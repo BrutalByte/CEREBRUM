@@ -20,3 +20,8 @@ env/
 
 # Environment
 .env
+
+# Documents
+*.docx
+
+# Python
