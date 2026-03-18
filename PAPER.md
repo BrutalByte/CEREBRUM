@@ -818,6 +818,31 @@ Time-stamped KGs (events, evolving relationships) introduce a temporal
 dimension. The positional encoding would need to incorporate temporal distance
 alongside graph-structural distance. Left for future work.
 
+### 8.6 Triple-Signal Consensus (TSC): Closing the Mesoscale Gap
+
+A significant extension for Phase 2 research is the transition from the
+dual-signal DSCF to a **Triple-Signal Consensus (TSC)** framework. This addresses
+the "Mesoscale Gap"—the structural region between immediate local topology (LPA)
+and global modularity (Leiden).
+
+By introducing a third methodology, such as **Infomap (Map Equation)**, we can
+weed out "structural hallucinations"—paths that exist in the graph but lack
+conceptual coherence. While modularity captures static edge density, Infomap
+captures the **flow of information** (random walks), identifying bottlenecks
+and sub-clusters that static methods often miss.
+
+In this framework, a node move or a traversal edge must pass a **Consensus Filter**:
+1.  **LPA (Local)**: Immediate neighbor recognition.
+2.  **Modularity (Global)**: Global architecture optimization.
+3.  **Infomap (Mid-Level)**: Natural information flow transit.
+
+The resulting decision logic for community fusion evolves into a tri-signal
+fused probability:
+$$P(\text{move}) = f(\text{LPA} \cdot \tau_{local}, \text{Mod} \cdot \tau_{global}, \text{Infomap} \cdot \tau_{mid})$$
+
+This "mid-level voting" ensures that only the most structurally robust reasoning
+chains survive the beam-search pruning process.
+
 ---
 
 ## 9. Benchmark and Evaluation Plan
