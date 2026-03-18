@@ -14,10 +14,26 @@ full interpretability of every inference step.
 
 See `PAPER.md` for the full white paper and architecture specification.
 
-## Status
+## Value Proposition
 
-**Phase 0 complete.** DSCF prototype validated. Core architecture specified.
-Phase 1 (core engine) is the current milestone.
+| Feature | Standard RAG | GraphRAG (Microsoft) | Parallax |
+| :--- | :--- | :--- | :--- |
+| **Primary Reasoner** | LLM | LLM | **Knowledge Graph** |
+| **Logic Source** | Probabilistic weights | LLM-generated summaries | **Graph Topology (DSCF/CSA)** |
+| **Hallucination Risk** | High | Medium | **Zero (Grounded Paths)** |
+| **Interpretability** | None (Black-box) | Medium (Text chunks) | **Absolute (Verifiable Edges)** |
+| **Context Window** | Limited by Token Count | Limited by Chunk Count | **Scale-Invariant (Beam Search)** |
+
+## Roadmap
+
+**Current Phase: 1 (Core Engine)**
+
+- [x] **Phase 0: Theory & Prototyping** (DSCF validated in AURA)
+- [ ] **Phase 1: Core Engine** (GraphAdapter, DSCF Engine, CSA Attention)
+- [ ] **Phase 2: Reasoning Engine** (BeamTraversal, PathScorer)
+- [ ] **Phase 3: Adapters & API** (Neo4j, RDF, FastAPI)
+- [ ] **Phase 4: Benchmarking** (WebQSP, MetaQA-3hop)
+- [ ] **Phase 5: Release** (v0.1.0 Stable)
 
 ## Quick Start
 
@@ -131,6 +147,17 @@ graph LR
     T5 -.->|maps to| P5
     T6 -.->|maps to| P6
 ```
+
+### Example: Reasoning Trace
+
+Query: *"Who discovered a radioactive element?"*
+
+1. **Entity Grounding**: `Marie Curie` is identified as the seed node.
+2. **Hop 1 (Attention)**: `Marie Curie` $\xrightarrow{\text{discovered}}$ `Polonium`.
+   - *CSA Weight*: High due to same community membership (Scientific Discoveries) and semantic alignment.
+3. **Hop 2 (Traversal)**: `Polonium` $\xrightarrow{\text{is\_a}}$ `Radioactive Element`.
+   - *CSA Weight*: High due to relation type weights and embedding proximity.
+4. **Output**: The path `Marie Curie → discovered → Polonium → is_a → Radioactive Element` is returned as a grounded proof.
 
 ## Mathematical Foundation
 

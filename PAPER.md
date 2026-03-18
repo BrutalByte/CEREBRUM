@@ -85,6 +85,16 @@ adjacency constraints, CSA uses community membership as a soft global
 constraint that captures both local topological cohesion and global structural
 significance simultaneously.
 
+### Table 1: Comparative Value Proposition
+
+| Feature | Standard RAG | GraphRAG (Microsoft) | Parallax |
+| :--- | :--- | :--- | :--- |
+| **Primary Reasoner** | LLM | LLM | **Knowledge Graph** |
+| **Logic Source** | Probabilistic weights | LLM-generated summaries | **Graph Topology (DSCF/CSA)** |
+| **Hallucination Risk** | High | Medium | **Zero (Grounded Paths)** |
+| **Interpretability** | None (Black-box) | Medium (Text chunks) | **Absolute (Verifiable Edges)** |
+| **Context Window** | Limited by Token Count | Limited by Chunk Count | **Scale-Invariant (Beam Search)** |
+
 This is made possible by a second contribution: the **Dual-Signal Community
 Fusion (DSCF)** algorithm, which produces communities that encode both LPA
 majority-vote structure (local) and modularity gain (global) in a single
@@ -459,6 +469,17 @@ STEP 5 — Output
     - Score breakdown (attention, community, semantic)
     - Community sequence (which "heads" were traversed)
     - Natural language explanation template
+
+**Example Reasoning Trace:**
+
+Query: *"Who discovered a radioactive element?"*
+
+1.  **Entity Grounding**: `Marie Curie` is identified as the seed node.
+2.  **Hop 1 (Attention)**: `Marie Curie` $\xrightarrow{\text{discovered}}$ `Polonium`.
+    - *CSA Weight*: High due to same community membership (Scientific Discoveries) and semantic alignment.
+3.  **Hop 2 (Traversal)**: `Polonium` $\xrightarrow{\text{is\_a}}$ `Radioactive Element`.
+    - *CSA Weight*: High due to relation type weights and embedding proximity.
+4.  **Output**: The path `Marie Curie → discovered → Polonium → is_a → Radioactive Element` is returned as a grounded proof.
 ```
 
 ### 5.2 Community Coherence
