@@ -174,6 +174,15 @@ $$\text{coherence}_{com}(P) = \frac{1.0 \cdot N_{\text{intra}} + 0.5 \cdot N_{\t
 
 This penalizes incoherent "conceptual leaps" while rewarding deep local reasoning within a specific conceptual domain (attention head).
 
+## Strategic Implications
+
+Parallax introduces a fundamental shift in how Knowledge Graphs and Large Language Models interact, moving from passive retrieval to **active structural reasoning**.
+
+- **Glass-Box Reasoning**: Shifts the AI paradigm from "black-box" probabilistic weights to "glass-box" deterministic graph paths. Every conclusion is auditable and grounded in explicit edges.
+- **Decoupled Logic**: Separates *reasoning* (performed by the graph) from *language generation* (performed by the LLM), enabling high-accuracy inference without the need for trillion-parameter models.
+- **Context Window Invariance**: Traversal complexity is governed by beam width and hop depth ($O(B \cdot L \cdot \bar{k} \cdot d)$), not graph size. This allows for reasoning over billion-node datasets that would otherwise shatter an LLM's context window.
+- **Topological Intelligence**: Assumes that the "intelligence" of a system lies in the *topology* of its knowledge. By deriving attention heads from the graph's own shape via DSCF, Parallax employs a powerful inductive bias that requires zero training data.
+
 ## Authors
 
 Bryan Alexander Buchorn (AMP) — Independent Researcher
