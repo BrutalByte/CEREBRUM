@@ -475,9 +475,9 @@ STEP 5 — Output
 Query: *"Who discovered a radioactive element?"*
 
 1.  **Entity Grounding**: `Marie Curie` is identified as the seed node.
-2.  **Hop 1 (Attention)**: `Marie Curie` $\xrightarrow{\text{discovered}}$ `Polonium`.
+2.  **Hop 1 (Attention)**: `Marie Curie` $\xrightarrow{discovered}$ `Polonium`.
     - *CSA Weight*: High due to same community membership (Scientific Discoveries) and semantic alignment.
-3.  **Hop 2 (Traversal)**: `Polonium` $\xrightarrow{\text{is\_a}}$ `Radioactive Element`.
+3.  **Hop 2 (Traversal)**: `Polonium` $\xrightarrow{is\_a}$ `Radioactive Element`.
     - *CSA Weight*: High due to relation type weights and embedding proximity.
 4.  **Output**: The path `Marie Curie → discovered → Polonium → is_a → Radioactive Element` is returned as a grounded proof.
 ```
