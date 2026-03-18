@@ -26,6 +26,14 @@ pip install -e ".[embeddings]"
 python examples/csv_quickstart.py
 ```
 
+## Genesis & Inspiration
+
+Parallax was born from a simple engineering request during the development of **AURA** (an AI assistant platform): *"When I hit the clusters button, I want to see the clusters forming in real-time."* 
+
+Achieving this required a deep dive into community detection. While exploring the trade-offs between **Leiden** (global modularity) and **Label Propagation** (local topology), a pivotal question was asked: *"Can we create an algorithm that includes structure from both simultaneously?"* This led to the creation of **DSCF**, which produces communities with the dual-signal character necessary for complex reasoning.
+
+The conceptual leap occurred when we asked: *"How can we treat Knowledge Graphs like LLMs? Can the structure of an LLM be adapted to the data?"* By mapping Transformer components (Attention Heads, Layer Depth, Positional Encoding) to functional equivalents in Graph Theory (Communities, Hop Depth, Structural Metrics), we realized that a Knowledge Graph doesn't just store data—it can **reason** through structured attention.
+
 ## Architecture
 
 ### Module Structure
