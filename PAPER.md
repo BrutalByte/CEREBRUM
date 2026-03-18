@@ -18,19 +18,22 @@ Every inference step is a verifiable graph edge.
 
 **The two core algorithms**:
 
-```
-DSCF (community detection):
-  For each node v at each iteration:
-    lpa_cid  = majority vote among neighbors  (local signal)
-    mod_cid  = best modularity gain ΔQ        (global signal)
-    if agree and ≠ current: MOVE (anchor)
-    elif disagree: MOVE with prob weighted by (lpa_conf × temp) vs (mod_conf × (2-temp))
-  temperature: τ_{t+1} = max(τ_t × 0.92, 0.01)
+$$
+\text{DSCF (community detection):}
+$$
+For each node $v$ at each iteration:
+- $\text{lpa\_cid} = \text{majority vote among neighbors (local signal)}$
+- $\text{mod\_cid} = \text{best modularity gain } \Delta Q \text{ (global signal)}$
+- If signals agree and $\neq \text{current}$: **MOVE (anchor)**
+- Elif disagree: **MOVE** with probability weighted by $(\text{lpa\_conf} \times \tau)$ vs $(\text{mod\_conf} \times (2-\tau))$
 
-CSA (attention weight for edge u→v at hop k):
-  a(u,v,k) = σ( α·sim(u,v) + β·community_score(u,v) + γ·edge_type - δ·distance + ε·hop_decay(k) )
-  defaults: α=0.4, β=0.4, γ=0.1, δ=0.05, ε=0.05
-```
+Temperature schedule: $\tau_{t+1} = \max(\tau_t \times 0.92, 0.01)$
+
+$$
+\text{CSA (attention weight for edge } u \to v \text{ at hop } k):
+$$
+$$a(u,v,k) = \sigma( \alpha \cdot \text{sim}(u,v) + \beta \cdot S_{com}(u,v) + \gamma \cdot w_{rel} - \delta \cdot d_{norm} + \epsilon \cdot \phi(k) )$$
+Defaults: $\alpha=0.4, \beta=0.4, \gamma=0.1, \delta=0.05, \epsilon=0.05$
 
 **Transformer → KG mapping**:
 
@@ -265,34 +268,25 @@ with 200 communities has 200. The architecture adapts to the data.
 
 ### 4.1 Community-Structured Attention (CSA)
 
-CSA computes attention weights for graph traversal that incorporate both local
-graph topology and global community structure.
+CSA computes attention weights for graph traversal that incorporate both local graph topology and global community structure.
 
 **Attention weight formula:**
 
-For entity u attending to entity v at traversal hop k:
+For entity $u$ attending to entity $v$ at traversal hop $k$:
 
-```
-a(u, v, k) = σ(
-    α · cosine_sim(emb(u), emb(v))
-  + β · community_score(u, v)
-  + γ · edge_type_weight(type(u → v))
-  - δ · normalized_distance(u, v)
-  + ε · hop_decay(k)
-)
-```
+$$a(u, v, k) = \sigma\left( \alpha \cdot \cos(\vec{e}_u, \vec{e}_v) + \beta \cdot S_{com}(u, v) + \gamma \cdot w_{rel} - \delta \cdot d_{norm}(u, v) + \epsilon \cdot \phi(k) \right)$$
 
 Where:
-- `emb(·)` is the entity embedding (any KGE method or sentence encoder)
-- `community_score(u, v)`:
-  - 1.0 if community(u) == community(v)           [same head]
-  - 0.5 if communities are adjacent               [neighboring heads]
-  - exp(-λ · community_distance(u, v)) otherwise  [distance decay]
-- `edge_type_weight(type)`: learned or manually assigned per relation type
-- `normalized_distance(u, v)`: shortest path length / graph diameter
-- `hop_decay(k)`: encourages shorter paths (e.g., 1 / (1 + k))
-- σ: sigmoid activation
-- α, β, γ, δ, ε: tunable parameters
+- $\vec{e}$ is the entity embedding.
+- $S_{com}(u, v)$:
+  - $1.0$ if $\text{community}(u) == \text{community}(v)$
+  - $0.5$ if communities are adjacent
+  - $\exp(-\lambda \cdot d_{com})$ otherwise
+- $w_{rel}$: weight per relation type.
+- $d_{norm}$: normalized shortest path length.
+- $\phi(k)$: hop decay (e.g., $1 / (1 + k)$).
+- $\sigma$: sigmoid activation.
+
 
 **Default parameter values (zero-shot deployment):**
 - α = 0.4 (embedding similarity)
@@ -350,10 +344,10 @@ For each node v at each iteration:
      lpa_conf = vote_count[lpa_cid] / total_neighbors  ∈ [0, 1]
 
   2. Modularity signal:
-     For each candidate community C adjacent to v:
-       ΔQ(v→C) = k_{v,C}/m − resolution × k_v × Σk_C / (2m²)
-     best_mod_cid = argmax ΔQ
-     mod_conf = min(best_ΔQ × m, 1.0)  ∈ [0, 1]
+     For each candidate community $C$ adjacent to $v$:
+     $$\Delta Q(v \to C) = \frac{k_{v,C}}{m} - \gamma \frac{k_v \sum k_C}{2m^2}$$
+     $\text{best\_mod\_cid} = \text{argmax } \Delta Q$
+     $\text{mod\_conf} = \min(\text{best\_}\Delta Q \cdot m, 1.0)$
 
   3. Decision:
      if lpa_cid == best_mod_cid ≠ current:
