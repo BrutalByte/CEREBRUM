@@ -1,0 +1,144 @@
+"""
+Unit tests for Community-Structured Attention (CSA).
+"""
+import math
+
+import numpy as np
+import pytest
+
+from core.attention_engine import CSAEngine, _cosine_sim, _sigmoid
+
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
+
+def make_engine() -> CSAEngine:
+    """
+    Three communities:
+      0 : a, b, c  (science cluster — embeddings point along x-axis)
+      1 : x, y, z  (history cluster — embeddings point along y-axis)
+      2 : m         (bridge node   — diagonal embedding)
+
+    Community graph: 0 adjacent to 1, 1 adjacent to 2, 0 and 2 NOT adjacent.
+    """
+    communities = {
+        "a": 0, "b": 0, "c": 0,
+        "x": 1, "y": 1, "z": 1,
+        "m": 2,
+    }
+    embeddings = {
+        "a": np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32),
+        "b": np.array([0.9, 0.1, 0.0, 0.0], dtype=np.float32),
+        "c": np.array([0.8, 0.2, 0.0, 0.0], dtype=np.float32),
+        "x": np.array([0.0, 1.0, 0.0, 0.0], dtype=np.float32),
+        "y": np.array([0.0, 0.9, 0.1, 0.0], dtype=np.float32),
+        "z": np.array([0.0, 0.8, 0.2, 0.0], dtype=np.float32),
+        "m": np.array([0.5, 0.5, 0.0, 0.0], dtype=np.float32),
+    }
+    engine = CSAEngine(communities=communities, embeddings=embeddings)
+    engine.set_community_graph(
+        community_distances={(0, 2): 2.0, (2, 0): 2.0},
+        adjacent_pairs={(0, 1), (1, 0), (1, 2), (2, 1)},
+    )
+    return engine
+
+
+# ---------------------------------------------------------------------------
+# community_score tests
+# ---------------------------------------------------------------------------
+
+def test_same_community_score_is_one():
+    engine = make_engine()
+    assert engine.community_score("a", "b") == 1.0
+    assert engine.community_score("x", "y") == 1.0
+    assert engine.community_score("b", "c") == 1.0
+
+
+def test_adjacent_community_score_is_half():
+    engine = make_engine()
+    # 0 and 1 are adjacent
+    assert engine.community_score("a", "x") == 0.5
+    assert engine.community_score("y", "m") == 0.5
+
+
+def test_distant_community_score_uses_exp_decay():
+    engine = make_engine()
+    # Communities 0 and 2 are distance 2 apart
+    score = engine.community_score("a", "m")
+    expected = math.exp(-0.5 * 2.0)   # lambda=0.5, d=2
+    assert abs(score - expected) < 0.01
+
+
+def test_unknown_community_returns_neutral():
+    engine = make_engine()
+    # "ghost" is not in communities dict
+    score = engine.community_score("a", "ghost")
+    assert score == 0.5
+
+
+# ---------------------------------------------------------------------------
+# compute_weight tests
+# ---------------------------------------------------------------------------
+
+def test_weight_is_in_0_1():
+    engine = make_engine()
+    for u in ["a", "x", "m"]:
+        for v in ["b", "y", "m"]:
+            if u != v:
+                w = engine.compute_weight(u, v, hop=1)
+                assert 0.0 < w < 1.0, f"Weight out of (0,1) for {u}->{v}: {w}"
+
+
+def test_same_community_weight_higher_than_cross():
+    engine = make_engine()
+    w_same  = engine.compute_weight("a", "b", hop=1)   # both in community 0
+    w_cross = engine.compute_weight("a", "x", hop=1)   # communities 0 and 1
+    assert w_same > w_cross
+
+
+def test_hop_decay_decreases_weight():
+    engine = make_engine()
+    w1 = engine.compute_weight("a", "b", hop=1)
+    w5 = engine.compute_weight("a", "b", hop=5)
+    assert w1 > w5, "Weight should decrease with hop depth"
+
+
+def test_missing_embeddings_use_zero_sim():
+    """Nodes without embeddings should still produce a valid weight."""
+    communities = {"u": 0, "v": 0}
+    embeddings  = {}   # empty — no vectors
+    engine = CSAEngine(communities=communities, embeddings=embeddings)
+    w = engine.compute_weight("u", "v", hop=1)
+    assert 0.0 < w < 1.0
+
+
+# ---------------------------------------------------------------------------
+# Helper function tests
+# ---------------------------------------------------------------------------
+
+def test_cosine_sim_parallel():
+    a = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+    b = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+    assert abs(_cosine_sim(a, b) - 1.0) < 1e-6
+
+
+def test_cosine_sim_orthogonal():
+    a = np.array([1.0, 0.0], dtype=np.float32)
+    b = np.array([0.0, 1.0], dtype=np.float32)
+    assert abs(_cosine_sim(a, b)) < 1e-6
+
+
+def test_cosine_sim_zero_vector():
+    a = np.array([0.0, 0.0], dtype=np.float32)
+    b = np.array([1.0, 0.0], dtype=np.float32)
+    assert _cosine_sim(a, b) == 0.0
+
+
+def test_sigmoid_midpoint():
+    assert abs(_sigmoid(0.0) - 0.5) < 1e-6
+
+
+def test_sigmoid_monotone():
+    vals = [_sigmoid(x) for x in [-5, -1, 0, 1, 5]]
+    assert vals == sorted(vals)

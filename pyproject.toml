@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "parallax-kg"
+version = "0.1.0"
+description = "Community-Structured Graph Attention for Knowledge Graph Reasoning"
+authors = [
+    {name = "Bryan Alexander Buchorn", email = "bryan.alexander@buchorn.com"},
+]
+license = {text = "Proprietary"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "networkx>=3.0.0",
+    "numpy>=1.24.0",
+    "igraph>=0.10.0",
+    "leidenalg>=0.10.0",
+    "scipy>=1.10.0",
+]
+
+[project.optional-dependencies]
+embeddings = ["sentence-transformers>=2.2.0"]
+kge        = ["pykeen>=1.10.0"]
+api        = ["fastapi>=0.100.0", "uvicorn[standard]>=0.23.0", "pydantic>=2.0.0"]
+neo4j      = ["neo4j>=5.8.0"]
+rdf        = ["SPARQLWrapper>=2.0"]
+dev        = ["pytest>=7.0", "pytest-asyncio>=0.21"]
+all        = ["parallax-kg[embeddings,api,neo4j,dev]"]
+
+[project.scripts]
+parallax = "cli.parallax:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
