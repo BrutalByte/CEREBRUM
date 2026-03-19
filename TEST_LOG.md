@@ -1825,10 +1825,12 @@ The primary goal was the completion of **Phase 5 (Release)**. This involved the 
 
 ### D. Final Evaluation Run
 - **Unit Tests**: 141 PASSED, 1 SKIPPED (Leidenalg check).
-- **E2E Journeys**: 3/3 PASSED (Query, Communities, API).
-- **Static Analysis**: Configured `.claude/commands/validate.md` for `ruff` and `mypy`.
+- E2E Journeys: 3/3 PASSED (Query, Communities, API).
+- Static Analysis: Configured `.claude/commands/validate.md` for `ruff` and `mypy`.
+- Documentation: Created `examples/Validation_Walkthrough.ipynb` as an interactive, visual proof of the framework's logic and the Bridge Bonus (EF-005).
 
 ## 4. Final System State
+
 - **Status**: Release Candidate v0.1.0 STABLE.
 - **Integrity**: Every reasoning path is fully grounded and verifiable.
 - **Readiness**: Roadmap Phase 5 marked as COMPLETE in `README.md`.
