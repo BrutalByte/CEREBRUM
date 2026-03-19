@@ -21,7 +21,7 @@ See `PAPER.md` for the full white paper and architecture specification.
 | **Primary Reasoner** | LLM | LLM | **Knowledge Graph** |
 | **Logic Source** | Probabilistic weights | LLM-generated summaries | **Graph Topology (DSCF/CSA)** |
 | **Hallucination Risk** | High | Medium | **Zero (Grounded Paths)** |
-| **Interpretability** | None (Black-box) | Medium (Text chunks) | **Absolute (Verifiable Edges)** |
+| **Interpretability** | **Black-Box** (None) | Medium (Text chunks) | **Glass-Box (Verifiable Edges)** |
 | **Context Window** | Limited by Token Count | Limited by Chunk Count | **Scale-Invariant (Beam Search)** |
 
 ## Roadmap
@@ -110,7 +110,11 @@ Parallax has been rigorously validated using the following datasets and fixtures
 
 Parallax was born from a simple engineering request during the development of **AURA** (an AI assistant platform): *"When I hit the clusters button, I want to see the clusters forming in real-time."* 
 
-Achieving this required a deep dive into community detection. While exploring the trade-offs between **Leiden** (global modularity) and **Label Propagation** (local topology), a pivotal question was asked: *"Can we create an algorithm that includes structure from both simultaneously?"* This led to the creation of **DSCF**, which produces communities with the dual-signal character necessary for complex reasoning.
+Achieving this required a deep dive into community detection. While exploring the trade-offs between **Leiden** (global modularity) and **Label Propagation** (local topology), a pivotal question was asked: *"Can we create an algorithm that includes structure from both simultaneously?"* 
+
+This led to the creation of **DSCF**, which produces communities with the dual-signal character necessary for complex reasoning. The inspiration for this multi-signal approach was rooted in **mid-level voting** (or mid-value selection) systems used in triplex-redundant aircraft navigation. By selecting the median value to reject sensor outliers, these systems correct navigation errors. Parallax applies this same principle to graph reasoning: by requiring consensus between local (LPA), global (Modularity), and flow (Infomap) signals, the framework "rights the navigation errors" (hallucinations) common in probabilistic language models. 
+
+This architectural shift moves AI from the **Black-Box** of hidden layer weights to a **Glass-Box** of deterministic, traceable graph paths — a critical requirement in today's high-stakes AI/ML landscape.
 
 ## Acknowledgments & Credits
 
@@ -121,6 +125,7 @@ Parallax stands on the shoulders of decades of foundational research. We explici
 - **GATs**: Veličković et al. (2018)
 - **Embeddings**: Bordes et al. (2013), Sun et al. (2019)
 - **GraphRAG**: Microsoft Research / Edge et al. (2024)
+- **Avionics Engineering**: Mid-level voting (or mid-value selection) systems used in triplex-redundant aircraft navigation, which provided the inspiration for multi-signal consensus and the "righting" of navigation errors in language graphs.
 
 ## Architecture
 

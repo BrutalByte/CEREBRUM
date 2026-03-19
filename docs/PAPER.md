@@ -881,7 +881,9 @@ Parallax stands on the shoulders of decades of research in graph theory, communi
 3.  **Leiden Algorithm**: Vincent Traag, Ludo Waltman, and Nees Jan van Eck (2019). Their refinement of Louvain, ensuring internal connectivity, provides the "Global Signal" and connectivity post-pass for DSCF.
 4.  **Graph Attention Networks (GATs)**: Petar Veličković, Guillem Cucurull, Arantxa Casanova, Adriana Romero, Pietro Liò, and Yoshua Bengio (2018). Their introduction of learned attention on graphs served as the primary foil and inspiration for our Community-Structured Attention (CSA).
 5.  **KG Embeddings (TransE / RotatE)**: Antoine Bordes et al. (2013) and Zhiqing Sun et al. (2019). Their work on representing relational knowledge in vector spaces provides the semantic grounding layer for CSA.
-6.  **GraphRAG**: Microsoft Research / Edge et al. (2024). Their pioneering work in combining community summaries with LLM retrieval provided the immediate context and competitive baseline for Parallax's grounded reasoning approach.
+6. **GraphRAG**: Microsoft Research / Edge et al. (2024). Their pioneering work in combining community summaries with LLM retrieval provided the immediate context and competitive baseline for Parallax's grounded reasoning approach.
+7. **Avionics Engineering**: The concept of **mid-level voting** (or mid-value selection) in triplex-redundant aircraft navigation. This engineering principle of multi-sensor consensus served as the foundational inspiration for the multi-signal logic of DSCF and TSC, providing a mechanism to "right the navigation errors" (hallucinations) common in probabilistic language models by moving from Black-Box speculation to Glass-Box verification.
+
 
 ---
 
@@ -995,8 +997,10 @@ character of multi-head attention: local cohesion (from DSCF's LPA component)
 combined with global structural significance (from DSCF's modularity
 component).
 
-The resulting system produces reasoning paths, not black-box embeddings. Every
-answer is traceable to a sequence of verified graph edges. Every reasoning step
+The resulting system produces reasoning paths, not **Black-Box** embeddings. Every
+answer is traceable to a sequence of verified graph edges. This architectural shift 
+moves AI from probabilistic hidden-layer weights to a **Glass-Box** of deterministic 
+paths — a vital transition in the modern AI/ML landscape. Every reasoning step
 names the community it traversed. This interpretability property, combined with
 the zero-hallucination guarantee of graph-grounded inference, positions Parallax
 as a meaningful complement to — and in certain domains, replacement for —
@@ -1010,7 +1014,11 @@ The name Parallax refers to the optical phenomenon where two viewpoints on
 the same object yield depth perception that neither viewpoint alone provides.
 LPA and modularity are two viewpoints on the same graph. Their combination
 yields structural depth — attention heads with both short-range and long-range
-character — that neither produces alone.
+character — that neither produces alone. This multi-signal consensus is inspired 
+by **mid-level voting** systems in triplex-redundant aircraft navigation, where 
+the median value is selected to correct navigation errors. Parallax applies this 
+principle to "right the navigation errors" (hallucinations) of current language 
+models by requiring structural consensus for every reasoning step.
 
 That depth is what makes the KG reason.
 

@@ -250,6 +250,14 @@ DSCF stands for Dual-Signal Community Fusion. It's a new algorithm created as pa
 
 The key idea: every existing algorithm uses one signal to decide where each node belongs. Either it asks "what are my immediate neighbors doing?" (local, like LPA) or "what assignment maximizes the overall structure score?" (global, like Leiden). DSCF asks both questions simultaneously for every node at every step.
 
+The Aircraft Analogy: Mid-Level Voting
+
+The inspiration for this "two-signal" approach comes from the world of aviation. High-stakes aircraft navigation systems use **mid-level voting** to ensure safety. Instead of trusting a single sensor, the flight computer takes inputs from three independent sources and selects the middle value. This "vote" automatically rejects any single sensor that is giving a wrong (outlier) reading.
+
+Parallax applies this same principle to AI reasoning. By requiring consensus between different structural signals, it "rights the navigation errors"—or hallucinations—that are so common in current language models. 
+
+This shifts AI from a **Black-Box** (where the logic is hidden inside billions of math weights) to a **Glass-Box** (where every reasoning step is a visible, verifiable path through a graph).
+
 Here's how DSCF makes the decision for each node:
 
 DSCF decision logic (simplified):
@@ -290,7 +298,7 @@ KG traverses itself using attention.
 KG generates a scored reasoning path.
 LLM (optional) writes the answer in English.
 
-Advantage: Every intermediate step is a verified graph edge. Nothing is invented.
+Advantage: Every intermediate step is a verified graph edge. Nothing is invented. This is **Glass-Box AI**: you can see exactly how the system arrived at its conclusion.
 
 How Parallax Traverses a Graph
 

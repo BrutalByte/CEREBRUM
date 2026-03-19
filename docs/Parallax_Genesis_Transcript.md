@@ -10,7 +10,10 @@ bryan.alexander@buchorn.com
 
 March 2026  ·  Session ID: 2cdef21d-f550-41db-a96f-175b1c7bb1cc
 
-This document is the verbatim transcript of the Claude Code session in which the Parallax framework was conceived. It begins at the moment Bryan Alexander Buchorn (AMP) requested real-time cluster animation for the AURA knowledge graph, and continues through the completion of the Parallax white paper. Editorial annotations (amber, marked with ▶) mark the pivotal conceptual transitions. Tool calls are shown inline in monospace. The session ran across multiple context windows; system-injected summaries are noted where they occur. All timestamps are UTC.
+This document is the verbatim transcript of the Claude Code session in which the Parallax framework was conceived. It begins at the moment Bryan Alexander Buchorn (AMP) requested real-time cluster animation for the AURA knowledge graph, and continues through the completion of the Parallax white paper. Editorial annotations (amber, marked with ▶) mark the pivotal conceptual transitions. A recurring theme in this session—and a major inspiration for the Dual-Signal Community Fusion (DSCF) algorithm—is the concept of **mid-level voting** used in triplex-redundant aircraft navigation. By requiring consensus between local, global, and flow signals, Parallax effectively "rights the navigation errors" (hallucinations) common in today's language graphs, moving AI from **Black-Box** speculation to **Glass-Box** verification.
+
+Tool calls are shown inline in monospace.
+ The session ran across multiple context windows; system-injected summaries are noted where they occur. All timestamps are UTC.
 
 Chapter 1: The Visualization Problem — Real-Time Cluster Animation
 

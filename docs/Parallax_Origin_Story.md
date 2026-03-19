@@ -84,7 +84,19 @@ Working through the properties of DSCF communities revealed something important:
 
 Leiden communities are globally optimal but can be locally incoherent. LPA communities are locally coherent but can be globally naive. DSCF communities are both: the LPA component holds locally coherent groups together even when modularity would split them, and the modularity component prevents over-merging when LPA would absorb structurally distinct regions.
 
-This dual property — short-range coherence combined with long-range structural significance — was interesting in its own right. But it became the foundation of something larger when the conversation took its most significant turn.
+This dual property — short-range coherence combined with long-range structural significance — was interesting in its own right. 
+
+2.3  The Avionics Analogy: Mid-Level Voting
+
+The conceptual root of this multi-signal consensus was found in an unexpected place: the high-stakes world of aerospace engineering. Specifically, the **mid-level voting** (or mid-value selection) systems used in triplex-redundant aircraft navigation. 
+
+In these avionics systems, the flight computer receives inputs from three independent sensors. Rather than averaging them—which would allow a single faulty sensor to pull the average away from the truth—the system selects the median value. This "mid-level vote" effectively rejects outliers and corrects navigation errors before they can propagate. 
+
+Parallax applies this exact logic to graph reasoning. By requiring consensus between local (LPA), global (Modularity), and flow (Infomap) signals, the framework "rights the navigation errors" (hallucinations) that are systemic in current language graphs. 
+
+This architectural shift moves AI away from the **Black-Box** of hidden probabilistic weights and into a **Glass-Box** of deterministic, traceable, and verifiable graph paths. In an era where AI interpretability is a source of intense contention, this transition from black-box speculation to glass-box verification is a fundamental requirement.
+
+But it became the foundation of something larger when the conversation took its most significant turn.
 
 3.  The Conceptual Leap: Knowledge Graphs as Language Models
 
