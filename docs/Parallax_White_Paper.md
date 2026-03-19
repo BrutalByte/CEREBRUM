@@ -751,59 +751,13 @@ parallax/
 
 │   ├── graph_adapter.py        # Abstract base class for graph backends
 
-│   │   ├── class GraphAdapter (ABC)
-
-│   │   ├── def get_neighbors(entity_id, edge_types=None) → List[Edge]
-
-│   │   ├── def get_entity(entity_id) → Entity
-
-│   │   ├── def get_edge_types() → List[str]
-
-│   │   └── def get_structural_features(entity_ids) → Dict[str, Features]
-
-│   │
-
 │   ├── embedding_engine.py     # Entity embedding interface
-
-│   │   ├── class EmbeddingEngine (ABC)
-
-│   │   ├── class TransEEngine (EmbeddingEngine)
-
-│   │   ├── class SentenceEngine (EmbeddingEngine)  # label-based, no training
-
-│   │   └── class RandomEngine (EmbeddingEngine)    # baseline/testing
-
-│   │
 
 │   ├── community_engine.py     # Community detection (DSCF + others)
 
-│   │   ├── def dscf_communities(G, resolution, max_iter, temp_start, cooling)
-
-│   │   ├── def leiden_communities(G, resolution)
-
-│   │   ├── def lpa_communities(G)
-
-│   │   └── def hybrid_communities(G, resolution)
-
-│   │
-
 │   ├── attention_engine.py     # Community-Structured Attention
 
-│   │   ├── class CSAEngine
-
-│   │   ├── def compute_weight(u, v, k, communities, embeddings) → float
-
-│   │   └── def community_score(u, v, communities) → float
-
-│   │
-
-│   └── structural_encoder.py  # Graph positional encoding
-
-│       ├── def compute_pagerank(G) → Dict[node, float]
-
-│       ├── def compute_betweenness(G) → Dict[node, float]
-
-│       └── def encode_features(features, dim) → np.ndarray
+│   └── structural_encoder.py   # Graph positional encoding
 
 │
 
@@ -811,23 +765,9 @@ parallax/
 
 │   ├── traversal.py            # Beam-search attention traversal
 
-│   │   ├── class BeamTraversal
-
-│   │   └── def traverse(seeds, depth, beam_width) → List[Path]
-
-│   │
-
 │   ├── path_scorer.py          # Multi-signal path ranking
 
-│   │   ├── def score_path(path, query_embedding, communities) → float
-
-│   │   └── def community_coherence(path, communities) → float
-
-│   │
-
-│   └── answer_extractor.py    # Extract top-K answers
-
-│       └── def extract(paths, top_k) → List[Answer]
+│   └── answer_extractor.py     # Extract top-K answers
 
 │
 
@@ -846,10 +786,6 @@ parallax/
 ├── llm_bridge/
 
 │   └── context_formatter.py    # Optional: format paths as LLM context
-
-│       ├── def to_prompt(paths, query) → str
-
-│       └── def to_structured(paths) → dict
 
 │
 
@@ -892,6 +828,8 @@ parallax/
 │
 
 ├── examples/
+
+│   ├── Validation_Walkthrough.ipynb # Interactive visual proof
 
 │   ├── wikidata_quickstart.py
 
@@ -1217,43 +1155,21 @@ In zero-shot mode, α, β, γ, δ, ε are fixed. For supervised settings, they c
 
 Time-stamped KGs (events, evolving relationships) introduce a temporal dimension. The positional encoding would need to incorporate temporal distance alongside graph-structural distance. Left for future work.
 
-9.6 Triple-Signal Consensus (TSC): The Next Frontier
+9.6 Triple-Signal Consensus (TSC): Closing the Mesoscale Gap
 
-A significant architectural expansion for Parallax is the transition from the dual-signal DSCF to a **Triple-Signal Consensus (TSC)** framework. This evolution is designed to close the **"Mesoscale Gap"**—the structural region between immediate local topology (LPA) and global modularity (Leiden).
+A significant extension for Phase 2 research is the transition from the dual-signal DSCF to a Triple-Signal Consensus (TSC) framework. This addresses the "Mesoscale Gap"—the structural region between immediate local topology (LPA) and global modularity (Leiden).
 
-### The Motivation for a Third Signal
+By introducing a third methodology, such as Infomap (Map Equation), we can weed out "structural hallucinations"—paths that exist in the graph but lack conceptual coherence. While modularity captures static edge density, Infomap captures the flow of information (random walks), identifying bottlenecks and sub-clusters that static methods often miss.
 
-While modularity (Global) captures static edge density and LPA (Local) captures immediate neighborhood cohesion, they both miss the **dynamic flow of information** through a network. In reasoning tasks, the most relevant path is often the one that information naturally "flows" along.
+In this framework, a node move or a traversal edge must pass a Consensus Filter:
+1. LPA (Local): Immediate neighbor recognition.
+2. Modularity (Global): Global architecture optimization.
+3. Infomap (Mid-Level): Natural information flow transit.
 
-### The TSC Components
+The resulting decision logic for community fusion evolves into a tri-signal fused probability:
+P(move) = f(LPA * τ_local, Mod * τ_global, Infomap * τ_mid)
 
-1.  **LPA (Local)**: Neighbor recognition (Cohesion).
-2.  **Modularity (Global)**: Architecture optimization (Significance).
-3.  **Infomap / Map Equation (Mid-Level)**: Flow-based clustering (Connectivity). Originally proposed by Martin Rosvall and Carl Bergstrom (2008), Infomap uses random walks to identify sub-clusters based on information flow, acting as the "mesoscale" judge between local and global signals.
-
-### Consensus Decision Logic
-
-In the TSC framework, a node move or a traversal edge must pass a **Consensus Filter**. This reduces "structural hallucinations"—paths that exist topologically but lack conceptual or informational flow coherence.
-
-The fused probability for a node move or attention weight calculation becomes:
-$$P(\text{move}) = f(\text{LPA} \cdot \tau_{local}, \text{Mod} \cdot \tau_{global}, \text{Infomap} \cdot \tau_{mid})$$
-
-This "mid-level voting" ensures that only the most structurally and dynamically robust reasoning chains survive the beam-search pruning process. TSC will be implemented as an optional, high-precision mode within the Parallax core, allowing for direct comparison with DSCF.
-
----
-
-## Acknowledgments: Intellectual Debt and Credits
-
-Parallax stands on the shoulders of decades of research in graph theory, community detection, and neural networks. We explicitly acknowledge the foundational work of the following researchers and the algorithms that form the bedrock of our framework:
-
-1.  **LPA (Label Propagation Algorithm)**: Usha Nandini Raghavan, Réka Albert, and Shailesh Kumara (2007). Their work on near-linear time community detection via local neighbor voting provided the "Local Signal" for our DSCF engine.
-2.  **Louvain Algorithm**: Vincent Blondel, Jean-Loup Guillaume, Renaud Lambiotte, and Etienne Lefebvre (2008). Their greedy modularity optimization method established the global structural baseline for community detection.
-3.  **Leiden Algorithm**: Vincent Traag, Ludo Waltman, and Nees Jan van Eck (2019). Their refinement of Louvain, ensuring internal connectivity, provides the "Global Signal" and connectivity post-pass for DSCF.
-4.  **Graph Attention Networks (GATs)**: Petar Veličković, Guillem Cucurull, Arantxa Casanova, Adriana Romero, Pietro Liò, and Yoshua Bengio (2018). Their introduction of learned attention on graphs served as the primary foil and inspiration for our Community-Structured Attention (CSA).
-5.  **KG Embeddings (TransE / RotatE)**: Antoine Bordes et al. (2013) and Zhiqing Sun et al. (2019). Their work on representing relational knowledge in vector spaces provides the semantic grounding layer for CSA.
-6.  **GraphRAG**: Microsoft Research / Edge et al. (2024). Their pioneering work in combining community summaries with LLM retrieval provided the immediate context and competitive baseline for Parallax's grounded reasoning approach.
-
----
+This "mid-level voting" ensures that only the most structurally robust reasoning chains survive the beam-search pruning process.
 
 10. Broader Impact and Applications
 
@@ -1312,173 +1228,6 @@ The open questions identified in Section 8 define the research program. The benc
 
 The name Parallax refers to the optical phenomenon where two viewpoints on the same object yield depth perception that neither viewpoint alone provides.
 LPA and modularity are two viewpoints on the same graph. Their combination yields structural depth — attention heads with both short-range and long-range character — that neither produces alone. That depth is what makes the KG reason.
-
-Appendix A: DSCF Algorithm — Full Pseudocode
-
-FUNCTION dscf_communities(G, resolution=1.0, max_iter=100,
-
-                           temp_start=1.0, cooling=0.92):
-
-  m = |E(G)|
-
-  IF m == 0: RETURN [{v} for v in V(G)]
-
-  nodes  = list(V(G))
-
-  degree = {v: deg(v) for v in nodes}
-
-  // Singleton initialization
-  assignment = {v: i for i, v in enumerate(nodes)}
-
-  com_k = {i: degree[v] for i, v in enumerate(nodes)}  // degree-sum cache
-
-  temperature = temp_start
-
-  FOR iteration = 1 to max_iter:
-
-    changed = False
-
-    SHUFFLE nodes
-
-    FOR EACH v in nodes:
-
-      neighbors = N(v)
-
-      IF |neighbors| == 0: CONTINUE
-
-      cur = assignment[v]; kv = degree[v]
-
-      // LPA signal
-
-      vote = COUNT(assignment[nb] for nb in neighbors)
-
-      lpa_cid = argmax(vote); lpa_conf = vote[lpa_cid] / |neighbors|
-
-      // Modularity signal
-
-      candidates = {assignment[nb] for nb in neighbors} - {cur}
-
-      best_cid = cur; best_dq = 0
-
-      FOR cid IN candidates:
-
-        k_vc = |{nb in neighbors : assignment[nb] == cid}|
-
-        dq = k_vc/m - resolution × kv × com_k[cid] / (2m²)
-
-        IF dq > best_dq: best_dq = dq; best_cid = cid
-
-      mod_conf = min(best_dq × m, 1.0)
-
-      // Decision
-
-      IF lpa_cid == best_cid ≠ cur:
-
-        new = lpa_cid  // consensus
-
-      ELIF best_cid == cur AND lpa_cid == cur:
-
-        CONTINUE  // both say stay
-
-      ELIF best_cid == cur:
-
-        IF random() >= lpa_conf × temperature: CONTINUE
-
-        new = lpa_cid
-
-      ELIF lpa_cid == cur:
-
-        IF random() >= mod_conf × (1 + (1−temperature)): CONTINUE
-
-        new = best_cid
-
-      ELSE:
-
-        lpa_w = lpa_conf × temperature
-
-        mod_w = mod_conf × (2 − temperature)
-
-        new = weighted_choice({lpa_cid: lpa_w, best_cid: mod_w})
-
-      // Apply move
-
-      com_k[cur] = max(com_k[cur] − kv, 0)
-
-      com_k[new] = com_k[new] + kv
-
-      assignment[v] = new; changed = True
-
-    temperature = max(temperature × cooling, 0.01)
-
-    IF NOT changed: BREAK
-
-  // Connectivity post-pass (Leiden-style)
-
-  // For each community whose induced subgraph is disconnected:
-
-  //   Split into connected components
-
-  //   First component keeps the original community ID
-
-  //   Additional components receive new IDs (max_existing_id + 1, +2, ...)
-
-  // This ensures IDs remain stable for the majority partition,
-
-  // which is important for downstream caching of community_score lookups.
-
-  RETURN [component for community in assignment.values()
-
-          for component in connected_components(G.subgraph(community))]
-
-Appendix B: CSA Weight Formula — Parameter Sensitivity
-
-The default parameter values (α=0.4, β=0.4, γ=0.1, δ=0.05, ε=0.05) were
-
-chosen based on the following intuitions:
-
-Embedding similarity (α) and community membership (β) are given equal weight
-
-because both capture complementary aspects of relevance: similarity captures
-
-semantic proximity while community captures structural proximity.
-
-Edge type (γ) is given lower weight because it is most useful in domain-
-
-specific settings with rich edge type vocabularies.
-
-Distance penalty (δ) is kept small to allow multi-hop paths without excessive
-
-pruning.
-
-Hop decay (ε) is minimal to allow deep traversal when needed.
-
-In practice, α + β dominate the attention weights for most graphs. The other
-
-parameters serve as tie-breakers and domain-adaptation handles.
-
-Appendix C: Relationship to Existing KG Embedding Methods
-
-TransE [Bordes et al., 2013] represents relations as translations in embedding
-
-space: emb(h) + emb(r) ≈ emb(t) for (h, r, t) triples. Parallax can use
-
-TransE embeddings directly for the similarity term in CSA without modification.
-
-RotatE [Sun et al., 2019] represents relations as rotations in complex space.
-
-More expressive for symmetric, antisymmetric, and compositional relations.
-
-Also directly usable in Parallax.
-
-Neither TransE nor RotatE produces multi-hop reasoning paths on their own.
-
-Parallax uses their embeddings as the semantic grounding layer while the
-
-traversal logic and community structure provide the reasoning.
-
-End of white paper. Version 0.1 — March 2026.
-
-This document is the founding specification for the Parallax project.
 
 References
 

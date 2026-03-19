@@ -45,6 +45,23 @@ pip install -e ".[embeddings]"
 python examples/csv_quickstart.py
 ```
 
+## Interactive Walkthrough
+
+For a visual, step-by-step demonstration of the framework's logic, we provide a Jupyter Notebook that serves as an interactive white paper.
+
+- **Notebook**: [examples/Validation_Walkthrough.ipynb](examples/Validation_Walkthrough.ipynb)
+- **Features**: Visualizes "Attention Heads" (communities), breaks down CSA scoring for specific edges, and traces 3-hop reasoning paths.
+
+### How to Run:
+1. Ensure you have the development dependencies installed:
+   ```bash
+   pip install -e ".[dev]"
+   ```
+2. Open the notebook in VS Code or run it via Jupyter:
+   ```bash
+   jupyter notebook examples/Validation_Walkthrough.ipynb
+   ```
+
 ## Testing & Validation Data
 
 Parallax has been rigorously validated using the following datasets and fixtures:

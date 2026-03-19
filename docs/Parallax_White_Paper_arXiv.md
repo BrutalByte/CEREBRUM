@@ -672,36 +672,23 @@ parallax/
 │
 
 ├── tests/
-
 │   ├── test_dscf.py
-
 │   ├── test_csa.py
-
 │   ├── test_traversal.py
-
 │   └── fixtures/
-
 │       └── toy_graph.csv       # Small graph for unit tests
-
 │
-
 ├── benchmarks/
-
 │   ├── webqsp_eval.py          # WebQSP KG Q&A benchmark
-
 │   ├── metaqa_eval.py          # MetaQA multi-hop benchmark
-
 │   └── baseline_comparison.py  # CSA vs GAT vs GraphRAG
-
 │
-
 ├── examples/
-
+│   ├── Validation_Walkthrough.ipynb # Interactive visual proof
 │   ├── wikidata_quickstart.py
-
 │   ├── neo4j_quickstart.py
-
 │   └── csv_quickstart.py
+
 
 │
 

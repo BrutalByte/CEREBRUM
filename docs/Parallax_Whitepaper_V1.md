@@ -58,6 +58,10 @@ An attention mechanism where weights are influenced by community membership, sem
 - PathScorer: Ranks paths using multiple signals.
 - AnswerExtractor: Returns the top-ranked answers.
 
+4.3  Demonstration
+For a visual, step-by-step walkthrough of the framework's logic, refer to:
+`examples/Validation_Walkthrough.ipynb`
+
 5. Mathematical Foundation
 
 5.1  CSA Formula

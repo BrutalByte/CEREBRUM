@@ -59,7 +59,7 @@ parallax/
 ├── cli/           parallax.py
 ├── tests/         test_dscf, test_csa, test_traversal, fixtures/toy_graph.csv
 ├── benchmarks/    webqsp_eval, metaqa_eval, baseline_comparison
-├── examples/      wikidata_quickstart, neo4j_quickstart, csv_quickstart
+├── examples/      wikidata_quickstart, neo4j_quickstart, csv_quickstart, Validation_Walkthrough.ipynb
 ├── pyproject.toml
 ├── README.md
 └── PAPER.md       (this file)

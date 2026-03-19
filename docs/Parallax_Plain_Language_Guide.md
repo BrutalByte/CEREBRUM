@@ -432,78 +432,22 @@ To ensure these results are reliable and can be repeated by other researchers, w
 
 CHAPTER 10
 
-What comes next?
+Visual Proof: Interactive Walkthrough
 
-Parallax has completed its initial research phase. The framework has been built, tested, and validated on standard AI benchmarks.
+To see Parallax in action, we have provided an **Interactive Validation Walkthrough**. This is a Jupyter Notebook that lets you see the logic of the framework step-by-step with real visualizations.
 
+**What you will see in the notebook:**
+1.  **Map of the Fact-Web**: A visual layout of our test city-map (the graph).
+2.  **Attention Heads Forming**: You'll see the DSCF algorithm group the nodes into colored communities in real-time.
+3.  **The Reasoning Path**: A highlighted trail showing exactly how Parallax follows a question from start to finish.
+4.  **The "Bridge Bonus" Effect**: A visual demonstration of how we steer the search across different types of information.
 
-Phase
+**Location**: `examples/Validation_Walkthrough.ipynb`
 
-Timeline
+**How to use it**:
+If you use VS Code, simply open the file. Otherwise, you can run it from your terminal using the command `jupyter notebook examples/Validation_Walkthrough.ipynb`.
 
-What Gets Built
-
-1
-
-Months 1-3
-
-DSCF algorithm, tested against Leiden and LPA on standard benchmarks
-
-2
-
-Months 3-5
-
-CSA attention engine and beam traversal pipeline
-
-3
-
-Months 5-7
-
-Graph adapters for Neo4j, NetworkX, CSV; embedding engine integration
-
-4
-
-Months 7-9
-
-Full benchmark evaluation: MetaQA, WebQSP, ablation studies
-
-5
-
-Months 9-11
-
-Paper writing, arXiv preprint, peer review preparation
-
-6
-
-Month 12
-
-Journal/conference submission and open-source code release
-
-If the Hypotheses Hold
-
-A peer-reviewed paper describing the Parallax framework, published at a top-tier AI or knowledge graph venue. An open-source Python library that any researcher or organization can use to apply Parallax to their own knowledge graph.
-
-If the Hypotheses Don't Hold
-
-That's also a valuable result. If DSCF doesn't outperform Leiden, we learn something important about the relationship between community quality and downstream reasoning. If CSA doesn't beat GATs, we learn that structural community information isn't sufficient on its own. Negative results get published too — they prevent other researchers from going down the same paths.
-
-The Longer-Term Vision: Triple-Signal Consensus (TSC)
-
-The initial paper is the foundation. If the results are positive, the follow-on research includes the transition from the dual-signal DSCF to a **Triple-Signal Consensus (TSC)** framework. 
-
-TSC adds a third signal based on **Information Flow** (using algorithms like Infomap) to the existing Local (LPA) and Global (Modularity) signals. This "mid-level voting" will allow Parallax to close the "Mesoscale Gap" and weed out "structural hallucinations" by ensuring reasoning chains follow natural paths of information movement.
-
-Other vision items include:
-
-Soft community membership — allowing entities to belong to multiple communities simultaneously
-
-Temporal knowledge graphs — reasoning over facts that change over time
-
-Domain-specific applications — biomedical, legal, cybersecurity deployments with real datasets
-
-Learned parameters — training the CSA weight formula on labeled examples for specific domains
-
-Each of these is a separate research thread, each one potentially a separate paper. The name Parallax describes this well: multiple viewpoints on the same object yield depth that none alone provides. LPA, modularity, and flow are those viewpoints.
+---
 
 **Acknowledgments & Credits**
 
