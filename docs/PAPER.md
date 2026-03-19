@@ -1535,6 +1535,5 @@ No AURA code other than Appendix D functions should be copied into Parallax.
 
 ---
 
-*End of document. Version 0.1 — March 2026.*
-*This is the founding specification and bootstrap guide for the Parallax project.*
-*Phase 0 is complete. Begin Phase 1.*
+**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+This document and the software it describes are protected by international copyright laws. Unauthorized commercial reproduction, distribution, or use without express written permission is strictly prohibited.

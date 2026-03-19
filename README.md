@@ -116,6 +116,17 @@ This led to the creation of **DSCF**, which produces communities with the dual-s
 
 This architectural shift moves AI from the **Black-Box** of hidden layer weights to a **Glass-Box** of deterministic, traceable graph paths — a critical requirement in today's high-stakes AI/ML landscape.
 
+## License & Commercial Use
+
+**Parallax is Dual-Licensed.**
+
+1.  **Non-Commercial Use**: Free for personal, academic, and non-profit research use under the terms of the **PolyForm Noncommercial License 1.0.0**. You may read the full license in the [LICENSE](LICENSE) file.
+2.  **Commercial Use**: Any use by for-profit entities, including internal business operations, commercial products, or SaaS deployments, requires a separate commercial license agreement.
+
+> **Legal Notice**: All rights, title, and interest in and to the Parallax software, documentation, and related intellectual property are and shall remain the exclusive property of **Bryan Alexander Buchorn (AMP)**. Unauthorized commercial use is strictly prohibited and will be pursued to the fullest extent of the law.
+
+For commercial licensing inquiries, please contact: **bryan.alexander@buchorn.com**
+
 ## Acknowledgments & Credits
 
 Parallax stands on the shoulders of decades of foundational research. We explicitly acknowledge the work of:

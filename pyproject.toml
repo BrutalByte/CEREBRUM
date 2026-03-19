@@ -9,7 +9,14 @@ description = "Community-Structured Graph Attention for Knowledge Graph Reasonin
 authors = [
     {name = "Bryan Alexander Buchorn", email = "bryan.alexander@buchorn.com"},
 ]
-license = {text = "Proprietary"}
+license = {text = "PolyForm Noncommercial License 1.0.0"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: Other/Proprietary License",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
