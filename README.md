@@ -26,14 +26,17 @@ See `PAPER.md` for the full white paper and architecture specification.
 
 ## Roadmap
 
-**Current Phase: 3 (Adapters & API)**
+**Current Phase: 5 (Release) — IN PROGRESS**
 
 - [x] **Phase 0: Theory & Prototyping** (DSCF validated in AURA)
 - [x] **Phase 1: Core Engine** (GraphAdapter, DSCF Engine, CSA Attention) — 81 tests passing
 - [x] **Phase 2: Reasoning Engine** (BeamTraversal, PathScorer) — end-to-end pipeline verified
 - [x] **Phase 3: Adapters & API** (FastAPI server + LLM bridge) — 141 tests passing
-- [ ] **Phase 4: Benchmarking** (WebQSP, MetaQA-3hop)
+- [x] **Phase 4: Benchmarking** (WebQSP, MetaQA, Hetionet) — Bridge Bonus innovation (EF-005)
 - [ ] **Phase 5: Release** (v0.1.0 Stable)
+
+### The Next Frontier: Triple-Signal Consensus (TSC)
+Post-v0.1.0, Parallax will evolve from the dual-signal DSCF to a **Triple-Signal Consensus (TSC)** framework. By integrating **Information Flow** (e.g., Infomap) as a third signal alongside Local (LPA) and Global (Modularity) signals, Parallax will close the "Mesoscale Gap" and further eliminate structural hallucinations in complex reasoning chains.
 
 ## Quick Start
 
@@ -48,7 +51,15 @@ Parallax was born from a simple engineering request during the development of **
 
 Achieving this required a deep dive into community detection. While exploring the trade-offs between **Leiden** (global modularity) and **Label Propagation** (local topology), a pivotal question was asked: *"Can we create an algorithm that includes structure from both simultaneously?"* This led to the creation of **DSCF**, which produces communities with the dual-signal character necessary for complex reasoning.
 
-The conceptual leap occurred when we asked: *"How can we treat Knowledge Graphs like LLMs? Can the structure of an LLM be adapted to the data?"* By mapping Transformer components (Attention Heads, Layer Depth, Positional Encoding) to functional equivalents in Graph Theory (Communities, Hop Depth, Structural Metrics), we realized that a Knowledge Graph doesn't just store data—it can **reason** through structured attention.
+## Acknowledgments & Credits
+
+Parallax stands on the shoulders of decades of foundational research. We explicitly acknowledge the work of:
+- **LPA**: Raghavan et al. (2007)
+- **Louvain**: Blondel et al. (2008)
+- **Leiden**: Traag et al. (2019)
+- **GATs**: Veličković et al. (2018)
+- **Embeddings**: Bordes et al. (2013), Sun et al. (2019)
+- **GraphRAG**: Microsoft Research / Edge et al. (2024)
 
 ## Architecture
 
@@ -148,17 +159,6 @@ graph LR
     T6 -.->|maps to| P6
 ```
 
-### Example: Reasoning Trace
-
-Query: *"Who discovered a radioactive element?"*
-
-1. **Entity Grounding**: `Marie Curie` is identified as the seed node.
-2. **Hop 1 (Attention)**: `Marie Curie` **—[discovered]→** `Polonium`.
-   - *CSA Weight*: High due to same community membership (Scientific Discoveries) and semantic alignment.
-3. **Hop 2 (Traversal)**: `Polonium` **—[is_a]→** `Radioactive Element`.
-   - *CSA Weight*: High due to relation type weights and embedding proximity.
-4. **Output**: The path `Marie Curie → discovered → Polonium → is_a → Radioactive Element` is returned as a grounded proof.
-
 ## Mathematical Foundation
 
 Parallax is built on two core mathematical innovations that bridge the gap between graph topology and transformer-style attention.
@@ -169,25 +169,9 @@ The core attention mechanism defines the weight $a(u,v,k)$ for an edge from node
 
 $$a(u,v,k) = \sigma\left( \alpha \cdot \cos(\vec{e}_u, \vec{e}_v) + \beta \cdot S_{com}(u,v) + \gamma \cdot w_{rel} - \delta \cdot d_{norm}(u,v) + \epsilon \cdot \phi(k) \right)$$
 
-Where:
-- $\cos(\vec{e}_u, \vec{e}_v)$: Semantic similarity between entity embeddings.
-- $S_{com}(u,v)$: **Community Score** — 1.0 if in the same community, 0.5 if adjacent, or $e^{-\lambda d}$ based on community-graph distance.
-- $w_{rel}$: Weight assigned to the specific relation type.
-- $d_{norm}(u,v)$: Normalized shortest-path distance.
-- $\phi(k)$: Hop-depth decay function (e.g., $1/(1+k)$).
-- $\sigma$: Sigmoid activation function.
-
 ### 2. Dual-Signal Community Fusion (DSCF)
 
-DSCF identifies the "attention heads" by fusing local and global structural signals during community detection. At each node update, the algorithm weighs two distinct signals:
-
-- **Local Signal (LPA)**: Majority vote among immediate neighbors (topological cohesion).
-- **Global Signal (Modularity)**: Maximization of modularity gain $\Delta Q$ (structural significance).
-
-The decision to move a node $v$ to community $C$ is governed by a temperature-annealing schedule $\tau$:
-$$P(\text{move}) = f(\text{LPA}_{conf} \cdot \tau, \text{Mod}_{conf} \cdot (2-\tau))$$
-
-This ensures that communities act as specialized relational contexts, much like multi-head attention in a Transformer.
+DSCF identifies the "attention heads" by fusing local and global structural signals during community detection. 
 
 ### 3. Path Scoring & Coherence
 
@@ -195,21 +179,12 @@ Final reasoning paths are ranked using a composite score that integrates attenti
 
 $$\text{score}(P) = \left( \prod_{k=1}^L a(u_k, v_k, k) \right) \cdot \text{coherence}_{com}(P) \cdot \cos(\vec{h}_{final}, \vec{q})$$
 
-Where **Community Coherence** ensures conceptual stability during traversal:
-
-$$\text{coherence}_{com}(P) = \frac{1.0 \cdot N_{\text{intra}} + 0.5 \cdot N_{\text{cross}}}{N_{\text{total}}}$$
-
-This penalizes incoherent "conceptual leaps" while rewarding deep local reasoning within a specific conceptual domain (attention head).
-
 ## Strategic Implications
 
-Parallax introduces a fundamental shift in how Knowledge Graphs and Large Language Models interact, moving from passive retrieval to **active structural reasoning**.
-
-- **Glass-Box Reasoning**: Shifts the AI paradigm from "black-box" probabilistic weights to "glass-box" deterministic graph paths. Every conclusion is auditable and grounded in explicit edges.
-- **Decoupled Logic**: Separates *reasoning* (performed by the graph) from *language generation* (performed by the LLM), enabling high-accuracy inference without the need for trillion-parameter models.
-- **Context Window Invariance**: Traversal complexity is governed by beam width and hop depth ($O(B \cdot L \cdot \bar{k} \cdot d)$), not graph size. This allows for reasoning over billion-node datasets that would otherwise shatter an LLM's context window.
-- **Topological Intelligence**: Assumes that the "intelligence" of a system lies in the *topology* of its knowledge. By deriving attention heads from the graph's own shape via DSCF, Parallax employs a powerful inductive bias that requires zero training data.
-- **Structural Cross-Verification**: Future extensions include **Triple-Signal Consensus (TSC)**, which introduces "mid-level voting" (e.g., via Infomap) to close the mesoscale gap and weed out structural hallucinations by requiring local, global, and flow-based consensus.
+- **Glass-Box Reasoning**: Shifts the paradigm from probabilistic weights to deterministic paths.
+- **Decoupled Logic**: Separates reasoning (Graph) from language generation (LLM).
+- **Context Window Invariance**: Sublinear complexity independent of graph size.
+- **Topological Intelligence**: Inductive bias derived from graph topology requires zero training.
 
 ## Authors
 

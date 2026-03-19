@@ -252,6 +252,120 @@ def modularity_score(G: nx.Graph, communities: List[frozenset]) -> float:
         return 0.0
 
 
+def merge_small_communities(
+    community_map: dict,
+    G: nx.Graph,
+    min_size: int = 20,
+) -> dict:
+    """
+    Post-processing: merge communities smaller than min_size into their
+    best-connected neighbor community.
+
+    This corrects over-splitting on star-topology graphs (e.g. MetaQA) where
+    DSCF's connectivity post-pass fragments spoke nodes into singletons.
+
+    Algorithm (efficient, single-pass with union-find style merging)
+    ---------
+    1. Build community adjacency from a single O(E) edge scan.
+    2. Build a size map and member list from a single O(N) node scan.
+    3. Repeatedly merge the smallest community below min_size into its
+       best-connected neighbor, updating the adjacency map incrementally.
+       Each merge is O(neighbors of victim community), not O(N).
+
+    Parameters
+    ----------
+    community_map : {node -> community_id} from DSCF or any partitioning
+    G             : the original graph (used to count cross-community edges)
+    min_size      : minimum allowed community size; communities below this
+                    are merged into their best-connected neighbor
+
+    Returns
+    -------
+    New {node -> community_id} dict. Community IDs are not guaranteed
+    to be contiguous after merging.
+    """
+    # -- Phase 1: build community adjacency in O(E) -------------------------
+    # adj[cid] = {neighbor_cid: shared_edge_count}
+    adj: dict = {}
+    for u, v in G.edges():
+        cu = community_map.get(u)
+        cv = community_map.get(v)
+        if cu is None or cv is None or cu == cv:
+            continue
+        if cu not in adj:
+            adj[cu] = {}
+        if cv not in adj:
+            adj[cv] = {}
+        adj[cu][cv] = adj[cu].get(cv, 0) + 1
+        adj[cv][cu] = adj[cv].get(cu, 0) + 1
+
+    # -- Phase 2: build size and members maps in O(N) -----------------------
+    size: dict = {}
+    members: dict = {}     # cid -> list of nodes (for final reassignment)
+    for node, cid in community_map.items():
+        size[cid] = size.get(cid, 0) + 1
+        members.setdefault(cid, []).append(node)
+
+    # Union-find: parent[cid] = canonical community ID after merges
+    parent: dict = {cid: cid for cid in size}
+
+    def find(c):
+        while parent[c] != c:
+            parent[c] = parent[parent[c]]   # path compression
+            c = parent[c]
+        return c
+
+    # -- Phase 3: iteratively merge smallest community below threshold -------
+    import heapq
+    heap = [(sz, cid) for cid, sz in size.items() if sz < min_size]
+    heapq.heapify(heap)
+
+    while heap:
+        sz, cid = heapq.heappop(heap)
+        victim = find(cid)
+        if size.get(victim, 0) >= min_size:
+            continue   # already grown through prior merges
+
+        # Find best neighbor (most shared edges, tie-break: larger community)
+        neighbors = adj.get(victim, {})
+        if not neighbors:
+            # Isolated — merge into the largest community
+            candidates = [(s, c) for c, s in size.items() if find(c) != victim]
+            if not candidates:
+                break
+            _, target = max(candidates)
+        else:
+            target = max(
+                neighbors,
+                key=lambda c: (neighbors[c], size.get(find(c), 0))
+            )
+            target = find(target)
+            if target == victim:
+                continue
+
+        # Merge victim into target: update adj and size incrementally
+        victim_adj = adj.pop(victim, {})
+        target_adj = adj.setdefault(target, {})
+        for nb, cnt in victim_adj.items():
+            nb_canon = find(nb)
+            if nb_canon == target:
+                continue
+            target_adj[nb_canon] = target_adj.get(nb_canon, 0) + cnt
+            if nb_canon in adj:
+                adj[nb_canon].pop(victim, None)
+                adj[nb_canon][target] = adj[nb_canon].get(target, 0) + cnt
+
+        new_size = size.pop(victim, 0) + size.get(target, 0)
+        size[target] = new_size
+        parent[victim] = target
+
+        if new_size < min_size:
+            heapq.heappush(heap, (new_size, target))
+
+    # -- Phase 4: apply canonical labels in O(N) ----------------------------
+    return {node: find(community_map[node]) for node in community_map}
+
+
 def best_of_n_dscf(
     G: nx.Graph,
     n_trials: int = 5,

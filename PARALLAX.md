@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: March 2026
-**Status**: Pre-publication — Version 0.1 · Phase 0 COMPLETE
+**Status**: Version 0.1 · Phase 4 COMPLETE
 **License**: Proprietary — all rights reserved
 
 ---
@@ -28,8 +28,9 @@ DSCF (community detection):
   temperature: τ_{t+1} = max(τ_t × 0.92, 0.01)
 
 CSA (attention weight for edge u→v at hop k):
-  a(u,v,k) = σ( α·sim(u,v) + β·community_score(u,v) + γ·edge_type - δ·distance + ε·hop_decay(k) )
+  a(u,v,k) = σ( α·sim(u,v) + β·community_score(u,v) + γ·w_rel - δ·distance + ε·hop_decay(k) )
   defaults: α=0.4, β=0.4, γ=0.1, δ=0.05, ε=0.05
+  w_rel: Metaedge Bridge Bonus (default 0.0, recommended 0.4 for inter-type reasoning)
 ```
 
 **Transformer → KG mapping**:
@@ -61,9 +62,9 @@ parallax/
 └── PAPER.md       (this file)
 ```
 
-**Current phase**: Phase 0 complete. DSCF prototype lives in AURA
-`services/knowledge_service/main.py`. Phase 1 is next: extract into
-`parallax/core/community_engine.py` and build the remaining core modules.
+**Current phase**: Phase 4 complete. Parallax has been benchmarked on MetaQA,
+WebQSP, and Hetionet. The "Metaedge Bridge Bonus" (EF-005) successfully
+mitigated the Type Alignment Trap. Phase 5 (Release) is underway.
 
 ---
 
@@ -636,7 +637,7 @@ See Appendix D for the extracted code.
 - Prototype DSCF in Python (lives in AURA `services/knowledge_service/main.py`)
 - Validate DSCF produces stable communities on AURA's Neo4j graph
 
-**Phase 1 — Core Engine**
+**Phase 1 — Core Engine (COMPLETE)**
 - `core/graph_adapter.py` — abstract base + NetworkX adapter
 - `core/community_engine.py` — DSCF, Leiden, LPA, hybrid (ported from AURA)
 - `core/embedding_engine.py` — SentenceEngine (zero-training default)
@@ -644,29 +645,30 @@ See Appendix D for the extracted code.
 - `core/structural_encoder.py` — PageRank, betweenness, degree encoding
 - Unit tests on `fixtures/toy_graph.csv` for all of the above
 
-**Phase 2 — Reasoning Engine**
+**Phase 2 — Reasoning Engine (COMPLETE)**
 - `reasoning/traversal.py` — beam-search traversal with CSA weights
 - `reasoning/path_scorer.py` — multi-signal scoring + community coherence
 - `reasoning/answer_extractor.py` — top-K ranked answers
 - Integration test: end-to-end query on toy graph produces grounded paths
 
-**Phase 3 — Adapters + API**
+**Phase 3 — Adapters + API (COMPLETE)**
 - `adapters/neo4j_adapter.py` (port AURA patterns)
 - `adapters/rdf_adapter.py` (SPARQL, for Wikidata/DBpedia)
 - `adapters/csv_adapter.py` (bootstrap from edge-list)
 - `api/server.py` — FastAPI REST: `/query`, `/communities`, `/health`
 - `cli/parallax.py` — command-line interface
 
-**Phase 4 — LLM Bridge + Benchmarks**
+**Phase 4 — LLM Bridge + Benchmarks (COMPLETE)**
 - `llm_bridge/context_formatter.py` — format paths as LLM prompts
 - `benchmarks/webqsp_eval.py` and `metaqa_eval.py`
 - Ablation study: DSCF vs Leiden vs LPA as attention heads
 - Baseline comparisons: BFS, GAT, GraphRAG, vanilla RAG
+- Innovation: Metaedge Bridge Bonus (EF-005) to solve "Type Alignment Trap"
 
-**Phase 5 — Publication**
-- Write formal paper from white paper foundation
-- Submit to venue (e.g., EMNLP, ICLR, NeurIPS Graphs Track)
-- Open-source repository under chosen license
+**Phase 5 — Release (IN PROGRESS)**
+- Final documentation and code cleanup
+- Project-wide validation and stable tag
+- Open-source repository preparation
 
 ### 6.6 Computational Complexity
 

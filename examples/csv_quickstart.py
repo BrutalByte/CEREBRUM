@@ -53,6 +53,9 @@ def main():
     csa.set_community_graph(dist, adj)
 
     # 5. Traverse from "newton"
+    # Use the 'Metaedge Bridge Bonus' (EF-005) to favor 'INFLUENCED' relations
+    edge_weights = {"INFLUENCED": 0.4}
+
     traversal = BeamTraversal(
         adapter=adapter,
         csa_engine=csa,
@@ -60,6 +63,7 @@ def main():
         communities=community_map,
         beam_width=10,
         max_hop=3,
+        edge_type_weights=edge_weights,
     )
 
     print("\nQuery: What is connected to 'newton'?")

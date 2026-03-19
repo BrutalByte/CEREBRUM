@@ -164,11 +164,11 @@ class CSAEngine:
         # 2. Community membership score
         cs = self.community_score(u, v)
 
-        # 3. Edge type weight (domain-specific; 1.0 = neutral)
+        # 3. Edge type weight (domain-specific; 0.0 = neutral)
         if edge_type_weights and edge_type in edge_type_weights:
             etw = edge_type_weights[edge_type]
         else:
-            etw = 1.0
+            etw = 0.0
 
         # 4. Hop decay: 1 / (1 + k)
         hop_decay = 1.0 / (1.0 + hop)
@@ -202,3 +202,25 @@ def _sigmoid(x: float) -> float:
         return 1.0 / (1.0 + math.exp(-x))
     e = math.exp(x)
     return e / (1.0 + e)
+
+
+class UniformCSAEngine(CSAEngine):
+    """
+    CSA engine that returns a constant weight for every edge.
+
+    This makes BeamTraversal equivalent to BFS — no preference is given
+    to any edge over any other. Used as the 'no-attention' ablation baseline.
+
+    Weight = sigmoid(0) = 0.5 for all edges (all coefficients zeroed out).
+    """
+
+    def compute_weight(
+        self,
+        u: str,
+        v: str,
+        hop: int,
+        edge_type: str = "",
+        edge_type_weights: Optional[Dict[str, float]] = None,
+        normalized_distance: float = 0.0,
+    ) -> float:
+        return 0.5   # sigmoid(0) — perfectly neutral

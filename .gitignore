@@ -24,4 +24,9 @@ env/
 # Documents
 *.docx
 
+# Benchmark data (large datasets — download separately)
+benchmarks/data/
+research/
+tests/validation/
+
 # Python

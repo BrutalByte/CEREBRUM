@@ -104,6 +104,7 @@ def encode_structural_features(
 def build_community_distance_matrix(
     G: nx.Graph,
     community_map: Dict[str, int],
+    max_communities: int = 2000,
 ) -> Dict[tuple, float]:
     """
     Precompute the shortest-path distance between every pair of communities
@@ -114,10 +115,32 @@ def build_community_distance_matrix(
 
     Used by CSAEngine.community_score() for the exp(-lambda * d) decay term.
     Returns a dict: {(cid_i, cid_j): hop_distance, ...} for all pairs.
+
+    Parameters
+    ----------
+    max_communities : int
+        If the number of unique communities exceeds this threshold, skip the
+        all-pairs BFS and return an empty dict. CSAEngine falls back to its
+        built-in default distance (d=5.0) for non-adjacent pairs, which
+        evaluates to exp(-λ*5) ≈ 0.082 — a conservative penalty that still
+        allows adjacent-pair (0.5) and same-community (1.0) scores to function.
+        This avoids O(N²) blowup on large graphs with many communities
+        (e.g. MetaQA DSCF produces ~15K communities → 2.1B BFS operations).
     """
+    communities = set(community_map.values())
+
+    if len(communities) > max_communities:
+        import sys
+        print(
+            f"  [build_community_distance_matrix] {len(communities):,} communities "
+            f"exceeds max_communities={max_communities:,}. "
+            f"Skipping all-pairs BFS — CSA will use d=5.0 fallback for non-adjacent pairs.",
+            file=sys.stderr,
+        )
+        return {}
+
     # Build community-level graph
     community_graph = nx.Graph()
-    communities = set(community_map.values())
     community_graph.add_nodes_from(communities)
 
     for u, v in G.edges():
@@ -126,10 +149,11 @@ def build_community_distance_matrix(
         if cu is not None and cv is not None and cu != cv:
             community_graph.add_edge(cu, cv)
 
-    # BFS shortest paths between all community pairs
+    # BFS shortest paths between all community pairs, capped at depth 5.
+    # exp(-λ*5) ≈ 0.007 for λ=1 — negligible CSA contribution beyond depth 5.
     distances: Dict[tuple, float] = {}
     for source in communities:
-        lengths = nx.single_source_shortest_path_length(community_graph, source)
+        lengths = nx.single_source_shortest_path_length(community_graph, source, cutoff=5)
         for target, dist in lengths.items():
             if source != target:
                 distances[(source, target)] = float(dist)

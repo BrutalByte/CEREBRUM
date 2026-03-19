@@ -52,6 +52,7 @@ def main():
         traversal = BeamTraversal(
             adapter=adapter, csa_engine=csa, embeddings=embeddings,
             communities=community_map, beam_width=10, max_hop=3,
+            edge_type_weights={"KNOWS": 0.4, "WORKS_AT": 0.3},
         )
         paths   = traversal.traverse(seeds)
         answers = extract(paths, top_k=5)
