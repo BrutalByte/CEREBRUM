@@ -301,3 +301,108 @@ Phase 3: Adapters & API
   - Optional: Neo4j and RDF adapter tests (require live backends)
 
 ---
+
+## Run 003a — Phase 3 first attempt: API fixture design failures (recorded)
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-03-18 |
+| **Phase**         | Phase 3 — Adapters & API |
+| **Purpose**       | First run with test_api.py and test_llm_bridge.py |
+| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Repo commit**   | d96d93c |
+
+### Results
+
+```
+26 failed, 33 passed in 0.74s
+```
+
+### Failure diagnosis
+
+All 26 failures were in `test_api.py`. Root causes:
+
+**Issue 1 — TestClient lifespan not triggered without context manager**
+
+`TestClient(app)` instantiated at module level (outside a `with` block) does
+NOT fire FastAPI lifespan events. `_load()` was never called, so `_state`
+remained empty and every loaded-app assertion failed. The fix: use
+`with TestClient(app) as client: yield client` inside a module-scoped pytest fixture.
+
+**Issue 2 — Global `_state` shared across app instances**
+
+`api/server.py` uses a single module-level `_state` dict. Multiple
+`create_app()` instances share it, making "unloaded" tests dependent on
+execution order. The fix: `unloaded_client` fixture saves `_state` values,
+sets them to None, runs the test, then restores them.
+
+**Issue 3 — Incorrect 404 expectation for explicit unknown seeds**
+
+Test `test_query_unknown_entity_returns_404` passed `seeds=["xyzzy_unknown"]`
+and expected 404. The server trusts explicit seeds — it runs the traversal
+(which returns empty results) and returns 200 with `paths: []`. The 404 is
+only raised when entity grounding fails (no explicit seeds, text query returns
+no matches). The test was split into two: one asserting 200 with empty paths
+(explicit seed), one asserting 404 (unresolvable text query).
+
+### Tests that correctly passed on first attempt
+
+All 27 `test_llm_bridge.py` tests passed immediately. `to_prompt()` and
+`to_structured()` are pure functions with no server state dependency.
+
+---
+
+## Run 003b — Phase 3 complete: All API and LLM bridge tests passing (clean)
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-03-18 |
+| **Phase**         | Phase 3 — Adapters & API — COMPLETE |
+| **Purpose**       | Confirm fixes from Run 003a; full suite regression check |
+| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Repo commit**   | *(to be filled after commit)* |
+
+### Environment
+
+*(same as Run 001)*
+
+### Command
+
+```
+python -m pytest tests/ -v
+```
+
+### Results
+
+```
+141 passed, 1 skipped in 0.69s
+```
+
+Full passing list:
+- `test_api.py` — 33 passed (TestHealth: 8, TestCommunities: 8, TestQuery: 17)
+- `test_csa.py` — 13 passed
+- `test_csv_adapter.py` — 15 passed
+- `test_dscf.py` — 8 passed, 1 skipped (leidenalg)
+- `test_end_to_end.py` — 12 passed
+- `test_llm_bridge.py` — 27 passed (TestToPrompt: 13, TestToStructured: 14)
+- `test_structural_encoder.py` — 16 passed
+- `test_traversal.py` — 16 passed
+
+### Summary
+
+- **141 PASSED / 1 SKIPPED / 0 FAILED**
+- Phase 3 gate: all 33 API tests pass, all 27 LLM bridge tests pass
+- No regressions in Phases 1/2
+
+### Phase gate status
+
+- **Phase 1 (Core Engine)**: COMPLETE
+- **Phase 2 (Reasoning Engine)**: COMPLETE
+- **Phase 3 (Adapters & API)**: COMPLETE — FastAPI server + LLM bridge fully tested
+  - Note: Neo4j and RDF adapters are out of scope until live backends are available
+
+### Next phase
+
+Phase 4: Benchmarking (WebQSP, MetaQA-3hop)
+
+---

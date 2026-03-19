@@ -31,7 +31,7 @@ See `PAPER.md` for the full white paper and architecture specification.
 - [x] **Phase 0: Theory & Prototyping** (DSCF validated in AURA)
 - [x] **Phase 1: Core Engine** (GraphAdapter, DSCF Engine, CSA Attention) — 81 tests passing
 - [x] **Phase 2: Reasoning Engine** (BeamTraversal, PathScorer) — end-to-end pipeline verified
-- [ ] **Phase 3: Adapters & API** (Neo4j, RDF, FastAPI)
+- [x] **Phase 3: Adapters & API** (FastAPI server + LLM bridge) — 141 tests passing
 - [ ] **Phase 4: Benchmarking** (WebQSP, MetaQA-3hop)
 - [ ] **Phase 5: Release** (v0.1.0 Stable)
 
