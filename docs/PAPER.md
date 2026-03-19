@@ -908,6 +908,16 @@ $$P(\text{move}) = f(\text{LPA} \cdot \tau_{local}, \text{Mod} \cdot \tau_{globa
 
 This "mid-level voting" ensures that only the most structurally and dynamically robust reasoning chains survive the beam-search pruning process. TSC will be implemented as an optional, high-precision mode within the Parallax core, allowing for direct comparison with DSCF.
 
+### TSC Development Roadmap (Phases 6–10)
+
+| Phase | Title | Primary Research Objective |
+| :--- | :--- | :--- |
+| **Phase 6** | **Flow Integration** | Formalize $P(\text{move}) = f(\text{LPA, Mod, Infomap})$ decision logic. |
+| **Phase 7** | **TSC Engine** | Implement Infomap signal processing and Consensus Confidence scoring. |
+| **Phase 8** | **Dynamic Traversal**| Implement consensus-gated Beam Search and `flow_coherence` ranking. |
+| **Phase 9** | **Ablation H4** | Prove precision superiority of TSC over DSCF on complex topologies. |
+| **Phase 10**| **v0.2.0 Release** | Productionize high-precision reasoning for high-stakes deployment. |
+
 ---
 
 ---

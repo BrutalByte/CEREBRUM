@@ -35,8 +35,42 @@ See `PAPER.md` for the full white paper and architecture specification.
 - [x] **Phase 4: Benchmarking** (WebQSP, MetaQA, Hetionet) — Bridge Bonus innovation (EF-005)
 - [ ] **Phase 5: Release** (v0.1.0 Stable)
 
-### The Next Frontier: Triple-Signal Consensus (TSC)
-Post-v0.1.0, Parallax will evolve from the dual-signal DSCF to a **Triple-Signal Consensus (TSC)** framework. By integrating **Information Flow** (e.g., Infomap) as a third signal alongside Local (LPA) and Global (Modularity) signals, Parallax will close the "Mesoscale Gap" and further eliminate structural hallucinations in complex reasoning chains.
+## Next Horizon: Triple-Signal Consensus (TSC) — Roadmap to v0.2.0
+
+With the baseline stability of v0.1.0 (DSCF), we are now entering the research and development phase for the **3-Algorithm Parallax Variant**. This evolution is designed to further eliminate "structural hallucinations" by requiring a three-way consensus for every reasoning step.
+
+### Phase 6: The Flow Signal (Research & Integration)
+- **Objective**: Integrate **Infomap (Map Equation)** as the third signal alongside LPA and Modularity.
+- **Milestones**:
+    - Research Python-native Infomap implementations for performance.
+    - Formalize the TSC Fused Probability formula: $P(move) = f(LPA, Mod, Infomap)$.
+    - Prototype consensus filtering on the `toy_graph`.
+
+### Phase 7: TSC Engine Implementation
+- **Objective**: Implement the `TSCEngine` within `core/`.
+- **Milestones**:
+    - Add `tsc_communities` to `community_engine.py`.
+    - Implement "Consensus Confidence" scores for every community assignment.
+    - Optimize flow-based clustering for graphs with >1M edges.
+
+### Phase 8: High-Precision Traversal
+- **Objective**: Update the Reasoning Engine to utilize tri-signal consensus.
+- **Milestones**:
+    - Implement **Dynamic Beam Width**: automatically narrow the search in areas of low consensus.
+    - Add `flow_coherence` to the `PathScorer` to reward paths following natural information transit.
+
+### Phase 9: Head-to-Head Evaluation
+- **Objective**: Quantify the precision gains of TSC over DSCF.
+- **Milestones**:
+    - Run head-to-head ablation studies on **Hetionet** and **WebQSP**.
+    - Prove Hypothesis H4: TSC reduces structural hallucinations in 3+ hop reasoning by >20% compared to DSCF.
+
+### Phase 10: Stable Release (v0.2.0)
+- **Objective**: Finalize the high-precision Parallax core.
+- **Milestones**:
+    - Extend the REST API to support `engine="tsc"`.
+    - Release updated Interactive Walkthrough showing the Mesoscale Gap closure.
+    - Formal publication of TSC findings.
 
 ## Quick Start
 
