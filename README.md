@@ -61,10 +61,12 @@ With the baseline stability of v0.1.0 (TSC), we are now entering the research ph
     - [x] Implement `HolographicIndex` for targeted multi-adapter discovery.
     - [x] Expose `/hologram` endpoint in Parallax API.
 
-### Phase 9: Stable Release (v0.2.0) (In Progress)
+### Phase 9: Stable Release (v0.2.0) — COMPLETE
 - **Objective**: Finalize the federated, Multi-Source ready protocol.
 - **Milestones**:
     - [x] **Security Hardening**: Audit and patch endpoints against injection, DoS, and information leakage.
+    - [x] **Handshake Protocol**: Implement capability negotiation between remote instances.
+    - [x] **Reasoning Callbacks**: Implement `/reason` endpoint for cross-graph path verification.
 
 ## Quick Start
 

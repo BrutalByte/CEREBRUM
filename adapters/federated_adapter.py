@@ -39,6 +39,16 @@ class FederatedAdapter(GraphAdapter):
                     sigs = [CommunitySignature.from_dict(s) for s in h["signatures"]]
                     self.hologram_index.add_adapter_signatures(name, sigs)
 
+    def validate_all_connections(self) -> Dict[str, bool]:
+        """Verify health and compatibility of all member adapters."""
+        results = {}
+        for name, adapter in self.adapters.items():
+            if hasattr(adapter, "validate_connection"):
+                results[name] = adapter.validate_connection()
+            else:
+                results[name] = True # Local adapters are always 'connected'
+        return results
+
     def _resolve_adapter(self, entity_id: str) -> Optional[str]:
         """Find which adapter owns this entity_id (primary owner)."""
         if entity_id in self._id_cache:

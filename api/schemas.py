@@ -114,4 +114,24 @@ class HologramResponse(BaseModel):
     signatures: List[CommunitySignatureSchema]
 
 
+class HandshakeResponse(BaseModel):
+    version: str
+    capabilities: List[str]
+    entity_types: List[str]
+    relation_types: List[str]
+    node_count: int
+    community_count: int
+
+
+class ReasoningCallbackRequest(BaseModel):
+    source_id: str
+    target_id: str
+    max_hop: int = 2
+
+
+class ReasoningCallbackResponse(BaseModel):
+    found: bool
+    paths: List[PathResult]
+
+
 

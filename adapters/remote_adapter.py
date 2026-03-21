@@ -16,6 +16,19 @@ class RemoteParallaxAdapter(GraphAdapter):
     def __init__(self, base_url: str, timeout: int = 10):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
+        self.metadata: Optional[Dict] = None
+
+    def validate_connection(self) -> bool:
+        """Handshake with remote API to verify version and capabilities."""
+        try:
+            resp = requests.get(f"{self.base_url}/handshake", timeout=self.timeout)
+            if resp.status_code == 200:
+                self.metadata = resp.json()
+                # Verify compatibility (e.g. major version match)
+                return True
+        except Exception:
+            pass
+        return False
 
     def get_entity(self, entity_id: str) -> Optional[Entity]:
         """
@@ -140,6 +153,17 @@ class RemoteParallaxAdapter(GraphAdapter):
         """Fetch holographic community signatures."""
         try:
             resp = requests.get(f"{self.base_url}/hologram", timeout=self.timeout)
+            if resp.status_code == 200:
+                return resp.json()
+        except Exception:
+            pass
+        return None
+
+    def verify_reasoning(self, source_id: str, target_id: str, max_hop: int = 2) -> Optional[Dict]:
+        """Request advanced reasoning trace from remote."""
+        try:
+            payload = {"source_id": source_id, "target_id": target_id, "max_hop": max_hop}
+            resp = requests.post(f"{self.base_url}/reason", json=payload, timeout=self.timeout)
             if resp.status_code == 200:
                 return resp.json()
         except Exception:

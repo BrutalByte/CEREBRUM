@@ -28,7 +28,8 @@ from api.schemas import (
     EntityResponse, EdgeResponse, SearchResponse,
     CommunityResponse, EmbeddingResponse,
     MaskedEntityResponse, MaskedSearchResponse,
-    CommunitySignatureSchema, HologramResponse
+    CommunitySignatureSchema, HologramResponse,
+    HandshakeResponse, ReasoningCallbackRequest, ReasoningCallbackResponse
 )
 
 # ---------------------------------------------------------------------------
@@ -306,6 +307,92 @@ def create_app(
             adapter_name="local", # Future: make configurable
             signatures=[CommunitySignatureSchema(**s.to_dict()) for s in sigs]
         )
+
+    @app.get("/handshake", response_model=HandshakeResponse, tags=["federated"])
+    async def handshake():
+        if not _is_ready():
+            return HandshakeResponse(
+                version="0.2.0",
+                capabilities=[],
+                entity_types=[],
+                relation_types=[],
+                node_count=0,
+                community_count=0
+            )
+        
+        adapter = _state["adapter"]
+        cm = _state["community_map"]
+        
+        # Infer types from adapter if supported, or sample
+        # For NetworkXAdapter we can look at node/edge attributes
+        entity_types = set()
+        relation_types = set()
+        
+        # Sample some nodes/edges to find types (limited for performance)
+        G = adapter.to_networkx()
+        for _, data in list(G.nodes(data=True))[:100]:
+            entity_types.add(data.get("type", "entity"))
+        for _, _, data in list(G.edges(data=True))[:100]:
+            relation_types.add(data.get("relation", "link"))
+
+        return HandshakeResponse(
+            version="0.2.0",
+            capabilities=["query", "search", "masked_search", "hologram", "traversal", "reasoning_callback"],
+            entity_types=list(entity_types),
+            relation_types=list(relation_types),
+            node_count=adapter.node_count(),
+            community_count=len(set(cm.values()))
+        )
+
+    @app.post("/reason", response_model=ReasoningCallbackResponse, tags=["federated"])
+    async def reason_callback(req: ReasoningCallbackRequest):
+        """
+        Verify if a path exists between source and target in this graph.
+        Used for advanced federated path verification.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Service not ready")
+
+        from core.attention_engine import CSAEngine
+        from reasoning.traversal import BeamTraversal
+        from reasoning.answer_extractor import extract
+        from llm_bridge.context_formatter import to_structured
+
+        adapter      = _state["adapter"]
+        community_map = _state["community_map"]
+        csa_meta     = _state["csa_metadata"]
+
+        csa = CSAEngine(adapter=adapter)
+        csa.set_community_graph(csa_meta["distances"], csa_meta["adjacent_pairs"])
+
+        traversal = BeamTraversal(
+            adapter=adapter,
+            csa_engine=csa,
+            beam_width=5, # Narrower for verification
+            max_hop=req.max_hop,
+        )
+        
+        paths = traversal.traverse([req.source_id])
+        
+        # Filter paths that end at target_id
+        target_paths = [p for p in paths if p.tail == req.target_id]
+        
+        if not target_paths:
+            return ReasoningCallbackResponse(found=False, paths=[])
+
+        # Format matches
+        structured = to_structured(target_paths, query=f"link {req.source_id} to {req.target_id}", adapter=adapter)
+        path_results = []
+        for p in structured["paths"]:
+            path_results.append(PathResult(
+                rank=p["rank"],
+                answer_entity=p["answer_entity"],
+                score=p["score"],
+                score_breakdown=p["score_breakdown"],
+                path=[PathNode(**n) for n in p["path"]],
+            ))
+
+        return ReasoningCallbackResponse(found=True, paths=path_results)
 
     return app
 
