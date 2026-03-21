@@ -57,4 +57,24 @@ class HealthResponse(BaseModel):
     community_count: int = 0
 
 
+class EntityResponse(BaseModel):
+    id: str
+    label: str
+    type: str = "entity"
+    properties: Dict[str, Any] = {}
+
+
+class EdgeResponse(BaseModel):
+    source_id: str
+    target_id: str
+    relation_type: str
+    weight: float = 1.0
+    properties: Dict[str, Any] = {}
+
+
+class SearchResponse(BaseModel):
+    results: List[EntityResponse]
+    query: str
+
+
 

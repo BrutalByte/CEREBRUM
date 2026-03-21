@@ -25,6 +25,7 @@ dependencies = [
     "igraph>=0.10.0",
     "leidenalg>=0.10.0",
     "scipy>=1.10.0",
+    "requests>=2.28.0",
 ]
 
 [project.optional-dependencies]

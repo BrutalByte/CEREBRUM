@@ -17,7 +17,7 @@ Or programmatically:
 """
 import os
 from contextlib import asynccontextmanager
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 import numpy as np
 from fastapi import FastAPI, HTTPException
@@ -25,6 +25,7 @@ from fastapi import FastAPI, HTTPException
 from api.schemas import (
     QueryRequest, QueryResponse, CommunitiesResponse,
     HealthResponse, PathResult, PathNode, CommunityInfo,
+    EntityResponse, EdgeResponse, SearchResponse
 )
 
 # ---------------------------------------------------------------------------
@@ -189,6 +190,69 @@ def create_app(
             community_count=len(community_members),
             node_count=len(cm),
             communities=community_infos,
+        )
+
+    # ---------------------------------------------------------------------------
+    # Low-level Graph Access (for Federated/Remote Adapters)
+    # ---------------------------------------------------------------------------
+
+    @app.get("/entities/{entity_id}", response_model=EntityResponse, tags=["graph"])
+    async def get_entity(entity_id: str):
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Service not ready")
+        
+        adapter = _state["adapter"]
+        ent = adapter.get_entity(entity_id)
+        if not ent:
+            raise HTTPException(status_code=404, detail=f"Entity '{entity_id}' not found")
+        
+        return EntityResponse(
+            id=ent.id, 
+            label=ent.label, 
+            type=ent.type, 
+            properties=ent.properties
+        )
+
+    @app.get("/entities/{entity_id}/neighbors", response_model=List[EdgeResponse], tags=["graph"])
+    async def get_neighbors(entity_id: str, edge_types: Optional[str] = None, max_neighbors: int = 50):
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Service not ready")
+
+        adapter = _state["adapter"]
+        types_list = edge_types.split(",") if edge_types else None
+        
+        edges = adapter.get_neighbors(entity_id, edge_types=types_list, max_neighbors=max_neighbors)
+        return [
+            EdgeResponse(
+                source_id=e.source_id, 
+                target_id=e.target_id, 
+                relation_type=e.relation_type, 
+                weight=e.weight, 
+                properties=e.properties
+            ) for e in edges
+        ]
+
+    @app.get("/search", response_model=SearchResponse, tags=["graph"])
+    async def search(q: str, top_k: int = 10):
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Service not ready")
+
+        adapter = _state["adapter"]
+        ents = adapter.find_entities(q, top_k=top_k)
+        
+        # Filter None results if adapter returns sparse list
+        valid_ents = [e for e in ents if e]
+        
+        return SearchResponse(
+            query=q,
+            results=[
+                EntityResponse(
+                    id=e.id, 
+                    label=e.label, 
+                    type=e.type, 
+                    properties=e.properties
+                ) for e in valid_ents
+            ]
         )
 
     return app

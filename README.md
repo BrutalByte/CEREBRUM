@@ -39,17 +39,18 @@ See `PAPER.md` for the full white paper and architecture specification.
 
 With the baseline stability of v0.1.0 (TSC), we are now entering the research phase for **Federated Parallax**. This evolution is designed to enable high-stakes reasoning across sensitive, distributed datasets.
 
-### Phase 6: Federated Graph Attention
+### Phase 6: Federated Graph Attention (In Progress)
 - **Objective**: Implement cross-graph attention mechanisms for distributed knowledge bases.
 - **Milestones**:
-    - **Privacy-Preserving Search**: Query across datasets without centralizing node attributes.
-    - **Cross-Node Alignment**: Match entities across disparate graph schemas.
-    - **Global-Local Community Fusion**: Integrate community structures from multiple graph instances.
+    - [x] **Federated Adapter**: Implement `FederatedAdapter` and `RemoteParallaxAdapter` for aggregating local and remote graphs.
+    - [x] **Remote Graph Access**: Expose low-level graph traversal endpoints in API (`/entities`, `/neighbors`).
+    - [ ] **Privacy-Preserving Search**: Query across datasets without centralizing node attributes.
+    - [ ] **Cross-Node Alignment**: Match entities across disparate graph schemas.
+    - [ ] **Global-Local Community Fusion**: Integrate community structures from multiple graph instances.
 
 ### Phase 7: Dynamic Graph Updates
 - **Objective**: Allow attention weights to traverse "wormholes" between separate KGs.
 - **Milestones**:
-    - Implement `FederatedAdapter` for remote Parallax instances.
     - Extend CSA to handle `external_community_score` for remote entities.
 
 ### Phase 8: The "Holographic" Index

@@ -300,4 +300,46 @@ class TestQuery:
         assert r.status_code == 503
 
 
+# ---------------------------------------------------------------------------
+# GET /entities, /search (Low-level Graph Access)
+# ---------------------------------------------------------------------------
+
+class TestGraphAccess:
+
+    def test_get_entity_returns_200(self, client):
+        r = client.get("/entities/newton")
+        assert r.status_code == 200
+        data = r.json()
+        assert data["id"] == "newton"
+        assert data["label"] == "newton"
+
+    def test_get_entity_not_found_returns_404(self, client):
+        r = client.get("/entities/nonexistent_entity")
+        assert r.status_code == 404
+
+    def test_get_neighbors_returns_list(self, client):
+        r = client.get("/entities/newton/neighbors")
+        assert r.status_code == 200
+        edges = r.json()
+        assert isinstance(edges, list)
+        assert len(edges) > 0
+        # Check structure
+        assert "source_id" in edges[0]
+        assert "target_id" in edges[0]
+        assert "relation_type" in edges[0]
+
+    def test_search_returns_results(self, client):
+        r = client.get("/search", params={"q": "newton", "top_k": 5})
+        assert r.status_code == 200
+        data = r.json()
+        assert data["query"] == "newton"
+        assert len(data["results"]) > 0
+        assert data["results"][0]["id"] == "newton"
+
+    def test_search_empty_returns_empty_list(self, client):
+        r = client.get("/search", params={"q": "xyzzy_unknown", "top_k": 5})
+        assert r.status_code == 200
+        assert len(r.json()["results"]) == 0
+
+
 
