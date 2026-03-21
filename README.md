@@ -54,13 +54,14 @@ With the baseline stability of v0.1.0 (TSC), we are now entering the research ph
     - [x] Extend CSA to handle `external_community_score` for remote entities with wildcard support.
     - [x] Implement alias-aware community resolution in `FederatedAdapter`.
 
-### Phase 8: The "Holographic" Index (In Progress)
+### Phase 8: The "Holographic" Index — COMPLETE
 - **Objective**: Create a compressed structural signature of a remote graph.
 - **Milestones**:
-    - Encode community centroids into a lightweight bloom filter.
-    - Enable "blind" relevance scoring for remote discovery.
+    - [x] Encode community centroids into a lightweight Bloom Filter and mean vector signature.
+    - [x] Implement `HolographicIndex` for targeted multi-adapter discovery.
+    - [x] Expose `/hologram` endpoint in Parallax API.
 
-### Phase 9: Stable Release (v0.2.0)
+### Phase 9: Stable Release (v0.2.0) (In Progress)
 - **Objective**: Finalize the federated, Multi-Source ready protocol.
 
 ## Quick Start

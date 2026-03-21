@@ -136,6 +136,16 @@ class RemoteParallaxAdapter(GraphAdapter):
             pass
         return None
 
+    def get_hologram(self) -> Optional[Dict]:
+        """Fetch holographic community signatures."""
+        try:
+            resp = requests.get(f"{self.base_url}/hologram", timeout=self.timeout)
+            if resp.status_code == 200:
+                return resp.json()
+        except Exception:
+            pass
+        return None
+
     def node_count(self) -> int:
         try:
             resp = requests.get(f"{self.base_url}/stats", timeout=self.timeout)

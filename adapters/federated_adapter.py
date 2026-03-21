@@ -8,6 +8,7 @@ disparate knowledge bases.
 from typing import List, Optional, Dict, Set, Tuple
 from core.graph_adapter import GraphAdapter, Entity, Edge
 from core.alignment_engine import AlignmentIndex
+from core.holographic_index import HolographicIndex, CommunitySignature
 
 
 class FederatedAdapter(GraphAdapter):
@@ -17,12 +18,26 @@ class FederatedAdapter(GraphAdapter):
     Attributes:
         adapters (Dict[str, GraphAdapter]): Named adapters (e.g., {'local': nx, 'remote': api})
         alignment (AlignmentIndex): Mapping for entity resolution across graphs.
+        hologram_index (HolographicIndex): Compressed structural signatures for fast discovery.
     """
 
     def __init__(self, adapters: Dict[str, GraphAdapter], alignment: Optional[AlignmentIndex] = None):
         self.adapters = adapters
         self.alignment = alignment or AlignmentIndex()
+        self.hologram_index = HolographicIndex()
         self._id_cache: Dict[str, str] = {}
+
+    def refresh_holograms(self):
+        """
+        Fetch holographic signatures from all sub-adapters to enable
+        optimized blind discovery.
+        """
+        for name, adapter in self.adapters.items():
+            if hasattr(adapter, "get_hologram"):
+                h = adapter.get_hologram()
+                if h and "signatures" in h:
+                    sigs = [CommunitySignature.from_dict(s) for s in h["signatures"]]
+                    self.hologram_index.add_adapter_signatures(name, sigs)
 
     def _resolve_adapter(self, entity_id: str) -> Optional[str]:
         """Find which adapter owns this entity_id (primary owner)."""
@@ -84,25 +99,33 @@ class FederatedAdapter(GraphAdapter):
         return all_edges[:max_neighbors]
 
     def find_entities(self, query: str, top_k: int = 10) -> List[Entity]:
-        """Aggregate search results from all adapters."""
+        """Aggregate search results from relevant adapters."""
         results: List[Entity] = []
         seen_ids: Set[str] = set()
         
-        for adapter in self.adapters.values():
+        # 1. Targeted search: if ID is unique, probe Bloom Filters
+        targeted_adapters = self.hologram_index.probe_entity(query)
+        adapters_to_query = targeted_adapters if targeted_adapters else list(self.adapters.keys())
+
+        for name in adapters_to_query:
+            adapter = self.adapters[name]
             for entity in adapter.find_entities(query, top_k):
                 if entity.id not in seen_ids:
                     results.append(entity)
                     seen_ids.add(entity.id)
                     
-        # Sort or rank could happen here if adapters provide scores
         return results[:top_k]
 
     def find_entities_masked(self, query: str, top_k: int = 10) -> List[Dict]:
-        """Aggregate masked search results from all adapters."""
+        """Aggregate masked search results from relevant adapters."""
         results: List[Dict] = []
         seen_ids: Set[str] = set()
         
-        for adapter in self.adapters.values():
+        targeted_adapters = self.hologram_index.probe_entity(query)
+        adapters_to_query = targeted_adapters if targeted_adapters else list(self.adapters.keys())
+
+        for name in adapters_to_query:
+            adapter = self.adapters[name]
             for r in adapter.find_entities_masked(query, top_k):
                 if r["id"] not in seen_ids:
                     results.append(r)

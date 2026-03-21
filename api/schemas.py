@@ -100,4 +100,18 @@ class MaskedSearchResponse(BaseModel):
     results: List[MaskedEntityResponse]
 
 
+class CommunitySignatureSchema(BaseModel):
+    community_id: int
+    centroid: List[float]
+    bloom_hex: str
+    bloom_cap: int
+    bloom_err: float
+    size: int
+
+
+class HologramResponse(BaseModel):
+    adapter_name: str
+    signatures: List[CommunitySignatureSchema]
+
+
 

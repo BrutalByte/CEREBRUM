@@ -27,7 +27,8 @@ from api.schemas import (
     HealthResponse, PathResult, PathNode, CommunityInfo,
     EntityResponse, EdgeResponse, SearchResponse,
     CommunityResponse, EmbeddingResponse,
-    MaskedEntityResponse, MaskedSearchResponse
+    MaskedEntityResponse, MaskedSearchResponse,
+    CommunitySignatureSchema, HologramResponse
 )
 
 # ---------------------------------------------------------------------------
@@ -40,6 +41,7 @@ _state = {
     "embeddings":       None,   # {node_id -> np.ndarray}
     "csa_metadata":     None,   # {"distances": dict, "adjacent_pairs": set}
     "default_edge_type_weights": None,
+    "hologram":         None,   # List[CommunitySignature]
 }
 
 
@@ -287,6 +289,20 @@ def create_app(
             results=[MaskedEntityResponse(**r) for r in results]
         )
 
+    @app.get("/hologram", response_model=HologramResponse, tags=["federated"])
+    async def get_hologram():
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Service not ready")
+        
+        sigs = _state["hologram"]
+        if sigs is None:
+            raise HTTPException(status_code=503, detail="Hologram not computed")
+            
+        return HologramResponse(
+            adapter_name="local", # Future: make configurable
+            signatures=[CommunitySignatureSchema(**s.to_dict()) for s in sigs]
+        )
+
     return app
 
 
@@ -376,7 +392,11 @@ def _load(
     # Attach to adapter for get_embedding() lookups
     adapter.embeddings = fused_embeddings
 
-    # 4. Save to cache
+    # 4. Compute Holographic Index (Phase 8)
+    from core.holographic_index import build_signatures
+    _state["hologram"] = build_signatures(adapter, community_map, fused_embeddings)
+
+    # 5. Save to cache
     if cache_path:
         save_state(
             cache_path,
@@ -385,6 +405,7 @@ def _load(
             embeddings=_state["embeddings"],
             csa_metadata=_state["csa_metadata"],
             default_edge_type_weights=_state["default_edge_type_weights"],
+            hologram=_state["hologram"],
         )
 
 
