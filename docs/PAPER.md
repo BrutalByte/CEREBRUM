@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: March 2026
-**Status**: Version 0.1 · Phase 4 COMPLETE
+**Status**: Version 0.2 · Phase 9 COMPLETE
 **License**: Proprietary — all rights reserved
 
 ---
@@ -257,11 +257,13 @@ and KG operations. This is not analogy — each mapping is functional.
 | Token | Entity or Relation | Atomic unit of information |
 | Vocabulary | Entity type taxonomy | Closed set of possible types |
 | Token embedding | Entity embedding (TransE/RotatE) | Dense vector per entity |
-| Positional encoding | Structural encoding (PR, BW, deg) | Where entity sits globally |
-| Attention head | Community cluster (DSCF) | Specialized relational context |
+| Positional encoding | PageRank + betweenness + degree | Where entity sits globally |
+| Attention head | Community cluster (TSC) | Specialized relational context |
 | Attention weight | CSA weight formula | Sim + community + edge + distance |
 | Context window | Ego-network radius R | How far to traverse |
 | Layer depth L | BFS hop count | Reasoning step count |
+| Wormhole Attention | Federated Link | Cross-graph attention jump |
+| Holographic Index | Compressed Signature | Privacy-preserving discovery |
 | Feed-forward sublayer | Entity-type projection | Type-specific transformation |
 | Residual connection | Previous-hop embedding | Prevents information loss |
 | Layer normalization | Embedding normalization | Prevents value explosion |
@@ -678,10 +680,29 @@ No other Home Assistant-specific dependencies are carried over. Refer to the `co
 - Baseline comparisons: BFS, GAT, GraphRAG, vanilla RAG
 - Innovation: Metaedge Bridge Bonus (EF-005) to solve "Type Alignment Trap"
 
-**Phase 5 — Release (IN PROGRESS)**
+**Phase 5 — Release (COMPLETE)**
 - Final documentation and code cleanup
-- Project-wide validation and stable tag
-- Open-source repository preparation
+- Project-wide validation and stable tag (v0.1.0)
+- Triple-Signal Consensus (TSC) engine rollout
+
+**Phase 6 — Federated Graph Attention (COMPLETE)**
+- `adapters/federated_adapter.py` — multi-source aggregation
+- `adapters/remote_adapter.py` — HTTP proxy for remote graphs
+- Entity Alignment Index for cross-graph resolution
+
+**Phase 7 — Dynamic Updates (COMPLETE)**
+- Cross-graph "wormhole" attention weights
+- Wildcard community scoring in CSA
+
+**Phase 8 — Holographic Index (COMPLETE)**
+- Bloom Filter based entity probing
+- Community Centroid based semantic discovery
+- Compressed graph signatures for "blind" discovery
+
+**Phase 9 — Stable Release v0.2.0 (COMPLETE)**
+- Handshake protocol for capability negotiation
+- Reasoning Callbacks for cross-graph path verification
+- Security hardening and full QA audit
 
 ### 6.6 Computational Complexity
 

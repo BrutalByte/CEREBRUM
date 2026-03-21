@@ -6,9 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Parallax is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-Two core novelties:
-- **DSCF** (Dual-Signal Community Fusion): community detection combining local (LPA) and global (modularity) signals
-- **CSA** (Community-Structured Attention): attention weights using community membership as soft global constraints
+**v0.2.0 (Federated)** adds support for distributed reasoning across multiple Parallax instances using holographic indexing and cross-graph attention.
+
+### Core Concepts
+- **DSCF/TSC**: Dual/Triple signal community fusion.
+- **CSA**: Community-Structured Attention formula.
+- **Federated**: Aggregating multiple graphs via `FederatedAdapter`.
+- **Hologram**: Bloom filters + centroids for blind discovery of remote graphs.
 
 ## Install & Development Commands
 

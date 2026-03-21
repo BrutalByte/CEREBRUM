@@ -26,7 +26,7 @@ See `PAPER.md` for the full white paper and architecture specification.
 
 ## Roadmap
 
-**Current Phase: 5 (Release) — COMPLETE**
+**Current Phase: 9 (Federated Release) — COMPLETE**
 
 - [x] **Phase 0: Theory & Prototyping** (DSCF validated in AI Personal Assistant)
 - [x] **Phase 1: Core Engine** (GraphAdapter, TSC Engine, CSA Attention)
@@ -34,39 +34,21 @@ See `PAPER.md` for the full white paper and architecture specification.
 - [x] **Phase 3: Adapters & API** (FastAPI server + LLM bridge)
 - [x] **Phase 4: Benchmarking** (WebQSP, MetaQA, Hetionet) — Bridge Bonus innovation (EF-005)
 - [x] **Phase 5: Release** (v0.1.0 Stable) — TSC, Persistence, Docker
+- [x] **Phase 6: Federated Graph Attention** — multi-source aggregation & alignment
+- [x] **Phase 7: Dynamic Graph Updates** — cross-graph wormhole attention
+- [x] **Phase 8: Holographic Index** — privacy-preserving discovery & Bloom filters
+- [x] **Phase 9: Federated Release** (v0.2.0 Stable) — handshake & reasoning callbacks
 
-## Next Horizon: Federated Reasoning — Roadmap to v0.2.0
+## Next Horizon: High-Stakes Deployment — Roadmap to v1.0.0
 
-With the baseline stability of v0.1.0 (TSC), we are now entering the research phase for **Federated Parallax**. This evolution is designed to enable high-stakes reasoning across sensitive, distributed datasets.
+With the completion of v0.2.0 (Federated), we are moving towards production-scale reliability.
 
-### Phase 6: Federated Graph Attention — COMPLETE
-- **Objective**: Implement cross-graph attention mechanisms for distributed knowledge bases.
+### Phase 10: Production Hardening (In Progress)
+- **Objective**: Finalize the framework for massive-scale deployment.
 - **Milestones**:
-    - [x] **Federated Adapter**: Implement `FederatedAdapter` and `RemoteParallaxAdapter` for aggregating local and remote graphs.
-    - [x] **Remote Graph Access**: Expose low-level graph traversal endpoints in API (`/entities`, `/neighbors`).
-    - [x] **Cross-Node Alignment**: Implement `AlignmentIndex` for matching entities across disparate graphs.
-    - [x] **Global-Local Community Fusion**: Integrate community structures from multiple graph instances.
-    - [x] **Privacy-Preserving Search**: Query across datasets without centralizing node attributes.
-
-### Phase 7: Dynamic Graph Updates — COMPLETE
-- **Objective**: Allow attention weights to traverse "wormholes" between separate KGs.
-- **Milestones**:
-    - [x] Extend CSA to handle `external_community_score` for remote entities with wildcard support.
-    - [x] Implement alias-aware community resolution in `FederatedAdapter`.
-
-### Phase 8: The "Holographic" Index — COMPLETE
-- **Objective**: Create a compressed structural signature of a remote graph.
-- **Milestones**:
-    - [x] Encode community centroids into a lightweight Bloom Filter and mean vector signature.
-    - [x] Implement `HolographicIndex` for targeted multi-adapter discovery.
-    - [x] Expose `/hologram` endpoint in Parallax API.
-
-### Phase 9: Stable Release (v0.2.0) — COMPLETE
-- **Objective**: Finalize the federated, Multi-Source ready protocol.
-- **Milestones**:
-    - [x] **Security Hardening**: Audit and patch endpoints against injection, DoS, and information leakage.
-    - [x] **Handshake Protocol**: Implement capability negotiation between remote instances.
-    - [x] **Reasoning Callbacks**: Implement `/reason` endpoint for cross-graph path verification.
+    - [ ] **Streaming Reasoning**: Process paths asynchronously for sub-second low-latency.
+    - [ ] **Sublinear Traversal**: Optimize Beam Search for >100M edges.
+    - [ ] **Auth Handshake**: Implement JWT-based secure federated authentication.
 
 ## Quick Start
 

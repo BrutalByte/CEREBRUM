@@ -6,6 +6,8 @@ This file provides essential context and instructions for Gemini CLI when workin
 
 **Parallax** is a **Community-Structured Graph Attention** framework for Knowledge Graph (KG) reasoning. It implements a multi-hop traversal mechanism inspired by Transformer architectures, allowing KGs to perform complex reasoning without an LLM or training data.
 
+**v0.2.0 (Federated)** enables distributed reasoning across sensitive datasets using holographic indexing and privacy-preserving search.
+
 ### Core Innovations
 1.  **DSCF (Dual-Signal Community Fusion):** A novel community detection algorithm that fuses local (Label Propagation) and global (Modularity) signals during each node update. These communities act as "attention heads."
 2.  **CSA (Community-Structured Attention):** An attention mechanism where weights are influenced by community membership, semantic similarity, and graph structure.
