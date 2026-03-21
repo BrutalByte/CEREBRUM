@@ -280,6 +280,10 @@ def create_app(
     async def search_masked(q: str, top_k: int = 10):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
+        
+        # Security hardening: Cap top_k to prevent enumeration attacks or DoS
+        if top_k > 100:
+            top_k = 100
 
         adapter = _state["adapter"]
         results = adapter.find_entities_masked(q, top_k=top_k)

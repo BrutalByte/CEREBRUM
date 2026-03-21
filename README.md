@@ -63,6 +63,8 @@ With the baseline stability of v0.1.0 (TSC), we are now entering the research ph
 
 ### Phase 9: Stable Release (v0.2.0) (In Progress)
 - **Objective**: Finalize the federated, Multi-Source ready protocol.
+- **Milestones**:
+    - [x] **Security Hardening**: Audit and patch endpoints against injection, DoS, and information leakage.
 
 ## Quick Start
 
