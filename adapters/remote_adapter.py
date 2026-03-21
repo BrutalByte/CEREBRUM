@@ -13,15 +13,22 @@ class RemoteParallaxAdapter(GraphAdapter):
     Adapter that proxies requests to a remote Parallax REST API.
     """
 
-    def __init__(self, base_url: str, timeout: int = 10):
+    def __init__(self, base_url: str, timeout: int = 10, api_key: Optional[str] = None):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
+        self.api_key = api_key
         self.metadata: Optional[Dict] = None
+
+    def _get_headers(self) -> Dict[str, str]:
+        headers = {}
+        if self.api_key:
+            headers["X-API-Key"] = self.api_key
+        return headers
 
     def validate_connection(self) -> bool:
         """Handshake with remote API to verify version and capabilities."""
         try:
-            resp = requests.get(f"{self.base_url}/handshake", timeout=self.timeout)
+            resp = requests.get(f"{self.base_url}/handshake", headers=self._get_headers(), timeout=self.timeout)
             if resp.status_code == 200:
                 self.metadata = resp.json()
                 # Verify compatibility (e.g. major version match)
@@ -33,11 +40,13 @@ class RemoteParallaxAdapter(GraphAdapter):
     def get_entity(self, entity_id: str) -> Optional[Entity]:
         """
         Fetch entity details from remote. 
-        Assumes a GET /entities/{id} endpoint exists or uses /query.
         """
         try:
-            # For now, we'll use a hypothetical /entities endpoint
-            resp = requests.get(f"{self.base_url}/entities/{entity_id}", timeout=self.timeout)
+            resp = requests.get(
+                f"{self.base_url}/entities/{entity_id}", 
+                headers=self._get_headers(), 
+                timeout=self.timeout
+            )
             if resp.status_code == 200:
                 data = resp.json()
                 return Entity(
@@ -65,6 +74,7 @@ class RemoteParallaxAdapter(GraphAdapter):
             resp = requests.get(
                 f"{self.base_url}/entities/{entity_id}/neighbors", 
                 params=params,
+                headers=self._get_headers(),
                 timeout=self.timeout
             )
             if resp.status_code == 200:
@@ -88,6 +98,7 @@ class RemoteParallaxAdapter(GraphAdapter):
             resp = requests.get(
                 f"{self.base_url}/search", 
                 params={"q": query, "top_k": top_k},
+                headers=self._get_headers(),
                 timeout=self.timeout
             )
             if resp.status_code == 200:
@@ -98,7 +109,7 @@ class RemoteParallaxAdapter(GraphAdapter):
                         type=e.get("type", "entity"),
                         properties=e.get("properties", {})
                     )
-                    for e in resp.json()["results"] # Fix: schemas.py SearchResponse has .results
+                    for e in resp.json()["results"]
                 ]
         except Exception:
             pass
@@ -110,6 +121,7 @@ class RemoteParallaxAdapter(GraphAdapter):
             resp = requests.get(
                 f"{self.base_url}/search/masked", 
                 params={"q": query, "top_k": top_k},
+                headers=self._get_headers(),
                 timeout=self.timeout
             )
             if resp.status_code == 200:
@@ -129,7 +141,11 @@ class RemoteParallaxAdapter(GraphAdapter):
     def get_community(self, entity_id: str) -> int:
         """Fetch community ID from remote /entities/{id}/community endpoint."""
         try:
-            resp = requests.get(f"{self.base_url}/entities/{entity_id}/community", timeout=self.timeout)
+            resp = requests.get(
+                f"{self.base_url}/entities/{entity_id}/community", 
+                headers=self._get_headers(),
+                timeout=self.timeout
+            )
             if resp.status_code == 200:
                 return resp.json().get("community_id", -1)
         except Exception:
@@ -139,7 +155,11 @@ class RemoteParallaxAdapter(GraphAdapter):
     def get_embedding(self, entity_id: str) -> Optional["np.ndarray"]:
         """Fetch embedding from remote /entities/{id}/embedding endpoint."""
         try:
-            resp = requests.get(f"{self.base_url}/entities/{entity_id}/embedding", timeout=self.timeout)
+            resp = requests.get(
+                f"{self.base_url}/entities/{entity_id}/embedding", 
+                headers=self._get_headers(),
+                timeout=self.timeout
+            )
             if resp.status_code == 200:
                 data = resp.json()
                 if "embedding" in data:
@@ -152,7 +172,11 @@ class RemoteParallaxAdapter(GraphAdapter):
     def get_hologram(self) -> Optional[Dict]:
         """Fetch holographic community signatures."""
         try:
-            resp = requests.get(f"{self.base_url}/hologram", timeout=self.timeout)
+            resp = requests.get(
+                f"{self.base_url}/hologram", 
+                headers=self._get_headers(),
+                timeout=self.timeout
+            )
             if resp.status_code == 200:
                 return resp.json()
         except Exception:
@@ -163,7 +187,12 @@ class RemoteParallaxAdapter(GraphAdapter):
         """Request advanced reasoning trace from remote."""
         try:
             payload = {"source_id": source_id, "target_id": target_id, "max_hop": max_hop}
-            resp = requests.post(f"{self.base_url}/reason", json=payload, timeout=self.timeout)
+            resp = requests.post(
+                f"{self.base_url}/reason", 
+                json=payload, 
+                headers=self._get_headers(),
+                timeout=self.timeout
+            )
             if resp.status_code == 200:
                 return resp.json()
         except Exception:
@@ -172,7 +201,11 @@ class RemoteParallaxAdapter(GraphAdapter):
 
     def node_count(self) -> int:
         try:
-            resp = requests.get(f"{self.base_url}/stats", timeout=self.timeout)
+            resp = requests.get(
+                f"{self.base_url}/stats", 
+                headers=self._get_headers(),
+                timeout=self.timeout
+            )
             if resp.status_code == 200:
                 return resp.json().get("node_count", 0)
         except Exception:

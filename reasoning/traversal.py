@@ -128,11 +128,10 @@ class BeamTraversal:
         self,
         adapter: GraphAdapter,
         csa_engine: CSAEngine,
-        embeddings: Optional[Dict[str, np.ndarray]] = None,
-        communities: Optional[Dict[str, int]] = None,
         beam_width: int = 10,
         max_hop: int = 3,
         max_neighbors: int = 50,
+        max_budget: int = 1000,
         edge_type_weights: Optional[Dict[str, float]] = None,
     ):
         self.adapter            = adapter
@@ -140,13 +139,16 @@ class BeamTraversal:
         self.beam_width         = beam_width
         self.max_hop            = max_hop
         self.max_neighbors      = max_neighbors
+        self.max_budget         = max_budget
         self.edge_type_weights  = edge_type_weights or {}
+        self.expansions         = 0
 
     def traverse(self, seeds: List[str]) -> List[TraversalPath]:
         """
         Run beam traversal from the given seed entity IDs.
         """
         emb_dim = self._infer_dim()
+        self.expansions = 0
 
         # Initialize beam from seed entities
         beam: List[TraversalPath] = []
@@ -177,10 +179,15 @@ class BeamTraversal:
             candidates: List[TraversalPath] = []
 
             for path in beam:
+                # Security check: Computational Budget
+                if self.expansions >= self.max_budget:
+                    break
+
                 edges = self.adapter.get_neighbors(
                     path.tail,
                     max_neighbors=self.max_neighbors,
                 )
+                self.expansions += 1
 
                 for edge in edges:
                     v = edge.target_id

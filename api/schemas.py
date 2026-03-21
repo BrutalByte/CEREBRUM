@@ -8,7 +8,8 @@ class QueryRequest(BaseModel):
     seeds: List[str] = Field(default=[], description="Optional explicit seed entity IDs")
     top_k: int = Field(default=5, ge=1, le=50)
     max_hop: int = Field(default=3, ge=1, le=6)
-    beam_width: int = Field(default=10, ge=1, le=100)
+    beam_width: int = Field(default=10, ge=1, le=50) # Capped at 50 for security
+    max_budget: int = Field(default=1000, ge=10, le=5000, description="Max neighbor expansions allowed")
     edge_types: Optional[List[str]] = Field(default=None, description="Filter traversal to these relation types")
     edge_type_weights: Optional[Dict[str, float]] = Field(default=None, description="Bridge Bonus: {relation_type -> weight}")
 
@@ -127,6 +128,7 @@ class ReasoningCallbackRequest(BaseModel):
     source_id: str
     target_id: str
     max_hop: int = 2
+    max_budget: int = 500
 
 
 class ReasoningCallbackResponse(BaseModel):

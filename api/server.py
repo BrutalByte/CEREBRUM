@@ -20,7 +20,9 @@ from contextlib import asynccontextmanager
 from typing import Optional, Dict, List
 
 import numpy as np
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Security
+from fastapi.security import APIKeyHeader
+from starlette.status import HTTP_403_FORBIDDEN
 
 from api.schemas import (
     QueryRequest, QueryResponse, CommunitiesResponse,
@@ -31,6 +33,23 @@ from api.schemas import (
     CommunitySignatureSchema, HologramResponse,
     HandshakeResponse, ReasoningCallbackRequest, ReasoningCallbackResponse
 )
+
+# ---------------------------------------------------------------------------
+# Security Configuration
+# ---------------------------------------------------------------------------
+
+API_KEY_NAME = "X-API-Key"
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+
+async def get_api_key(api_key: str = Security(api_key_header)):
+    # In production, this should be a robust secret management system.
+    # For now, we use an environment variable with a default.
+    expected_key = os.getenv("PARALLAX_API_KEY", "dev-secret")
+    if api_key == expected_key:
+        return api_key
+    raise HTTPException(
+        status_code=HTTP_403_FORBIDDEN, detail="Could not validate credentials"
+    )
 
 # ---------------------------------------------------------------------------
 # Global state (populated at startup)
@@ -105,7 +124,7 @@ def create_app(
         )
 
     @app.post("/query", response_model=QueryResponse, tags=["reasoning"])
-    async def query(req: QueryRequest):
+    async def query(req: QueryRequest, api_key: str = Depends(get_api_key)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready — call load() first")
 
@@ -144,6 +163,7 @@ def create_app(
             csa_engine=csa,
             beam_width=req.beam_width,
             max_hop=req.max_hop,
+            max_budget=req.max_budget,
         )
         paths   = traversal.traverse(seeds)
         answers = extract(paths, top_k=req.top_k)
@@ -168,7 +188,7 @@ def create_app(
         )
 
     @app.get("/communities", response_model=CommunitiesResponse, tags=["graph"])
-    async def communities():
+    async def communities(api_key: str = Depends(get_api_key)):
         if _state["community_map"] is None:
             raise HTTPException(status_code=503, detail="Communities not loaded")
 
@@ -198,7 +218,7 @@ def create_app(
     # ---------------------------------------------------------------------------
 
     @app.get("/entities/{entity_id}", response_model=EntityResponse, tags=["graph"])
-    async def get_entity(entity_id: str):
+    async def get_entity(entity_id: str, api_key: str = Depends(get_api_key)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
         
@@ -215,7 +235,7 @@ def create_app(
         )
 
     @app.get("/entities/{entity_id}/neighbors", response_model=List[EdgeResponse], tags=["graph"])
-    async def get_neighbors(entity_id: str, edge_types: Optional[str] = None, max_neighbors: int = 50):
+    async def get_neighbors(entity_id: str, edge_types: Optional[str] = None, max_neighbors: int = 50, api_key: str = Depends(get_api_key)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
 
@@ -234,7 +254,7 @@ def create_app(
         ]
 
     @app.get("/entities/{entity_id}/community", response_model=CommunityResponse, tags=["graph"])
-    async def get_entity_community(entity_id: str):
+    async def get_entity_community(entity_id: str, api_key: str = Depends(get_api_key)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
 
@@ -243,7 +263,7 @@ def create_app(
         return CommunityResponse(entity_id=entity_id, community_id=cid)
 
     @app.get("/entities/{entity_id}/embedding", response_model=EmbeddingResponse, tags=["graph"])
-    async def get_entity_embedding(entity_id: str):
+    async def get_entity_embedding(entity_id: str, api_key: str = Depends(get_api_key)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
 
@@ -255,7 +275,7 @@ def create_app(
         return EmbeddingResponse(entity_id=entity_id, embedding=emb.tolist())
 
     @app.get("/search", response_model=SearchResponse, tags=["graph"])
-    async def search(q: str, top_k: int = 10):
+    async def search(q: str, top_k: int = 10, api_key: str = Depends(get_api_key)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
 
@@ -278,7 +298,7 @@ def create_app(
         )
 
     @app.get("/search/masked", response_model=MaskedSearchResponse, tags=["graph"])
-    async def search_masked(q: str, top_k: int = 10):
+    async def search_masked(q: str, top_k: int = 10, api_key: str = Depends(get_api_key)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
         
@@ -295,7 +315,7 @@ def create_app(
         )
 
     @app.get("/hologram", response_model=HologramResponse, tags=["federated"])
-    async def get_hologram():
+    async def get_hologram(api_key: str = Depends(get_api_key)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
         
@@ -345,7 +365,7 @@ def create_app(
         )
 
     @app.post("/reason", response_model=ReasoningCallbackResponse, tags=["federated"])
-    async def reason_callback(req: ReasoningCallbackRequest):
+    async def reason_callback(req: ReasoningCallbackRequest, api_key: str = Depends(get_api_key)):
         """
         Verify if a path exists between source and target in this graph.
         Used for advanced federated path verification.
@@ -370,6 +390,7 @@ def create_app(
             csa_engine=csa,
             beam_width=5, # Narrower for verification
             max_hop=req.max_hop,
+            max_budget=req.max_budget,
         )
         
         paths = traversal.traverse([req.source_id])

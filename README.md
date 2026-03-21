@@ -46,6 +46,8 @@ With the completion of v0.2.0 (Federated), we are moving towards production-scal
 ### Phase 10: Production Hardening (In Progress)
 - **Objective**: Finalize the framework for massive-scale deployment.
 - **Milestones**:
+    - [x] **API Key Security**: Enforced `X-API-Key` headers on all data-access and reasoning endpoints.
+    - [x] **Computational Governor**: Implemented `max_budget` enforcement in `BeamTraversal` to prevent resource exhaustion.
     - [ ] **Streaming Reasoning**: Process paths asynchronously for sub-second low-latency.
     - [ ] **Sublinear Traversal**: Optimize Beam Search for >100M edges.
     - [ ] **Auth Handshake**: Implement JWT-based secure federated authentication.
