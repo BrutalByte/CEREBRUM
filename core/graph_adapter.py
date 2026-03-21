@@ -80,6 +80,14 @@ class GraphAdapter(ABC):
         """Return the embedding vector for entity_id, or None."""
         ...
 
+    def find_entities_masked(self, query: str, top_k: int = 10) -> List[Dict]:
+        """
+        Find entities but return masked results (ID + Score only).
+        Default implementation wraps find_entities.
+        """
+        entities = self.find_entities(query, top_k)
+        return [{"id": e.id, "type": e.type, "score": 1.0} for e in entities if e]
+
     # Optional helpers — override for better performance or richer metadata.
 
     def get_all_entities(self) -> List[Entity]:

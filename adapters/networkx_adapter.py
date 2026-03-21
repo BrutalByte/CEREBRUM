@@ -115,6 +115,36 @@ class NetworkXAdapter(GraphAdapter):
 
         return self._fuzzy_search(query, top_k=top_k)
 
+    def find_entities_masked(self, query: str, top_k: int = 10) -> List[Dict]:
+        """Return IDs and scores but hide labels."""
+        if not hasattr(self, "_ngram_index"):
+            self._build_ngram_index()
+
+        q_ngrams = self._get_ngrams(query.lower())
+        scores: Dict[str, float] = {}
+
+        for ng in q_ngrams:
+            for node_id in self._ngram_index.get(ng, []):
+                scores[node_id] = scores.get(node_id, 0.0) + 1.0
+
+        if not scores:
+            return []
+
+        # Normalize by length
+        sorted_ids = sorted(
+            scores.keys(),
+            key=lambda nid: scores[nid] / (len(q_ngrams) + self._node_ngram_len.get(nid, 1)),
+            reverse=True
+        )
+
+        results = []
+        for nid in sorted_ids[:top_k]:
+            ent = self.get_entity(nid)
+            if ent:
+                score = scores[nid] / (len(q_ngrams) + self._node_ngram_len.get(nid, 1))
+                results.append({"id": nid, "type": ent.type, "score": float(score)})
+        return results
+
     def _fuzzy_search(self, query: str, top_k: int = 10) -> List[Entity]:
         """Internal n-gram based fuzzy search."""
         if not hasattr(self, "_ngram_index"):

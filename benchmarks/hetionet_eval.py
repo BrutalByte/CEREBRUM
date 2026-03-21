@@ -447,19 +447,24 @@ def build_traversal(
     variant="dscf", edge_type_weights=None
 ) -> BeamTraversal:
     """Build a BeamTraversal for a given community map and variant type."""
+    # Attach communities and embeddings to adapter for lookups
+    if cmap:
+        adapter.community_map = cmap
+    if embeddings:
+        adapter.embeddings = embeddings
+
     if variant == "bfs":
         cmap_uniform = {node: 0 for node in G.nodes()}
-        csa = UniformCSAEngine(communities=cmap_uniform, embeddings=embeddings)
+        adapter.community_map = cmap_uniform
+        csa = UniformCSAEngine(adapter=adapter)
         return BeamTraversal(adapter=adapter, csa_engine=csa,
-                             embeddings=embeddings, communities=cmap_uniform,
                              beam_width=beam_width, max_hop=max_hop)
 
     dist = build_community_distance_matrix(G, cmap)
     adj  = adjacent_community_pairs(G, cmap)
-    csa  = CSAEngine(communities=cmap, embeddings=embeddings)
+    csa  = CSAEngine(adapter=adapter)
     csa.set_community_graph(dist, adj)
     return BeamTraversal(adapter=adapter, csa_engine=csa,
-                         embeddings=embeddings, communities=cmap,
                          beam_width=beam_width, max_hop=max_hop,
                          edge_type_weights=edge_type_weights)
 

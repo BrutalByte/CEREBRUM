@@ -87,4 +87,17 @@ class EmbeddingResponse(BaseModel):
     embedding: List[float]
 
 
+class MaskedEntityResponse(BaseModel):
+    id: str
+    type: str = "entity"
+    score: float
+    label: str = "[REDACTED]"
+    properties: Dict[str, Any] = Field(default_factory=dict, description="Redacted in masked mode")
+
+
+class MaskedSearchResponse(BaseModel):
+    query: str
+    results: List[MaskedEntityResponse]
+
+
 

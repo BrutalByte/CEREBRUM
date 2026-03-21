@@ -352,7 +352,12 @@ def main():
     print("Building CSA engine...")
     distances = build_community_distance_matrix(G, cmap)
     adj       = adjacent_community_pairs(G, cmap)
-    csa       = CSAEngine(communities=cmap, embeddings=embeddings)
+    
+    # Attach communities and embeddings to adapter for lookups
+    adapter.community_map = cmap
+    adapter.embeddings = embeddings
+    
+    csa = CSAEngine(adapter=adapter)
     csa.set_community_graph(distances, adj)
 
     # ------------------------------------------------------------------
@@ -369,8 +374,6 @@ def main():
         traversal = BeamTraversal(
             adapter=adapter,
             csa_engine=csa,
-            embeddings=embeddings,
-            communities=cmap,
             beam_width=args.beam_width,
             max_hop=hop,
         )

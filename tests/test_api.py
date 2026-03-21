@@ -341,5 +341,15 @@ class TestGraphAccess:
         assert r.status_code == 200
         assert len(r.json()["results"]) == 0
 
+    def test_search_masked_returns_redacted(self, client):
+        r = client.get("/search/masked", params={"q": "newton", "top_k": 5})
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data["results"]) > 0
+        res = data["results"][0]
+        assert res["id"] == "newton"
+        assert res["label"] == "[REDACTED]"
+        assert "score" in res
+
 
 

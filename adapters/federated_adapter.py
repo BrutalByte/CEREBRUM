@@ -97,6 +97,19 @@ class FederatedAdapter(GraphAdapter):
         # Sort or rank could happen here if adapters provide scores
         return results[:top_k]
 
+    def find_entities_masked(self, query: str, top_k: int = 10) -> List[Dict]:
+        """Aggregate masked search results from all adapters."""
+        results: List[Dict] = []
+        seen_ids: Set[str] = set()
+        
+        for adapter in self.adapters.values():
+            for r in adapter.find_entities_masked(query, top_k):
+                if r["id"] not in seen_ids:
+                    results.append(r)
+                    seen_ids.add(r["id"])
+                    
+        return results[:top_k]
+
     def to_networkx(self) -> "nx.Graph":
         """
         Merged NetworkX graph. Warning: can be expensive for large federated KGs.
@@ -117,7 +130,17 @@ class FederatedAdapter(GraphAdapter):
         """
         owner_name = self._resolve_adapter(entity_id)
         if not owner_name:
-            return -1
+            # Check aliases in case it's known under a different ID
+            # This handles 'wormhole' entities from other graphs
+            aliases = self.alignment.resolve_aliases("", entity_id)
+            for adapter_name, alias_id in aliases:
+                if adapter_name in self.adapters:
+                    owner_name = adapter_name
+                    entity_id = alias_id
+                    break
+            
+            if not owner_name:
+                return -1
         
         adapter = self.adapters[owner_name]
         # We assume local adapters might have a .community_map attribute 
@@ -129,7 +152,15 @@ class FederatedAdapter(GraphAdapter):
                 return -1
             # Federated CID = hash(adapter_name) + local_cid to avoid collisions
             return hash(owner_name) % 1000000 + local_cid
-        return -1
+        
+        # Check if it's a Remote adapter (uses get_community method)
+        try:
+            local_cid = adapter.get_community(entity_id)
+            if local_cid == -1:
+                return -1
+            return hash(owner_name) % 1000000 + local_cid
+        except Exception:
+            return -1
 
     def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:
         """Get embedding from the owner adapter."""

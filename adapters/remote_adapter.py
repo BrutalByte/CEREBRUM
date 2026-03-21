@@ -85,8 +85,22 @@ class RemoteParallaxAdapter(GraphAdapter):
                         type=e.get("type", "entity"),
                         properties=e.get("properties", {})
                     )
-                    for e in resp.json()
+                    for e in resp.json()["results"] # Fix: schemas.py SearchResponse has .results
                 ]
+        except Exception:
+            pass
+        return []
+
+    def find_entities_masked(self, query: str, top_k: int = 10) -> List[Dict]:
+        """Perform remote masked search."""
+        try:
+            resp = requests.get(
+                f"{self.base_url}/search/masked", 
+                params={"q": query, "top_k": top_k},
+                timeout=self.timeout
+            )
+            if resp.status_code == 200:
+                return resp.json()["results"]
         except Exception:
             pass
         return []

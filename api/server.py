@@ -26,7 +26,8 @@ from api.schemas import (
     QueryRequest, QueryResponse, CommunitiesResponse,
     HealthResponse, PathResult, PathNode, CommunityInfo,
     EntityResponse, EdgeResponse, SearchResponse,
-    CommunityResponse, EmbeddingResponse
+    CommunityResponse, EmbeddingResponse,
+    MaskedEntityResponse, MaskedSearchResponse
 )
 
 # ---------------------------------------------------------------------------
@@ -271,6 +272,19 @@ def create_app(
                     properties=e.properties
                 ) for e in valid_ents
             ]
+        )
+
+    @app.get("/search/masked", response_model=MaskedSearchResponse, tags=["graph"])
+    async def search_masked(q: str, top_k: int = 10):
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Service not ready")
+
+        adapter = _state["adapter"]
+        results = adapter.find_entities_masked(q, top_k=top_k)
+        
+        return MaskedSearchResponse(
+            query=q,
+            results=[MaskedEntityResponse(**r) for r in results]
         )
 
     return app

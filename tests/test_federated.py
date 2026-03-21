@@ -112,6 +112,16 @@ def test_federated_with_alignment(graph_a, graph_b):
     assert "calculus" in targets  # from B:leibniz
     assert len(neighbors) == 2
 
+def test_federated_masked_search(graph_a, graph_b):
+    fed = FederatedAdapter({"A": graph_a, "B": graph_b})
+    results = fed.find_entities_masked("newton", top_k=5)
+    
+    assert len(results) >= 1
+    assert results[0]["id"] == "newton"
+    assert "score" in results[0]
+    # In masked search results, label is usually not present or redacted at API level
+    # Adapter find_entities_masked returns dict with ID, Type, Score
+
 # ---------------------------------------------------------------------------
 # Remote Adapter Tests (Mocked)
 # ---------------------------------------------------------------------------
@@ -156,9 +166,10 @@ def test_remote_get_neighbors(mock_response):
         )
 
 def test_remote_find_entities(mock_response):
-    mock_response.json.return_value = [
-        {"id": "a", "label": "A", "type": "T", "properties": {}}
-    ]
+    mock_response.json.return_value = {
+        "query": "query",
+        "results": [{"id": "a", "label": "A", "type": "T", "properties": {}}]
+    }
     
     with patch("requests.get", return_value=mock_response) as mock_get:
         adapter = RemoteParallaxAdapter("http://test-api")

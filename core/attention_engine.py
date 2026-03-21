@@ -94,16 +94,32 @@ class CSAEngine:
     def community_score(self, u: str, v: str) -> float:
         """
         Structural community membership score for the edge u -> v.
+        
+        Handles:
+          - Same community: 1.0
+          - Adjacent communities: 0.5
+          - Distant communities: exp(-lambda * d)
+          - Federated/Remote communities: uses external_community_scores map
         """
         cu = self.adapter.get_community(u)
         cv = self.adapter.get_community(v)
 
+        # Handle federated/external IDs via the external_community_scores map
+        # Check specific pair first, then wildcards (-1)
+        if (cu, cv) in self.external_community_scores:
+            return self.external_community_scores[(cu, cv)]
+        
+        # Wildcard: score for any link from cu to "somewhere remote"
+        if (cu, -1) in self.external_community_scores:
+            return self.external_community_scores[(cu, -1)]
+            
+        # Wildcard: score for any link from "somewhere remote" to cv
+        if (-1, cv) in self.external_community_scores:
+            return self.external_community_scores[(-1, cv)]
+
+        # Global fallback for any unknown-to-unknown or unknown-to-known link
         if cu == -1 or cv == -1:
-            # Try to find a cross-graph community score
-            score = self.external_community_scores.get((cu, cv))
-            if score is not None:
-                return score
-            return 0.5
+            return self.external_community_scores.get((-1, -1), 0.5)
 
         if cu == cv:
             return 1.0
