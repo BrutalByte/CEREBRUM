@@ -46,7 +46,12 @@ def test_federated_get_entity(graph_a, graph_b):
     assert e3.label == "Isaac Newton"
 
 def test_federated_get_neighbors_merges_sources(graph_a, graph_b):
-    fed = FederatedAdapter({"A": graph_a, "B": graph_b})
+    from core.alignment_engine import AlignmentIndex
+    align = AlignmentIndex()
+    # Explicitly align 'newton' across both graphs
+    align.add_alignment("A", "newton", "B", "newton")
+    
+    fed = FederatedAdapter({"A": graph_a, "B": graph_b}, alignment=align)
     
     # Newton should have neighbors from BOTH A (gravity) and B (calculus)
     neighbors = fed.get_neighbors("newton")
@@ -74,6 +79,38 @@ def test_federated_node_count(graph_a, graph_b):
     # B: newton, leibniz, calculus (3)
     # Sum = 5 (naive sum)
     assert fed.node_count() == 5
+
+def test_federated_with_alignment(graph_a, graph_b):
+    from core.alignment_engine import AlignmentIndex
+    
+    # Align 'gravity' (A) with 'calculus' (B) just for testing
+    # (Pretend they are the same entity in different namespaces)
+    align = AlignmentIndex()
+    align.add_alignment("A", "gravity", "B", "calculus")
+    
+    fed = FederatedAdapter({"A": graph_a, "B": graph_b}, alignment=align)
+    
+    # Querying neighbors for 'gravity' should now also return neighbors of 'calculus'
+    neighbors = fed.get_neighbors("gravity")
+    targets = {e.target_id for e in neighbors}
+    
+    # From A (gravity): newton (actually gravity is target of newton in fixture, 
+    # so we need to check outgoing. Newton has outgoing to gravity.)
+    
+    # In fixture: newton -> gravity. leibniz -> calculus.
+    # Let's check neighbors of 'newton' (A) and 'leibniz' (B)
+    
+    # If we align newton(A) and leibniz(B)
+    align2 = AlignmentIndex()
+    align2.add_alignment("A", "newton", "B", "leibniz")
+    fed2 = FederatedAdapter({"A": graph_a, "B": graph_b}, alignment=align2)
+    
+    neighbors = fed2.get_neighbors("newton")
+    targets = {e.target_id for e in neighbors}
+    
+    assert "gravity" in targets   # from A:newton
+    assert "calculus" in targets  # from B:leibniz
+    assert len(neighbors) == 2
 
 # ---------------------------------------------------------------------------
 # Remote Adapter Tests (Mocked)

@@ -5,8 +5,9 @@ Aggregates multiple GraphAdapter instances (local or remote) into a single
 virtual graph. Handles entity resolution and neighbor merging across 
 disparate knowledge bases.
 """
-from typing import List, Optional, Dict, Set
+from typing import List, Optional, Dict, Set, Tuple
 from core.graph_adapter import GraphAdapter, Entity, Edge
+from core.alignment_engine import AlignmentIndex
 
 
 class FederatedAdapter(GraphAdapter):
@@ -15,15 +16,16 @@ class FederatedAdapter(GraphAdapter):
     
     Attributes:
         adapters (Dict[str, GraphAdapter]): Named adapters (e.g., {'local': nx, 'remote': api})
-        id_to_adapter (Dict[str, str]): Mapping from entity_id to adapter name
+        alignment (AlignmentIndex): Mapping for entity resolution across graphs.
     """
 
-    def __init__(self, adapters: Dict[str, GraphAdapter]):
+    def __init__(self, adapters: Dict[str, GraphAdapter], alignment: Optional[AlignmentIndex] = None):
         self.adapters = adapters
+        self.alignment = alignment or AlignmentIndex()
         self._id_cache: Dict[str, str] = {}
 
     def _resolve_adapter(self, entity_id: str) -> Optional[str]:
-        """Find which adapter owns this entity_id."""
+        """Find which adapter owns this entity_id (primary owner)."""
         if entity_id in self._id_cache:
             return self._id_cache[entity_id]
             
@@ -34,10 +36,12 @@ class FederatedAdapter(GraphAdapter):
         return None
 
     def get_entity(self, entity_id: str) -> Optional[Entity]:
-        name = self._resolve_adapter(entity_id)
-        if name:
-            return self.adapters[name].get_entity(entity_id)
-        return None
+        # Implementation: Check all owners of this ID or any alias
+        owner_name = self._resolve_adapter(entity_id)
+        if not owner_name:
+            return None
+            
+        return self.adapters[owner_name].get_entity(entity_id)
 
     def get_neighbors(
         self,
@@ -46,34 +50,36 @@ class FederatedAdapter(GraphAdapter):
         max_neighbors: int = 50,
     ) -> List[Edge]:
         """
-        Merge neighbors from all adapters. 
-        Note: Current implementation assumes entity_id is globally unique 
-        or the first adapter found is the 'owner'.
+        Merge neighbors from all adapters based on entity aliases.
         """
         all_edges: List[Edge] = []
         seen_targets: Set[str] = set()
         
-        # Primary: check the owner
+        # 1. Identify which adapter(s) have this entity (primary and aliases)
         owner_name = self._resolve_adapter(entity_id)
-        if owner_name:
-            edges = self.adapters[owner_name].get_neighbors(entity_id, edge_types, max_neighbors)
-            for e in edges:
-                if e.target_id not in seen_targets:
-                    all_edges.append(e)
-                    seen_targets.add(e.target_id)
-                    
-        # Secondary: Check other adapters for cross-graph links 
-        # (This is where cross-node alignment happens in Phase 6.2)
-        # For now, we just aggregate if multiple adapters have info on the same ID.
-        for name, adapter in self.adapters.items():
-            if name == owner_name:
+        if not owner_name:
+            return []
+            
+        # 2. Get all known (adapter, id) pairs for this entity via alignment index
+        aliases = self.alignment.resolve_aliases(owner_name, entity_id)
+        
+        # 3. Aggregate neighbors from every alias
+        for alias_adapter_name, alias_id in aliases:
+            if alias_adapter_name not in self.adapters:
                 continue
-            # Some adapters might have partial info or cross-links
-            edges = adapter.get_neighbors(entity_id, edge_types, max_neighbors)
+            
+            adapter = self.adapters[alias_adapter_name]
+            edges = adapter.get_neighbors(alias_id, edge_types, max_neighbors)
+            
             for e in edges:
-                if e.target_id not in seen_targets:
+                # Deduplication by target ID. 
+                # Future: Map target_id to its canonical ID for global deduplication.
+                target_canonical = self.alignment.get_canonical(alias_adapter_name, e.target_id)
+                dedupe_key = target_canonical or e.target_id
+                
+                if dedupe_key not in seen_targets:
                     all_edges.append(e)
-                    seen_targets.add(e.target_id)
+                    seen_targets.add(dedupe_key)
                     
         return all_edges[:max_neighbors]
 
