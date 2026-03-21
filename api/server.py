@@ -20,8 +20,10 @@ from contextlib import asynccontextmanager
 from typing import Optional, Dict, List
 
 import numpy as np
+import json
 from fastapi import FastAPI, HTTPException, Depends, Security
 from fastapi.security import APIKeyHeader
+from fastapi.responses import StreamingResponse
 from starlette.status import HTTP_403_FORBIDDEN
 
 from api.schemas import (
@@ -186,6 +188,63 @@ def create_app(
             paths=path_results,
             total_paths_explored=len(paths),
         )
+
+    @app.post("/query/stream", tags=["reasoning"])
+    async def query_stream(req: QueryRequest, api_key: str = Depends(get_api_key)):
+        """
+        Streaming version of /query. Yields paths hop-by-hop as JSON lines.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Service not ready")
+
+        from core.attention_engine import CSAEngine
+        from reasoning.traversal import AsyncBeamTraversal
+        from llm_bridge.context_formatter import to_structured
+
+        adapter      = _state["adapter"]
+        csa_meta     = _state["csa_metadata"]
+        default_edge_type_weights = _state["default_edge_type_weights"]
+
+        # Resolve seeds
+        if req.seeds:
+            seeds = req.seeds
+        else:
+            entities = adapter.find_entities(req.query, top_k=5)
+            seeds    = [e.id for e in entities if e]
+
+        if not seeds:
+            raise HTTPException(status_code=404, detail=f"No entities found for query: {req.query!r}")
+
+        async def generate():
+            from reasoning.answer_extractor import extract
+            csa = CSAEngine(adapter=adapter, edge_type_weights=req.edge_type_weights or default_edge_type_weights)
+            csa.set_community_graph(csa_meta["distances"], csa_meta["adjacent_pairs"])
+
+            traversal = AsyncBeamTraversal(
+                adapter=adapter,
+                csa_engine=csa,
+                beam_width=req.beam_width,
+                max_hop=req.max_hop,
+                max_budget=req.max_budget
+            )
+
+            hop_count = 0
+            async for hop_paths in traversal.traverse_stream(seeds):
+                # Format this hop's paths
+                # convert paths to Answers for to_structured
+                answers = extract(hop_paths, top_k=req.top_k, min_hop=0)
+                structured = to_structured(answers, query=req.query, adapter=adapter)
+                
+                # Add metadata
+                chunk = {
+                    "hop": hop_count,
+                    "paths": structured["paths"],
+                    "status": "complete" if hop_count == req.max_hop else "reasoning"
+                }
+                yield json.dumps(chunk) + "\n"
+                hop_count += 1
+
+        return StreamingResponse(generate(), media_type="application/x-ndjson")
 
     @app.get("/communities", response_model=CommunitiesResponse, tags=["graph"])
     async def communities(api_key: str = Depends(get_api_key)):

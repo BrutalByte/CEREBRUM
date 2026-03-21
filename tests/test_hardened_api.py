@@ -83,3 +83,23 @@ class TestAPISecurity:
         )
         assert r.status_code == 200
         assert len(r.json()["results"]) <= 100
+
+    def test_query_stream(self, hardened_client):
+        # Query safe_node which has a path to n0, n1...
+        with hardened_client.stream(
+            "POST",
+            "/query/stream",
+            json={"query": "safe_node", "max_hop": 2},
+            headers={"X-API-Key": "test-secret"}
+        ) as r:
+            assert r.status_code == 200
+            
+            # Parse ndjson lines
+            lines = [json.loads(line) for line in r.iter_lines() if line]
+            assert len(lines) >= 2 # hop 0 and hop 1 at least
+            assert lines[0]["hop"] == 0
+            assert lines[1]["hop"] == 1
+            assert "paths" in lines[0]
+            assert lines[0]["status"] == "reasoning"
+
+import json

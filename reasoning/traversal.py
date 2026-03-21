@@ -13,6 +13,7 @@ import numpy as np
 
 from core.graph_adapter import GraphAdapter
 from core.attention_engine import CSAEngine
+from core.resource_governor import ResourceGovernor
 from reasoning.path_scorer import community_coherence
 
 
@@ -142,6 +143,7 @@ class BeamTraversal:
         self.max_budget         = max_budget
         self.edge_type_weights  = edge_type_weights or {}
         self.expansions         = 0
+        self.governor           = ResourceGovernor()
 
     def traverse(self, seeds: List[str]) -> List[TraversalPath]:
         """
@@ -179,8 +181,8 @@ class BeamTraversal:
             candidates: List[TraversalPath] = []
 
             for path in beam:
-                # Security check: Computational Budget
-                if self.expansions >= self.max_budget:
+                # Security & Resource check: Computational Budget & RAM pressure
+                if not self.governor.can_expand(self.expansions, self.max_budget):
                     break
 
                 edges = self.adapter.get_neighbors(
@@ -250,6 +252,106 @@ class BeamTraversal:
         except Exception:
             pass
         return 384  # Default for sentence-transformers
+
+class AsyncBeamTraversal(BeamTraversal):
+    """
+    Asynchronous version of BeamTraversal that yields paths as they are found.
+    Allows for real-time reasoning visualization and lower TTFT (Time To First Trace).
+    """
+
+    async def traverse_stream(self, seeds: List[str]):
+        """
+        Run beam traversal and yield paths hop-by-hop.
+        Yields: List[TraversalPath] at each hop completion.
+        """
+        import asyncio
+        emb_dim = self._infer_dim()
+        self.expansions = 0
+
+        # Initialize beam from seed entities
+        beam: List[TraversalPath] = []
+        for seed in seeds:
+            emb = self.adapter.get_embedding(seed)
+            if emb is None:
+                emb = np.zeros(emb_dim, dtype=np.float32)
+            
+            norm = float(np.linalg.norm(emb))
+            if norm > 0:
+                emb = emb / norm
+                
+            cid = self.adapter.get_community(seed)
+            path = TraversalPath(
+                nodes=[seed],
+                seen_entities={seed},
+                embedding=emb.copy(),
+                score=1.0,
+                community_sequence=[cid] if cid >= 0 else [],
+            )
+            beam.append(path)
+
+        # Yield depth-0 (seeds)
+        yield beam
+
+        for hop in range(1, self.max_hop + 1):
+            candidates: List[TraversalPath] = []
+
+            for path in beam:
+                if not self.governor.can_expand(self.expansions, self.max_budget):
+                    break
+
+                # Non-blocking neighbor fetch (if adapter supports it, 
+                # otherwise runs in thread pool or just regular call)
+                edges = self.adapter.get_neighbors(
+                    path.tail,
+                    max_neighbors=self.max_neighbors,
+                )
+                self.expansions += 1
+                
+                # Small yield to prevent event loop starvation on huge graphs
+                if self.expansions % 100 == 0:
+                    await asyncio.sleep(0)
+
+                for edge in edges:
+                    v = edge.target_id
+                    if v in path.seen_entities:
+                        continue
+
+                    w = self.csa.compute_weight(
+                        path.tail,
+                        v,
+                        hop=hop,
+                        edge_type=edge.relation_type,
+                        edge_type_weights=self.edge_type_weights,
+                    )
+
+                    v_emb = self.adapter.get_embedding(v)
+                    if v_emb is None:
+                        v_emb = np.zeros(emb_dim, dtype=np.float32)
+                    
+                    v_cid = self.adapter.get_community(v)
+                    coh = community_coherence(path.community_sequence + [v_cid])
+                    
+                    new_path = path.copy_with_extension(
+                        rel=edge.relation_type,
+                        v=v,
+                        v_cid=v_cid,
+                        v_emb=v_emb,
+                        weight=w,
+                        coherence_score=coh
+                    )
+                    candidates.append(new_path)
+
+            if not candidates:
+                break
+
+            # Pick top B candidates for next hop
+            if len(candidates) > self.beam_width:
+                beam = heapq.nlargest(self.beam_width, candidates, key=lambda p: p.score)
+            else:
+                beam = sorted(candidates, key=lambda p: p.score, reverse=True)
+            
+            # Yield this layer's best paths
+            yield beam
 
 
 
