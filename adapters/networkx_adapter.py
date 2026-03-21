@@ -158,6 +158,18 @@ class NetworkXAdapter(GraphAdapter):
     def to_networkx(self) -> nx.Graph:
         return self._G
 
+    def get_community(self, entity_id: str) -> int:
+        """Requires communities to be attached to the adapter instance."""
+        if hasattr(self, "community_map"):
+            return self.community_map.get(entity_id, -1)
+        return -1
+
+    def get_embedding(self, entity_id: str) -> Optional["np.ndarray"]:
+        """Requires embeddings to be attached to the adapter instance."""
+        if hasattr(self, "embeddings"):
+            return self.embeddings.get(entity_id)
+        return None
+
     # ------------------------------------------------------------------
     # Optional helpers
     # ------------------------------------------------------------------

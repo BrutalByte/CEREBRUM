@@ -109,3 +109,35 @@ class FederatedAdapter(GraphAdapter):
 
     def node_count(self) -> int:
         return sum(a.node_count() for a in self.adapters.values())
+
+    def get_community(self, entity_id: str) -> int:
+        """
+        Get community ID for entity. Uses primary adapter's community
+        and maps it to a federated namespace.
+        """
+        owner_name = self._resolve_adapter(entity_id)
+        if not owner_name:
+            return -1
+        
+        adapter = self.adapters[owner_name]
+        # We assume local adapters might have a .community_map attribute 
+        # or the FederatedAdapter is initialized with them.
+        # For now, let's look for a community_map in the adapter if it's a local one.
+        if hasattr(adapter, "community_map"):
+            local_cid = adapter.community_map.get(entity_id, -1)
+            if local_cid == -1:
+                return -1
+            # Federated CID = hash(adapter_name) + local_cid to avoid collisions
+            return hash(owner_name) % 1000000 + local_cid
+        return -1
+
+    def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:
+        """Get embedding from the owner adapter."""
+        owner_name = self._resolve_adapter(entity_id)
+        if not owner_name:
+            return None
+        
+        adapter = self.adapters[owner_name]
+        if hasattr(adapter, "embeddings"):
+            return adapter.embeddings.get(entity_id)
+        return None

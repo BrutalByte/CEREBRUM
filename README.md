@@ -45,8 +45,8 @@ With the baseline stability of v0.1.0 (TSC), we are now entering the research ph
     - [x] **Federated Adapter**: Implement `FederatedAdapter` and `RemoteParallaxAdapter` for aggregating local and remote graphs.
     - [x] **Remote Graph Access**: Expose low-level graph traversal endpoints in API (`/entities`, `/neighbors`).
     - [x] **Cross-Node Alignment**: Implement `AlignmentIndex` for matching entities across disparate graphs.
+    - [x] **Global-Local Community Fusion**: Integrate community structures from multiple graph instances.
     - [ ] **Privacy-Preserving Search**: Query across datasets without centralizing node attributes.
-    - [ ] **Global-Local Community Fusion**: Integrate community structures from multiple graph instances.
 
 ### Phase 7: Dynamic Graph Updates
 - **Objective**: Allow attention weights to traverse "wormholes" between separate KGs.

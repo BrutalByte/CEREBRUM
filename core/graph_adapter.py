@@ -70,6 +70,16 @@ class GraphAdapter(ABC):
         """
         ...
 
+    @abstractmethod
+    def get_community(self, entity_id: str) -> int:
+        """Return the community ID for entity_id, or -1 if unknown."""
+        ...
+
+    @abstractmethod
+    def get_embedding(self, entity_id: str) -> Optional["np.ndarray"]: # noqa: F821
+        """Return the embedding vector for entity_id, or None."""
+        ...
+
     # Optional helpers — override for better performance or richer metadata.
 
     def get_all_entities(self) -> List[Entity]:

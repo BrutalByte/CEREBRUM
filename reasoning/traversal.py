@@ -128,8 +128,8 @@ class BeamTraversal:
         self,
         adapter: GraphAdapter,
         csa_engine: CSAEngine,
-        embeddings: Dict[str, np.ndarray],
-        communities: Dict[str, int],
+        embeddings: Optional[Dict[str, np.ndarray]] = None,
+        communities: Optional[Dict[str, int]] = None,
         beam_width: int = 10,
         max_hop: int = 3,
         max_neighbors: int = 50,
@@ -137,8 +137,6 @@ class BeamTraversal:
     ):
         self.adapter            = adapter
         self.csa                = csa_engine
-        self.embeddings         = embeddings
-        self.communities        = communities
         self.beam_width         = beam_width
         self.max_hop            = max_hop
         self.max_neighbors      = max_neighbors
@@ -147,29 +145,22 @@ class BeamTraversal:
     def traverse(self, seeds: List[str]) -> List[TraversalPath]:
         """
         Run beam traversal from the given seed entity IDs.
-
-        Parameters
-        ----------
-        seeds : list of entity IDs to start from (STEP 1 output)
-
-        Returns
-        -------
-        All paths explored across all hops, including seed-only depth-0 paths.
-        Call reasoning.answer_extractor.extract() to get top-K ranked answers.
         """
         emb_dim = self._infer_dim()
 
         # Initialize beam from seed entities
         beam: List[TraversalPath] = []
         for seed in seeds:
-            emb = self.embeddings.get(seed, np.zeros(emb_dim, dtype=np.float32))
+            emb = self.adapter.get_embedding(seed)
+            if emb is None:
+                emb = np.zeros(emb_dim, dtype=np.float32)
             
             # STEP 2 LayerNorm (initial)
             norm = float(np.linalg.norm(emb))
             if norm > 0:
                 emb = emb / norm
                 
-            cid = self.communities.get(seed, -1)
+            cid = self.adapter.get_community(seed)
             beam.append(
                 TraversalPath(
                     nodes=[seed],
@@ -208,8 +199,11 @@ class BeamTraversal:
                     )
 
                     # Path metadata and extension
-                    v_emb = self.embeddings.get(v, np.zeros(emb_dim, dtype=np.float32))
-                    v_cid = self.communities.get(v, -1)
+                    v_emb = self.adapter.get_embedding(v)
+                    if v_emb is None:
+                        v_emb = np.zeros(emb_dim, dtype=np.float32)
+                    
+                    v_cid = self.adapter.get_community(v)
                     
                     # Compute community coherence for the candidate step
                     coh = community_coherence(path.community_sequence + [v_cid])
@@ -238,10 +232,17 @@ class BeamTraversal:
         return all_paths
 
     def _infer_dim(self) -> int:
-        """Infer embedding dimension from the first available vector."""
-        for v in self.embeddings.values():
-            return len(v)
-        return 64
+        """Infer embedding dimension from the adapter."""
+        # Use a sample entity if possible
+        try:
+            # Try some common entities or just pick one
+            for seed in self.adapter.find_entities("", top_k=1):
+                emb = self.adapter.get_embedding(seed.id)
+                if emb is not None:
+                    return len(emb)
+        except Exception:
+            pass
+        return 384  # Default for sentence-transformers
 
 
 

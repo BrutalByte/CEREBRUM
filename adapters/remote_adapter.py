@@ -99,6 +99,29 @@ class RemoteParallaxAdapter(GraphAdapter):
         import networkx as nx
         return nx.Graph()
 
+    def get_community(self, entity_id: str) -> int:
+        """Fetch community ID from remote /entities/{id}/community endpoint."""
+        try:
+            resp = requests.get(f"{self.base_url}/entities/{entity_id}/community", timeout=self.timeout)
+            if resp.status_code == 200:
+                return resp.json().get("community_id", -1)
+        except Exception:
+            pass
+        return -1
+
+    def get_embedding(self, entity_id: str) -> Optional["np.ndarray"]:
+        """Fetch embedding from remote /entities/{id}/embedding endpoint."""
+        try:
+            resp = requests.get(f"{self.base_url}/entities/{entity_id}/embedding", timeout=self.timeout)
+            if resp.status_code == 200:
+                data = resp.json()
+                if "embedding" in data:
+                    import numpy as np
+                    return np.array(data["embedding"], dtype=np.float32)
+        except Exception:
+            pass
+        return None
+
     def node_count(self) -> int:
         try:
             resp = requests.get(f"{self.base_url}/stats", timeout=self.timeout)

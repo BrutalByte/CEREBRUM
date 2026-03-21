@@ -30,7 +30,7 @@ class CSAEngine:
 
     Usage:
         # After running DSCF and building community graph metadata
-        engine = CSAEngine(communities=community_map, embeddings=entity_embeddings)
+        engine = CSAEngine(adapter=adapter)
         engine.set_community_graph(distances, adjacent_pairs)
 
         # During beam traversal
@@ -39,8 +39,9 @@ class CSAEngine:
 
     def __init__(
         self,
-        communities: Dict[str, int],
-        embeddings: Dict[str, np.ndarray],
+        adapter: GraphAdapter,
+        communities: Optional[Dict[str, int]] = None,
+        embeddings: Optional[Dict[str, np.ndarray]] = None,
         alpha: float = 0.4,
         beta: float = 0.4,
         gamma: float = 0.1,
@@ -53,8 +54,9 @@ class CSAEngine:
         """
         Parameters
         ----------
-        communities       : {node_id -> community_id} mapping from DSCF
-        embeddings        : {node_id -> float32 vector} from EmbeddingEngine
+        adapter           : GraphAdapter providing get_community() and get_embedding()
+        communities       : deprecated — use adapter instead
+        embeddings        : deprecated — use adapter instead
         alpha             : weight for cosine embedding similarity
         beta              : weight for community membership score
         gamma             : weight for edge type relevance
@@ -64,8 +66,7 @@ class CSAEngine:
         edge_type_weights : {relation_type -> weight} mapping for "Bridge Bonus"
         external_community_scores : { (cid_u, cid_v) -> score } for cross-graph links
         """
-        self.communities       = communities
-        self.embeddings        = embeddings
+        self.adapter           = adapter
         self.alpha             = alpha
         self.beta              = beta
         self.gamma             = gamma
@@ -86,39 +87,19 @@ class CSAEngine:
     ) -> None:
         """
         Load precomputed community-level graph metadata.
-
-        Call once after DSCF converges, using:
-            from core.structural_encoder import (
-                build_community_distance_matrix, adjacent_community_pairs
-            )
-            distances = build_community_distance_matrix(G, community_map)
-            adj       = adjacent_community_pairs(G, community_map)
-            engine.set_community_graph(distances, adj)
         """
         self._community_distances = community_distances
         self._adjacent_pairs      = adjacent_pairs
 
-    # ------------------------------------------------------------------
-    # community_score
-    # ------------------------------------------------------------------
-
     def community_score(self, u: str, v: str) -> float:
         """
         Structural community membership score for the edge u -> v.
-
-          same community   : 1.0
-          adjacent comms   : 0.5
-          distant comms    : exp(-lambda * hop_distance)
-          external/unknown : use external_community_scores or 0.5 fallback
         """
-        cu = self.communities.get(u)
-        cv = self.communities.get(v)
+        cu = self.adapter.get_community(u)
+        cv = self.adapter.get_community(v)
 
-        # Handle federated/external IDs
-        if cu is None or cv is None:
+        if cu == -1 or cv == -1:
             # Try to find a cross-graph community score
-            # We use 0 as a default ID for 'unknown/remote' if specific IDs aren't provided
-            # in external_community_scores.
             score = self.external_community_scores.get((cu, cv))
             if score is not None:
                 return score
@@ -136,10 +117,6 @@ class CSAEngine:
         )
         return math.exp(-self.lambda_decay * d)
 
-    # ------------------------------------------------------------------
-    # compute_weight — the full CSA formula
-    # ------------------------------------------------------------------
-
     def compute_weight(
         self,
         u: str,
@@ -149,31 +126,15 @@ class CSAEngine:
         edge_type_weights: Optional[Dict[str, float]] = None,
         normalized_distance: float = 0.0,
     ) -> float:
-        """
-        Compute the CSA attention weight for the directed edge u -> v
-        at traversal hop k.
-
-        Parameters
-        ----------
-        u, v                 : entity IDs
-        hop                  : current BFS hop depth (1-indexed)
-        edge_type            : relation type label (e.g. "INFLUENCED")
-        edge_type_weights    : optional {relation_type -> weight} override
-                               (takes precedence over self.edge_type_weights)
-        normalized_distance  : pre-normalized shortest-path distance (0..1)
-                               Pass 0 when not available (no penalty applied).
-
-        Returns
-        -------
-        float in (0, 1) — sigmoid-transformed attention weight
-        """
         # 1. Embedding cosine similarity
-        eu = self.embeddings.get(u)
-        ev = self.embeddings.get(v)
+        eu = self.adapter.get_embedding(u)
+        ev = self.adapter.get_embedding(v)
         if eu is not None and ev is not None:
             sim = _cosine_sim(eu, ev)
         else:
             sim = 0.0
+        
+        # ... rest same
 
         # 2. Community membership score
         cs = self.community_score(u, v)

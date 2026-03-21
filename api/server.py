@@ -25,7 +25,8 @@ from fastapi import FastAPI, HTTPException
 from api.schemas import (
     QueryRequest, QueryResponse, CommunitiesResponse,
     HealthResponse, PathResult, PathNode, CommunityInfo,
-    EntityResponse, EdgeResponse, SearchResponse
+    EntityResponse, EdgeResponse, SearchResponse,
+    CommunityResponse, EmbeddingResponse
 )
 
 # ---------------------------------------------------------------------------
@@ -129,8 +130,7 @@ def create_app(
         edge_type_weights_to_use = req.edge_type_weights or default_edge_type_weights
 
         csa = CSAEngine(
-            communities=community_map, 
-            embeddings=embeddings,
+            adapter=adapter,
             edge_type_weights=edge_type_weights_to_use
         )
         csa.set_community_graph(csa_meta["distances"], csa_meta["adjacent_pairs"])
@@ -138,12 +138,9 @@ def create_app(
         traversal = BeamTraversal(
             adapter=adapter,
             csa_engine=csa,
-            embeddings=embeddings,
-            communities=community_map,
             beam_width=req.beam_width,
             max_hop=req.max_hop,
         )
-
         paths   = traversal.traverse(seeds)
         answers = extract(paths, top_k=req.top_k)
 
@@ -232,6 +229,27 @@ def create_app(
             ) for e in edges
         ]
 
+    @app.get("/entities/{entity_id}/community", response_model=CommunityResponse, tags=["graph"])
+    async def get_entity_community(entity_id: str):
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Service not ready")
+
+        adapter = _state["adapter"]
+        cid = adapter.get_community(entity_id)
+        return CommunityResponse(entity_id=entity_id, community_id=cid)
+
+    @app.get("/entities/{entity_id}/embedding", response_model=EmbeddingResponse, tags=["graph"])
+    async def get_entity_embedding(entity_id: str):
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Service not ready")
+
+        adapter = _state["adapter"]
+        emb = adapter.get_embedding(entity_id)
+        if emb is None:
+            raise HTTPException(status_code=404, detail=f"Embedding for '{entity_id}' not found")
+        
+        return EmbeddingResponse(entity_id=entity_id, embedding=emb.tolist())
+
     @app.get("/search", response_model=SearchResponse, tags=["graph"])
     async def search(q: str, top_k: int = 10):
         if not _is_ready():
@@ -306,6 +324,8 @@ def _load(
             for node in members:
                 community_map[node] = cid
     _state["community_map"] = community_map
+    # Attach to adapter for get_community() lookups
+    adapter.community_map = community_map
 
     # 2. Precompute CSA metadata (distances and adjacent pairs)
     # This avoids O(E) or O(C^2) calculations on every query.
@@ -339,6 +359,8 @@ def _load(
         fused_embeddings[node] = sem + strc
     
     _state["embeddings"] = fused_embeddings
+    # Attach to adapter for get_embedding() lookups
+    adapter.embeddings = fused_embeddings
 
     # 4. Save to cache
     if cache_path:

@@ -77,4 +77,14 @@ class SearchResponse(BaseModel):
     query: str
 
 
+class CommunityResponse(BaseModel):
+    entity_id: str
+    community_id: int
+
+
+class EmbeddingResponse(BaseModel):
+    entity_id: str
+    embedding: List[float]
+
+
 
