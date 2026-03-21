@@ -70,3 +70,6 @@ def load_csv_adapter(
             G.add_edge(src, tgt, relation=rel)
 
     return NetworkXAdapter(G)
+
+
+

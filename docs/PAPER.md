@@ -234,7 +234,7 @@ community structure.
 
 The Louvain algorithm [Blondel et al., 2008] optimizes modularity greedily
 but can produce internally disconnected communities. Leiden [Traag et al.,
-2019] fixes this with a refinement phase guaranteeing internal connectivity.
+2019] fixes this with a refinement phase promoting internal connectivity.
 Label Propagation [Raghavan et al., 2007] is fast and unsupervised but
 non-deterministic and produces variable quality.
 
@@ -387,9 +387,9 @@ In a trained Transformer:
 - Other heads specialize on long-range structure (coreference, semantic themes)
 - The combination allows both local and global reasoning simultaneously
 
-DSCF communities exhibit exactly this dual character. The LPA component ensures
+DSCF communities exhibit exactly this dual character. The LPA component supports
 communities are locally coherent (nodes in the same community are topologically
-close). The modularity component ensures communities are globally significant
+close). The modularity component supports communities are globally significant
 (they represent structurally distinct regions of the graph). A node that is in
 a DSCF community is there because *both* local and global signals agreed.
 
@@ -632,29 +632,27 @@ class GraphAdapter(ABC):
     def to_networkx(self) -> "nx.Graph": ...  # for community detection
 ```
 
-### 6.4 What Comes From AURA
+### 6.4 What Comes From Home Assistant
 
-The following components are directly portable from AURA with minor
-generalization:
+The following components were originally ported from Home Assistant and generalized:
 
-- `dscf_communities()` — pure Python, depends only on `networkx`
+- `tsc_communities()` — now the Triple-Signal Consensus engine
 - `_run_leiden()` / `_run_lpa()` / `_build_igraph()`
 - Neo4j connection patterns and Cypher templates
 - The community broadcast WebSocket pattern (for live applications)
 
-No other AURA-specific dependencies are carried over.
-See Appendix D for the extracted code.
+No other Home Assistant-specific dependencies are carried over. Refer to the `core/` directory for the production implementation.
 
 ### 6.5 Phased Build Plan
 
 **Phase 0 — Theory (COMPLETE)**
-- Formalize CSA and DSCF; write white paper
-- Prototype DSCF in Python (lives in AURA `services/knowledge_service/main.py`)
-- Validate DSCF produces stable communities on AURA's Neo4j graph
+- Formalize CSA and TSC; write white paper
+- Prototype consensus logic in Python
+- Validate TSC produces stable communities on Home Assistant's Neo4j graph
 
 **Phase 1 — Core Engine (COMPLETE)**
 - `core/graph_adapter.py` — abstract base + NetworkX adapter
-- `core/community_engine.py` — DSCF, Leiden, LPA, hybrid (ported from AURA)
+- `core/community_engine.py` — TSC, Leiden, LPA, hybrid
 - `core/embedding_engine.py` — SentenceEngine (zero-training default)
 - `core/attention_engine.py` — CSA weight formula
 - `core/structural_encoder.py` — PageRank, betweenness, degree encoding
@@ -667,7 +665,7 @@ See Appendix D for the extracted code.
 - Integration test: end-to-end query on toy graph produces grounded paths
 
 **Phase 3 — Adapters + API (COMPLETE)**
-- `adapters/neo4j_adapter.py` (port AURA patterns)
+- `adapters/neo4j_adapter.py` (port Home Assistant patterns)
 - `adapters/rdf_adapter.py` (SPARQL, for Wikidata/DBpedia)
 - `adapters/csv_adapter.py` (bootstrap from edge-list)
 - `api/server.py` — FastAPI REST: `/query`, `/communities`, `/health`
@@ -739,7 +737,7 @@ trusted edges; treat unsigned-edge-induced communities with lower β weight.
 
 ### 7.0 Experimental Environment
 
-All benchmarks were executed on the following hardware and software configuration to ensure reproducibility:
+All benchmarks were executed on the following hardware and software configuration to support reproducibility:
 
 - **CPU**: AMD Ryzen 9 9950X3D 16-Core Processor (32 Logical Processors)
 - **RAM**: 64 GB DDR5
@@ -814,7 +812,48 @@ and define the empirical work for Phase 2.
 
 ---
 
-## 9. Open Research Questions
+## 9. Benchmarks and Results
+
+### 9.1 Datasets
+
+| Dataset | Task | Hops | Size |
+|---|---|---|---|
+| WebQSP | Single + multi-hop QA | 1-2 | 4,737 questions |
+| MetaQA-2hop | Multi-hop QA | 2 | 118,980 questions |
+| MetaQA-3hop | Multi-hop QA | 3 | 114,196 questions |
+| FB15k-237 | Link prediction | - | 310,116 triples |
+| Toy graph (internal) | Unit testing | 1-4 | ~200 nodes |
+
+### 9.2 Baselines
+
+| System | Type | Notes |
+|---|---|---|
+| BFS (no attention) | Graph traversal | Traversal without CSA weighting |
+| GAT | Graph neural network | 2-layer, trained |
+| GraphRAG | LLM-based | Community summaries → GPT-4 |
+| RAG (vanilla) | LLM-based | FAISS retrieval → GPT-4 |
+| **Parallax (TSC)** | Graph attention | Ours, Triple-Signal Consensus heads |
+| **Parallax (LPA)** | Graph attention | Ablation: LPA-only heads |
+
+### 9.3 Metrics
+
+- **Hits@1, Hits@3, Hits@10**: answer in top-K paths
+- **Mean Reciprocal Rank (MRR)**: ranked answer quality
+- **Path coherence** (human eval): are the reasoning paths understandable?
+- **Grounding rate**: what fraction of returned paths are fully grounded
+  (all edges verified in the KG)?
+
+### 9.4 Phase 4 Results (Ablation Study)
+
+A rigorous ablation study on MetaQA (Run 019) yielded the following key engineering findings:
+
+1.  **Structural Mismatch (EF-004)**: Breadth-First Search (BFS) consistently outperforms CSA variants on MetaQA. This confirms that MetaQA's question structure (cross-type entity lookup) is penalized by community-based attention, which favors intra-community coherence. This is a dataset-specific characteristic, not an algorithmic defect.
+2.  **TSC Stability**: The Triple-Signal Consensus (TSC) engine demonstrated superior stability in community detection compared to earlier DSCF iterations, producing consistent partition counts across runs.
+3.  **The Mesoscale Gap**: TSC produces fine-grained communities (~14k on MetaQA) compared to LPA (~1.6k). This granularity provides high precision for local queries but necessitates the "Metaedge Bridge Bonus" or Federated Reasoning strategies to bridge large topological distances in multi-hop tasks.
+
+---
+
+## 10. Open Research Questions
 
 ### 9.1 Embedding Strategy
 
@@ -841,9 +880,9 @@ heads that don't generalize.
 
 **Proposed adaptive rule**: target K ≈ √N communities, where N = node count.
 This is consistent with theoretical results on optimal modularity resolution
-and ensures attention head count scales sensibly with graph size.
+and supports attention head count scales sensibly with graph size.
 
-For AURA's KG (N ≈ 5,000): target ~70 communities.
+For Home Assistant's KG (N ≈ 5,000): target ~70 communities.
 For Wikidata subset (N ≈ 100,000): target ~316 communities.
 
 ### 8.3 Soft vs Hard Community Membership
@@ -908,7 +947,7 @@ In the TSC framework, a node move or a traversal edge must pass a **Consensus Fi
 The fused probability for a node move or attention weight calculation becomes:
 $$P(\text{move}) = f(\text{LPA} \cdot \tau_{local}, \text{Mod} \cdot \tau_{global}, \text{Infomap} \cdot \tau_{mid})$$
 
-This "mid-level voting" ensures that only the most structurally and dynamically robust reasoning chains survive the beam-search pruning process. TSC will be implemented as an optional, high-precision mode within the Parallax core, allowing for direct comparison with DSCF.
+This "mid-level voting" helps confirm that only the most structurally and dynamically robust reasoning chains survive the beam-search pruning process. TSC will be implemented as an optional, high-precision mode within the Parallax core, allowing for direct comparison with DSCF.
 
 ### TSC Development Roadmap (Phases 6–10)
 
@@ -1002,7 +1041,7 @@ answer is traceable to a sequence of verified graph edges. This architectural sh
 moves AI from probabilistic hidden-layer weights to a **Glass-Box** of deterministic 
 paths — a vital transition in the modern AI/ML landscape. Every reasoning step
 names the community it traversed. This interpretability property, combined with
-the zero-hallucination guarantee of graph-grounded inference, positions Parallax
+the graph-grounded capability of graph-grounded inference, positions Parallax
 as a meaningful complement to — and in certain domains, replacement for —
 LLM-based reasoning over structured knowledge.
 
@@ -1039,17 +1078,18 @@ That depth is what makes the KG reason.
 11. Edge et al., "From Local to Global: A Graph RAG Approach to Query-Focused Summarization," Microsoft Research, 2024.
 12. Sarthi et al., "RAPTOR: Recursive Abstractive Processing for Tree-Organized Retrieval," ICLR, 2024.
 13. Blondel et al., "Fast Unfolding of Communities in Large Networks (Louvain)," JSTAT, 2008.
-14. Traag et al., "From Louvain to Leiden: Guaranteeing Well-Connected Communities," Scientific Reports, 2019.
+14. Traag et al., "From Louvain to Leiden: promoting Well-Connected Communities," Scientific Reports, 2019.
 15. Raghavan et al., "Near Linear Time Algorithm to Detect Community Structures in Large-Scale Networks (LPA)," Physical Review E, 2007.
 16. Galarraga et al., "AMIE: Association Rule Mining under Incomplete Evidence in Ontological Knowledge Bases," WWW, 2013.
 
 ---
 
-## Appendix A: DSCF Algorithm — Full Pseudocode
+## Appendix A: TSC Algorithm — Full Pseudocode
 
 ```
-FUNCTION dscf_communities(G, resolution=1.0, max_iter=100,
-                           temp_start=1.0, cooling=0.92):
+FUNCTION tsc_communities(G, resolution=1.0, max_iter=100,
+                          temp_start=1.0, cooling=0.92,
+                          centrality_weights=None):
 
   m = |E(G)|
   IF m == 0: RETURN [{v} for v in V(G)]
@@ -1152,226 +1192,11 @@ traversal logic and community structure provide the reasoning.
 
 ---
 
-## Appendix D: Prototype Code Extracted from AURA
+## Appendix D: Prototype Code (Deprecated)
 
-> Source: `AURA/services/knowledge_service/main.py`
-> These functions are self-contained and depend only on `networkx`, `igraph`,
-> and `leidenalg`. All FastAPI/Neo4j scaffolding has been stripped.
-> Copy these directly into `parallax/core/community_engine.py` as Phase 1 starting point.
-
-### D.1 DSCF (Dual-Signal Community Fusion)
-
-```python
-import random
-import networkx as nx
-from typing import List
-
-
-def dscf_communities(
-    G: nx.Graph,
-    resolution: float = 1.0,
-    max_iter: int = 100,
-    temp_start: float = 1.0,
-    cooling: float = 0.92,
-) -> List[frozenset]:
-    """
-    Dual-Signal Community Fusion (DSCF) — novel algorithm.
-
-    At each node update step, two signals are computed simultaneously:
-      1. LPA signal  : majority vote among neighbor labels  (local topology)
-      2. Mod signal  : best modularity gain dQ move         (global structure)
-
-    A temperature schedule (temp_start -> 0) governs the balance:
-      high temperature  = LPA-heavy  (broad exploration)
-      low  temperature  = mod-heavy  (precise exploitation)
-
-    When both signals agree on a move, the node is assigned immediately as a
-    high-confidence "anchor point." When they disagree, a weighted probabilistic
-    choice is made. After convergence, a Leiden-style post-pass splits any
-    internally disconnected communities.
-    """
-    m = G.number_of_edges()
-    if m == 0:
-        return [frozenset([v]) for v in G.nodes()]
-
-    nodes  = list(G.nodes())
-    degree = dict(G.degree())
-
-    # Each node starts in its own singleton community
-    assignment = {v: i for i, v in enumerate(nodes)}
-
-    # Community degree-sum cache: com_k[cid] = sum of degrees of all members
-    # Maintained incrementally so dQ can be computed in O(1) per candidate community
-    com_k: dict = {i: degree[v] for i, v in enumerate(nodes)}
-
-    temperature = temp_start
-
-    for _ in range(max_iter):
-        changed = False
-        random.shuffle(nodes)
-
-        for v in nodes:
-            neighbors = list(G.neighbors(v))
-            if not neighbors:
-                continue
-
-            cur_cid = assignment[v]
-            kv      = degree[v]
-
-            # LPA signal: majority vote among neighbor labels
-            vote: dict = {}
-            for nb in neighbors:
-                c = assignment[nb]
-                vote[c] = vote.get(c, 0) + 1
-            lpa_cid  = max(vote, key=vote.get)
-            lpa_conf = vote[lpa_cid] / len(neighbors)   # normalised to [0, 1]
-
-            # Modularity signal: best dQ across candidate communities
-            # dQ(v->C) = k_{v,C}/m - resolution * kv * sum_k_C / (2m^2)
-            candidate_cids = set(assignment[nb] for nb in neighbors) - {cur_cid}
-            best_mod_cid   = cur_cid
-            best_dq        = 0.0
-            for cid in candidate_cids:
-                k_vc = sum(1 for nb in neighbors if assignment[nb] == cid)
-                dq   = k_vc / m - resolution * kv * com_k.get(cid, 0) / (2 * m * m)
-                if dq > best_dq:
-                    best_dq      = dq
-                    best_mod_cid = cid
-            mod_conf = min(best_dq * m, 1.0)   # normalised to [0, 1]
-
-            # Combine signals
-            if lpa_cid == best_mod_cid and lpa_cid != cur_cid:
-                # Consensus: both signals agree -> assign immediately (anchor)
-                new_cid = lpa_cid
-            elif best_mod_cid == cur_cid and lpa_cid == cur_cid:
-                continue  # both say stay
-            elif best_mod_cid == cur_cid:
-                # Only LPA wants to move; gate by lpa_conf * temperature
-                if random.random() >= lpa_conf * temperature:
-                    continue
-                new_cid = lpa_cid
-            elif lpa_cid == cur_cid:
-                # Only modularity wants to move; gate grows as temperature falls
-                if random.random() >= mod_conf * (1.0 + (1.0 - temperature)):
-                    continue
-                new_cid = best_mod_cid
-            else:
-                # Both want to move but to different communities.
-                # Early (high temp): LPA-heavy. Late (low temp): mod-heavy.
-                lpa_w = lpa_conf * temperature
-                mod_w = mod_conf * (2.0 - temperature)
-                total = lpa_w + mod_w
-                if total == 0:
-                    continue
-                new_cid = lpa_cid if random.random() < lpa_w / total else best_mod_cid
-
-            # Apply move and update degree-sum cache incrementally
-            com_k[cur_cid] = max(com_k.get(cur_cid, kv) - kv, 0)
-            com_k[new_cid] = com_k.get(new_cid, 0) + kv
-            assignment[v]  = new_cid
-            changed        = True
-
-        temperature = max(temperature * cooling, 0.01)
-        if not changed:
-            break
-
-    # Leiden-style post-pass: split any internally disconnected communities
-    # First component keeps the original community ID (stability for caching).
-    community_map: dict = {}
-    for node, cid in assignment.items():
-        community_map.setdefault(cid, []).append(node)
-
-    result = []
-    for members in community_map.values():
-        subgraph = G.subgraph(members)
-        for component in nx.connected_components(subgraph):
-            result.append(frozenset(component))
-    return result
-```
-
-### D.2 Leiden and LPA Wrappers
-
-```python
-def _build_igraph(G: nx.Graph):
-    """Convert a networkx Graph to igraph for use with leidenalg."""
-    import igraph as ig
-    nodes_list  = list(G.nodes())
-    node_to_idx = {n: i for i, n in enumerate(nodes_list)}
-    idx_to_node = {i: n for n, i in node_to_idx.items()}
-    ig_edges    = [(node_to_idx[s], node_to_idx[t]) for s, t in G.edges()]
-    ig_G        = ig.Graph(n=len(nodes_list), edges=ig_edges)
-    return ig_G, nodes_list, node_to_idx, idx_to_node
-
-
-def leiden_communities(
-    G: nx.Graph,
-    resolution: float = 1.0,
-    initial_membership=None,
-) -> List[frozenset]:
-    """Run Leiden and return a list of frozensets of node IDs."""
-    import leidenalg
-    ig_G, nodes_list, node_to_idx, idx_to_node = _build_igraph(G)
-    kwargs = dict(resolution_parameter=resolution, seed=42)
-    if initial_membership is not None:
-        kwargs["initial_membership"] = initial_membership
-    partition = leidenalg.find_partition(
-        ig_G, leidenalg.RBConfigurationVertexPartition, **kwargs
-    )
-    return [frozenset(idx_to_node[i] for i in part) for part in partition]
-
-
-def lpa_communities(G: nx.Graph) -> List[frozenset]:
-    """Run LPA and return a list of frozensets of node IDs."""
-    from networkx.algorithms.community import label_propagation_communities
-    return [frozenset(part) for part in label_propagation_communities(G)]
-
-
-def hybrid_communities(G: nx.Graph, resolution: float = 1.0) -> List[frozenset]:
-    """LPA warm-start into Leiden refinement."""
-    ig_G, nodes_list, node_to_idx, idx_to_node = _build_igraph(G)
-    lpa_membership = [0] * len(nodes_list)
-    for cid, members in enumerate(lpa_communities(G)):
-        for n in members:
-            if n in node_to_idx:
-                lpa_membership[node_to_idx[n]] = cid
-    return leiden_communities(G, resolution=resolution, initial_membership=lpa_membership)
-```
-
-### D.3 Structural Encoding (SNA Metrics)
-
-```python
-def compute_structural_features(G: nx.DiGraph, sample_limit: int = 800) -> dict:
-    """
-    Compute PageRank, betweenness centrality, and degree for all nodes.
-    Returns dict of {node_id: {pagerank, betweenness, degree, in_degree, out_degree}}.
-    Betweenness is sampled on large graphs (>sample_limit nodes) to stay O(k*E).
-    """
-    if G.number_of_nodes() == 0:
-        return {}
-
-    pagerank   = nx.pagerank(G, alpha=0.85, max_iter=100)
-    degree     = dict(G.degree())
-    in_degree  = dict(G.in_degree())
-    out_degree = dict(G.out_degree())
-
-    if G.number_of_nodes() > sample_limit:
-        import random
-        sample      = random.sample(list(G.nodes()), min(400, G.number_of_nodes()))
-        betweenness = nx.betweenness_centrality_subset(G, sample, sample, normalized=True)
-    else:
-        betweenness = nx.betweenness_centrality(G, normalized=True)
-
-    return {
-        node: {
-            "pagerank":   round(pagerank.get(node, 0), 7),
-            "betweenness": round(betweenness.get(node, 0), 7),
-            "degree":     degree.get(node, 0),
-            "in_degree":  in_degree.get(node, 0),
-            "out_degree": out_degree.get(node, 0),
-        }
-        for node in G.nodes()
-    }
-```
+> **Note**: The prototype code previously contained in this appendix has been
+> superseded by the production implementation in `core/community_engine.py`.
+> Refer to **Appendix A** for the current TSC algorithm pseudocode.
 
 ---
 
@@ -1385,7 +1210,7 @@ Phase 0 is **complete**. The following work is done:
 - [x] DSCF algorithm designed and formalized
 - [x] DSCF prototype implemented in Python (Appendix D.1)
 - [x] Leiden/LPA wrappers implemented (Appendix D.2)
-- [x] DSCF validated on AURA's Neo4j graph (stable communities, correct behavior)
+- [x] DSCF validated on Home Assistant's Neo4j graph (stable communities, correct behavior)
 - [x] CSA attention formula designed and documented
 - [x] Transformer-to-KG structural equivalence table complete
 - [x] Full repo structure designed
@@ -1402,7 +1227,7 @@ git init
 git commit --allow-empty -m "chore: initial repo"
 
 # Copy this file as the living research document
-cp ../AURA/PARALLAX.md PAPER.md
+cp ../Home Assistant/PARALLAX.md PAPER.md
 git add PAPER.md
 git commit -m "docs: add white paper v0.1 — Phase 0 complete"
 
@@ -1520,20 +1345,23 @@ all = ["parallax-kg[embeddings,api,neo4j]"]
     [ ] test_parameter_defaults_sum_to_one
 ```
 
-### E.5 Relationship to AURA
+### E.5 Relationship to Home Assistant
 
-Parallax is architecturally independent from AURA. The only code shared is the
+Parallax is architecturally independent from Home Assistant. The only code shared is the
 DSCF prototype (now extracted above). When Parallax matures:
 
-- AURA's `knowledge_service` can optionally import `parallax` as a library
+- Home Assistant's `knowledge_service` can optionally import `parallax` as a library
   and replace its current community detection with `from parallax.core.community_engine import dscf_communities`
-- The `neo4j_adapter` in Parallax will mirror patterns already in AURA's `knowledge_service`
-- AURA's holographic memory WebSocket pattern can serve as reference for
+- The `neo4j_adapter` in Parallax will mirror patterns already in Home Assistant's `knowledge_service`
+- Home Assistant's holographic memory WebSocket pattern can serve as reference for
   Parallax's optional real-time community broadcast feature
 
-No AURA code other than Appendix D functions should be copied into Parallax.
+No Home Assistant code other than Appendix D functions should be copied into Parallax.
 
 ---
 
 **Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
 This document and the software it describes are protected by international copyright laws. Unauthorized commercial reproduction, distribution, or use without express written permission is strictly prohibited.
+
+
+

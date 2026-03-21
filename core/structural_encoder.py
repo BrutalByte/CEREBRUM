@@ -55,20 +55,25 @@ def compute_structural_features(
 def encode_structural_features(
     features: Dict[str, dict],
     dim: int = 64,
+    seed: int = 42,
 ) -> Dict[str, np.ndarray]:
     """
     Project {pagerank, betweenness, log(degree+1)} per node into a
-    d-dimensional float32 vector.
+    d-dimensional float32 vector using a fixed random projection.
 
     Steps:
       1. Build raw [N x 3] feature matrix
       2. Normalize each column to [0, 1]
-      3. Pad with zeros to reach dim dimensions
+      3. Project into d-dimensions via a fixed random matrix W_pos
 
     The result can be added to entity embeddings in STEP 2 of the forward pass:
-        h0_i = LayerNorm(h0_i + W_pos @ structural_features[entity_i])
+        h0_i = LayerNorm(h0_i + structural_features[entity_i])
 
-    When dim == 3, returns the raw normalized features directly.
+    Parameters
+    ----------
+    features : dict from compute_structural_features
+    dim      : target embedding dimension (default 64)
+    seed     : seed for the fixed random projection (default 42)
     """
     if not features:
         return {}
@@ -87,16 +92,26 @@ def encode_structural_features(
     )
 
     # Normalize each column to [0, 1]
-    col_max         = raw.max(axis=0)
+    col_max = raw.max(axis=0)
     col_max[col_max == 0] = 1.0
-    raw             = raw / col_max
+    raw = raw / col_max
 
     n_features = raw.shape[1]
-    if dim <= n_features:
-        result_matrix = raw[:, :dim]
+    if dim == n_features:
+        result_matrix = raw
     else:
-        pad           = np.zeros((len(nodes), dim - n_features), dtype=np.float32)
-        result_matrix = np.concatenate([raw, pad], axis=1)
+        # Fixed random projection matrix (W_pos)
+        # This mixes the 3 structural signals across all d dimensions.
+        rng = np.random.default_rng(seed)
+        # Use uniform distribution [0, 1] to keep results non-negative
+        W_pos = rng.uniform(0, 1, (n_features, dim)).astype(np.float32)
+        
+        # Normalize W_pos rows to keep variance stable
+        row_norms = np.linalg.norm(W_pos, axis=1, keepdims=True)
+        row_norms[row_norms == 0] = 1.0
+        W_pos /= row_norms
+        
+        result_matrix = raw @ W_pos
 
     return {n: result_matrix[i] for i, n in enumerate(nodes)}
 
@@ -177,3 +192,6 @@ def adjacent_community_pairs(
             pairs.add((cu, cv))
             pairs.add((cv, cu))
     return pairs
+
+
+

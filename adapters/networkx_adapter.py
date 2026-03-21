@@ -93,25 +93,67 @@ class NetworkXAdapter(GraphAdapter):
         return edges
 
     def find_entities(self, query: str, top_k: int = 10) -> List[Entity]:
-        """Fuzzy match query against node IDs and labels."""
-        all_nodes = list(self._G.nodes())
+        """
+        Fuzzy match query against node IDs and labels.
+        Uses an internal n-gram index for O(1)-ish performance on large graphs.
+        """
+        if not query:
+            return []
 
-        # Exact match first
+        # 1. Exact match check (fastest)
         if query in self._G:
             exact = self.get_entity(query)
-            rest  = difflib.get_close_matches(query, all_nodes, n=top_k, cutoff=0.4)
-            seen  = {query}
+            # Still do a fuzzy search for alternatives, but put exact first
+            fuzzy = self._fuzzy_search(query, top_k=top_k)
+            seen = {query}
             result = [exact]
-            for n in rest:
-                if n not in seen:
-                    e = self.get_entity(n)
-                    if e:
-                        result.append(e)
-                    seen.add(n)
+            for e in fuzzy:
+                if e.id not in seen:
+                    result.append(e)
+                    seen.add(e.id)
             return result[:top_k]
 
-        matches = difflib.get_close_matches(query, all_nodes, n=top_k, cutoff=0.3)
-        return [self.get_entity(m) for m in matches if self.get_entity(m)]
+        return self._fuzzy_search(query, top_k=top_k)
+
+    def _fuzzy_search(self, query: str, top_k: int = 10) -> List[Entity]:
+        """Internal n-gram based fuzzy search."""
+        if not hasattr(self, "_ngram_index"):
+            self._build_ngram_index()
+
+        q_ngrams = self._get_ngrams(query.lower())
+        scores: Dict[str, float] = {}
+
+        for ng in q_ngrams:
+            for node_id in self._ngram_index.get(ng, []):
+                scores[node_id] = scores.get(node_id, 0.0) + 1.0
+
+        if not scores:
+            return []
+
+        # Normalize by length (Jaccard-like)
+        sorted_ids = sorted(
+            scores.keys(),
+            key=lambda nid: scores[nid] / (len(q_ngrams) + self._node_ngram_len.get(nid, 1)),
+            reverse=True
+        )
+
+        return [self.get_entity(nid) for nid in sorted_ids[:top_k] if self.get_entity(nid)]
+
+    def _get_ngrams(self, text: str, n: int = 3) -> List[str]:
+        return [text[i : i + n] for i in range(len(text) - n + 1)]
+
+    def _build_ngram_index(self):
+        """Build a simple inverted index of n-grams for all node IDs and labels."""
+        self._ngram_index: Dict[str, List[str]] = {}
+        self._node_ngram_len: Dict[str, int] = {}
+
+        for node_id in self._G.nodes():
+            e = self.get_entity(node_id)
+            text = (e.label + " " + node_id).lower() if e else node_id.lower()
+            ngrams = set(self._get_ngrams(text))
+            self._node_ngram_len[node_id] = len(ngrams)
+            for ng in ngrams:
+                self._ngram_index.setdefault(ng, []).append(node_id)
 
     def to_networkx(self) -> nx.Graph:
         return self._G
@@ -155,3 +197,6 @@ class NetworkXAdapter(GraphAdapter):
         for s, p, o in triples:
             G.add_edge(str(s), str(o), relation=str(p))
         return cls(G)
+
+
+

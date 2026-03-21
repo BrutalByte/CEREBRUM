@@ -84,7 +84,7 @@ Traversal is O(B · L · k̄ · d), making it sublinear in graph size for fixed-
 
 7.0 Experimental Environment
 
-All benchmarks were executed on the following hardware and software configuration to ensure reproducibility:
+All benchmarks were executed on the following hardware and software configuration to support reproducibility:
 - CPU: AMD Ryzen 9 9950X3D 16-Core Processor (32 Logical Processors)
 - RAM: 64 GB DDR5
 - OS: Windows 11 Pro (Build 10.0.26220)
@@ -149,8 +149,8 @@ Option B — On-the-fly label embeddings (sentence-transformers): encode entity 
 
 9.2  Adaptive Community Granularity
 The DSCF resolution parameter controls how many communities are formed. Too few communities produce coarse attention heads that miss structure. Too many produce noisy heads that do not generalize.
-Proposed adaptive rule: target K ≈ √N communities, where N = node count. This ensures attention head count scales sensibly with graph size:
-For AURA's KG (N ≈ 5,000): target ~70 communities
+Proposed adaptive rule: target K ≈ √N communities, where N = node count. This supports attention head count scales sensibly with graph size:
+For Home Assistant's KG (N ≈ 5,000): target ~70 communities
 For Wikidata subset (N ≈ 100,000): target ~316 communities
 
 9.3  Soft vs Hard Community Membership
@@ -184,7 +184,7 @@ In the TSC framework, a node move or a traversal edge must pass a **Consensus Fi
 The fused probability for a node move or attention weight calculation becomes:
 $$P(\text{move}) = f(\text{LPA} \cdot \tau_{local}, \text{Mod} \cdot \tau_{global}, \text{Infomap} \cdot \tau_{mid})$$
 
-This "mid-level voting" ensures that only the most structurally and dynamically robust reasoning chains survive the beam-search pruning process. TSC will be implemented as an optional, high-precision mode within the Parallax core, allowing for direct comparison with DSCF.
+This "mid-level voting" helps confirm that only the most structurally and dynamically robust reasoning chains survive the beam-search pruning process. TSC will be implemented as an optional, high-precision mode within the Parallax core, allowing for direct comparison with DSCF.
 
 10. Broader Impact and Applications
 
@@ -226,7 +226,7 @@ The two core contributions — Community-Structured Attention (CSA) and Dual-Sig
 The resulting system produces reasoning paths, not **Black-Box** embeddings. Every
 answer is traceable to a sequence of verified graph edges. This architectural shift 
 moves AI from probabilistic hidden-layer weights to a **Glass-Box** of deterministic 
-paths — a vital transition in the modern AI/ML landscape. Every reasoning step names the community it traversed. This interpretability property, combined with the zero-hallucination guarantee of graph-grounded inference, positions Parallax as a meaningful complement to — and in certain domains, replacement for — LLM-based reasoning over structured knowledge.
+paths — a vital transition in the modern AI/ML landscape. Every reasoning step names the community it traversed. This interpretability property, combined with the graph-grounded capability of graph-grounded inference, positions Parallax as a meaningful complement to — and in certain domains, replacement for — LLM-based reasoning over structured knowledge.
 
 The open questions identified in Section 8 define the research program. The benchmarks in Section 9 define the empirical standard. The architecture in Section 6 defines what to build.
 
@@ -253,6 +253,9 @@ References
 [11] Edge et al., "From Local to Global: A Graph RAG Approach to Query-Focused Summarization," Microsoft Research, 2024.
 [12] Sarthi et al., "RAPTOR: Recursive Abstractive Processing for Tree-Organized Retrieval," ICLR, 2024.
 [13] Blondel et al., "Fast Unfolding of Communities in Large Networks (Louvain)," JSTAT, 2008.
-[14] Traag et al., "From Louvain to Leiden: Guaranteeing Well-Connected Communities," Scientific Reports, 2019.
+[14] Traag et al., "From Louvain to Leiden: promoting Well-Connected Communities," Scientific Reports, 2019.
 [15] Raghavan et al., "Near Linear Time Algorithm to Detect Community Structures in Large-Scale Networks (LPA)," Physical Review E, 2007.
 [16] Galarraga et al., "AMIE: Association Rule Mining under Incomplete Evidence in Ontological Knowledge Bases," WWW, 2013.
+
+
+

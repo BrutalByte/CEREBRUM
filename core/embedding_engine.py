@@ -116,3 +116,6 @@ class SentenceEngine(EmbeddingEngine):
             show_progress_bar=False,
             convert_to_numpy=True,
         ).astype(np.float32)
+
+
+

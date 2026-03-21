@@ -16,7 +16,7 @@ What follows is a reconstruction of that path: the engineering problems that see
 
 1.  Where It Started: A Visualization Problem
 
-The story begins not in a research lab but inside AURA — a self-hosted AI assistant platform being built with a microservices architecture, a Neo4j knowledge graph, and a 3D graph visualization component built on Three.js and react-force-graph-3d. The knowledge graph was alive: every conversation, every ingested document, every retrieved fact was stored as nodes and relationships in Neo4j.
+The story begins not in a research lab but inside Home Assistant — a self-hosted AI assistant platform being built with a microservices architecture, a Neo4j knowledge graph, and a 3D graph visualization component built on Three.js and react-force-graph-3d. The knowledge graph was alive: every conversation, every ingested document, every retrieved fact was stored as nodes and relationships in Neo4j.
 
 The visualization existed. Nodes floated in three-dimensional space, connected by edges representing semantic relationships. It was functional but static. The first request was deceptively simple:
 
@@ -28,7 +28,7 @@ That request — animate the clustering process as it happens — required think
 
 1.1  From Louvain to Leiden
 
-The Leiden algorithm was the natural successor. Published by Traag, Waltman, and van Eck in 2019 as a direct correction to Louvain's known flaw, Leiden adds a refinement phase that guarantees every community in the final partition is internally well-connected. For a live visualization where nodes were meant to physically attract toward their community centroid, a partition with disconnected communities would be visually incoherent — nodes would be pulled toward a centroid that did not represent their actual neighborhood.
+The Leiden algorithm was the natural successor. Published by Traag, Waltman, and van Eck in 2019 as a direct correction to Louvain's known flaw, Leiden adds a refinement phase that promotes every community in the final partition is internally well-connected. For a live visualization where nodes were meant to physically attract toward their community centroid, a partition with disconnected communities would be visually incoherent — nodes would be pulled toward a centroid that did not represent their actual neighborhood.
 
 Leiden was implemented via the leidenalg and igraph Python packages, integrated into the knowledge service as a POST /communities/detect endpoint. The frontend received community assignments over WebSocket and applied a custom d3-force cohesion force that computed per-community centroids at each simulation tick, attracting same-community nodes toward each other. The animation worked: clusters visibly flew together in real-time.
 
@@ -76,7 +76,7 @@ If both signals disagree on which community to move to: execute a weighted proba
 
 Anneal the temperature over iterations: early iterations are LPA-dominated (exploration), late iterations are modularity-dominated (exploitation).
 
-A connectivity post-pass, borrowed from Leiden, splits any community whose induced subgraph is internally disconnected. The result is a partition where every community is locally coherent (LPA ensures this) and globally significant (modularity ensures this). A node ends up in its community because both signals agreed — not just one.
+A connectivity post-pass, borrowed from Leiden, splits any community whose induced subgraph is internally disconnected. The result is a partition where every community is locally coherent (LPA supports this) and globally significant (modularity supports this). A node ends up in its community because both signals agreed — not just one.
 
 2.2  The Structural Duality
 
@@ -156,11 +156,11 @@ Parallax does not need an LLM to reason. An LLM can optionally be used to conver
 
 This inversion is the central claim: Parallax is not a better RAG system. It is a graph that reasons the way a language model reasons — through structured attention over community-organized knowledge — without being a language model.
 
-5.  The Role of AURA in the Genesis
+5.  The Role of Home Assistant in the Genesis
 
-AURA was not incidental to Parallax. Several components that will form Parallax's Phase 1 implementation already exist in AURA's codebase as a direct result of this session:
+Home Assistant was not incidental to Parallax. Several components that will form Parallax's Phase 1 implementation already exist in Home Assistant's codebase as a direct result of this session:
 
-The DSCF algorithm is implemented in Python in services/knowledge_service/main.py, depending only on networkx. It was written, reasoned about, and validated within AURA.
+The DSCF algorithm is implemented in Python in services/knowledge_service/main.py, depending only on networkx. It was written, reasoned about, and validated within Home Assistant.
 
 The full algorithm suite — Leiden, LPA, Hybrid, and DSCF — is exposed via a unified POST /communities/detect endpoint with an algorithm parameter.
 
@@ -170,7 +170,7 @@ The community broadcast WebSocket pattern — sending community_detection_starte
 
 The Neo4j adapter patterns: Cypher query templates, bolt connection management, and entity/relationship schema conventions are all directly portable to Parallax's neo4j_adapter.py.
 
-AURA served as the prototyping environment in which every core Parallax concept was first given code form. The spin-off is a generalization of what AURA proved was possible.
+Home Assistant served as the prototyping environment in which every core Parallax concept was first given code form. The spin-off is a generalization of what Home Assistant proved was possible.
 
 6.  The Name
 
@@ -196,7 +196,7 @@ The output is always a path. Every Parallax answer is a verified sequence of (en
 
 8.  What Comes Next
 
-The white paper defines the theory. The AURA prototype proves the core algorithm works. What remains is to build Parallax as a standalone, framework-agnostic library and to validate the three central hypotheses on standard benchmarks (WebQSP, MetaQA-3hop).
+The white paper defines the theory. The Home Assistant prototype proves the core algorithm works. What remains is to build Parallax as a standalone, framework-agnostic library and to validate the three central hypotheses on standard benchmarks (WebQSP, MetaQA-3hop).
 
 The most important empirical question is H1: do DSCF communities produce better reasoning paths than Leiden-only or LPA-only communities as attention heads? The structural argument is strong. The proof is in the benchmark numbers.
 
@@ -205,3 +205,5 @@ The broader significance — if the hypotheses hold — is that a knowledge grap
 It started with wanting clusters to animate in real-time. It ended with a new way of thinking about what a knowledge graph can do.
 
 Developed in conversation between Bryan Alexander Buchorn (AMP) and Claude Sonnet 4.6 (Anthropic)March 2026
+
+

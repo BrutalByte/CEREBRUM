@@ -10,6 +10,7 @@ class QueryRequest(BaseModel):
     max_hop: int = Field(default=3, ge=1, le=6)
     beam_width: int = Field(default=10, ge=1, le=100)
     edge_types: Optional[List[str]] = Field(default=None, description="Filter traversal to these relation types")
+    edge_type_weights: Optional[Dict[str, float]] = Field(default=None, description="Bridge Bonus: {relation_type -> weight}")
 
 
 class PathNode(BaseModel):
@@ -54,3 +55,6 @@ class HealthResponse(BaseModel):
     embeddings_loaded: bool
     node_count: int = 0
     community_count: int = 0
+
+
+

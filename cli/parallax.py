@@ -13,7 +13,7 @@ import sys
 
 def cmd_query(args):
     from adapters.csv_adapter import load_csv_adapter
-    from core.community_engine import best_of_n_dscf
+    from core.community_engine import best_of_n_dscf, hierarchical_dscf
     from core.embedding_engine import RandomEngine
     from core.attention_engine import CSAEngine
     from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
@@ -27,7 +27,11 @@ def cmd_query(args):
     print(f"Graph: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges")
 
     # Communities
-    parts        = best_of_n_dscf(G, n_trials=3, seed=42)
+    if args.hierarchical:
+        parts = hierarchical_dscf(G, target_communities=args.target_communities)
+    else:
+        parts = best_of_n_dscf(G, n_trials=3, seed=42)
+        
     community_map = {}
     for cid, members in enumerate(parts):
         for node in members:
@@ -42,10 +46,26 @@ def cmd_query(args):
         labels[node] = e.label if e else node
     embeddings = engine.encode_entities(labels)
 
+    # Bridge Bonus
+    bridge_weights = {}
+    if args.bridge_bonus:
+        try:
+            bridge_weights = json.loads(args.bridge_bonus)
+        except json.JSONDecodeError:
+            # Fallback to key:val,key:val
+            for pair in args.bridge_bonus.split(","):
+                if ":" in pair:
+                    k, v = pair.split(":")
+                    bridge_weights[k] = float(v)
+
     # CSA
     dist = build_community_distance_matrix(G, community_map)
     adj  = adjacent_community_pairs(G, community_map)
-    csa  = CSAEngine(communities=community_map, embeddings=embeddings)
+    csa  = CSAEngine(
+        communities=community_map, 
+        embeddings=embeddings,
+        edge_type_weights=bridge_weights
+    )
     csa.set_community_graph(dist, adj)
 
     # Traversal
@@ -79,12 +99,17 @@ def cmd_query(args):
 
 def cmd_communities(args):
     from adapters.csv_adapter import load_csv_adapter
-    from core.community_engine import best_of_n_dscf, modularity_score
+    from core.community_engine import best_of_n_dscf, hierarchical_dscf, modularity_score
 
     adapter = load_csv_adapter(args.csv)
     G       = adapter.to_networkx()
-    parts   = best_of_n_dscf(G, n_trials=5, seed=42)
-    q       = modularity_score(G, parts)
+    
+    if args.hierarchical:
+        parts = hierarchical_dscf(G, target_communities=args.target_communities)
+    else:
+        parts = best_of_n_dscf(G, n_trials=5, seed=42)
+        
+    q = modularity_score(G, parts)
 
     print(f"Graph: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges")
     print(f"Communities: {len(parts)}  |  Modularity Q: {q:.4f}")
@@ -109,7 +134,25 @@ def cmd_serve(args):
 
     adapter = load_csv_adapter(args.csv)
     engine  = RandomEngine(dim=64)
-    app     = create_app(adapter=adapter, embedding_engine=engine)
+
+    # Bridge Bonus
+    bridge_weights = {}
+    if args.bridge_bonus:
+        try:
+            bridge_weights = json.loads(args.bridge_bonus)
+        except json.JSONDecodeError:
+            for pair in args.bridge_bonus.split(","):
+                if ":" in pair:
+                    k, v = pair.split(":")
+                    bridge_weights[k] = float(v)
+
+    app     = create_app(
+        adapter=adapter,
+        embedding_engine=engine,
+        hierarchical_dscf_enabled=args.hierarchical,
+        target_communities=args.target_communities,
+        default_edge_type_weights=bridge_weights,
+    )
 
     print(f"Serving Parallax API on http://localhost:{args.port}")
     uvicorn.run(app, host="0.0.0.0", port=args.port)
@@ -130,15 +173,23 @@ def main():
     q.add_argument("--max-hop", type=int, default=3, dest="max_hop")
     q.add_argument("--beam-width", type=int, default=10, dest="beam_width")
     q.add_argument("--json", action="store_true", help="Output as JSON")
+    q.add_argument("--hierarchical", action="store_true", help="Use hierarchical DSCF")
+    q.add_argument("--target-communities", type=int, default=500, dest="target_communities")
+    q.add_argument("--bridge-bonus", help="JSON or 'key:val,key:val' for edge weights")
 
     # communities
     c = sub.add_parser("communities", help="Show detected communities")
     c.add_argument("--csv", required=True, help="Path to edge-list CSV")
+    c.add_argument("--hierarchical", action="store_true", help="Use hierarchical DSCF")
+    c.add_argument("--target-communities", type=int, default=500, dest="target_communities")
 
     # serve
     s = sub.add_parser("serve", help="Start the REST API server")
     s.add_argument("--csv", required=True, help="Path to edge-list CSV")
     s.add_argument("--port", type=int, default=8200)
+    s.add_argument("--hierarchical", action="store_true", help="Use hierarchical DSCF for API server")
+    s.add_argument("--target-communities", type=int, default=500, dest="target_communities", help="Target communities for hierarchical DSCF")
+    s.add_argument("--bridge-bonus", help="JSON or 'key:val,key:val' for default API edge weights")
 
     args = parser.parse_args()
 
@@ -152,3 +203,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+

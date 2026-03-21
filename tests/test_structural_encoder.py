@@ -214,3 +214,6 @@ def test_no_intra_community_pairs():
     pairs            = adjacent_community_pairs(G, community_map)
     for (ci, cj) in pairs:
         assert ci != cj, f"Intra-community pair ({ci}, {cj}) found in adjacent pairs"
+
+
+

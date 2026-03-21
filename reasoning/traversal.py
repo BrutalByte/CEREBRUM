@@ -6,7 +6,8 @@ candidate next-hop using CSA attention weights and pruning to beam_width at
 each step. Returns all explored paths for downstream ranking.
 """
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Set
+import heapq
 
 import numpy as np
 
@@ -25,6 +26,9 @@ class TraversalPath:
     Entity nodes are at even indices; relation labels at odd indices.
     """
 
+    seen_entities: Set[str] = field(default_factory=set)
+    """Set of all entity IDs in the path (for cycle detection)."""
+
     embedding: Optional[np.ndarray] = None
     """Current aggregated embedding (updated at each hop)."""
 
@@ -36,6 +40,12 @@ class TraversalPath:
 
     community_sequence: List[int] = field(default_factory=list)
     """Community ID of each entity node visited."""
+
+    def __post_init__(self):
+        # Confirm seen_entities is populated if nodes is provided
+        if not self.seen_entities and self.nodes:
+            for i in range(0, len(self.nodes), 2):
+                self.seen_entities.add(self.nodes[i])
 
     @property
     def head(self) -> str:
@@ -55,6 +65,42 @@ class TraversalPath:
     @property
     def hop_depth(self) -> int:
         return len(self.attention_weights)
+
+    def copy_with_extension(
+        self, 
+        rel: str, 
+        v: str, 
+        v_cid: int, 
+        v_emb: np.ndarray, 
+        weight: float,
+        coherence_score: float,
+    ) -> "TraversalPath":
+        """
+        Create a new path by extending this one with an edge.
+        Aggregates embedding: ReLU(w * v_emb + h) + h (residual) followed by LayerNorm.
+        """
+        # 1. New sequence
+        new_nodes = self.nodes + [rel, v]
+        new_seen  = self.seen_entities | {v}
+        new_cseq  = self.community_sequence + [v_cid]
+        
+        # 2. Embedding aggregation (STEP 3)
+        # ReLU(w * v_emb + h) + h
+        h_agg = np.maximum(0.0, weight * v_emb + self.embedding) + self.embedding
+        
+        # 3. LayerNorm (approximated via L2-norm normalization)
+        norm = float(np.linalg.norm(h_agg))
+        if norm > 0:
+            h_agg = h_agg / norm
+            
+        return TraversalPath(
+            nodes=new_nodes,
+            seen_entities=new_seen,
+            embedding=h_agg,
+            score=self.score * weight * coherence_score,
+            attention_weights=self.attention_weights + [weight],
+            community_sequence=new_cseq,
+        )
 
     def __repr__(self) -> str:
         chain = " -> ".join(
@@ -117,10 +163,17 @@ class BeamTraversal:
         beam: List[TraversalPath] = []
         for seed in seeds:
             emb = self.embeddings.get(seed, np.zeros(emb_dim, dtype=np.float32))
+            
+            # STEP 2 LayerNorm (initial)
+            norm = float(np.linalg.norm(emb))
+            if norm > 0:
+                emb = emb / norm
+                
             cid = self.communities.get(seed, -1)
             beam.append(
                 TraversalPath(
                     nodes=[seed],
+                    seen_entities={seed},
                     embedding=emb.copy(),
                     score=1.0,
                     community_sequence=[cid] if cid >= 0 else [],
@@ -141,8 +194,8 @@ class BeamTraversal:
                 for edge in edges:
                     v = edge.target_id
 
-                    # Avoid revisiting entities already in the path
-                    if v in path.entity_nodes:
+                    # Avoid revisiting entities already in the path (O(1) now)
+                    if v in path.seen_entities:
                         continue
 
                     # CSA attention weight
@@ -154,34 +207,32 @@ class BeamTraversal:
                         edge_type_weights=self.edge_type_weights,
                     )
 
-                    # Embedding aggregation with residual + LayerNorm
-                    v_emb   = self.embeddings.get(v, np.zeros(emb_dim, dtype=np.float32))
-                    h_new   = np.maximum(0.0, w * v_emb + path.embedding) + path.embedding
-                    norm    = float(np.linalg.norm(h_new))
-                    if norm > 0:
-                        h_new = h_new / norm
-
-                    # Path metadata
-                    new_nodes  = path.nodes + [edge.relation_type, v]
-                    new_cseq   = path.community_sequence + [self.communities.get(v, -1)]
-                    coh        = community_coherence(new_cseq)
-                    new_score  = path.score * w * coh
-
-                    candidates.append(
-                        TraversalPath(
-                            nodes=new_nodes,
-                            embedding=h_new,
-                            score=new_score,
-                            attention_weights=path.attention_weights + [w],
-                            community_sequence=new_cseq,
-                        )
+                    # Path metadata and extension
+                    v_emb = self.embeddings.get(v, np.zeros(emb_dim, dtype=np.float32))
+                    v_cid = self.communities.get(v, -1)
+                    
+                    # Compute community coherence for the candidate step
+                    coh = community_coherence(path.community_sequence + [v_cid])
+                    
+                    new_path = path.copy_with_extension(
+                        rel=edge.relation_type,
+                        v=v,
+                        v_cid=v_cid,
+                        v_emb=v_emb,
+                        weight=w,
+                        coherence_score=coh
                     )
+                    candidates.append(new_path)
 
             if not candidates:
                 break
 
-            candidates.sort(key=lambda p: p.score, reverse=True)
-            beam = candidates[: self.beam_width]
+            # Efficiently pick top B candidates
+            if len(candidates) > self.beam_width:
+                beam = heapq.nlargest(self.beam_width, candidates, key=lambda p: p.score)
+            else:
+                beam = sorted(candidates, key=lambda p: p.score, reverse=True)
+                
             all_paths.extend(beam)
 
         return all_paths
@@ -191,3 +242,6 @@ class BeamTraversal:
         for v in self.embeddings.values():
             return len(v)
         return 64
+
+
+

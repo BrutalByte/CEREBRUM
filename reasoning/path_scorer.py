@@ -101,3 +101,6 @@ def score_path(
         wa = weight_attention / total
         wc = weight_community / total
         return wa * attention_score + wc * coh
+
+
+

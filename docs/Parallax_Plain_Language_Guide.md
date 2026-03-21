@@ -228,7 +228,7 @@ Can create disconnected communities
 
 Leiden
 
-Guarantees connected communities
+promotes connected communities
 
 Optimizes only for global structure
 
@@ -252,7 +252,7 @@ The key idea: every existing algorithm uses one signal to decide where each node
 
 The Aircraft Analogy: Mid-Level Voting
 
-The inspiration for this "two-signal" approach comes from the world of aviation. High-stakes aircraft navigation systems use **mid-level voting** to ensure safety. Instead of trusting a single sensor, the flight computer takes inputs from three independent sources and selects the middle value. This "vote" automatically rejects any single sensor that is giving a wrong (outlier) reading.
+The inspiration for this "two-signal" approach comes from the world of aviation. High-stakes aircraft navigation systems use **mid-level voting** to promote safety. Instead of trusting a single sensor, the flight computer takes inputs from three independent sources and selects the middle value. This "vote" automatically rejects any single sensor that is giving a wrong (outlier) reading.
 
 Parallax applies this same principle to AI reasoning. By requiring consensus between different structural signals, it "rights the navigation errors"—or hallucinations—that are so common in current language models. 
 
@@ -401,7 +401,7 @@ Hypothesis 3: Parallax Paths Are More Understandable
 
 The claim: when humans are shown Parallax's reasoning paths alongside LLM-generated reasoning chains for the same questions, they find Parallax's paths more coherent and easier to verify.
 
-How it's tested: a human evaluation study with at least three independent annotators rating reasoning chains. Inter-annotator agreement is measured to ensure the ratings are consistent.
+How it's tested: a human evaluation study with at least three independent annotators rating reasoning chains. Inter-annotator agreement is measured to check that the ratings are consistent.
 
 The Benchmarks
 
@@ -428,11 +428,13 @@ The results are encouraging:
 3.  **Real-world recall**: In general knowledge tests (WebQSP), Parallax's ability to keep the correct answer within its "top 10" candidates was significantly higher than the baseline.
 4.  **Zero Training**: Most AI systems require weeks of expensive "training" on powerful computers. Parallax achieved these results "out of the box" without any training at all, proving the power of its structural reasoning.
 
+5.  **Learning from Failure (MetaQA)**: Science isn't just about success. On the MetaQA movie dataset, we found that sometimes community structure can fight you. Because movie questions always jump between types (e.g., Movie → Actor), staying in the same community is actually wrong. This "Structural Mismatch" taught us to add a **Bridge Bonus** for questions that need to cross boundaries, making the system smarter.
+
 This proves that our core idea — that graph structure can guide reasoning just like attention guides a Transformer — is not just a theory. It works in practice, even in highly complex domains like medicine.
 
 **Experiment Conditions**
 
-To ensure these results are reliable and can be repeated by other researchers, we documented the exact setup used for our tests:
+To support the reliability of these results are reliable and can be repeated by other researchers, we documented the exact setup used for our tests:
 - **Processor**: AMD Ryzen 9 9950X3D (High-performance 16-core research processor)
 - **Memory**: 64 GB DDR5 RAM
 - **Software**: Windows 11 Pro, Python 3.14.0
@@ -472,3 +474,5 @@ Questions? Contact the author:
 Bryan Alexander Buchorn  —  bryan.alexander@buchorn.com
 
 End of Guide  —  Version 1.0  —  March 2026
+
+

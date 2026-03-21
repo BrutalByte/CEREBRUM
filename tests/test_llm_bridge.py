@@ -221,3 +221,6 @@ class TestToStructured:
     def test_empty_answers_returns_empty_paths(self):
         result = to_structured([], query="test")
         assert result["paths"] == []
+
+
+

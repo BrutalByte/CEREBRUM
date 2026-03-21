@@ -94,3 +94,6 @@ Implement the abstract `GraphAdapter` interface in `core/graph_adapter.py`, foll
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)
 - Synthetic graph helpers (`make_two_cliques()`, etc.) live in `tests/` for unit tests that don't need the CSV fixture
+
+
+

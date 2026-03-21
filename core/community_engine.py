@@ -6,8 +6,8 @@ it produces the attention head structure used by CSA.
 
 Also includes Leiden, LPA, and hybrid wrappers for ablation studies.
 
-Source: ported from AURA services/knowledge_service/main.py with
-AURA-specific scaffolding (FastAPI, Neo4j) removed.
+Source: ported from Home Assistant services/knowledge_service/main.py with
+Home Assistant-specific scaffolding (FastAPI, Neo4j) removed.
 """
 import random
 from typing import List
@@ -25,37 +25,27 @@ def dscf_communities(
     max_iter: int = 100,
     temp_start: float = 1.0,
     cooling: float = 0.92,
+    force_connectivity: bool = True,
+    centrality_weights: Optional[dict] = None,
 ) -> List[frozenset]:
     """
-    Dual-Signal Community Fusion (DSCF) — novel algorithm.
-
-    At each node update step, two signals are computed simultaneously:
-      1. LPA signal  : majority vote among neighbor labels  (local topology)
-      2. Mod signal  : best modularity gain dQ move         (global structure)
-
-    A temperature schedule (temp_start -> 0.01) governs the balance:
-      high temperature  = LPA-heavy  (broad exploration)
-      low  temperature  = mod-heavy  (precise exploitation)
-
-    When both signals agree on a move, the node is assigned immediately as a
-    high-confidence "anchor point." When they disagree, a weighted probabilistic
-    choice is made governed by temperature.
-
-    After convergence, a Leiden-style post-pass splits any internally
-    disconnected communities. The first connected component of each split
-    community retains the original ID (important for community_score caching).
-
-    This combination of simultaneously evaluated LPA + modularity signals
-    at each node update has not been published in the community detection
-    literature as of the author's knowledge cutoff (August 2025).
+    Triple-Signal Consensus (TSC) Community Detection.
+    
+    Extension of DSCF with a third signal:
+      1. LPA signal  : majority vote (local topology)
+      2. Mod signal  : modularity gain (global structure)
+      3. Cent signal : centrality-weighted vote (structural significance)
 
     Parameters
     ----------
-    G          : NetworkX graph
-    resolution : controls community granularity; higher = more communities
-    max_iter   : maximum iterations before forced stop
-    temp_start : starting temperature (1.0 = LPA/mod balanced)
-    cooling    : multiplicative cooling factor per iteration
+    G                  : NetworkX graph
+    resolution         : controls community granularity; higher = more communities
+    max_iter           : maximum iterations before forced stop
+    temp_start         : starting temperature (1.0 = LPA/mod balanced)
+    cooling            : multiplicative cooling factor per iteration
+    force_connectivity : if True, splits disconnected communities (Leiden-style)
+    centrality_weights : optional {node_id -> float} e.g. from PageRank.
+                         If provided, enables the third TSC signal.
 
     Returns
     -------
@@ -89,52 +79,80 @@ def dscf_communities(
             cur_cid = assignment[v]
             kv      = degree[v]
 
-            # -- LPA signal: majority vote among neighbor labels ---------------
-            vote: dict = {}
+            # 1. Count neighbor community memberships in a single pass — O(degree)
+            neighbor_com_counts: dict = {}
+            neighbor_cent_sums: dict = {}  # For TSC signal
             for nb in neighbors:
-                c = assignment[nb]
-                vote[c] = vote.get(c, 0) + 1
-            lpa_cid  = max(vote, key=vote.get)
-            lpa_conf = vote[lpa_cid] / len(neighbors)   # [0, 1]
+                cid = assignment[nb]
+                neighbor_com_counts[cid] = neighbor_com_counts.get(cid, 0) + 1
+                
+                if centrality_weights:
+                    cw = centrality_weights.get(nb, 1.0)
+                    neighbor_cent_sums[cid] = neighbor_cent_sums.get(cid, 0.0) + cw
+            
+            # 2. LPA signal (majority vote)
+            lpa_cid  = max(neighbor_com_counts, key=neighbor_com_counts.get)
+            lpa_conf = neighbor_com_counts[lpa_cid] / len(neighbors)
 
-            # -- Modularity signal: best dQ across candidate communities -------
+            # 3. Modularity signal (best dQ) — O(number of neighbor communities)
             # dQ(v->C) = k_{v,C}/m - resolution * kv * sum_k_C / (2m^2)
-            candidate_cids = set(assignment[nb] for nb in neighbors) - {cur_cid}
-            best_mod_cid   = cur_cid
-            best_dq        = 0.0
-            for cid in candidate_cids:
-                k_vc = sum(1 for nb in neighbors if assignment[nb] == cid)
-                dq   = k_vc / m - resolution * kv * com_k.get(cid, 0) / (2 * m * m)
+            best_mod_cid = cur_cid
+            best_dq      = 0.0
+            for cid, k_vc in neighbor_com_counts.items():
+                if cid == cur_cid:
+                    continue
+                dq = k_vc / m - resolution * kv * com_k.get(cid, 0) / (2 * m * m)
                 if dq > best_dq:
                     best_dq      = dq
                     best_mod_cid = cid
-            mod_conf = min(best_dq * m, 1.0)            # [0, 1]
+            mod_conf = min(best_dq * m, 1.0)
 
-            # -- Combine signals -----------------------------------------------
-            if lpa_cid == best_mod_cid and lpa_cid != cur_cid:
-                # Consensus: both agree -> anchor point, assign immediately
-                new_cid = lpa_cid
-            elif best_mod_cid == cur_cid and lpa_cid == cur_cid:
-                continue   # both say stay
-            elif best_mod_cid == cur_cid:
-                # Only LPA wants to move
-                if random.random() >= lpa_conf * temperature:
-                    continue
-                new_cid = lpa_cid
-            elif lpa_cid == cur_cid:
-                # Only modularity wants to move; gate grows as temperature falls
-                if random.random() >= mod_conf * (1.0 + (1.0 - temperature)):
-                    continue
-                new_cid = best_mod_cid
+            # 4. TSC: Centrality signal
+            if centrality_weights:
+                cent_cid  = max(neighbor_cent_sums, key=neighbor_cent_sums.get)
+                cent_conf = neighbor_cent_sums[cent_cid] / sum(neighbor_cent_sums.values())
             else:
-                # Both want to move but to different communities.
-                # Early (high temp): LPA-heavy.  Late (low temp): mod-heavy.
-                lpa_w = lpa_conf * temperature
-                mod_w = mod_conf * (2.0 - temperature)
-                total = lpa_w + mod_w
-                if total == 0:
+                cent_cid, cent_conf = lpa_cid, lpa_conf
+
+            # 5. Combine signals with Consensus Logic --------------------------
+            # 5.1 Consensus Stay check
+            if lpa_cid == cur_cid and best_mod_cid == cur_cid and cent_cid == cur_cid:
+                continue
+
+            # 5.2 Full Consensus Move check (High Confidence Anchor)
+            if lpa_cid == best_mod_cid == cent_cid:
+                new_cid = lpa_cid
+            else:
+                # 5.3 Signal Competition (Weighted Random Choice)
+                # Weighted random choice among signals governed by temperature
+                lpa_w  = lpa_conf * temperature
+                mod_w  = mod_conf * (2.0 - temperature)
+                cent_w = cent_conf * (1.5 - temperature) if centrality_weights else 0.0
+                
+                # Boost consensus pairs (Pairwise Consensus)
+                if lpa_cid == cent_cid: lpa_w *= 1.5; cent_w *= 1.5
+                if lpa_cid == best_mod_cid: lpa_w *= 1.5; mod_w *= 1.5
+                if cent_cid == best_mod_cid: cent_w *= 1.5; mod_w *= 1.5
+                
+                # Penalize signals that want to stay when others want to move
+                if lpa_cid == cur_cid: lpa_w *= 0.1
+                if best_mod_cid == cur_cid: mod_w *= 0.1
+                if cent_cid == cur_cid: cent_w *= 0.1
+
+                total = lpa_w + mod_w + cent_w
+                if total <= 0:
+                    continue # Should have been caught by 5.1 but for safety
+                    
+                roll = random.random() * total
+                if roll < lpa_w:
+                    new_cid = lpa_cid
+                elif roll < lpa_w + mod_w:
+                    new_cid = best_mod_cid
+                else:
+                    new_cid = cent_cid
+                
+                if new_cid == cur_cid:
                     continue
-                new_cid = lpa_cid if random.random() < lpa_w / total else best_mod_cid
 
             # Apply move and update degree-sum cache incrementally
             com_k[cur_cid] = max(com_k.get(cur_cid, kv) - kv, 0)
@@ -146,18 +164,90 @@ def dscf_communities(
         if not changed:
             break
 
-    # Leiden-style post-pass: split any internally disconnected communities.
-    # The first component of each split retains the original ID for cache stability.
     community_map: dict = {}
     for node, cid in assignment.items():
         community_map.setdefault(cid, []).append(node)
 
+    if not force_connectivity:
+        return [frozenset(members) for members in community_map.values()]
+
+    # Leiden-style post-pass: split any internally disconnected communities.
     result = []
     for members in community_map.values():
         subgraph = G.subgraph(members)
         for component in nx.connected_components(subgraph):
             result.append(frozenset(component))
     return result
+
+
+def hierarchical_dscf(
+    G: nx.Graph,
+    resolution: float = 1.0,
+    max_iter: int = 100,
+    target_communities: int = 500,
+) -> List[frozenset]:
+    """
+    Hierarchical DSCF: runs DSCF then recursively merges communities by
+    running community detection on the community-level graph.
+
+    This is the most principled way to handle over-fragmentation on star
+    topologies while preserving the attention-head abstraction.
+
+    Parameters
+    ----------
+    G                  : original graph
+    resolution         : modularity resolution for base pass
+    max_iter           : max iterations for base pass
+    target_communities : stop merging when this count is reached
+
+    Returns
+    -------
+    List of frozensets (original nodes)
+    """
+    # 1. Base pass (may over-split)
+    current_parts = dscf_communities(G, resolution=resolution, max_iter=max_iter)
+    
+    while len(current_parts) > target_communities:
+        # 2. Build community graph
+        # Node IDs are indices of current_parts
+        c_graph = nx.Graph()
+        node_to_cid = {}
+        for cid, part in enumerate(current_parts):
+            c_graph.add_node(cid, weight=len(part))
+            for node in part:
+                node_to_cid[node] = cid
+        
+        # Add edges between communities with weights = cross-community edge count
+        has_edges = False
+        for u, v in G.edges():
+            cu = node_to_cid[u]
+            cv = node_to_cid[v]
+            if cu != cv:
+                w = c_graph.get_edge_data(cu, cv, {"weight": 0})["weight"]
+                c_graph.add_edge(cu, cv, weight=w + 1)
+                has_edges = True
+        
+        if not has_edges:
+            break # No more merges possible
+            
+        # 3. Run DSCF on community graph
+        # We use a higher resolution here to favor consolidation
+        meta_parts = dscf_communities(c_graph, resolution=0.5, force_connectivity=False)
+        
+        if len(meta_parts) >= len(current_parts):
+            break # No progress
+            
+        # 4. Map back to original nodes
+        new_parts = []
+        for m_part in meta_parts:
+            combined = []
+            for cid in m_part:
+                combined.extend(list(current_parts[cid]))
+            new_parts.append(frozenset(combined))
+        
+        current_parts = new_parts
+        
+    return current_parts
 
 
 # ---------------------------------------------------------------------------
@@ -187,7 +277,7 @@ def leiden_communities(
     """
     Run the Leiden algorithm and return a list of frozensets.
 
-    Leiden guarantees internally connected communities (unlike Louvain).
+    Leiden promotes internally connected communities (unlike Louvain).
     seed=42 for reproducibility. Pass initial_membership for warm-start.
     """
     import leidenalg
@@ -224,7 +314,7 @@ def hybrid_communities(G: nx.Graph, resolution: float = 1.0) -> List[frozenset]:
     """
     LPA-warm-start Leiden: use LPA partition as initial_membership for Leiden.
 
-    Combines LPA's speed with Leiden's connectivity guarantees. Faster
+    Combines LPA's speed with Leiden's connectivity promotes. Faster
     than cold-start Leiden on large graphs.
     """
     ig_G, nodes_list, node_to_idx, idx_to_node = _build_igraph(G)
@@ -281,7 +371,7 @@ def merge_small_communities(
 
     Returns
     -------
-    New {node -> community_id} dict. Community IDs are not guaranteed
+    New {node -> community_id} dict. Community IDs are not supported
     to be contiguous after merging.
     """
     # -- Phase 1: build community adjacency in O(E) -------------------------
@@ -372,23 +462,55 @@ def best_of_n_dscf(
     resolution: float = 1.0,
     max_iter: int = 100,
     seed: int = None,
+    use_multiprocessing: bool = True,
 ) -> List[frozenset]:
     """
     Run DSCF n_trials times and return the partition with highest modularity.
 
     Recommended for production use to mitigate DSCF's non-determinism.
-    For reproducibility, set seed (seeds Python's random module).
+    Uses multiprocessing by default for faster execution.
     """
     if seed is not None:
         random.seed(seed)
 
-    best_parts  = None
-    best_q      = -1.0
-    for _ in range(n_trials):
-        parts = dscf_communities(G, resolution=resolution, max_iter=max_iter)
-        q     = modularity_score(G, parts)
+    if use_multiprocessing and n_trials > 1:
+        from concurrent.futures import ProcessPoolExecutor
+        import multiprocessing
+        
+        # Determine number of workers (at most n_trials or CPU count)
+        cpus = multiprocessing.cpu_count()
+        workers = min(n_trials, cpus)
+        
+        with ProcessPoolExecutor(max_workers=workers) as executor:
+            # We must pass arguments to dscf_communities. 
+            # Note: G must be pickleable (NetworkX graphs are).
+            futures = [
+                executor.submit(
+                    dscf_communities, 
+                    G, 
+                    resolution=resolution, 
+                    max_iter=max_iter,
+                    # Each process will have its own random state.
+                )
+                for _ in range(n_trials)
+            ]
+            results = [f.result() for f in futures]
+    else:
+        results = [
+            dscf_communities(G, resolution=resolution, max_iter=max_iter)
+            for _ in range(n_trials)
+        ]
+
+    # Select best by modularity score
+    best_parts = None
+    best_q = -1.0
+    for parts in results:
+        q = modularity_score(G, parts)
         if q > best_q:
-            best_q     = q
+            best_q = q
             best_parts = parts
 
     return best_parts
+
+
+

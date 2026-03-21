@@ -2,7 +2,7 @@
 Neo4j graph adapter for Parallax.
 
 Connects to a Neo4j instance via the bolt driver and implements GraphAdapter.
-Patterns ported from AURA services/knowledge_service/main.py.
+Patterns ported from Home Assistant services/knowledge_service/main.py.
 
 Requires: pip install neo4j
 """
@@ -174,3 +174,6 @@ class Neo4jAdapter(GraphAdapter):
             if row.get("src") and row.get("tgt"):
                 G.add_edge(row["src"], row["tgt"], relation=row.get("rel", "RELATED_TO"))
         return G
+
+
+

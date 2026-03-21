@@ -152,3 +152,6 @@ def test_networkx_adapter_from_triples_undirected():
     """directed=False must produce an undirected Graph."""
     adapter = NetworkXAdapter.from_triples([("a", "R", "b")], directed=False)
     assert not adapter.to_networkx().is_directed()
+
+
+

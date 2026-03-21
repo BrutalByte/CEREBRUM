@@ -148,3 +148,6 @@ class RDFAdapter(GraphAdapter):
             rel = row["p"]["value"].split("/")[-1].split("#")[-1]
             G.add_edge(s, o, relation=rel)
         return G
+
+
+

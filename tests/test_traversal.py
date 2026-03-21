@@ -190,3 +190,6 @@ def test_extract_answers_sorted_by_score():
     answers = extract(paths, top_k=10)
     scores  = [a.score for a in answers]
     assert scores == sorted(scores, reverse=True)
+
+
+

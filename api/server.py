@@ -17,8 +17,9 @@ Or programmatically:
 """
 import os
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Optional, Dict
 
+import numpy as np
 from fastapi import FastAPI, HTTPException
 
 from api.schemas import (
@@ -34,13 +35,13 @@ _state = {
     "adapter":          None,
     "community_map":    None,   # {node_id -> community_id}
     "embeddings":       None,   # {node_id -> np.ndarray}
-    "csa_engine":       None,
-    "traversal":        None,
+    "csa_metadata":     None,   # {"distances": dict, "adjacent_pairs": set}
+    "default_edge_type_weights": None,
 }
 
 
 def _is_ready() -> bool:
-    return all(_state[k] is not None for k in ("adapter", "community_map", "embeddings"))
+    return all(_state[k] is not None for k in ("adapter", "community_map", "embeddings", "csa_metadata"))
 
 
 # ---------------------------------------------------------------------------
@@ -51,6 +52,10 @@ def create_app(
     adapter=None,
     embedding_engine=None,
     community_map: Optional[dict] = None,
+    hierarchical_dscf_enabled: bool = False,
+    target_communities: int = 500,
+    default_edge_type_weights: Optional[Dict[str, float]] = None,
+    cache_path: Optional[str] = None,
 ) -> FastAPI:
     """
     Create a configured FastAPI app.
@@ -62,7 +67,15 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         if adapter is not None and embedding_engine is not None:
-            _load(adapter, embedding_engine, community_map)
+            _load(
+                adapter,
+                embedding_engine,
+                community_map,
+                hierarchical_dscf_enabled,
+                target_communities,
+                default_edge_type_weights,
+                cache_path,
+            )
         yield
 
     app = FastAPI(
@@ -91,7 +104,6 @@ def create_app(
             raise HTTPException(status_code=503, detail="Service not ready — call load() first")
 
         from core.attention_engine import CSAEngine
-        from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
         from reasoning.traversal import BeamTraversal
         from reasoning.answer_extractor import extract
         from llm_bridge.context_formatter import to_structured
@@ -99,6 +111,8 @@ def create_app(
         adapter      = _state["adapter"]
         community_map = _state["community_map"]
         embeddings   = _state["embeddings"]
+        csa_meta     = _state["csa_metadata"]
+        default_edge_type_weights = _state["default_edge_type_weights"]
 
         # Resolve seeds
         if req.seeds:
@@ -110,13 +124,15 @@ def create_app(
         if not seeds:
             raise HTTPException(status_code=404, detail=f"No entities found for query: {req.query!r}")
 
-        # Build CSA engine
-        G  = adapter.to_networkx()
-        dist = build_community_distance_matrix(G, community_map)
-        adj  = adjacent_community_pairs(G, community_map)
+        # Build CSA engine using precomputed metadata
+        edge_type_weights_to_use = req.edge_type_weights or default_edge_type_weights
 
-        csa = CSAEngine(communities=community_map, embeddings=embeddings)
-        csa.set_community_graph(dist, adj)
+        csa = CSAEngine(
+            communities=community_map, 
+            embeddings=embeddings,
+            edge_type_weights=edge_type_weights_to_use
+        )
+        csa.set_community_graph(csa_meta["distances"], csa_meta["adjacent_pairs"])
 
         traversal = BeamTraversal(
             adapter=adapter,
@@ -178,39 +194,99 @@ def create_app(
     return app
 
 
-def _load(adapter, embedding_engine, community_map=None):
+def _load(
+    adapter,
+    embedding_engine,
+    community_map=None,
+    hierarchical_dscf_enabled: bool = False,
+    target_communities: int = 500,
+    default_edge_type_weights: Optional[Dict[str, float]] = None,
+    cache_path: Optional[str] = None,
+):
     """Load graph state into the global _state dict."""
     import random
-    from core.community_engine import best_of_n_dscf
+    from core.community_engine import best_of_n_dscf, hierarchical_dscf
+    from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
+    from core.persistence import is_state_cached, load_state, save_state
+
+    # 0. Check cache
+    if cache_path and is_state_cached(cache_path):
+        print(f"  [API] Loading state from cache: {cache_path}")
+        try:
+            state = load_state(cache_path)
+            _state.update({
+                "adapter": state["adapter"],
+                "community_map": state["community_map"],
+                "embeddings": state["embeddings"],
+                "csa_metadata": state["csa_metadata"],
+                "default_edge_type_weights": state.get("default_edge_type_weights"),
+            })
+            return
+        except Exception as e:
+            print(f"  [API] Cache load failed: {e}. Falling back to computation.")
 
     _state["adapter"] = adapter
+    _state["default_edge_type_weights"] = default_edge_type_weights
 
     G = adapter.to_networkx()
 
-    # Community detection
+    # 1. Community detection
     if community_map is None:
-        parts         = best_of_n_dscf(G, n_trials=3, resolution=adapter.adaptive_resolution())
+        if hierarchical_dscf_enabled:
+            parts = hierarchical_dscf(G, target_communities=target_communities)
+        else:
+            parts = best_of_n_dscf(G, n_trials=3, resolution=adapter.adaptive_resolution())
+
         community_map = {}
         for cid, members in enumerate(parts):
             for node in members:
                 community_map[node] = cid
     _state["community_map"] = community_map
 
-    # Entity embeddings
+    # 2. Precompute CSA metadata (distances and adjacent pairs)
+    # This avoids O(E) or O(C^2) calculations on every query.
+    _state["csa_metadata"] = {
+        "distances": build_community_distance_matrix(G, community_map),
+        "adjacent_pairs": adjacent_community_pairs(G, community_map),
+    }
+
+    # 3. Entity embeddings + Structural Encoding (STEP 2)
+    from core.structural_encoder import compute_structural_features, encode_structural_features
+
     entity_labels = {}
     for node in G.nodes():
         e = adapter.get_entity(node)
         entity_labels[node] = e.label if e else node
-    _state["embeddings"] = embedding_engine.encode_entities(entity_labels)
+    
+    # 3.1 Get base embeddings (e.g. from SentenceTransformers)
+    base_embeddings = embedding_engine.encode_entities(entity_labels)
+    emb_dim = len(next(iter(base_embeddings.values()))) if base_embeddings else 384
+
+    # 3.2 Compute structural features (PageRank, Betweenness, Degree)
+    struct_feats = compute_structural_features(G)
+    struct_embs  = encode_structural_features(struct_feats, dim=emb_dim)
+
+    # 3.3 Fuse: h0_i = h_semantic + h_structural
+    # (Simple addition; LayerNorm is handled inside BeamTraversal)
+    fused_embeddings = {}
+    for node in G.nodes():
+        sem = base_embeddings.get(node, np.zeros(emb_dim, dtype=np.float32))
+        strc = struct_embs.get(node, np.zeros(emb_dim, dtype=np.float32))
+        fused_embeddings[node] = sem + strc
+    
+    _state["embeddings"] = fused_embeddings
+
+    # 4. Save to cache
+    if cache_path:
+        save_state(
+            cache_path,
+            adapter=_state["adapter"],
+            community_map=_state["community_map"],
+            embeddings=_state["embeddings"],
+            csa_metadata=_state["csa_metadata"],
+            default_edge_type_weights=_state["default_edge_type_weights"],
+        )
 
 
-# ---------------------------------------------------------------------------
-# Default app instance (for uvicorn)
-# ---------------------------------------------------------------------------
-
-app = FastAPI(title="Parallax KG Reasoning API", version="0.1.0")
 
 
-@app.get("/health", tags=["system"])
-async def health():
-    return {"status": "ok", "note": "Load data via create_app() for full functionality"}

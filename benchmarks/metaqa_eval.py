@@ -67,7 +67,7 @@ import time
 from pathlib import Path
 from typing import List, Tuple, Dict, Optional
 
-# Ensure repo root is on the path when run as a script
+# Confirm repo root is on the path when run as a script
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import networkx as nx
@@ -423,3 +423,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+

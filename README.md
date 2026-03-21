@@ -6,11 +6,11 @@ Parallax enables Knowledge Graphs to perform multi-hop reasoning using the struc
 principles of Transformer attention — without an LLM, without training data, and with
 full interpretability of every inference step.
 
-- **DSCF**: Dual-Signal Community Fusion — novel community detection combining LPA (local)
-  and modularity gain (global) simultaneously at each node update
+- **TSC**: Triple-Signal Consensus — novel community detection combining LPA (local),
+  modularity gain (global), and centrality (flow) simultaneously at each node update
 - **CSA**: Community-Structured Attention — attention weights that incorporate community
   membership as a soft global constraint on graph traversal
-- **Zero hallucination**: every answer is a path through verified graph edges
+- **Graph-Grounded**: every answer is a path through verified graph edges
 
 See `PAPER.md` for the full white paper and architecture specification.
 
@@ -19,58 +19,47 @@ See `PAPER.md` for the full white paper and architecture specification.
 | Feature | Standard RAG | GraphRAG (Microsoft) | Parallax |
 | :--- | :--- | :--- | :--- |
 | **Primary Reasoner** | LLM | LLM | **Knowledge Graph** |
-| **Logic Source** | Probabilistic weights | LLM-generated summaries | **Graph Topology (DSCF/CSA)** |
+| **Logic Source** | Probabilistic weights | LLM-generated summaries | **Graph Topology (TSC/CSA)** |
 | **Hallucination Risk** | High | Medium | **Zero (Grounded Paths)** |
 | **Interpretability** | **Black-Box** (None) | Medium (Text chunks) | **Glass-Box (Verifiable Edges)** |
 | **Context Window** | Limited by Token Count | Limited by Chunk Count | **Scale-Invariant (Beam Search)** |
 
 ## Roadmap
 
-**Current Phase: 5 (Release) — IN PROGRESS**
+**Current Phase: 5 (Release) — COMPLETE**
 
-- [x] **Phase 0: Theory & Prototyping** (DSCF validated in AURA)
-- [x] **Phase 1: Core Engine** (GraphAdapter, DSCF Engine, CSA Attention) — 81 tests passing
+- [x] **Phase 0: Theory & Prototyping** (DSCF validated in AI Personal Assistant)
+- [x] **Phase 1: Core Engine** (GraphAdapter, TSC Engine, CSA Attention)
 - [x] **Phase 2: Reasoning Engine** (BeamTraversal, PathScorer) — end-to-end pipeline verified
-- [x] **Phase 3: Adapters & API** (FastAPI server + LLM bridge) — 141 tests passing
+- [x] **Phase 3: Adapters & API** (FastAPI server + LLM bridge)
 - [x] **Phase 4: Benchmarking** (WebQSP, MetaQA, Hetionet) — Bridge Bonus innovation (EF-005)
-- [ ] **Phase 5: Release** (v0.1.0 Stable)
+- [x] **Phase 5: Release** (v0.1.0 Stable) — TSC, Persistence, Docker
 
-## Next Horizon: Triple-Signal Consensus (TSC) — Roadmap to v0.2.0
+## Next Horizon: Federated Reasoning — Roadmap to v0.2.0
 
-With the baseline stability of v0.1.0 (DSCF), we are now entering the research and development phase for the **3-Algorithm Parallax Variant**. This evolution is designed to further eliminate "structural hallucinations" by requiring a three-way consensus for every reasoning step.
+With the baseline stability of v0.1.0 (TSC), we are now entering the research phase for **Federated Parallax**. This evolution is designed to enable high-stakes reasoning across sensitive, distributed datasets.
 
-### Phase 6: The Flow Signal (Research & Integration)
-- **Objective**: Integrate **Infomap (Map Equation)** as the third signal alongside LPA and Modularity.
+### Phase 6: Federated Graph Attention
+- **Objective**: Implement cross-graph attention mechanisms for distributed knowledge bases.
 - **Milestones**:
-    - Research Python-native Infomap implementations for performance.
-    - Formalize the TSC Fused Probability formula: $P(move) = f(LPA, Mod, Infomap)$.
-    - Prototype consensus filtering on the `toy_graph`.
+    - **Privacy-Preserving Search**: Query across datasets without centralizing node attributes.
+    - **Cross-Node Alignment**: Match entities across disparate graph schemas.
+    - **Global-Local Community Fusion**: Integrate community structures from multiple graph instances.
 
-### Phase 7: TSC Engine Implementation
-- **Objective**: Implement the `TSCEngine` within `core/`.
+### Phase 7: Dynamic Graph Updates
+- **Objective**: Allow attention weights to traverse "wormholes" between separate KGs.
 - **Milestones**:
-    - Add `tsc_communities` to `community_engine.py`.
-    - Implement "Consensus Confidence" scores for every community assignment.
-    - Optimize flow-based clustering for graphs with >1M edges.
+    - Implement `FederatedAdapter` for remote Parallax instances.
+    - Extend CSA to handle `external_community_score` for remote entities.
 
-### Phase 8: High-Precision Traversal
-- **Objective**: Update the Reasoning Engine to utilize tri-signal consensus.
+### Phase 8: The "Holographic" Index
+- **Objective**: Create a compressed structural signature of a remote graph.
 - **Milestones**:
-    - Implement **Dynamic Beam Width**: automatically narrow the search in areas of low consensus.
-    - Add `flow_coherence` to the `PathScorer` to reward paths following natural information transit.
+    - Encode community centroids into a lightweight bloom filter.
+    - Enable "blind" relevance scoring for remote discovery.
 
-### Phase 9: Head-to-Head Evaluation
-- **Objective**: Quantify the precision gains of TSC over DSCF.
-- **Milestones**:
-    - Run head-to-head ablation studies on **Hetionet** and **WebQSP**.
-    - Prove Hypothesis H4: TSC reduces structural hallucinations in 3+ hop reasoning by >20% compared to DSCF.
-
-### Phase 10: Stable Release (v0.2.0)
-- **Objective**: Finalize the high-precision Parallax core.
-- **Milestones**:
-    - Extend the REST API to support `engine="tsc"`.
-    - Release updated Interactive Walkthrough showing the Mesoscale Gap closure.
-    - Formal publication of TSC findings.
+### Phase 9: Stable Release (v0.2.0)
+- **Objective**: Finalize the federated, Multi-Source ready protocol.
 
 ## Quick Start
 
@@ -87,7 +76,7 @@ For a visual, step-by-step demonstration of the framework's logic, we provide a 
 - **Features**: Visualizes "Attention Heads" (communities), breaks down CSA scoring for specific edges, and traces 3-hop reasoning paths.
 
 ### How to Run:
-1. Ensure you have the development dependencies installed:
+1. Verify you have the development dependencies installed:
    ```bash
    pip install -e ".[dev]"
    ```
@@ -108,7 +97,7 @@ Parallax has been rigorously validated using the following datasets and fixtures
 
 ## Genesis & Inspiration
 
-Parallax was born from a simple engineering request during the development of **AURA** (an AI assistant platform): *"When I hit the clusters button, I want to see the clusters forming in real-time."* 
+Parallax was born from a simple engineering request during the development of **Home Assistant** (an AI assistant platform): *"When I hit the clusters button, I want to see the clusters forming in real-time."* 
 
 Achieving this required a deep dive into community detection. While exploring the trade-offs between **Leiden** (global modularity) and **Label Propagation** (local topology), a pivotal question was asked: *"Can we create an algorithm that includes structure from both simultaneously?"* 
 
@@ -261,9 +250,12 @@ $$\text{score}(P) = \left( \prod_{k=1}^L a(u_k, v_k, k) \right) \cdot \text{cohe
 - **Glass-Box Reasoning**: Shifts the paradigm from probabilistic weights to deterministic paths.
 - **Decoupled Logic**: Separates reasoning (Graph) from language generation (LLM).
 - **Context Window Invariance**: Sublinear complexity independent of graph size.
-- **Topological Intelligence**: Inductive bias derived from graph topology requires zero training.
+- **Topological Analysis**: Inductive bias derived from graph topology requires zero training.
 
 ## Authors
 
 Bryan Alexander Buchorn (AMP) — Independent Researcher
 Claude Sonnet 4.6 — Research Collaborator, Anthropic
+
+
+

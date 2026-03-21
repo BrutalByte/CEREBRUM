@@ -100,3 +100,6 @@ class GraphAdapter(ABC):
         if n <= 10000:
             return 1.2
         return 1.5
+
+
+

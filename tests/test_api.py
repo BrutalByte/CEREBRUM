@@ -45,7 +45,7 @@ SEED    = 42
 def client():
     """
     Module-scoped loaded client.  Built once, shared across all tests in this
-    file. The `with` block ensures the FastAPI lifespan fires and _load() runs.
+    file. The `with` block supports the FastAPI lifespan fires and _load() runs.
     """
     random.seed(SEED)
     adapter = load_csv_adapter(str(TOY_CSV))
@@ -298,3 +298,6 @@ class TestQuery:
             "/query", json={"query": "newton", "seeds": ["newton"]}
         )
         assert r.status_code == 503
+
+
+

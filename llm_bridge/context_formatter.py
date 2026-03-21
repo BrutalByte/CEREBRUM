@@ -151,3 +151,6 @@ def _resolve_label(entity_id: str, adapter=None) -> str:
         return entity.label if entity else entity_id
     except Exception:
         return entity_id
+
+
+
