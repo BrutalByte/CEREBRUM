@@ -175,4 +175,22 @@ class StreamStatusResponse(BaseModel):
     total_community_updates: int
 
 
+class BridgeRecordSchema(BaseModel):
+    """One active bridge twin relationship."""
+    original_id: str
+    twin_id: str
+    source_community: int
+    destination_community: int
+    traversal_count: int
+    age_days: float
+    idle_days: float
+    similarity_at_creation: float
+
+
+class BridgesResponse(BaseModel):
+    """Response for GET /bridges."""
+    total: int
+    bridges: List[BridgeRecordSchema]
+
+
 

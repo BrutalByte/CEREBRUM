@@ -13,6 +13,7 @@ import numpy as np
 
 from core.graph_adapter import GraphAdapter
 from core.attention_engine import CSAEngine
+from core.bridge_engine import BridgeTwinEngine, BRIDGE_RELATION
 from core.resource_governor import ResourceGovernor
 from reasoning.path_scorer import community_coherence
 
@@ -142,9 +143,10 @@ class BeamTraversal:
         self.max_hop            = max_hop
         self.max_neighbors      = max_neighbors
         self.max_budget         = max_budget
-        self.edge_type_weights  = edge_type_weights or {}
+        self.edge_type_weights  = {BRIDGE_RELATION: 1.0, **(edge_type_weights or {})}
         self.expansions         = 0
         self.governor           = governor or ResourceGovernor()
+        self.bridge_engine: Optional[BridgeTwinEngine] = None
 
     def traverse(self, seeds: List[str]) -> List[TraversalPath]:
         """
@@ -214,10 +216,34 @@ class BeamTraversal:
                         v_emb = np.zeros(emb_dim, dtype=np.float32)
                     
                     v_cid = self.adapter.get_community(v)
-                    
+
+                    # Bridge twin detection: record cross-community crossings
+                    # and let the engine create a structural relay if warranted.
+                    u_cid = self.adapter.get_community(path.tail)
+                    if (
+                        self.bridge_engine is not None
+                        and u_cid != v_cid
+                        and u_cid >= 0
+                        and v_cid >= 0
+                        and edge.relation_type != BRIDGE_RELATION
+                    ):
+                        self.bridge_engine.record_crossing(
+                            node_id=v,
+                            source_community=v_cid,
+                            dest_community=u_cid,
+                            adapter=self.adapter,
+                        )
+
+                    # Mark bridge twin use so its idle timer resets
+                    if (
+                        self.bridge_engine is not None
+                        and edge.relation_type == BRIDGE_RELATION
+                    ):
+                        self.bridge_engine.record_twin_use(v)
+
                     # Compute community coherence for the candidate step
                     coh = community_coherence(path.community_sequence + [v_cid])
-                    
+
                     new_path = path.copy_with_extension(
                         rel=edge.relation_type,
                         v=v,

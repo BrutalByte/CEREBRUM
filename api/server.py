@@ -36,6 +36,7 @@ from api.schemas import (
     CommunitySignatureSchema, HologramResponse,
     HandshakeResponse, ReasoningCallbackRequest, ReasoningCallbackResponse,
     StreamIngestRequest, StreamIngestResponse, StreamStatusResponse,
+    BridgeRecordSchema, BridgesResponse,
 )
 
 # ---------------------------------------------------------------------------
@@ -638,6 +639,44 @@ def create_app(
                 adapter.remove_mutation_listener(on_mutation)
 
         return StreamingResponse(generate(), media_type="text/event-stream")
+
+    @app.get("/bridges", response_model=BridgesResponse, tags=["reasoning"])
+    async def list_bridges(node: Dict = Depends(get_authenticated_node)):
+        """
+        List all active bridge twin nodes.
+
+        Bridge twins are structural relay nodes created when a cross-community
+        traversal occurs repeatedly (>= n_min times) and the crossing node
+        semantically fits the destination community. Each bridge completes a
+        bidirectional circuit between two communities, eliminating the
+        exponential distance penalty for frequently-used crossings.
+
+        Returns an empty list if the BridgeTwinEngine has not been attached
+        to the current BeamTraversal instance.
+        """
+        from core.bridge_engine import BridgeTwinEngine
+
+        bridge_engine: Optional[BridgeTwinEngine] = _state.get("bridge_engine")
+        if bridge_engine is None:
+            return BridgesResponse(total=0, bridges=[])
+
+        records = bridge_engine.active_bridges()
+        return BridgesResponse(
+            total=len(records),
+            bridges=[
+                BridgeRecordSchema(
+                    original_id=r.original_id,
+                    twin_id=r.twin_id,
+                    source_community=r.source_community,
+                    destination_community=r.destination_community,
+                    traversal_count=r.traversal_count,
+                    age_days=r.age_days(),
+                    idle_days=r.idle_days(),
+                    similarity_at_creation=r.similarity_at_creation,
+                )
+                for r in records
+            ],
+        )
 
     return app
 

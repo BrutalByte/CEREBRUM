@@ -142,6 +142,16 @@ class CSAEngine:
         edge_type_weights: Optional[Dict[str, float]] = None,
         normalized_distance: float = 0.0,
     ) -> float:
+        # Bridge twin shortcut: crossing to your structural relay is free.
+        # The twin has the same embedding (sim=1.0) and is explicitly placed
+        # in the destination community (cs=1.0), so the full formula would
+        # already score this highly — but we short-circuit for clarity and
+        # to avoid any floating-point drift from separate lookups.
+        if edge_type == "BRIDGE_TWIN":
+            hop_decay = 1.0 / (1.0 + hop)
+            raw = self.alpha * 1.0 + self.beta * 1.0 + self.gamma * 1.0 + self.epsilon * hop_decay
+            return _sigmoid(raw)
+
         # 1. Embedding cosine similarity
         eu = self.adapter.get_embedding(u)
         ev = self.adapter.get_embedding(v)
