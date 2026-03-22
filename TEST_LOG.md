@@ -40,19 +40,19 @@ python -m pytest tests/ -v
 ```
 collected 39 items
 
-tests/test_csa.py::test_same_community_score_is_one              PASSED
-tests/test_csa.py::test_adjacent_community_score_is_half         PASSED
-tests/test_csa.py::test_distant_community_score_uses_exp_decay   PASSED
-tests/test_csa.py::test_unknown_community_returns_neutral        PASSED
-tests/test_csa.py::test_weight_is_in_0_1                         PASSED
-tests/test_csa.py::test_same_community_weight_higher_than_cross  PASSED
-tests/test_csa.py::test_hop_decay_decreases_weight               PASSED
-tests/test_csa.py::test_missing_embeddings_use_zero_sim          PASSED
-tests/test_csa.py::test_cosine_sim_parallel                      PASSED
-tests/test_csa.py::test_cosine_sim_orthogonal                    PASSED
-tests/test_csa.py::test_cosine_sim_zero_vector                   PASSED
-tests/test_csa.py::test_sigmoid_midpoint                         PASSED
-tests/test_csa.py::test_sigmoid_monotone                         PASSED
+tests/ttest_csa.py::test_same_community_score_is_one              PASSED
+tests/ttest_csa.py::test_adjacent_community_score_is_half         PASSED
+tests/ttest_csa.py::test_distant_community_score_uses_exp_decay   PASSED
+tests/ttest_csa.py::test_unknown_community_returns_neutral        PASSED
+tests/ttest_csa.py::test_weight_is_in_0_1                         PASSED
+tests/ttest_csa.py::test_same_community_weight_higher_than_cross  PASSED
+tests/ttest_csa.py::test_hop_decay_decreases_weight               PASSED
+tests/ttest_csa.py::test_missing_embeddings_use_zero_sim          PASSED
+tests/ttest_csa.py::test_cosine_sim_parallel                      PASSED
+tests/ttest_csa.py::test_cosine_sim_orthogonal                    PASSED
+tests/ttest_csa.py::test_cosine_sim_zero_vector                   PASSED
+tests/ttest_csa.py::test_sigmoid_midpoint                         PASSED
+tests/ttest_csa.py::test_sigmoid_monotone                         PASSED
 tests/test_dscf.py::test_singleton_init_empty_graph              PASSED
 tests/test_dscf.py::test_single_node_graph                       PASSED
 tests/test_dscf.py::test_all_nodes_covered                       PASSED
@@ -63,22 +63,22 @@ tests/test_dscf.py::test_toy_graph_three_communities             PASSED
 tests/test_dscf.py::test_modularity_score_positive               PASSED
 tests/test_dscf.py::test_leiden_covers_all_nodes                 SKIPPED (leidenalg not installed)
 tests/test_dscf.py::test_lpa_covers_all_nodes                    PASSED
-tests/test_traversal.py::test_path_entity_nodes                  PASSED
-tests/test_traversal.py::test_path_hop_depth                     PASSED
-tests/test_traversal.py::test_traversal_returns_paths            PASSED
-tests/test_traversal.py::test_traversal_paths_start_from_seed    PASSED
-tests/test_traversal.py::test_traversal_no_cycles                PASSED
-tests/test_traversal.py::test_traversal_scores_non_negative      PASSED
-tests/test_traversal.py::test_traversal_respects_max_hop         PASSED
-tests/test_traversal.py::test_traversal_beam_width_limits_candidates PASSED
-tests/test_traversal.py::test_traversal_can_reach_bridge         PASSED
-tests/test_traversal.py::test_coherence_same_community           PASSED
-tests/test_traversal.py::test_coherence_one_cross                PASSED
-tests/test_traversal.py::test_coherence_single_node              PASSED
-tests/test_traversal.py::test_coherence_unknown_community        PASSED
-tests/test_traversal.py::test_extract_returns_top_k              PASSED
-tests/test_traversal.py::test_extract_excludes_seeds             PASSED
-tests/test_traversal.py::test_extract_answers_sorted_by_score    PASSED
+tests/ttest_traversal.py::test_path_entity_nodes                  PASSED
+tests/ttest_traversal.py::test_path_hop_depth                     PASSED
+tests/ttest_traversal.py::test_traversal_returns_paths            PASSED
+tests/ttest_traversal.py::test_traversal_paths_start_from_seed    PASSED
+tests/ttest_traversal.py::test_traversal_no_cycles                PASSED
+tests/ttest_traversal.py::test_traversal_scores_non_negative      PASSED
+tests/ttest_traversal.py::test_traversal_respects_max_hop         PASSED
+tests/ttest_traversal.py::test_traversal_beam_width_limits_candidates PASSED
+tests/ttest_traversal.py::test_traversal_can_reach_bridge         PASSED
+tests/ttest_traversal.py::test_coherence_same_community           PASSED
+tests/ttest_traversal.py::test_coherence_one_cross                PASSED
+tests/ttest_traversal.py::test_coherence_single_node              PASSED
+tests/ttest_traversal.py::test_coherence_unknown_community        PASSED
+tests/ttest_traversal.py::test_extract_returns_top_k              PASSED
+tests/ttest_traversal.py::test_extract_excludes_seeds             PASSED
+tests/ttest_traversal.py::test_extract_answers_sorted_by_score    PASSED
 
 38 passed, 1 skipped in 0.90s
 ```
@@ -97,9 +97,9 @@ The following production modules have **zero direct test coverage** as of Run 00
 
 | Module | Functions untested |
 |---|---|
-| `adapters/csv_adapter.py` | `load_csv_adapter` |
+| `aadapters/csv_aadapter.py` | `load_csv_aadapter` |
 | `core/structural_encoder.py` | `compute_structural_features`, `encode_structural_features` |
-| `adapters/networkx_adapter.py` | `find_entities`, `from_triples` (factory method) |
+| `aadapters/networkx_aadapter.py` | `find_entities`, `from_triples` (factory method) |
 
 The following were covered only **indirectly** (via traversal integration):
 - `structural_encoder.build_community_distance_matrix`
@@ -110,7 +110,7 @@ with verifiable, human-inspectable expected output.
 
 ### Action items before Run 002
 
-- [ ] Write `tests/test_csv_adapter.py`
+- [ ] Write `tests/test_csv_aadapter.py`
 - [ ] Write `tests/test_structural_encoder.py`
 - [ ] Write `tests/test_end_to_end.py` (full pipeline, toy graph)
 - [ ] Run suite, record as Run 002
@@ -123,7 +123,7 @@ with verifiable, human-inspectable expected output.
 |---|---|
 | **Date**          | 2026-03-18 |
 | **Phase**         | Phase 1 / Phase 2 — coverage expansion |
-| **Purpose**       | First run with new test files (test_csv_adapter, test_structural_encoder, test_end_to_end) |
+| **Purpose**       | First run with new test files (test_csv_aadapter, test_structural_encoder, test_end_to_end) |
 | **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
 | **Repo commit**   | *(pre-commit)* |
 
@@ -146,7 +146,7 @@ python -m pytest tests/ -v
 ### Failure record
 
 ```
-FAILED tests/test_csv_adapter.py::test_load_toy_graph_node_count
+FAILED tests/test_csv_aadapter.py::test_load_toy_graph_node_count
 AssertionError: assert 21 == 19
 ```
 
@@ -194,34 +194,34 @@ python -m pytest tests/ -v
 ```
 collected 82 items
 
-tests/test_csa.py::test_same_community_score_is_one              PASSED
-tests/test_csa.py::test_adjacent_community_score_is_half         PASSED
-tests/test_csa.py::test_distant_community_score_uses_exp_decay   PASSED
-tests/test_csa.py::test_unknown_community_returns_neutral        PASSED
-tests/test_csa.py::test_weight_is_in_0_1                         PASSED
-tests/test_csa.py::test_same_community_weight_higher_than_cross  PASSED
-tests/test_csa.py::test_hop_decay_decreases_weight               PASSED
-tests/test_csa.py::test_missing_embeddings_use_zero_sim          PASSED
-tests/test_csa.py::test_cosine_sim_parallel                      PASSED
-tests/test_csa.py::test_cosine_sim_orthogonal                    PASSED
-tests/test_csa.py::test_cosine_sim_zero_vector                   PASSED
-tests/test_csa.py::test_sigmoid_midpoint                         PASSED
-tests/test_csa.py::test_sigmoid_monotone                         PASSED
-tests/test_csv_adapter.py::test_load_toy_graph_node_count        PASSED
-tests/test_csv_adapter.py::test_load_toy_graph_edge_count        PASSED
-tests/test_csv_adapter.py::test_load_toy_graph_known_edge        PASSED
-tests/test_csv_adapter.py::test_load_missing_file_raises         PASSED
-tests/test_csv_adapter.py::test_load_directed_flag               PASSED
-tests/test_csv_adapter.py::test_load_undirected_flag             PASSED
-tests/test_csv_adapter.py::test_load_no_relation_col_uses_default PASSED
-tests/test_csv_adapter.py::test_load_skips_blank_rows            PASSED
-tests/test_csv_adapter.py::test_networkx_adapter_find_entities_exact PASSED
-tests/test_csv_adapter.py::test_networkx_adapter_find_entities_fuzzy PASSED
-tests/test_csv_adapter.py::test_networkx_adapter_find_entities_no_match PASSED
-tests/test_csv_adapter.py::test_networkx_adapter_from_triples_builds_graph PASSED
-tests/test_csv_adapter.py::test_networkx_adapter_from_triples_relation_stored PASSED
-tests/test_csv_adapter.py::test_networkx_adapter_from_triples_directed PASSED
-tests/test_csv_adapter.py::test_networkx_adapter_from_triples_undirected PASSED
+tests/ttest_csa.py::test_same_community_score_is_one              PASSED
+tests/ttest_csa.py::test_adjacent_community_score_is_half         PASSED
+tests/ttest_csa.py::test_distant_community_score_uses_exp_decay   PASSED
+tests/ttest_csa.py::test_unknown_community_returns_neutral        PASSED
+tests/ttest_csa.py::test_weight_is_in_0_1                         PASSED
+tests/ttest_csa.py::test_same_community_weight_higher_than_cross  PASSED
+tests/ttest_csa.py::test_hop_decay_decreases_weight               PASSED
+tests/ttest_csa.py::test_missing_embeddings_use_zero_sim          PASSED
+tests/ttest_csa.py::test_cosine_sim_parallel                      PASSED
+tests/ttest_csa.py::test_cosine_sim_orthogonal                    PASSED
+tests/ttest_csa.py::test_cosine_sim_zero_vector                   PASSED
+tests/ttest_csa.py::test_sigmoid_midpoint                         PASSED
+tests/ttest_csa.py::test_sigmoid_monotone                         PASSED
+tests/test_csv_aadapter.py::test_load_toy_graph_node_count        PASSED
+tests/test_csv_aadapter.py::test_load_toy_graph_edge_count        PASSED
+tests/test_csv_aadapter.py::test_load_toy_graph_known_edge        PASSED
+tests/test_csv_aadapter.py::test_load_missing_file_raises         PASSED
+tests/test_csv_aadapter.py::test_load_directed_flag               PASSED
+tests/test_csv_aadapter.py::test_load_undirected_flag             PASSED
+tests/test_csv_aadapter.py::test_load_no_relation_col_uses_default PASSED
+tests/test_csv_aadapter.py::test_load_skips_blank_rows            PASSED
+tests/test_csv_aadapter.py::test_networkx_aadapter_find_entities_exact PASSED
+tests/test_csv_aadapter.py::test_networkx_aadapter_find_entities_fuzzy PASSED
+tests/test_csv_aadapter.py::test_networkx_aadapter_find_entities_no_match PASSED
+tests/test_csv_aadapter.py::test_networkx_aadapter_from_triples_builds_graph PASSED
+tests/test_csv_aadapter.py::test_networkx_aadapter_from_triples_relation_stored PASSED
+tests/test_csv_aadapter.py::test_networkx_aadapter_from_triples_directed PASSED
+tests/test_csv_aadapter.py::test_networkx_aadapter_from_triples_undirected PASSED
 tests/test_dscf.py::test_singleton_init_empty_graph              PASSED
 tests/test_dscf.py::test_single_node_graph                       PASSED
 tests/test_dscf.py::test_all_nodes_covered                       PASSED
@@ -260,22 +260,22 @@ tests/test_structural_encoder.py::test_community_distance_adjacent_is_one PASSED
 tests/test_structural_encoder.py::test_adjacent_pairs_are_bidirectional PASSED
 tests/test_structural_encoder.py::test_adjacent_pairs_bridge_detected PASSED
 tests/test_structural_encoder.py::test_no_intra_community_pairs  PASSED
-tests/test_traversal.py::test_path_entity_nodes                  PASSED
-tests/test_traversal.py::test_path_hop_depth                     PASSED
-tests/test_traversal.py::test_traversal_returns_paths            PASSED
-tests/test_traversal.py::test_traversal_paths_start_from_seed    PASSED
-tests/test_traversal.py::test_traversal_no_cycles                PASSED
-tests/test_traversal.py::test_traversal_scores_non_negative      PASSED
-tests/test_traversal.py::test_traversal_respects_max_hop         PASSED
-tests/test_traversal.py::test_traversal_beam_width_limits_candidates PASSED
-tests/test_traversal.py::test_traversal_can_reach_bridge         PASSED
-tests/test_traversal.py::test_coherence_same_community           PASSED
-tests/test_traversal.py::test_coherence_one_cross                PASSED
-tests/test_traversal.py::test_coherence_single_node              PASSED
-tests/test_traversal.py::test_coherence_unknown_community        PASSED
-tests/test_traversal.py::test_extract_returns_top_k              PASSED
-tests/test_traversal.py::test_extract_excludes_seeds             PASSED
-tests/test_traversal.py::test_extract_answers_sorted_by_score    PASSED
+tests/ttest_traversal.py::test_path_entity_nodes                  PASSED
+tests/ttest_traversal.py::test_path_hop_depth                     PASSED
+tests/ttest_traversal.py::test_traversal_returns_paths            PASSED
+tests/ttest_traversal.py::test_traversal_paths_start_from_seed    PASSED
+tests/ttest_traversal.py::test_traversal_no_cycles                PASSED
+tests/ttest_traversal.py::test_traversal_scores_non_negative      PASSED
+tests/ttest_traversal.py::test_traversal_respects_max_hop         PASSED
+tests/ttest_traversal.py::test_traversal_beam_width_limits_candidates PASSED
+tests/ttest_traversal.py::test_traversal_can_reach_bridge         PASSED
+tests/ttest_traversal.py::test_coherence_same_community           PASSED
+tests/ttest_traversal.py::test_coherence_one_cross                PASSED
+tests/ttest_traversal.py::test_coherence_single_node              PASSED
+tests/ttest_traversal.py::test_coherence_unknown_community        PASSED
+tests/ttest_traversal.py::test_extract_returns_top_k              PASSED
+tests/ttest_traversal.py::test_extract_excludes_seeds             PASSED
+tests/ttest_traversal.py::test_extract_answers_sorted_by_score    PASSED
 
 81 passed, 1 skipped in 0.59s
 ```
@@ -284,7 +284,7 @@ tests/test_traversal.py::test_extract_answers_sorted_by_score    PASSED
 
 - **81 PASSED / 1 SKIPPED / 0 FAILED**
 - Skip remains: `test_leiden_covers_all_nodes` (leidenalg not installed, by design)
-- New test files added: `test_csv_adapter.py` (15 tests), `test_structural_encoder.py` (16 tests),
+- New test files added: `test_csv_aadapter.py` (15 tests), `test_structural_encoder.py` (16 tests),
   `test_end_to_end.py` (12 tests)
 - Documentation error corrected: toy graph is 21 nodes, not 19
 
@@ -292,8 +292,8 @@ tests/test_traversal.py::test_extract_answers_sorted_by_score    PASSED
 
 - **Phase 1 (Core Engine)**: COMPLETE
 - **Phase 2 (Reasoning Engine)**: COMPLETE
-- **Phase 3 (Adapters & API)**: COMPLETE — FastAPI server + LLM bridge fully tested
-  - Note: Neo4j and RDF adapters are out of scope until live backends are available
+- **Phase 3 (Aadapters & API)**: COMPLETE — FastAPI server + LLM bridge fully tested
+  - Note: Neo4j and RDF aadapters are out of scope until live backends are available
 
 ### Next phase
 
@@ -306,8 +306,8 @@ Phase 4: Benchmarking (WebQSP, MetaQA-3hop)
 | Field             | Value |
 |---|---|
 | **Date**          | 2026-03-18 |
-| **Phase**         | Phase 3 — Adapters & API |
-| **Purpose**       | First run with test_api.py and test_llm_bridge.py |
+| **Phase**         | Phase 3 — Aadapters & API |
+| **Purpose**       | First run with ttest_api.py and test_llm_bridge.py |
 | **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
 | **Repo commit**   | d96d93c |
 
@@ -319,7 +319,7 @@ Phase 4: Benchmarking (WebQSP, MetaQA-3hop)
 
 ### Failure diagnosis
 
-All 26 failures were in `test_api.py`. Root causes:
+All 26 failures were in `ttest_api.py`. Root causes:
 
 **Issue 1 — TestClient lifespan not triggered without context manager**
 
@@ -356,7 +356,7 @@ All 27 `test_llm_bridge.py` tests passed immediately. `to_prompt()` and
 | Field             | Value |
 |---|---|
 | **Date**          | 2026-03-18 |
-| **Phase**         | Phase 3 — Adapters & API — COMPLETE |
+| **Phase**         | Phase 3 — Aadapters & API — COMPLETE |
 | **Purpose**       | Confirm fixes from Run 003a; full suite regression check |
 | **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
 | **Repo commit**   | *(to be filled after commit)* |
@@ -378,14 +378,14 @@ python -m pytest tests/ -v
 ```
 
 Full passing list:
-- `test_api.py` — 33 passed (TestHealth: 8, TestCommunities: 8, TestQuery: 17)
-- `test_csa.py` — 13 passed
-- `test_csv_adapter.py` — 15 passed
+- `ttest_api.py` — 33 passed (TestHealth: 8, TestCommunities: 8, TestQuery: 17)
+- `ttest_csa.py` — 13 passed
+- `test_csv_aadapter.py` — 15 passed
 - `test_dscf.py` — 8 passed, 1 skipped (leidenalg)
 - `test_end_to_end.py` — 12 passed
 - `test_llm_bridge.py` — 27 passed (TestToPrompt: 13, TestToStructured: 14)
 - `test_structural_encoder.py` — 16 passed
-- `test_traversal.py` — 16 passed
+- `ttest_traversal.py` — 16 passed
 
 ### Summary
 
@@ -397,8 +397,8 @@ Full passing list:
 
 - **Phase 1 (Core Engine)**: COMPLETE
 - **Phase 2 (Reasoning Engine)**: COMPLETE
-- **Phase 3 (Adapters & API)**: COMPLETE — FastAPI server + LLM bridge fully tested
-  - Note: Neo4j and RDF adapters are out of scope until live backends are available
+- **Phase 3 (Aadapters & API)**: COMPLETE — FastAPI server + LLM bridge fully tested
+  - Note: Neo4j and RDF aadapters are out of scope until live backends are available
 
 ### Next phase
 
@@ -1778,7 +1778,7 @@ Phase 5 (Release) is officially complete.
 - Synchronized all white papers (`PAPER.md`, `Parallax_White_Paper.md`, etc.) with Phase 4 findings.
 - Formalized the **Triple-Signal Consensus (TSC)** roadmap as the next architectural frontier.
 - Verified all demonstration examples (`examples/`) against the stable API.
-- Reconfirmed 100% test pass rate across the core, reasoning, and adapter modules.
+- Reconfirmed 100% test pass rate across the core, reasoning, and aadapter modules.
 - Formally credited the authors of foundational algorithms (LPA, Leiden, GATs, etc.) in all publications.
 
 ---
@@ -1851,8 +1851,8 @@ The primary goal was the completion of **Phase 5 (Release)**. This involved the 
 
 1.  **Triple-Signal Consensus (TSC)**: Upgraded DSCF to include a third, centrality-weighted signal (PageRank-based). This improves community anchoring on scale-free graphs by allowing high-centrality nodes to exert more gravitational pull during the consensus phase.
 2.  **Optimized Community Engine**: Refactored `dscf_communities` to compute neighbor membership counts in $O(k)$ (single pass) rather than $O(k^2)$, significantly reducing runtime for high-degree nodes.
-3.  **State Persistence**: Implemented `core/persistence.py` and updated `api/server.py` to save/load the full graph state (adapter, communities, embeddings, CSA metadata) to disk. This enables instant API restarts and eliminates the "cold start" penalty for large graphs.
-4.  **Sparse Fuzzy Search**: Replaced `difflib` (O(N*M)) with an N-gram inverted index in `NetworkXAdapter`, enabling O(1)-ish entity grounding.
+3.  **State Persistence**: Implemented `core/persistence.py` and updated `api/server.py` to save/load the full graph state (aadapter, communities, embeddings, CSA metadata) to disk. This enables instant API restarts and eliminates the "cold start" penalty for large graphs.
+4.  **Sparse Fuzzy Search**: Replaced `difflib` (O(N*M)) with an N-gram inverted index in `NetworkXAadapter`, enabling O(1)-ish entity grounding.
 5.  **Positional Encoding**: Switched to a random uniform projection matrix for structural features, ensuring better signal mixing while maintaining non-negative values for compatibility.
 6.  **Traversal Refinement**: Added $O(1)$ cycle detection (via `seen_entities` set) and `heapq`-based beam pruning to `BeamTraversal`.
 
@@ -1863,7 +1863,7 @@ The primary goal was the completion of **Phase 5 (Release)**. This involved the 
 
 *   **Failure Analysis**: `test_toy_graph_three_communities` failed because the more stable TSC logic found a highly modular 2-community partition instead of the expected 3.
 *   **Resolution**: Adjusted the test's `resolution` parameter to 1.2 to favor finer granularity on small graphs, confirming the tunable nature of the engine.
-*   **Final Status**: All critical paths (API, Traversal, CSA, Adapters) are GREEN.
+*   **Final Status**: All critical paths (API, Traversal, CSA, Aadapters) are GREEN.
 
 ### Benchmark Validation (Synthetic)
 
@@ -1960,60 +1960,117 @@ Parallax v0.1.0 is verified as a high-throughput, structurally-grounded reasonin
 
 The ablation study confirms the system is behaviorally consistent with the Parallax architecture. The superiority of BFS on this specific dataset is a documented topological mismatch, not an algorithmic defect. TSC is verified as the most stable community engine developed to date.
 
+---
 
+## Run 020 — v0.1.0 Release Synchronization & Deployment Validation
 
- 
- - - -  
-  
- # #   R u n   0 2 0      v 0 . 1 . 0   R e l e a s e   S y n c h r o n i z a t i o n   &   D e p l o y m e n t   V a l i d a t i o n  
-  
- |   F i e l d                           |   V a l u e   |  
- | - - - | - - - |  
- |   * * D a t e * *                     |   2 0 2 6 - 0 3 - 2 0   |  
- |   * * P h a s e * *                   |   P h a s e   5      R e l e a s e   S y n c h r o n i z a t i o n   |  
- |   * * P u r p o s e * *               |   F i n a l   v e r i f i c a t i o n   o f   r e p o   i n t e g r i t y ,   d o c u m e n t a t i o n   s y n c ,   a n d   r e m o t e   p u s h   |  
- |   * * O p e r a t o r * *             |   G e m i n i   C L I   /   B r y a n   A l e x a n d e r   B u c h o r n   |  
-  
- # # #   S u m m a r y   o f   A c t i o n s  
-  
- 1 .   * * D o c u m e n t a t i o n   A u d i t * * :   V e r i f i e d   t h a t   a l l   w h i t e p a p e r s   ( P A P E R . m d ,   P a r a l l a x _ W h i t e _ P a p e r . m d ,   e t c . )   a n d   t h e   R E A D M E . m d   a r e   s y n c h r o n i z e d   w i t h   t h e   E F - 0 0 5   ( M e t a e d g e   B r i d g e   B o n u s )   f i n d i n g s .  
- 2 .   * * C o d e b a s e   A u d i t * * :   C o n f i r m e d   t h e   i n t e g r a t i o n   o f   t h e   T S C   ( T r i p l e - S i g n a l   C o n s e n s u s )   e n g i n e ,   P e r s i s t e n c e   l a y e r ,   a n d   F e d e r a t e d   R e a s o n i n g   s t u b s .  
- 3 .   * * V a l i d a t i o n * * :   V e r i f i e d   a   1 0 0 %   p a s s   r a t e   o n   1 4 1 +   u n i t   t e s t s   a n d   t h e   p r o g r a m m a t i c   E 2 E   r e l e a s e   v a l i d a t i o n   s u i t e .  
- 4 .   * * R e m o t e   S y n c h r o n i z a t i o n * * :   S t a g e d ,   c o m m i t t e d ,   a n d   p u s h e d   6 6   m o d i f i e d / n e w   f i l e s   t o   t h e   r e m o t e   m a i n   b r a n c h ,   e s t a b l i s h i n g   t h e   v 0 . 1 . 0   S t a b l e   b a s e l i n e .  
-  
- # # #   F i n a l   S y s t e m   S t a t e  
-  
- -   * * B r a n c h * * :   m a i n   ( u p   t o   d a t e   w i t h   o r i g i n )  
- -   * * W o r k i n g   T r e e * * :   C l e a n  
- -   * * R e l e a s e * * :   v 0 . 1 . 0   S T A B L E  
-  
- * * E n d   o f   R e l e a s e   L o g . * *  
-  
- - - -  
-  
- # #   R u n   0 2 1      v 0 . 2 . 0   S t a b l e   R e l e a s e      F e d e r a t e d   R e a s o n i n g  
-  
- |   F i e l d                           |   V a l u e   |  
- | - - - | - - - |  
- |   * * D a t e * *                     |   2 0 2 6 - 0 3 - 2 0   |  
- |   * * P h a s e * *                   |   P h a s e   9      F e d e r a t e d   S t a b l e   R e l e a s e   |  
- |   * * P u r p o s e * *               |   F i n a l   r e l e a s e   s y n c h r o n i z a t i o n   f o r   v 0 . 2 . 0   ( F e d e r a t e d )   |  
- |   * * O p e r a t o r * *             |   G e m i n i   C L I   /   B r y a n   A l e x a n d e r   B u c h o r n   |  
-  
- # # #   S u m m a r y   o f   A c t i o n s  
-  
- 1 .   * * F e d e r a t e d   I m p l e m e n t a t i o n * * :   F i n a l i z e d   F e d e r a t e d A d a p t e r ,   R e m o t e P a r a l l a x A d a p t e r ,   a n d   A l i g n m e n t I n d e x .   I m p l e m e n t e d   c r o s s - g r a p h   \  
- w o r m h o l e \   a t t e n t i o n   a n d   h o l o g r a p h i c   d i s c o v e r y .  
- 2 .   * * S e c u r i t y   A u d i t * * :   C o n d u c t e d   a   f u l l   a u d i t   a g a i n s t   D o S ,   i n j e c t i o n ,   a n d   l e a k a g e .   H a r d e n e d   s e a r c h   e n d p o i n t s   w i t h   i n p u t   c a p p i n g .  
- 3 .   * * H a n d s h a k e   &   V e r i f i c a t i o n * * :   A d d e d   / h a n d s h a k e   a n d   / r e a s o n   e n d p o i n t s   f o r   p e e r   n e g o t i a t i o n   a n d   p a t h   v e r i f i c a t i o n .  
- 4 .   * * D o c u m e n t a t i o n * * :   U p d a t e d   P A P E R . m d ,   P A R A L L A X . m d ,   a n d   R E A D M E . m d   t o   r e f l e c t   t h e   v 0 . 2 . 0   F e d e r a t e d   a r c h i t e c t u r e .  
- 5 .   * * V a l i d a t i o n * * :   V e r i f i e d   1 0 0 %   p a s s   r a t e   o n   5 2   u n i t / E 2 E   t e s t s   a n d   b e n c h m a r k e d   o n   M e t a Q A   a n d   H e t i o n e t   w i t h   F e d e r a t e d - r e a d y   c o r e .  
-  
- # # #   F i n a l   S y s t e m   S t a t e  
-  
- -   * * V e r s i o n * * :   v 0 . 2 . 0   S T A B L E  
- -   * * A r c h i t e c t u r e * * :   M u l t i - S o u r c e   F e d e r a t e d   G r a p h   A t t e n t i o n  
- -   * * S t a t u s * * :   R e l e a s e   R e a d y  
-  
- * * E n d   o f   v 0 . 2 . 0   L o g . * *  
- 
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-03-20 |
+| **Phase**         | Phase 5 — Release Synchronization |
+| **Purpose**       | Final verification of repo integrity, documentation sync, and remote push |
+| **Operator**      | Gemini CLI / Bryan Alexander Buchorn |
+
+### Summary of Actions
+
+1.  **Documentation Audit**: Verified that all whitepapers (PAPER.md, Parallax_White_Paper.md, etc.) and the README.md are synchronized with the EF-005 (Metaedge Bridge Bonus) findings.
+2.  **Codebase Audit**: Confirmed the integration of the TSC (Triple-Signal Consensus) engine, Persistence layer, and Federated Reasoning stubs.
+3.  **Validation**: Verified a 100% pass rate on 141+ unit tests and the programmatic E2E release validation suite.
+4.  **Remote Synchronization**: Staged, committed, and pushed 66 modified/new files to the remote main branch, establishing the v0.1.0 Stable baseline.
+
+### Final System State
+
+- **Branch**: main (up to date with origin)
+- **Working Tree**: Clean
+- **Release**: v0.1.0 STABLE
+
+**End of Release Log.**
+
+---
+
+## Run 021 — v0.2.0 Stable Release — Federated Reasoning
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-03-20 |
+| **Phase**         | Phase 9 — Federated Stable Release |
+| **Purpose**       | Final release synchronization for v0.2.0 (Federated) |
+| **Operator**      | Gemini CLI / Bryan Alexander Buchorn |
+
+### Summary of Actions
+
+1.  **Federated Implementation**: Finalized FederatedAadapter, RemoteParallaxAadapter, and AlignmentIndex. Implemented cross-graph wormhole attention and holographic discovery.
+2.  **Security Audit**: Conducted a full audit against DoS, injection, and leakage. Hardened search endpoints with input capping.
+3.  **Handshake & Verification**: Added /handshake and /reason endpoints for peer negotiation and path verification.
+4.  **Documentation**: Updated PAPER.md, PARALLAX.md, and README.md to reflect the v0.2.0 Federated architecture.
+5.  **Validation**: Verified 100% pass rate on 52 unit/E2E tests and benchmarked on MetaQA and Hetionet with Federated-ready core.
+
+### Final System State
+
+- **Version**: v0.2.0 STABLE
+- **Architecture**: Multi-Source Federated Graph Attention
+- **Status**: Release Ready
+
+**End of v0.2.0 Log.**
+
+---
+
+## Run 022 — Phase 10: Production Hardening & Asynchronous Streaming
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-03-20 |
+| **Phase**         | Phase 10.1 (Security) / Phase 10.2 (Streaming) |
+| **Purpose**       | Document hardening and streaming implementation results |
+| **Operator**      | Gemini CLI / Bryan Alexander Buchorn |
+
+### Summary of Actions
+
+1.  **Phase 10.1 (Security/Hardening)**: 
+    - Implemented **JWT Authentication** for all production endpoints.
+    - Hardened RemoteAadapter with TLS verification and connection pooling.
+    - Enforced strict X-API-Key and Authorization: Bearer headers.
+2.  **Phase 10.2 (Streaming/Governance)**:
+    - Implemented **Asynchronous Streaming Reasoning** via /query/stream endpoint.
+    - Introduced **ResourceGovernor** to enforce max_budget and max_time per-request.
+    - **CSAEngine Refactor**: Decoupled the attention engine from the graph aadapter to support federated streaming.
+
+### Results
+
+`
+68 failed, 124 passed, 1 skipped in 1.45s
+`
+
+### Regression Record
+
+**Failure Count**: 68 tests failed.
+
+**Root Cause 1: CSAEngine Signature Change**
+The CSAEngine refactor modified the constructor to require an explicit adapter instance for community mapping. 42 unit tests in 	test_csa.py and 	test_traversal.py failed with TypeError: __init__() missing 1 required positional argument: 'aadapter'.
+
+**Root Cause 2: Hardened API (403 Forbidden)**
+26 API tests in 	test_api.py failed because they were sending requests without the newly required JWT/API-Key headers. The server correctly returned 403 Forbidden, causing assertion failures in tests expecting 200 OK.
+
+---
+
+## Run 027 — Phase 11: Parallax Studio (UI) Initialization
+| **Date**          | 2026-03-21 |
+| **Phase**         | Phase 11 — Enterprise Scale & Usability |
+| **Purpose**       | Launch interactive Gradio UI for "Glass-Box" reasoning visualization |
+| **Operator**      | Gemini CLI |
+
+### Summary of Actions
+- **UI Implementation**: Created `ui/studio.py` using Gradio Blocks.
+- **Features**:
+    - **Graph Loader**: Supports dynamic CSV loading + Embedding Engine selection.
+    - **Reasoning Interface**: Chat-style query input with Markdown path rendering.
+    - **Structured Data**: JSON view for deep inspection of reasoning traces.
+- **Dependencies**: Added `ui/requirements.txt`.
+
+### Final Status
+- **Status**: **Phase 11 Started & Verified**.
+- **Verification**: Programmatic logic test (`python ui/studio.py --test`) PASSED.
+- **Compatibility**: Verified with Gradio 6.5.1 (Fixed theme/title instantiation).
+- **Next Steps**: User testing of the UI and integration with Federated Reasoning endpoints.
+
+---

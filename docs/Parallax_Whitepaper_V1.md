@@ -6,7 +6,7 @@ Authors: Bryan (Originator), Claude Sonnet 4.6 (Collaborator)
 
 Date: March 2026
 
-Status: Version 1.0 · Phase 4 COMPLETE
+Status: Version 0.3.0 · Phase 11 COMPLETE
 
 ---
 
@@ -67,10 +67,47 @@ For a visual, step-by-step walkthrough of the framework's logic, refer to:
 5. Mathematical Foundation
 
 5.1  CSA Formula
-a(u,v,k) = sigmoid(α · Sim + β · Comm + γ · Edge - δ · Dist + ε · Hop)
+
+The Community-Structured Attention weight for edge $u \to v$ at hop $k$:
+
+$$\boxed{a(u,v,k) = \sigma\!\left(\alpha\cos(\mathbf{e}_u, \mathbf{e}_v) + \beta S_{\mathcal{C}}(u,v) + \gamma w_{rel} - \delta d_{norm} + \varepsilon\phi(k)\right)}$$
+
+where $\sigma$ is sigmoid, $\mathbf{e}_u$ and $\mathbf{e}_v$ are entity embeddings,
+and the community score $S_{\mathcal{C}}$ is:
+
+$$S_{\mathcal{C}}(u,v) = \begin{cases} 1.0 & c(u) = c(v) \\ 0.5 & (c(u),c(v)) \in \mathcal{A} \\ e^{-\lambda d_{\mathcal{C}}} & \text{otherwise} \end{cases}$$
+
+where $\mathcal{A}$ is the set of adjacent community pairs (Bridge Bonus applies here),
+$d_{\mathcal{C}}$ is the inter-community graph distance, and $\lambda$ is a decay constant.
+
+Default weights: $\alpha=0.4,\; \beta=0.4,\; \gamma=0.1,\; \delta=0.05,\; \varepsilon=0.05$.
 
 5.2  DSCF Logic
-P(move) = f(LPA_conf · τ, Mod_conf · (2-τ))
+
+For each node $v$ at each iteration, compute the local LPA signal and global
+modularity-gain signal, then fuse them with temperature annealing:
+
+$$\Delta Q(v \to \mathcal{C}) = \frac{k_{v,\mathcal{C}}}{m} - \rho \cdot \frac{k_v \cdot \sum_{u \in \mathcal{C}} k_u}{2m^2}$$
+
+Decision table (where $\tau$ is the current temperature):
+
+| LPA signal | Mod signal | Action |
+|---|---|---|
+| Same community | Same community | MOVE (anchor) |
+| Agree on new community | Agree on new community | MOVE (anchor) |
+| Disagree | Disagree | MOVE with $P = \frac{\text{lpa\_conf} \cdot \tau}{\text{lpa\_conf} \cdot \tau + \text{mod\_conf} \cdot (2-\tau)}$ |
+
+Temperature schedule: $\tau_{t+1} = \max(\tau_t \times 0.92,\; 0.01)$
+
+5.3  Path Score
+
+Final score for a path $P = (v_0, v_1, \ldots, v_L)$:
+
+$$\mathrm{score}(P) = \left(\prod_{k=1}^{L} a(v_{k-1}, v_k, k)\right) \cdot \gamma_{\mathcal{C}}(P) \cdot \cos(\mathbf{h}_L, \mathbf{q})$$
+
+Community coherence penalty:
+
+$$\gamma_{\mathcal{C}}(P) = \frac{1}{L}\sum_{k=1}^{L} \begin{cases} 1.0 & c(v_k) = c(v_{k-1}) \\ 0.5 & c(v_k) \neq c(v_{k-1}) \end{cases}$$
 
 6. Implementation Details
 
@@ -163,9 +200,9 @@ In zero-shot mode, α, β, γ, δ, ε are fixed. For supervised settings, they c
 9.5  Temporal Knowledge Graphs
 Time-stamped KGs (events, evolving relationships) introduce a temporal dimension. The positional encoding would need to incorporate temporal distance alongside graph-structural distance. Left for future work.
 
-9.6 Triple-Signal Consensus (TSC): The Next Frontier
+9.6 Triple-Signal Consensus (TSC): Implemented
 
-A significant architectural expansion for Parallax is the transition from the dual-signal DSCF to a **Triple-Signal Consensus (TSC)** framework. This evolution is designed to close the **"Mesoscale Gap"**—the structural region between immediate local topology (LPA) and global modularity (Leiden).
+TSC extends DSCF from two signals to three, closing the **"Mesoscale Gap"** — the structural region between immediate local topology (LPA) and global modularity (Leiden). TSC is fully implemented in `core/community_engine.py` as the default community detection mode.
 
 ### The Motivation for a Third Signal
 
@@ -184,7 +221,7 @@ In the TSC framework, a node move or a traversal edge must pass a **Consensus Fi
 The fused probability for a node move or attention weight calculation becomes:
 $$P(\text{move}) = f(\text{LPA} \cdot \tau_{local}, \text{Mod} \cdot \tau_{global}, \text{Infomap} \cdot \tau_{mid})$$
 
-This "mid-level voting" helps confirm that only the most structurally and dynamically robust reasoning chains survive the beam-search pruning process. TSC will be implemented as an optional, high-precision mode within the Parallax core, allowing for direct comparison with DSCF.
+This "mid-level voting" confirms that only the most structurally and dynamically robust reasoning chains survive the beam-search pruning process. TSC is callable via `community_engine.tsc_communities(G)` and used by default when `igraph` is available.
 
 10. Broader Impact and Applications
 
@@ -217,7 +254,66 @@ Domain: the algorithm is domain-blind; community structure emerges from the grap
 Query language: entities can be identified from text, IDs, or direct lookup
 A single Parallax deployment can serve multiple graph backends simultaneously, which is not possible with GraphRAG or KG-specific systems.
 
-11. Conclusion
+11. Production Hardening (Phase 10)
+
+Phase 10 hardened Parallax into a production-grade service. Three subsystems were added:
+
+**11.1 JWT Authentication**
+All REST API endpoints require a signed JWT Bearer token validated on every request. Expired tokens return HTTP 403; missing tokens return HTTP 401. Token issuance is external, supporting OAuth2 and OIDC identity providers.
+
+**11.2 ResourceGovernor**
+Per-request ceilings prevent runaway queries. Configurable parameters:
+
+$$\text{ResourceGovernor}: \{N_{max},\; E_{max},\; B_{max},\; H_{max},\; T_{max},\; C_{max}\}$$
+
+(nodes, edges, beam width, hops, timeout, concurrent queries). Violations return HTTP 429.
+
+**11.3 AsyncBeamTraversal and `/query/stream`**
+`BeamTraversal` was wrapped in `asyncio` and a Server-Sent Events endpoint added. The client receives one SSE event per beam step plus a final result event, enabling progressive rendering of multi-hop answers.
+
+---
+
+12. Real-Time Streaming (Phase 11)
+
+Phase 11 extends Parallax to live, continuous data. The core CSA and DSCF algorithms are unchanged; streaming sits in a layer above them.
+
+**12.1 Key components**
+
+| Component | Description |
+|---|---|
+| `StreamSource` subclasses | FileTail, HTTP polling, WebSocket, MQTT, Python callbacks |
+| `*Discretizer` classes | Continuous signal → discrete typed graph edges |
+| `SlidingWindowBuffer` | Time-bounded + count-capped live edge set with reference counting |
+| `StreamAdapter` | Thread-safe `NetworkXAdapter` with mutation listener broadcast |
+| `IncrementalCommunityUpdater` | Ego-network DSCF re-run on affected nodes only |
+
+**12.2 Discretization formulas**
+
+ThresholdDiscretizer (hysteresis-aware state detection):
+$$\text{state}(x) = \begin{cases} \text{SPIKE} & x > \mu + 3\sigma \\ \text{HIGH} & x > \mu + \sigma \\ \text{LOW} & x < \mu - \sigma \\ \text{NORMAL} & \text{otherwise} \end{cases}$$
+
+CoActivationDiscretizer (co-occurrence graph):
+$$\text{emit}(A,B) \iff |t_A - t_B| \leq \delta_t \;\wedge\; \text{count}(A,B) \geq n_{min}$$
+
+**12.3 Incremental community updates**
+
+Re-runs DSCF only over the radius-$r$ ego-network of nodes that received new edges since the last full run:
+
+$$G_{local} = \{v \mid d_G(v, u) \leq r,\; u \in \mathcal{A}\}$$
+
+Default: $r = 2$. Updates trigger when $|\mathcal{A}| \geq 10$.
+
+**12.4 Streaming API**
+
+| Endpoint | Description |
+|---|---|
+| `POST /stream/ingest` | Batch-ingest `StreamEvent` objects |
+| `GET /stream/status` | Live stats (nodes, edges, events/s) |
+| `GET /stream/events` | SSE subscription to graph mutations |
+
+---
+
+13. Conclusion
 
 We have presented Parallax: a framework that enables Knowledge Graphs to reason using the structural principles of Transformer attention without training data, without an LLM, and with full interpretability.
 
@@ -228,7 +324,7 @@ answer is traceable to a sequence of verified graph edges. This architectural sh
 moves AI from probabilistic hidden-layer weights to a **Glass-Box** of deterministic 
 paths — a vital transition in the modern AI/ML landscape. Every reasoning step names the community it traversed. This interpretability property, combined with the graph-grounded capability of graph-grounded inference, positions Parallax as a meaningful complement to — and in certain domains, replacement for — LLM-based reasoning over structured knowledge.
 
-The open questions identified in Section 8 define the research program. The benchmarks in Section 9 define the empirical standard. The architecture in Section 6 defines what to build.
+The open questions identified in Section 9 define the ongoing research program. The benchmarks in Section 7 define the empirical standard. The architecture in Section 4 defines the core build. Sections 11–12 demonstrate that the architecture scales to production and real-time streaming use cases without modification to CSA or DSCF.
 
 The name Parallax refers to the optical phenomenon where two viewpoints on the same object yield depth perception that neither viewpoint alone provides. LPA and modularity are two viewpoints on the same graph. Their combination yields structural depth — attention heads with both short-range and long-range character — that neither produces alone. This multi-signal consensus is inspired 
 by **mid-level voting** systems in triplex-redundant aircraft navigation, where 

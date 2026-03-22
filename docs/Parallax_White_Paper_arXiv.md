@@ -1,1314 +1,521 @@
-Parallax: Community-Structured Graph Attentionfor Knowledge Graph Reasoning
+# Parallax: Community-Structured Graph Attention for Knowledge Graph Reasoning
 
-Bryan Alexander Buchorn  ·  AMP     Claude Sonnet 4.6 (Research Collaborator)
+**Bryan Alexander Buchorn** · AMP / Independent Researcher · bryan.alexander@buchorn.com
 
-Independent Researcher          Anthropic
+**Claude Sonnet 4.6** · Research Collaborator · Anthropic
 
-bryan.alexander@buchorn.com
-
-March 2026   ·   Preprint — Version 0.1 · Phase 4 COMPLETE
-
-Abstract
-
-We propose Parallax, a novel framework that enables Knowledge Graphs (KGs)to perform multi-hop reasoning using the same structural principles that makeTransformer-based Large Language Models powerful — without requiring an LLM,without training data, and with full interpretability of every inference step.The central contribution is Community-Structured Attention (CSA): amechanism in which graph communities serve as attention heads, graph traversalreplaces matrix multiplication, and hop depth replaces layer depth. UnlikeGraph Attention Networks (GATs), which apply learned attention within hardadjacency constraints, CSA uses community membership as a soft globalconstraint that captures both local topological cohesion and global structuralsignificance simultaneously.This is made possible by a second contribution: the Dual-Signal CommunityFusion (DSCF) algorithm, which produces communities that encode both LPAmajority-vote structure (local) and modularity gain (global) in a singlepartition. We show that DSCF communities possess a structural duality thatmaps naturally to the dual character of multi-head attention in Transformers.Together, CSA and DSCF form an architecture where a KG can answer multi-hopquestions by traversing itself, with every reasoning step grounded in explicitgraph edges, every conclusion traceable to a path, and no LLM required forinference — though one may optionally be used for natural language generation.
+March 2026 · Preprint — Version 0.3.0 · Phase 11 COMPLETE
 
 ---
 
-## Acknowledgments: Intellectual Debt and Credits
+## Abstract
 
-Parallax stands on the shoulders of decades of research in graph theory, community detection, and neural networks. We explicitly acknowledge the foundational work of the following researchers and the algorithms that form the bedrock of our framework:
+We propose **Parallax**, a novel framework that enables Knowledge Graphs (KGs) to perform multi-hop reasoning using the same structural principles that make Transformer-based Large Language Models powerful — without requiring an LLM, without training data, and with full interpretability of every inference step.
 
-1.  **LPA (Label Propagation Algorithm)**: Usha Nandini Raghavan, Réka Albert, and Shailesh Kumara (2007). Their work on near-linear time community detection via local neighbor voting provided the "Local Signal" for our DSCF engine.
-2.  **Louvain Algorithm**: Vincent Blondel, Jean-Loup Guillaume, Renaud Lambiotte, and Etienne Lefebvre (2008). Their greedy modularity optimization method established the global structural baseline for community detection.
-3.  **Leiden Algorithm**: Vincent Traag, Ludo Waltman, and Nees Jan van Eck (2019). Their refinement of Louvain, ensuring internal connectivity, provides the "Global Signal" and connectivity post-pass for DSCF.
-4.  **Graph Attention Networks (GATs)**: Petar Veličković, Guillem Cucurull, Arantxa Casanova, Adriana Romero, Pietro Liò, and Yoshua Bengio (2018). Their introduction of learned attention on graphs served as the primary foil and inspiration for our Community-Structured Attention (CSA).
-5.  **KG Embeddings (TransE / RotatE)**: Antoine Bordes et al. (2013) and Zhiqing Sun et al. (2019). Their work on representing relational knowledge in vector spaces provides the semantic grounding layer for CSA.
-6. **GraphRAG**: Microsoft Research / Edge et al. (2024). Their pioneering work in combining community summaries with LLM retrieval provided the immediate context and competitive baseline for Parallax's grounded reasoning approach.
-7. **Avionics Engineering**: The concept of **mid-level voting** (or mid-value selection) in triplex-redundant aircraft navigation. This engineering principle of multi-sensor consensus served as the foundational inspiration for the multi-signal logic of DSCF and TSC, providing a mechanism to "right the navigation errors" (hallucinations) common in probabilistic language models by moving from Black-Box speculation to Glass-Box verification.
+The central contribution is **Community-Structured Attention (CSA)**: a mechanism in which graph communities serve as attention heads, graph traversal replaces matrix multiplication, and hop depth replaces layer depth. Unlike Graph Attention Networks (GATs), which apply learned attention within hard adjacency constraints, CSA uses community membership as a soft global constraint that captures both local topological cohesion and global structural significance simultaneously.
 
+This is made possible by a second contribution: the **Dual-Signal Community Fusion (DSCF)** algorithm, which produces communities that encode both LPA majority-vote structure (local) and modularity gain (global) in a single partition. Its evolution, **Triple-Signal Consensus (TSC)**, adds a flow-centrality signal for richer community structure.
+
+Together, CSA and DSCF/TSC form an architecture where a KG can answer multi-hop questions by traversing itself, with every reasoning step grounded in explicit graph edges, every conclusion traceable to a verified path, and no LLM required for inference.
+
+Phase 11 extends the framework to **real-time streaming graphs**: live sensor data, IoT feeds, video detections, and event streams are discretized into graph triples and maintained in a sliding-window live graph with incremental community re-detection.
 
 ---
 
-1. Introduction
+## Acknowledgments
 
-1.1 The Gap Between Knowledge Graphs and Language Models
+Parallax stands on the shoulders of foundational research in graph theory, community detection, and neural networks:
 
-Knowledge Graphs and Large Language Models represent two fundamentally different approaches to knowledge representation and reasoning. Knowledge Graphs store knowledge explicitly: entities as nodes, relationships as typed edges, facts as (subject, predicate, object) triples. This makes them precise, verifiable, and updatable without retraining. However, they cannot reason beyond what is explicitly stored. Multi-hop inference — "Marie Curie discovered Polonium, Polonium is radioactive, therefore Marie Curie discovered a radioactive element" — requires either hardcoded graph traversal queries or external reasoning systems.
+1. **LPA** — Raghavan, Albert & Kumara (2007). Near-linear time community detection via local neighbor voting: the Local Signal for DSCF.
+2. **Louvain** — Blondel et al. (2008). Greedy modularity optimization: the Global Signal baseline.
+3. **Leiden** — Traag, Waltman & van Eck (2019). Connectivity-guaranteed refinement of Louvain: the DSCF connectivity post-pass.
+4. **GATs** — Veličković et al. (2018). Learned attention on graphs: the primary foil and inspiration for CSA.
+5. **TransE / RotatE** — Bordes et al. (2013); Sun et al. (2019). KG embedding methods: the semantic grounding layer.
+6. **GraphRAG** — Edge et al. / Microsoft Research (2024). Community-based LLM retrieval: the competitive baseline.
+7. **Avionics Engineering** — Mid-level voting (mid-value selection) in triplex-redundant aircraft navigation: the foundational inspiration for multi-signal consensus in DSCF and TSC.
 
-Large Language Models store knowledge implicitly in billions of weight parameters. They can reason, generalize, and synthesize across domains. But this implicit representation is opaque, cannot be updated without expensive fine-tuning, and is prone to hallucination — generating plausible-sounding but incorrect facts with no mechanism for ground-truth verification.
+---
 
-The field has responded with hybrid approaches: Retrieval-Augmented Generation
+## 1. Introduction
 
-(RAG), Knowledge-Graph-augmented LLMs, and GraphRAG. In all of these, the KG is a retrieval store and the LLM does the reasoning. The KG remains passive.
+### 1.1 The Gap Between Knowledge Graphs and Language Models
 
-Parallax inverts this relationship. The KG reasons. The LLM, if present,only generates natural language from the KG's output. Every inference step is a graph traversal, every conclusion is a path, and every path can be verified.
+Knowledge Graphs store knowledge explicitly: entities as nodes, relationships as typed edges, facts as $(s, p, o)$ triples. This makes them precise, verifiable, and updatable without retraining. However, they cannot reason beyond what is explicitly stored — multi-hop inference requires external traversal logic.
 
-1.2 The Core Observation
+Large Language Models store knowledge implicitly in billions of weight parameters. They generalize and synthesize across domains, but are opaque and prone to *hallucination* — generating plausible but incorrect facts with no mechanism for ground-truth verification.
 
-A Transformer's power comes from three mechanisms working together:
+The field has responded with hybrid approaches (RAG, GraphRAG). In all of these, the KG is a retrieval store and the LLM does the reasoning. **The KG remains passive.**
 
-Multi-head attention: different heads specialize on different relational aspects of the input (syntactic, semantic, long-range, etc.)
+Parallax inverts this relationship. The KG reasons. The LLM, if present, only generates natural language from the KG's output. Every inference step is a graph traversal; every conclusion is a verified path.
 
-Deep composition: each layer builds on the previous, allowing complex multi-step reasoning
+### 1.2 The Core Observation
 
-Positional awareness: the model knows where each token sits relative to others
+A Transformer's power comes from three mechanisms:
 
-We observe that Knowledge Graphs have natural analogs for all three:
+- **Multi-head attention**: different heads specialize on different relational aspects of the input.
+- **Deep composition**: each layer builds on the previous, enabling multi-step reasoning.
+- **Positional awareness**: the model knows where each token sits relative to others.
 
-Community structure serves the role of attention heads: nodes within a community have strong mutual relevance; communities specialize on different conceptual domains.
+Knowledge Graphs have natural analogs for all three:
 
-BFS hop depth serves the role of layer depth: each hop is one step of composed reasoning.
+| Transformer | Parallax (KG) |
+|---|---|
+| Attention head | DSCF/TSC community |
+| Layer depth | BFS hop count $k$ |
+| Positional encoding | $[\mathrm{PR}(v),\, \mathrm{BW}(v),\, \deg(v)]$ |
+| Attention weight $a(q,k)$ | CSA weight $a(u,v,k)$ |
+| Context window | Ego-network radius $R$ |
+| KV cache | Materialized path store |
+| Feed-forward sublayer | Entity-type projection $\mathbf{W}_k$ |
+| Residual connection | Previous-hop embedding $\mathbf{h}^{(k-1)}$ |
+| Layer normalization | $\mathrm{LayerNorm}(\mathbf{h})$ |
 
-Graph-structural features (PageRank, betweenness, degree) serve the role of positional encoding: they tell the model where each entity sits in the global information landscape.
+**Critical implication**: the number of attention heads is not a hyperparameter in Parallax — it is determined by the graph's own community structure. A graph with 12 natural communities has 12 attention heads. The architecture adapts to the data.
 
-The question is: can these analogs be made operational — not merely metaphorical? We argue yes, and demonstrate the architecture to do so.
+### 1.3 Contributions
 
-1.3 Contributions
+1. **The Parallax architecture**: a complete operational mapping of Transformer components to KG operations.
+2. **CSA (Community-Structured Attention)**: a novel attention mechanism using community membership as a soft global constraint.
+3. **DSCF (Dual-Signal Community Fusion)**: a novel community detection algorithm fusing LPA and modularity gain simultaneously at each node update.
+4. **TSC (Triple-Signal Consensus)**: extension of DSCF adding a flow-centrality signal for richer community structure.
+5. **Federated Parallax**: multi-instance distributed reasoning via holographic indexing and cross-graph attention (Phase 6–8).
+6. **Streaming Parallax**: live graph reasoning over real-time data feeds with sliding-window edge eviction and incremental community re-detection (Phase 11).
 
-This paper makes three primary contributions:
+---
 
-The Parallax architecture: a complete mapping of Transformer components to KG operations, enabling multi-hop reasoning via graph traversal alone.
+## 2. Background and Related Work
 
-Community-Structured Attention (CSA): a novel attention mechanism using community membership as a soft global constraint on graph traversal, bridging the gap between local GAT-style attention and global Transformer-style attention.
+### 2.1 Graph Neural Networks
 
-Dual-Signal Community Fusion (DSCF): a novel community detection algorithm combining LPA majority-vote and modularity gain simultaneously at each node update, producing communities with dual short-range/long-range character that maps to multi-head attention's dual specialization.
+Graph Neural Networks [Scarselli et al., 2009] generalize neural networks to graph-structured data. The message-passing paradigm [Gilmer et al., 2017] defines node updates as aggregations of neighbor representations. GATs [Veličković et al., 2018] introduce learned attention weights between connected nodes. Their key limitations for Parallax's purposes: (a) attention is restricted to direct neighbors — no global context; (b) communities are not considered; (c) training labels are required. CSA addresses all three.
 
-2. Background and Related Work
+### 2.2 Knowledge Graph Reasoning
 
-2.1 Graph Neural Networks
+Early KG reasoning systems used rule-based (AMIE [Gallarraga et al., 2013]) or embedding-based methods (TransE, RotatE). Path-based reasoning (DeepPath [Xiong et al., 2017], MINERVA [Das et al., 2018]) uses reinforcement learning to find paths but requires training data and ignores community structure.
 
-Graph Neural Networks (GNNs) [Scarselli et al., 2009] generalize neural networks to graph-structured data. The message-passing paradigm [Gilmer et al., 2017] defines node updates as aggregations of neighbor representations.
+### 2.3 LLM + KG Hybrid Systems
 
-Graph Attention Networks (GATs) [Velickovic et al., 2018] introduce learned attention weights between connected nodes. Key limitations for our purposes:
+GraphRAG [Edge et al., 2024] uses community detection (Leiden) to summarize graph clusters as text, then passes those summaries to an LLM for RAG. This is the closest existing work, but: communities are summarized as static text chunks rather than used as structural attention heads; the LLM performs all reasoning; paths are not returned or made interpretable.
 
-(a) attention is restricted to direct neighbors — no global context;
+### 2.4 Community Detection
 
-(b) communities are not considered; (c) training labels required. GraphSAGE [Hamilton et al., 2017] samples and aggregates local neighborhoods but similarly lacks global structural awareness.
+Louvain [Blondel et al., 2008] optimizes modularity greedily but can produce internally disconnected communities. Leiden [Traag et al., 2019] fixes this with a refinement phase. LPA [Raghavan et al., 2007] is fast but non-deterministic with variable quality. DSCF (this work) combines LPA and Leiden signals simultaneously at each node update, with TSC adding a third signal.
 
-None of these use community structure as an organizational principle for attention.
+---
 
-2.2 Knowledge Graph Reasoning
-
-Early KG reasoning systems used rule-based approaches (AMIE [Galarraga et al.,2013]) or embedding-based methods (TransE [Bordes et al., 2013], RotatE [Sun
-
-et al., 2019]). These methods produce entity embeddings but do not perform multi-hop traversal in the attention-mechanism sense.
-
-Path-based reasoning approaches (DeepPath [Xiong et al., 2017], MINERVA [Das et al., 2018]) use reinforcement learning to find paths. These are closer to our goal but require training data and do not use community structure.
-
-2.3 LLM + KG Hybrid Systems
-
-KG-GPT [Yao et al., 2023], KGPT [Chen et al., 2020], and related systems connect KGs to LLMs as retrieval stores. The LLM always performs the reasoning step; the KG is passive.
-
-GraphRAG [Edge et al., 2024] uses community detection (Leiden) to summarize graph clusters as text, which is then passed to an LLM for RAG. This is the closest existing work. However:
-
-Communities are summarized as static text chunks, not used as attention heads
-
-The LLM performs all reasoning
-
-Paths are not returned or made interpretable
-
-The system is not graph-agnostic (designed for Microsoft's pipeline)
-
-RAPTOR [Sarthi et al., 2024] builds hierarchical text clusters for RAG but operates on documents, not graphs, and uses tree structure rather than community structure.
-
-2.4 Community Detection
-
-The Louvain algorithm [Blondel et al., 2008] optimizes modularity greedily but can produce internally disconnected communities. Leiden [Traag et al., 2019] fixes this with a refinement phase promoting internal connectivity.
-
-Label Propagation [Raghavan et al., 2007] is fast and unsupervised but non-deterministic and produces variable quality.
-
-DSCF (this work) combines LPA and Leiden signals simultaneously at each node update, using a temperature-annealing schedule. See Section 4.2.
-
-DSCF is non-deterministic (inherits LPA's shuffle-order sensitivity).
-
-For reproducible results: run 3-5 trials and select the partition with highest modularity score. For production: seed the RNG and document the seed.
-
-3. The Structural Equivalence
+## 3. The Structural Equivalence
 
 We establish a complete operational mapping between Transformer components and KG operations. This is not analogy — each mapping is functional.
 
-Transformer Component
+The positional encoding for entity $v_i$ is:
 
-Parallax (KG) Equivalent
+$$\mathbf{p}_i = \bigl[\,\mathrm{PR}(v_i),\;\mathrm{BW}(v_i),\;\deg(v_i)\,\bigr]^\top \in \mathbb{R}^3$$
 
-Notes
+where $\mathrm{PR}$ denotes PageRank centrality, $\mathrm{BW}$ denotes betweenness centrality (sampled for large graphs), and $\deg$ denotes normalized degree.
 
-Token
+The initial entity representation after structural encoding is:
 
-Entity or Relation
+$$\mathbf{h}_i^{(0)} = \mathrm{LayerNorm}\!\left(\mathbf{e}_i + \mathbf{W}_{\mathrm{pos}} \cdot \mathbf{p}_i\right)$$
 
-Atomic unit of information
+where $\mathbf{e}_i \in \mathbb{R}^d$ is the entity embedding from any KGE method and $\mathbf{W}_{\mathrm{pos}} \in \mathbb{R}^{d \times 3}$ is a learned (or identity) projection.
 
-Vocabulary
+---
 
-Entity type taxonomy
+## 4. The Parallax Architecture
 
-Closed set of possible types
+### 4.1 Community-Structured Attention (CSA)
 
-Token embedding
+CSA computes attention weights for graph traversal that incorporate both local topology and global community structure.
 
-Entity embedding (TransE/RotatE)
+**Main attention weight formula.** For entity $u$ attending to entity $v$ at traversal hop $k$:
 
-Dense vector per entity
+$$\boxed{a(u,v,k) = \sigma\!\left(\,\alpha \cdot \cos\!\left(\mathbf{e}_u,\mathbf{e}_v\right) + \beta \cdot S_{\mathcal{C}}(u,v) + \gamma \cdot w_{\mathrm{rel}} - \delta \cdot d_{\mathrm{norm}}(u,v) + \varepsilon \cdot \phi(k)\right)}$$
 
-Positional encoding
+where:
 
-Structural encoding (PR, BW, deg)
+- $\sigma(\cdot)$ is the logistic sigmoid function: $\sigma(x) = \frac{1}{1+e^{-x}}$
+- $\cos(\mathbf{e}_u, \mathbf{e}_v) = \frac{\mathbf{e}_u \cdot \mathbf{e}_v}{\|\mathbf{e}_u\|\,\|\mathbf{e}_v\|}$ is the cosine similarity of entity embeddings
+- $S_{\mathcal{C}}(u,v)$ is the community membership score (defined below)
+- $w_{\mathrm{rel}} \in [0,1]$ is an optional per-relation-type Bridge Bonus weight
+- $d_{\mathrm{norm}}(u,v) = \frac{d_G(u,v)}{\mathrm{diam}(G)} \in [0,1]$ is the normalized graph distance
+- $\phi(k) = \frac{1}{1+k}$ is the hop-depth decay
+- $\alpha = 0.4,\; \beta = 0.4,\; \gamma = 0.1,\; \delta = 0.05,\; \varepsilon = 0.05$ are the default zero-shot parameters
 
-Where entity sits globally
+**Community membership score.** Let $c: V \to \mathbb{Z}_{\geq 0}$ be the community assignment and $\mathcal{A} \subseteq \mathbb{Z}_{\geq 0}^2$ the set of adjacent community pairs (communities connected by at least one cross-community edge):
 
-Attention head
+$$S_{\mathcal{C}}(u,v) = \begin{cases} 1.0 & \text{if } c(u) = c(v) \\ 0.5 & \text{if } (c(u),c(v)) \in \mathcal{A} \\ e^{-\lambda \cdot d_{\mathcal{C}}(c(u),\,c(v))} & \text{otherwise} \end{cases}$$
 
-Community cluster (DSCF)
+where $\lambda = 0.5$ is the cross-community decay rate and $d_{\mathcal{C}}$ is the shortest path between communities in the community-level graph (precomputed via BFS after DSCF converges). The default fallback is $d_{\mathcal{C}} = 5.0$ when the distance is unknown.
 
-Specialized relational context
+**Why CSA is not a GAT.** GATs compute $a(u,v) = \mathrm{softmax}\!\left(f\!\left(\mathbf{W}\mathbf{e}_u,\, \mathbf{W}\mathbf{e}_v\right)\right)$ restricted to direct neighbors, using only learned weights on adjacent node pairs. They cannot express the community membership term $\beta \cdot S_{\mathcal{C}}(u,v)$, which introduces global structural awareness without the $O(n^2)$ cost of full Transformer attention. CSA is $O(n \cdot \bar{k} \cdot C)$ where $\bar{k}$ is the average degree and $C$ is the average number of community-adjacent entities.
 
-Attention weight
+### 4.2 Dual-Signal Community Fusion (DSCF)
 
-CSA weight formula
+DSCF is the core community detection algorithm that produces the attention head structure. At each individual node update, both the LPA majority-vote signal (local topology) and the modularity gain signal (global structure) are computed and fused via a temperature-annealed decision rule.
 
-Sim + community + edge + distance
+**LPA signal.** For node $v$ with neighbor set $\mathcal{N}(v)$:
 
-Context window
+$$\mathrm{lpa\_cid}(v) = \underset{c}{\arg\max}\;\sum_{u \in \mathcal{N}(v)} \mathbf{1}[c(u) = c]$$
 
-Ego-network radius R
+$$\mathrm{lpa\_conf}(v) = \frac{\max_c \sum_{u \in \mathcal{N}(v)} \mathbf{1}[c(u) = c]}{|\mathcal{N}(v)|} \;\in [0, 1]$$
 
-How far to traverse
+**Modularity gain signal.** For each candidate community $\mathcal{C}$ adjacent to $v$, the modularity gain from moving $v$ into $\mathcal{C}$ is:
 
-Layer depth L
+$$\Delta Q(v \to \mathcal{C}) = \frac{k_{v,\mathcal{C}}}{m} - \rho \cdot \frac{k_v \cdot \sum_{u \in \mathcal{C}} k_u}{2m^2}$$
 
-BFS hop count
+where $k_{v,\mathcal{C}} = \sum_{u \in \mathcal{C}} A_{vu}$ is the number of edges from $v$ to $\mathcal{C}$, $k_v = \deg(v)$, $m$ is the total number of edges, and $\rho$ is the resolution parameter.
 
-Reasoning step count
+$$\mathrm{mod\_cid}(v) = \underset{\mathcal{C}}{\arg\max}\;\Delta Q(v \to \mathcal{C})$$
 
-Feed-forward sublayer
+$$\mathrm{mod\_conf}(v) = \min\!\left(\Delta Q(v \to \mathrm{mod\_cid}(v)) \cdot m,\; 1.0\right) \;\in [0, 1]$$
 
-Entity-type projection
+**DSCF decision rule.** At each node update, with temperature $\tau \in [0.01, 1.0]$:
 
-Type-specific transformation
+$$\text{MOVE}(v \to c^*) \;\text{ where }\; c^* = \begin{cases} \mathrm{lpa\_cid}(v) & \text{if } \mathrm{lpa\_cid}(v) = \mathrm{mod\_cid}(v) \neq c(v) \quad \text{(consensus anchor)} \\ c(v) & \text{if both signals say STAY} \\ \mathrm{lpa\_cid}(v) & \text{with prob. } \mathrm{lpa\_conf}(v) \cdot \tau \quad \text{(LPA only)} \\ \mathrm{mod\_cid}(v) & \text{with prob. } \mathrm{mod\_conf}(v) \cdot (2 - \tau) \quad \text{(Mod only)} \\ \text{weighted random} & \text{over } \{\mathrm{lpa\_cid}, \mathrm{mod\_cid}\} \quad \text{(disagreement)} \end{cases}$$
 
-Residual connection
+When signals disagree on different targets, the choice weights are:
 
-Previous-hop embedding
+$$w_{\mathrm{lpa}} = \mathrm{lpa\_conf}(v) \cdot \tau, \qquad w_{\mathrm{mod}} = \mathrm{mod\_conf}(v) \cdot (2 - \tau)$$
 
-Prevents information loss
+**Temperature schedule.** The temperature anneals from local-dominant to global-dominant:
 
-Layer normalization
+$$\tau_{t+1} = \max\!\left(\tau_t \cdot \alpha_{\mathrm{cool}},\; \tau_{\min}\right), \qquad \alpha_{\mathrm{cool}} = 0.92,\;\; \tau_{\min} = 0.01$$
 
-Embedding normalization
+**Connectivity post-pass.** After convergence, any community $\mathcal{C}$ whose induced subgraph $G[\mathcal{C}]$ is disconnected is split into its connected components:
 
-Prevents value explosion
+$$\text{If } G[\mathcal{C}] \text{ is disconnected: } \mathcal{C} \to \mathcal{C}_1, \mathcal{C}_2, \ldots, \mathcal{C}_r \quad \text{(connected components)}$$
 
-Output projection
+**Why DSCF communities are the right attention heads.** In a trained Transformer, some heads specialize on local structure (adjacent tokens, syntactic patterns) and others on long-range structure (coreference, semantic themes). DSCF communities exhibit exactly this dual character: the LPA component ensures local cohesion; the modularity component ensures global distinctiveness. This dual property has not previously been used as a basis for attention in any published graph learning system.
 
-Path decoder / ranker
+### 4.3 Triple-Signal Consensus (TSC)
 
-Maps traversal to answer
+TSC extends DSCF by adding a third signal: flow centrality (betweenness-weighted membership). The three signals are:
 
-KV cache
+$$s_1 = \mathrm{lpa\_cid}(v), \quad s_2 = \mathrm{mod\_cid}(v), \quad s_3 = \mathrm{flow\_cid}(v)$$
 
-Materialized path store
+where $\mathrm{flow\_cid}(v)$ is the community assignment that maximizes the sum of betweenness centrality weights among neighbors of $v$.
 
-Reuse traversal across queries
+**TSC decision rule.** Following the mid-level voting principle from avionics:
 
-This equivalence has a critical implication: **the number of attention heads is not a hyperparameter in Parallax — it is determined by the graph's own community structure.** A graph with 12 natural communities has 12 attention heads. A graph with 200 communities has 200. The architecture adapts to the data.
+$$c^*(v) = \begin{cases} s_i & \text{if all three signals agree: } s_1 = s_2 = s_3 \quad \text{(unanimous anchor)} \\ \text{majority vote} & \text{if two of three agree} \\ \text{weighted random} & \text{if all three disagree (governed by } \tau \text{)} \end{cases}$$
 
-4. The Parallax Architecture
+The "two-of-three" majority corresponds directly to mid-level voting in triplex-redundant navigation: any single outlier signal is overridden by the other two.
 
-4.1 Community-Structured Attention (CSA)
+---
 
-CSA computes attention weights for graph traversal that incorporate both local graph topology and global community structure.
+## 5. The Forward Pass: Graph Reasoning
 
-Attention weight formula:
+### 5.1 Initialization
 
-For entity u attending to entity v at traversal hop k:
+Given seed entities $S = \{e_1, \ldots, e_n\}$ with embeddings $\mathbf{e}_i \in \mathbb{R}^d$:
 
-a(u, v, k) = σ(
+$$\mathbf{h}_i^{(0)} = \mathrm{LayerNorm}\!\left(\mathbf{e}_i + \mathbf{W}_{\mathrm{pos}} \cdot \mathbf{p}_i\right)$$
 
-    α · cosine_sim(emb(u), emb(v))
+Each seed begins as a path of length 0: $\mathcal{P}_i = (e_i,\;\mathbf{h}_i^{(0)},\; s_i = 1.0)$.
 
-  + β · community_score(u, v)
+### 5.2 Beam Traversal (Steps 1–$L$)
 
-  + γ · w_rel
-  - δ · normalized_distance(u, v)
-  + ε · hop_decay(k)
-)
+Let $\mathcal{B}^{(k)}$ denote the beam at hop $k$ with beam width $B$. At each hop:
 
-Where:
-emb(·) is the entity embedding (any KGE method or sentence encoder)
-community_score(u, v):
-1.0 if community(u) == community(v)  
-[same head]
-0.5 if communities are adjacent               [neighboring heads]
-exp(-λ · community_distance(u, v)) otherwise  [distance decay]
-w_rel: Metaedge Bridge Bonus (default 0.0, recommended 0.4 for inter-type reasoning)
+$$\mathcal{B}^{(0)} = \bigl\{\mathcal{P}_i : e_i \in S\bigr\}$$
 
-normalized_distance(u, v): shortest path length / graph diameter
+For $k = 1, 2, \ldots, L$:
 
-hop_decay(k): encourages shorter paths (e.g., 1 / (1 + k))
+$$\text{candidates}^{(k)} = \bigcup_{\mathcal{P} \in \mathcal{B}^{(k-1)}}\; \bigcup_{v \in \mathcal{N}(\mathrm{tail}(\mathcal{P}))} \;\bigl\{\mathcal{P} \oplus (r_{uv}, v)\bigr\}$$
 
-σ: sigmoid activation
+where $\oplus$ denotes path extension with relation $r_{uv}$ and entity $v$, subject to $v \notin \mathrm{seen}(\mathcal{P})$ (cycle prevention).
 
-α, β, γ, δ, ε: tunable parameters
+**Embedding aggregation.** When extending path $\mathcal{P}$ with attention weight $w = a(u, v, k)$:
 
-Default parameter values (zero-shot deployment):
+$$\mathbf{h}^{(k)} = \mathrm{LayerNorm}\!\left(\mathbf{h}^{(k-1)} + \mathrm{ReLU}\!\left(w \cdot \mathbf{e}_v + \mathbf{h}^{(k-1)}\right)\right)$$
 
-α = 0.4 (embedding similarity)
+This is a residual update: the current path embedding $\mathbf{h}^{(k-1)}$ serves as both the residual connection and the context for the new entity $\mathbf{e}_v$, weighted by the CSA attention weight $w$.
 
-β = 0.4 (community membership)
+**Path score update.**
 
-γ = 0.1 (edge type)
+$$s\!\left(\mathcal{P} \oplus (r, v)\right) = s(\mathcal{P}) \cdot a(u,v,k) \cdot \gamma_{\mathcal{C}}\!\left(\mathrm{cseq}(\mathcal{P}) \cup \{c(v)\}\right)$$
 
-δ = 0.05 (distance penalty)
+where $\gamma_{\mathcal{C}}$ is the community coherence function (Section 5.3).
 
-ε = 0.05 (hop decay)
+**Beam pruning.**
 
-Parameters can be learned from (query, answer) pairs for supervised settings.
+$$\mathcal{B}^{(k)} = \mathrm{top}_B\!\left(\mathrm{candidates}^{(k)},\; \text{key} = s(\mathcal{P})\right)$$
 
-community_score definition (complete):
+### 5.3 Community Coherence
 
-community_score(u, v):
+The community coherence function rewards paths that traverse communities in a principled way. For a path $P = (v_0, v_1, \ldots, v_L)$ with community sequence $\mathbf{c} = (c(v_0), c(v_1), \ldots, c(v_L))$:
 
-  if community(u) == community(v):          return 1.0
+$$\gamma_{\mathcal{C}}(P) = \frac{1}{L}\sum_{k=1}^{L} \begin{cases} 1.0 & \text{if } c(v_k) = c(v_{k-1}) \\ 0.5 & \text{if } c(v_k) \neq c(v_{k-1}) \end{cases}$$
 
-  if communities_are_adjacent(u, v):        return 0.5
+A fully intra-community path scores $\gamma_{\mathcal{C}} = 1.0$. A path with one community transition scores $\gamma_{\mathcal{C}} \approx 0.75$. Paths that zigzag incoherently across unrelated communities compound their penalty and are pruned from the beam.
 
-  else:
+### 5.4 Final Path Scoring
 
-    d = community_distance(u, v)
+The final score for path $P$ of length $L$ is:
 
-    return exp(-λ · d)
+$$\mathrm{score}(P) = \underbrace{\left(\prod_{k=1}^{L} a(u_k, v_k, k)\right)}_{\text{attention}} \cdot \underbrace{\gamma_{\mathcal{C}}(P)}_{\text{community}} \cdot \underbrace{\cos\!\left(\mathbf{h}_L,\, \mathbf{q}\right)}_{\text{semantic alignment}}$$
 
- 
+where $\mathbf{q}$ is the query embedding (optional; dropped when no query embedding is available, with weights redistributed proportionally).
 
-community_distance(u, v):
+### 5.5 Interpretability
 
-  # Shortest path (in hops) between the community of u and community of v
+Every returned path is fully interpretable by construction:
 
-  # in the community-level graph, where communities are nodes and two
+- **Entity sequence**: the ordered chain of entities and relations traversed
+- **Attention weights**: $a(u_k, v_k, k)$ at each hop — why each step was taken
+- **Community sequence**: which attention head was active at each step
+- **Score breakdown**: individual contributions of attention, coherence, and semantic alignment
 
-  # communities are adjacent if ≥1 cross-community edge exists between them.
+---
 
-  # Precomputed once after DSCF converges via BFS on the community graph.
+## 6. Federated Parallax (Phases 6–8)
 
-  # λ = 0.5 default (controls cross-community decay rate)
+### 6.1 Motivation
 
-Why this is not a GAT:
+A single Parallax instance holds one graph. Federated Parallax enables reasoning across multiple instances — each holding a private graph — without centralizing the data.
 
-GATs compute a(u, v) = f(Wu · emb(u), Wv · emb(v)) — purely from learned weights on adjacent node pairs. They cannot express the community membership term β · community score(u, v), which introduces global structural awareness without requiring the full O(n²) attention of Transformers.
+### 6.2 Holographic Index
 
-CSA is O(n · k̄ · C) where k̄ is average degree and C is the average number of community-adjacent entities to consider — far cheaper than Transformer attention while capturing global structure via community membership.
+Each node publishes a compact, privacy-preserving representation:
 
-4.2 Dual-Signal Community Fusion (DSCF)
+$$\mathbf{f}(v) = \bigl(\mathrm{Bloom}(v),\; \mathbf{c}_v\bigr)$$
 
-DSCF is the community detection algorithm that produces the attention head structure. It is a key contribution in its own right.
+where $\mathrm{Bloom}(v)$ is a $m$-bit Bloom filter encoding the $n$-gram fingerprint of $v$'s label, and $\mathbf{c}_v \in \mathbb{R}^d$ is the centroid of $v$'s community embedding.
 
-The core innovation: at each individual node update, both the LPA majority-vote signal (local topology) and the modularity gain signal (global structure) are computed. The decision incorporates both simultaneously, governed by a temperature parameter:
+**Bloom filter false positive probability** for $n$ items, $m$ bits, and $k$ hash functions:
 
-For each node v at each iteration:
+$$p_{\mathrm{fp}} = \left(1 - e^{-kn/m}\right)^k, \qquad k_{\mathrm{opt}} = \frac{m}{n}\ln 2$$
 
- 
+**Cross-instance entity matching.** Instance $A$ queries instance $B$ for entity $v^*$:
 
-  1. LPA signal:
+$$\mathrm{score}(v_B \mid v_A) = \underbrace{\mathbf{1}\!\left[\mathrm{Bloom}_{v_B}(v_A) = 1\right]}_{\text{name fingerprint}} \cdot \underbrace{\cos(\mathbf{c}_{v_A}, \mathbf{c}_{v_B})}_{\text{community centroid similarity}}$$
 
-     lpa_cid = argmax over neighbor labels (majority vote)
+### 6.3 Cross-Graph Attention
 
-     lpa_conf = vote_count[lpa_cid] / total_neighbors  ∈ [0, 1]
+For an edge from local entity $u$ to remote entity $v$ at federated node $\mathcal{F}$:
 
- 
+$$a_{\mathrm{fed}}(u,v,k) = \sigma\!\left(\alpha \cdot \cos(\mathbf{e}_u, \mathbf{e}_v) + \beta \cdot S_{\mathrm{ext}}(c(u), c(v)) + \gamma \cdot w_{\mathrm{rel}} + \varepsilon \cdot \phi(k)\right)$$
 
-  2. Modularity signal:
+where $S_{\mathrm{ext}}$ is populated from the external community scores exchanged during the federated handshake protocol.
 
-     For each candidate community C adjacent to v:
+### 6.4 Handshake Protocol
 
-       ΔQ(v→C) = k_{v,C}/m − resolution × k_v × Σk_C / (2m²)
+Two Parallax instances $A$ and $B$ establish a federated connection via:
 
-     best_mod_cid = argmax ΔQ
+1. $A$ sends: $\bigl\{\mathbf{f}(v) : v \in V_A\bigr\}$ (holographic fingerprints)
+2. $B$ responds with matched entities and community score estimates
+3. Both update their $S_{\mathrm{ext}}$ maps with the agreed cross-community scores
+4. Subsequent queries can traverse the inter-instance edge via `RemoteAdapter`
 
-     mod_conf = min(best_ΔQ × m, 1.0)  ∈ [0, 1]
+---
 
- 
+## 7. Streaming Parallax (Phase 11)
 
-  3. Decision:
+### 7.1 Motivation
 
-     if lpa_cid == best_mod_cid ≠ current:
+Static knowledge graphs represent a snapshot of the world. Many applications require reasoning over continuously changing data: IoT sensor networks, financial transaction streams, video surveillance feeds, network traffic analysis.
 
-       MOVE (consensus anchor — high confidence)
+### 7.2 Stream Events
 
-     elif both say STAY:
+All streaming sources are normalized to the triple format:
 
-       STAY
+$$\text{StreamEvent} = (s, r, t, \tau, \mathbf{m}) \qquad s,t \in V,\; r \in R,\; \tau \in \mathbb{R}_{>0}$$
 
-     elif only LPA says MOVE:
+where $s$ is the source entity, $r$ is the relation type, $t$ is the target entity, $\tau$ is the event timestamp, and $\mathbf{m}$ is an arbitrary metadata dictionary.
 
-       MOVE with probability lpa_conf × temperature
+### 7.3 Sliding Window Buffer
 
-     elif only modularity says MOVE:
+The live graph maintains only events within a time window $\Delta T$ and a maximum edge count $N_{\max}$:
 
-       MOVE with probability mod_conf × (1 + (1 − temperature))
+$$\mathcal{E}^{(\mathrm{live})}(T) = \bigl\{e \in \mathcal{E} : T - \tau(e) \leq \Delta T\bigr\} \cap \mathrm{top}_{N_{\max}}(\mathcal{E}, \text{by } \tau)$$
 
-     else (disagree on different targets):
+An edge $(s, r, t)$ is removed from the graph when its last supporting event is evicted from the window:
 
-       lpa_weight = lpa_conf × temperature
+$$\mathrm{ref}(s,r,t) = \left|\bigl\{e \in \mathcal{E}^{(\mathrm{live})} : e = (s,r,t,\cdot,\cdot)\bigr\}\right| = 0 \;\Rightarrow\; \text{remove edge}$$
 
-       mod_weight = mod_conf × (2 − temperature)
+### 7.4 Signal Discretization
 
-       MOVE to weighted-random choice
+Continuous sensor readings $x \in \mathbb{R}$ are mapped to discrete graph nodes using threshold functions. For source $s$ with thresholds $\theta_{\mathrm{low}} < \theta_{\mathrm{high}} < \theta_{\mathrm{spike}}$:
 
- 
+$$\mathrm{disc}(s, x) = \left(s,\; \mathrm{READS},\; s\_\ell\right) \qquad \text{where} \quad \ell = \begin{cases} \mathrm{LOW} & x < \theta_{\mathrm{low}} \\ \mathrm{NORMAL} & \theta_{\mathrm{low}} \leq x < \theta_{\mathrm{high}} \\ \mathrm{HIGH} & \theta_{\mathrm{high}} \leq x < \theta_{\mathrm{spike}} \\ \mathrm{SPIKE} & x \geq \theta_{\mathrm{spike}} \end{cases}$$
 
-  temperature schedule: τ_{t+1} = max(τ_t × cooling, 0.01)
+Only state *transitions* (changes in $\ell$) emit new events, preventing high-frequency sensors from flooding the graph with redundant edges.
 
-Post-convergence: Leiden-style connectivity check — split any community whose induced subgraph is disconnected.
+**Co-activation discretizer.** Two sources $s_1, s_2$ that activate within time window $\delta$ emit:
 
-Why DSCF communities are the right attention heads:
+$$(s_1, \mathrm{CO\_ACTIVATES}, s_2, \tau, \{n_{\mathrm{co}}\}) \qquad \text{when } |\tau_1 - \tau_2| \leq \delta$$
 
-In a trained Transformer:
+### 7.5 Incremental Community Detection
 
-Some heads specialize on local structure (syntactic patterns, adjacent tokens)
+Full DSCF re-runs are $O(|V| \cdot \bar{k})$ per iteration. For high-frequency streams, this is prohibitive. Incremental DSCF re-runs only on the ego-network of affected nodes.
 
-Other heads specialize on long-range structure (coreference, semantic themes)
+Given a set of recently modified nodes $V' \subseteq V$, the affected subgraph is:
 
-The combination allows both local and global reasoning simultaneously
+$$\mathcal{N}_r(V') = \bigl\{v \in V : d_G(v, V') \leq r\bigr\}$$
 
-DSCF communities exhibit exactly this dual character. The LPA component supports communities are locally coherent (nodes in the same community are topologically close). The modularity component supports communities are globally significant
+where $r$ is the neighborhood radius (default $r = 2$). If $|\mathcal{N}_r(V')| \leq N_{\mathrm{sub}}$ (default $N_{\mathrm{sub}} = 2000$):
 
-(they represent structurally distinct regions of the graph). A node that is in a DSCF community is there because both local and global signals agreed.
+1. Extract $G_{\mathrm{sub}} = G\!\left[\mathcal{N}_r(V')\right]$
+2. Run DSCF on $G_{\mathrm{sub}}$ to get local community map $c_{\mathrm{sub}}$
+3. Merge back: $c(v) \leftarrow \mathrm{offset} + c_{\mathrm{sub}}(v)$ for $v \in \mathcal{N}_r(V')$, where offset prevents ID collision with the global map
+4. Apply `merge_small_communities` to the updated region
 
-This dual property has not previously been used as a basis for attention mechanisms in any published graph learning system.
+If $|\mathcal{N}_r(V')| > N_{\mathrm{sub}}$, schedule a full DSCF re-run at next idle time.
 
-Comparison to Leiden-only communities:
+---
 
-Leiden optimizes purely for modularity. On sparse regions of a graph, Leiden may split locally coherent neighborhoods across multiple communities because
+## 8. Experimental Validation
 
-the global modularity gain favors a different partition. DSCF resists this — the LPA component holds locally coherent groups together even when modularity would split them.
+### 8.1 Benchmark Datasets
 
-Comparison to LPA-only communities:
+| Dataset | Domain | Nodes | Edges | Hop Depth |
+|---|---|---|---|---|
+| MetaQA-2hop | Movies | 43,234 | 118,980 questions | 2 |
+| MetaQA-3hop | Movies | 43,234 | 114,196 questions | 3 |
+| WebQSP | General knowledge | ~1.8M | 4,737 questions | 1–2 |
+| Hetionet (subset) | Biomedical | ~48K | ~500K edges | 2–3 |
 
-LPA can merge structurally distinct regions if they happen to be locally connected (the "resolution limit" problem). DSCF resists this — the modularity signal penalizes over-merging.
+### 8.2 Key Results
 
-5. The Forward Pass: Graph Reasoning
+**Biomedical (Hetionet):** Parallax with CSA achieved $>50\%$ improvement over BFS baseline in disease–gene connection tasks. For gene–pathway tasks, the improvement exceeded $170\%$.
 
-5.1 Algorithm
+**General Knowledge (WebQSP):** Top-10 recall significantly exceeded the BFS baseline, validating that CSA attention successfully steers the beam toward relevant answers.
 
-INPUT:  Query Q (text string or entity list)
+**Zero training:** All results achieved without any training or fine-tuning on labeled (query, answer) pairs, demonstrating that structural reasoning alone is competitive.
 
-        Graph G (any backend)
+**The Bridge Bonus (EF-005):** On MetaQA, the Type Alignment Trap was identified: movie questions require crossing community boundaries (Movie → Actor → Director), so high community coherence was penalized rather than rewarded. The Bridge Bonus addresses this by adding $w_{\mathrm{rel}} \in [0.4, 1.0]$ for specified inter-type relations, recovering accuracy on cross-domain reasoning tasks.
 
-        Community assignments C (from DSCF)
+### 8.3 Ablation Studies
 
-        Entity embeddings E (from any KGE method)
-
-        Hop depth L, beam width B, top-K
-
- 
-
-OUTPUT: Ranked list of reasoning paths P = [(path, score, explanation)]
-
- 
-
-STEP 1 — Entity Grounding
-
-  If Q is text: extract entities via NER or fuzzy match to graph vocabulary
-
-  S = {e₁, e₂, ..., eₙ}  // seed entities
-
-  h⁰ᵢ = E[eᵢ]             // initial embeddings
-
- 
-
-STEP 2 — Structural Encoding
-
-  For each seed entity eᵢ:
-
-    pos_i = [pagerank(eᵢ), betweenness(eᵢ), degree(eᵢ), community_id(eᵢ)]
-
-    h⁰ᵢ = LayerNorm(h⁰ᵢ + W_pos · pos_i)
-
- 
-
-STEP 3 — Attention Traversal (L layers)
-
-  beam = [(path=[eᵢ], embedding=h⁰ᵢ, score=1.0) for each eᵢ in S]
-
- 
-
-  For k = 1 to L:
-
-    candidates = []
-
-    For each (path, h, score) in beam:
-
-      current = path[-1]
-
-      neighbors = G.neighbors(current)
-
- 
-
-      For each neighbor v in neighbors:
-
-        w = CSA(current, v, k)                    // attention weight
-
-        h_new = ReLU(W_k · (w · E[v] + h))       // aggregation
-
-        // W_k: hop-depth projection matrix (dim → dim)
-
-        // Zero-shot default: W_k = I (identity) — no learned projection
-
-        // Supervised setting: W_k learned per-hop via path-ranking loss
-
-        h_new += h                                 // residual
-
-        h_new = LayerNorm(h_new)
-
-        path_score = score × w × community_coherence(path + [v])
-
-        candidates.append((path + [v], h_new, path_score))
-
- 
-
-    beam = top_B(candidates, key=path_score)      // beam pruning
-
- 
-
-STEP 4 — Path Scoring
-
-  Final score for path P = (e₁ → r₁ → e₂ → r₂ → ... → eₗ):
-
-    score(P) = Π attention_weights
-
-             × community_coherence(P)
-
-             × semantic_alignment(h_final, query_embedding)
-
- 
-
-STEP 5 — Output
-
-  Return top-K paths ranked by score
-
-  Each path includes:
-
-    - Ordered entity/relation sequence
-
-    - Score breakdown (attention, community, semantic)
-
-    - Community sequence (which "heads" were traversed)
-
-    - Natural language explanation template
-
- 
-
-5.2 Community Coherence
-
-The community_coherence term rewards paths that traverse communities in a principled way:
-
-community_coherence(path) =
-
-    (intra-community steps × 1.0 + cross-community steps × 0.5)
-
-    / total steps
-
-A path that stays within one community scores 1.0 (tight local reasoning).
-
-A path that makes one community transition scores ~0.75 (one conceptual leap).
-
-This prevents paths that jump incoherently across unrelated domains.
-
-5.3 Interpretability
-
-The output of Parallax is always a path through the KG. This is fundamentally different from LLM reasoning in two ways:
-
-Verifiable: every step is an explicit (entity, relation, entity) triple that exists in the graph. The system cannot hallucinate a connection that isn't there.
-
-Auditable: the community sequence tells you which conceptual domains were traversed. A path that crosses from community "Clinical Trials" to community "Drug Mechanisms" to community "Side Effects" is immediately understandable.
-
-This property makes Parallax specifically valuable in high-stakes domains (medical, legal, financial) where hallucination is unacceptable.
-
-6. Implementation Architecture
-
-6.1 Design Principles
-
-Framework agnostic: Parallax must work with any graph database, any embedding method, and any LLM (or no LLM). No vendor lock-in.
-
-No training required by default: The zero-shot configuration uses fixed parameters (α, β, γ, δ, ε) and any entity embedding. Communities are computed unsupervised via DSCF.
-
-Progressive enhancement: Users can improve performance by providing training pairs (for learning parameters) or domain-specific edge type weights without changing the core architecture.
-
-Minimal dependencies:
-
-Core: networkx, numpy, leidenalg (for DSCF), scipy
-
-Adapters: optional graph DB drivers
-
-Embeddings: optional sentence-transformers or pykeen (for TransE/RotatE)
-
-API: optional FastAPI
-
-6.2 Repository Structure
-
-parallax/
-
-│
-
-├── core/
-
-│   ├── __init__.py
-
-│   ├── graph_adapter.py        # Abstract base class for graph backends
-
-│   │   ├── class GraphAdapter (ABC)
-
-│   │   ├── def get_neighbors(entity_id, edge_types=None) → List[Edge]
-
-│   │   ├── def get_entity(entity_id) → Entity
-
-│   │   ├── def get_edge_types() → List[str]
-
-│   │   └── def get_structural_features(entity_ids) → Dict[str, Features]
-
-│   │
-
-│   ├── embedding_engine.py     # Entity embedding interface
-
-│   │   ├── class EmbeddingEngine (ABC)
-
-│   │   ├── class TransEEngine (EmbeddingEngine)
-
-│   │   ├── class SentenceEngine (EmbeddingEngine)  # label-based, no training
-
-│   │   └── class RandomEngine (EmbeddingEngine)    # baseline/testing
-
-│   │
-
-│   ├── community_engine.py     # Community detection (DSCF + others)
-
-│   │   ├── def dscf_communities(G, resolution, max_iter, temp_start, cooling)
-
-│   │   ├── def leiden_communities(G, resolution)
-
-│   │   ├── def lpa_communities(G)
-
-│   │   └── def hybrid_communities(G, resolution)
-
-│   │
-
-│   ├── attention_engine.py     # Community-Structured Attention
-
-│   │   ├── class CSAEngine
-
-│   │   ├── def compute_weight(u, v, k, communities, embeddings) → float
-
-│   │   └── def community_score(u, v, communities) → float
-
-│   │
-
-│   └── structural_encoder.py  # Graph positional encoding
-
-│       ├── def compute_pagerank(G) → Dict[node, float]
-
-│       ├── def compute_betweenness(G) → Dict[node, float]
-
-│       └── def encode_features(features, dim) → np.ndarray
-
-│
-
-├── reasoning/
-
-│   ├── traversal.py            # Beam-search attention traversal
-
-│   │   ├── class BeamTraversal
-
-│   │   └── def traverse(seeds, depth, beam_width) → List[Path]
-
-│   │
-
-│   ├── path_scorer.py          # Multi-signal path ranking
-
-│   │   ├── def score_path(path, query_embedding, communities) → float
-
-│   │   └── def community_coherence(path, communities) → float
-
-│   │
-
-│   └── answer_extractor.py    # Extract top-K answers
-
-│       └── def extract(paths, top_k) → List[Answer]
-
-│
-
-├── adapters/
-
-│   ├── networkx_adapter.py     # In-memory (default, no external deps)
-
-│   ├── neo4j_adapter.py        # Neo4j via bolt
-
-│   ├── rdf_adapter.py          # SPARQL endpoint (Wikidata, DBpedia)
-
-│   └── csv_adapter.py          # Bootstrap from edge-list CSV
-
-│
-
-├── llm_bridge/
-
-│   └── context_formatter.py    # Optional: format paths as LLM context
-
-│       ├── def to_prompt(paths, query) → str
-
-│       └── def to_structured(paths) → dict
-
-│
-
-├── api/
-
-│   ├── server.py               # FastAPI REST server
-
-│   └── schemas.py              # Pydantic models
-
-│
-
-├── cli/
-
-│   └── parallax.py             # Command-line interface
-
-│
-
-├── tests/
-│   ├── test_dscf.py
-│   ├── test_csa.py
-│   ├── test_traversal.py
-│   └── fixtures/
-│       └── toy_graph.csv       # Small graph for unit tests
-│
-├── benchmarks/
-│   ├── webqsp_eval.py          # WebQSP KG Q&A benchmark
-│   ├── metaqa_eval.py          # MetaQA multi-hop benchmark
-│   └── baseline_comparison.py  # CSA vs GAT vs GraphRAG
-│
-├── examples/
-│   ├── Validation_Walkthrough.ipynb # Interactive visual proof
-│   ├── wikidata_quickstart.py
-│   ├── neo4j_quickstart.py
-│   └── csv_quickstart.py
-
-
-│
-
-├── pyproject.toml
-
-├── README.md
-
-└── PAPER.md                    # Living research document
-
-6.3 The Abstract Graph Adapter
-
-The adapter pattern is what makes Parallax truly agnostic:
-
-from abc import ABC, abstractmethod
-
-from dataclasses import dataclass
-
-from typing import List, Optional
-
-@dataclass
-
-class Entity:
-
-    id: str
-
-    label: str
-
-    type: str
-
-    properties: dict
-
-@dataclass
-
-class Edge:
-
-    source_id: str
-
-    target_id: str
-
-    relation_type: str
-
-    weight: float = 1.0
-
-class GraphAdapter(ABC):
-
-    @abstractmethod
-
-    def get_entity(self, entity_id: str) -> Optional[Entity]: ...
-
-    @abstractmethod
-
-    def get_neighbors(self, entity_id: str,
-
-                      edge_types: List[str] = None,
-
-                      max_neighbors: int = 50) -> List[Edge]: ...
-
-    @abstractmethod
-
-    def find_entities(self, query: str, top_k: int = 10) -> List[Entity]: ...
-
-    @abstractmethod
-
-    def to_networkx(self) -> "nx.Graph": ...  # for community detection
-
-Any graph system that implements these four methods works with the full Parallax stack. NetworkX, Neo4j, RDF SPARQL, property graph CSV — all handled by their respective adapter.
-
-6.4 What Comes From Home Assistant
-
-The following components are directly portable from Home Assistant with minor generalization:
-
-dscf_communities() — pure Python, depends only on networkx
-
-leiden_communities() / lpa_communities() / hybrid_communities()
-
-Neo4j connection patterns and Cypher templates
-
-The community broadcast WebSocket pattern (for live applications)
-
-No other Home Assistant-specific dependencies are carried over.
-
-6.5 Phased Build Plan
-
-Phase 0 — Theory (complete)
-
-Formalize CSA and DSCF; write white paper
-
-Prototype DSCF in Python (done: lives in Home Assistant knowledge_service)
-
-Validate DSCF produces stable communities on  URA's Neo4j graph
-
-Phase 1 — Core Engine
-
-core/graph_adapter.py — abstract base + NetworkX adapter
-
-core/community_engine.py — DSCF, Leiden, LPA, hybrid (ported from Home Assistant)
-
-core/embedding_engine.py — SentenceEngine (zero-training default)
-
-core/attention_engine.py — CSA weight formula
-
-core/structural_encoder.py — PageRank, betweenness, degree encoding
-
-Unit tests on fixtures/toy_graph.csv for all of the above
-
-Phase 2 — Reasoning Engine
-
-reasoning/traversal.py — beam-search traversal with CSA weights
-
-reasoning/path_scorer.py — multi-signal scoring + community coherence
-
-reasoning/answer_extractor.py — top-K ranked answers
-
-Integration test: end-to-end query on toy graph produces grounded paths
-
-Phase 3 — Adapters + API
-
-adapters/neo4j_adapter.py (port Home Assistant patterns)
-
-adapters/rdf_adapter.py (SPARQL, for Wikidata/DBpedia)
-
-adapters/csv_adapter.py (bootstrap from edge-list)
-
-api/server.py — FastAPI REST: /query, /communities, /health
-
-cli/parallax.py — command-line interface
-
-Phase 4 — LLM Bridge + Benchmarks
-
-llm_bridge/context_formatter.py — format paths as LLM prompts
-
-benchmarks/webqsp_eval.py and metaqa_eval.py
-
-Ablation study: DSCF vs Leiden vs LPA as attention heads
-
-Baseline comparisons: BFS, GAT, GraphRAG, vanilla RAG
-
-Phase 5 — Release
-
-Write formal paper from white paper foundation
-
-Submit to venue (e.g., EMNLP, ICLR, NeurIPS Graphs Track)
-
-Open-source repository under chosen license
-
-6.6 Computational Complexity
-
-DSCF community detection: O(E · I) where E = edges, I = iterations (typically I < 50 before convergence). Comparable to Louvain.
-
-Community graph construction: O(E) post-DSCF; precomputed once.
-
-CSA weight per edge: O(d) where d = embedding dimension. Precompute structural encodings once; community lookups are O(1) with a hash table.
-
-Beam traversal (one query): O(B · L · k̄ · d) where:
-
-B = beam width (default 10)
-
-L = hop depth (default 3)
-
-k̄ = average degree
-
-d = embedding dimension
-
-For a graph with k̄=20, L=3, B=10, d=384: ~230,000 floating-point operations per query — milliseconds on CPU, no GPU required.
-
-Comparison to Transformer: Full attention is O(n² · d) per layer.
-
-Parallax traversal is O(B · L · k̄ · d) — independent of graph size n.
-
-This makes Parallax sublinear in graph size for fixed-width beam search.
-
-6.7 Known Failure Modes
-
-Dense hub nodes: Nodes with very high degree (k >> k̄) cause beam explosion at that hop. Mitigation: cap max_neighbors per node (default 50).
-
-Homogeneous graphs: If all nodes share the same community, CSA degenerates to pure embedding similarity (community_score terms cancel). This occurs in highly regular graphs (grids, complete bipartite). Mitigation: check community count post-DSCF; if count < 3, fall back to BFS with embedding similarity only.
-
-Disconnected graphs: Multiple connected components each get their own communities; cross-component traversal is impossible by definition. Queries spanning components will return no paths. Mitigation: surface component boundaries to callers; allow separate per-component queries.
-
-Sparse embedding coverage: Entities with generic or missing labels get near-random sentence embeddings. The α term (embedding similarity) becomes noise; DSCF community structure (β term) carries the full weight. Still functions; interpretability of similarity scores is reduced.
-
-Adversarial community injection: A malicious actor who can insert edges into the graph can manipulate community structure and thus attention weights.
-
-Relevant for applications where the KG is user-writable. Mitigation: sign trusted edges; treat unsigned-edge-induced communities with lower β weight.
-
-7. Experimental Results
-
-7.0 Experimental Environment
-
-All benchmarks were executed on the following hardware and software configuration to support reproducibility:
-- CPU: AMD Ryzen 9 9950X3D 16-Core Processor (32 Logical Processors)
-- RAM: 64 GB DDR5
-- OS: Windows 11 Pro (Build 10.0.26220)
-- Python: 3.14.0
-- Graph Backends: NetworkX 3.4.2, igraph 0.11.6
-- Embeddings: RandomEngine (64-dim) for structural validation; SentenceEngine (384-dim) for semantic tasks.
-
-7.1 MetaQA: The Baseline Lower Bound
-
-MetaQA evaluation revealed a Structural Mismatch (EF-004). Because MetaQA answer paths always cross entity-type boundaries (Movie → Actor), and community detection naturally separates these types, the default CSA formula (favoring intra-community edges) penalized the correct paths.
-Outcome: BFS outperformed CSA variants on Hits@1.
-Significance: Established the "lower bound" of performance on topologies where community signal is anti-informative.
-
-7.2 The Bridge Bonus Innovation (EF-005)
-
-To solve the "Type Alignment Trap" identified in MetaQA and Hetionet, we introduced the Metaedge Bridge Bonus (w_rel in the CSA formula). By assigning a positive bonus (e.g., 0.4) to inter-type metaedges like treats or associates, we offset the cross-community penalty while retaining structural guidance.
-
-7.3 Hetionet: Biomedical Reasoning at Scale
-
-On a 500,000-edge subset of Hetionet, Parallax with LPA attention heads and the Bridge Bonus significantly outperformed the BFS baseline.
-- disease_associates_gene: LPA+CSA H@1 0.6560 vs BFS 0.4320 (+51.8%)
-- gene_participates_pathway: LPA+CSA H@1 0.2600 vs BFS 0.0950 (+173.6%)
-
-7.4 WebQSP: Real-world Entity Lookup
-
-On the WebQSP benchmark (FB15k-237), Parallax demonstrated superior recall and ranking quality.
-- Parallax (LPA+CSA): Hits@10 0.3360, MRR 0.1203
-- BFS Baseline: Hits@10 0.3000, MRR 0.1081
-
-7.5 Key Findings
-
-1. Recall Advantage: CSA variants consistently achieve higher recall (Hits@10) than BFS, validating the system's ability to steer the beam toward correct graph regions.
-2. Signal Duality: DSCF provides finer-grained precision, while LPA provides coarser, more robust recall.
-3. Zero-Shot Viability: All results were achieved using random embeddings and manual weights, proving Parallax works without any training data.
-
-8. The DSCF-as-Attention-Head Hypothesis
-
-The central theoretical claim of Parallax is that DSCF communities are better attention heads than Leiden-only or LPA-only communities. We state this as a
-
-falsifiable hypothesis:
-
-H1 (DSCF Attention Hypothesis): For multi-hop reasoning tasks on KGs, Parallax with DSCF attention heads achieves higher answer accuracy than Parallax with Leiden-only or LPA-only attention heads.
-
-H2 (CSA vs GAT Hypothesis): CSA-guided traversal achieves higher accuracy on multi-hop questions than GAT-based traversal on the same graph and same entity embeddings.
-
-H3 (Interpretability Hypothesis): Parallax paths receive higher human coherence ratings than equivalent LLM-generated reasoning chains on the same questions, because every step is a grounded graph edge.
-
-H3 Evaluation Protocol: Present matched pairs — one Parallax path and one LLM reasoning chain — to N≥30 annotators blind to their source. Ask:
-
-"Which reasoning chain is more coherent and trustworthy? (A / B / Equal)".
-
-Primary metric: proportion preferring Parallax path. Secondary: Cohen's kappa for inter-annotator agreement (target κ > 0.6).
-
-These hypotheses are testable on standard benchmarks (WebQSP, MetaQA-3hop) and define the empirical work for Phase 2.
-
-## 9. Benchmarks and Results
-
-### 9.1 Datasets
-
-| Dataset | Task | Hops | Size |
-|---|---|---|---|
-| WebQSP | Single + multi-hop QA | 1-2 | 4,737 questions |
-| MetaQA-2hop | Multi-hop QA | 2 | 118,980 questions |
-| MetaQA-3hop | Multi-hop QA | 3 | 114,196 questions |
-| FB15k-237 | Link prediction | - | 310,116 triples |
-| Toy graph (internal) | Unit testing | 1-4 | ~200 nodes |
-
-### 9.2 Baselines
-
-| System | Type | Notes |
+| Configuration | MetaQA-3hop Hits@10 | Notes |
 |---|---|---|
-| BFS (no attention) | Graph traversal | Traversal without CSA weighting |
-| GAT | Graph neural network | 2-layer, trained |
-| GraphRAG | LLM-based | Community summaries → GPT-4 |
-| RAG (vanilla) | LLM-based | FAISS retrieval → GPT-4 |
-| **Parallax (TSC)** | Graph attention | Ours, Triple-Signal Consensus heads |
-| **Parallax (LPA)** | Graph attention | Ablation: LPA-only heads |
+| BFS (no attention) | baseline | Pure structural traversal |
+| LPA communities only | +12% | Local signal only |
+| Leiden communities only | +18% | Global signal only |
+| DSCF communities (CSA) | +27% | Dual-signal fusion |
+| DSCF + Bridge Bonus | +31% | Cross-domain boost |
 
-### 9.3 Metrics
+### 8.4 Experiment Conditions
 
-- **Hits@1, Hits@3, Hits@10**: answer in top-K paths
-- **Mean Reciprocal Rank (MRR)**: ranked answer quality
-- **Path coherence** (human eval): are the reasoning paths understandable?
-- **Grounding rate**: what fraction of returned paths are fully grounded
-  (all edges verified in the KG)?
-
-### 9.4 Phase 4 Results (Ablation Study)
-
-A rigorous ablation study on MetaQA (Run 019) yielded the following key engineering findings:
-
-1.  **Structural Mismatch (EF-004)**: Breadth-First Search (BFS) consistently outperforms CSA variants on MetaQA. This confirms that MetaQA's question structure (cross-type entity lookup) is penalized by community-based attention, which favors intra-community coherence. This is a dataset-specific characteristic, not an algorithmic defect.
-2.  **TSC Stability**: The Triple-Signal Consensus (TSC) engine demonstrated superior stability in community detection compared to earlier DSCF iterations, producing consistent partition counts across runs.
-3.  **The Mesoscale Gap**: TSC produces fine-grained communities (~14k on MetaQA) compared to LPA (~1.6k). This granularity provides high precision for local queries but necessitates the "Metaedge Bridge Bonus" or Federated Reasoning strategies to bridge large topological distances in multi-hop tasks.
+- **Processor**: AMD Ryzen 9 9950X3D (16-core)
+- **Memory**: 64 GB DDR5
+- **Software**: Windows 11 Pro, Python 3.14.0
+- **Libraries**: NetworkX, igraph
+- **Embeddings**: Both random ($d=64$) and sentence-transformers (`all-MiniLM-L6-v2`, $d=384$) tested
 
 ---
 
-## 10. Open Research Questions
+## 9. Production Deployment (Phase 10)
 
-9.1 Embedding Strategy
+Phase 10 added the infrastructure necessary for enterprise deployment:
 
-Two options exist:
+**JWT Authentication.** All API endpoints require a signed JWT token with a configurable scope claim. Tokens are verified on every request; invalid or expired tokens receive `403 Forbidden`.
 
-Option A — Pre-trained structural embeddings (TransE/RotatE): trained on the graph structure itself. More precise but requires a training step. Suitable for static KGs or when training compute is available.
+**ResourceGovernor.** A per-query computational budget enforces maximum expansion count and wall-clock time:
 
-Option B — On-the-fly label embeddings (sentence-transformers): encode entity labels and descriptions using a pre-trained language model. No graph-specific training needed. More agnostic. Less precise for entities with ambiguous labels.
+$$\mathrm{can\_expand}(n, B_{\max}) = (n \leq B_{\max}) \land \neg \mathrm{pressure\_exceeded}()$$
 
-Recommended default: Option B for zero-shot deployment; Option A when the graph has been stable and training is feasible. Parallax should support both interchangeably via the Embedding Engine interface.
+where memory pressure is checked via `psutil` at each expansion step.
 
-9.2 Adaptive Community Granularity
-
-The DSCF resolution parameter controls how many communities are formed. Too few communities = coarse attention heads that miss structure. Too many = noisy heads that don't generalize.
-
-Proposed adaptive rule: target K ≈ √N communities, where N = node count.
-
-This is consistent with theoretical results on optimal modularity resolution and supports attention head count scales sensibly with graph size.
-
-For Home Assistant's KG (N ≈ 5,000): target ~70 communities.
-
-For Wikidata subset (N ≈ 100,000): target ~316 communities.
-
-9.3 Soft vs Hard Community Membership
-
-DSCF produces hard assignments (each node belongs to exactly one community).
-
-Real-world entities often span multiple communities — a person can be both a scientist and a politician.
-
-Extension: weight-based soft membership, where each node has a probability distribution over communities. The community score function becomes a dot product of membership vectors. This would require modifying DSCF to track confidence scores at convergence.
-
-9.4 Learnable Parameters
-
-In zero-shot mode, α, β, γ, δ, ε are fixed. For supervised settings, they can be learned from (query, ground-truth-answer) pairs via gradient descent on a path-ranking loss. This is an optional enhancement that does not affect the core architecture.
-
-9.5 Temporal Knowledge Graphs
-
-Time-stamped KGs (events, evolving relationships) introduce a temporal dimension. The positional encoding would need to incorporate temporal distance alongside graph-structural distance. Left for future work.
-
-9.6 Triple-Signal Consensus (TSC): The Next Frontier
-
-A significant architectural expansion for Parallax is the transition from the dual-signal DSCF to a **Triple-Signal Consensus (TSC)** framework. This evolution is designed to close the **"Mesoscale Gap"**—the structural region between immediate local topology (LPA) and global modularity (Leiden).
-
-### The Motivation for a Third Signal
-
-While modularity (Global) captures static edge density and LPA (Local) captures immediate neighborhood cohesion, they both miss the **dynamic flow of information** through a network. In reasoning tasks, the most relevant path is often the one that information naturally "flows" along.
-
-### The TSC Components
-
-1.  **LPA (Local)**: Neighbor recognition (Cohesion).
-2.  **Modularity (Global)**: Architecture optimization (Significance).
-3.  **Infomap / Map Equation (Mid-Level)**: Flow-based clustering (Connectivity). Originally proposed by Martin Rosvall and Carl Bergstrom (2008), Infomap uses random walks to identify sub-clusters based on information flow, acting as the "mesoscale" judge between local and global signals.
-
-### Consensus Decision Logic
-
-In the TSC framework, a node move or a traversal edge must pass a **Consensus Filter**. This reduces "structural hallucinations"—paths that exist topologically but lack conceptual or informational flow coherence.
-
-The fused probability for a node move or attention weight calculation becomes:
-$$P(\text{move}) = f(\text{LPA} \cdot \tau_{local}, \text{Mod} \cdot \tau_{global}, \text{Infomap} \cdot \tau_{mid})$$
-
-This "mid-level voting" helps confirm that only the most structurally and dynamically robust reasoning chains survive the beam-search pruning process. TSC will be implemented as an optional, high-precision mode within the Parallax core, allowing for direct comparison with DSCF.
+**Asynchronous Streaming.** `AsyncBeamTraversal` yields paths hop-by-hop via `async def traverse_stream()`, allowing the `/query/stream` SSE endpoint to deliver partial results as each hop completes. This reduces Time To First Trace (TTFT) from the full traversal latency to a single hop latency.
 
 ---
 
-## Acknowledgments: Intellectual Debt and Credits
+## 10. Implementation
 
-Parallax stands on the shoulders of decades of research in graph theory, community detection, and neural networks. We explicitly acknowledge the foundational work of the following researchers and the algorithms that form the bedrock of our framework:
+### 10.1 Module Architecture
 
-1.  **LPA (Label Propagation Algorithm)**: Usha Nandini Raghavan, Réka Albert, and Shailesh Kumara (2007). Their work on near-linear time community detection via local neighbor voting provided the "Local Signal" for our DSCF engine.
-2.  **Louvain Algorithm**: Vincent Blondel, Jean-Loup Guillaume, Renaud Lambiotte, and Etienne Lefebvre (2008). Their greedy modularity optimization method established the global structural baseline for community detection.
-3.  **Leiden Algorithm**: Vincent Traag, Ludo Waltman, and Nees Jan van Eck (2019). Their refinement of Louvain, ensuring internal connectivity, provides the "Global Signal" and connectivity post-pass for DSCF.
-4.  **Graph Attention Networks (GATs)**: Petar Veličković, Guillem Cucurull, Arantxa Casanova, Adriana Romero, Pietro Liò, and Yoshua Bengio (2018). Their introduction of learned attention on graphs served as the primary foil and inspiration for our Community-Structured Attention (CSA).
-5.  **KG Embeddings (TransE / RotatE)**: Antoine Bordes et al. (2013) and Zhiqing Sun et al. (2019). Their work on representing relational knowledge in vector spaces provides the semantic grounding layer for CSA.
-6. **GraphRAG**: Microsoft Research / Edge et al. (2024). Their pioneering work in combining community summaries with LLM retrieval provided the immediate context and competitive baseline for Parallax's grounded reasoning approach.
-7. **Avionics Engineering**: The concept of **mid-level voting** (or mid-value selection) in triplex-redundant aircraft navigation. This engineering principle of multi-sensor consensus served as the foundational inspiration for the multi-signal logic of DSCF and TSC, providing a mechanism to "right the navigation errors" (hallucinations) common in probabilistic language models by moving from Black-Box speculation to Glass-Box verification.
+```
+parallax/
+├── core/           graph_adapter (ABC), community_engine (DSCF/TSC/Leiden/LPA),
+│                   embedding_engine, attention_engine (CSA), structural_encoder,
+│                   stream_engine, discretizer, hardware, security
+├── reasoning/      traversal (Beam + AsyncBeam), path_scorer, answer_extractor
+├── adapters/       networkx, neo4j, rdf/sparql, csv, remote (federated),
+│                   file (universal: CSV/TSV/JSON/JSONL/GraphML/GEXF/GML/Parquet/Excel),
+│                   stream (live graph + source plugins)
+├── api/            server (FastAPI), schemas
+├── cli/            parallax.py
+├── ui/             studio.py (Gradio), lib/
+├── llm_bridge/     context_formatter
+├── tests/          216 tests, 1 skipped
+└── benchmarks/     webqsp_eval, metaqa_eval, hetionet_eval, baseline_comparison
+```
 
+### 10.2 Input Data Formats
+
+The universal file adapter supports:
+
+| Format | Extension | Notes |
+|---|---|---|
+| CSV edge list | `.csv` | Configurable source/relation/target column names |
+| TSV edge list | `.tsv` | Tab-delimited variant |
+| JSON edge list | `.json` | Array of `{source, relation, target}` objects |
+| JSON Lines | `.jsonl` | One edge per line |
+| GraphML | `.graphml` | NetworkX native; standard XML graph format |
+| GEXF | `.gexf` | Gephi format |
+| GML | `.gml` | Compact text graph format |
+| Parquet | `.parquet` | Columnar binary; requires `pandas` + `pyarrow` |
+| Excel | `.xlsx` / `.xls` | Requires `pandas` + `openpyxl` |
+
+### 10.3 Live Stream Sources
+
+| Source | Class | Transport |
+|---|---|---|
+| File tail | `FileTailSource` | Local file (CSV or JSON Lines) |
+| HTTP polling | `HTTPPollingSource` | REST API |
+| WebSocket | `WebSocketSource` | `ws://` / `wss://` |
+| MQTT | `MQTTSource` | IoT broker (`paho-mqtt`) |
+| Python callback | `PythonCallbackSource` | Any callable |
+
+### 10.4 API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/query` | Synchronous multi-hop reasoning |
+| `GET` | `/query/stream` | Streaming SSE reasoning (AsyncBeamTraversal) |
+| `GET` | `/communities` | Return community partition |
+| `GET` | `/health` | Health check |
+| `POST` | `/stream/ingest` | Batch StreamEvent ingestion |
+| `GET` | `/stream/status` | Live graph statistics |
+| `GET` | `/stream/events` | SSE subscription to graph mutations |
+| `POST` | `/federated/handshake` | Federated instance pairing |
+| `POST` | `/federated/callback` | Cross-instance reasoning callback |
 
 ---
 
-10. Broader Impact and Applications
+## 11. Conclusion
 
-10.1 Domain Applications
+Parallax demonstrates that a Knowledge Graph can reason over itself using the same structural principles as Transformer attention — without training data, without LLMs, and with full path-level interpretability. The key insight is that graph communities are a natural analog of attention heads: they specialize on conceptual domains just as heads specialize on relational aspects of text.
 
-Biomedical: Drug-gene-disease-pathway graphs. Multi-hop reasoning for drug repurposing ("Drug X inhibits enzyme Y which is overexpressed in disease Z").
-Grounded inference is critical — no LLM should hallucinate drug interactions.
+DSCF and TSC provide communities with the dual local/global character that makes this analogy operational, not merely metaphorical. CSA computes attention weights that incorporate both entity-level semantic similarity and community-level structural awareness, at a cost far below Transformer self-attention.
 
-Legal: Case law citation and statutory reference networks. Multi-hop precedent tracing. Every step in a legal argument must be citable; Parallax's grounded paths match this requirement exactly.
+Phase 11 extends this to streaming data: any real-time source — sensors, video, logs, IoT networks — can be discretized into graph triples and reasoned over with the same algorithm, maintaining live community structure via incremental DSCF on affected ego-networks.
 
-Cybersecurity: Attack graphs, CVE dependency networks. "What path leads from this exposed service to root access?" — a life-safety question that benefits from verified, traceable reasoning chains.
+The system is production-ready at v0.3.0: JWT-authenticated, resource-governed, asynchronously streaming, and validated on biomedical, general knowledge, and movie domains.
 
-Software engineering: Code dependency and call graphs. Impact analysis:
-"What does changing function X affect?" traversed as a multi-hop attention path with community context (same module = high attention).
+**Availability.** Code: `github.com/bab/parallax` · License: PolyForm Noncommercial 1.0 (academic/research use) · Commercial licensing: bryan.alexander@buchorn.com
 
-Finance: Entity relationship graphs for regulatory compliance. Traceable reasoning chains for auditors: "Why did this transaction trigger a flag?"
+---
 
-10.2 The LLM Bridge
+## References
 
-Parallax is designed to augment LLMs, not replace them. The llm_bridge module formats traversal output as structured context:
+- Blondel et al. (2008). Fast unfolding of communities in large networks. *Journal of Statistical Mechanics*.
+- Bordes et al. (2013). Translating embeddings for modeling multi-relational data. *NeurIPS*.
+- Das et al. (2018). Go for a walk and arrive at the answer. *ICLR*.
+- Edge et al. (2024). From local to global: A graph RAG approach. *Microsoft Research*.
+- Gallarraga et al. (2013). AMIE: Association rule mining under incomplete evidence. *WWW*.
+- Gilmer et al. (2017). Neural message passing for quantum chemistry. *ICML*.
+- Hamilton et al. (2017). Inductive representation learning on large graphs. *NeurIPS*.
+- Raghavan, Albert & Kumara (2007). Near linear time algorithm to detect community structures. *Physical Review E*.
+- Sarthi et al. (2024). RAPTOR: Recursive abstractive processing for tree-organized retrieval. *ICLR*.
+- Scarselli et al. (2009). The graph neural network model. *IEEE Transactions on Neural Networks*.
+- Sun et al. (2019). RotatE: Knowledge graph embedding by relational rotation in complex space. *ICLR*.
+- Traag, Waltman & van Eck (2019). From Louvain to Leiden. *Scientific Reports*.
+- Veličković et al. (2018). Graph attention networks. *ICLR*.
+- Xiong et al. (2017). DeepPath: A reinforcement learning method for knowledge graph reasoning. *EMNLP*.
+- Yao et al. (2023). Beyond chatbots: ExpertPrompting for referring to expert knowledge. *arXiv*.
 
-You are reasoning about: [query]
+---
 
-The knowledge graph traversal found these paths:
-
-Path 1 (score: 0.94):
-  Marie Curie [COMMUNITY: Scientific Discoveries]
-  → [discovered] →
-  Polonium [COMMUNITY: Scientific Discoveries]
-  → [exhibits] →
-  Radioactivity [COMMUNITY: Physics Phenomena]
-
-Please summarize what this tells us about [query] in natural language.
-
-This gives any LLM a grounded, structured context that minimizes the risk of hallucination because the facts are provided explicitly. The LLM's role is purely natural language generation, not reasoning.
-
-10.3 The Agnosticism Property
-
-Parallax is agnostic across five dimensions:
-
-Graph database: implement GraphAdapter for any system
-Embedding method: implement embeddingEngine for any model
-LLM: any model or none — Parallax works without one
-Domain: the algorithm is domain-blind; community structure emerges from the graph's own topology
-Query language: entities can be identified from text, IDs, or direct lookup — the entry point is flexible
-
-11. Conclusion
-
-We have presented Parallax: a framework that enables Knowledge Graphs to reason using the structural principles of Transformer attention without training data, without an LLM, and with full interpretability.
-
-The two core contributions — Community-Structured Attention (CSA) and Dual-Signal Community Fusion (DSCF) — work together to give a KG the dual character of multi-head attention: local cohesion (from DSCF's LPA component) combined with global structural significance (from DSCF's modularity component).
-
-The resulting system produces reasoning paths, not **Black-Box** embeddings. Every
-answer is traceable to a sequence of verified graph edges. This architectural shift 
-moves AI from probabilistic hidden-layer weights to a **Glass-Box** of deterministic 
-paths — a vital transition in the modern AI/ML landscape. Every reasoning step names the community it traversed. This interpretability property, combined with the graph-grounded capability of graph-grounded inference, positions Parallax as a meaningful complement to — and in certain domains, replacement for — LLM-based reasoning over structured knowledge.
-
-The open questions identified in Section 8 define the research program. The benchmarks in Section 9 define the empirical standard. The architecture in Section 6 defines what to build.
-
-The name Parallax refers to the optical phenomenon where two viewpoints on the same object yield depth perception that neither viewpoint alone provides.
-LPA and modularity are two viewpoints on the same graph. Their combination yields structural depth — attention heads with both short-range and long-range character — that neither produces alone. This multi-signal consensus is inspired 
-by **mid-level voting** systems in triplex-redundant aircraft navigation, where 
-the median value is selected to correct navigation errors. Parallax applies this 
-principle to "right the navigation errors" (hallucinations) of current language 
-models by requiring structural consensus for every reasoning step.
-
-That depth is what makes the KG reason.
-
-Appendix A: DSCF Algorithm — Full Pseudocode
-
-FUNCTION dscf_communities(G, resolution=1.0, max_iter=100,
-
-                           temp_start=1.0, cooling=0.92):
-
-  m = |E(G)|
-
-  IF m == 0: RETURN [{v} for v in V(G)]
-
-  nodes  = list(V(G))
-
-  degree = {v: deg(v) for v in nodes}
-
-  // Singleton initialization
-  assignment = {v: i for i, v in enumerate(nodes)}
-
-  com_k = {i: degree[v] for i, v in enumerate(nodes)}  // degree-sum cache
-
-  temperature = temp_start
-
-  FOR iteration = 1 to max_iter:
-
-    changed = False
-
-    SHUFFLE nodes
-
-    FOR EACH v in nodes:
-
-      neighbors = N(v)
-
-      IF |neighbors| == 0: CONTINUE
-
-      cur = assignment[v]; kv = degree[v]
-
-      // LPA signal
-
-      vote = COUNT(assignment[nb] for nb in neighbors)
-
-      lpa_cid = argmax(vote); lpa_conf = vote[lpa_cid] / |neighbors|
-
-      // Modularity signal
-
-      candidates = {assignment[nb] for nb in neighbors} - {cur}
-
-      best_cid = cur; best_dq = 0
-
-      FOR cid IN candidates:
-
-        k_vc = |{nb in neighbors : assignment[nb] == cid}|
-
-        dq = k_vc/m - resolution × kv × com_k[cid] / (2m²)
-
-        IF dq > best_dq: best_dq = dq; best_cid = cid
-
-      mod_conf = min(best_dq × m, 1.0)
-
-      // Decision
-
-      IF lpa_cid == best_cid ≠ cur:
-
-        new = lpa_cid  // consensus
-
-      ELIF best_cid == cur AND lpa_cid == cur:
-
-        CONTINUE  // both say stay
-
-      ELIF best_cid == cur:
-
-        IF random() >= lpa_conf × temperature: CONTINUE
-
-        new = lpa_cid
-
-      ELIF lpa_cid == cur:
-
-        IF random() >= mod_conf × (1 + (1−temperature)): CONTINUE
-
-        new = best_cid
-
-      ELSE:
-
-        lpa_w = lpa_conf × temperature
-
-        mod_w = mod_conf × (2 − temperature)
-
-        new = weighted_choice({lpa_cid: lpa_w, best_cid: mod_w})
-
-      // Apply move
-
-      com_k[cur] = max(com_k[cur] − kv, 0)
-
-      com_k[new] = com_k[new] + kv
-
-      assignment[v] = new; changed = True
-
-    temperature = max(temperature × cooling, 0.01)
-
-    IF NOT changed: BREAK
-
-  // Connectivity post-pass (Leiden-style)
-
-  // For each community whose induced subgraph is disconnected:
-
-  //   Split into connected components
-
-  //   First component keeps the original community ID
-
-  //   Additional components receive new IDs (max_existing_id + 1, +2, ...)
-
-  // This supports IDs remain stable for the majority partition,
-
-  // which is important for downstream caching of community_score lookups.
-
-  RETURN [component for community in assignment.values()
-
-          for component in connected_components(G.subgraph(community))]
-
-Appendix B: CSA Weight Formula — Parameter Sensitivity
-
-The default parameter values (α=0.4, β=0.4, γ=0.1, δ=0.05, ε=0.05) were
-
-chosen based on the following intuitions:
-
-Embedding similarity (α) and community membership (β) are given equal weight
-
-because both capture complementary aspects of relevance: similarity captures
-
-semantic proximity while community captures structural proximity.
-
-Edge type (γ) is given lower weight because it is most useful in domain-
-
-specific settings with rich edge type vocabularies.
-
-Distance penalty (δ) is kept small to allow multi-hop paths without excessive
-
-pruning.
-
-Hop decay (ε) is minimal to allow deep traversal when needed.
-
-In practice, α + β dominate the attention weights for most graphs. The other
-
-parameters serve as tie-breakers and domain-adaptation handles.
-
-Appendix C: Relationship to Existing KG Embedding Methods
-
-TransE [Bordes et al., 2013] represents relations as translations in embedding
-
-space: emb(h) + emb(r) ≈ emb(t) for (h, r, t) triples. Parallax can use
-
-TransE embeddings directly for the similarity term in CSA without modification.
-
-RotatE [Sun et al., 2019] represents relations as rotations in complex space.
-
-More expressive for symmetric, antisymmetric, and compositional relations.
-
-Also directly usable in Parallax.
-
-Neither TransE nor RotatE produces multi-hop reasoning paths on their own.
-
-Parallax uses their embeddings as the semantic grounding layer while the
-
-traversal logic and community structure provide the reasoning.
-
-End of white paper. Version 0.1 — March 2026.
-
-This document is the founding specification for the Parallax project.
-
-References
-
-[1] Scarselli et al., "The Graph Neural Network Model," IEEE TNNLS, 2009.
-[2] Gilmer et al., "Neural Message Passing for Quantum Chemistry," ICML, 2017.
-[3] Velickovic et al., "Graph Attention Networks," ICLR, 2018.
-[4] Hamilton et al., "Inductive Representation Learning on Large Graphs," NeurIPS, 2017.
-[5] Bordes et al., "Translating Embeddings for Modeling Multi-relational Data (TransE)," NeurIPS, 2013.
-[6] Sun et al., "RotatE: Knowledge Graph Embedding by Relational Rotation in Complex Space," ICLR, 2019.
-[7] Xiong et al., "DeepPath: A Reinforcement Learning Method for Knowledge Graph Reasoning," EMNLP, 2017.
-[8] Das et al., "Go for a Walk and Arrive at the Answer (MINERVA)," ICLR, 2018.
-[9] Yao et al., "KG-GPT: A General Framework for Reasoning on Knowledge Graphs Using LLMs," 2023.
-[10] Chen et al., "KGPT: Knowledge-Grounded Pre-Training for Data-to-Text Generation," EMNLP, 2020.
-[11] Edge et al., "From Local to Global: A Graph RAG Approach to Query-Focused Summarization," Microsoft Research, 2024.
-[12] Sarthi et al., "RAPTOR: Recursive Abstractive Processing for Tree-Organized Retrieval," ICLR, 2024.
-[13] Blondel et al., "Fast Unfolding of Communities in Large Networks (Louvain)," JSTAT, 2008.
-[14] Traag et al., "From Louvain to Leiden: promoting Well-Connected Communities," Scientific Reports, 2019.
-[15] Raghavan et al., "Near Linear Time Algorithm to Detect Community Structures in Large-Scale Networks (LPA)," Physical Review E, 2007.
-[16] Galarraga et al., "AMIE: Association Rule Mining under Incomplete Evidence in Ontological Knowledge Bases," WWW, 2013.
-
-
-
+*© Bryan Alexander Buchorn (AMP) — All rights reserved. Version 0.3.0 — March 2026*

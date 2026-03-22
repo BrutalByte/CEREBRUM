@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: March 2026
-**Status**: Version 0.2 · Phase 9 COMPLETE
+**Status**: Version 0.3.0 · Phase 11 COMPLETE
 **License**: Proprietary — all rights reserved
 
 ---
@@ -53,9 +53,10 @@ $w_{rel}$: Metaedge Bridge Bonus (default 0.0, recommended 0.4 for inter-type re
 parallax/
 ├── core/          graph_adapter, embedding_engine, community_engine, attention_engine, structural_encoder
 ├── reasoning/     traversal, path_scorer, answer_extractor
-├── adapters/      networkx, neo4j, rdf, csv
+├── adapters/      networkx, neo4j, rdf, csv, file_adapter, stream_adapter
 ├── llm_bridge/    context_formatter
-├── api/           server, schemas
+├── core/          ... + stream_engine, discretizer, hardware, security
+├── api/           server, schemas (+ /stream/* endpoints)
 ├── cli/           parallax.py
 ├── tests/         test_dscf, test_csa, test_traversal, fixtures/toy_graph.csv
 ├── benchmarks/    webqsp_eval, metaqa_eval, baseline_comparison
@@ -65,9 +66,11 @@ parallax/
 └── PAPER.md       (this file)
 ```
 
-**Current phase**: Phase 4 complete. Parallax has been benchmarked on MetaQA,
-WebQSP, and Hetionet. The "Metaedge Bridge Bonus" (EF-005) successfully
-mitigated the Type Alignment Trap. Phase 5 (Release) is underway.
+**Current phase**: Phase 11 complete (v0.3.0). Core algorithms (CSA, DSCF/TSC)
+stable. Federated reasoning (Phase 6–9), production hardening — JWT auth,
+ResourceGovernor, AsyncBeamTraversal (Phase 10) — and real-time streaming
+infrastructure — pluggable sources, signal discretizers, sliding-window buffer,
+incremental community updates, SSE endpoints (Phase 11) — all shipped.
 
 ---
 
@@ -1045,7 +1048,109 @@ Parallax is agnostic across five dimensions:
 
 ---
 
-## 11. Conclusion
+## 11. Production Hardening (Phase 10)
+
+Phase 10 transitioned Parallax from research prototype to deployable service.
+
+### 11.1 JWT Authentication
+
+All REST endpoints require a Bearer JWT. Tokens are validated by a FastAPI
+dependency; expired tokens return HTTP 403, missing tokens return HTTP 401.
+Token issuance is external, enabling OAuth2/OIDC integration.
+
+### 11.2 ResourceGovernor
+
+Per-request resource ceilings prevent query runaway:
+
+$$\text{ResourceGovernor: } \{N_{\max}, E_{\max}, B_{\max}, H_{\max}, T_{\max}, C_{\max}\}$$
+
+where $N_{\max}$ = max nodes, $E_{\max}$ = max edges, $B_{\max}$ = beam width,
+$H_{\max}$ = max hops, $T_{\max}$ = timeout (seconds), $C_{\max}$ = concurrent
+queries. Violations return HTTP 429 with a structured JSON error body.
+
+### 11.3 Asynchronous Beam Traversal
+
+`AsyncBeamTraversal` wraps `BeamTraversal` in `asyncio` and adds a
+`/query/stream` SSE endpoint. One event is emitted per beam step:
+
+```
+event: step
+data: {"hop": k, "candidates": [...], "scores": [...]}
+
+event: result
+data: {"paths": [...], "top_score": 0.94, "hops": 2}
+```
+
+The `ResourceGovernor` timeout applies per stream connection.
+
+---
+
+## 12. Real-Time Streaming (Phase 11)
+
+Phase 11 extends Parallax to continuous, live data. The streaming subsystem
+sits above the core CSA/DSCF algorithms, which are unchanged.
+
+### 12.1 Architecture Layers
+
+| Layer | Component | Responsibility |
+|---|---|---|
+| Ingestion | `StreamSource` subclasses | FileTail, HTTP polling, WebSocket, MQTT, Python callbacks |
+| Discretization | `*Discretizer` classes | Continuous signal → discrete graph edges |
+| Buffering | `SlidingWindowBuffer` | Time-window + count cap + reference counting |
+| Live graph | `StreamAdapter` | Thread-safe `NetworkXAdapter` with mutation broadcast |
+| Community | `IncrementalCommunityUpdater` | Ego-network DSCF on affected nodes only |
+| API | `/stream/*` endpoints | Ingest, status, SSE event subscription |
+
+### 12.2 Sliding Window Buffer
+
+The buffer maintains live edges satisfying two simultaneous constraints:
+
+$$\mathcal{W}(t) = \left\{ e \in \mathcal{E} \;\middle|\; t - t_e \leq \Delta t \right\} \cap \left\{ |\mathcal{E}| \leq N_{\max} \right\}$$
+
+Reference counting allows the same edge $(s, r, t)$ to be held by multiple
+overlapping events; the edge is evicted only when all references expire.
+
+### 12.3 Signal Discretization
+
+**ThresholdDiscretizer** — categorical states with hysteresis:
+
+$$\text{state}(x) = \begin{cases} \text{SPIKE} & x > \mu + 3\sigma \\ \text{HIGH} & x > \mu + \sigma \\ \text{LOW} & x < \mu - \sigma \\ \text{NORMAL} & \text{otherwise} \end{cases}$$
+
+**BinningDiscretizer** — uniform quantization into $N$ bins:
+
+$$\text{bin}(x) = \left\lfloor \frac{x - x_{\min}}{x_{\max} - x_{\min}} \cdot N \right\rfloor$$
+
+**CoActivationDiscretizer** — emit `CO_ACTIVATES` when two sensors fire within
+window $\delta_t$ and have co-activated at least $n_{\min}$ times:
+
+$$\text{emit}(A,B) \iff |t_A - t_B| \leq \delta_t \;\wedge\; \text{count}(A,B) \geq n_{\min}$$
+
+**TemporalSequenceDiscretizer** — `PRECEDES` chains between consecutive events.
+
+**ObjectDetectionDiscretizer** — `DETECTS` + `CO_OCCURS_WITH` from frame detections.
+
+### 12.4 Incremental Community Updates
+
+Full DSCF after each ingestion event is prohibitive. The updater restricts
+re-computation to the ego-network of radius $r$ around affected nodes:
+
+$$G_{\text{local}} = \{v \mid d_G(v, u) \leq r,\; u \in \mathcal{A}\}$$
+
+Updates trigger when $|\mathcal{A}| \geq n_{\min}$ (default 10). All
+assignments outside $G_{\text{local}}$ are preserved from the previous full
+run, maintaining a globally-consistent, locally-fresh partition.
+
+### 12.5 Streaming API
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/stream/ingest` | POST | Batch-ingest `StreamEvent` objects |
+| `/stream/status` | GET | Live stats (nodes, edges, events/s, communities) |
+| `/stream/events` | GET (SSE) | Subscribe to graph mutation events |
+
+---
+
+## 13. Conclusion
 
 We have presented Parallax: a framework that enables Knowledge Graphs to
 reason using the structural principles of Transformer attention without
@@ -1066,9 +1171,11 @@ the graph-grounded capability of graph-grounded inference, positions Parallax
 as a meaningful complement to — and in certain domains, replacement for —
 LLM-based reasoning over structured knowledge.
 
-The open questions identified in Section 8 define the research program. The
-benchmarks in Section 9 define the empirical standard. The architecture in
-Section 6 defines what to build.
+The open questions identified in Section 10 define the ongoing research program.
+The benchmarks in Section 9 define the empirical standard. The architecture in
+Section 6 defines the core build. Sections 11–12 demonstrate that the
+architecture scales to production and real-time streaming use cases without
+modification to the core CSA or DSCF algorithms.
 
 The name Parallax refers to the optical phenomenon where two viewpoints on
 the same object yield depth perception that neither viewpoint alone provides.

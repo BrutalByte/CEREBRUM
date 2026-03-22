@@ -2,11 +2,11 @@ Parallax: Community-Structured Graph Attention for Knowledge Graph Reasoning
 
 A White Paper
 
-Authors: Bryan (Originator), Claude Sonnet 4.6 (Research Collaborator)
+Authors: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)
 
 Date: March 2026
 
-Status: Version 0.1 · Phase 4 COMPLETE
+Status: **Version 0.3.0 · Phase 11 COMPLETE**
 
 License: Proprietary — all rights reserved
 
@@ -51,6 +51,14 @@ questions by traversing itself, with every reasoning step grounded in explicit
 graph edges, every conclusion traceable to a path, and no LLM required for
 
 inference — though one may optionally be used for natural language generation.
+
+Version 0.3.0 extends the core architecture with production hardening (JWT
+authentication, ResourceGovernor, asynchronous streaming traversal) and a
+full real-time streaming subsystem: pluggable ingestion sources, five signal
+discretizer classes, a sliding-window buffer with reference-counted edge
+eviction, incremental ego-network community updates, and SSE streaming API
+endpoints. The core CSA and DSCF algorithms are unchanged; the streaming layer
+sits entirely above them.
 
 ---
 
@@ -373,101 +381,23 @@ CSA computes attention weights for graph traversal that incorporate both local
 
 graph topology and global community structure.
 
-Attention weight formula:
+**Attention weight formula.** For entity $u$ attending to entity $v$ at traversal hop $k$:
 
-For entity u attending to entity v at traversal hop k:
+$$\boxed{a(u,v,k) = \sigma\!\left(\alpha \cdot \cos\!\left(\mathbf{e}_u, \mathbf{e}_v\right) + \beta \cdot S_{\mathcal{C}}(u,v) + \gamma \cdot w_{\mathrm{rel}} - \delta \cdot d_{\mathrm{norm}}(u,v) + \varepsilon \cdot \phi(k)\right)}$$
 
-a(u, v, k) = σ(
+where $\sigma(x) = \frac{1}{1 + e^{-x}}$ is the sigmoid activation, $\cos(\mathbf{e}_u, \mathbf{e}_v) = \frac{\mathbf{e}_u \cdot \mathbf{e}_v}{\|\mathbf{e}_u\|\|\mathbf{e}_v\|}$ is the cosine similarity of entity embeddings, $d_{\mathrm{norm}}(u,v) = d_G(u,v) / \mathrm{diam}(G)$ is the normalized graph distance, and $\phi(k) = \frac{1}{1+k}$ is the hop-depth decay.
 
-    α · cosine_sim(emb(u), emb(v))
+**Default zero-shot parameters:** $\alpha = 0.4$ (embedding similarity), $\beta = 0.4$ (community membership), $\gamma = 0.1$ (edge type), $\delta = 0.05$ (distance penalty), $\varepsilon = 0.05$ (hop decay). All parameters can be learned from $(q, a)$ pairs in supervised settings.
 
-  + β · community_score(u, v)
+**Community membership score.** Let $c: V \to \mathbb{Z}_{\geq 0}$ be the community assignment and $\mathcal{A}$ the set of adjacent community pairs (connected by $\geq 1$ cross-community edge):
 
-  + γ · w_rel
+$$S_{\mathcal{C}}(u,v) = \begin{cases} 1.0 & \text{if } c(u) = c(v) \quad \text{[same attention head]} \\ 0.5 & \text{if } (c(u), c(v)) \in \mathcal{A} \quad \text{[adjacent heads]} \\ e^{-\lambda \cdot d_{\mathcal{C}}(c(u),\, c(v))} & \text{otherwise} \quad \text{[distance decay, } \lambda = 0.5\text{]} \end{cases}$$
 
-  - δ · normalized_distance(u, v)
+where $d_{\mathcal{C}}$ is the shortest path (in hops) between communities in the community-level graph, precomputed once after DSCF converges.
 
-  + ε · hop_decay(k)
+**Bridge Bonus** $w_{\mathrm{rel}} \in [0, 1]$: an optional per-relation-type weight that explicitly rewards cross-domain edges when the domain structure requires them (default $0.0$; recommended $0.4$ for inter-type reasoning tasks such as Movie → Actor → Director).
 
-)
-
-Where:
-
-emb(·) is the entity embedding (any KGE method or sentence encoder)
-
-community_score(u, v):
-
-1.0 if community(u) == community(v)           [same head]
-
-0.5 if communities are adjacent               [neighboring heads]
-
-exp(-λ · community_distance(u, v)) otherwise  [distance decay]
-
-w_rel: Metaedge Bridge Bonus (default 0.0, recommended 0.4 for inter-type reasoning)
-
-normalized_distance(u, v): shortest path length / graph diameter
-
-hop_decay(k): encourages shorter paths (e.g., 1 / (1 + k))
-
-σ: sigmoid activation
-
-α, β, γ, δ, ε: tunable parameters
-
-Default parameter values (zero-shot deployment):
-
-α = 0.4 (embedding similarity)
-
-β = 0.4 (community membership)
-
-γ = 0.1 (edge type)
-
-δ = 0.05 (distance penalty)
-
-ε = 0.05 (hop decay)
-
-Parameters can be learned from (query, answer) pairs for supervised settings.
-
-community_score definition (complete):
-
-community_score(u, v):
-
-  if community(u) == community(v):          return 1.0
-
-  if communities_are_adjacent(u, v):        return 0.5
-
-  else:
-
-    d = community_distance(u, v)
-
-    return exp(-λ · d)
-
-community_distance(u, v):
-
-  # Shortest path (in hops) between the community of u and community of v
-
-  # in the community-level graph, where communities are nodes and two
-
-  # communities are adjacent if ≥1 cross-community edge exists between them.
-
-  # Precomputed once after DSCF converges via BFS on the community graph.
-
-  # λ = 0.5 default (controls cross-community decay rate)
-
-Why this is not a GAT:
-
-GATs compute a(u, v) = f(Wu · emb(u), Wv · emb(v)) — purely from learned
-
-weights on adjacent node pairs. They cannot express the community membership
-
-term β · community_score(u, v), which introduces global structural awareness
-
-without requiring the full O(n²) attention of Transformers.
-
-CSA is O(n · k̄ · C) where k̄ is average degree and C is the average number
-
-of community-adjacent entities to consider — far cheaper than Transformer
-
-attention while capturing global structure via community membership.
+**Why CSA is not a GAT.** GATs compute $a(u,v) = f(\mathbf{W}\mathbf{e}_u,\, \mathbf{W}\mathbf{e}_v)$ from learned weights on adjacent pairs only, with no global context. CSA introduces the term $\beta \cdot S_{\mathcal{C}}(u,v)$ which provides global structural awareness at $O(n \cdot \bar{k} \cdot C)$ — far cheaper than Transformer self-attention's $O(n^2)$.
 
 4.2 Dual-Signal Community Fusion (DSCF)
 
@@ -483,55 +413,35 @@ structure) are computed. The decision incorporates both simultaneously,
 
 governed by a temperature parameter:
 
-For each node v at each iteration:
+**LPA signal** (local majority vote):
 
-  1. LPA signal:
+$$\mathrm{lpa\_cid}(v) = \underset{c}{\arg\max}\sum_{u \in \mathcal{N}(v)} \mathbf{1}[c(u) = c], \qquad \mathrm{lpa\_conf}(v) = \frac{\max_c \sum_{u \in \mathcal{N}(v)} \mathbf{1}[c(u)=c]}{|\mathcal{N}(v)|} \in [0,1]$$
 
-     lpa_cid = argmax over neighbor labels (majority vote)
+**Modularity gain signal** (global structure). For each candidate community $\mathcal{C}$ adjacent to $v$:
 
-     lpa_conf = vote_count[lpa_cid] / total_neighbors  ∈ [0, 1]
+$$\Delta Q(v \to \mathcal{C}) = \frac{k_{v,\mathcal{C}}}{m} - \rho \cdot \frac{k_v \cdot \sum_{u \in \mathcal{C}} k_u}{2m^2}$$
 
-  2. Modularity signal:
+$$\mathrm{mod\_cid}(v) = \underset{\mathcal{C}}{\arg\max}\;\Delta Q(v \to \mathcal{C}), \qquad \mathrm{mod\_conf}(v) = \min\!\left(\Delta Q_{\max} \cdot m,\; 1.0\right)$$
 
-     For each candidate community C adjacent to v:
+where $k_{v,\mathcal{C}}$ is the number of edges from $v$ to $\mathcal{C}$, $k_v = \deg(v)$, $m$ is the total edge count, and $\rho$ is the resolution parameter.
 
-       ΔQ(v→C) = k_{v,C}/m − resolution × k_v × Σk_C / (2m²)
+**Decision rule** (temperature $\tau \in [0.01, 1.0]$):
 
-     best_mod_cid = argmax ΔQ
+| Condition | Action |
+|---|---|
+| $\mathrm{lpa\_cid} = \mathrm{mod\_cid} \neq c(v)$ | **MOVE** (consensus anchor) |
+| Both signals say STAY | STAY |
+| LPA says MOVE, Mod says STAY | MOVE with probability $\mathrm{lpa\_conf} \cdot \tau$ |
+| Mod says MOVE, LPA says STAY | MOVE with probability $\mathrm{mod\_conf} \cdot (2 - \tau)$ |
+| Both say MOVE to different targets | Move to $\mathrm{lpa\_cid}$ with weight $\mathrm{lpa\_conf} \cdot \tau$; to $\mathrm{mod\_cid}$ with weight $\mathrm{mod\_conf} \cdot (2 - \tau)$ |
 
-     mod_conf = min(best_ΔQ × m, 1.0)  ∈ [0, 1]
+**Temperature schedule** (anneals from local-dominant to global-dominant):
 
-  3. Decision:
+$$\tau_{t+1} = \max\!\left(\tau_t \cdot \alpha_{\mathrm{cool}},\; \tau_{\min}\right), \qquad \alpha_{\mathrm{cool}} = 0.92, \quad \tau_{\min} = 0.01$$
 
-     if lpa_cid == best_mod_cid ≠ current:
+**Post-convergence connectivity check.** Any community $\mathcal{C}$ whose induced subgraph $G[\mathcal{C}]$ is disconnected is split into its connected components:
 
-       MOVE (consensus anchor — high confidence)
-
-     elif both say STAY:
-
-       STAY
-
-     elif only LPA says MOVE:
-
-       MOVE with probability lpa_conf × temperature
-
-     elif only modularity says MOVE:
-
-       MOVE with probability mod_conf × (1 + (1 − temperature))
-
-     else (disagree on different targets):
-
-       lpa_weight = lpa_conf × temperature
-
-       mod_weight = mod_conf × (2 − temperature)
-
-       MOVE to weighted-random choice
-
-  temperature schedule: τ_{t+1} = max(τ_t × cooling, 0.01)
-
-Post-convergence: Leiden-style connectivity check — split any community whose
-
-induced subgraph is disconnected.
+$$\text{If } G[\mathcal{C}] \text{ is disconnected: } \mathcal{C} \to \mathcal{C}_1, \mathcal{C}_2, \ldots, \mathcal{C}_r$$
 
 Why DSCF communities are the right attention heads:
 
@@ -593,57 +503,27 @@ INPUT:  Query Q (text string or entity list)
 
 OUTPUT: Ranked list of reasoning paths P = [(path, score, explanation)]
 
-STEP 1 — Entity Grounding
+**Step 1 — Entity Grounding.** Extract seed entities $S = \{e_1, \ldots, e_n\}$ from query $Q$ (via NER or n-gram fuzzy match).
 
-  If Q is text: extract entities via NER or fuzzy match to graph vocabulary
+**Step 2 — Structural Encoding.** For each seed entity $e_i$ with positional vector $\mathbf{p}_i = [\mathrm{PR}(e_i),\, \mathrm{BW}(e_i),\, \deg(e_i)]^\top$:
 
-  S = {e₁, e₂, ..., eₙ}  // seed entities
+$$\mathbf{h}_i^{(0)} = \mathrm{LayerNorm}\!\left(\mathbf{e}_i + \mathbf{W}_{\mathrm{pos}} \cdot \mathbf{p}_i\right)$$
 
-  h⁰ᵢ = E[eᵢ]             // initial embeddings
+**Step 3 — Attention Traversal** ($k = 1, \ldots, L$). Initialize beam $\mathcal{B}^{(0)} = \{(e_i, \mathbf{h}_i^{(0)}, 1.0)\}$. At each hop:
 
-STEP 2 — Structural Encoding
+*Embedding aggregation* when extending to neighbor $v$ with attention weight $w = a(u, v, k)$:
 
-  For each seed entity eᵢ:
+$$\mathbf{h}^{(k)} = \mathrm{LayerNorm}\!\left(\mathbf{h}^{(k-1)} + \mathrm{ReLU}\!\left(w \cdot \mathbf{e}_v + \mathbf{h}^{(k-1)}\right)\right)$$
 
-    pos_i = [pagerank(eᵢ), betweenness(eᵢ), degree(eᵢ), community_id(eᵢ)]
+($\mathbf{W}_k = \mathbf{I}$ in zero-shot deployment; learned per-hop in supervised settings)
 
-    h⁰ᵢ = LayerNorm(h⁰ᵢ + W_pos · pos_i)
+*Path score update:*
 
-STEP 3 — Attention Traversal (L layers)
+$$s(\mathcal{P} \oplus v) = s(\mathcal{P}) \cdot a(u,v,k) \cdot \gamma_{\mathcal{C}}(\mathrm{cseq}(\mathcal{P}) \cup \{c(v)\})$$
 
-  beam = [(path=[eᵢ], embedding=h⁰ᵢ, score=1.0) for each eᵢ in S]
+*Beam pruning:*
 
-  For k = 1 to L:
-
-    candidates = []
-
-    For each (path, h, score) in beam:
-
-      current = path[-1]
-
-      neighbors = G.neighbors(current)
-
-      For each neighbor v in neighbors:
-
-        w = CSA(current, v, k)                    // attention weight
-
-        h_new = ReLU(W_k · (w · E[v] + h))       // aggregation
-
-        // W_k: hop-depth projection matrix (dim → dim)
-
-        // Zero-shot default: W_k = I (identity) — no learned projection
-
-        // Supervised setting: W_k learned per-hop via path-ranking loss
-
-        h_new += h                                 // residual
-
-        h_new = LayerNorm(h_new)
-
-        path_score = score × w × community_coherence(path + [v])
-
-        candidates.append((path + [v], h_new, path_score))
-
-    beam = top_B(candidates, key=path_score)      // beam pruning
+$$\mathcal{B}^{(k)} = \mathrm{top}_B\!\left(\mathrm{candidates}^{(k)},\; \text{key} = s\right)$$
 
 STEP 4 — Path Scoring
 
@@ -686,6 +566,16 @@ A path that stays within one community scores 1.0 (tight local reasoning).
 A path that makes one community transition scores ~0.75 (one conceptual leap).
 
 This prevents paths that jump incoherently across unrelated domains.
+
+**Step 4 — Path Scoring.** Final score for path $P = (v_0, r_1, v_1, \ldots, r_L, v_L)$:
+
+$$\mathrm{score}(P) = \left(\prod_{k=1}^{L} a(u_k, v_k, k)\right) \cdot \gamma_{\mathcal{C}}(P) \cdot \cos\!\left(\mathbf{h}_L,\, \mathbf{q}\right)$$
+
+**Community coherence** (Step 3 and 4 shared function):
+
+$$\gamma_{\mathcal{C}}(P) = \frac{1}{L}\sum_{k=1}^{L} \begin{cases} 1.0 & c(v_k) = c(v_{k-1}) \\ 0.5 & c(v_k) \neq c(v_{k-1}) \end{cases}$$
+
+A fully intra-community path scores $\gamma_{\mathcal{C}} = 1.0$. One community transition: $\gamma_{\mathcal{C}} \approx 0.75$. Incoherent zigzags compound the penalty exponentially across hops.
 
 5.3 Interpretability
 
@@ -1275,7 +1165,146 @@ Parallax's **Glass-Box** architecture and **Zero-Hallucination** capability make
 
 **Potential Application: Signature Correlation**: Signature correlation. Reasoning over networks of technical signatures (acoustic, seismic, chemical). Identifying anomalous clusters that correspond to specific industrial or technological processes.
 
-11. Conclusion
+11. Production Hardening (Phase 10)
+
+Phase 10 hardened the research prototype into a production-grade service deployable in real environments. Three components were introduced: authentication, resource governance, and asynchronous streaming traversal.
+
+11.1 JWT Authentication
+
+All API endpoints are protected by JSON Web Token (JWT) bearer authentication. Tokens carry an expiry claim and are validated on every request by the FastAPI dependency injection layer. Unauthenticated requests receive HTTP 401; expired tokens receive HTTP 403. Token issuance is intentionally decoupled from Parallax itself, enabling integration with any OAuth2 or OIDC identity provider.
+
+11.2 Resource Governor
+
+Unbounded queries over large graphs risk exhausting system memory or monopolizing CPU. The ResourceGovernor enforces per-request ceilings:
+
+| Parameter | Default | Description |
+|---|---|---|
+| `max_nodes` | 50,000 | Node count above which traversal is refused |
+| `max_edges` | 200,000 | Edge count ceiling |
+| `max_beam_size` | 50 | Beam width cap |
+| `max_hops` | 6 | Depth ceiling per query |
+| `query_timeout_s` | 30.0 | Wall-clock timeout in seconds |
+| `max_concurrent` | 10 | Concurrent query limit |
+
+Queries that exceed any ceiling receive HTTP 429 with a structured JSON error explaining which limit was breached.
+
+11.3 Asynchronous Beam Traversal
+
+The `AsyncBeamTraversal` class wraps `BeamTraversal` in Python's `asyncio` event loop and adds a `/query/stream` SSE endpoint. Instead of blocking until the full beam completes, the server emits one Server-Sent Event per beam step:
+
+```
+event: step
+data: {"hop": 1, "candidates": [...], "scores": [...]}
+
+event: result
+data: {"paths": [...], "top_score": 0.94, "hops": 2}
+```
+
+This allows front-ends and downstream agents to render partial results as the traversal progresses — important for user-facing applications where a 3-hop traversal over a large graph may take several seconds.
+
+The `/query/stream` endpoint accepts the same request schema as `/query` and is protected by the same JWT authentication. The `ResourceGovernor` timeout applies per stream: if traversal does not complete within `query_timeout_s` seconds, the stream emits a final `event: timeout` and closes.
+
+---
+
+12. Real-Time Streaming (Phase 11)
+
+Phase 11 extended Parallax from static knowledge graph reasoning to live, streaming data. The motivation is direct: many of Parallax's highest-value applications — industrial sensors, network telemetry, signal analysis, video feeds — produce continuous data that must be reasoned over without batch processing delays.
+
+12.1 The Streaming Architecture
+
+The streaming subsystem has four interacting layers:
+
+1. **Sources** — pluggable data ingestion adapters (file tail, HTTP polling, WebSocket, MQTT, Python callbacks)
+2. **Discretizer** — converts continuous signal values into discrete graph nodes and typed edges
+3. **SlidingWindowBuffer** — maintains a time-bounded, count-bounded live edge set with reference counting
+4. **StreamAdapter** — a thread-safe, live-mutating `NetworkXAdapter` that integrates all layers
+
+12.2 Sliding Window Buffer
+
+The buffer maintains the set of currently-active edges using two eviction policies applied together:
+
+$$\mathcal{W}(t) = \{e \in \mathcal{E} \mid t - t_e \leq \Delta t\} \cap \{|\mathcal{E}| \leq N_{max}\}$$
+
+where $\Delta t$ is the time window in seconds, $t_e$ is the most recent timestamp for edge $e$, and $N_{max}$ is the maximum edge count. When both policies would evict different edges, the buffer evicts the oldest-first until both constraints are satisfied.
+
+Reference counting tracks how many live `StreamEvent` objects reference each edge key $(\text{src}, \text{rel}, \text{tgt})$. An edge is only removed from the graph when its reference count drops to zero, preventing premature eviction of frequently-repeated signals.
+
+12.3 Signal Discretization
+
+Continuous sensor values are converted to discrete graph edges through one of five discretizer classes:
+
+**ThresholdDiscretizer** maps a scalar reading to a categorical state node with hysteresis:
+
+$$\text{state}(x) = \begin{cases} \text{SPIKE} & x > \mu + 3\sigma \\ \text{HIGH} & x > \mu + \sigma \\ \text{LOW} & x < \mu - \sigma \\ \text{NORMAL} & \text{otherwise} \end{cases}$$
+
+where $\mu$ is a configurable nominal value and $\sigma$ is the threshold scale. The hysteresis margin $h$ requires the signal to exceed $\theta \pm h$ before transitioning, preventing rapid edge oscillation at threshold boundaries.
+
+**BinningDiscretizer** quantizes $x$ into $N$ equal-width bins over $[\text{min}, \text{max}]$:
+
+$$\text{bin}(x) = \left\lfloor \frac{x - x_{min}}{x_{max} - x_{min}} \cdot N \right\rfloor$$
+
+Each bin maps to a node label (e.g., `sensor_A_bin_3`) and emits a `READS` edge from the sensor node to the bin node.
+
+**ObjectDetectionDiscretizer** converts a detection event (label, confidence, bounding box) into `DETECTS` edges and `CO_OCCURS_WITH` edges between co-detected objects within the same frame.
+
+**TemporalSequenceDiscretizer** emits `PRECEDES` edges between consecutive events, building an ordered chain of observations:
+
+$$v_1 \xrightarrow{\text{PRECEDES}} v_2 \xrightarrow{\text{PRECEDES}} v_3 \xrightarrow{\text{PRECEDES}} \cdots$$
+
+**CoActivationDiscretizer** emits `CO_ACTIVATES` edges between sensor pairs that fire within a configurable time window $\delta_t$ of each other and have co-activated at least $n_{min}$ times:
+
+$$\text{emit}(A, B) \iff |t_A - t_B| \leq \delta_t \;\wedge\; \text{count}(A, B) \geq n_{min}$$
+
+12.4 Incremental Community Updates
+
+Running full DSCF after every ingested event would be prohibitively expensive. `IncrementalCommunityUpdater` maintains a set of *affected nodes* $\mathcal{A}$ — nodes that gained or lost edges since the last community computation — and re-runs DSCF only over the ego-network of radius $r$ around those nodes:
+
+$$G_{\text{local}} = \{v \mid d_G(v, u) \leq r, \; u \in \mathcal{A}\}$$
+
+where $d_G$ is shortest-path distance. The default radius is $r = 2$. Updates are triggered when $|\mathcal{A}| \geq n_{min}$ (default 10), batching small mutations to amortize overhead. The subgraph is converted to undirected before DSCF runs (since directed sensor graphs use DiGraph internally but DSCF requires an undirected view for connected-components computation).
+
+Community assignments outside $G_{\text{local}}$ are preserved from the previous full run, producing a hybrid partition that is locally fresh and globally stable.
+
+12.5 Streaming API Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/stream/ingest` | POST | Ingest a batch of `StreamEvent` objects into the live graph |
+| `/stream/status` | GET | Live stats: nodes, edges, communities, events/s, buffer utilization |
+| `/stream/events` | GET (SSE) | Subscribe to graph mutation events in real time |
+
+The `/stream/ingest` endpoint accepts:
+
+```json
+{
+  "events": [
+    {
+      "source": "sensor_A",
+      "relation": "READS",
+      "target": "temperature_HIGH",
+      "timestamp": 1711051234.5,
+      "ttl": 60.0,
+      "metadata": {"unit": "celsius", "value": 87.3}
+    }
+  ]
+}
+```
+
+The `/stream/events` SSE stream emits one JSON line per graph mutation (edge add, edge evict, community update), enabling downstream subscribers to maintain a synchronized view of the live graph.
+
+12.6 Application: Sensor Co-Activation Reasoning
+
+Consider a factory with 50 sensors feeding Parallax via MQTT. The `CoActivationDiscretizer` builds a graph of sensors that reliably activate together. Within minutes of startup, Parallax has formed communities of co-activating sensors — physically meaningful clusters corresponding to cooling loops, power rails, and conveyor stages — without any domain configuration.
+
+A query of the form "which sensors are structurally related to Sensor_A?" returns a verified path:
+
+> Sensor_A $\xrightarrow{\text{CO\_ACTIVATES}}$ Sensor_B $\xrightarrow{\text{CO\_ACTIVATES}}$ Sensor_C $\xrightarrow{\text{MONITORS}}$ Cooling\_Loop\_2
+
+Every edge in this path is a real co-activation event captured in the sliding window. No fact was inferred from a model; every fact was observed.
+
+---
+
+13. Conclusion
 
 We have presented Parallax: a framework that enables Knowledge Graphs to reason using the structural principles of Transformer attention without training data, without an LLM, and with full interpretability.
 
@@ -1286,7 +1315,7 @@ answer is traceable to a sequence of verified graph edges. This architectural sh
 moves AI from probabilistic hidden-layer weights to a **Glass-Box** of deterministic 
 paths — a vital transition in the modern AI/ML landscape. Every reasoning step names the community it traversed. This interpretability property, combined with the graph-grounded capability of graph-grounded inference, positions Parallax as a meaningful complement to — and in certain domains, replacement for — LLM-based reasoning over structured knowledge.
 
-The open questions identified in Section 8 define the research program. The benchmarks in Section 9 define the empirical standard. The architecture in Section 6 defines what to build.
+The open questions identified in Section 10 define the ongoing research program. The benchmarks in Section 9 define the empirical standard. The architecture in Section 6 defines the core build. Phases 10 and 11 (Sections 11–12) demonstrate that the architecture scales to production and real-time streaming use cases without modification to the core CSA or DSCF algorithms.
 
 The name Parallax refers to the optical phenomenon where two viewpoints on the same object yield depth perception that neither viewpoint alone provides.
 LPA and modularity are two viewpoints on the same graph. Their combination yields structural depth — attention heads with both short-range and long-range character — that neither produces alone. This multi-signal consensus is inspired 

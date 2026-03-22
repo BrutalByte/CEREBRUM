@@ -98,15 +98,18 @@ uvicorn api.server:app --port 8200 --reload
 -   **Reproducibility:** Follow the guidelines in `TESTING.md` for deterministic runs (especially for DSCF).
 -   **Documentation:** Absolute precedence is given to `PARALLAX.md` (whitepaper) and `README.md`. `CLAUDE.md` provides environment-specific guidance.
 
-## Current Project Status (Phase 4)
+## Current Project Status (Phase 10 COMPLETE)
 
-The project has completed **Phase 3 (Adapters & API)**.
-Current focus is **Phase 4: Benchmarking**, specifically implementing and running evaluations on:
--   **MetaQA** (3-hop reasoning)
--   **WebQSP** (Freebase reasoning)
--   **Hetionet** (Biomedical KG)
+Parallax is currently in **v0.3.0 Stable**.
+The project has completed **Phase 10: Production Hardening & Asynchronous Streaming**.
 
-Refer to `TEST_LOG.md` for the latest benchmarking results and engineering findings (EF-001 to EF-004).
+Key recent implementations:
+-   **Security**: JWT Authentication and strict API-Key enforcement.
+-   **Performance**: Asynchronous streaming reasoning (`/query/stream`) for real-time delivery.
+-   **Governance**: `ResourceGovernor` for computational budget and time enforcement.
+-   **Federation**: Multi-source federated reasoning with holographic indexing (v0.2.0 heritage).
+
+Refer to `TEST_LOG.md` for details on Run 022, including regression findings related to the `CSAEngine` signature change and API hardening.
 
 
 

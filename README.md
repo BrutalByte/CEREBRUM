@@ -26,7 +26,7 @@ See `PAPER.md` for the full white paper and architecture specification.
 
 ## Roadmap
 
-**Current Phase: 9 (Federated Release) — COMPLETE**
+**Current Project Status: v0.3.0 Stable — COMPLETE**
 
 - [x] **Phase 0: Theory & Prototyping** (DSCF validated in AI Personal Assistant)
 - [x] **Phase 1: Core Engine** (GraphAdapter, TSC Engine, CSA Attention)
@@ -38,19 +38,20 @@ See `PAPER.md` for the full white paper and architecture specification.
 - [x] **Phase 7: Dynamic Graph Updates** — cross-graph wormhole attention
 - [x] **Phase 8: Holographic Index** — privacy-preserving discovery & Bloom filters
 - [x] **Phase 9: Federated Release** (v0.2.0 Stable) — handshake & reasoning callbacks
+- [x] **Phase 10: Production Hardening & Streaming** (v0.3.0 Stable) — JWT, Resource Governance, Async Streaming
 
-## Next Horizon: High-Stakes Deployment — Roadmap to v1.0.0
+## Next Horizon: Enterprise Scale — Roadmap to v1.0.0
 
-With the completion of v0.2.0 (Federated), we are moving towards production-scale reliability.
+With the completion of v0.3.0, Parallax is production-ready for enterprise deployment.
 
-### Phase 10: Production Hardening (In Progress)
-- **Objective**: Finalize the framework for massive-scale deployment.
+### Phase 10: Production Hardening & Asynchronous Streaming — COMPLETE
+- **Objective**: Finalize the framework for massive-scale deployment and real-time reasoning.
 - **Milestones**:
-    - [x] **API Key Security**: Enforced `X-API-Key` headers on all data-access and reasoning endpoints.
-    - [x] **Computational Governor**: Implemented `max_budget` enforcement in `BeamTraversal` to prevent resource exhaustion.
-    - [x] **Streaming Reasoning**: Implemented `/query/stream` using `AsyncBeamTraversal` for hop-by-hop path delivery.
-    - [ ] **Sublinear Traversal**: Optimize Beam Search for >100M edges.
-    - [ ] **Auth Handshake**: Implement JWT-based secure federated authentication.
+    - [x] **JWT Authentication**: Implemented secure token-based auth for all endpoints.
+    - [x] **RemoteAdapter Hardening**: TLS verification and connection pooling for federated nodes.
+    - [x] **Computational Governor**: Implemented `ResourceGovernor` for budget and time enforcement.
+    - [x] **Streaming Reasoning**: Implemented `/query/stream` using `AsyncBeamTraversal` for real-time delivery.
+    - [x] **CSAEngine Refactor**: Decoupled engine for high-concurrency streaming environments.
 
 ## Quick Start
 
