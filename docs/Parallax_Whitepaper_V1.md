@@ -6,7 +6,7 @@ Authors: Bryan (Originator), Claude Sonnet 4.6 (Collaborator)
 
 Date: March 2026
 
-Status: Version 0.3.0 · Phase 11 COMPLETE
+Status: Version 0.3.2 · Phase 13 COMPLETE
 
 ---
 
@@ -313,6 +313,25 @@ Default: $r = 2$. Updates trigger when $|\mathcal{A}| \geq 10$.
 
 ---
 
+12.5 Bridge Twin Nodes (Phase 12)
+
+When a node crosses community boundaries $\geq n_{min}$ times and its embedding fits the destination community centroid:
+$$\text{fit}(v, \mathcal{C}_d) = \cos\!\left(\mathbf{e}_v,\; \tfrac{1}{|\mathcal{C}_d|}\textstyle\sum_{u \in \mathcal{C}_d} \mathbf{e}_u\right) \geq \theta_{bridge}$$
+a twin $v'$ is materialised with $c(v') = \mathcal{C}_d$, $\mathbf{e}_{v'} = \mathbf{e}_v$, and bidirectional `BRIDGE_TWIN` edges. CSA short-circuits to $\sigma(0.925 + \varepsilon\phi(k)) \approx 0.716$. Idle twins pruned after $\tau_{prune}$ days. Biological analog: thalamic relay nuclei (LGN).
+
+---
+
+12.6 Spike-Timing Dependent Plasticity (Phase 13)
+
+`STDPDiscretizer` infers directional causal edges from event timing, implementing the biological STDP rule:
+$$\Delta w(A \to B) = \begin{cases}
+A_+ \exp(-\Delta t/\tau_+) & \Delta t > 0 \;\; \text{(LTP: A precedes B)} \\
+-A_- \exp(\Delta t/\tau_-) & \Delta t \leq 0 \;\; \text{(LTD: anti-causal)}
+\end{cases}$$
+Emits `CAUSES(A→B)` when $w(A \to B) \geq w_{threshold}$ AND count $\geq n_{min}$. Per-spike weight decay $\lambda$ provides exponential forgetting. Defaults: $A_+ = 0.1$, $A_- = 0.105$, $\tau_\pm = 0.2\,\text{s}$ (slight LTD dominance, Bi & Poo 1998). Enables autonomous causal chain discovery from streaming data.
+
+---
+
 13. Conclusion
 
 We have presented Parallax: a framework that enables Knowledge Graphs to reason using the structural principles of Transformer attention without training data, without an LLM, and with full interpretability.
@@ -324,7 +343,7 @@ answer is traceable to a sequence of verified graph edges. This architectural sh
 moves AI from probabilistic hidden-layer weights to a **Glass-Box** of deterministic 
 paths — a vital transition in the modern AI/ML landscape. Every reasoning step names the community it traversed. This interpretability property, combined with the graph-grounded capability of graph-grounded inference, positions Parallax as a meaningful complement to — and in certain domains, replacement for — LLM-based reasoning over structured knowledge.
 
-The open questions identified in Section 9 define the ongoing research program. The benchmarks in Section 7 define the empirical standard. The architecture in Section 4 defines the core build. Sections 11–12 demonstrate that the architecture scales to production and real-time streaming use cases without modification to CSA or DSCF.
+The open questions identified in Section 9 define the ongoing research program. The benchmarks in Section 7 define the empirical standard. The architecture in Section 4 defines the core build. Sections 11–12 demonstrate that the architecture scales to production, real-time streaming, experience-dependent structural plasticity (Phase 12), and autonomous causal discovery (Phase 13) without modification to CSA or DSCF.
 
 The name Parallax refers to the optical phenomenon where two viewpoints on the same object yield depth perception that neither viewpoint alone provides. LPA and modularity are two viewpoints on the same graph. Their combination yields structural depth — attention heads with both short-range and long-range character — that neither produces alone. This multi-signal consensus is inspired 
 by **mid-level voting** systems in triplex-redundant aircraft navigation, where 

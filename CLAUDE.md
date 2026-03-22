@@ -6,13 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Parallax is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v0.2.0 (Federated)** adds support for distributed reasoning across multiple Parallax instances using holographic indexing and cross-graph attention.
+**v0.3.2 (Phase 13 COMPLETE)** — JWT auth, ResourceGovernor, async streaming, real-time discretizers, Bridge Twins, STDP causal inference. 275 tests passing.
 
 ### Core Concepts
 - **DSCF/TSC**: Dual/Triple signal community fusion.
 - **CSA**: Community-Structured Attention formula.
 - **Federated**: Aggregating multiple graphs via `FederatedAdapter`.
 - **Hologram**: Bloom filters + centroids for blind discovery of remote graphs.
+- **Bridge Twins**: Experience-dependent structural relay nodes (Phase 12).
+- **STDPDiscretizer**: Directional causal edge inference from spike timing (Phase 13).
 
 ## Install & Development Commands
 
@@ -73,13 +75,13 @@ a(u,v,k) = sigmoid(
 
 | Directory | Purpose |
 |---|---|
-| `core/` | Core engines: community detection (DSCF/Leiden/LPA), embedding, CSA attention, structural encoding |
+| `core/` | Core engines: community detection (DSCF/Leiden/LPA), embedding, CSA attention, structural encoding, BridgeTwinEngine, STDPDiscretizer |
 | `reasoning/` | Beam-search traversal, path scoring, answer extraction |
-| `adapters/` | Pluggable graph backends: NetworkX (default), Neo4j, RDF/SPARQL, CSV |
-| `api/` | FastAPI REST server — endpoints: `/health`, `/query`, `/communities` |
+| `adapters/` | Pluggable graph backends: NetworkX, Neo4j, RDF/SPARQL, CSV, StreamAdapter |
+| `api/` | FastAPI REST server — endpoints: `/health`, `/query`, `/communities`, `/bridges`, `/stream/*` |
 | `cli/` | CLI entry point (`parallax query`, `communities`, `serve`) |
 | `llm_bridge/` | Optional: formats reasoning output for LLM consumption |
-| `tests/` | pytest suite; fixture: `tests/fixtures/toy_graph.csv` (19-node historical graph) |
+| `tests/` | pytest suite; fixture: `tests/fixtures/toy_graph.csv` (21 nodes, 30 edges) |
 | `examples/` | Quickstart scripts for CSV, Neo4j, and Wikidata/RDF backends |
 
 ### Data Flow

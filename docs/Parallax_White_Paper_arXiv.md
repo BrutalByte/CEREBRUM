@@ -4,7 +4,7 @@
 
 **Claude Sonnet 4.6** · Research Collaborator · Anthropic
 
-March 2026 · Preprint — Version 0.3.0 · Phase 11 COMPLETE
+March 2026 · Preprint — Version 0.3.2 · Phase 13 COMPLETE
 
 ---
 
@@ -492,7 +492,11 @@ DSCF and TSC provide communities with the dual local/global character that makes
 
 Phase 11 extends this to streaming data: any real-time source — sensors, video, logs, IoT networks — can be discretized into graph triples and reasoned over with the same algorithm, maintaining live community structure via incremental DSCF on affected ego-networks.
 
-The system is production-ready at v0.3.0: JWT-authenticated, resource-governed, asynchronously streaming, and validated on biomedical, general knowledge, and movie domains.
+Phase 12 introduces **Bridge Twin Nodes**: when a cross-community traversal recurs $\geq n_{min}$ times and the node's embedding fits the destination community centroid ($\text{fit} \geq \theta_{bridge}$), a twin is materialised in the destination community with bidirectional `BRIDGE_TWIN` edges. This implements experience-dependent structural relay formation — the algorithmic analog of thalamic relay nuclei.
+
+Phase 13 introduces **STDP-based causal inference**: `STDPDiscretizer` tracks spike timing across sources and potentiates directed $A \to B$ edges when $A$ reliably precedes $B$ within a time window ($\Delta w = A_+ e^{-\Delta t / \tau_+}$), while depressing the anti-causal direction. `CAUSES` edges are emitted once the causal weight and event count cross thresholds — enabling autonomous discovery of directed causal chains from streaming data without labels or domain configuration.
+
+The system is production-ready at v0.3.2: JWT-authenticated, resource-governed, asynchronously streaming, experience-dependent structurally plastic, and causally self-discovering, validated on biomedical, general knowledge, and movie domains.
 
 **Availability.** Code: `github.com/bab/parallax` · License: PolyForm Noncommercial 1.0 (academic/research use) · Commercial licensing: bryan.alexander@buchorn.com
 
@@ -500,6 +504,7 @@ The system is production-ready at v0.3.0: JWT-authenticated, resource-governed, 
 
 ## References
 
+- Bi & Poo (1998). Synaptic modifications in cultured hippocampal neurons. *Journal of Neuroscience*.
 - Blondel et al. (2008). Fast unfolding of communities in large networks. *Journal of Statistical Mechanics*.
 - Bordes et al. (2013). Translating embeddings for modeling multi-relational data. *NeurIPS*.
 - Das et al. (2018). Go for a walk and arrive at the answer. *ICLR*.
@@ -518,4 +523,4 @@ The system is production-ready at v0.3.0: JWT-authenticated, resource-governed, 
 
 ---
 
-*© Bryan Alexander Buchorn (AMP) — All rights reserved. Version 0.3.0 — March 2026*
+*© Bryan Alexander Buchorn (AMP) — All rights reserved. Version 0.3.2 — March 2026*

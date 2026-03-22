@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: March 2026
-**Status**: Version 0.3.0 · Phase 11 COMPLETE
+**Status**: Version 0.3.2 · Phase 13 COMPLETE
 **License**: Proprietary — all rights reserved
 
 ---
@@ -66,11 +66,10 @@ parallax/
 └── PAPER.md       (this file)
 ```
 
-**Current phase**: Phase 11 complete (v0.3.0). Core algorithms (CSA, DSCF/TSC)
-stable. Federated reasoning (Phase 6–9), production hardening — JWT auth,
-ResourceGovernor, AsyncBeamTraversal (Phase 10) — and real-time streaming
-infrastructure — pluggable sources, signal discretizers, sliding-window buffer,
-incremental community updates, SSE endpoints (Phase 11) — all shipped.
+**Current phase**: Phase 13 complete (v0.3.2). Core algorithms (CSA, DSCF/TSC)
+stable. Federated reasoning (Phase 6–9), production hardening (Phase 10),
+real-time streaming (Phase 11), Bridge Twin structural relay formation (Phase 12),
+and STDP directional causal edge inference (Phase 13) — all shipped.
 
 ---
 
@@ -1150,6 +1149,29 @@ run, maintaining a globally-consistent, locally-fresh partition.
 
 ---
 
+## 12.6 Bridge Twin Nodes (Phase 12)
+
+When a node crosses community boundaries repeatedly — because the graph's true reasoning path requires it — the CSA distance penalty imposes a persistent cost on an edge that is structurally correct. **Bridge Twins** resolve this by materialising a copy of the node inside the destination community once the crossing count and semantic fit threshold are both met:
+
+$$\text{fit}(v, \mathcal{C}_d) = \cos\!\left(\mathbf{e}_v,\; \frac{1}{|\mathcal{C}_d|}\sum_{u \in \mathcal{C}_d} \mathbf{e}_u\right) \geq \theta_{bridge}$$
+
+The twin $v'$ is assigned $c(v') = \mathcal{C}_d$, carries $\mathbf{e}_{v'} = \mathbf{e}_v$, and is connected via bidirectional `BRIDGE_TWIN` edges ($w_{rel} = 1.0$). The CSA short-circuits to $\sigma(0.925 + \varepsilon\phi(k)) \approx 0.716$ for bridge edges. Idle bridges are pruned after $\tau_{prune}$ days (LTD analog). Biological correspondence: thalamic relay nuclei (LGN).
+
+---
+
+## 12.7 Spike-Timing Dependent Plasticity (Phase 13)
+
+The `CoActivationDiscretizer` detects symmetric correlations. `STDPDiscretizer` adds **directional causal inference** from timing alone, matching the biological STDP rule:
+
+$$\Delta w(A \to B) = \begin{cases}
+A_+ \exp(-\Delta t/\tau_+) & \Delta t > 0 \quad \text{(LTP: A precedes B)} \\
+-A_- \exp(\Delta t/\tau_-) & \Delta t \leq 0 \quad \text{(LTD: anti-causal)}
+\end{cases}$$
+
+Default: $A_+ = 0.1$, $A_- = 0.105$ (slight LTD dominance, matching Bi & Poo 1998). A `CAUSES(A→B)` edge is emitted when $w(A \to B) \geq w_{threshold}$ AND $n(A \to B) \geq n_{min}$. Per-spike multiplicative weight decay ($\lambda \in (0,1]$) provides exponential forgetting. The result: Parallax autonomously infers directed causal chains from streaming data without domain configuration or labeled training.
+
+---
+
 ## 13. Conclusion
 
 We have presented Parallax: a framework that enables Knowledge Graphs to
@@ -1174,8 +1196,9 @@ LLM-based reasoning over structured knowledge.
 The open questions identified in Section 10 define the ongoing research program.
 The benchmarks in Section 9 define the empirical standard. The architecture in
 Section 6 defines the core build. Sections 11–12 demonstrate that the
-architecture scales to production and real-time streaming use cases without
-modification to the core CSA or DSCF algorithms.
+architecture scales to production, real-time streaming, experience-dependent
+structural plasticity, and autonomous causal discovery without modification to
+the core CSA or DSCF algorithms.
 
 The name Parallax refers to the optical phenomenon where two viewpoints on
 the same object yield depth perception that neither viewpoint alone provides.

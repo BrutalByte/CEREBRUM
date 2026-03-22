@@ -98,18 +98,17 @@ uvicorn api.server:app --port 8200 --reload
 -   **Reproducibility:** Follow the guidelines in `TESTING.md` for deterministic runs (especially for DSCF).
 -   **Documentation:** Absolute precedence is given to `PARALLAX.md` (whitepaper) and `README.md`. `CLAUDE.md` provides environment-specific guidance.
 
-## Current Project Status (Phase 10 COMPLETE)
+## Current Project Status (Phase 13 COMPLETE)
 
-Parallax is currently in **v0.3.0 Stable**.
-The project has completed **Phase 10: Production Hardening & Asynchronous Streaming**.
+Parallax is currently in **v0.3.2**. Phases 10–13 all shipped.
 
-Key recent implementations:
--   **Security**: JWT Authentication and strict API-Key enforcement.
--   **Performance**: Asynchronous streaming reasoning (`/query/stream`) for real-time delivery.
--   **Governance**: `ResourceGovernor` for computational budget and time enforcement.
--   **Federation**: Multi-source federated reasoning with holographic indexing (v0.2.0 heritage).
+Key implementations:
+-   **Phase 10 — Security**: JWT Authentication, ResourceGovernor, AsyncBeamTraversal, `/query/stream`.
+-   **Phase 11 — Streaming**: StreamAdapter, SlidingWindowBuffer, 5 discretizers, SSE endpoints.
+-   **Phase 12 — Bridge Twins**: Experience-dependent structural relay formation; GET /bridges API.
+-   **Phase 13 — STDP**: STDPDiscretizer — directional CAUSES edges from spike timing (275 tests passing).
 
-Refer to `TEST_LOG.md` for details on Run 022, including regression findings related to the `CSAEngine` signature change and API hardening.
+Refer to `TEST_LOG.md` for details on previous runs.
 
 
 

@@ -26,7 +26,7 @@ See `PAPER.md` for the full white paper and architecture specification.
 
 ## Roadmap
 
-**Current Project Status: v0.3.0 Stable — COMPLETE**
+**Current Project Status: v0.3.2 — Phase 13 COMPLETE — 275 tests passing**
 
 - [x] **Phase 0: Theory & Prototyping** (DSCF validated in AI Personal Assistant)
 - [x] **Phase 1: Core Engine** (GraphAdapter, TSC Engine, CSA Attention)
@@ -38,11 +38,14 @@ See `PAPER.md` for the full white paper and architecture specification.
 - [x] **Phase 7: Dynamic Graph Updates** — cross-graph wormhole attention
 - [x] **Phase 8: Holographic Index** — privacy-preserving discovery & Bloom filters
 - [x] **Phase 9: Federated Release** (v0.2.0 Stable) — handshake & reasoning callbacks
-- [x] **Phase 10: Production Hardening & Streaming** (v0.3.0 Stable) — JWT, Resource Governance, Async Streaming
+- [x] **Phase 10: Production Hardening** (v0.3.0) — JWT, ResourceGovernor, AsyncBeamTraversal
+- [x] **Phase 11: Real-Time Streaming** — StreamAdapter, 5 discretizers, sliding-window buffer, SSE endpoints
+- [x] **Phase 12: Bridge Twin Nodes** — experience-dependent structural relay formation (thalamic analog)
+- [x] **Phase 13: STDP Causal Inference** — directional CAUSES edges from spike timing (Bi & Poo analog)
 
 ## Next Horizon: Enterprise Scale — Roadmap to v1.0.0
 
-With the completion of v0.3.0, Parallax is production-ready for enterprise deployment.
+With the completion of Phase 13, Parallax is production-ready for enterprise deployment.
 
 ### Phase 10: Production Hardening & Asynchronous Streaming — COMPLETE
 - **Objective**: Finalize the framework for massive-scale deployment and real-time reasoning.

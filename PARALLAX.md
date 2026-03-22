@@ -694,11 +694,29 @@ See Appendix D for the extracted code.
 - Reasoning Callbacks for cross-graph path verification
 - Security hardening and full QA audit
 
-**Phase 10 — Production Hardening & Asynchronous Streaming v0.3.0 (COMPLETE)**
+**Phase 10 — Production Hardening v0.3.0 (COMPLETE)**
 - JWT-based secure federated authentication
 - Resource Governance (budget/time enforcement)
 - Asynchronous Streaming Reasoning (/query/stream)
 - CSAEngine refactor for high-concurrency environments
+
+**Phase 11 — Real-Time Streaming v0.3.1 (COMPLETE)**
+- StreamAdapter, SlidingWindowBuffer (reference-counted TTL eviction)
+- 5 discretizers: Threshold, Binning, ObjectDetection, TemporalSequence, CoActivation
+- IncrementalCommunityUpdater (ego-network DSCF re-runs)
+- SSE endpoints: /stream/ingest, /stream/status, /stream/events
+
+**Phase 12 — Bridge Twin Nodes v0.3.1 (COMPLETE)**
+- Experience-dependent structural relay formation (thalamic relay nuclei analog)
+- BridgeTwinEngine: twin materialisation when crossing count ≥ n_min and fit ≥ θ_bridge
+- CSA short-circuit for BRIDGE_TWIN edges: σ(0.925) ≈ 0.716
+- LTD-analog pruning after idle days; GET /bridges API endpoint
+
+**Phase 13 — STDP Causal Inference v0.3.2 (COMPLETE)**
+- STDPDiscretizer: directional CAUSES edges from spike timing (Bi & Poo 1998 analog)
+- LTP: A→B potentiated when A fires before B; LTD: anti-causal direction depressed
+- Exponential time decay, per-spike weight decay (forgetting), configurable thresholds
+- Enables autonomous causal chain discovery from streaming data
 
 ### 6.6 Computational Complexity
 

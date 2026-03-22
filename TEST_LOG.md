@@ -2074,3 +2074,21 @@ The CSAEngine refactor modified the constructor to require an explicit adapter 
 - **Next Steps**: User testing of the UI and integration with Federated Reasoning endpoints.
 
 ---
+
+## Run 028 — Phase 13: STDP Causal Inference
+| **Date**          | 2026-03-21 |
+| **Phase**         | Phase 13 — Spike-Timing Dependent Plasticity |
+| **Purpose**       | Add directional causal edge inference to streaming pipeline |
+| **Operator**      | Claude Sonnet 4.6 |
+
+### Summary of Actions
+- **STDPDiscretizer** added to `core/discretizer.py`: LTP/LTD from spike timing, CAUSES edges at threshold
+- **Test suite** `tests/test_stdp.py`: 24 tests — LTP, LTD, threshold emission, weight decay, out-of-window, self-pairing, reset, directionality, metadata, accumulation
+- **All docs updated** to v0.3.2: white paper, PAPER.md, Whitepaper_V1, arXiv, Plain Language Guide (Ch. 12.6), README, PARALLAX.md, GEMINI.md, CLAUDE.md
+
+### Final Status
+- **Status**: **Phase 13 COMPLETE**
+- **Tests**: 275 passed, 1 skipped
+- **Version**: v0.3.2
+
+---

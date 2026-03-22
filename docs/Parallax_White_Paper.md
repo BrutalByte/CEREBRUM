@@ -6,7 +6,7 @@ Authors: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborat
 
 Date: March 2026
 
-Status: **Version 0.3.0 · Phase 11 COMPLETE**
+Status: **Version 0.3.2 · Phase 13 COMPLETE**
 
 License: Proprietary — all rights reserved
 
@@ -52,13 +52,14 @@ graph edges, every conclusion traceable to a path, and no LLM required for
 
 inference — though one may optionally be used for natural language generation.
 
-Version 0.3.0 extends the core architecture with production hardening (JWT
-authentication, ResourceGovernor, asynchronous streaming traversal) and a
-full real-time streaming subsystem: pluggable ingestion sources, five signal
-discretizer classes, a sliding-window buffer with reference-counted edge
-eviction, incremental ego-network community updates, and SSE streaming API
-endpoints. The core CSA and DSCF algorithms are unchanged; the streaming layer
-sits entirely above them.
+Version 0.3.x extends the core architecture with production hardening (JWT
+authentication, ResourceGovernor, asynchronous streaming traversal), a
+full real-time streaming subsystem (five signal discretizer classes, sliding-
+window buffer with reference-counted edge eviction, incremental ego-network
+community updates, SSE streaming API), experience-dependent structural relay
+formation via Bridge Twin Nodes (Phase 12), and directional causal edge
+inference via Spike-Timing Dependent Plasticity (Phase 13). The core CSA and
+DSCF algorithms are unchanged; all extensions sit above them.
 
 ---
 
@@ -1331,6 +1332,43 @@ This is implemented as a direct short-circuit in `CSAEngine.compute_weight()`, b
 
 ---
 
+12.8 Spike-Timing Dependent Plasticity (Phase 13)
+
+The `CoActivationDiscretizer` (Phase 11) detects *symmetric* correlations: sensors A and B that co-activate are linked with equal weight regardless of which fired first. In real causal systems this symmetry is incorrect — causation has a direction and a time ordering.
+
+Biological STDP resolves this: if neuron A fires **before** neuron B within a short window, the synapse $A \to B$ is potentiated (LTP). If A fires **after** B, $A \to B$ is depressed (LTD). The magnitude depends exponentially on the time difference $\Delta t = t_{post} - t_{pre}$:
+
+$$\Delta w(A \to B) = \begin{cases}
+A_+ \exp\!\left(-\dfrac{\Delta t}{\tau_+}\right) & \text{if } \Delta t > 0 \quad (\text{LTP: A precedes B}) \\[6pt]
+-A_- \exp\!\left(\dfrac{\Delta t}{\tau_-}\right) & \text{if } \Delta t \leq 0 \quad (\text{LTD: A follows B})
+\end{cases}$$
+
+**Parallax STDPDiscretizer.** Each call to `process(source_id, timestamp)` is a "spike". For every prior spike within `window_seconds`:
+
+1. **LTP pass** — compute $\Delta t = t_{post} - t_{pre} > 0$ and increment $w_{pre \to post}$ by $A_+ \exp(-\Delta t / \tau_+)$.
+2. **LTD pass** — simultaneously decrement the *anti-causal* direction $w_{post \to pre}$ by $A_- \exp(-\Delta t / \tau_-)$, clamped to 0.
+3. **Forgetting** — after each spike, all weights are multiplied by $\lambda \in (0,1]$ (`weight_decay`), providing exponential forgetting of old associations.
+
+A directional `CAUSES(A→B)` edge is emitted when:
+$$w(A \to B) \geq w_{threshold} \quad \text{AND} \quad n(A \to B) \geq n_{min}$$
+
+Default parameters ($A_+ = 0.1$, $A_- = 0.105$, $\tau_+ = \tau_- = 0.2\,\text{s}$) give slight LTD dominance — matching biological asymmetry measurements where depression is marginally stronger than potentiation to prevent runaway weight growth (Bi & Poo, 1998).
+
+**Biological correspondence.**
+
+| STDP Biology | Parallax STDPDiscretizer |
+|---|---|
+| Pre fires before post → LTP | pre-spike within window\_seconds → $w$ increment |
+| Post fires before pre → LTD | reverse direction decremented, clamped at 0 |
+| Exponential decay with $|\Delta t|$ | $A_\pm \exp(-|\Delta t|/\tau_\pm)$ |
+| Multiplicative weight decay (forgetting) | `weight_decay` per spike |
+| Synapse → "strengthened causal pathway" | CAUSES edge in graph |
+| Threshold for synaptic consolidation | $w \geq w_{threshold}$, $n \geq n_{min}$ |
+
+**Integration with the reasoning graph.** `CAUSES` edges participate in beam traversal identically to any other relation. In a manufacturing sensor graph, after hours of operation, Parallax will have autonomously inferred directed causal chains — e.g., `Pump_A --[CAUSES]--> Pressure_Spike_B --[CAUSES]--> Relief_Valve_C` — from timing alone, without any domain-specific configuration or labeled training data.
+
+---
+
 13. Conclusion
 
 We have presented Parallax: a framework that enables Knowledge Graphs to reason using the structural principles of Transformer attention without training data, without an LLM, and with full interpretability.
@@ -1342,7 +1380,7 @@ answer is traceable to a sequence of verified graph edges. This architectural sh
 moves AI from probabilistic hidden-layer weights to a **Glass-Box** of deterministic 
 paths — a vital transition in the modern AI/ML landscape. Every reasoning step names the community it traversed. This interpretability property, combined with the graph-grounded capability of graph-grounded inference, positions Parallax as a meaningful complement to — and in certain domains, replacement for — LLM-based reasoning over structured knowledge.
 
-The open questions identified in Section 10 define the ongoing research program. The benchmarks in Section 9 define the empirical standard. The architecture in Section 6 defines the core build. Phases 10 and 11 (Sections 11–12) demonstrate that the architecture scales to production and real-time streaming use cases without modification to the core CSA or DSCF algorithms.
+The open questions identified in Section 10 define the ongoing research program. The benchmarks in Section 9 define the empirical standard. The architecture in Section 6 defines the core build. Phases 10–13 (Sections 11–12) demonstrate that the architecture scales to production, real-time streaming, experience-dependent structural plasticity, and autonomous causal discovery without modification to the core CSA or DSCF algorithms.
 
 The name Parallax refers to the optical phenomenon where two viewpoints on the same object yield depth perception that neither viewpoint alone provides.
 LPA and modularity are two viewpoints on the same graph. Their combination yields structural depth — attention heads with both short-range and long-range character — that neither produces alone. This multi-signal consensus is inspired 
@@ -1355,7 +1393,8 @@ That depth is what makes the KG reason.
 
 References
 
-[1] Scarselli et al., "The Graph Neural Network Model," IEEE TNNLS, 2009.
+[1] Bi & Poo, "Synaptic Modifications in Cultured Hippocampal Neurons," Journal of Neuroscience, 1998.
+[2] Scarselli et al., "The Graph Neural Network Model," IEEE TNNLS, 2009.
 [2] Gilmer et al., "Neural Message Passing for Quantum Chemistry," ICML, 2017.
 [3] Velickovic et al., "Graph Attention Networks," ICLR, 2018.
 [4] Hamilton et al., "Inductive Representation Learning on Large Graphs," NeurIPS, 2017.

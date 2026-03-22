@@ -14,7 +14,7 @@ numerical example so you can see the numbers actually working.
 
 **Bryan Alexander Buchorn**
 
-March 2026  |  Version 2.1
+March 2026  |  Version 2.3
 
 ---
 
@@ -694,7 +694,7 @@ All datasets have published results from previous systems, so a direct compariso
 
 ## CHAPTER 9 — Does It Work? (Validation Results)
 
-As of March 2026, Parallax has been validated on several large-scale datasets and is operating at v0.3.0 production-ready status.
+As of March 2026, Parallax has been validated on several large-scale datasets and is operating at v0.3.2 production-ready status.
 
 **What the tests showed:**
 
@@ -983,7 +983,7 @@ Three new API endpoints support streaming deployments:
 
 ## CHAPTER 12 — What Kinds of Data Can Parallax Use?
 
-As of v0.3.0, Parallax can load a knowledge graph from any of the following formats, with no configuration required beyond pointing it at the file:
+As of v0.3.2, Parallax can load a knowledge graph from any of the following formats, with no configuration required beyond pointing it at the file:
 
 | Format | Extension | What it looks like |
 |---|---|---|
@@ -1131,9 +1131,115 @@ The key insight: all three mechanisms require *repeated use* before the structur
 
 ---
 
+## CHAPTER 12.6 — STDP: Teaching the Graph Which Way Causation Flows
+
+### The Problem This Solves
+
+The Co-Activation Discretizer (Chapter 11) is symmetric: if Sensor A and Sensor B both spike within one second of each other, it emits an undirected `CO_ACTIVATES` edge between them. That edge says "these two things happen together" — but it says nothing about *which one causes the other*.
+
+In a factory: does the pressure sensor spike *because* the pump turned on, or does the pump turn on *because* pressure dropped? The co-activation edge treats both as equally plausible. STDP resolves this by paying attention to timing.
+
+### The Biological Principle
+
+In 1998, Bi and Poo published experiments showing that the order in which neurons fire — not just whether they fire together — determines whether the synapse between them is strengthened or weakened:
+
+> **If neuron A fires before neuron B:** the connection A→B gets stronger. (LTP — Long-Term Potentiation)
+> **If neuron A fires after neuron B:** the connection A→B gets weaker. (LTD — Long-Term Depression)
+
+The effect is largest when the time difference is tiny, and falls off exponentially as the gap grows. This is called **Spike-Timing Dependent Plasticity**, or STDP.
+
+### How Parallax Implements It
+
+The `STDPDiscretizer` tracks every time a source "spikes" (fires). When a new spike arrives, it looks back through recent spikes within a configurable time window and asks: who fired just before me?
+
+**For each prior source that fired before the current one:**
+- **Potentiate** (increase) the weight of the directed edge `prior → current`.
+- **Depress** (decrease) the weight of the *reverse* direction `current → prior`.
+
+**The formula** (the same one Bi and Poo measured in real neurons):
+
+$$\Delta w(A \to B) = \begin{cases}
+A_+ \times \exp\!\left(-\dfrac{\Delta t}{\tau_+}\right) & \text{if } \Delta t > 0 \;\; \text{(A fired before B)}
+\\[8pt]
+-A_- \times \exp\!\left(\dfrac{\Delta t}{\tau_-}\right) & \text{if } \Delta t \leq 0 \;\; \text{(B fired before A — anti-causal)}
+\end{cases}$$
+
+Let's decode each symbol:
+
+| Symbol | Default | Meaning |
+|---|---|---|
+| $\Delta t$ | — | Time gap: $t_{post} - t_{pre}$ in seconds |
+| $A_+$ | 0.1 | Maximum LTP increment (at Δt → 0) |
+| $A_-$ | 0.105 | Maximum LTD decrement |
+| $\tau_+$ | 0.2 s | LTP time constant — how fast the potentiation falls off |
+| $\tau_-$ | 0.2 s | LTD time constant |
+
+Note that $A_- > A_+$ (0.105 vs 0.100). This slight LTD dominance matches biology: depression is marginally stronger than potentiation. It prevents weights from growing without bound.
+
+### A Worked Example
+
+Suppose Pump_A fires at $t = 0.00$ s, then Pressure_Spike_B fires at $t = 0.05$ s (50 ms later).
+
+**LTP increment for Pump_A → Pressure_Spike_B:**
+
+$$\Delta w = 0.1 \times \exp\!\left(-\frac{0.05}{0.2}\right) = 0.1 \times \exp(-0.25) = 0.1 \times 0.7788 = 0.0779$$
+
+**LTD decrement for the reverse direction (Pressure_Spike_B → Pump_A):**
+
+$$\Delta w = -0.105 \times \exp\!\left(-\frac{0.05}{0.2}\right) = -0.105 \times 0.7788 = -0.0818$$
+
+Since Pressure_Spike_B → Pump_A had no prior weight, it clamps to 0.
+
+Now repeat this 20 times over the next few minutes (the pump always fires just before the pressure spikes). Each repetition adds about 0.078 to $w(\text{Pump\_A} \to \text{Pressure\_Spike\_B})$.
+
+Once this weight crosses `w_threshold` (default 0.5) AND the count crosses `n_min` (default 5), Parallax emits:
+
+```
+Pump_A --[CAUSES]--> Pressure_Spike_B
+```
+
+That's a real causal claim, inferred from timing alone, with no labels, no training, and no domain expertise entered by hand.
+
+### The Forgetting Mechanism
+
+All weights are multiplied by `weight_decay` (default 0.99) on every spike call. This means:
+- Associations that are **actively maintained** by repeated co-occurrence stay strong.
+- Associations that **fall out of use** decay exponentially.
+
+This is the algorithmic equivalent of synaptic pruning: connections that aren't reinforced eventually vanish.
+
+| Iterations without co-firing | Weight remaining |
+|---|---|
+| 100 | $0.99^{100} \approx 37\%$ |
+| 200 | $0.99^{200} \approx 13\%$ |
+| 500 | $0.99^{500} \approx 1\%$ |
+
+### What the Graph Learns
+
+After hours of operation on a real sensor stream, Parallax builds directed causal chains autonomously:
+
+```
+Pump_A --[CAUSES]--> Pressure_Spike_B --[CAUSES]--> Relief_Valve_C
+```
+
+These `CAUSES` edges participate in beam traversal exactly like any other relation. A query like "what is related to Pump_A?" will traverse the causal chain and return a verified path — every edge timestamped and count-verified.
+
+### Biological Table
+
+| STDP Biology | STDPDiscretizer |
+|---|---|
+| Pre fires before post → LTP | prior spike in window → weight increment |
+| Post fires before pre → LTD | reverse direction depressed, clamped ≥ 0 |
+| Exponential decay with $|\Delta t|$ | $A_\pm \exp(-|\Delta t|/\tau_\pm)$ |
+| Synaptic forgetting | `weight_decay` per spike |
+| Synaptic consolidation threshold | $w \geq w_{threshold}$, count $\geq n_{min}$ |
+| Strengthened pathway = "learned synapse" | `CAUSES` edge in graph |
+
+---
+
 ## CHAPTER 13 — What Comes Next?
 
-Parallax is currently at v0.3.0, with all eleven development phases complete and the system in production-ready condition. The roadmap to v1.0.0 focuses on three areas:
+Parallax is currently at v0.3.2, with all thirteen development phases complete and the system in production-ready condition. The roadmap to v1.0.0 focuses on three areas:
 
 **Performance at true scale**
 
@@ -1173,4 +1279,4 @@ Questions? Contact the author:
 
 **Bryan Alexander Buchorn** — bryan.alexander@buchorn.com
 
-*End of Guide — Version 2.1 — March 2026*
+*End of Guide — Version 2.3 — March 2026*

@@ -1,5 +1,5 @@
 """
-Phase 11 — Signal Discretizer.
+Phase 11/13 — Signal Discretizer.
 
 Converts continuous data (sensor readings, video detections, log levels,
 numeric metrics) into discrete (source, relation, target) graph triples
@@ -35,6 +35,13 @@ CoActivationDiscretizer
     window) and emits CO_ACTIVATES edges between them — useful for
     correlating sensor anomalies.
 
+STDPDiscretizer
+    Spike-Timing Dependent Plasticity analog. Tracks the causal order in
+    which sources fire and adjusts directional weights: sources that
+    consistently fire *before* a target are potentiated (LTP-analog);
+    sources that fire *after* are depressed (LTD-analog). Emits directional
+    CAUSES edges once the causal weight and event count cross thresholds.
+
 Example Usage
 -------------
 from core.discretizer import ThresholdDiscretizer
@@ -51,6 +58,7 @@ adapter.ingest(events)
 """
 from __future__ import annotations
 
+import math
 import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
@@ -443,3 +451,176 @@ class CoActivationDiscretizer:
 
         self._last_seen[source_id] = now
         return events
+
+
+# ---------------------------------------------------------------------------
+# STDPDiscretizer — Spike-Timing Dependent Plasticity analog (Phase 13)
+# ---------------------------------------------------------------------------
+
+class STDPDiscretizer:
+    """
+    Spike-Timing Dependent Plasticity (STDP) analog.
+
+    Biological STDP: if neuron A fires *before* neuron B, the synapse A→B
+    is potentiated (LTP). If A fires *after* B, the synapse A→B is
+    depressed (LTD). The magnitude of the change decays exponentially with
+    the time difference |Δt|.
+
+    Parallax analog:
+        - Each source_id that calls ``process()`` is a "spike".
+        - For every recent prior spike (pre-synaptic), Δt = t_post − t_pre > 0
+          → potentiate weight[(pre, post)] by A_plus * exp(-Δt / tau_plus).
+        - For every recent *future* spike that fires within window_seconds
+          of the current spike (post < pre, i.e. this call is the pre):
+          those relationships are captured in the next call's LTD branch.
+        - Symmetric LTD: when a new spike (post) arrives and an older spike
+          (pre) was *already seen within window_seconds*, the *reverse*
+          direction (post → pre) is depressed by A_minus * exp(-|Δt|/tau_minus)
+          because post fired after pre but pre's direction is already captured
+          in LTP; the depression reduces spurious reverse edges.
+
+    The net result: weight[(A, B)] grows when A reliably precedes B, and
+    shrinks when the ordering is reversed. Once weight[(A, B)] ≥ w_threshold
+    AND event_count[(A, B)] ≥ n_min a CAUSES(A→B) edge is emitted.
+
+    A per-event multiplicative ``weight_decay`` keeps weights from growing
+    unboundedly across long periods without co-activation.
+
+    Parameters
+    ----------
+    window_seconds : look-back window for pairing pre and post spikes
+    tau_plus       : LTP time constant (seconds). Smaller → faster decay with Δt.
+    tau_minus      : LTD time constant (seconds).
+    A_plus         : maximum LTP weight increment per pair
+    A_minus        : maximum LTD weight decrement per pair
+    w_threshold    : causal weight above which a CAUSES edge is emitted
+    n_min          : minimum co-occurrence count before emitting
+    weight_decay   : multiplicative decay applied to all weights on each call
+                     (1.0 = no decay; 0.99 = slow exponential forgetting)
+    relation       : edge relation label for emitted causal edges
+    ttl            : time-to-live for emitted edges (seconds; 0 = permanent)
+    """
+
+    def __init__(
+        self,
+        window_seconds: float = 1.0,
+        tau_plus: float = 0.2,
+        tau_minus: float = 0.2,
+        A_plus: float = 0.1,
+        A_minus: float = 0.105,
+        w_threshold: float = 0.5,
+        n_min: int = 5,
+        weight_decay: float = 0.99,
+        relation: str = "CAUSES",
+        ttl: float = 0.0,
+    ):
+        self.window_seconds = window_seconds
+        self.tau_plus = tau_plus
+        self.tau_minus = tau_minus
+        self.A_plus = A_plus
+        self.A_minus = A_minus
+        self.w_threshold = w_threshold
+        self.n_min = n_min
+        self.weight_decay = weight_decay
+        self.relation = relation
+        self.ttl = ttl
+
+        # source_id → last spike timestamp
+        self._last_fire: Dict[str, float] = {}
+        # (pre_id, post_id) → accumulated causal weight
+        self._weights: Dict[Tuple[str, str], float] = {}
+        # (pre_id, post_id) → number of causal pairings observed
+        self._counts: Dict[Tuple[str, str], int] = {}
+        # edges already emitted (avoid duplicate StreamEvents per step)
+        self._emitted: set = set()
+
+    def process(
+        self,
+        source_id: str,
+        timestamp: Optional[float] = None,
+        metadata: Optional[Dict] = None,
+    ) -> List[StreamEvent]:
+        """
+        Record a spike for source_id and update STDP weights.
+
+        Returns CAUSES edges for any (pre, post) pair whose causal weight
+        has crossed w_threshold with at least n_min pairings.
+
+        Parameters
+        ----------
+        source_id : the entity that just "fired"
+        timestamp : explicit event timestamp (uses time.time() if None)
+        metadata  : extra metadata merged into emitted StreamEvents
+        """
+        now = timestamp if timestamp is not None else time.time()
+        events: List[StreamEvent] = []
+
+        # Apply per-spike weight decay to all accumulated weights
+        if self.weight_decay < 1.0:
+            for key in list(self._weights.keys()):
+                self._weights[key] *= self.weight_decay
+
+        # For each prior spike within window_seconds:
+        #   Δt = now - t_pre  (positive → source_id is POST, prior is PRE)
+        #   → potentiate weight[(pre, post)] by A_plus * exp(-Δt / tau_plus)
+        #   → depress  weight[(post, pre)] by A_minus * exp(-Δt / tau_minus)
+        for pre_id, t_pre in list(self._last_fire.items()):
+            if pre_id == source_id:
+                continue
+            delta_t = now - t_pre
+            if delta_t < 0 or delta_t > self.window_seconds:
+                continue
+
+            # LTP: pre → post (pre fired before current spike)
+            pair_ltp = (pre_id, source_id)
+            dw_ltp = self.A_plus * math.exp(-delta_t / self.tau_plus)
+            self._weights[pair_ltp] = self._weights.get(pair_ltp, 0.0) + dw_ltp
+            self._counts[pair_ltp] = self._counts.get(pair_ltp, 0) + 1
+
+            # LTD: post → pre direction is depressed (anti-causal direction)
+            pair_ltd = (source_id, pre_id)
+            dw_ltd = self.A_minus * math.exp(-delta_t / self.tau_minus)
+            self._weights[pair_ltd] = self._weights.get(pair_ltd, 0.0) - dw_ltd
+            # Clamp at 0 — weights cannot go negative
+            if self._weights[pair_ltd] < 0.0:
+                self._weights[pair_ltd] = 0.0
+
+        # Check which pairs now exceed threshold and emit CAUSES edges
+        for (pre_id, post_id), w in self._weights.items():
+            count = self._counts.get((pre_id, post_id), 0)
+            if w >= self.w_threshold and count >= self.n_min:
+                edge_key = (pre_id, post_id)
+                if edge_key not in self._emitted:
+                    self._emitted.add(edge_key)
+                meta = {
+                    "causal_weight": round(w, 6),
+                    "event_count": count,
+                }
+                if metadata:
+                    meta.update(metadata)
+                events.append(StreamEvent(
+                    source=pre_id,
+                    relation=self.relation,
+                    target=post_id,
+                    timestamp=now,
+                    metadata=meta,
+                    ttl=self.ttl,
+                ))
+
+        self._last_fire[source_id] = now
+        return events
+
+    def weight(self, pre_id: str, post_id: str) -> float:
+        """Return current causal weight for the (pre, post) directed pair."""
+        return self._weights.get((pre_id, post_id), 0.0)
+
+    def count(self, pre_id: str, post_id: str) -> int:
+        """Return co-occurrence count for the (pre, post) directed pair."""
+        return self._counts.get((pre_id, post_id), 0)
+
+    def reset(self) -> None:
+        """Clear all accumulated state (useful for test isolation)."""
+        self._last_fire.clear()
+        self._weights.clear()
+        self._counts.clear()
+        self._emitted.clear()
