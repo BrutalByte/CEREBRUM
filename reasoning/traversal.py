@@ -257,12 +257,14 @@ class BeamTraversal:
             if not candidates:
                 break
 
-            # Efficiently pick top B candidates
-            if len(candidates) > self.beam_width:
+            # At the terminal hop, skip pruning — all reachable endpoints are kept
+            # for the answer extractor to score and deduplicate. Pruning here discards
+            # valid answers with zero benefit (no further expansion occurs).
+            if hop < self.max_hop and len(candidates) > self.beam_width:
                 beam = heapq.nlargest(self.beam_width, candidates, key=lambda p: p.score)
             else:
                 beam = sorted(candidates, key=lambda p: p.score, reverse=True)
-                
+
             all_paths.extend(beam)
 
         return all_paths
@@ -371,12 +373,12 @@ class AsyncBeamTraversal(BeamTraversal):
             if not candidates:
                 break
 
-            # Pick top B candidates for next hop
-            if len(candidates) > self.beam_width:
+            # At the terminal hop, skip pruning (same as sync version)
+            if hop < self.max_hop and len(candidates) > self.beam_width:
                 beam = heapq.nlargest(self.beam_width, candidates, key=lambda p: p.score)
             else:
                 beam = sorted(candidates, key=lambda p: p.score, reverse=True)
-            
+
             # Yield this layer's best paths
             yield beam
 

@@ -108,7 +108,9 @@ Values: $\phi(0)=1.0$, $\phi(1)=0.5$, $\phi(2)=0.333$, $\phi(3)=0.25$.
 
 ### 4.4 Attention Weight
 
-$$a(u,v,k) = \sigma\!\left(\alpha \cdot \cos(\mathbf{e}_u, \mathbf{e}_v) + \beta \cdot S_\mathcal{C}(u,v) + \gamma \cdot w_r - \delta \cdot d_{norm}(u,v) + \varepsilon \cdot \phi(k)\right)$$
+$$a(u,v,k) = \sigma\!\left(\alpha \cdot \cos(\mathbf{e}_u, \mathbf{e}_v) + \beta \cdot S_\mathcal{C}(u,v) + \gamma \cdot w_r - \delta \cdot d_{norm}(u,v) + \varepsilon \cdot \phi(k) + \zeta \cdot \hat{r}(v)\right)$$
+
+where $\hat{r}(v) = \text{PageRank}(v) / \max_{u \in V} \text{PageRank}(u)$ is the globally normalized PageRank of the destination node. This term gives the beam a gravity signal toward structurally important nodes, closing the recall gap at deep hops without running random walks at query time. PageRank is precomputed once after graph load.
 
 ### 4.5 Special Case: Bridge Twin Edges
 
@@ -154,9 +156,7 @@ For each beam entry $(v_{k-1}, \text{path}, \mathbf{h}_{k-1}, \text{score})$:
     - Extended score: $\text{score}' = \text{score} \cdot a_k$
     - Add $(v_k, \text{path} + [(v_{k-1}, r, v_k)], \mathbf{h}_k, \text{score}')$ to candidates
 
-Keep top-$B$ candidates by score. These form the beam for hop $k+1$.
-
-All beam entries at all hops are retained as candidate answer paths.
+**Pruning rule**: If $k < L$ (not the terminal hop), keep top-$B$ candidates by score. If $k = L$ (terminal hop), retain **all** candidates — pruning at the final step discards valid answers with zero benefit since no further expansion occurs. All beam entries at all hops are retained as candidate answer paths.
 
 ### 6.3 Path Scoring
 
@@ -198,8 +198,9 @@ These features are concatenated with the entity embedding and used by CSAEngine 
 | $\gamma$ | 0.1 | Edge type weight |
 | $\delta$ | 0.05 | Distance penalty weight |
 | $\varepsilon$ | 0.05 | Hop decay weight |
+| $\zeta$ | 0.1 | Global PageRank prior weight |
 | $\lambda$ | 1.0 | Cross-community distance decay |
-| $B$ | 10 | Beam width |
+| $B$ | 10 | Beam width (pruning at intermediate hops only) |
 | $L$ | 3 | Maximum hops |
 | $N$ | 5 | DSCF best-of-N trials |
 | $\tau_0$ | 1.0 | Initial DSCF temperature |

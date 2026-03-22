@@ -123,12 +123,18 @@ def load_kb(undirected: bool = True) -> NetworkXAdapter:
 # QA file parsing
 # ---------------------------------------------------------------------------
 
-def load_qa(hop: int, sample: Optional[int] = None, seed: int = 42) -> List[Tuple[str, List[str]]]:
+def load_qa(
+    hop: int,
+    sample: Optional[int] = None,
+    seed: int = 42,
+    include_question: bool = False,
+) -> List[Tuple]:
     """
     Load QA pairs for a given hop level.
 
-    Returns list of (seed_entity, [answer_entity, ...]) tuples.
-    seed_entity is extracted from [brackets] in the question.
+    Returns list of (seed_entity, [answer_entity, ...]) tuples by default.
+    When include_question=True, returns (seed_entity, [answer_entity, ...], question_text)
+    triples, where question_text has the entity brackets removed for clean encoding.
     """
     path = QA_FILES[hop]
     pairs = []
@@ -148,7 +154,13 @@ def load_qa(hop: int, sample: Optional[int] = None, seed: int = 42) -> List[Tupl
                 continue
             seed_entity = m.group(1).strip()
             if seed_entity and answers:
-                pairs.append((seed_entity, answers))
+                if include_question:
+                    # Strip brackets so "what movies did [Tom Hanks] direct"
+                    # becomes "what movies did Tom Hanks direct" for encoding
+                    clean_q = re.sub(r"\[(.+?)\]", r"\1", question)
+                    pairs.append((seed_entity, answers, clean_q))
+                else:
+                    pairs.append((seed_entity, answers))
 
     if sample is not None and sample < len(pairs):
         rng = random.Random(seed)

@@ -47,9 +47,11 @@ class CSAEngine:
         gamma: float = 0.1,
         delta: float = 0.05,
         epsilon: float = 0.05,
+        zeta: float = 0.1,
         lambda_decay: float = 0.5,
         edge_type_weights: Optional[Dict[str, float]] = None,
         external_community_scores: Optional[Dict[Tuple[int, int], float]] = None,
+        pagerank: Optional[Dict[str, float]] = None,
     ):
         """
         Parameters
@@ -62,9 +64,11 @@ class CSAEngine:
         gamma             : weight for edge type relevance
         delta             : penalty for normalized graph distance
         epsilon           : weight for hop-depth decay
+        zeta              : weight for global PageRank prior (global authority signal)
         lambda_decay      : decay rate for cross-community distance (community_score)
         edge_type_weights : {relation_type -> weight} mapping for "Bridge Bonus"
         external_community_scores : { (cid_u, cid_v) -> score } for cross-graph links
+        pagerank          : precomputed {node -> pagerank_score} dict; enables zeta term
         """
         self.adapter           = adapter
         self.alpha             = alpha
@@ -72,9 +76,14 @@ class CSAEngine:
         self.gamma             = gamma
         self.delta             = delta
         self.epsilon           = epsilon
+        self.zeta              = zeta
         self.lambda_decay      = lambda_decay
         self.edge_type_weights = edge_type_weights or {}
         self.external_community_scores = external_community_scores or {}
+
+        # PageRank prior: normalize by max so the term is always in [0, 1]
+        self._pagerank: Dict[str, float] = pagerank or {}
+        self._max_pr: float = max(self._pagerank.values()) if self._pagerank else 1.0
 
         # Populated by set_community_graph()
         self._community_distances: Dict[Tuple[int, int], float] = {}
@@ -159,8 +168,6 @@ class CSAEngine:
             sim = _cosine_sim(eu, ev)
         else:
             sim = 0.0
-        
-        # ... rest same
 
         # 2. Community membership score
         cs = self.community_score(u, v)
@@ -175,13 +182,19 @@ class CSAEngine:
         # 4. Hop decay: 1 / (1 + k)
         hop_decay = 1.0 / (1.0 + hop)
 
-        # 5. Assemble and sigmoid
+        # 5. Global PageRank prior: normalized authority score for destination node.
+        # Gives the beam a gravity signal toward structurally important nodes,
+        # closing the recall gap vs. PPR at deep hops without running random walks.
+        pr_v = self._pagerank.get(v, 0.0) / self._max_pr if self._pagerank else 0.0
+
+        # 6. Assemble and sigmoid
         raw = (
             self.alpha   * sim
             + self.beta  * cs
             + self.gamma * etw
             - self.delta * normalized_distance
             + self.epsilon * hop_decay
+            + self.zeta  * pr_v
         )
         return _sigmoid(raw)
 

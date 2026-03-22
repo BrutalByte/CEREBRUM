@@ -199,12 +199,14 @@ def build_parallax(
     beam_width: int,
     max_hop: int,
     cmap: Dict[str, int],
+    pagerank: Optional[Dict[str, float]] = None,
+    zeta: float = 0.1,
 ) -> BeamTraversal:
     dist = build_community_distance_matrix(G, cmap)
     adj  = adjacent_community_pairs(G, cmap)
     adapter.community_map = cmap
     adapter.embeddings = embeddings
-    csa = CSAEngine(adapter=adapter)
+    csa = CSAEngine(adapter=adapter, pagerank=pagerank, zeta=zeta)
     csa.set_community_graph(dist, adj)
     return BeamTraversal(adapter=adapter, csa_engine=csa,
                          beam_width=beam_width, max_hop=max_hop)
@@ -225,7 +227,8 @@ def evaluate_external(
     t0 = time.time()
     n  = len(qa_pairs)
 
-    for i, (seed, correct) in enumerate(qa_pairs):
+    for i, qa in enumerate(qa_pairs):
+        seed, correct = qa[0], qa[1]
         if (i + 1) % 100 == 0 or (i + 1) == n:
             print(f"    {i+1:,}/{n:,}  ({time.time()-t0:.1f}s)", end="\r")
 
@@ -254,20 +257,42 @@ def evaluate_external(
 
 def evaluate_parallax(
     traversal: BeamTraversal,
-    qa_pairs: List[Tuple[str, List[str]]],
+    qa_pairs: List[Tuple],
     top_k: int = 10,
+    embed_fn=None,
 ) -> Dict:
-    """Evaluate Parallax beam traversal."""
+    """
+    Evaluate Parallax beam traversal.
+
+    Parameters
+    ----------
+    embed_fn : optional callable(question_text: str) -> np.ndarray
+        When provided, encodes question text into a query embedding that is
+        passed to the answer extractor for semantic re-ranking (Fix 1).
+        QA pairs must be (seed, answers, question_text) triples for this to activate.
+    """
     h1 = h10 = mrr_sum = found = skipped = 0
     t0 = time.time()
     n  = len(qa_pairs)
 
-    for i, (seed, correct) in enumerate(qa_pairs):
+    for i, qa in enumerate(qa_pairs):
+        seed, correct = qa[0], qa[1]
+        q_text = qa[2] if len(qa) > 2 else None
+
         if (i + 1) % 100 == 0 or (i + 1) == n:
             print(f"    {i+1:,}/{n:,}  ({time.time()-t0:.1f}s)", end="\r")
 
-        paths   = traversal.traverse([seed])
-        answers = extract(paths, top_k=top_k, min_hop=1)
+        paths = traversal.traverse([seed])
+
+        # Build query embedding from question text if encoder is available
+        q_emb = None
+        if embed_fn is not None and q_text:
+            try:
+                q_emb = embed_fn(q_text)
+            except Exception:
+                pass
+
+        answers = extract(paths, top_k=top_k, min_hop=1, query_embedding=q_emb)
         pred    = [a.entity_id for a in answers]
 
         if not pred:
@@ -373,8 +398,9 @@ def run_synthetic(args) -> List[Dict]:
 
         # A ? Parallax
         print("\n  [A] Parallax DSCF+CSA...")
-        trav = build_parallax(adapter, G, embeddings, args.beam_width, hop, cmap)
-        m_a  = evaluate_parallax(trav, qa_pairs, top_k=args.top_k)
+        trav = build_parallax(adapter, G, embeddings, args.beam_width, hop, cmap,
+                              pagerank=global_pr, zeta=0.1)
+        m_a  = evaluate_parallax(trav, qa_pairs, top_k=args.top_k, embed_fn=None)
         results.append(m_a)
 
         # B ? PPR
@@ -437,33 +463,55 @@ def run_metaqa(args) -> List[Dict]:
     G       = adapter.to_networkx()
     print(f"  {G.number_of_nodes():,} entities, {G.number_of_edges():,} edges")
 
-    engine     = RandomEngine(dim=64)
-    embeddings = engine.encode_entities({n: n for n in G.nodes()})
+    # Try to load cached MiniLM embeddings (384-dim) so path embeddings and
+    # query embeddings share the same space. Fall back to RandomEngine if absent.
+    _emb_cache = CACHE_DIR_META / "embeddings_minilm.pkl"
+    if _emb_cache.exists():
+        import pickle
+        with open(_emb_cache, "rb") as _f:
+            embeddings = pickle.load(_f)
+        print(f"  Loaded MiniLM embeddings for {len(embeddings):,} entities (384-dim)")
+    else:
+        engine     = RandomEngine(dim=64)
+        embeddings = engine.encode_entities({n: n for n in G.nodes()})
+        print(f"  Using random embeddings (64-dim)")
 
     print("Loading/computing DSCF communities (MetaQA)...")
     cmap = load_or_compute_communities(G, use_cache=not args.no_cache, dscf_seed=args.seed)
     n_comm = len(set(cmap.values()))
     print(f"  {n_comm} communities detected")
 
-    print("Pre-computing global PageRank (for SP-BFS baseline, ~30s)...")
+    print("Pre-computing global PageRank (for SP-BFS baseline + Parallax prior, ~30s)...")
     t0 = time.time()
     global_pr = nx.pagerank(G, alpha=0.85, max_iter=200)
     print(f"  Done in {time.time()-t0:.1f}s")
+
+    # Set up sentence-transformer for query embedding (Fix 1)
+    embed_fn = None
+    try:
+        from sentence_transformers import SentenceTransformer
+        _st = SentenceTransformer("all-MiniLM-L6-v2")
+        embed_fn = lambda t: _st.encode(t, show_progress_bar=False)
+        print("  Sentence-transformer query encoding: enabled")
+    except ImportError:
+        print("  Sentence-transformer not available; running without query embedding")
 
     hops = [args.hop] if args.hop else [1, 2, 3]
     all_rows: List[Dict] = []
 
     for hop in hops:
         print(f"\n--- MetaQA {hop}-hop ---")
-        qa_pairs = load_qa(hop, sample=args.sample, seed=args.seed)
+        qa_pairs = load_qa(hop, sample=args.sample, seed=args.seed,
+                           include_question=(embed_fn is not None))
         print(f"  {len(qa_pairs):,} test questions")
 
         results = []
 
         # A ? Parallax
         print("\n  [A] Parallax DSCF+CSA...")
-        trav = build_parallax(adapter, G, embeddings, args.beam_width, hop, cmap)
-        m_a  = evaluate_parallax(trav, qa_pairs, top_k=args.top_k)
+        trav = build_parallax(adapter, G, embeddings, args.beam_width, hop, cmap,
+                              pagerank=global_pr, zeta=0.1)
+        m_a  = evaluate_parallax(trav, qa_pairs, top_k=args.top_k, embed_fn=embed_fn)
         results.append(m_a)
 
         # B ? PPR  (expensive on 43K nodes; use nx.pagerank personalization)
