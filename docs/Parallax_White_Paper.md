@@ -1304,6 +1304,33 @@ Every edge in this path is a real co-activation event captured in the sliding wi
 
 ---
 
+12.7 Bridge Twin Nodes (Phase 12)
+
+The exponential community distance penalty in the CSA formula correctly discounts speculative cross-domain hops. However, when a specific crossing is used repeatedly — not speculatively but because it is the structurally correct reasoning step — the persistent penalty is a performance cost rather than a correctness signal.
+
+**Bridge Twin Formation.** When a cross-community traversal of node $v$ into community $\mathcal{C}_d$ occurs $\geq n_{min}$ times and the node's embedding is semantically close to the destination community centroid:
+
+$$\text{fit}(v, \mathcal{C}_d) = \cos\!\left(\mathbf{e}_v,\; \frac{1}{|\mathcal{C}_d|}\sum_{u \in \mathcal{C}_d} \mathbf{e}_u\right) \geq \theta_{bridge}$$
+
+a bridge twin node $v'$ is materialised with:
+- $\mathbf{e}_{v'} = \mathbf{e}_v$ (identical embedding at birth)
+- $c(v') = \mathcal{C}_d$ (assigned to destination community)
+- Bidirectional `BRIDGE_TWIN` edges: $v \leftrightarrow v'$ with $w_{rel} = 1.0$
+
+The twin can subsequently accumulate community-specific edges, diverging from the original to represent the same underlying concept through the lens of its adopted community.
+
+**CSA short-circuit for bridge edges.** A `BRIDGE_TWIN` edge has $\cos(\mathbf{e}_v, \mathbf{e}_{v'}) = 1.0$ and $S_\mathcal{C}(v, v') = 1.0$ by construction. The formula reduces to:
+
+$$a(v, v', k) = \sigma\!\left(\alpha + \beta + \gamma + \varepsilon\phi(k)\right) = \sigma(0.925 + \varepsilon\phi(k)) \approx 0.716$$
+
+This is implemented as a direct short-circuit in `CSAEngine.compute_weight()`, bypassing the general formula for efficiency and numerical stability.
+
+**LTD-analog pruning.** Bridge twins idle for $\geq \tau_{prune}$ days are removed from both the engine registry and the adapter graph — exactly as synapses that fall out of use weaken and prune under long-term depression.
+
+**Biological correspondence.** Bridge twins are the algorithmic equivalent of thalamic relay nuclei: faithful copies of source signals re-expressed in an intermediate structural location, completing bidirectional circuits between otherwise-distant brain regions. The lateral geniculate nucleus holds the same retinotopic map as the retina but lives inside the thalamus, positioned close to the visual cortex it serves. Formation requires repeated use ($n_{min}$, like the stimulus repetition threshold for LTP), and pruning occurs with disuse ($\tau_{prune}$, like LTD).
+
+---
+
 13. Conclusion
 
 We have presented Parallax: a framework that enables Knowledge Graphs to reason using the structural principles of Transformer attention without training data, without an LLM, and with full interpretability.

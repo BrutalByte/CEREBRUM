@@ -1009,6 +1009,128 @@ Beyond files, Parallax has adapter plugins for:
 
 ---
 
+## CHAPTER 12.5 — Bridge Twins: Completing the Circuit
+
+### The Problem This Solves
+
+Every time Parallax traverses from community A to community B through a particular node, it pays the exponential distance penalty. Even if that crossing is the *correct* reasoning step — even if it's the only path to the right answer — it loses credit because it crosses a community boundary.
+
+Over many queries, the system keeps penalizing the same correct crossing. It works, but it works harder than it should. The crossing isn't wrong; the static community assignment is simply incomplete.
+
+### The Idea
+
+What if the system noticed which crossings it was repeatedly making — and built a permanent relay for them?
+
+A **bridge twin** is a copy of a node that lives in the destination community instead of the source community. The original stays in its home; the twin is placed across the boundary. A special bidirectional **BRIDGE_TWIN** edge connects them. The circuit is complete.
+
+The next time a traversal needs to cross from community A to community B via this node, it finds the twin already waiting on the other side. Crossing to your twin costs nothing — the CSA formula gives BRIDGE_TWIN edges near-maximum weight, because the twin has the same embedding as the original (similarity = 1.0) and lives in the right community (community score = 1.0).
+
+### When a Bridge Forms
+
+Three conditions must all be true:
+
+1. **Repeated use**: the crossing must have occurred at least `n_min` times (default 5). One or two crossings might be coincidence — five is a pattern.
+
+2. **Semantic fit**: the crossing node's embedding must be similar to the destination community's centroid (cosine similarity ≥ 0.65 by default). If the node doesn't semantically belong in the destination, placing a twin there would be misleading.
+
+3. **No existing bridge**: if a bridge for this (node, destination) pair already exists, the system just refreshes its activity timer instead of creating a duplicate.
+
+### The Math, Unpacked: CSA Weight for a Bridge Twin Edge
+
+When the traversal reaches a BRIDGE_TWIN edge, the CSA formula short-circuits directly to:
+
+```
+sim = 1.0          (twin has identical embedding — perfect similarity)
+community_score = 1.0  (twin is in the destination community — full credit)
+edge_type_weight = 1.0  (BRIDGE_TWIN is explicitly maximally rewarded)
+```
+
+Plugging these into the CSA formula at hop k:
+
+```
+raw = 0.4 × 1.0 + 0.4 × 1.0 + 0.1 × 1.0 + 0.05 × (1/(1+k))
+    ≈ 0.9 + 0.025   (at hop 1)
+    = 0.925
+
+a(u, twin, k) = sigmoid(0.925) ≈ 0.716
+```
+
+Compare this to a cold cross-community edge between distant communities:
+
+```
+sim ≈ 0.15 (unrelated concepts)
+community_score = e^(-0.5 × 3) ≈ 0.22  (three communities apart)
+edge_type_weight = 0.0
+
+raw ≈ 0.4×0.15 + 0.4×0.22 + 0 ≈ 0.148
+a ≈ sigmoid(0.148) ≈ 0.537
+```
+
+The bridge twin edge scores 0.716 vs. 0.537 for the cold crossing — a **33% boost** from a single hop. Multiplied across a 3-hop path, the bridge path scores roughly 1.97× higher.
+
+### Twin Divergence
+
+Twins start as exact copies. But once a twin lives in the destination community, it begins accumulating edges from its new neighborhood — connections to nodes in the destination community that the original doesn't have.
+
+Over time, the original and the twin develop different local pictures of the same underlying concept. The original "Enzyme X" knows about drugs and inhibitors (its home community). The twin "Enzyme X [relay@disease_community]" knows about diseases and clinical outcomes (its adopted community).
+
+This is exactly how the brain represents concepts: not in one place, but distributed across multiple regions, each of which captures a different facet. The BRIDGE_TWIN edge is the binding relationship — "these two representations refer to the same entity."
+
+### The LTD Analog: Pruning Idle Bridges
+
+Bridges are not permanent. If a bridge twin hasn't been used in `prune_after_days` (default 7), it is removed from the graph and from the engine's registry. The relay station is decommissioned.
+
+This is the same mechanism as long-term depression in neuroscience: synapses and neural circuits that fall out of use weaken and eventually prune. The brain doesn't maintain infrastructure it doesn't need. Neither does Parallax.
+
+---
+
+### The Math, Unpacked: Similarity to Community Centroid
+
+Before creating a bridge, the engine checks whether the crossing node actually fits in the destination community. It does this by comparing the node's embedding to the community's centroid — the average position of all member embeddings.
+
+**Centroid formula:**
+
+```
+centroid(C) = (1/|C|) × sum of all member embeddings in C
+```
+
+**Similarity check:**
+
+```
+fit_score = cosine_similarity(node_embedding, centroid(C))
+```
+
+**Worked example** — Node M with embedding [0.8, 0.7, 0, 0], destination community C₁ with members X=[0,1,0,0], Y=[0.1,0.9,0,0], Z=[0.05,0.95,0,0]:
+
+```
+centroid(C₁) = ([0 + 0.1 + 0.05] / 3, [1 + 0.9 + 0.95] / 3, 0, 0)
+             = [0.05, 0.95, 0, 0]
+
+dot(M, centroid) = 0.8×0.05 + 0.7×0.95 = 0.04 + 0.665 = 0.705
+|M| = sqrt(0.64 + 0.49) = sqrt(1.13) ≈ 1.063
+|centroid| = sqrt(0.0025 + 0.9025) ≈ 0.951
+
+fit_score = 0.705 / (1.063 × 0.951) ≈ 0.705 / 1.011 ≈ 0.697
+```
+
+0.697 ≥ 0.65 threshold → bridge is created. Node M is granted a relay in community C₁.
+
+---
+
+### The Biological Analog, in Full
+
+What Parallax does with bridge twins is structurally equivalent to three biological mechanisms:
+
+**Thalamic relay nuclei**: The lateral geniculate nucleus (LGN) is a faithful copy of the retinal map, located inside the thalamus. It bridges the retina (input community) and the visual cortex (output community). It contains the same spatial information as the retina but is positioned close to its destination, eliminating the cost of the long-range projection. The LGN is a bridge twin.
+
+**Axonal arborization**: A single neuron can project into multiple cortical areas simultaneously — the same cell body "present" in several communities at once. Over time, different axon terminals in different areas develop different local synaptic patterns (twin divergence). The cell body is the original; the terminal arborations are the twins.
+
+**Experience-dependent cortical reorganization**: When a skill is practiced repeatedly, the circuit that initially crossed multiple cortical areas awkwardly develops dedicated relay neurons in intermediate areas — making the once-expensive crossing structurally cheap. Bridge twin formation is this process, implemented algorithmically.
+
+The key insight: all three mechanisms require *repeated use* before the structural change occurs. A one-time crossing doesn't justify building infrastructure. Only patterns that persist deserve permanent relays. That's exactly what `n_min` enforces.
+
+---
+
 ## CHAPTER 13 — What Comes Next?
 
 Parallax is currently at v0.3.0, with all eleven development phases complete and the system in production-ready condition. The roadmap to v1.0.0 focuses on three areas:
