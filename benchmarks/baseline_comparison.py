@@ -68,8 +68,7 @@ class UniformCSAEngine(CSAEngine):
     Weight = sigmoid(0) = 0.5 for all edges (all coefficients zeroed out).
     """
 
-    def compute_weight(self, u, v, hop, edge_type="", edge_type_weights=None,
-                       normalized_distance=0.0) -> float:
+    def compute_weight(self, u, v, hop, edge_type="", edge_type_weights=None) -> float:
         return 0.5   # sigmoid(0) — perfectly neutral
 
 
@@ -84,10 +83,18 @@ def build_dscf_traversal(
     cmap = load_or_compute_communities(G, use_cache=use_cache, dscf_seed=dscf_seed)
     dist = build_community_distance_matrix(G, cmap)
     adj  = adjacent_community_pairs(G, cmap)
-    csa  = CSAEngine(communities=cmap, embeddings=embeddings)
+    
+    adapter.community_map = cmap
+    adapter.embeddings = embeddings
+    
+    csa  = CSAEngine(adapter=adapter)
     csa.set_community_graph(dist, adj)
-    return BeamTraversal(adapter=adapter, csa_engine=csa, embeddings=embeddings,
-                         communities=cmap, beam_width=beam_width, max_hop=max_hop), cmap
+    return BeamTraversal(
+        adapter=adapter, 
+        csa_engine=csa, 
+        beam_width=beam_width, 
+        max_hop=max_hop
+    ), cmap
 
 
 def build_lpa_traversal(
@@ -101,10 +108,18 @@ def build_lpa_traversal(
     print(f"  LPA: {len(parts)} communities in {time.time()-t0:.1f}s")
     dist = build_community_distance_matrix(G, cmap)
     adj  = adjacent_community_pairs(G, cmap)
-    csa  = CSAEngine(communities=cmap, embeddings=embeddings)
+    
+    adapter.community_map = cmap
+    adapter.embeddings = embeddings
+    
+    csa  = CSAEngine(adapter=adapter)
     csa.set_community_graph(dist, adj)
-    return BeamTraversal(adapter=adapter, csa_engine=csa, embeddings=embeddings,
-                         communities=cmap, beam_width=beam_width, max_hop=max_hop), cmap
+    return BeamTraversal(
+        adapter=adapter, 
+        csa_engine=csa, 
+        beam_width=beam_width, 
+        max_hop=max_hop
+    ), cmap
 
 
 def build_bfs_traversal(
@@ -113,9 +128,17 @@ def build_bfs_traversal(
     """Variant C: BFS — no community structure, uniform weights."""
     # Community map assigns all nodes to community 0 (irrelevant since weights are uniform)
     cmap = {node: 0 for node in G.nodes()}
-    csa  = UniformCSAEngine(communities=cmap, embeddings=embeddings)
-    return BeamTraversal(adapter=adapter, csa_engine=csa, embeddings=embeddings,
-                         communities=cmap, beam_width=beam_width, max_hop=max_hop), cmap
+    
+    adapter.community_map = cmap
+    adapter.embeddings = embeddings
+    
+    csa  = UniformCSAEngine(adapter=adapter)
+    return BeamTraversal(
+        adapter=adapter, 
+        csa_engine=csa, 
+        beam_width=beam_width, 
+        max_hop=max_hop
+    ), cmap
 
 
 # ---------------------------------------------------------------------------

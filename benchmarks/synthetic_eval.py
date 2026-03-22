@@ -417,11 +417,18 @@ def main():
         print(f"\n  [A] DSCF + CSA  (ARI={ari_dscf:.3f})...")
         dist_dscf = build_community_distance_matrix(G, cmap_dscf)
         adj_dscf  = adjacent_community_pairs(G, cmap_dscf)
-        csa_dscf  = CSAEngine(communities=cmap_dscf, embeddings=embeddings)
+        
+        adapter.community_map = cmap_dscf
+        adapter.embeddings = embeddings
+        
+        csa_dscf  = CSAEngine(adapter=adapter)
         csa_dscf.set_community_graph(dist_dscf, adj_dscf)
-        t_dscf = BeamTraversal(adapter=adapter, csa_engine=csa_dscf,
-                               embeddings=embeddings, communities=cmap_dscf,
-                               beam_width=args.beam_width, max_hop=hop)
+        t_dscf = BeamTraversal(
+            adapter=adapter, 
+            csa_engine=csa_dscf,
+            beam_width=args.beam_width, 
+            max_hop=hop
+        )
         m_a = evaluate_variant("DSCF+CSA", t_dscf, qa_pairs, hop, args.top_k)
         print(f"      Hits@1={m_a['hits_1']:.4f}  Hits@10={m_a['hits_10']:.4f}  MRR={m_a['mrr']:.4f}")
 
@@ -429,21 +436,35 @@ def main():
         print(f"\n  [B] LPA + CSA  (ARI={ari_lpa:.3f})...")
         dist_lpa = build_community_distance_matrix(G, cmap_lpa)
         adj_lpa  = adjacent_community_pairs(G, cmap_lpa)
-        csa_lpa  = CSAEngine(communities=cmap_lpa, embeddings=embeddings)
+        
+        adapter.community_map = cmap_lpa
+        adapter.embeddings = embeddings
+        
+        csa_lpa  = CSAEngine(adapter=adapter)
         csa_lpa.set_community_graph(dist_lpa, adj_lpa)
-        t_lpa = BeamTraversal(adapter=adapter, csa_engine=csa_lpa,
-                              embeddings=embeddings, communities=cmap_lpa,
-                              beam_width=args.beam_width, max_hop=hop)
+        t_lpa = BeamTraversal(
+            adapter=adapter, 
+            csa_engine=csa_lpa,
+            beam_width=args.beam_width, 
+            max_hop=hop
+        )
         m_b = evaluate_variant("LPA+CSA", t_lpa, qa_pairs, hop, args.top_k)
         print(f"      Hits@1={m_b['hits_1']:.4f}  Hits@10={m_b['hits_10']:.4f}  MRR={m_b['mrr']:.4f}")
 
         # Variant C — BFS
         print(f"\n  [C] BFS (uniform weights)...")
         cmap_bfs = {node: 0 for node in G.nodes()}
-        csa_bfs  = UniformCSAEngine(communities=cmap_bfs, embeddings=embeddings)
-        t_bfs = BeamTraversal(adapter=adapter, csa_engine=csa_bfs,
-                              embeddings=embeddings, communities=cmap_bfs,
-                              beam_width=args.beam_width, max_hop=hop)
+        
+        adapter.community_map = cmap_bfs
+        adapter.embeddings = embeddings
+        
+        csa_bfs  = UniformCSAEngine(adapter=adapter)
+        t_bfs = BeamTraversal(
+            adapter=adapter, 
+            csa_engine=csa_bfs,
+            beam_width=args.beam_width, 
+            max_hop=hop
+        )
         m_c = evaluate_variant("BFS", t_bfs, qa_pairs, hop, args.top_k)
         print(f"      Hits@1={m_c['hits_1']:.4f}  Hits@10={m_c['hits_10']:.4f}  MRR={m_c['mrr']:.4f}")
 

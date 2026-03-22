@@ -134,6 +134,7 @@ class BeamTraversal:
         max_neighbors: int = 50,
         max_budget: int = 1000,
         edge_type_weights: Optional[Dict[str, float]] = None,
+        governor: Optional[ResourceGovernor] = None,
     ):
         self.adapter            = adapter
         self.csa                = csa_engine
@@ -143,7 +144,7 @@ class BeamTraversal:
         self.max_budget         = max_budget
         self.edge_type_weights  = edge_type_weights or {}
         self.expansions         = 0
-        self.governor           = ResourceGovernor()
+        self.governor           = governor or ResourceGovernor()
 
     def traverse(self, seeds: List[str]) -> List[TraversalPath]:
         """

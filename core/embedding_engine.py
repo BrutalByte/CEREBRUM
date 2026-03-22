@@ -8,7 +8,7 @@ The EmbeddingEngine ABC defines the interface. Two implementations ship:
 Add TransEEngine / RotatEEngine (via pykeen) for graph-structure-aware embeddings.
 """
 from abc import ABC, abstractmethod
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 import numpy as np
 
@@ -94,10 +94,16 @@ class SentenceEngine(EmbeddingEngine):
     Default model: all-MiniLM-L6-v2 (384-dim, fast, good quality)
     """
 
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2", device: Optional[str] = None):
         try:
+            from core.hardware import HAS_CUDA
             from sentence_transformers import SentenceTransformer
-            self._model = SentenceTransformer(model_name)
+            
+            # Hardware agnostic device selection
+            if device is None:
+                device = "cuda" if HAS_CUDA else "cpu"
+                
+            self._model = SentenceTransformer(model_name, device=device)
             self._dim   = self._model.get_sentence_embedding_dimension()
         except ImportError as e:
             raise ImportError(

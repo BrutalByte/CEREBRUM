@@ -7,7 +7,24 @@ import numpy as np
 import pytest
 
 from core.attention_engine import CSAEngine, _cosine_sim, _sigmoid
+from core.graph_adapter import GraphAdapter, Entity, Edge
 
+
+# ---------------------------------------------------------------------------
+# Mock Adapter for Testing
+# ---------------------------------------------------------------------------
+
+class MockAdapter(GraphAdapter):
+    def __init__(self, communities, embeddings):
+        self.communities = communities
+        self.embeddings = embeddings
+
+    def get_entity(self, entity_id): return None
+    def get_neighbors(self, entity_id, edge_types=None, max_neighbors=50): return []
+    def find_entities(self, query, top_k=10): return []
+    def to_networkx(self): return None
+    def get_community(self, entity_id): return self.communities.get(entity_id, -1)
+    def get_embedding(self, entity_id): return self.embeddings.get(entity_id)
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -36,7 +53,8 @@ def make_engine() -> CSAEngine:
         "z": np.array([0.0, 0.8, 0.2, 0.0], dtype=np.float32),
         "m": np.array([0.5, 0.5, 0.0, 0.0], dtype=np.float32),
     }
-    engine = CSAEngine(communities=communities, embeddings=embeddings)
+    adapter = MockAdapter(communities, embeddings)
+    engine = CSAEngine(adapter=adapter)
     engine.set_community_graph(
         community_distances={(0, 2): 2.0, (2, 0): 2.0},
         adjacent_pairs={(0, 1), (1, 0), (1, 2), (2, 1)},
@@ -108,7 +126,8 @@ def test_missing_embeddings_use_zero_sim():
     """Nodes without embeddings should still produce a valid weight."""
     communities = {"u": 0, "v": 0}
     embeddings  = {}   # empty — no vectors
-    engine = CSAEngine(communities=communities, embeddings=embeddings)
+    adapter = MockAdapter(communities, embeddings)
+    engine = CSAEngine(adapter=adapter)
     w = engine.compute_weight("u", "v", hop=1)
     assert 0.0 < w < 1.0
 

@@ -9,10 +9,10 @@ Also includes Leiden, LPA, and hybrid wrappers for ablation studies.
 Source: ported from Home Assistant services/knowledge_service/main.py with
 Home Assistant-specific scaffolding (FastAPI, Neo4j) removed.
 """
-import random
-from typing import List
-
+from typing import List, Optional
+from core.hardware import HAS_RAPIDS, to_gpu_graph
 import networkx as nx
+import random
 
 
 # ---------------------------------------------------------------------------
@@ -54,6 +54,29 @@ def dscf_communities(
     m = G.number_of_edges()
     if m == 0:
         return [frozenset([v]) for v in G.nodes()]
+
+    # GPU acceleration for large graphs if RAPIDS is available
+    if HAS_RAPIDS and G.number_of_nodes() > 1000:
+        try:
+            import cugraph
+            G_cuda, is_gpu = to_gpu_graph(G)
+            if is_gpu:
+                # Use Leiden as a high-performance GPU alternative to TSC
+                parts_df = cugraph.leiden(G_cuda, resolution=resolution)
+                
+                # Convert cuDF result back to List[frozenset]
+                community_members = {}
+                # Handle cuDF dataframe efficiently
+                pdf = parts_df.to_pandas()
+                for _, row in pdf.iterrows():
+                    cid = int(row['partition'])
+                    node = row['vertex']
+                    community_members.setdefault(cid, []).append(node)
+                
+                return [frozenset(members) for members in community_members.values()]
+        except Exception as e:
+            import logging
+            logging.getLogger("parallax.community").warning(f"GPU community detection failed: {e}. Falling back to CPU.")
 
     nodes  = list(G.nodes())
     degree = dict(G.degree())

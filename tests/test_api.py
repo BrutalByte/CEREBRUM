@@ -56,7 +56,7 @@ def client():
     cmap  = {node: cid for cid, members in enumerate(parts) for node in members}
 
     app = create_app(adapter=adapter, embedding_engine=engine, community_map=cmap)
-    with TestClient(app) as c:
+    with TestClient(app, headers={"X-API-Key": "dev-secret"}) as c:
         yield c
 
 
@@ -73,7 +73,7 @@ def unloaded_client():
         _server_module._state[key] = None
 
     bare_app = create_app()
-    with TestClient(bare_app, raise_server_exceptions=False) as c:
+    with TestClient(bare_app, raise_server_exceptions=False, headers={"X-API-Key": "dev-secret"}) as c:
         yield c
 
     _server_module._state.update(saved)

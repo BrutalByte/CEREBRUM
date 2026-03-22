@@ -48,16 +48,18 @@ def build_traversal(G: nx.Graph, **kwargs) -> BeamTraversal:
     parts        = dscf_communities(G, max_iter=50)
     community_map = {node: cid for cid, members in enumerate(parts) for node in members}
 
+    # Attach to adapter for CSAEngine and BeamTraversal
+    adapter.community_map = community_map
+    adapter.embeddings    = embeddings
+
     dist = build_community_distance_matrix(G, community_map)
     adj  = adjacent_community_pairs(G, community_map)
-    csa  = CSAEngine(communities=community_map, embeddings=embeddings)
+    csa  = CSAEngine(adapter=adapter)
     csa.set_community_graph(dist, adj)
 
     return BeamTraversal(
         adapter=adapter,
         csa_engine=csa,
-        embeddings=embeddings,
-        communities=community_map,
         beam_width=kwargs.get("beam_width", 5),
         max_hop=kwargs.get("max_hop", 2),
     )

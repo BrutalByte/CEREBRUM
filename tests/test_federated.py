@@ -145,7 +145,7 @@ def test_remote_get_entity(mock_response):
         assert ent.id == "remote_1"
         assert ent.label == "Remote Entity"
         
-        mock_get.assert_called_with("http://test-api/entities/remote_1", timeout=10)
+        mock_get.assert_called_with("http://test-api/entities/remote_1", headers={}, timeout=10)
 
 def test_remote_get_neighbors(mock_response):
     mock_response.json.return_value = [
@@ -162,6 +162,7 @@ def test_remote_get_neighbors(mock_response):
         mock_get.assert_called_with(
             "http://test-api/entities/a/neighbors", 
             params={"max_neighbors": 50}, 
+            headers={},
             timeout=10
         )
 
@@ -181,5 +182,6 @@ def test_remote_find_entities(mock_response):
         mock_get.assert_called_with(
             "http://test-api/search", 
             params={"q": "query", "top_k": 10}, 
+            headers={},
             timeout=10
         )

@@ -136,4 +136,43 @@ class ReasoningCallbackResponse(BaseModel):
     paths: List[PathResult]
 
 
+# ---------------------------------------------------------------------------
+# Phase 11 — Streaming schemas
+# ---------------------------------------------------------------------------
+
+class StreamEventRequest(BaseModel):
+    """A single streaming event pushed to /stream/ingest."""
+    source: str = Field(..., description="Source entity ID")
+    relation: str = Field(default="RELATED_TO", description="Edge relation type")
+    target: str = Field(..., description="Target entity ID")
+    timestamp: Optional[float] = Field(default=None, description="Unix timestamp; defaults to server time")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Arbitrary event metadata")
+    ttl: float = Field(default=0.0, description="Time-to-live in seconds; 0 = window default; -1 = permanent")
+
+
+class StreamIngestRequest(BaseModel):
+    """Batch of events for POST /stream/ingest."""
+    events: List[StreamEventRequest] = Field(..., description="One or more StreamEvents to ingest")
+
+
+class StreamIngestResponse(BaseModel):
+    ingested: int
+    nodes: int
+    edges: int
+    communities: int
+
+
+class StreamStatusResponse(BaseModel):
+    running: bool
+    nodes: int
+    edges: int
+    communities: int
+    buffer_size: int
+    sources: int
+    events_per_second: float
+    total_ingested: int
+    total_evicted: int
+    total_community_updates: int
+
+
 

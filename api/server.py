@@ -22,9 +22,10 @@ from typing import Optional, Dict, List
 import numpy as np
 import json
 from fastapi import FastAPI, HTTPException, Depends, Security
-from fastapi.security import APIKeyHeader
+from fastapi.security import APIKeyHeader, HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import StreamingResponse
-from starlette.status import HTTP_403_FORBIDDEN
+from starlette.status import HTTP_403_FORBIDDEN, HTTP_401_UNAUTHORIZED
+from core.security import FederatedAuth
 
 from api.schemas import (
     QueryRequest, QueryResponse, CommunitiesResponse,
@@ -33,7 +34,8 @@ from api.schemas import (
     CommunityResponse, EmbeddingResponse,
     MaskedEntityResponse, MaskedSearchResponse,
     CommunitySignatureSchema, HologramResponse,
-    HandshakeResponse, ReasoningCallbackRequest, ReasoningCallbackResponse
+    HandshakeResponse, ReasoningCallbackRequest, ReasoningCallbackResponse,
+    StreamIngestRequest, StreamIngestResponse, StreamStatusResponse,
 )
 
 # ---------------------------------------------------------------------------
@@ -42,16 +44,44 @@ from api.schemas import (
 
 API_KEY_NAME = "X-API-Key"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+bearer_scheme = HTTPBearer(auto_error=False)
 
-async def get_api_key(api_key: str = Security(api_key_header)):
-    # In production, this should be a robust secret management system.
-    # For now, we use an environment variable with a default.
-    expected_key = os.getenv("PARALLAX_API_KEY", "dev-secret")
-    if api_key == expected_key:
-        return api_key
-    raise HTTPException(
-        status_code=HTTP_403_FORBIDDEN, detail="Could not validate credentials"
-    )
+async def get_authenticated_node(
+    api_key: Optional[str] = Security(api_key_header),
+    token: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme)
+) -> Dict:
+    """
+    Unified security: accepts either static X-API-Key or JWT Bearer token.
+    Returns a 'node' context (identity and scopes).
+    """
+    # 1. Try API Key (Backwards compatibility / Local dev)
+    if api_key:
+        expected_key = os.getenv("PARALLAX_API_KEY", "dev-secret")
+        if api_key == expected_key:
+            return {"node_id": "local-admin", "scopes": ["query", "search", "graph"]}
+        raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Invalid API Key")
+
+    # 2. Try JWT Bearer Token (Federated / Production)
+    if token:
+        try:
+            payload = FederatedAuth.validate_token(token.credentials)
+            return {"node_id": payload["sub"], "scopes": payload.get("scopes", [])}
+        except Exception:
+            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid or expired JWT")
+
+    # 3. No credentials provided
+    raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Authentication required")
+
+def check_scope(required_scope: str):
+    """Dependency factory for checking specific scopes on the authenticated node."""
+    async def scope_checker(node: Dict = Depends(get_authenticated_node)):
+        if required_scope not in node["scopes"] and "local-admin" != node["node_id"]:
+            raise HTTPException(
+                status_code=HTTP_403_FORBIDDEN, 
+                detail=f"Scope {required_scope!r} required"
+            )
+        return node
+    return scope_checker
 
 # ---------------------------------------------------------------------------
 # Global state (populated at startup)
@@ -126,7 +156,7 @@ def create_app(
         )
 
     @app.post("/query", response_model=QueryResponse, tags=["reasoning"])
-    async def query(req: QueryRequest, api_key: str = Depends(get_api_key)):
+    async def query(req: QueryRequest, node: Dict = Depends(check_scope("query"))):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready — call load() first")
 
@@ -190,7 +220,7 @@ def create_app(
         )
 
     @app.post("/query/stream", tags=["reasoning"])
-    async def query_stream(req: QueryRequest, api_key: str = Depends(get_api_key)):
+    async def query_stream(req: QueryRequest, node: Dict = Depends(check_scope("query"))):
         """
         Streaming version of /query. Yields paths hop-by-hop as JSON lines.
         """
@@ -247,14 +277,14 @@ def create_app(
         return StreamingResponse(generate(), media_type="application/x-ndjson")
 
     @app.get("/communities", response_model=CommunitiesResponse, tags=["graph"])
-    async def communities(api_key: str = Depends(get_api_key)):
+    async def communities(node: Dict = Depends(get_authenticated_node)):
         if _state["community_map"] is None:
             raise HTTPException(status_code=503, detail="Communities not loaded")
 
         cm = _state["community_map"]
         community_members: dict = {}
-        for node, cid in cm.items():
-            community_members.setdefault(cid, []).append(node)
+        for node_id, cid in cm.items():
+            community_members.setdefault(cid, []).append(node_id)
 
         community_infos = [
             CommunityInfo(
@@ -277,7 +307,7 @@ def create_app(
     # ---------------------------------------------------------------------------
 
     @app.get("/entities/{entity_id}", response_model=EntityResponse, tags=["graph"])
-    async def get_entity(entity_id: str, api_key: str = Depends(get_api_key)):
+    async def get_entity(entity_id: str, node: Dict = Depends(get_authenticated_node)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
         
@@ -294,7 +324,7 @@ def create_app(
         )
 
     @app.get("/entities/{entity_id}/neighbors", response_model=List[EdgeResponse], tags=["graph"])
-    async def get_neighbors(entity_id: str, edge_types: Optional[str] = None, max_neighbors: int = 50, api_key: str = Depends(get_api_key)):
+    async def get_neighbors(entity_id: str, edge_types: Optional[str] = None, max_neighbors: int = 50, node: Dict = Depends(get_authenticated_node)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
 
@@ -313,7 +343,7 @@ def create_app(
         ]
 
     @app.get("/entities/{entity_id}/community", response_model=CommunityResponse, tags=["graph"])
-    async def get_entity_community(entity_id: str, api_key: str = Depends(get_api_key)):
+    async def get_entity_community(entity_id: str, node: Dict = Depends(get_authenticated_node)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
 
@@ -322,7 +352,7 @@ def create_app(
         return CommunityResponse(entity_id=entity_id, community_id=cid)
 
     @app.get("/entities/{entity_id}/embedding", response_model=EmbeddingResponse, tags=["graph"])
-    async def get_entity_embedding(entity_id: str, api_key: str = Depends(get_api_key)):
+    async def get_entity_embedding(entity_id: str, node: Dict = Depends(get_authenticated_node)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
 
@@ -334,7 +364,7 @@ def create_app(
         return EmbeddingResponse(entity_id=entity_id, embedding=emb.tolist())
 
     @app.get("/search", response_model=SearchResponse, tags=["graph"])
-    async def search(q: str, top_k: int = 10, api_key: str = Depends(get_api_key)):
+    async def search(q: str, top_k: int = 10, node: Dict = Depends(check_scope("search"))):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
 
@@ -357,7 +387,7 @@ def create_app(
         )
 
     @app.get("/search/masked", response_model=MaskedSearchResponse, tags=["graph"])
-    async def search_masked(q: str, top_k: int = 10, api_key: str = Depends(get_api_key)):
+    async def search_masked(q: str, top_k: int = 10, node: Dict = Depends(check_scope("search"))):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
         
@@ -374,7 +404,7 @@ def create_app(
         )
 
     @app.get("/hologram", response_model=HologramResponse, tags=["federated"])
-    async def get_hologram(api_key: str = Depends(get_api_key)):
+    async def get_hologram(node: Dict = Depends(get_authenticated_node)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
         
@@ -424,7 +454,7 @@ def create_app(
         )
 
     @app.post("/reason", response_model=ReasoningCallbackResponse, tags=["federated"])
-    async def reason_callback(req: ReasoningCallbackRequest, api_key: str = Depends(get_api_key)):
+    async def reason_callback(req: ReasoningCallbackRequest, node: Dict = Depends(check_scope("query"))):
         """
         Verify if a path exists between source and target in this graph.
         Used for advanced federated path verification.
@@ -474,7 +504,175 @@ def create_app(
 
         return ReasoningCallbackResponse(found=True, paths=path_results)
 
+    # ---------------------------------------------------------------------------
+    # Phase 11 — Streaming Endpoints
+    # ---------------------------------------------------------------------------
+
+    @app.post("/stream/ingest", response_model=StreamIngestResponse, tags=["streaming"])
+    async def stream_ingest(req: StreamIngestRequest, node: Dict = Depends(check_scope("query"))):
+        """
+        Push a batch of StreamEvents into the live graph.
+
+        The adapter must be a StreamAdapter (loaded via create_stream_app()).
+        Regular static adapters will return 501.
+        """
+        from adapters.stream_adapter import StreamAdapter
+        from core.stream_engine import StreamEvent as SE
+
+        adapter = _state["adapter"]
+        if not isinstance(adapter, StreamAdapter):
+            raise HTTPException(
+                status_code=501,
+                detail="Stream ingestion requires a StreamAdapter. "
+                       "Start the server with create_stream_app().",
+            )
+
+        import time as _time
+        events = [
+            SE(
+                source=ev.source,
+                relation=ev.relation,
+                target=ev.target,
+                timestamp=ev.timestamp or _time.time(),
+                metadata=ev.metadata,
+                ttl=ev.ttl,
+            )
+            for ev in req.events
+        ]
+        adapter.ingest_batch(events)
+
+        # Sync updated community map back to server state
+        _state["community_map"] = adapter.community_map
+
+        stats = adapter.live_stats()
+        return StreamIngestResponse(
+            ingested=len(events),
+            nodes=stats["nodes"],
+            edges=stats["edges"],
+            communities=stats["communities"],
+        )
+
+    @app.get("/stream/status", response_model=StreamStatusResponse, tags=["streaming"])
+    async def stream_status(node: Dict = Depends(get_authenticated_node)):
+        """
+        Return live statistics for the streaming graph.
+        Works with both StreamAdapter (live stats) and static adapters (snapshot).
+        """
+        from adapters.stream_adapter import StreamAdapter
+
+        adapter = _state["adapter"]
+        if isinstance(adapter, StreamAdapter):
+            s = adapter.live_stats()
+            return StreamStatusResponse(**s)
+
+        # Fallback for static adapters
+        cm = _state["community_map"] or {}
+        emb = _state["embeddings"] or {}
+        try:
+            G = adapter.to_networkx()
+            n_edges = G.number_of_edges()
+        except Exception:
+            n_edges = 0
+        return StreamStatusResponse(
+            running=_is_ready(),
+            nodes=len(emb),
+            edges=n_edges,
+            communities=len(set(cm.values())) if cm else 0,
+            buffer_size=0,
+            sources=0,
+            events_per_second=0.0,
+            total_ingested=0,
+            total_evicted=0,
+            total_community_updates=0,
+        )
+
+    @app.get("/stream/events", tags=["streaming"])
+    async def stream_events(node: Dict = Depends(get_authenticated_node)):
+        """
+        Server-Sent Events (SSE) stream of live graph mutations.
+
+        Each event is a JSON object:
+            {"action": "add"|"remove", "source": "...", "relation": "...", "target": "...",
+             "timestamp": 1234567890.0, "metadata": {...}}
+
+        Clients subscribe and receive real-time graph updates.
+        Only available when the adapter is a StreamAdapter.
+        """
+        from adapters.stream_adapter import StreamAdapter
+        import asyncio
+
+        adapter = _state["adapter"]
+        if not isinstance(adapter, StreamAdapter):
+            raise HTTPException(
+                status_code=501,
+                detail="SSE stream requires a StreamAdapter.",
+            )
+
+        event_queue: asyncio.Queue = asyncio.Queue(maxsize=1000)
+        loop = asyncio.get_event_loop()
+
+        def on_mutation(action: str, event):
+            try:
+                loop.call_soon_threadsafe(
+                    event_queue.put_nowait,
+                    {"action": action, "source": event.source,
+                     "relation": event.relation, "target": event.target,
+                     "timestamp": event.timestamp, "metadata": event.metadata},
+                )
+            except Exception:
+                pass  # Queue full — drop event rather than block
+
+        adapter.add_mutation_listener(on_mutation)
+
+        async def generate():
+            try:
+                while True:
+                    try:
+                        item = await asyncio.wait_for(event_queue.get(), timeout=30.0)
+                        yield f"data: {json.dumps(item)}\n\n"
+                    except asyncio.TimeoutError:
+                        yield ": keepalive\n\n"
+            except asyncio.CancelledError:
+                pass
+            finally:
+                adapter.remove_mutation_listener(on_mutation)
+
+        return StreamingResponse(generate(), media_type="text/event-stream")
+
     return app
+
+
+def create_stream_app(
+    stream_adapter=None,
+    time_window_seconds: float = 60.0,
+    max_edges: int = 10_000,
+    **kwargs,
+) -> "FastAPI":
+    """
+    Convenience factory for a streaming-enabled Parallax API.
+
+    Creates (or wraps) a StreamAdapter and calls create_app().
+    The adapter is registered in _state so /stream/ingest and
+    /stream/events work out of the box.
+
+    Parameters
+    ----------
+    stream_adapter        : existing StreamAdapter to use; created fresh if None
+    time_window_seconds   : sliding window (ignored if stream_adapter provided)
+    max_edges             : max live edges (ignored if stream_adapter provided)
+    **kwargs              : forwarded to create_app()
+    """
+    from adapters.stream_adapter import StreamAdapter
+    from core.embedding_engine import RandomEngine
+
+    if stream_adapter is None:
+        stream_adapter = StreamAdapter(
+            time_window_seconds=time_window_seconds,
+            max_edges=max_edges,
+        )
+
+    embedding_engine = kwargs.pop("embedding_engine", RandomEngine(dim=64))
+    return create_app(adapter=stream_adapter, embedding_engine=embedding_engine, **kwargs)
 
 
 def _load(

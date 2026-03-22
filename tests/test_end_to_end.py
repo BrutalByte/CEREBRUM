@@ -54,7 +54,7 @@ def build_pipeline(beam_width: int = 10, max_hop: int = 3):
     G       = adapter.to_networkx()
 
     # Step 2 — Community detection (DSCF)
-    parts         = best_of_n_dscf(G, n_trials=5, seed=GLOBAL_SEED)
+    parts         = best_of_n_dscf(G, n_trials=5, seed=GLOBAL_SEED, use_multiprocessing=False)
     community_map = {
         node: cid
         for cid, members in enumerate(parts)
@@ -70,16 +70,18 @@ def build_pipeline(beam_width: int = 10, max_hop: int = 3):
     distances = build_community_distance_matrix(G, community_map)
     adj       = adjacent_community_pairs(G, community_map)
 
+    # Attach to adapter for CSAEngine
+    adapter.community_map = community_map
+    adapter.embeddings    = embeddings
+
     # Step 5 — CSA engine
-    csa = CSAEngine(communities=community_map, embeddings=embeddings)
+    csa = CSAEngine(adapter=adapter)
     csa.set_community_graph(distances, adj)
 
     # Step 6 — Beam traversal
     traversal = BeamTraversal(
         adapter=adapter,
         csa_engine=csa,
-        embeddings=embeddings,
-        communities=community_map,
         beam_width=beam_width,
         max_hop=max_hop,
     )

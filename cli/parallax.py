@@ -58,12 +58,15 @@ def cmd_query(args):
                     k, v = pair.split(":")
                     bridge_weights[k] = float(v)
 
+    # Attach to adapter for CSAEngine
+    adapter.community_map = community_map
+    adapter.embeddings    = embeddings
+
     # CSA
     dist = build_community_distance_matrix(G, community_map)
     adj  = adjacent_community_pairs(G, community_map)
     csa  = CSAEngine(
-        communities=community_map, 
-        embeddings=embeddings,
+        adapter=adapter,
         edge_type_weights=bridge_weights
     )
     csa.set_community_graph(dist, adj)
@@ -79,8 +82,10 @@ def cmd_query(args):
     print(f"Seeds: {seeds}")
 
     traversal = BeamTraversal(
-        adapter=adapter, csa_engine=csa, embeddings=embeddings,
-        communities=community_map, beam_width=args.beam_width, max_hop=args.max_hop,
+        adapter=adapter, 
+        csa_engine=csa, 
+        beam_width=args.beam_width, 
+        max_hop=args.max_hop,
     )
     paths   = traversal.traverse(seeds)
     answers = extract(paths, top_k=args.top_k)

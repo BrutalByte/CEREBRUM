@@ -13,16 +13,16 @@ class RemoteParallaxAdapter(GraphAdapter):
     Adapter that proxies requests to a remote Parallax REST API.
     """
 
-    def __init__(self, base_url: str, timeout: int = 10, api_key: Optional[str] = None):
+    def __init__(self, base_url: str, timeout: int = 10, token: Optional[str] = None):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
-        self.api_key = api_key
+        self.token = token # JWT token for bearer authentication
         self.metadata: Optional[Dict] = None
 
     def _get_headers(self) -> Dict[str, str]:
         headers = {}
-        if self.api_key:
-            headers["X-API-Key"] = self.api_key
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
         return headers
 
     def validate_connection(self) -> bool:

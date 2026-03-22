@@ -69,13 +69,15 @@ def main():
         # API Query
         print("Checking /query endpoint...")
         query_payload = {"query": "newton", "top_k": 3}
-        resp = requests.post(f"http://localhost:{port}/query", json=query_payload)
+        headers = {"X-API-Key": "dev-secret"}
+        resp = requests.post(f"http://localhost:{port}/query", json=query_payload, headers=headers)
         if resp.status_code == 200:
             data = resp.json()
             paths = data.get("paths", [])
             print(f"API Query: PASSED (found {len(paths)} paths)")
         else:
             print(f"API Query: FAILED (status={resp.status_code})")
+            print(f"Response: {resp.text}")
             sys.exit(1)
             
     finally:

@@ -7,6 +7,7 @@ entity embeddings in the forward pass (Section 5, STEP 2).
 """
 from typing import Dict, List
 
+from core.hardware import HAS_RAPIDS, to_gpu_graph
 import networkx as nx
 import numpy as np
 
@@ -18,6 +19,7 @@ def compute_structural_features(
     """
     Compute PageRank, betweenness centrality, and degree for every node.
 
+    GPU (RAPIDS) is used if available for O(10-100x) speedup on large graphs.
     Betweenness is O(V*E) — sampled on large graphs (>sample_limit nodes)
     using a random subset to stay tractable.
 
@@ -28,6 +30,47 @@ def compute_structural_features(
     if G.number_of_nodes() == 0:
         return {}
 
+    # Check for GPU acceleration
+    if HAS_RAPIDS:
+        try:
+            import cugraph
+            G_cuda, is_gpu = to_gpu_graph(G)
+            if is_gpu:
+                # 1. PageRank
+                pr_df = cugraph.pagerank(G_cuda, alpha=0.85, max_iter=100)
+                pagerank = dict(zip(pr_df['vertex'], pr_df['pagerank']))
+                
+                # 2. Betweenness (Sampling if large)
+                if G.number_of_nodes() > sample_limit:
+                    import random
+                    sample = random.sample(list(G.nodes()), min(400, G.number_of_nodes()))
+                    # cuGraph betweenness doesn't have a direct 'subset' like NX, 
+                    # but we can use 'k' for approximate or specify sources.
+                    bc_df = cugraph.betweenness_centrality(G_cuda, k=len(sample), normalized=True)
+                else:
+                    bc_df = cugraph.betweenness_centrality(G_cuda, normalized=True)
+                betweenness = dict(zip(bc_df['vertex'], bc_df['betweenness_centrality']))
+                
+                # 3. Degrees (Calculated on CPU via NX as it's O(V), fast enough)
+                degree     = dict(G.degree())
+                in_degree  = dict(G.in_degree()) if G.is_directed() else dict(G.degree())
+                out_degree = dict(G.out_degree()) if G.is_directed() else dict(G.degree())
+                
+                return {
+                    node: {
+                        "pagerank":    round(pagerank.get(node, 0.0), 7),
+                        "betweenness": round(betweenness.get(node, 0.0), 7),
+                        "degree":      degree.get(node, 0),
+                        "in_degree":   in_degree.get(node, 0),
+                        "out_degree":  out_degree.get(node, 0),
+                    }
+                    for node in G.nodes()
+                }
+        except Exception as e:
+            import logging
+            logging.getLogger("parallax.structural").warning(f"GPU structural computation failed: {e}. Falling back to CPU.")
+
+    # CPU Fallback (Existing implementation)
     pagerank   = nx.pagerank(G, alpha=0.85, max_iter=100)
     degree     = dict(G.degree())
     in_degree  = dict(G.in_degree()) if G.is_directed() else dict(G.degree())
