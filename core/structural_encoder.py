@@ -1,11 +1,11 @@
 """
-Graph structural encoding — the positional encoding layer of Parallax.
+Graph structural encoding — the positional encoding layer of CEREBRUM.
 
 Computes PageRank, betweenness centrality, and degree per node, then
 projects them into a d-dimensional embedding vector for use alongside
 entity embeddings in the forward pass (Section 5, STEP 2).
 """
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from core.hardware import HAS_RAPIDS, to_gpu_graph
 import networkx as nx
@@ -68,7 +68,7 @@ def compute_structural_features(
                 }
         except Exception as e:
             import logging
-            logging.getLogger("parallax.structural").warning(f"GPU structural computation failed: {e}. Falling back to CPU.")
+            logging.getLogger("cerebrum.structural").warning(f"GPU structural computation failed: {e}. Falling back to CPU.")
 
     # CPU Fallback (Existing implementation)
     pagerank   = nx.pagerank(G, alpha=0.85, max_iter=100)
@@ -159,6 +159,119 @@ def encode_structural_features(
     return {n: result_matrix[i] for i, n in enumerate(nodes)}
 
 
+def coarsen_communities(
+    G: nx.Graph,
+    community_map: Dict[str, int],
+    target_max: int = 500,
+    min_size: int = 3,
+) -> Dict[str, int]:
+    """
+    Merge small communities into their most-connected neighbors until the
+    community count falls to target_max or below.
+
+    Motivation: when DSCF over-partitions a large graph (e.g. MetaQA produces
+    14,976 communities, 74% of which are singletons), the community signal in
+    CSA becomes degenerate — almost every edge scores 0.5 (adjacent) with no
+    discrimination between near and far communities.  Coarsening restores a
+    meaningful signal by grouping structurally related nodes together.
+
+    Algorithm
+    ---------
+    Uses an inverse index (community -> members) so each merge is
+    O(community_size × avg_degree) rather than O(N).  Iteratively finds
+    communities below min_size (or the K - target_max smallest communities
+    when K > target_max) and reassigns their members to the neighbor community
+    sharing the most edges with them.  Stops when K <= target_max or no
+    further merges are possible.
+
+    Parameters
+    ----------
+    target_max : int
+        Target upper bound on number of communities.
+    min_size : int
+        Communities smaller than this are always candidates for merging,
+        even if K <= target_max.
+
+    Returns
+    -------
+    New community_map with contiguous integer community IDs.
+    Does NOT modify the input map.
+    """
+    import logging
+    log = logging.getLogger("cerebrum.structural")
+
+    cmap: Dict[str, int] = dict(community_map)
+
+    # Build inverse index: cid -> list of member nodes
+    members: Dict[int, list] = {}
+    for node, cid in cmap.items():
+        members.setdefault(cid, []).append(node)
+
+    def _best_neighbor(cid: int) -> Optional[int]:
+        """Neighbor community with the most shared edges — O(size × degree)."""
+        counts: Dict[int, int] = {}
+        for node in members.get(cid, []):
+            for nbr in G.neighbors(node):
+                nc = cmap.get(nbr)
+                if nc is not None and nc != cid:
+                    counts[nc] = counts.get(nc, 0) + 1
+        return max(counts, key=lambda c: counts[c]) if counts else None
+
+    def _merge(src: int, dst: int) -> None:
+        """Merge community src into dst, updating cmap and members in O(size)."""
+        for node in members.pop(src, []):
+            cmap[node] = dst
+            members[dst].append(node)
+
+    for _pass in range(500):
+        K = len(members)
+        if K <= target_max and all(len(m) >= min_size for m in members.values()):
+            break
+
+        sizes = {cid: len(m) for cid, m in members.items()}
+
+        # Phase 1: merge communities below min_size that have cross-community neighbors
+        small = [cid for cid, sz in sizes.items() if sz < min_size]
+        merged_any = False
+        for cid in list(small):
+            if cid not in members:
+                continue
+            best = _best_neighbor(cid)
+            if best is None:
+                continue  # isolated — skip
+            _merge(cid, best)
+            merged_any = True
+
+        # Phase 2: if still over target, merge smallest mergeable communities
+        if len(members) > target_max:
+            sizes2 = {cid: len(m) for cid, m in members.items()}
+            candidates = sorted(sizes2, key=lambda c: sizes2[c])
+            needed = len(members) - target_max
+            merged_phase2 = 0
+            for cid in candidates:
+                if merged_phase2 >= needed:
+                    break
+                if cid not in members:
+                    continue
+                best = _best_neighbor(cid)
+                if best is None:
+                    continue
+                _merge(cid, best)
+                merged_phase2 += 1
+                merged_any = True
+
+        if not merged_any:
+            break
+
+    final_k = len(members)
+    log.info("coarsen_communities: %d -> %d communities", len(set(community_map.values())), final_k)
+
+    # Relabel to contiguous 0-based integers
+    old_ids = sorted(members.keys())
+    remap = {old: new for new, old in enumerate(old_ids)}
+    return {node: remap[cid] for node, cid in cmap.items()}
+
+
 def build_community_distance_matrix(
     G: nx.Graph,
     community_map: Dict[str, int],
@@ -179,21 +292,21 @@ def build_community_distance_matrix(
     max_communities : int
         If the number of unique communities exceeds this threshold, skip the
         all-pairs BFS and return an empty dict. CSAEngine falls back to its
-        built-in default distance (d=5.0) for non-adjacent pairs, which
-        evaluates to exp(-λ*5) ≈ 0.082 — a conservative penalty that still
-        allows adjacent-pair (0.5) and same-community (1.0) scores to function.
-        This avoids O(N²) blowup on large graphs with many communities
-        (e.g. MetaQA DSCF produces ~15K communities → 2.1B BFS operations).
+        built-in default distance (d=5.0) for non-adjacent pairs.
+        This avoids O(K²) blowup on large graphs.
+
+        When this fires it usually means the community detection over-partitioned
+        the graph (many singleton communities).  Call coarsen_communities() before
+        this function to merge small communities and restore a meaningful signal.
     """
     communities = set(community_map.values())
 
     if len(communities) > max_communities:
-        import sys
-        print(
-            f"  [build_community_distance_matrix] {len(communities):,} communities "
-            f"exceeds max_communities={max_communities:,}. "
-            f"Skipping all-pairs BFS — CSA will use d=5.0 fallback for non-adjacent pairs.",
-            file=sys.stderr,
+        import logging
+        logging.getLogger("cerebrum.structural").warning(
+            "build_community_distance_matrix: %d communities exceeds cap of %d. "
+            "Call coarsen_communities() first to restore full CSA signal.",
+            len(communities), max_communities,
         )
         return {}
 

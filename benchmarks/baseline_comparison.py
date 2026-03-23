@@ -4,8 +4,8 @@ Ablation study: DSCF vs LPA vs BFS-only for MetaQA (Phase 4).
 This module implements the ablation plan from Section 9.2 of PARALLAX.md.
 Three variants are evaluated on the same MetaQA test questions:
 
-  Variant A — Parallax (DSCF + CSA)          [the full system]
-  Variant B — Parallax (LPA  + CSA)           [swap community detection only]
+  Variant A — CEREBRUM (DSCF + CSA)          [the full system]
+  Variant B — CEREBRUM (LPA  + CSA)           [swap community detection only]
   Variant C — BFS baseline (uniform weights)  [no attention, no communities]
 
 All three variants use the same:
@@ -41,7 +41,9 @@ from adapters.networkx_adapter import NetworkXAdapter
 from core.community_engine import best_of_n_dscf, lpa_communities
 from core.embedding_engine import RandomEngine
 from core.attention_engine import CSAEngine
-from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
+from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs, coarsen_communities
+
+_COARSEN_TARGET = 500  # max communities before CSA signal degrades
 from reasoning.traversal import BeamTraversal
 from reasoning.answer_extractor import extract
 
@@ -81,6 +83,10 @@ def build_dscf_traversal(
 ) -> BeamTraversal:
     """Variant A: full DSCF + CSA."""
     cmap = load_or_compute_communities(G, use_cache=use_cache, dscf_seed=dscf_seed)
+    if len(set(cmap.values())) > _COARSEN_TARGET:
+        k_before = len(set(cmap.values()))
+        cmap = coarsen_communities(G, cmap, target_max=_COARSEN_TARGET)
+        print(f"  Coarsened DSCF: {k_before:,} -> {len(set(cmap.values()))} communities")
     dist = build_community_distance_matrix(G, cmap)
     adj  = adjacent_community_pairs(G, cmap)
     
@@ -106,6 +112,10 @@ def build_lpa_traversal(
     parts = lpa_communities(G)
     cmap  = {node: cid for cid, members in enumerate(parts) for node in members}
     print(f"  LPA: {len(parts)} communities in {time.time()-t0:.1f}s")
+    if len(set(cmap.values())) > _COARSEN_TARGET:
+        k_before = len(set(cmap.values()))
+        cmap = coarsen_communities(G, cmap, target_max=_COARSEN_TARGET)
+        print(f"  Coarsened LPA:  {k_before:,} -> {len(set(cmap.values()))} communities")
     dist = build_community_distance_matrix(G, cmap)
     adj  = adjacent_community_pairs(G, cmap)
     
@@ -146,7 +156,7 @@ def build_bfs_traversal(
 # ---------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="Parallax ablation study on MetaQA")
+    parser = argparse.ArgumentParser(description="CEREBRUM ablation study on MetaQA")
     parser.add_argument("--hop",        type=int, default=None,
                         help="Hop level to evaluate (1, 2, or 3). Default: all.")
     parser.add_argument("--sample",     type=int, default=None,
@@ -160,10 +170,10 @@ def main():
 
     hops = [args.hop] if args.hop else [1, 2, 3]
 
-    print("\n=== Parallax — MetaQA Ablation Study ===\n")
+    print("\n=== CEREBRUM — MetaQA Ablation Study ===\n")
     print("Variants:")
-    print("  A  Parallax  DSCF + CSA   (full system)")
-    print("  B  Parallax  LPA  + CSA   (LPA communities only)")
+    print("  A  CEREBRUM  DSCF + CSA   (full system)")
+    print("  B  CEREBRUM  LPA  + CSA   (LPA communities only)")
     print("  C  BFS       uniform      (no attention baseline)")
     print()
 
