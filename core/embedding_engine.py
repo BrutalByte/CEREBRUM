@@ -1,5 +1,5 @@
 """
-Entity embedding engines for Parallax.
+Entity embedding engines for CEREBRUM.
 
 The EmbeddingEngine ABC defines the interface. Two implementations ship:
   - RandomEngine  : seeded random unit vectors — always available, used in tests
@@ -75,8 +75,8 @@ class RandomEngine(EmbeddingEngine):
             rng  = np.random.default_rng(seed)
             v    = rng.normal(size=self._dim).astype(np.float32)
             v    = v / (np.linalg.norm(v) + 1e-8)
-            result.append(v)
-        return np.array(result, dtype=np.float32)
+            result.append(v.astype(np.float16))
+        return np.array(result, dtype=np.float16)
 
 
 # ---------------------------------------------------------------------------
@@ -116,12 +116,13 @@ class SentenceEngine(EmbeddingEngine):
         return self._dim
 
     def encode(self, texts: List[str]) -> np.ndarray:
-        return self._model.encode(
+        vecs = self._model.encode(
             texts,
             normalize_embeddings=True,
             show_progress_bar=False,
             convert_to_numpy=True,
-        ).astype(np.float32)
+        ).astype(np.float32)          # normalize in float32 for precision
+        return vecs.astype(np.float16)
 
 
 
