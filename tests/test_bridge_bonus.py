@@ -10,6 +10,8 @@ class MockAdapter:
         return self.community_map.get(node)
     def get_embedding(self, node):
         return self.embeddings.get(node)
+    def get_neighbors(self, *args, **kwargs): return []
+    def find_similar(self, *args, **kwargs): return []
 
 def test_bridge_bonus_influence():
     # Simple setup

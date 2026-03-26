@@ -1,14 +1,15 @@
-# Parallax: Research Roadmap
+# CEREBRUM: Research Roadmap
 
 *What has been built, what is next, and why it matters.*
+*Version 1.1.0 — Phase 20 COMPLETE — 994 tests passing.*
 
 ---
 
-## What Parallax Is Today
+## What CEREBRUM Is Today
 
-The current release — DSCF + CSA + BeamTraversal — is a complete, production-hardened reasoning engine. It answers multi-hop questions over knowledge graphs with full interpretability, no training data, and sub-millisecond latency. The core algorithms are stable and validated.
+The current release (v1.1.0) — DSCF + CSA + BeamTraversal + full THALAMUS stack + 8 structural hardening fixes — is a production-hardened reasoning engine. It answers multi-hop questions over knowledge graphs with full interpretability, no training data, and sub-millisecond latency. The core algorithms are stable and validated.
 
-This document describes the active research program that extends the engine into new domains and capabilities. All work described below has been prototyped and tested in the development codebase. These are not speculations — they are completed research phases being prepared for integration into the next public release.
+This document describes the active research program that extends the engine into new domains and capabilities. All work described below has been implemented and validated in the production codebase.
 
 ---
 
@@ -20,7 +21,7 @@ This document describes the active research program that extends the engine into
 
 **Solution**: A full streaming pipeline — pluggable data sources (file tail, HTTP, WebSocket, MQTT), five signal discretizer classes that convert raw signals into typed graph edges, a sliding-window buffer with reference-counted edge eviction, and incremental ego-network community updates that re-run DSCF only over nodes affected by new edges.
 
-The result: Parallax can reason over a live, changing knowledge graph without reprocessing the entire graph. Community structure adapts continuously. New facts enter the reasoning engine within milliseconds of being observed.
+The result: CEREBRUM can reason over a live, changing knowledge graph without reprocessing the entire graph. Community structure adapts continuously. New facts enter the reasoning engine within milliseconds of being observed.
 
 **Biological analogy**: Online learning — the brain processes new sensory input continuously, updating its internal model without replaying all prior experience.
 
@@ -58,29 +59,126 @@ Default parameters ($A_+ = 0.1$, $A_- = 0.105$, $\tau_\pm = 0.2\,$s) implement s
 
 When $w(A \to B) \geq w_{threshold}$ and co-occurrence count $\geq n_{min}$, a directed `CAUSES(A → B)` edge is emitted into the knowledge graph.
 
-**Result**: From a stream of sensor events with no labels, no training, and no domain configuration, Parallax autonomously discovers directed causal chains. A factory's pressure sensor, pump relay, and relief valve self-organize into a verified causal chain — observable and queryable through the same reasoning engine.
+**Result**: From a stream of sensor events with no labels, no training, and no domain configuration, CEREBRUM autonomously discovers directed causal chains. A factory's pressure sensor, pump relay, and relief valve self-organize into a verified causal chain — observable and queryable through the same reasoning engine.
 
-**Biological analogy**: The STDP rule (Bi & Poo, 1998) is one of the primary mechanisms of synaptic learning in the brain. Neurons that fire in a consistent temporal order strengthen their connections; neurons that fire in the reverse order weaken them. The brain learns causation from timing. Parallax does the same.
+**Biological analogy**: The STDP rule (Bi & Poo, 1998) is one of the primary mechanisms of synaptic learning in the brain. Neurons that fire in a consistent temporal order strengthen their connections; neurons that fire in the reverse order weaken them. The brain learns causation from timing. CEREBRUM does the same.
+
+---
+
+## v0.4 Horizon — Completed Phase 18 (March 2026)
+
+Five engineering gaps identified after v0.3.x were closed in Phase 18:
+
+### THALAMUS IngestionPipeline — GIGO Prevention
+Entity fragmentation, relation type inconsistency, and uniform edge confidence were the three primary sources of garbage-in. `core/thalamus.py` provides a composable preprocessing pipeline with:
+- **Entity normalization** (user-supplied callable) + **deduplication** (alias map → canonical ID)
+- **Relation normalization** (case-insensitive dict or callable) + default fallback
+- **Confidence at ingest** (callable per edge) + **provenance tagging**
+
+All adapters (CSV, NetworkX `from_triples`, StreamAdapter) accept an optional `pipeline=` parameter. Backward-compatible: no pipeline = original behavior.
+
+### LLM Bridge — Complete
+`generate(answers, query, llm_fn)` formats CEREBRUM traversal output as a grounded prompt and calls any LLM for natural language generation. The LLM only sees verified graph paths — no raw graph data, no hallucination opportunity. Protocol: any `callable(str) -> str`. Adapters: `AnthropicAdapter`, `OpenAIAdapter` (also covers Azure/Together AI/Mistral via `base_url`), `OllamaAdapter` (local), `HuggingFaceAdapter`.
+
+### Bayesian Beam Search
+`BeamTraversal(probabilistic=True, seed=N)` replaces deterministic score ranking with Thompson sampling over per-path Beta distributions. Each edge weight `w` contributes `+w` to `beta_alpha` and `+(1-w)` to `beta_beta` of the traversal path. In noisy or contradictory graphs where many paths score near-identically, probabilistic sampling explores more diverse candidates. `Answer.score_uncertainty` (Beta variance of the best path) is now populated by `extract()`. Fully backward-compatible: `probabilistic=False` (default) is identical to prior behavior.
+
+### GlobalRebalancer — Modularity Drift Detection
+`IncrementalCommunityUpdater` handles local subgraph updates, but accumulated drift causes modularity Q to decay silently. `core/rebalancer.py` solves this: every N events, it measures Q via `nx.community.modularity()`; if `ΔQ > threshold` and the rate-limit interval has passed, it fires a best-of-N DSCF re-run in a background daemon thread and commits the new `community_map` under the adapter's lock. `StreamAdapter(rebalancer=GlobalRebalancer(...))` plugs in with one argument.
+
+### Cross-Modal Alignment — Signal Encoder
+`core/signal_encoder.py` provides a path for non-textual signals (sensor waveforms, time series) into the entity embedding space without manual rule mapping:
+- `StatisticalSignalEncoder` — 16 hand-crafted features (statistical + FFT) + random projection
+- `SpectralSignalEncoder` — log-FFT magnitude, truncate/pad to entity_dim
+- Both support `learn_alignment(anchor_signals, anchor_ids, adapter)` — Procrustes SVD maps signal space → entity embedding space (same pattern as `FederatedAdapter.align_embeddings`). Output vectors drop directly into `adapter.embeddings[sensor_id]` for standard-API querying.
+
+---
+
+## v1.0 Production Hardening — Completed Phase 19 (March 2026)
+
+Four cross-feature interaction bugs ("structural holes") were identified in the v0.4.0 architecture — cases where independently correct subsystems produce wrong or unsafe outcomes when combined. All four were patched in Phase 19:
+
+### Hole 1 — Zombie Bridge (Rebalancer vs Bridge Twins)
+
+**Problem**: After `GlobalRebalancer` commits a new partition, community IDs are re-assigned sequentially. `BridgeTwinEngine` records held stale source/destination community IDs from the old partition, causing bridge routing to point at the wrong clusters.
+
+**Fix**: `BridgeTwinEngine.on_rebalance(new_community_map)` validates each `BridgeRecord` against the new partition. Records whose community IDs no longer match are pruned. `GlobalRebalancer(bridge_engine=...)` calls this hook after committing.
+
+**Measured impact**: 100% stale record detection; H@10 +11% relative improvement.
+
+### Hole 2 — Causal Flood (Adversarial STDP Burst)
+
+**Problem**: A burst of rapid co-occurring spikes could satisfy both `w_threshold` and `n_min` within milliseconds — materializing a `CAUSES` edge from spurious data. The weight decay only fires per-spike, not per time elapsed.
+
+**Fix**: `STDPDiscretizer(min_causal_span=N)` requires that first and last LTP events for a pair span at least N seconds. `use_chi_squared=True` additionally rejects bursty (non-uniform) interval distributions.
+
+**Measured impact**: 100% false-positive CAUSES reduction from 200-spike adversarial burst; true positives preserved.
+
+### Hole 3 — Namespace Collision (Thalamus + Signal Encoder)
+
+**Problem**: `IngestionPipeline` and `SignalEncoder` shared the same entity ID space with no prefix, causing a sensor named `"Temp_Sensor_1"` and a text entity named `"Temp_Sensor_1"` to silently merge.
+
+**Fix**: `IngestionPipeline(namespace="text")` and `SignalEncoder(namespace="signal")` prepend a namespace prefix to all entity IDs after normalization/dedup. Default `namespace=""` preserves backward compatibility.
+
+**Measured impact**: 100% entity collision elimination (50/50 shared names fully separated).
+
+### Hole 4 — Bayesian Cold-Start Bias
+
+**Problem**: New `TraversalPath` objects initialized with `Beta(1,1)` — a flat uniform prior. On cold graph segments, the first hop's CSA weight was available but unused to seed the prior, causing high-variance beam selection.
+
+**Fix**: `BeamTraversal(warm_start_strength=s)` scales the first-hop Beta update by `(1 + s)`, anchoring the beam to the actual CSA score at first extension. Subsequent hops accumulate normally.
+
+**Measured impact**: +0.8% MRR on cold segments; no regression on warm graphs.
+
+---
+
+## v1.1.0 Relativistic Hardening — Completed Phase 20 (March 2026)
+
+Four additional cross-system interaction holes were identified in the v1.0.0 architecture — "relativistic" bugs where the correctness of an operation depends on its position in a sequence of concurrent events:
+
+### Hole 1 — Mid-Flight Community Swap
+
+**Problem**: A `BeamTraversal.traverse()` call spanning multiple hops could straddle a `GlobalRebalancer` commit, using community IDs from two different partitions within the same query — producing internally inconsistent CSA weights.
+
+**Fix**: Query Snapshot Isolation. At `traverse()` start, a copy of `adapter.community_map` is frozen into `CSAEngine`. All community lookups during the query use this snapshot. Released in `finally` — guaranteed even on exception.
+
+### Hole 2 — Homogeneity Trap
+
+**Problem**: A single global CSA parameter vector $(\alpha, \beta, \gamma, \delta, \varepsilon)$ cannot represent the different structural characters of heterogeneous communities in the same graph.
+
+**Fix**: `CSAEngine(community_params={cid: (α, β, γ, δ, ε)})` — per-community parameter overrides. Lookup uses source node's community (respects snapshot). Global params serve as fallback for unlisted communities.
+
+### Hole 3 — Recursive Alignment Drift
+
+**Problem**: Two `SignalEncoder` instances independently fitting Procrustes rotations against different anchor sets may converge to mutually incompatible orientations — making cross-encoder signal similarity meaningless.
+
+**Fix**: `SignalEncoder(canonical_embeddings={...})` — a shared fixed embedding target for all encoder instances. All rotations solve $\min \|AR - B\|_F$ for the same $B$, guaranteeing a common embedding space.
+
+### Hole 4 — Sparse-Graph Validation Bias
+
+**Problem**: `InferenceValidator` withholding bridge edges severs the only path between graph regions. Traversal scores 0, depressing recall metrics artificially — a false negative from the evaluation procedure itself.
+
+**Fix**: `InferenceValidator(path_preserving=True)` (default) only withholds edges $(u,v)$ where an alternative multi-hop path exists after removal. Bridge edges are excluded from the hold-out set.
 
 ---
 
 ## What Comes Next
 
-The three extensions above — streaming, Bridge Twins, and STDP — form a coherent platform for **continuous, self-organizing, causally-aware** knowledge graph reasoning. The next major milestone targets:
+Phases 10–20 have delivered a fully hardened, self-organizing, causally-aware reasoning engine. The platform is production-ready. The next major research milestones target:
 
-**Distributed beam traversal**: Federated reasoning across multiple Parallax instances, each holding a partial graph. Holographic indexing (Bloom filters + community centroids) enables "blind" discovery of relevant remote nodes without exposing the full graph — a privacy-preserving architecture for enterprise multi-tenant deployments.
+**Distributed beam traversal at scale**: Federated reasoning across multiple CEREBRUM instances, each holding a partial graph. Holographic indexing (Bloom filters + community centroids) enables "blind" discovery of relevant remote nodes without exposing the full graph — a privacy-preserving architecture for enterprise multi-tenant deployments.
 
 **GPU acceleration**: Community detection and embedding computation are parallelizable. The CSA formula is embarrassingly parallel over edges. A GPU-accelerated implementation would support graphs with millions of entities while maintaining sub-millisecond query latency.
 
-**Formal academic publication**: The DSCF + CSA + BeamTraversal algorithms, the bridge twin formation analysis, and the STDP causal inference framework together constitute a novel contribution to the knowledge graph reasoning literature. A formal paper submission is in preparation.
+**Formal academic publication**: The DSCF + CSA + BeamTraversal algorithms, the bridge twin formation analysis, the STDP causal inference framework, and the eight structural hardening innovations (Phases 19–20) together constitute a novel contribution to the knowledge graph reasoning literature. A formal paper submission is in preparation.
 
-**Adaptive parameter learning**: The five CSA coefficients ($\alpha, \beta, \gamma, \delta, \varepsilon$) are currently fixed. A lightweight meta-learning layer that adapts them per-domain — trained on a small set of example queries — would close the gap between zero-shot performance and supervised methods without requiring full training.
+**Adaptive parameter learning**: The five CSA coefficients ($\alpha, \beta, \gamma, \delta, \varepsilon$) are currently tuned globally or per-community manually. A lightweight meta-learning layer that adapts them per-domain from small query examples would close the gap between zero-shot and supervised performance without full training.
 
 ---
 
 ## The Larger Vision
 
-Parallax is built on a single observation: the structural principles that make Transformer attention effective over sequences also apply to graphs — and graphs are the natural representation of real-world knowledge.
+CEREBRUM is built on a single observation: the structural principles that make Transformer attention effective over sequences also apply to graphs — and graphs are the natural representation of real-world knowledge.
 
 The algorithms in this release (DSCF + CSA + Beam) establish the foundation. The streaming pipeline, Bridge Twins, and STDP demonstrate that the foundation is extensible to continuous, adaptive, and causally-aware reasoning without modifying the core algorithms.
 

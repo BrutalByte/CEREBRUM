@@ -1,5 +1,5 @@
 """
-Synthetic clustered graph benchmark for Parallax (Phase 4).
+Synthetic clustered graph benchmark for CEREBRUM (Phase 4).
 
 Directly tests the core CSA hypothesis with controlled ground truth:
   "CSA's community membership scoring boosts intra-community paths."
@@ -44,6 +44,9 @@ from core.attention_engine import CSAEngine
 from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
 from reasoning.traversal import BeamTraversal
 from reasoning.answer_extractor import extract
+from core.resource_governor import ResourceGovernor
+
+_BENCH_GOVERNOR = ResourceGovernor(memory_threshold_pct=99.0)
 
 from benchmarks.metaqa_eval import hits_at_k, reciprocal_rank
 from benchmarks.baseline_comparison import (
@@ -327,7 +330,7 @@ def evaluate_variant(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Synthetic clustered graph benchmark for Parallax"
+        description="Synthetic clustered graph benchmark for CEREBRUM"
     )
     parser.add_argument("--n-communities",  type=int, default=20)
     parser.add_argument("--community-size", type=int, default=50)
@@ -350,7 +353,7 @@ def main():
 
     hops = [args.hop] if args.hop else [1, 2, 3]
 
-    print("\n=== Parallax — Synthetic Clustered Graph Benchmark ===\n")
+    print("\n=== CEREBRUM — Synthetic Clustered Graph Benchmark ===\n")
     print("Hypothesis: DSCF+CSA outperforms BFS on intra-community questions.")
     print()
 
@@ -424,10 +427,11 @@ def main():
         csa_dscf  = CSAEngine(adapter=adapter)
         csa_dscf.set_community_graph(dist_dscf, adj_dscf)
         t_dscf = BeamTraversal(
-            adapter=adapter, 
+            adapter=adapter,
             csa_engine=csa_dscf,
-            beam_width=args.beam_width, 
-            max_hop=hop
+            beam_width=args.beam_width,
+            max_hop=hop,
+            governor=_BENCH_GOVERNOR,
         )
         m_a = evaluate_variant("DSCF+CSA", t_dscf, qa_pairs, hop, args.top_k)
         print(f"      Hits@1={m_a['hits_1']:.4f}  Hits@10={m_a['hits_10']:.4f}  MRR={m_a['mrr']:.4f}")
@@ -443,10 +447,11 @@ def main():
         csa_lpa  = CSAEngine(adapter=adapter)
         csa_lpa.set_community_graph(dist_lpa, adj_lpa)
         t_lpa = BeamTraversal(
-            adapter=adapter, 
+            adapter=adapter,
             csa_engine=csa_lpa,
-            beam_width=args.beam_width, 
-            max_hop=hop
+            beam_width=args.beam_width,
+            max_hop=hop,
+            governor=_BENCH_GOVERNOR,
         )
         m_b = evaluate_variant("LPA+CSA", t_lpa, qa_pairs, hop, args.top_k)
         print(f"      Hits@1={m_b['hits_1']:.4f}  Hits@10={m_b['hits_10']:.4f}  MRR={m_b['mrr']:.4f}")
@@ -460,10 +465,11 @@ def main():
         
         csa_bfs  = UniformCSAEngine(adapter=adapter)
         t_bfs = BeamTraversal(
-            adapter=adapter, 
+            adapter=adapter,
             csa_engine=csa_bfs,
-            beam_width=args.beam_width, 
-            max_hop=hop
+            beam_width=args.beam_width,
+            max_hop=hop,
+            governor=_BENCH_GOVERNOR,
         )
         m_c = evaluate_variant("BFS", t_bfs, qa_pairs, hop, args.top_k)
         print(f"      Hits@1={m_c['hits_1']:.4f}  Hits@10={m_c['hits_10']:.4f}  MRR={m_c['mrr']:.4f}")

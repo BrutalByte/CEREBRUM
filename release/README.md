@@ -1,18 +1,18 @@
-# Parallax
+# CEREBRUM
 
 **Community-Structured Graph Attention for Knowledge Graph Reasoning**
 
-*Bryan Alexander Buchorn (AMP) · March 2026*
+*Bryan Alexander Buchorn (AMP) · March 2026 · v1.1.0 — Phase 20 COMPLETE — 994 tests passing*
 
 ---
 
-Parallax is a framework for multi-hop reasoning over Knowledge Graphs. It produces **verified reasoning paths** — not probabilistic guesses. Every answer is traceable to a sequence of real graph edges.
+CEREBRUM is a framework for multi-hop reasoning over Knowledge Graphs. It produces **verified reasoning paths** — not probabilistic guesses. Every answer is traceable to a sequence of real graph edges.
 
 No training data. No language model required. No hallucinations.
 
 ## The Core Idea
 
-A Transformer uses attention heads to decide which tokens are relevant at each step of reasoning. Parallax does the same thing for graphs: it uses **communities** (groups of structurally related nodes) as attention heads, and computes a **Community-Structured Attention (CSA)** weight for every candidate edge at every reasoning step.
+A Transformer uses attention heads to decide which tokens are relevant at each step of reasoning. CEREBRUM does the same thing for graphs: it uses **communities** (groups of structurally related nodes) as attention heads, and computes a **Community-Structured Attention (CSA)** weight for every candidate edge at every reasoning step.
 
 The result is beam-search traversal that thinks in the same structural terms as the graph itself — following paths that are both semantically meaningful and structurally coherent.
 
@@ -20,7 +20,7 @@ The result is beam-search traversal that thinks in the same structural terms as 
 
 Given a question like *"Which drugs inhibit the enzyme associated with Alzheimer's disease?"*:
 
-1. Parallax identifies the seed entity (`Alzheimer's disease`)
+1. CEREBRUM identifies the seed entity (`Alzheimer's disease`)
 2. DSCF community detection partitions the biomedical KG into functional groups (disease clusters, drug clusters, enzyme clusters)
 3. CSA-weighted beam search traverses outward, preferring paths that stay within or cleanly cross community boundaries
 4. The returned answer includes the **full reasoning path**:
@@ -104,20 +104,38 @@ uvicorn api.server:app --port 8200 --reload
 | `GET /communities` | View detected community structure |
 | `GET /stream/events` | Subscribe to live graph updates (SSE) |
 
+## Phase 20 New APIs
+
+| Feature | API | Description |
+|---|---|---|
+| **Query Snapshot Isolation** | automatic (built into `traverse()`) | Community map frozen at query start; concurrent rebalancer commits are invisible mid-query |
+| **Community-Specific CSA** | `CSAEngine(community_params={cid: (α,β,γ,δ,ε)})` | Per-community attention parameter overrides for heterogeneous KGs |
+| **Canonical Basis Anchor** | `SignalEncoder(canonical_embeddings={...})` | Fixed shared embedding target ensures cross-encoder signal compatibility |
+| **Path-Preserving Hold-out** | `InferenceValidator(path_preserving=True)` | Only withholds edges with alternative paths; prevents false-zero recall on sparse graphs |
+
+## Phase 19 APIs (v1.0)
+
+| Feature | API | Description |
+|---|---|---|
+| **Zombie Bridge Fix** | `GlobalRebalancer(bridge_engine=BridgeTwinEngine(...))` | Post-rebalance hook prunes stale bridge records |
+| **Causal Flood Filter** | `STDPDiscretizer(min_causal_span=N, use_chi_squared=True)` | Blocks adversarial spike bursts; requires temporal span + uniformity |
+| **Namespace Isolation** | `IngestionPipeline(namespace="text")`, `SignalEncoder(namespace="signal")` | ID prefixing prevents semantic collisions |
+| **Bayesian Warm-Start** | `BeamTraversal(probabilistic=True, warm_start_strength=5)` | Seeds first-hop Beta from CSA score, reducing cold-start variance |
+
 ## Documents
 
 | File | Description |
 |---|---|
 | `WHITE_PAPER.md` | Full academic paper — architecture, algorithms, evaluation |
-| `ALGORITHMS.md` | Precise mathematical specification of DSCF, CSA, and BeamTraversal |
-| `BENCHMARKS.md` | Benchmark results vs standard graph algorithms |
-| `ROADMAP.md` | Active research directions and next milestones |
+| `ALGORITHMS.md` | Precise mathematical specification of DSCF, CSA, BeamTraversal, and all Phase 19–20 extensions |
+| `BENCHMARKS.md` | Benchmark results vs standard graph algorithms + v1.0 accuracy evaluation |
+| `ROADMAP.md` | Completed phases (10–20) and active research directions |
 
 ## Why Not Just Use an LLM?
 
-LLMs generate plausible text. Parallax generates **verified paths**. These are complementary:
+LLMs generate plausible text. CEREBRUM generates **verified paths**. These are complementary:
 
-| | LLM alone | Parallax alone | Parallax + LLM |
+| | LLM alone | CEREBRUM alone | CEREBRUM + LLM |
 |---|---|---|---|
 | Answers questions | Yes | Yes | Yes |
 | Sources facts | No | Yes | Yes |
@@ -126,7 +144,7 @@ LLMs generate plausible text. Parallax generates **verified paths**. These are c
 | Requires training | Yes | No | No |
 | Speed | ~500ms | <1ms | ~500ms |
 
-The LLM bridge turns Parallax's verified paths into natural language — the LLM composes, Parallax reasons.
+The LLM bridge turns CEREBRUM's verified paths into natural language — the LLM composes, CEREBRUM reasons.
 
 ---
 

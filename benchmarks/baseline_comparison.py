@@ -41,11 +41,20 @@ from adapters.networkx_adapter import NetworkXAdapter
 from core.community_engine import best_of_n_dscf, lpa_communities
 from core.embedding_engine import RandomEngine
 from core.attention_engine import CSAEngine
-from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs, coarsen_communities
+from core.structural_encoder import (
+    build_community_distance_matrix, adjacent_community_pairs,
+    coarsen_communities, build_community_graph,
+)
 
 _COARSEN_TARGET = 500  # max communities before CSA signal degrades
 from reasoning.traversal import BeamTraversal
 from reasoning.answer_extractor import extract
+from core.resource_governor import ResourceGovernor
+
+# Benchmarks measure algorithmic quality, not governor behavior.
+# Use a near-unlimited governor (99% threshold) so memory pressure on the
+# host machine doesn't silently throttle CEREBRUM to zero answers.
+_BENCH_GOVERNOR = ResourceGovernor(memory_threshold_pct=99.0)
 
 from benchmarks.metaqa_eval import (
     load_kb, load_qa, load_or_compute_communities,
@@ -89,17 +98,19 @@ def build_dscf_traversal(
         print(f"  Coarsened DSCF: {k_before:,} -> {len(set(cmap.values()))} communities")
     dist = build_community_distance_matrix(G, cmap)
     adj  = adjacent_community_pairs(G, cmap)
-    
+    cg   = build_community_graph(G, cmap)
+
     adapter.community_map = cmap
     adapter.embeddings = embeddings
-    
+
     csa  = CSAEngine(adapter=adapter)
-    csa.set_community_graph(dist, adj)
+    csa.set_community_graph(dist, adj, community_graph=cg)
     return BeamTraversal(
-        adapter=adapter, 
-        csa_engine=csa, 
-        beam_width=beam_width, 
-        max_hop=max_hop
+        adapter=adapter,
+        csa_engine=csa,
+        beam_width=beam_width,
+        max_hop=max_hop,
+        governor=_BENCH_GOVERNOR,
     ), cmap
 
 
@@ -118,17 +129,19 @@ def build_lpa_traversal(
         print(f"  Coarsened LPA:  {k_before:,} -> {len(set(cmap.values()))} communities")
     dist = build_community_distance_matrix(G, cmap)
     adj  = adjacent_community_pairs(G, cmap)
-    
+    cg   = build_community_graph(G, cmap)
+
     adapter.community_map = cmap
     adapter.embeddings = embeddings
-    
+
     csa  = CSAEngine(adapter=adapter)
-    csa.set_community_graph(dist, adj)
+    csa.set_community_graph(dist, adj, community_graph=cg)
     return BeamTraversal(
-        adapter=adapter, 
-        csa_engine=csa, 
-        beam_width=beam_width, 
-        max_hop=max_hop
+        adapter=adapter,
+        csa_engine=csa,
+        beam_width=beam_width,
+        max_hop=max_hop,
+        governor=_BENCH_GOVERNOR,
     ), cmap
 
 
@@ -144,10 +157,11 @@ def build_bfs_traversal(
     
     csa  = UniformCSAEngine(adapter=adapter)
     return BeamTraversal(
-        adapter=adapter, 
-        csa_engine=csa, 
-        beam_width=beam_width, 
-        max_hop=max_hop
+        adapter=adapter,
+        csa_engine=csa,
+        beam_width=beam_width,
+        max_hop=max_hop,
+        governor=_BENCH_GOVERNOR,
     ), cmap
 
 

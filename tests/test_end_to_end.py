@@ -1,5 +1,5 @@
 """
-End-to-end integration tests for the full Parallax inference pipeline.
+End-to-end integration tests for the full CEREBRUM inference pipeline.
 
 Pipeline under test (Section 5 of PARALLAX.md):
   CSV → NetworkXAdapter
@@ -14,7 +14,7 @@ All tests run against the canonical toy graph fixture
 (tests/fixtures/toy_graph.csv, 19 nodes, 30 edges).
 
 These tests are the first verifiable proof that the complete pipeline
-operates as described in the Parallax white paper.
+operates as described in the CEREBRUM white paper.
 """
 import random
 from pathlib import Path

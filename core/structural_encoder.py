@@ -332,6 +332,32 @@ def build_community_distance_matrix(
     return distances
 
 
+def build_community_graph(
+    G: nx.Graph,
+    community_map: Dict[str, int],
+) -> "nx.Graph":
+    """
+    Build the community-level graph without computing any distances.
+
+    Each unique community ID becomes a node; two communities are connected
+    by an edge if at least one cross-community edge exists between them in G.
+
+    This is O(|E|) and is the lightweight alternative to
+    ``build_community_distance_matrix``.  Pass the result to
+    ``CSAEngine.set_community_graph(..., community_graph=cg)`` to enable
+    lazy on-demand distance computation instead of upfront all-pairs BFS.
+    """
+    communities = set(community_map.values())
+    cg = nx.Graph()
+    cg.add_nodes_from(communities)
+    for u, v in G.edges():
+        cu = community_map.get(u)
+        cv = community_map.get(v)
+        if cu is not None and cv is not None and cu != cv:
+            cg.add_edge(cu, cv)
+    return cg
+
+
 def adjacent_community_pairs(
     G: nx.Graph,
     community_map: Dict[str, int],

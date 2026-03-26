@@ -1,5 +1,5 @@
 """
-Hardware Abstraction Layer for Parallax.
+Hardware Abstraction Layer for CEREBRUM.
 
 Handles agnostic dispatch between CPU (NetworkX/NumPy) and GPU (RAPIDS/CuPy/Torch).
 Ensures scalability across diverse hardware environments.
@@ -8,7 +8,7 @@ import logging
 import functools
 from typing import Optional, Any
 
-logger = logging.getLogger("parallax.hardware")
+logger = logging.getLogger("cerebrum.hardware")
 
 # 1. Check for RAPIDS (cuGraph, cuDF)
 try:

@@ -1,5 +1,5 @@
 """
-Holographic Index for Parallax Federated Discovery.
+Holographic Index for CEREBRUM Federated Discovery.
 
 Provides compressed, privacy-preserving structural signatures of graphs.
 Uses Bloom Filters for membership and Centroid Embeddings for semantic relevance.
@@ -87,7 +87,7 @@ class CommunitySignature:
 
 class HolographicIndex:
     """
-    Aggregates signatures from multiple Parallax instances.
+    Aggregates signatures from multiple CEREBRUM instances.
     Used by FederatedAdapter to decide which remote instance to query.
     """
     def __init__(self):

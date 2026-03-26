@@ -1,5 +1,5 @@
 """
-MetaQA benchmark evaluation for Parallax (Phase 4).
+MetaQA benchmark evaluation for CEREBRUM (Phase 4).
 
 Dataset
 -------
@@ -76,7 +76,9 @@ from adapters.networkx_adapter import NetworkXAdapter
 from core.community_engine import best_of_n_dscf, merge_small_communities
 from core.embedding_engine import RandomEngine
 from core.attention_engine import CSAEngine
-from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
+from core.structural_encoder import (
+    build_community_distance_matrix, adjacent_community_pairs, build_community_graph,
+)
 from reasoning.traversal import BeamTraversal
 from reasoning.answer_extractor import extract
 
@@ -282,7 +284,7 @@ def evaluate_hop(
 # ---------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="MetaQA benchmark for Parallax")
+    parser = argparse.ArgumentParser(description="MetaQA benchmark for CEREBRUM")
     parser.add_argument("--hop",        type=int,   default=None,
                         help="Evaluate only this hop level (1, 2, or 3). Default: all.")
     parser.add_argument("--sample",     type=int,   default=None,
@@ -311,7 +313,7 @@ def main():
     # ------------------------------------------------------------------
     # Setup (done once, shared across all hop evaluations)
     # ------------------------------------------------------------------
-    print("\n=== Parallax — MetaQA Benchmark ===\n")
+    print("\n=== CEREBRUM — MetaQA Benchmark ===\n")
 
     if not KB_FILE.exists():
         print(f"ERROR: kb.txt not found at {KB_FILE}")
@@ -364,13 +366,14 @@ def main():
     print("Building CSA engine...")
     distances = build_community_distance_matrix(G, cmap)
     adj       = adjacent_community_pairs(G, cmap)
-    
+    cg        = build_community_graph(G, cmap)   # community-level graph for lazy distance
+
     # Attach communities and embeddings to adapter for lookups
     adapter.community_map = cmap
     adapter.embeddings = embeddings
-    
+
     csa = CSAEngine(adapter=adapter)
-    csa.set_community_graph(distances, adj)
+    csa.set_community_graph(distances, adj, community_graph=cg)
 
     # ------------------------------------------------------------------
     # Evaluate each hop level
@@ -405,7 +408,7 @@ def main():
     # Summary table
     # ------------------------------------------------------------------
     print("\n=== Results Summary ===\n")
-    print(f"  Model     : Parallax CSA + DSCF")
+    print(f"  Model     : CEREBRUM CSA + DSCF")
     print(f"  Embeddings: {args.embeddings}")
     print(f"  Beam width: {args.beam_width}")
     print(f"  Top-K     : {args.top_k}")

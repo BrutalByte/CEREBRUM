@@ -1,4 +1,4 @@
-Parallax: The Genesis Conversation
+CEREBRUM: The Genesis Conversation
 
 Complete Session Transcript with Annotations
 
@@ -10,7 +10,7 @@ bryan.alexander@buchorn.com
 
 March 2026  ·  Session ID: 2cdef21d-f550-41db-a96f-175b1c7bb1cc
 
-This document is the verbatim transcript of the Claude Code session in which the Parallax framework was conceived. It begins at the moment Bryan Alexander Buchorn (AMP) requested real-time cluster animation for the Home Assistant knowledge graph, and continues through the completion of the Parallax white paper. Editorial annotations (amber, marked with ▶) mark the pivotal conceptual transitions. A recurring theme in this session—and a major inspiration for the Dual-Signal Community Fusion (DSCF) algorithm—is the concept of **mid-level voting** used in triplex-redundant aircraft navigation. By requiring consensus between local, global, and flow signals, Parallax effectively "rights the navigation errors" (hallucinations) common in today's language graphs, moving AI from **Black-Box** speculation to **Glass-Box** verification.
+This document is the verbatim transcript of the Claude Code session in which the CEREBRUM framework was conceived. It begins at the moment Bryan Alexander Buchorn (AMP) requested real-time cluster animation for the Home Assistant knowledge graph, and continues through the completion of the CEREBRUM white paper. Editorial annotations (amber, marked with ▶) mark the pivotal conceptual transitions. A recurring theme in this session—and a major inspiration for the Dual-Signal Community Fusion (DSCF) algorithm—is the concept of **mid-level voting** used in triplex-redundant aircraft navigation. By requiring consensus between local, global, and flow signals, CEREBRUM effectively "rights the navigation errors" (hallucinations) common in today's language graphs, moving AI from **Black-Box** speculation to **Glass-Box** verification.
 
 Tool calls are shown inline in monospace.
  The session ran across multiple context windows; system-injected summaries are noted where they occur. All timestamps are UTC.
@@ -793,7 +793,7 @@ Good framing — this deserves to be thought through cleanly on its own terms be
 
   → ExitPlanMode: submitted plan for approval
 
-Chapter 8: The White Paper — Parallax Formalized
+Chapter 8: The White Paper — CEREBRUM Formalized
 
 #155  ASSISTANT  —  2026-03-18  04:17:43 UTC  [claude-sonnet-4-6]
 
@@ -819,11 +819,11 @@ Applying fixes now:
 
 #160  ASSISTANT  —  2026-03-18  04:18:21 UTC  [claude-sonnet-4-6]
 
-  → Edit: C:\Users\brandon\.claude\plans\polished-prancing-flame.md  [**H3 (Interpretability Hypothesis)**: Parallax paths receive...]
+  → Edit: C:\Users\brandon\.claude\plans\polished-prancing-flame.md  [**H3 (Interpretability Hypothesis)**: CEREBRUM paths receive...]
 
 #161  ASSISTANT  —  2026-03-18  04:18:25 UTC  [claude-sonnet-4-6]
 
-  → Edit: C:\Users\bryan\.claude\plans\polished-prancing-flame.md  [**H3 (Interpretability Hypothesis)**: Parallax paths receive...]
+  → Edit: C:\Users\bryan\.claude\plans\polished-prancing-flame.md  [**H3 (Interpretability Hypothesis)**: CEREBRUM paths receive...]
 
 #162  ASSISTANT  —  2026-03-18  04:18:32 UTC  [claude-sonnet-4-6]
 
@@ -875,7 +875,7 @@ Now generating the Word document. Let me check if python-docx is available first
 
 #174  ASSISTANT  —  2026-03-18  04:20:07 UTC  [claude-sonnet-4-6]
 
-  → Bash: Generate Parallax Word document
+  → Bash: Generate CEREBRUM Word document
 
 #175  ASSISTANT  —  2026-03-18  04:20:12 UTC  [claude-sonnet-4-6]
 
@@ -913,7 +913,7 @@ Now generating the Word document. Let me check if python-docx is available first
 
 The Word document is ready:
 
-`C:\Users\bryan\Documents\Parallax_White_Paper.docx` — 54 KB
+`C:\Users\bryan\Documents\CEREBRUM_White_Paper.docx` — 54 KB
 
 Improvements applied before generating:- Added complete community_distance(u, v) definition with precomputation note- Clarified W_k matrix (identity by default, learnable when supervised)- Added Section 6.5 — full phased build plan (Phase 0–5) that was missing- Added Section 6.6 — end-to-end computational complexity analysis (O(B·L·k̄·d), sublinear in graph size)- Added Section 6.7 — known failure modes with mitigations (hub nodes, homogeneous graphs, disconnected graphs, adversarial injection)- Added H3 evaluation protocol (N≥30 annotators, Cohen's kappa target)- Added DSCF non-determinism note with multi-run guidance- Fixed Appendix A: post-split community ID assignment policy specified- Fixed GraphRAG citation style
 
@@ -1005,7 +1005,7 @@ Let me use the Write tool directly:
 
 Done. The document is at:
 
-`C:\Users\bryan\Documents\Parallax_White_Paper_arXiv.docx` — 55 KB
+`C:\Users\bryan\Documents\CEREBRUM_White_Paper_arXiv.docx` — 55 KB
 
 What's in it:
 
@@ -1051,7 +1051,7 @@ continue
 
 #214  ASSISTANT  —  2026-03-18  05:35:23 UTC  [claude-sonnet-4-6]
 
-Done. `C:\Users\bryan\Documents\Parallax_Origin_Story.docx` — 42.5 KB
+Done. `C:\Users\bryan\Documents\CEREBRUM_Origin_Story.docx` — 42.5 KB
 
 The document tells the complete intellectual journey in eight sections:
 
@@ -1063,7 +1063,7 @@ The document tells the complete intellectual journey in eight sections:
 
 4. The Conceptual Leap — Your follow-up: *"How can we treat Knowledge Graphs like LLMs?"* This reframed everything from engineering to theory. The Transformer-to-KG equivalence was worked out step by step from that question.
 
-5. The Critical Distinction from GraphRAG — GraphRAG uses communities as text chunks; Parallax uses communities as attention mechanisms. The KG reasons, not the LLM.
+5. The Critical Distinction from GraphRAG — GraphRAG uses communities as text chunks; CEREBRUM uses communities as attention mechanisms. The KG reasons, not the LLM.
 
 6. The Role of Home Assistant — DSCF, the algorithm suite, refinement, WebSocket broadcast, and Neo4j patterns are all already in Home Assistant's codebase. Home Assistant is the prototype.
 
@@ -1099,7 +1099,7 @@ The full transcript is in the JSONL file referenced in the context. Let me read 
 
 #221  ASSISTANT  —  2026-03-18  05:44:50 UTC  [claude-sonnet-4-6]
 
-  → Bash: Find the key Parallax genesis messages
+  → Bash: Find the key CEREBRUM genesis messages
 
 #222  ASSISTANT  —  2026-03-18  05:45:05 UTC  [claude-sonnet-4-6]
 

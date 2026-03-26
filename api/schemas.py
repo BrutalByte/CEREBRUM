@@ -1,4 +1,4 @@
-"""Pydantic schemas for the Parallax REST API."""
+"""Pydantic schemas for the CEREBRUM REST API."""
 from typing import List, Dict, Optional, Any
 from pydantic import BaseModel, Field
 
@@ -76,6 +76,23 @@ class EdgeResponse(BaseModel):
 class SearchResponse(BaseModel):
     results: List[EntityResponse]
     query: str
+
+
+class SimilarSearchRequest(BaseModel):
+    embedding: List[float] = Field(..., description="Query vector for semantic search")
+    top_k: int = Field(default=10, ge=1, le=100)
+
+
+class SimilarSearchResponse(BaseModel):
+    query_vector: List[float]
+    results: List[EntityResponse]
+
+
+class FeedbackRequest(BaseModel):
+    path_nodes: List[str] = Field(..., description="The sequence of nodes in the path")
+    edge_features: List[List[float]] = Field(..., description="Recorded (sim, cs, etw, nd, hd) for each hop")
+    community_sequence: List[int] = Field(..., description="Community ID for each node in the path")
+    reward: float = Field(..., description="Feedback value: 1.0 for helpful, -1.0 for noise")
 
 
 class CommunityResponse(BaseModel):
@@ -193,4 +210,243 @@ class BridgesResponse(BaseModel):
     bridges: List[BridgeRecordSchema]
 
 
+# ---------------------------------------------------------------------------
+# Phase 14 — REM Cycle schemas
+# ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Phase 15 — Insight Engine schemas
+# ---------------------------------------------------------------------------
+
+class InsightEventSchema(BaseModel):
+    bridging_node: str
+    source: str
+    target: str
+    insight_score: float
+    explanatory_power: float
+    community_leap: int
+    edge_created: bool
+    timestamp: float
+    # Phase 16 — validation fields
+    id: str = ""
+    validation_status: str = "pending"
+    corroboration_count: int = 0
+
+
+class InsightStatusResponse(BaseModel):
+    total_events: int
+    ring_buffer_size: int
+    ring_buffer_capacity: int
+    paused: bool
+    recent_events: List[InsightEventSchema]
+
+
+class InsightScanResponse(BaseModel):
+    events_found: int
+    events: List[InsightEventSchema]
+
+
+# ---------------------------------------------------------------------------
+# Phase 16 — InsightValidator schemas
+# ---------------------------------------------------------------------------
+
+class InsightValidateResponse(BaseModel):
+    event_id: str
+    validation_status: str
+    corroboration_count: int
+    insight_score: float
+
+
+class InsightValidateAllResponse(BaseModel):
+    validated: int
+    results: List[InsightValidateResponse]
+
+
+# ---------------------------------------------------------------------------
+# Phase 16 — MetaInsightEngine schemas
+# ---------------------------------------------------------------------------
+
+class MetaInsightEventSchema(BaseModel):
+    id: str
+    insight_a_id: str
+    insight_b_id: str
+    connection_type: str
+    meta_score: float
+    depth: int
+    timestamp: float
+    chain_ids: List[str]
+
+
+class MetaInsightStatusResponse(BaseModel):
+    total_meta_events: int
+    insight_graph_nodes: int
+    insight_graph_edges: int
+    recent_meta_events: List[MetaInsightEventSchema]
+
+
+class InsightGraphNodeSchema(BaseModel):
+    id: str
+    source_entity: str
+    target_entity: str
+    insight_score: float
+    community_leap: int
+    timestamp: float
+
+
+class InsightGraphEdgeSchema(BaseModel):
+    from_id: str
+    to_id: str
+    connection_type: str
+    score: float
+
+
+class InsightGraphResponse(BaseModel):
+    nodes: List[InsightGraphNodeSchema]
+    edges: List[InsightGraphEdgeSchema]
+
+
+# ---------------------------------------------------------------------------
+# Phase 14 — REM Cycle schemas
+# ---------------------------------------------------------------------------
+
+class REMRunRequest(BaseModel):
+    dry_run: bool = Field(
+        default=False,
+        description="If true, return the report without mutating the graph.",
+    )
+
+
+class REMReportSchema(BaseModel):
+    pruned_edges: int
+    synthesized_edges: int
+    communities_updated: bool
+    duration_seconds: float
+    pruned_edge_list: List[List[str]]    # [[source, target, relation], ...]
+    synthesized_edge_list: List[List[str]]
+    dry_run: bool
+    timestamp: float
+
+
+class REMStatusResponse(BaseModel):
+    last_report: Optional[REMReportSchema]
+    can_rollback: bool
+
+
+class REMRollbackResponse(BaseModel):
+    operations: int
+    message: str
+
+
+# ---------------------------------------------------------------------------
+# Inference engine schemas
+# ---------------------------------------------------------------------------
+
+class InferenceProposalSchema(BaseModel):
+    source: str
+    via: str
+    target: str
+    derived_relation: str
+    confidence: float
+    domain: str
+    note: str
+    derivation: str
+
+
+class InferenceReportSchema(BaseModel):
+    proposal_count: int
+    materialized: int
+    rules_applied: Dict[str, int]
+    skipped_existing: int
+    duration_seconds: float
+    dry_run: bool
+    timestamp: float
+    proposals: List[InferenceProposalSchema]
+
+
+class InferenceStatusResponse(BaseModel):
+    last_report: Optional[InferenceReportSchema]
+    can_rollback: bool
+    active_rule_count: int
+
+
+class InferenceRollbackResponse(BaseModel):
+    removed: int
+    message: str
+
+
+# ---------------------------------------------------------------------------
+# Conversation schemas
+# ---------------------------------------------------------------------------
+
+class ChatRequest(BaseModel):
+    session_id: Optional[str] = None
+    """Omit to start a new session; provide to continue an existing one."""
+    question: str
+
+
+class ConversationTurnSchema(BaseModel):
+    turn_number: int
+    raw_question: str
+    resolved_question: str
+    seed_entity: Optional[str]
+    seed_entity_label: str
+    answer_text: str
+    new_entities: List[str]
+    is_followup: bool
+    focus_shift: bool
+    clarification_needed: bool
+    clarification_options: List[List[str]]   # [[id, label], ...]
+    knowledge_gap: bool
+    knowledge_gap_hint: str
+    hop_hint: int
+
+
+class ChatResponse(BaseModel):
+    session_id: str
+    turn: ConversationTurnSchema
+    focus_entity: Optional[str]
+    focus_entity_label: str
+    entity_trail: List[str]    # human-readable labels of entities mentioned so far
+    turn_count: int
+
+
+class ChatResetResponse(BaseModel):
+    session_id: str
+    message: str
+
+
+# ---------------------------------------------------------------------------
+# Text ingest schemas
+# ---------------------------------------------------------------------------
+
+class IngestTextRequest(BaseModel):
+    text: str
+    dry_run: bool = False
+    min_confidence: float = 0.30
+    create_new_entities: bool = True
+
+
+class IngestTripleSchema(BaseModel):
+    source: str
+    relation: str
+    target: str
+    confidence: float
+
+
+class IngestReportSchema(BaseModel):
+    text_length: int
+    sentences_processed: int
+    entities_found: int
+    entities_linked: int
+    entities_new: int
+    triples_extracted: int
+    triples_accepted: int
+    triples_skipped_duplicate: int
+    triples_skipped_low_confidence: int
+    edges_added: int
+    nodes_added: int
+    added_triples: List[IngestTripleSchema]
+    duration_seconds: float
+    provenance: str
+    dry_run: bool
+    timestamp: float

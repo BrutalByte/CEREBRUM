@@ -2,11 +2,11 @@
 Abstract base class for graph backends.
 
 Implement these four methods for any graph system (NetworkX, Neo4j, RDF, etc.)
-and the full Parallax stack works with it unchanged.
+and the full CEREBRUM stack works with it unchanged.
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 
 
 @dataclass
@@ -24,11 +24,16 @@ class Edge:
     relation_type: str
     weight: float = 1.0
     properties: dict = field(default_factory=dict)
+    # Contradiction handling fields
+    confidence: float = 1.0          # Claim certainty [0, 1]; 1.0 = fully certain
+    provenance: str = ""             # Source ID: "pubmed:123", "wikidata:Q42", etc.
+    valid_from: Optional[float] = None  # Unix timestamp; None = always valid
+    valid_to: Optional[float] = None    # Unix timestamp; None = still valid
 
 
 class GraphAdapter(ABC):
     """
-    Minimal interface that any graph backend must implement to work with Parallax.
+    Minimal interface that any graph backend must implement to work with CEREBRUM.
 
     All four abstract methods are required. Two optional helpers (get_all_entities,
     get_edge_types) have default NotImplementedError stubs — override when available.
@@ -45,12 +50,16 @@ class GraphAdapter(ABC):
         entity_id: str,
         edge_types: List[str] = None,
         max_neighbors: int = 50,
+        context_embedding: Optional["np.ndarray"] = None,
     ) -> List[Edge]:
         """
         Return outgoing edges from entity_id.
 
         If edge_types is provided, filter to only those relation types.
         Callers set max_neighbors to prevent beam explosion at high-degree nodes.
+        
+        context_embedding: optional vector used by FederatedAdapter for
+                           holographic blind discovery.
         """
         ...
 
@@ -78,6 +87,18 @@ class GraphAdapter(ABC):
     @abstractmethod
     def get_embedding(self, entity_id: str) -> Optional["np.ndarray"]: # noqa: F821
         """Return the embedding vector for entity_id, or None."""
+        ...
+
+    @abstractmethod
+    def find_similar(
+        self, 
+        embedding: "np.ndarray", 
+        top_k: int = 10
+    ) -> List[Entity]:
+        """
+        Find entities most semantically similar to the given vector.
+        Used for cross-modal and blind federated discovery.
+        """
         ...
 
     def find_entities_masked(self, query: str, top_k: int = 10) -> List[Dict]:

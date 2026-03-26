@@ -1,5 +1,5 @@
 """
-Entity Alignment Engine for Parallax.
+Entity Alignment Engine for CEREBRUM.
 
 Handles the mapping and resolution of entities across multiple GraphAdapters.
 Provides an explicit alignment index to unify disparate entity IDs into

@@ -1,5 +1,5 @@
 """
-RDF/SPARQL graph adapter for Parallax.
+RDF/SPARQL graph adapter for CEREBRUM.
 
 Connects to any SPARQL endpoint (Wikidata, DBpedia, local RDF store)
 and implements GraphAdapter.
@@ -95,6 +95,7 @@ class RDFAdapter(GraphAdapter):
         entity_id: str,
         edge_types: Optional[List[str]] = None,
         max_neighbors: int = 50,
+        context_embedding: Optional[np.ndarray] = None,
     ) -> List[Edge]:
         rows = self._query(
             f"SELECT ?pred ?obj WHERE {{"

@@ -1,5 +1,5 @@
 """
-Hetionet biomedical knowledge graph benchmark for Parallax (Phase 4).
+Hetionet biomedical knowledge graph benchmark for CEREBRUM (Phase 4).
 
 Hetionet integrates multiple biomedical databases into a single graph:
   Nodes : 47,031 across 11 types (Gene, Disease, Compound, Anatomy,
@@ -475,7 +475,7 @@ def build_traversal(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Hetionet biomedical KG benchmark for Parallax"
+        description="Hetionet biomedical KG benchmark for CEREBRUM"
     )
     parser.add_argument("--template",       type=str,  default=None,
                         help=f"QA template to evaluate. Options: "
@@ -512,7 +512,7 @@ def main():
         else list(QA_TEMPLATES.keys())
     )
 
-    print("\n=== Parallax — Hetionet Biomedical KG Benchmark ===\n")
+    print("\n=== CEREBRUM — Hetionet Biomedical KG Benchmark ===\n")
 
     # ------------------------------------------------------------------
     # Data
@@ -661,7 +661,7 @@ def main():
     if all_results:
         print("=== Summary by Template ===\n")
         print(f"  {'Template':<35} {'Hop':<5} {'DSCF H@1':>10} {'LPA H@1':>9} "
-              f"{'BFS H@1':>9} {'Δ DSCF-BFS':>12}")
+              f"{'BFS H@1':>9} {'d DSCF-BFS':>12}")
         print("  " + "-" * 85)
         for r in all_results:
             a, b, c = r["dscf"], r["lpa"], r["bfs"]

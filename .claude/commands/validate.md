@@ -1,10 +1,10 @@
 ---
-description: Comprehensive validation for the Parallax framework
+description: Comprehensive validation for the CEREBRUM framework
 ---
 
-# Validate Parallax
+# Validate CEREBRUM
 
-This command performs a full validation of the Parallax codebase, from static analysis to end-to-end user workflows.
+This command performs a full validation of the CEREBRUM codebase, from static analysis to end-to-end user workflows.
 
 ## Phase 1: Static Analysis (Linting & Style)
 
@@ -33,7 +33,7 @@ This script verifies actual user workflows (CLI Query, Community Inspection, and
 
 ## Summary
 
-If all phases pass, Parallax is stable and ready for release.
+If all phases pass, CEREBRUM is stable and ready for release.
 
 
 

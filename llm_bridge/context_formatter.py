@@ -1,16 +1,146 @@
 """
-LLM bridge: format Parallax traversal output as structured LLM context.
+LLM bridge: format CEREBRUM traversal output as structured LLM context
+and invoke any LLM for natural language generation.
 
-Parallax performs all reasoning. The LLM's role is purely natural language
+CEREBRUM performs all reasoning. The LLM's role is purely natural language
 generation from the grounded, verified paths (Section 10.2).
 
 Usage:
-    answers = extract(paths, top_k=3)
-    prompt  = to_prompt(answers, query="What did Einstein work on?")
-    # Pass prompt to any LLM (OpenAI, Claude, local model)
-"""
-from typing import List, Dict, Any, Optional
+    from llm_bridge.context_formatter import generate
+    from llm_bridge.adapters import AnthropicAdapter
 
+    answers = extract(paths, top_k=3)
+    result  = generate(answers, query="What did Einstein work on?",
+                       llm_fn=AnthropicAdapter())
+    print(result.response)          # natural language answer
+    print(result.prompt)            # the prompt that was sent (auditable)
+
+Any callable (str) -> str works as llm_fn — the adapter wrappers in
+llm_bridge/adapters.py are convenience helpers, not requirements.
+"""
+from __future__ import annotations
+
+import time
+from dataclasses import dataclass, field
+from typing import Callable, List, Dict, Any, Optional
+
+
+# ---------------------------------------------------------------------------
+# GenerationResult — output of generate()
+# ---------------------------------------------------------------------------
+
+@dataclass
+class GenerationResult:
+    """
+    The output of a generate() call.
+
+    Carries the LLM response alongside the full context that produced it,
+    so the caller can always audit what was sent and which paths were used.
+
+    Fields
+    ------
+    response        : Natural language text returned by the LLM.
+    prompt          : The exact prompt string sent to the LLM.
+    query           : The original query passed to generate().
+    paths_used      : Number of CEREBRUM answer paths included in the prompt.
+    source_entities : Entity IDs of the answers that were included.
+    duration_seconds: Wall-clock time for the LLM call.
+    """
+    response:         str
+    prompt:           str
+    query:            str
+    paths_used:       int
+    source_entities:  List[str]
+    duration_seconds: float = 0.0
+    timestamp:        float = field(default_factory=time.time)
+
+
+# ---------------------------------------------------------------------------
+# generate() — the main entry point
+# ---------------------------------------------------------------------------
+
+DEFAULT_INSTRUCTION = (
+    "Using only the knowledge graph paths above, answer the query in clear, "
+    "concise natural language. Cite the path steps where relevant. "
+    "Do not add information that is not present in the paths."
+)
+
+
+def generate(
+    answers,                              # List[Answer] from answer_extractor.extract()
+    query: str,
+    llm_fn: Callable[[str], str],
+    max_paths: int = 5,
+    instruction: str = DEFAULT_INSTRUCTION,
+    adapter=None,                         # Optional GraphAdapter for entity label lookup
+) -> GenerationResult:
+    """
+    Format CEREBRUM answers into a grounded prompt and call an LLM for
+    natural language generation.
+
+    Parameters
+    ----------
+    answers     : List[Answer] from ``reasoning.answer_extractor.extract()``.
+    query       : The original query string (included verbatim in the prompt).
+    llm_fn      : Any callable with signature ``(prompt: str) -> str``.
+                  Use the adapter wrappers in ``llm_bridge.adapters`` for
+                  Anthropic, OpenAI, Ollama, or HuggingFace. A plain lambda
+                  or function works equally well.
+    max_paths   : Maximum number of answer paths to include in the prompt.
+                  Fewer paths = shorter prompt = cheaper/faster LLM call.
+    instruction : Task instruction appended at the end of the prompt.
+                  Override to change tone, language, or output format.
+    adapter     : Optional GraphAdapter used to resolve entity IDs to human-
+                  readable labels in the prompt. Pass None to use raw IDs.
+
+    Returns
+    -------
+    GenerationResult with the LLM response, the prompt, and metadata.
+
+    Examples
+    --------
+    Plain callable (no dependencies):
+        result = generate(answers, "Who influenced Einstein?",
+                          llm_fn=lambda p: "Isaac Newton influenced Einstein.")
+
+    Anthropic:
+        from llm_bridge.adapters import AnthropicAdapter
+        result = generate(answers, query, AnthropicAdapter())
+
+    OpenAI:
+        from llm_bridge.adapters import OpenAIAdapter
+        result = generate(answers, query, OpenAIAdapter("gpt-4o-mini"))
+
+    Ollama:
+        from llm_bridge.adapters import OllamaAdapter
+        result = generate(answers, query, OllamaAdapter("llama3.2"))
+    """
+    prompt = to_prompt(
+        answers,
+        query=query,
+        adapter=adapter,
+        max_paths=max_paths,
+        instruction=instruction,
+    )
+
+    t0 = time.time()
+    response = llm_fn(prompt)
+    duration = time.time() - t0
+
+    used = answers[:max_paths]
+    return GenerationResult(
+        response=response,
+        prompt=prompt,
+        query=query,
+        paths_used=len(used),
+        source_entities=[a.entity_id for a in used],
+        duration_seconds=duration,
+    )
+
+
+# ---------------------------------------------------------------------------
+# to_prompt
+# ---------------------------------------------------------------------------
 
 def to_prompt(
     answers,                # List[Answer] from answer_extractor.extract()

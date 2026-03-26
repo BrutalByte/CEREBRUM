@@ -20,11 +20,12 @@ class MockAdapter(GraphAdapter):
         self.embeddings = embeddings
 
     def get_entity(self, entity_id): return None
-    def get_neighbors(self, entity_id, edge_types=None, max_neighbors=50): return []
+    def get_neighbors(self, entity_id, edge_types=None, max_neighbors=50, context_embedding=None): return []
     def find_entities(self, query, top_k=10): return []
     def to_networkx(self): return None
     def get_community(self, entity_id): return self.communities.get(entity_id, -1)
     def get_embedding(self, entity_id): return self.embeddings.get(entity_id)
+    def find_similar(self, embedding, top_k=10): return []
 
 # ---------------------------------------------------------------------------
 # Fixtures

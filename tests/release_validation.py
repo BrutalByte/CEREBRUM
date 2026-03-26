@@ -1,5 +1,5 @@
 """
-Release Validation Script for Parallax.
+Release Validation Script for CEREBRUM.
 
 This script performs end-to-end verification of the primary user journeys:
 1. CLI Reasoning Query
@@ -35,13 +35,13 @@ def main():
     
     # 1. CLI Multi-hop Query
     run_command([
-        sys.executable, "-m", "cli.parallax", "query", 
+        sys.executable, "-m", "cli.cerebrum", "query", 
         "--csv", str(csv_path), "newton", "--top-k", "3"
     ], "CLI Reasoning Query")
 
     # 2. CLI Community Inspection
     run_command([
-        sys.executable, "-m", "cli.parallax", "communities", 
+        sys.executable, "-m", "cli.cerebrum", "communities", 
         "--csv", str(csv_path)
     ], "CLI Community Inspection")
 
@@ -49,7 +49,7 @@ def main():
     print("\n>>> Validating: API Server Lifecycle")
     port = 8200
     server_process = subprocess.Popen([
-        sys.executable, "-m", "cli.parallax", "serve",
+        sys.executable, "-m", "cli.cerebrum", "serve",
         "--csv", str(csv_path), "--port", str(port)
     ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     

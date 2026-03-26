@@ -12,6 +12,27 @@ from typing import List, Optional
 import numpy as np
 
 
+def path_confidence(path) -> float:
+    """
+    Minimum edge confidence along the path (weakest-link rule).
+
+    A reasoning chain is only as confident as its least-certain edge.
+    Paths with no confidence data (legacy graphs) return 1.0.
+
+    Parameters
+    ----------
+    path : TraversalPath
+
+    Returns
+    -------
+    float in [0, 1]
+    """
+    confs = getattr(path, "edge_confidences", [])
+    if not confs:
+        return 1.0
+    return min(confs)
+
+
 def community_coherence(community_sequence: List[int]) -> float:
     """
     Score a community traversal sequence for domain consistency.

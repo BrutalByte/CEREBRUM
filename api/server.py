@@ -1,5 +1,5 @@
 """
-Parallax FastAPI REST server.
+CEREBRUM FastAPI REST server.
 
 Endpoints:
   GET  /health       — service health and readiness
@@ -16,6 +16,7 @@ Or programmatically:
     app = create_app(adapter, embedding_engine, community_map)
 """
 import os
+import time
 from contextlib import asynccontextmanager
 from typing import Optional, Dict, List
 
@@ -31,12 +32,22 @@ from api.schemas import (
     QueryRequest, QueryResponse, CommunitiesResponse,
     HealthResponse, PathResult, PathNode, CommunityInfo,
     EntityResponse, EdgeResponse, SearchResponse,
+    SimilarSearchRequest, SimilarSearchResponse, FeedbackRequest,
     CommunityResponse, EmbeddingResponse,
     MaskedEntityResponse, MaskedSearchResponse,
     CommunitySignatureSchema, HologramResponse,
     HandshakeResponse, ReasoningCallbackRequest, ReasoningCallbackResponse,
     StreamIngestRequest, StreamIngestResponse, StreamStatusResponse,
     BridgeRecordSchema, BridgesResponse,
+    REMRunRequest, REMReportSchema, REMStatusResponse, REMRollbackResponse,
+    InferenceReportSchema, InferenceStatusResponse, InferenceRollbackResponse,
+    InferenceProposalSchema,
+    ChatRequest, ChatResponse, ChatResetResponse, ConversationTurnSchema,
+    IngestTextRequest, IngestReportSchema, IngestTripleSchema,
+    InsightEventSchema, InsightStatusResponse, InsightScanResponse,
+    InsightValidateResponse, InsightValidateAllResponse,
+    MetaInsightEventSchema, MetaInsightStatusResponse,
+    InsightGraphNodeSchema, InsightGraphEdgeSchema, InsightGraphResponse,
 )
 
 # ---------------------------------------------------------------------------
@@ -95,6 +106,13 @@ _state = {
     "csa_metadata":     None,   # {"distances": dict, "adjacent_pairs": set}
     "default_edge_type_weights": None,
     "hologram":         None,   # List[CommunitySignature]
+    "meta_learner":     None,   # MetaParameterLearner (Milestone 4)
+    "rem_engine":       None,   # REMEngine (lazy-initialized on first /rem call)
+    "infer_engine":     None,   # TransitiveInferenceEngine (lazy-initialized on first /infer call)
+    "chat_manager":     None,   # ConversationManager (lazy-initialized on first /chat call)
+    "chat_sessions":    {},     # session_id -> ConversationSession
+    "text_ingestor":    None,   # TextIngestor (lazy-initialized on first /ingest call)
+    "insight_engine":   None,   # InsightEngine (lazy-initialized on first /insight call)
 }
 
 
@@ -114,6 +132,7 @@ def create_app(
     target_communities: int = 500,
     default_edge_type_weights: Optional[Dict[str, float]] = None,
     cache_path: Optional[str] = None,
+    use_meta_learning: bool = True,
 ) -> FastAPI:
     """
     Create a configured FastAPI app.
@@ -133,13 +152,14 @@ def create_app(
                 target_communities,
                 default_edge_type_weights,
                 cache_path,
+                use_meta_learning=use_meta_learning,
             )
         yield
 
     app = FastAPI(
-        title="Parallax KG Reasoning API",
+        title="CEREBRUM KG Reasoning API",
         description="Community-Structured Graph Attention for Knowledge Graph Reasoning",
-        version="0.1.0",
+        version="1.2.0",
         lifespan=lifespan,
     )
 
@@ -187,9 +207,14 @@ def create_app(
 
         csa = CSAEngine(
             adapter=adapter,
-            edge_type_weights=edge_type_weights_to_use
+            edge_type_weights=edge_type_weights_to_use,
+            community_params=csa_meta.get("community_params"),
         )
         csa.set_community_graph(csa_meta["distances"], csa_meta["adjacent_pairs"])
+        
+        # Milestone 4: Attach meta-learner for adaptive tuning
+        if _state["meta_learner"]:
+            csa.set_meta_learner(_state["meta_learner"])
 
         traversal = BeamTraversal(
             adapter=adapter,
@@ -248,8 +273,15 @@ def create_app(
 
         async def generate():
             from reasoning.answer_extractor import extract
-            csa = CSAEngine(adapter=adapter, edge_type_weights=req.edge_type_weights or default_edge_type_weights)
+            csa = CSAEngine(
+                adapter=adapter, 
+                edge_type_weights=req.edge_type_weights or default_edge_type_weights,
+                community_params=csa_meta.get("community_params"),
+            )
             csa.set_community_graph(csa_meta["distances"], csa_meta["adjacent_pairs"])
+            
+            if _state["meta_learner"]:
+                csa.set_meta_learner(_state["meta_learner"])
 
             traversal = AsyncBeamTraversal(
                 adapter=adapter,
@@ -276,6 +308,28 @@ def create_app(
                 hop_count += 1
 
         return StreamingResponse(generate(), media_type="application/x-ndjson")
+
+    @app.post("/feedback", tags=["reasoning"])
+    async def feedback(req: FeedbackRequest, node: Dict = Depends(check_scope("query"))):
+        """
+        Record user feedback for a specific reasoning path.
+        Triggers online parameter adaptation via MetaParameterLearner.
+        """
+        if not _state["meta_learner"]:
+            raise HTTPException(status_code=501, detail="Meta-learning is not enabled")
+
+        from reasoning.traversal import TraversalPath
+        
+        # Note: We only need edge_features and community_sequence for the update
+        dummy_path = TraversalPath(
+            nodes=req.path_nodes,
+            edge_features=[tuple(f) for f in req.edge_features],
+            community_sequence=req.community_sequence
+        )
+        
+        _state["meta_learner"].update_from_feedback(dummy_path, req.reward)
+        
+        return {"status": "success", "message": "Feedback recorded, model updated"}
 
     @app.get("/communities", response_model=CommunitiesResponse, tags=["graph"])
     async def communities(node: Dict = Depends(get_authenticated_node)):
@@ -404,6 +458,32 @@ def create_app(
             results=[MaskedEntityResponse(**r) for r in results]
         )
 
+    @app.post("/search/similar", response_model=SimilarSearchResponse, tags=["graph"])
+    async def search_similar(req: SimilarSearchRequest, node: Dict = Depends(check_scope("search"))):
+        """
+        Perform semantic vector search across the graph.
+        Returns entities most similar to the provided embedding vector.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Service not ready")
+
+        adapter = _state["adapter"]
+        emb_query = np.array(req.embedding, dtype=np.float32)
+        
+        ents = adapter.find_similar(emb_query, top_k=req.top_k)
+        
+        return SimilarSearchResponse(
+            query_vector=req.embedding,
+            results=[
+                EntityResponse(
+                    id=e.id, 
+                    label=e.label, 
+                    type=e.type, 
+                    properties=e.properties
+                ) for e in ents if e
+            ]
+        )
+
     @app.get("/hologram", response_model=HologramResponse, tags=["federated"])
     async def get_hologram(node: Dict = Depends(get_authenticated_node)):
         if not _is_ready():
@@ -422,7 +502,7 @@ def create_app(
     async def handshake():
         if not _is_ready():
             return HandshakeResponse(
-                version="0.2.0",
+                version="1.2.0",
                 capabilities=[],
                 entity_types=[],
                 relation_types=[],
@@ -434,11 +514,9 @@ def create_app(
         cm = _state["community_map"]
         
         # Infer types from adapter if supported, or sample
-        # For NetworkXAdapter we can look at node/edge attributes
         entity_types = set()
         relation_types = set()
         
-        # Sample some nodes/edges to find types (limited for performance)
         G = adapter.to_networkx()
         for _, data in list(G.nodes(data=True))[:100]:
             entity_types.add(data.get("type", "entity"))
@@ -446,8 +524,8 @@ def create_app(
             relation_types.add(data.get("relation", "link"))
 
         return HandshakeResponse(
-            version="0.2.0",
-            capabilities=["query", "search", "masked_search", "hologram", "traversal", "reasoning_callback"],
+            version="1.2.0",
+            capabilities=["query", "search", "masked_search", "hologram", "traversal", "reasoning_callback", "feedback", "search_similar"],
             entity_types=list(entity_types),
             relation_types=list(relation_types),
             node_count=adapter.node_count(),
@@ -472,8 +550,14 @@ def create_app(
         community_map = _state["community_map"]
         csa_meta     = _state["csa_metadata"]
 
-        csa = CSAEngine(adapter=adapter)
+        csa = CSAEngine(
+            adapter=adapter,
+            community_params=csa_meta.get("community_params")
+        )
         csa.set_community_graph(csa_meta["distances"], csa_meta["adjacent_pairs"])
+        
+        if _state["meta_learner"]:
+            csa.set_meta_learner(_state["meta_learner"])
 
         traversal = BeamTraversal(
             adapter=adapter,
@@ -678,6 +762,570 @@ def create_app(
             ],
         )
 
+    # ---------------------------------------------------------------------------
+    # Phase 15 — Insight Engine Endpoints
+    # ---------------------------------------------------------------------------
+
+    def _get_insight_engine():
+        """Lazy-initialize InsightEngine on first call."""
+        from core.insight_engine import InsightEngine
+        if _state["insight_engine"] is None:
+            if not _is_ready():
+                raise HTTPException(status_code=503, detail="Service not ready — call load() first")
+            _state["insight_engine"] = InsightEngine(_state["adapter"])
+        return _state["insight_engine"]
+
+    def _insight_event_schema(ev) -> InsightEventSchema:
+        return InsightEventSchema(
+            bridging_node=ev.bridging_node,
+            source=ev.source,
+            target=ev.target,
+            insight_score=ev.insight_score,
+            explanatory_power=ev.explanatory_power,
+            community_leap=ev.community_leap,
+            edge_created=ev.edge_created,
+            timestamp=ev.timestamp,
+            id=getattr(ev, "id", ""),
+            validation_status=getattr(ev, "validation_status", "pending"),
+            corroboration_count=getattr(ev, "corroboration_count", 0),
+        )
+
+    @app.get("/insight/status", response_model=InsightStatusResponse, tags=["insight"])
+    async def insight_status(node: Dict = Depends(get_authenticated_node)):
+        """
+        Return InsightEngine status: ring buffer occupancy, total events fired,
+        pause state, and the 10 most recent InsightEvents.
+        """
+        ie = _get_insight_engine()
+        return InsightStatusResponse(
+            total_events=ie.total_events,
+            ring_buffer_size=ie.buffer_size,
+            ring_buffer_capacity=ie.buffer_capacity,
+            paused=ie.is_paused,
+            recent_events=[_insight_event_schema(ev) for ev in ie.recent_events(10)],
+        )
+
+    @app.get("/insight/events", response_model=InsightStatusResponse, tags=["insight"])
+    async def insight_events(n: int = 20, node: Dict = Depends(get_authenticated_node)):
+        """Return the last n InsightEvents (default 20)."""
+        ie = _get_insight_engine()
+        return InsightStatusResponse(
+            total_events=ie.total_events,
+            ring_buffer_size=ie.buffer_size,
+            ring_buffer_capacity=ie.buffer_capacity,
+            paused=ie.is_paused,
+            recent_events=[_insight_event_schema(ev) for ev in ie.recent_events(n)],
+        )
+
+    @app.post("/insight/scan", response_model=InsightScanResponse, tags=["insight"])
+    async def insight_scan(node: Dict = Depends(check_scope("query"))):
+        """
+        Trigger an on-demand cold-path community boundary scan.
+
+        Finds high-similarity unconnected node pairs at community edges and
+        materializes INSIGHT_LINK edges where warranted. Safe to call at any
+        time — no mutations if no insights meet the salience threshold.
+        """
+        ie = _get_insight_engine()
+        events = ie.scan_boundaries()
+        return InsightScanResponse(
+            events_found=len(events),
+            events=[_insight_event_schema(ev) for ev in events],
+        )
+
+    # ---------------------------------------------------------------------------
+    # Phase 16 — InsightValidator endpoints
+    # ---------------------------------------------------------------------------
+
+    def _get_insight_validator():
+        """Lazy-initialize InsightValidator on first call."""
+        from core.insight_validator import InsightValidator
+        if "insight_validator" not in _state:
+            _state["insight_validator"] = None
+        if _state.get("insight_validator") is None:
+            if not _is_ready():
+                raise HTTPException(status_code=503, detail="Service not ready — call load() first")
+            _state["insight_validator"] = InsightValidator(_state["adapter"])
+        return _state["insight_validator"]
+
+    def _get_meta_insight_engine():
+        """Lazy-initialize MetaInsightEngine on first call."""
+        from core.meta_insight_engine import MetaInsightEngine
+        if "meta_insight_engine" not in _state:
+            _state["meta_insight_engine"] = None
+        if _state.get("meta_insight_engine") is None:
+            _state["meta_insight_engine"] = MetaInsightEngine()
+        return _state["meta_insight_engine"]
+
+    @app.post("/insight/validate/all", response_model=InsightValidateAllResponse, tags=["insight"])
+    async def insight_validate_all(node: Dict = Depends(check_scope("query"))):
+        """
+        Validate all pending InsightEvents via bilateral reverse traversal and
+        multi-seed corroboration. Updates validation_status and corroboration_count
+        on each event. Promotes INSIGHT_LINK edge confidence for confirmed insights.
+        """
+        ie = _get_insight_engine()
+        validator = _get_insight_validator()
+        events = ie.recent_events(500)
+        pending = [ev for ev in events if getattr(ev, "validation_status", "pending") == "pending"]
+        validator.validate_all(pending)
+        return InsightValidateAllResponse(
+            validated=len(pending),
+            results=[
+                InsightValidateResponse(
+                    event_id=ev.id,
+                    validation_status=ev.validation_status,
+                    corroboration_count=ev.corroboration_count,
+                    insight_score=ev.insight_score,
+                )
+                for ev in pending
+            ],
+        )
+
+    @app.post("/insight/validate/{event_id}", response_model=InsightValidateResponse, tags=["insight"])
+    async def insight_validate_one(event_id: str, node: Dict = Depends(check_scope("query"))):
+        """
+        Validate a single InsightEvent by its ID. Returns 404 if not found.
+        """
+        ie = _get_insight_engine()
+        validator = _get_insight_validator()
+        all_events = ie.recent_events(500)
+        target = next((ev for ev in all_events if getattr(ev, "id", "") == event_id), None)
+        if target is None:
+            raise HTTPException(status_code=404, detail=f"InsightEvent '{event_id}' not found")
+        validator.validate(target)
+        return InsightValidateResponse(
+            event_id=target.id,
+            validation_status=target.validation_status,
+            corroboration_count=target.corroboration_count,
+            insight_score=target.insight_score,
+        )
+
+    # ---------------------------------------------------------------------------
+    # Phase 16 — MetaInsightEngine endpoints
+    # ---------------------------------------------------------------------------
+
+    def _meta_insight_event_schema(ev) -> MetaInsightEventSchema:
+        return MetaInsightEventSchema(
+            id=ev.id,
+            insight_a_id=ev.insight_a_id,
+            insight_b_id=ev.insight_b_id,
+            connection_type=ev.connection_type,
+            meta_score=ev.meta_score,
+            depth=ev.depth,
+            timestamp=ev.timestamp,
+            chain_ids=ev.chain_ids,
+        )
+
+    @app.get("/meta-insight/status", response_model=MetaInsightStatusResponse, tags=["meta-insight"])
+    async def meta_insight_status(node: Dict = Depends(get_authenticated_node)):
+        """
+        Return MetaInsightEngine status: total meta-events, InsightGraph size,
+        and the 10 most recent MetaInsightEvents.
+        """
+        meta = _get_meta_insight_engine()
+        nodes, edges = meta.insight_graph_size
+        return MetaInsightStatusResponse(
+            total_meta_events=meta.total_meta_events,
+            insight_graph_nodes=nodes,
+            insight_graph_edges=edges,
+            recent_meta_events=[_meta_insight_event_schema(ev) for ev in meta.recent_meta_events(10)],
+        )
+
+    @app.get("/meta-insight/events", response_model=MetaInsightStatusResponse, tags=["meta-insight"])
+    async def meta_insight_events(n: int = 20, node: Dict = Depends(get_authenticated_node)):
+        """Return the last n MetaInsightEvents (default 20)."""
+        meta = _get_meta_insight_engine()
+        nodes, edges = meta.insight_graph_size
+        return MetaInsightStatusResponse(
+            total_meta_events=meta.total_meta_events,
+            insight_graph_nodes=nodes,
+            insight_graph_edges=edges,
+            recent_meta_events=[_meta_insight_event_schema(ev) for ev in meta.recent_meta_events(n)],
+        )
+
+    @app.get("/meta-insight/graph", response_model=InsightGraphResponse, tags=["meta-insight"])
+    async def meta_insight_graph(node: Dict = Depends(get_authenticated_node)):
+        """
+        Export the full InsightGraph as nodes and edges.
+
+        The InsightGraph is the second-order reasoning graph where nodes are
+        InsightEvent IDs and edges are structural relationships between insights
+        (chain, shared_entity, community_overlap, temporal_cluster).
+        """
+        meta = _get_meta_insight_engine()
+        data = meta.export_insight_graph()
+        return InsightGraphResponse(
+            nodes=[
+                InsightGraphNodeSchema(
+                    id=n["id"],
+                    source_entity=n["source_entity"],
+                    target_entity=n["target_entity"],
+                    insight_score=n["insight_score"],
+                    community_leap=n["community_leap"],
+                    timestamp=n["timestamp"],
+                )
+                for n in data["nodes"]
+            ],
+            edges=[
+                InsightGraphEdgeSchema(
+                    from_id=e["from"],
+                    to_id=e["to"],
+                    connection_type=e["connection_type"],
+                    score=e["score"],
+                )
+                for e in data["edges"]
+            ],
+        )
+
+    # ---------------------------------------------------------------------------
+    # Phase 14 — REM Cycle Endpoints
+    # ---------------------------------------------------------------------------
+
+    def _get_rem_engine():
+        """Lazy-initialize REMEngine on first call."""
+        from core.rem_engine import REMEngine
+        if _state["rem_engine"] is None:
+            if not _is_ready():
+                raise HTTPException(status_code=503, detail="Service not ready — call load() first")
+            _state["rem_engine"] = REMEngine(_state["adapter"])
+        return _state["rem_engine"]
+
+    @app.post("/rem/run", response_model=REMReportSchema, tags=["rem"])
+    async def rem_run(req: REMRunRequest, node: Dict = Depends(check_scope("query"))):
+        """
+        Execute one REM cycle (prune → consolidate → synthesize).
+
+        Set dry_run=true to preview changes without mutating the graph.
+        """
+        rem = _get_rem_engine()
+        report = rem.run(dry_run=req.dry_run)
+        return REMReportSchema(
+            pruned_edges=report.pruned_edges,
+            synthesized_edges=report.synthesized_edges,
+            communities_updated=report.communities_updated,
+            duration_seconds=report.duration_seconds,
+            pruned_edge_list=[list(t) for t in report.pruned_edge_list],
+            synthesized_edge_list=[list(t) for t in report.synthesized_edge_list],
+            dry_run=report.dry_run,
+            timestamp=report.timestamp,
+        )
+
+    @app.post("/rem/rollback", response_model=REMRollbackResponse, tags=["rem"])
+    async def rem_rollback(node: Dict = Depends(check_scope("query"))):
+        """
+        Undo the most recent non-dry-run REM cycle.
+
+        Restores pruned edges with original attributes and removes synthesized
+        edges. Only one level of undo is supported (the last real run).
+        Returns 409 if no snapshot exists.
+        """
+        rem = _get_rem_engine()
+        if not rem.can_rollback:
+            raise HTTPException(status_code=409, detail="No REM cycle to roll back — run a real cycle first.")
+        ops = rem.rollback()
+        return REMRollbackResponse(
+            operations=ops,
+            message=f"Rolled back last REM cycle: {ops} edge operation(s) reversed.",
+        )
+
+    @app.get("/rem/status", response_model=REMStatusResponse, tags=["rem"])
+    async def rem_status(node: Dict = Depends(get_authenticated_node)):
+        """Return the last REMReport and whether a rollback is currently available."""
+        rem = _get_rem_engine()
+        last = rem.last_report
+        schema = None
+        if last is not None:
+            schema = REMReportSchema(
+                pruned_edges=last.pruned_edges,
+                synthesized_edges=last.synthesized_edges,
+                communities_updated=last.communities_updated,
+                duration_seconds=last.duration_seconds,
+                pruned_edge_list=[list(t) for t in last.pruned_edge_list],
+                synthesized_edge_list=[list(t) for t in last.synthesized_edge_list],
+                dry_run=last.dry_run,
+                timestamp=last.timestamp,
+            )
+        return REMStatusResponse(last_report=schema, can_rollback=rem.can_rollback)
+
+    # ------------------------------------------------------------------
+    # Inference endpoints  (/infer/*)
+    # ------------------------------------------------------------------
+
+    def _get_infer_engine():
+        from core.inference_engine import TransitiveInferenceEngine
+        if _state["infer_engine"] is None:
+            _state["infer_engine"] = TransitiveInferenceEngine(_state["adapter"])
+        return _state["infer_engine"]
+
+    def _infer_report_to_schema(report) -> InferenceReportSchema:
+        return InferenceReportSchema(
+            proposal_count=report.proposal_count,
+            materialized=report.materialized,
+            rules_applied=report.rules_applied,
+            skipped_existing=report.skipped_existing,
+            duration_seconds=report.duration_seconds,
+            dry_run=report.dry_run,
+            timestamp=report.timestamp,
+            proposals=[
+                InferenceProposalSchema(
+                    source=p.source,
+                    via=p.via,
+                    target=p.target,
+                    derived_relation=p.derived_relation,
+                    confidence=p.confidence,
+                    domain=p.rule.domain,
+                    note=p.rule.note,
+                    derivation=p.derivation_str,
+                )
+                for p in report.proposals
+            ],
+        )
+
+    @app.post("/infer/run", response_model=InferenceReportSchema, tags=["inference"])
+    async def run_inference(
+        dry_run: bool = False,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """
+        Run one transitive inference cycle.
+
+        Discovers new knowledge by composing existing graph relations
+        according to domain-specific rules.  Returns a full report of
+        proposed (and optionally materialized) edges.
+
+        Set ``dry_run=true`` to inspect discoveries without modifying the graph.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        infer = _get_infer_engine()
+        try:
+            report = infer.run(dry_run=dry_run)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=str(exc))
+        return _infer_report_to_schema(report)
+
+    @app.post("/infer/rollback", response_model=InferenceRollbackResponse, tags=["inference"])
+    async def infer_rollback(node: Dict = Depends(get_authenticated_node)):
+        """
+        Undo the most recent non-dry inference run.
+
+        Removes all edges that were added during that cycle.
+        Raises 409 if no prior run exists.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        infer = _get_infer_engine()
+        try:
+            removed = infer.rollback()
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc))
+        return InferenceRollbackResponse(
+            removed=removed,
+            message=f"Rolled back {removed} inferred edges.",
+        )
+
+    @app.get("/infer/status", response_model=InferenceStatusResponse, tags=["inference"])
+    async def infer_status(node: Dict = Depends(get_authenticated_node)):
+        """Return the last InferenceReport and whether rollback is available."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        infer = _get_infer_engine()
+        last = infer.last_report
+        schema = _infer_report_to_schema(last) if last is not None else None
+        return InferenceStatusResponse(
+            last_report=schema,
+            can_rollback=infer.can_rollback,
+            active_rule_count=infer.rule_count(),
+        )
+
+    # ------------------------------------------------------------------
+    # Chat endpoints  (/chat/*)
+    # ------------------------------------------------------------------
+
+    _SESSION_TTL = 1800.0  # 30 minutes
+
+    def _get_chat_manager():
+        from core.conversation import ConversationManager
+        from reasoning.traversal import BeamTraversal
+        if _state["chat_manager"] is None:
+            meta = _state["csa_metadata"]
+            from core.attention_engine import CSAEngine
+            csa = CSAEngine(
+                adapter=_state["adapter"],
+                community_params=meta.get("community_params")
+            )
+            csa.set_community_graph(meta["distances"], meta["adjacent_pairs"])
+            
+            if _state["meta_learner"]:
+                csa.set_meta_learner(_state["meta_learner"])
+
+            trav = BeamTraversal(
+                adapter=_state["adapter"],
+                csa_engine=csa,
+                beam_width=10,
+                max_hop=3,
+            )
+            from core.embedding_engine import RandomEngine
+            eng = getattr(_state["adapter"], "_embedding_engine", None) \
+                  or RandomEngine(dim=64)
+            _state["chat_manager"] = ConversationManager(
+                adapter=_state["adapter"],
+                embedding_engine=eng,
+                csa_engine=csa,
+                beam_traversal=trav,
+            )
+        return _state["chat_manager"]
+
+    def _purge_stale_sessions():
+        now = time.time()
+        stale = [sid for sid, sess in _state["chat_sessions"].items()
+                 if now - sess.last_active > _SESSION_TTL]
+        for sid in stale:
+            del _state["chat_sessions"][sid]
+
+    def _turn_to_schema(turn) -> ConversationTurnSchema:
+        return ConversationTurnSchema(
+            turn_number=turn.turn_number,
+            raw_question=turn.raw_question,
+            resolved_question=turn.resolved_question,
+            seed_entity=turn.seed_entity,
+            seed_entity_label=turn.seed_entity_label,
+            answer_text=turn.answer_text,
+            new_entities=turn.new_entities,
+            is_followup=turn.is_followup,
+            focus_shift=turn.focus_shift,
+            clarification_needed=turn.clarification_needed,
+            clarification_options=[[c[0], c[1]] for c in turn.clarification_options],
+            knowledge_gap=turn.knowledge_gap,
+            knowledge_gap_hint=turn.knowledge_gap_hint,
+            hop_hint=turn.hop_hint,
+        )
+
+    @app.post("/chat", response_model=ChatResponse, tags=["conversation"])
+    async def chat(
+        request: ChatRequest,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """
+        Send one conversational turn to CEREBRUM.
+
+        Omit ``session_id`` to start a new session.  Include it in subsequent
+        requests to continue the conversation.  Sessions expire after 30 minutes
+        of inactivity.
+
+        The response includes the full verbalized answer plus session metadata
+        (focus entity, entity trail, turn count) so clients can render context.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+
+        _purge_stale_sessions()
+        manager = _get_chat_manager()
+
+        # Get or create session
+        sid = request.session_id
+        if sid and sid in _state["chat_sessions"]:
+            session = _state["chat_sessions"][sid]
+        else:
+            session = manager.new_session(sid)
+            _state["chat_sessions"][session.session_id] = session
+            sid = session.session_id
+
+        try:
+            turn = manager.process(request.question, session)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=str(exc))
+
+        entity_trail = [
+            session.entity_label_map.get(e, e)
+            for e in session.entity_history[-10:]
+        ]
+
+        return ChatResponse(
+            session_id=sid,
+            turn=_turn_to_schema(turn),
+            focus_entity=session.focus_entity,
+            focus_entity_label=session.focus_entity_label,
+            entity_trail=entity_trail,
+            turn_count=session.turn_count,
+        )
+
+    @app.post("/chat/reset", response_model=ChatResetResponse, tags=["conversation"])
+    async def chat_reset(
+        session_id: str,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Reset (clear context of) an active session without deleting it."""
+        if session_id not in _state["chat_sessions"]:
+            raise HTTPException(status_code=404, detail="Session not found")
+        _state["chat_sessions"][session_id].reset()
+        return ChatResetResponse(
+            session_id=session_id,
+            message="Session context cleared.",
+        )
+
+    # ------------------------------------------------------------------
+    # Text ingest endpoints  (/ingest/*)
+    # ------------------------------------------------------------------
+
+    def _get_text_ingestor(min_confidence: float, create_new: bool):
+        from core.text_ingestor import TextIngestor
+        # Always create fresh ingestor so per-request options are respected
+        return TextIngestor(
+            _state["adapter"],
+            min_confidence=min_confidence,
+            create_new_entities=create_new,
+        )
+
+    def _report_to_schema(report) -> IngestReportSchema:
+        return IngestReportSchema(
+            text_length=report.text_length,
+            sentences_processed=report.sentences_processed,
+            entities_found=report.entities_found,
+            entities_linked=report.entities_linked,
+            entities_new=report.entities_new,
+            triples_extracted=report.triples_extracted,
+            triples_accepted=report.triples_accepted,
+            triples_skipped_duplicate=report.triples_skipped_duplicate,
+            triples_skipped_low_confidence=report.triples_skipped_low_confidence,
+            edges_added=report.edges_added,
+            nodes_added=report.nodes_added,
+            added_triples=[
+                IngestTripleSchema(source=s, relation=r, target=d, confidence=c)
+                for s, r, d, c in report.added_triples
+            ],
+            duration_seconds=report.duration_seconds,
+            provenance=report.provenance,
+            dry_run=report.dry_run,
+            timestamp=report.timestamp,
+        )
+
+    @app.post("/ingest/text", response_model=IngestReportSchema, tags=["ingest"])
+    async def ingest_text(
+        request: IngestTextRequest,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """
+        Extract triples from plain text and add them to the graph.
+
+        CEREBRUM scans the text for entity mentions (known graph entities and
+        capitalized noun phrases) and infers relations from verb phrases between
+        them.  Every edge added carries ``provenance="text_ingest"`` and the
+        source sentence for full traceability.
+
+        Set ``dry_run=true`` to inspect what would be extracted without
+        modifying the graph.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        ingestor = _get_text_ingestor(request.min_confidence, request.create_new_entities)
+        try:
+            report = ingestor.ingest_text(request.text, dry_run=request.dry_run)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=str(exc))
+        return _report_to_schema(report)
+
     return app
 
 
@@ -688,7 +1336,7 @@ def create_stream_app(
     **kwargs,
 ) -> "FastAPI":
     """
-    Convenience factory for a streaming-enabled Parallax API.
+    Convenience factory for a streaming-enabled CEREBRUM API.
 
     Creates (or wraps) a StreamAdapter and calls create_app().
     The adapter is registered in _state so /stream/ingest and
@@ -722,12 +1370,14 @@ def _load(
     target_communities: int = 500,
     default_edge_type_weights: Optional[Dict[str, float]] = None,
     cache_path: Optional[str] = None,
+    use_meta_learning: bool = True,
 ):
     """Load graph state into the global _state dict."""
     import random
     from core.community_engine import best_of_n_dscf, hierarchical_dscf
     from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
     from core.persistence import is_state_cached, load_state, save_state
+    from core.parameter_learner import MetaParameterLearner
 
     # 0. Check cache
     if cache_path and is_state_cached(cache_path):
@@ -741,6 +1391,8 @@ def _load(
                 "csa_metadata": state["csa_metadata"],
                 "default_edge_type_weights": state.get("default_edge_type_weights"),
             })
+            if use_meta_learning:
+                _state["meta_learner"] = MetaParameterLearner()
             return
         except Exception as e:
             print(f"  [API] Cache load failed: {e}. Falling back to computation.")
@@ -803,8 +1455,12 @@ def _load(
     # 4. Compute Holographic Index (Phase 8)
     from core.holographic_index import build_signatures
     _state["hologram"] = build_signatures(adapter, community_map, fused_embeddings)
+    
+    # 5. Milestone 4: Adaptive Parameter Learning
+    if use_meta_learning:
+        _state["meta_learner"] = MetaParameterLearner()
 
-    # 5. Save to cache
+    # 6. Save to cache
     if cache_path:
         save_state(
             cache_path,
@@ -817,5 +1473,10 @@ def _load(
         )
 
 
-
-
+def _unload():
+    """Clear global state."""
+    for k in _state:
+        if isinstance(_state[k], dict):
+            _state[k] = {}
+        else:
+            _state[k] = None

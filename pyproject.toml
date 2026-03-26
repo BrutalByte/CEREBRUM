@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.backends.legacy:build"
 
 [project]
-name = "parallax-kg"
+name = "cerebrum-kg"
 version = "0.2.0"
-description = "Community-Structured Graph Attention for Knowledge Graph Reasoning"
+description = "CEREBRUM — Community-Structured Graph Attention for Knowledge Graph Reasoning"
 authors = [
     {name = "Bryan Alexander Buchorn", email = "bryan.alexander@buchorn.com"},
 ]
@@ -22,8 +22,6 @@ requires-python = ">=3.10"
 dependencies = [
     "networkx>=3.0.0",
     "numpy>=1.24.0",
-    "igraph>=0.10.0",
-    "leidenalg>=0.10.0",
     "scipy>=1.10.0",
     "requests>=2.28.0",
     "psutil>=5.9.0",
@@ -37,10 +35,10 @@ api        = ["fastapi>=0.100.0", "uvicorn[standard]>=0.23.0", "pydantic>=2.0.0"
 neo4j      = ["neo4j>=5.8.0"]
 rdf        = ["SPARQLWrapper>=2.0"]
 dev        = ["pytest>=7.0", "pytest-asyncio>=0.21", "matplotlib>=3.7.0"]
-all        = ["parallax-kg[embeddings,api,neo4j,dev]"]
+all        = ["cerebrum-kg[embeddings,api,neo4j,dev]"]
 
 [project.scripts]
-parallax = "cli.parallax:main"
+cerebrum = "cli.cerebrum:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

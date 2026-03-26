@@ -1,22 +1,29 @@
 """
-Remote Parallax Adapter.
+Remote CEREBRUM Adapter.
 
-Connects to a remote Parallax API instance to perform federated graph operations.
+Connects to a remote CEREBRUM API instance to perform federated graph operations.
 """
 import requests
 from typing import List, Optional, Dict
 from core.graph_adapter import GraphAdapter, Entity, Edge
 
 
-class RemoteParallaxAdapter(GraphAdapter):
+class RemoteCerebrumAdapter(GraphAdapter):
     """
-    Adapter that proxies requests to a remote Parallax REST API.
+    Adapter that proxies requests to a remote CEREBRUM REST API.
     """
 
-    def __init__(self, base_url: str, timeout: int = 10, token: Optional[str] = None):
+    def __init__(
+        self,
+        base_url: str,
+        timeout: int = 10,
+        token: Optional[str] = None,
+        secret: Optional[str] = None,
+    ):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.token = token # JWT token for bearer authentication
+        self.secret = secret # Shared secret for HMAC signature verification
         self.metadata: Optional[Dict] = None
 
     def _get_headers(self) -> Dict[str, str]:
@@ -25,11 +32,39 @@ class RemoteParallaxAdapter(GraphAdapter):
             headers["Authorization"] = f"Bearer {self.token}"
         return headers
 
+    def _verify_signature(self, resp) -> bool:
+        """
+        Verify X-Signature header against the response body using the shared secret.
+        Returns True if signature is valid or if no secret is configured.
+        """
+        if not self.secret:
+            return True
+            
+        sig = resp.headers.get("X-Signature")
+        if not sig:
+            # If secret is enforced, missing signature is a failure
+            return False
+            
+        import hmac
+        import hashlib
+        
+        try:
+            expected = hmac.new(
+                self.secret.encode("utf-8"),
+                resp.content,
+                hashlib.sha256
+            ).hexdigest()
+            return hmac.compare_digest(sig, expected)
+        except Exception:
+            return False
+
     def validate_connection(self) -> bool:
         """Handshake with remote API to verify version and capabilities."""
         try:
             resp = requests.get(f"{self.base_url}/handshake", headers=self._get_headers(), timeout=self.timeout)
             if resp.status_code == 200:
+                if not self._verify_signature(resp):
+                    return False
                 self.metadata = resp.json()
                 # Verify compatibility (e.g. major version match)
                 return True
@@ -48,6 +83,8 @@ class RemoteParallaxAdapter(GraphAdapter):
                 timeout=self.timeout
             )
             if resp.status_code == 200:
+                if not self._verify_signature(resp):
+                    return None
                 data = resp.json()
                 return Entity(
                     id=data["id"],
@@ -64,12 +101,17 @@ class RemoteParallaxAdapter(GraphAdapter):
         entity_id: str,
         edge_types: List[str] = None,
         max_neighbors: int = 50,
+        context_embedding: Optional[np.ndarray] = None,
     ) -> List[Edge]:
         """Fetch neighbors from remote /neighbors endpoint."""
         try:
             params = {"max_neighbors": max_neighbors}
             if edge_types:
                 params["edge_types"] = ",".join(edge_types)
+            
+            # Future: send context_embedding to remote for its own blind discovery
+            # if context_embedding is not None:
+            #     params["context_vector"] = ...
                 
             resp = requests.get(
                 f"{self.base_url}/entities/{entity_id}/neighbors", 
@@ -78,6 +120,10 @@ class RemoteParallaxAdapter(GraphAdapter):
                 timeout=self.timeout
             )
             if resp.status_code == 200:
+                # Phase 19 fix: Federated Signature (Hole 3)
+                if not self._verify_signature(resp):
+                    return []
+
                 return [
                     Edge(
                         source_id=e["source_id"],
@@ -102,6 +148,8 @@ class RemoteParallaxAdapter(GraphAdapter):
                 timeout=self.timeout
             )
             if resp.status_code == 200:
+                if not self._verify_signature(resp):
+                    return []
                 return [
                     Entity(
                         id=e["id"],
@@ -125,7 +173,42 @@ class RemoteParallaxAdapter(GraphAdapter):
                 timeout=self.timeout
             )
             if resp.status_code == 200:
+                if not self._verify_signature(resp):
+                    return []
                 return resp.json()["results"]
+        except Exception:
+            pass
+        return []
+
+    def find_similar(
+        self, 
+        embedding: "np.ndarray", 
+        top_k: int = 10
+    ) -> List[Entity]:
+        """Perform remote semantic search via /search/similar."""
+        try:
+            payload = {
+                "embedding": embedding.tolist(),
+                "top_k": top_k
+            }
+            resp = requests.post(
+                f"{self.base_url}/search/similar", 
+                json=payload,
+                headers=self._get_headers(),
+                timeout=self.timeout
+            )
+            if resp.status_code == 200:
+                if not self._verify_signature(resp):
+                    return []
+                return [
+                    Entity(
+                        id=e["id"],
+                        label=e["label"],
+                        type=e.get("type", "entity"),
+                        properties=e.get("properties", {})
+                    )
+                    for e in resp.json()["results"]
+                ]
         except Exception:
             pass
         return []
@@ -147,6 +230,8 @@ class RemoteParallaxAdapter(GraphAdapter):
                 timeout=self.timeout
             )
             if resp.status_code == 200:
+                if not self._verify_signature(resp):
+                    return -1
                 return resp.json().get("community_id", -1)
         except Exception:
             pass
@@ -161,6 +246,8 @@ class RemoteParallaxAdapter(GraphAdapter):
                 timeout=self.timeout
             )
             if resp.status_code == 200:
+                if not self._verify_signature(resp):
+                    return None
                 data = resp.json()
                 if "embedding" in data:
                     import numpy as np
@@ -178,6 +265,8 @@ class RemoteParallaxAdapter(GraphAdapter):
                 timeout=self.timeout
             )
             if resp.status_code == 200:
+                if not self._verify_signature(resp):
+                    return None
                 return resp.json()
         except Exception:
             pass
@@ -194,6 +283,8 @@ class RemoteParallaxAdapter(GraphAdapter):
                 timeout=self.timeout
             )
             if resp.status_code == 200:
+                if not self._verify_signature(resp):
+                    return None
                 return resp.json()
         except Exception:
             pass

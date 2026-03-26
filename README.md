@@ -1,8 +1,8 @@
-# Parallax
+# CEREBRUM
 
 **Community-Structured Graph Attention for Knowledge Graph Reasoning**
 
-Parallax enables Knowledge Graphs to perform multi-hop reasoning using the structural
+CEREBRUM enables Knowledge Graphs to perform multi-hop reasoning using the structural
 principles of Transformer attention — without an LLM, without training data, and with
 full interpretability of every inference step.
 
@@ -16,7 +16,7 @@ See `PAPER.md` for the full white paper and architecture specification.
 
 ## Value Proposition
 
-| Feature | Standard RAG | GraphRAG (Microsoft) | Parallax |
+| Feature | Standard RAG | GraphRAG (Microsoft) | CEREBRUM |
 | :--- | :--- | :--- | :--- |
 | **Primary Reasoner** | LLM | LLM | **Knowledge Graph** |
 | **Logic Source** | Probabilistic weights | LLM-generated summaries | **Graph Topology (TSC/CSA)** |
@@ -26,7 +26,7 @@ See `PAPER.md` for the full white paper and architecture specification.
 
 ## Roadmap
 
-**Current Project Status: v0.3.2 — Phase 13 COMPLETE — 275 tests passing**
+**Current Project Status: v1.1.0 — Phase 20 COMPLETE — 994 tests passing**
 
 - [x] **Phase 0: Theory & Prototyping** (DSCF validated in AI Personal Assistant)
 - [x] **Phase 1: Core Engine** (GraphAdapter, TSC Engine, CSA Attention)
@@ -42,19 +42,23 @@ See `PAPER.md` for the full white paper and architecture specification.
 - [x] **Phase 11: Real-Time Streaming** — StreamAdapter, 5 discretizers, sliding-window buffer, SSE endpoints
 - [x] **Phase 12: Bridge Twin Nodes** — experience-dependent structural relay formation (thalamic analog)
 - [x] **Phase 13: STDP Causal Inference** — directional CAUSES edges from spike timing (Bi & Poo analog)
+- [x] **Phase 14: ResourceGovernor** — hardware-aware query throttling and energy budget enforcement
+- [x] **Phase 15: REM Cycle** — autonomous graph self-reorganization (prune/consolidate/synthesize, rollback-capable)
+- [x] **Phase 16: Verification & Metacognition** — InsightValidator (bilateral reverse traversal) + MetaInsightEngine (second-order reasoning graph)
+- [x] **Phase 17: Algorithmic Depth** — Temporal reasoning, uncertainty propagation, soft community membership, learned CSA parameters (CSAParameterLearner), KGE embeddings (TransE/RotatE)
+- [x] **Native Leiden** — GPL-free reimplementation of Leiden algorithm (`core/leiden_native.py`); `igraph`/`leidenalg` dependencies fully removed
+- [x] **Phase 18: v0.4 Horizon** — THALAMUS `IngestionPipeline` (GIGO prevention), complete LLM bridge (`generate()` + 4 adapters), Bayesian Beam Search (Beta-distribution paths + Thompson sampling), `GlobalRebalancer` (Q-drift detection + background DSCF), Cross-Modal Alignment (`SignalEncoder` — sensor/waveform → entity embedding space)
+- [x] **Phase 19: v1.0 Production Hardening** — Four structural holes fixed: Zombie Bridge (`BridgeTwinEngine.on_rebalance` hook), Causal Flood filter (`min_causal_span` + chi-squared uniformity test), Namespace Isolation (`IngestionPipeline`/`SignalEncoder` `namespace=` param), Bayesian Cold-Start warm-starting (`warm_start_strength` seeds first-hop Beta from CSA score)
+- [x] **Phase 20: v1.1.0 Relativistic Hardening** — Four cross-system interaction holes fixed: Query Snapshot Isolation (mid-flight community swap), Community-Specific CSA Parameters (homogeneity trap), Canonical Basis Anchor (SVD drift across federated hops), Path-Preserving Hold-out (sparse-graph validation bias)
 
-## Next Horizon: Enterprise Scale — Roadmap to v1.0.0
+## What Comes Next
 
-With the completion of Phase 13, Parallax is production-ready for enterprise deployment.
+With Phase 20 COMPLETE, CEREBRUM v1.1.0 is the production-hardened release. All eight structural holes (four in Phase 19, four in Phase 20) have been patched and validated. The next development horizon focuses on:
 
-### Phase 10: Production Hardening & Asynchronous Streaming — COMPLETE
-- **Objective**: Finalize the framework for massive-scale deployment and real-time reasoning.
-- **Milestones**:
-    - [x] **JWT Authentication**: Implemented secure token-based auth for all endpoints.
-    - [x] **RemoteAdapter Hardening**: TLS verification and connection pooling for federated nodes.
-    - [x] **Computational Governor**: Implemented `ResourceGovernor` for budget and time enforcement.
-    - [x] **Streaming Reasoning**: Implemented `/query/stream` using `AsyncBeamTraversal` for real-time delivery.
-    - [x] **CSAEngine Refactor**: Decoupled engine for high-concurrency streaming environments.
+- **GPU-accelerated DSCF**: Batched eigenvector computation and parallel community moves on CUDA.
+- **Adaptive CSA learning**: Online `CSAParameterLearner` that continuously adjusts weights from live query feedback without full retraining.
+- **Enterprise connectors**: Production-grade Neo4j bulk-load, Amazon Neptune adapter, and distributed Spark GraphX offline DSCF.
+- **arXiv publication**: Twelve individual technical papers covering each subsystem are ready for submission.
 
 ## Quick Start
 
@@ -82,7 +86,7 @@ For a visual, step-by-step demonstration of the framework's logic, we provide a 
 
 ## Testing & Validation Data
 
-Parallax has been rigorously validated using the following datasets and fixtures:
+CEREBRUM has been rigorously validated using the following datasets and fixtures:
 
 - **Canonical Test Graph**: [tests/fixtures/toy_graph.csv](tests/fixtures/toy_graph.csv) (21 nodes, 30 edges) — used for all unit and E2E release journeys.
 - **Biomedical Benchmark**: [benchmarks/data/hetionet/](benchmarks/data/hetionet/) — 500,000 edge subset of the Hetionet KG.
@@ -92,28 +96,28 @@ Parallax has been rigorously validated using the following datasets and fixtures
 
 ## Genesis & Inspiration
 
-Parallax was born from a simple engineering request during the development of **Home Assistant** (an AI assistant platform): *"When I hit the clusters button, I want to see the clusters forming in real-time."* 
+CEREBRUM was born from a simple engineering request during the development of **Home Assistant** (an AI assistant platform): *"When I hit the clusters button, I want to see the clusters forming in real-time."* 
 
 Achieving this required a deep dive into community detection. While exploring the trade-offs between **Leiden** (global modularity) and **Label Propagation** (local topology), a pivotal question was asked: *"Can we create an algorithm that includes structure from both simultaneously?"* 
 
-This led to the creation of **DSCF**, which produces communities with the dual-signal character necessary for complex reasoning. The inspiration for this multi-signal approach was rooted in **mid-level voting** (or mid-value selection) systems used in triplex-redundant aircraft navigation. By selecting the median value to reject sensor outliers, these systems correct navigation errors. Parallax applies this same principle to graph reasoning: by requiring consensus between local (LPA), global (Modularity), and flow (Infomap) signals, the framework "rights the navigation errors" (hallucinations) common in probabilistic language models. 
+This led to the creation of **DSCF**, which produces communities with the dual-signal character necessary for complex reasoning. The inspiration for this multi-signal approach was rooted in **mid-level voting** (or mid-value selection) systems used in triplex-redundant aircraft navigation. By selecting the median value to reject sensor outliers, these systems correct navigation errors. CEREBRUM applies this same principle to graph reasoning: by requiring consensus between local (LPA), global (Modularity), and flow (Infomap) signals, the framework "rights the navigation errors" (hallucinations) common in probabilistic language models. 
 
 This architectural shift moves AI from the **Black-Box** of hidden layer weights to a **Glass-Box** of deterministic, traceable graph paths — a critical requirement in today's high-stakes AI/ML landscape.
 
 ## License & Commercial Use
 
-**Parallax is Dual-Licensed.**
+**CEREBRUM is Dual-Licensed.**
 
 1.  **Non-Commercial Use**: Free for personal, academic, and non-profit research use under the terms of the **PolyForm Noncommercial License 1.0.0**. You may read the full license in the [LICENSE](LICENSE) file.
 2.  **Commercial Use**: Any use by for-profit entities, including internal business operations, commercial products, or SaaS deployments, requires a separate commercial license agreement.
 
-> **Legal Notice**: All rights, title, and interest in and to the Parallax software, documentation, and related intellectual property are and shall remain the exclusive property of **Bryan Alexander Buchorn (AMP)**. Unauthorized commercial use is strictly prohibited and will be pursued to the fullest extent of the law.
+> **Legal Notice**: All rights, title, and interest in and to the CEREBRUM software, documentation, and related intellectual property are and shall remain the exclusive property of **Bryan Alexander Buchorn (AMP)**. Unauthorized commercial use is strictly prohibited and will be pursued to the fullest extent of the law.
 
 For commercial licensing inquiries, please contact: **bryan.alexander@buchorn.com**
 
 ## Acknowledgments & Credits
 
-Parallax stands on the shoulders of decades of foundational research. We explicitly acknowledge the work of:
+CEREBRUM stands on the shoulders of decades of foundational research. We explicitly acknowledge the work of:
 - **LPA**: Raghavan et al. (2007)
 - **Louvain**: Blondel et al. (2008)
 - **Leiden**: Traag et al. (2019)
@@ -203,7 +207,7 @@ graph LR
         T6[KV cache]
     end
 
-    subgraph Parallax
+    subgraph CEREBRUM
         P1[DSCF community]
         P2[BFS hop count]
         P3[PageRank + betweenness + degree]
@@ -222,7 +226,7 @@ graph LR
 
 ## Mathematical Foundation
 
-Parallax is built on two core mathematical innovations that bridge the gap between graph topology and transformer-style attention.
+CEREBRUM is built on two core mathematical innovations that bridge the gap between graph topology and transformer-style attention.
 
 ### 1. Community-Structured Attention (CSA)
 
@@ -246,6 +250,20 @@ $$\text{score}(P) = \left( \prod_{k=1}^L a(u_k, v_k, k) \right) \cdot \text{cohe
 - **Decoupled Logic**: Separates reasoning (Graph) from language generation (LLM).
 - **Context Window Invariance**: Sublinear complexity independent of graph size.
 - **Topological Analysis**: Inductive bias derived from graph topology requires zero training.
+
+## Project Status (v1.1.0 — Phase 20 COMPLETE)
+
+CEREBRUM is currently at **v1.1.0**. All **994 tests** are passing (1 skipped).
+
+Key features in v1.1.0 (Phase 19–20 hardening):
+- **Query Snapshot Isolation**: Mid-flight community swap prevention (Phase 20).
+- **Community-Specific CSA Parameters**: Per-community attention tuning (Phase 20).
+- **Canonical Basis Anchor**: SVD drift prevention across federated encoders (Phase 20).
+- **Path-Preserving Hold-out**: Sparse-graph validation bias fix (Phase 20).
+- **Zombie Bridge fix**: `BridgeTwinEngine.on_rebalance` hook (Phase 19).
+- **Causal Flood filter**: `min_causal_span` + chi-squared uniformity guard (Phase 19).
+- **Namespace Isolation**: `IngestionPipeline`/`SignalEncoder` `namespace=` param (Phase 19).
+- **Bayesian Warm-Start**: `warm_start_strength` seeds first-hop Beta prior (Phase 19).
 
 ## Authors
 

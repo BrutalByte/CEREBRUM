@@ -1,5 +1,5 @@
 """
-Neo4j graph adapter for Parallax.
+Neo4j graph adapter for CEREBRUM.
 
 Connects to a Neo4j instance via the bolt driver and implements GraphAdapter.
 Patterns ported from Home Assistant services/knowledge_service/main.py.
@@ -116,6 +116,7 @@ class Neo4jAdapter(GraphAdapter):
         entity_id: str,
         edge_types: Optional[List[str]] = None,
         max_neighbors: int = 50,
+        context_embedding: Optional[np.ndarray] = None,
     ) -> List[Edge]:
         if edge_types:
             type_filter = ":" + "|".join(edge_types)

@@ -3,13 +3,68 @@ Extract and rank top-K answers from a set of traversal paths (Section 5, STEP 5)
 
 An "answer" is the terminal entity of a path. Paths are re-scored using
 score_path() and deduplicated by terminal entity (best score wins).
+
+Contradiction surfacing: after ranking, detect_answer_contradictions() inspects
+each pair of answers for cross-path contradictions (Type 2). When found, a
+ContradictionFlag is attached to each conflicting Answer. Contradictions are
+surfaced as research signals — they are never filtered from the result.
 """
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Tuple
 from dataclasses import dataclass, field
 
 import numpy as np
 
-from reasoning.path_scorer import score_path, community_coherence
+from reasoning.path_scorer import score_path, community_coherence, path_confidence
+
+# Lazy import to avoid circular dependency. Falls back gracefully if unavailable.
+try:
+    from core.contradiction_engine import relations_contradict
+    _HAS_CONTRADICTION_ENGINE = True
+except ImportError:
+    _HAS_CONTRADICTION_ENGINE = False
+    def relations_contradict(a: str, b: str) -> bool:  # type: ignore[misc]
+        return False
+
+
+@dataclass
+class ContradictionFlag:
+    """
+    A detected contradiction between this answer and another in the result set.
+
+    Contradictions are research signals: the conflicting claim may represent an
+    emerging discovery, an unsettled debate, or a claim that has been superseded.
+    The presence of a flag means both answers should be investigated, not that
+    either should be discarded.
+    """
+
+    contradiction_type: str
+    """Type of contradiction detected: "cross_path" for query-time detections."""
+
+    conflicting_entity: str
+    """Terminal entity of the answer that conflicts with this one."""
+
+    conflicting_path: Any
+    """The TraversalPath of the conflicting answer (for citation / inspection)."""
+
+    this_confidence: float
+    """path_confidence of this answer's path (weakest-link rule)."""
+
+    conflicting_confidence: float
+    """path_confidence of the conflicting answer's path."""
+
+    contradicting_relations: Tuple[str, str]
+    """The (rel_a, rel_b) pair that triggered the flag."""
+
+    resolution_status: str = "unresolved"
+    note: str = ""
+
+    def __repr__(self) -> str:
+        a, b = self.contradicting_relations
+        return (
+            f"ContradictionFlag(type={self.contradiction_type!r}, "
+            f"conflicts_with={self.conflicting_entity!r}, "
+            f"relations=({a!r} vs {b!r}))"
+        )
 
 
 @dataclass
@@ -31,8 +86,98 @@ class Answer:
     community_trace: List[int] = field(default_factory=list)
     """Community ID sequence for the best path — shows conceptual trajectory."""
 
+    path_confidence: float = 1.0
+    """
+    Weakest-link confidence along the best path's edges.
+    1.0 when all edges are fully certain; lower values indicate one or more
+    speculative edges (REM-synthesized, low-confidence ingest, etc.) on the
+    reasoning chain. Use this to communicate answer credence to callers.
+    """
+
+    contradiction_flags: List[ContradictionFlag] = field(default_factory=list)
+    """
+    Any cross-path contradictions detected among the extracted answers.
+    Non-empty means another answer in the same result set reached a conflicting
+    conclusion via a contradicting relation. Inspect both answers and their paths.
+    """
+
+    score_uncertainty: float = 0.0
+    """
+    Beta-distribution variance of the best path at extraction time.
+    Higher values indicate wider uncertainty over the path score (noisier evidence).
+    0.0 when no Beta data is present (deterministic traversal).
+    """
+
     def __repr__(self) -> str:
-        return f"Answer(entity={self.entity_id!r}, score={self.score:.4f})"
+        flags = f", flags={len(self.contradiction_flags)}" if self.contradiction_flags else ""
+        return f"Answer(entity={self.entity_id!r}, score={self.score:.4f}{flags})"
+
+
+def detect_answer_contradictions(answers: List[Answer]) -> None:
+    """
+    Detect Type 2 (cross-path) contradictions among extracted answers in-place.
+
+    For each pair of answers, compares the intermediate edge relations in their
+    best paths. When a pair of relations is found to be contradictory (per
+    CONTRADICTION_PAIRS), a ContradictionFlag is appended to both answers.
+
+    This operation is O(K^2 * max_path_len^2) where K = number of answers — fast
+    for the typical K <= 10 result set.
+
+    Modifies answer.contradiction_flags in-place; returns None.
+    """
+    if not _HAS_CONTRADICTION_ENGINE or len(answers) < 2:
+        return
+
+    for i, ans_a in enumerate(answers):
+        for ans_b in answers[i + 1:]:
+            path_a = ans_a.best_path
+            path_b = ans_b.best_path
+            if path_a is None or path_b is None:
+                continue
+
+            # Extract edge relations from path.nodes (odd-index elements)
+            rels_a = [path_a.nodes[k] for k in range(1, len(path_a.nodes), 2)]
+            rels_b = [path_b.nodes[k] for k in range(1, len(path_b.nodes), 2)]
+
+            for ra in rels_a:
+                for rb in rels_b:
+                    if ra == rb:
+                        continue
+                    if relations_contradict(ra, rb):
+                        conf_a = path_confidence(path_a)
+                        conf_b = path_confidence(path_b)
+                        flag_for_a = ContradictionFlag(
+                            contradiction_type="cross_path",
+                            conflicting_entity=ans_b.entity_id,
+                            conflicting_path=path_b,
+                            this_confidence=conf_a,
+                            conflicting_confidence=conf_b,
+                            contradicting_relations=(ra, rb),
+                            note=(
+                                f"Path to {ans_a.entity_id!r} uses {ra!r}; "
+                                f"path to {ans_b.entity_id!r} uses {rb!r}"
+                            ),
+                        )
+                        flag_for_b = ContradictionFlag(
+                            contradiction_type="cross_path",
+                            conflicting_entity=ans_a.entity_id,
+                            conflicting_path=path_a,
+                            this_confidence=conf_b,
+                            conflicting_confidence=conf_a,
+                            contradicting_relations=(rb, ra),
+                            note=(
+                                f"Path to {ans_b.entity_id!r} uses {rb!r}; "
+                                f"path to {ans_a.entity_id!r} uses {ra!r}"
+                            ),
+                        )
+                        ans_a.contradiction_flags.append(flag_for_a)
+                        ans_b.contradiction_flags.append(flag_for_b)
+                        # One flag per pair is enough
+                        break
+                else:
+                    continue
+                break
 
 
 def extract(
@@ -125,8 +270,15 @@ def extract(
                 best_path=path,
                 score_breakdown=breakdown,
                 community_trace=path.community_sequence,
+                path_confidence=path_confidence(path),
+                score_uncertainty=path.score_variance,
             )
         )
+
+    # Surface any cross-path contradictions among the result set.
+    # Contradictions are research signals — they are attached as flags,
+    # never used to filter or reorder results.
+    detect_answer_contradictions(answers)
 
     return answers
 

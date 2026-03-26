@@ -1,5 +1,5 @@
 """
-WebQSP benchmark evaluation for Parallax (Phase 4).
+WebQSP benchmark evaluation for CEREBRUM (Phase 4).
 
 WebQSP: 4,737 questions, 1-2 hop reasoning over Freebase.
 KB: FB15k-237 (PyKEEN subset).
@@ -175,7 +175,7 @@ def evaluate_variant(
 # ---------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="WebQSP benchmark for Parallax")
+    parser = argparse.ArgumentParser(description="WebQSP benchmark for CEREBRUM")
     parser.add_argument("--sample", type=int, default=None)
     parser.add_argument("--beam-width", type=int, default=10)
     parser.add_argument("--max-hop", type=int, default=2)

@@ -1,7 +1,7 @@
 """
 Quickstart: load a graph from CSV and run a query.
 
-The simplest possible Parallax session — no external dependencies
+The simplest possible CEREBRUM session — no external dependencies
 beyond networkx, igraph, and leidenalg.
 
 Usage:
@@ -11,7 +11,7 @@ import random
 import sys
 from pathlib import Path
 
-# Make sure parallax root is on path when running from examples/
+# Make sure cerebrum root is on path when running from examples/
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from adapters.csv_adapter import load_csv_adapter

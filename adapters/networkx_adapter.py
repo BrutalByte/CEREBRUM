@@ -8,11 +8,15 @@ Use it for:
   - In-memory graph construction from Python dicts or triples
 """
 import difflib
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, TYPE_CHECKING
 
 import networkx as nx
+import numpy as np
 
 from core.graph_adapter import GraphAdapter, Entity, Edge
+
+if TYPE_CHECKING:
+    from core.thalamus import IngestionPipeline
 
 
 class NetworkXAdapter(GraphAdapter):
@@ -59,6 +63,7 @@ class NetworkXAdapter(GraphAdapter):
         entity_id: str,
         edge_types: Optional[List[str]] = None,
         max_neighbors: int = 50,
+        context_embedding: Optional["np.ndarray"] = None,
     ) -> List[Edge]:
         if entity_id not in self._G:
             return []
@@ -84,6 +89,10 @@ class NetworkXAdapter(GraphAdapter):
                     relation_type=rel_type,
                     weight=float(edge_data.get("weight", 1.0)),
                     properties=dict(edge_data),
+                    confidence=float(edge_data.get("confidence", 1.0)),
+                    provenance=str(edge_data.get("provenance", "")),
+                    valid_from=edge_data.get("valid_from"),
+                    valid_to=edge_data.get("valid_to"),
                 )
             )
 
@@ -188,6 +197,27 @@ class NetworkXAdapter(GraphAdapter):
     def to_networkx(self) -> nx.Graph:
         return self._G
 
+    def build_communities(self, resolution: float = 1.0) -> None:
+        """
+        Run DSCF community detection and attach results to this adapter.
+
+        Populates ``self.community_map`` (node -> int) and
+        ``self._partition`` (List[frozenset]) so that get_community()
+        returns meaningful IDs and compute_soft_memberships() has a
+        partition to work with.
+
+        Safe to call multiple times (re-runs detection each time).
+        """
+        from core.community_engine import dscf_communities
+        G_und = self._G.to_undirected() if self._G.is_directed() else self._G
+        parts = dscf_communities(G_und, resolution=resolution)
+        self._partition = parts
+        cm: Dict[str, int] = {}
+        for cid, members in enumerate(parts):
+            for node in members:
+                cm[node] = cid
+        self.community_map = cm
+
     def get_community(self, entity_id: str) -> int:
         """Requires communities to be attached to the adapter instance."""
         if hasattr(self, "community_map"):
@@ -199,6 +229,35 @@ class NetworkXAdapter(GraphAdapter):
         if hasattr(self, "embeddings"):
             return self.embeddings.get(entity_id)
         return None
+
+    def find_similar(
+        self, 
+        embedding: "np.ndarray", 
+        top_k: int = 10
+    ) -> List[Entity]:
+        """Brute-force cosine similarity over all entities with embeddings."""
+        if not hasattr(self, "embeddings") or not self.embeddings:
+            return []
+
+        # Ensure embedding is normalized for cosine sim
+        norm_q = np.linalg.norm(embedding)
+        if norm_q == 0:
+            return []
+        
+        q_norm = embedding / norm_q
+        
+        scores = []
+        for eid, emb in self.embeddings.items():
+            norm_e = np.linalg.norm(emb)
+            if norm_e == 0:
+                continue
+            sim = np.dot(q_norm, emb / norm_e)
+            scores.append((eid, sim))
+            
+        # Sort by similarity
+        sorted_eids = sorted(scores, key=lambda x: x[1], reverse=True)
+        
+        return [self.get_entity(eid) for eid, _ in sorted_eids[:top_k] if self.get_entity(eid)]
 
     # ------------------------------------------------------------------
     # Optional helpers
@@ -225,9 +284,17 @@ class NetworkXAdapter(GraphAdapter):
         cls,
         triples: List[tuple],
         directed: bool = True,
+        pipeline: Optional["IngestionPipeline"] = None,
     ) -> "NetworkXAdapter":
         """
         Build an adapter from a list of (subject, predicate, object) triples.
+
+        Parameters
+        ----------
+        triples  : list of (source, relation, target) tuples. A fourth element
+                   may be a dict of metadata passed to the pipeline.
+        directed : use DiGraph if True (default), Graph if False
+        pipeline : optional IngestionPipeline for normalization and enrichment
 
         Example:
             adapter = NetworkXAdapter.from_triples([
@@ -236,8 +303,23 @@ class NetworkXAdapter(GraphAdapter):
             ])
         """
         G = nx.DiGraph() if directed else nx.Graph()
-        for s, p, o in triples:
-            G.add_edge(str(s), str(o), relation=str(p))
+        for t in triples:
+            s, p, o = str(t[0]), str(t[1]), str(t[2])
+            meta = t[3] if len(t) > 3 and isinstance(t[3], dict) else {}
+
+            if pipeline is not None:
+                edge = pipeline.process(s, o, p, meta)
+                G.add_edge(
+                    edge.source,
+                    edge.target,
+                    relation=edge.relation,
+                    confidence=edge.confidence,
+                    provenance=edge.provenance,
+                    weight=edge.weight,
+                    **edge.properties,
+                )
+            else:
+                G.add_edge(s, o, relation=p)
         return cls(G)
 
 

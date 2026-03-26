@@ -1,10 +1,10 @@
-# Parallax: Community-Structured Graph Attention for Knowledge Graph Reasoning
+# CEREBRUM: Community-Structured Graph Attention for Knowledge Graph Reasoning
 
 **Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: March 2026
-**Status**: Version 0.3 · Phase 10 COMPLETE
+**Status**: Version 1.1.0 · Phase 20 COMPLETE — 994 tests passing
 **License**: Proprietary — all rights reserved
 
 ---
@@ -35,7 +35,7 @@ CSA (attention weight for edge u→v at hop k):
 
 **Transformer → KG mapping**:
 
-| Transformer | Parallax |
+| Transformer | CEREBRUM |
 |---|---|
 | Attention head | DSCF community |
 | Layer depth | BFS hop count |
@@ -53,7 +53,7 @@ parallax/
 ├── adapters/      networkx, neo4j, rdf, csv
 ├── llm_bridge/    context_formatter
 ├── api/           server, schemas
-├── cli/           parallax.py
+├── cli/           cerebrum.py
 ├── tests/         test_dscf, test_csa, test_traversal, fixtures/toy_graph.csv
 ├── benchmarks/    webqsp_eval, metaqa_eval, baseline_comparison
 ├── examples/      wikidata_quickstart, neo4j_quickstart, csv_quickstart
@@ -62,15 +62,13 @@ parallax/
 └── PAPER.md       (this file)
 ```
 
-**Current phase**: Phase 4 complete. Parallax has been benchmarked on MetaQA,
-WebQSP, and Hetionet. The "Metaedge Bridge Bonus" (EF-005) successfully
-mitigated the Type Alignment Trap. Phase 5 (Release) is underway.
+**Current phase**: Phase 20 complete (v1.1.0). CEREBRUM has been benchmarked on MetaQA, WebQSP, and Hetionet. The framework includes the complete THALAMUS ingestion pipeline, a full LLM bridge, Bayesian Beam Search with warm-start cold-start seeding, GlobalRebalancer with bridge-engine post-rebalance hook, Cross-Modal Alignment with canonical basis anchor, Namespace Isolation, Causal Flood filtering, Zombie Bridge pruning, Query Snapshot Isolation, Community-Specific CSA Parameters, and Path-Preserving Hold-out validation. 994 tests passing.
 
 ---
 
 ## Abstract
 
-We propose **Parallax**, a novel framework that enables Knowledge Graphs (KGs)
+We propose **CEREBRUM**, a novel framework that enables Knowledge Graphs (KGs)
 to perform multi-hop reasoning using the same structural principles that make
 Transformer-based Large Language Models powerful — without requiring an LLM,
 without training data, and with full interpretability of every inference step.
@@ -121,7 +119,7 @@ The field has responded with hybrid approaches: Retrieval-Augmented Generation
 (RAG), Knowledge-Graph-augmented LLMs, and GraphRAG. In all of these, the KG
 is a retrieval store and the LLM does the reasoning. The KG remains passive.
 
-**Parallax inverts this relationship.** The KG reasons. The LLM, if present,
+**CEREBRUM inverts this relationship.** The KG reasons. The LLM, if present,
 only generates natural language from the KG's output. Every inference step is
 a graph traversal, every conclusion is a path, and every path can be verified.
 
@@ -154,7 +152,7 @@ metaphorical? We argue yes, and demonstrate the architecture to do so.
 
 This paper makes three primary contributions:
 
-1. **The Parallax architecture**: a complete mapping of Transformer components
+1. **The CEREBRUM architecture**: a complete mapping of Transformer components
    to KG operations, enabling multi-hop reasoning via graph traversal alone.
 
 2. **Community-Structured Attention (CSA)**: a novel attention mechanism using
@@ -241,7 +239,7 @@ highest modularity score. For production: seed the RNG and document the seed.
 We establish a complete operational mapping between Transformer components
 and KG operations. This is not analogy — each mapping is functional.
 
-| Transformer Component | Parallax (KG) Equivalent | Notes |
+| Transformer Component | CEREBRUM (KG) Equivalent | Notes |
 |---|---|---|
 | Token | Entity or Relation | Atomic unit of information |
 | Vocabulary | Entity type taxonomy | Closed set of possible types |
@@ -261,13 +259,13 @@ and KG operations. This is not analogy — each mapping is functional.
 | KV cache | Materialized path store | Reuse traversal across queries |
 
 This equivalence has a critical implication: **the number of attention heads is
-not a hyperparameter in Parallax — it is determined by the graph's own community
+not a hyperparameter in CEREBRUM — it is determined by the graph's own community
 structure.** A graph with 12 natural communities has 12 attention heads. A graph
 with 200 communities has 200. The architecture adapts to the data.
 
 ---
 
-## 4. The Parallax Architecture
+## 4. The CEREBRUM Architecture
 
 ### 4.1 Community-Structured Attention (CSA)
 
@@ -490,7 +488,7 @@ This prevents paths that jump incoherently across unrelated domains.
 
 ### 5.3 Interpretability
 
-The output of Parallax is always a path through the KG. This is fundamentally
+The output of CEREBRUM is always a path through the KG. This is fundamentally
 different from LLM reasoning in two ways:
 
 1. **Verifiable**: every step is an explicit (entity, relation, entity) triple
@@ -502,7 +500,7 @@ different from LLM reasoning in two ways:
    community "Drug Mechanisms" to community "Side Effects" is immediately
    understandable.
 
-This property makes Parallax specifically valuable in high-stakes domains
+This property makes CEREBRUM specifically valuable in high-stakes domains
 (medical, legal, financial) where hallucination is unacceptable.
 
 ---
@@ -511,7 +509,7 @@ This property makes Parallax specifically valuable in high-stakes domains
 
 ### 6.1 Design Principles
 
-**Framework agnostic**: Parallax must work with any graph database, any
+**Framework agnostic**: CEREBRUM must work with any graph database, any
 embedding method, and any LLM (or no LLM). No vendor lock-in.
 
 **No training required by default**: The zero-shot configuration uses fixed
@@ -585,7 +583,7 @@ parallax/
 
 ### 6.3 The Abstract Graph Adapter
 
-The adapter pattern is what makes Parallax truly agnostic:
+The adapter pattern is what makes CEREBRUM truly agnostic:
 
 ```python
 from abc import ABC, abstractmethod
@@ -718,6 +716,14 @@ See Appendix D for the extracted code.
 - Exponential time decay, per-spike weight decay (forgetting), configurable thresholds
 - Enables autonomous causal chain discovery from streaming data
 
+**Phase 18 — v0.4 Horizon v0.4.0 (COMPLETE)**
+- **IngestionPipeline** (core/thalamus.py): entity normalization/dedup, relation normalization, confidence/provenance — GIGO prevention at THALAMUS layer
+- **LLM Bridge** (llm_bridge/): `generate()` + `GenerationResult`; `AnthropicAdapter`, `OpenAIAdapter`, `OllamaAdapter`, `HuggingFaceAdapter`
+- **Bayesian Beam Search**: Beta-distribution path model + Thompson sampling in `BeamTraversal(probabilistic=True)`; `Answer.score_uncertainty`
+- **GlobalRebalancer** (core/rebalancer.py): modularity Q drift detection + background DSCF re-run; plugs into StreamAdapter
+- **Cross-Modal Alignment** (core/signal_encoder.py): `StatisticalSignalEncoder`, `SpectralSignalEncoder` + Procrustes SVD alignment to entity embedding space
+- 895 tests passing (51 new tests across 3 new test files)
+
 ### 6.6 Computational Complexity
 
 **DSCF community detection**: O(E · I) where E = edges, I = iterations
@@ -738,8 +744,8 @@ For a graph with k̄=20, L=3, B=10, d=384: ~230,000 floating-point operations
 per query — milliseconds on CPU, no GPU required.
 
 **Comparison to Transformer**: Full attention is O(n² · d) per layer.
-Parallax traversal is O(B · L · k̄ · d) — independent of graph size n.
-This makes Parallax sublinear in graph size for fixed-width beam search.
+CEREBRUM traversal is O(B · L · k̄ · d) — independent of graph size n.
+This makes CEREBRUM sublinear in graph size for fixed-width beam search.
 
 ### 6.7 Known Failure Modes
 
@@ -770,26 +776,26 @@ trusted edges; treat unsigned-edge-induced communities with lower β weight.
 
 ## 7. The DSCF-as-Attention-Head Hypothesis
 
-The central theoretical claim of Parallax is that DSCF communities are better
+The central theoretical claim of CEREBRUM is that DSCF communities are better
 attention heads than Leiden-only or LPA-only communities. We state this as a
 falsifiable hypothesis:
 
 **H1 (DSCF Attention Hypothesis)**: For multi-hop reasoning tasks on KGs,
-Parallax with DSCF attention heads achieves higher answer accuracy than
-Parallax with Leiden-only or LPA-only attention heads.
+CEREBRUM with DSCF attention heads achieves higher answer accuracy than
+CEREBRUM with Leiden-only or LPA-only attention heads.
 
 **H2 (CSA vs GAT Hypothesis)**: CSA-guided traversal achieves higher accuracy
 on multi-hop questions than GAT-based traversal on the same graph and same
 entity embeddings.
 
-**H3 (Interpretability Hypothesis)**: Parallax paths receive higher human
+**H3 (Interpretability Hypothesis)**: CEREBRUM paths receive higher human
 coherence ratings than equivalent LLM-generated reasoning chains on the same
 questions, because every step is a grounded graph edge.
 
-**H3 Evaluation Protocol**: Present matched pairs — one Parallax path and
+**H3 Evaluation Protocol**: Present matched pairs — one CEREBRUM path and
 one LLM reasoning chain — to N≥30 annotators blind to their source. Ask:
 "Which reasoning chain is more coherent and trustworthy? (A / B / Equal)".
-Primary metric: proportion preferring Parallax path. Secondary: Cohen's kappa
+Primary metric: proportion preferring CEREBRUM path. Secondary: Cohen's kappa
 for inter-annotator agreement (target κ > 0.6).
 
 These hypotheses are testable on standard benchmarks (WebQSP, MetaQA-3hop)
@@ -813,7 +819,7 @@ specific training needed. More agnostic. Less precise for entities with
 ambiguous labels.
 
 **Recommended default**: Option B for zero-shot deployment; Option A when the
-graph has been stable and training is feasible. Parallax should support both
+graph has been stable and training is feasible. CEREBRUM should support both
 interchangeably via the EmbeddingEngine interface.
 
 ### 8.2 Adaptive Community Granularity
@@ -875,8 +881,8 @@ alongside graph-structural distance. Left for future work.
 | GAT | Graph neural network | 2-layer, trained |
 | GraphRAG | LLM-based | Community summaries → GPT-4 |
 | RAG (vanilla) | LLM-based | FAISS retrieval → GPT-4 |
-| **Parallax (TSC)** | Graph attention | Ours, Triple-Signal Consensus heads |
-| **Parallax (LPA)** | Graph attention | Ablation: LPA-only heads |
+| **CEREBRUM (TSC)** | Graph attention | Ours, Triple-Signal Consensus heads |
+| **CEREBRUM (LPA)** | Graph attention | Ablation: LPA-only heads |
 
 ### 9.3 Metrics
 
@@ -905,7 +911,7 @@ repurposing ("Drug X inhibits enzyme Y which is overexpressed in disease Z").
 Grounded inference is critical — no LLM should hallucinate drug interactions.
 
 **Legal**: Case law citation and statutory reference networks. Multi-hop
-precedent tracing. Every step in a legal argument must be citable; Parallax's
+precedent tracing. Every step in a legal argument must be citable; CEREBRUM's
 grounded paths match this requirement exactly.
 
 **Cybersecurity**: Attack graphs, CVE dependency networks. "What path leads
@@ -921,7 +927,7 @@ reasoning chains for auditors: "Why did this transaction trigger a flag?"
 
 ### 10.2 The LLM Bridge
 
-Parallax is designed to augment LLMs, not replace them. The `llm_bridge`
+CEREBRUM is designed to augment LLMs, not replace them. The `llm_bridge`
 module formats traversal output as structured context:
 
 ```
@@ -945,11 +951,11 @@ purely natural language generation, not reasoning.
 
 ### 10.3 The Agnosticism Property
 
-Parallax is agnostic across five dimensions:
+CEREBRUM is agnostic across five dimensions:
 
 1. **Graph database**: implement GraphAdapter for any system
 2. **Embedding method**: implement EmbeddingEngine for any model
-3. **LLM**: any model or none — Parallax works without one
+3. **LLM**: any model or none — CEREBRUM works without one
 4. **Domain**: the algorithm is domain-blind; community structure emerges from the graph's own topology
 5. **Query language**: entities can be identified from text, IDs, or direct lookup — the entry point is flexible
 
@@ -958,7 +964,7 @@ Parallax is agnostic across five dimensions:
 ## 11. Conclusion
 
 
-We have presented Parallax: a framework that enables Knowledge Graphs to
+We have presented CEREBRUM: a framework that enables Knowledge Graphs to
 reason using the structural principles of Transformer attention without
 training data, without an LLM, and with full interpretability.
 
@@ -973,7 +979,7 @@ answer is traceable to a sequence of verified graph edges. This architectural sh
 moves AI from probabilistic hidden-layer weights to a **Glass-Box** of deterministic 
 paths — a vital transition in the modern AI/ML landscape. Every reasoning step
 names the community it traversed. This interpretability property, combined with
-the graph-grounded capability of graph-grounded inference, positions Parallax
+the graph-grounded capability of graph-grounded inference, positions CEREBRUM
 as a meaningful complement to — and in certain domains, replacement for —
 LLM-based reasoning over structured knowledge.
 
@@ -981,13 +987,13 @@ The open questions identified in Section 8 define the research program. The
 benchmarks in Section 9 define the empirical standard. The architecture in
 Section 6 defines what to build.
 
-The name Parallax refers to the optical phenomenon where two viewpoints on
+The name CEREBRUM refers to the optical phenomenon where two viewpoints on
 the same object yield depth perception that neither viewpoint alone provides.
 LPA and modularity are two viewpoints on the same graph. Their combination
 yields structural depth — attention heads with both short-range and long-range
 character — that neither produces alone. This multi-signal consensus is inspired 
 by **mid-level voting** systems in triplex-redundant aircraft navigation, where 
-the median value is selected to correct navigation errors. Parallax applies this 
+the median value is selected to correct navigation errors. CEREBRUM applies this 
 principle to "right the navigation errors" (hallucinations) of current language 
 models by requiring structural consensus for every reasoning step.
 
@@ -997,14 +1003,14 @@ That depth is what makes the KG reason.
 
 ## Acknowledgments: Intellectual Debt and Credits
 
-Parallax stands on the shoulders of decades of research in graph theory, community detection, and neural networks. We explicitly acknowledge the foundational work of the following researchers and the algorithms that form the bedrock of our framework:
+CEREBRUM stands on the shoulders of decades of research in graph theory, community detection, and neural networks. We explicitly acknowledge the foundational work of the following researchers and the algorithms that form the bedrock of our framework:
 
 1.  **LPA (Label Propagation Algorithm)**: Usha Nandini Raghavan, Réka Albert, and Shailesh Kumara (2007). Their work on near-linear time community detection via local neighbor voting provided the "Local Signal" for our DSCF engine.
 2.  **Louvain Algorithm**: Vincent Blondel, Jean-Loup Guillaume, Renaud Lambiotte, and Etienne Lefebvre (2008). Their greedy modularity optimization method established the global structural baseline for community detection.
 3.  **Leiden Algorithm**: Vincent Traag, Ludo Waltman, and Nees Jan van Eck (2019). Their refinement of Louvain, ensuring internal connectivity, provides the "Global Signal" and connectivity post-pass for DSCF.
 4.  **Graph Attention Networks (GATs)**: Petar Veličković, Guillem Cucurull, Arantxa Casanova, Adriana Romero, Pietro Liò, and Yoshua Bengio (2018). Their introduction of learned attention on graphs served as the primary foil and inspiration for our Community-Structured Attention (CSA).
 5.  **KG Embeddings (TransE / RotatE)**: Antoine Bordes et al. (2013) and Zhiqing Sun et al. (2019). Their work on representing relational knowledge in vector spaces provides the semantic grounding layer for CSA.
-6. **GraphRAG**: Microsoft Research / Edge et al. (2024). Their pioneering work in combining community summaries with LLM retrieval provided the immediate context and competitive baseline for Parallax's grounded reasoning approach.
+6. **GraphRAG**: Microsoft Research / Edge et al. (2024). Their pioneering work in combining community summaries with LLM retrieval provided the immediate context and competitive baseline for CEREBRUM's grounded reasoning approach.
 7. **Avionics Engineering**: The concept of **mid-level voting** (or mid-value selection) in triplex-redundant aircraft navigation. This engineering principle of multi-sensor consensus served as the foundational inspiration for the multi-signal logic of DSCF and TSC, providing a mechanism to "right the navigation errors" (hallucinations) common in probabilistic language models by moving from Black-Box speculation to Glass-Box verification.
 
 ---
@@ -1185,15 +1191,15 @@ In practice, α + β dominate the attention weights for most graphs.
 ## Appendix C: Relationship to Existing KG Embedding Methods
 
 TransE [Bordes et al., 2013] represents relations as translations in embedding
-space: emb(h) + emb(r) ≈ emb(t) for (h, r, t) triples. Parallax can use
+space: emb(h) + emb(r) ≈ emb(t) for (h, r, t) triples. CEREBRUM can use
 TransE embeddings directly for the similarity term in CSA without modification.
 
 RotatE [Sun et al., 2019] represents relations as rotations in complex space.
 More expressive for symmetric, antisymmetric, and compositional relations.
-Also directly usable in Parallax.
+Also directly usable in CEREBRUM.
 
 Neither TransE nor RotatE produces multi-hop reasoning paths on their own.
-Parallax uses their embeddings as the semantic grounding layer while the
+CEREBRUM uses their embeddings as the semantic grounding layer while the
 traversal logic and community structure provide the reasoning.
 
 ---
@@ -1353,16 +1359,16 @@ all = ["parallax-kg[embeddings,api,neo4j]"]
 
 ### E.5 Relationship to Home Assistant
 
-Parallax is architecturally independent from Home Assistant. The only code shared is the
-DSCF prototype (now extracted above). When Parallax matures:
+CEREBRUM is architecturally independent from Home Assistant. The only code shared is the
+DSCF prototype (now extracted above). When CEREBRUM matures:
 
 - Home Assistant's `knowledge_service` can optionally import `parallax` as a library
   and replace its current community detection with `from parallax.core.community_engine import dscf_communities`
-- The `neo4j_adapter` in Parallax will mirror patterns already in Home Assistant's `knowledge_service`
+- The `neo4j_adapter` in CEREBRUM will mirror patterns already in Home Assistant's `knowledge_service`
 - Home Assistant's holographic memory WebSocket pattern can serve as reference for
-  Parallax's optional real-time community broadcast feature
+  CEREBRUM's optional real-time community broadcast feature
 
-No Home Assistant code other than Appendix D functions should be copied into Parallax.
+No Home Assistant code other than Appendix D functions should be copied into CEREBRUM.
 
 ---
 

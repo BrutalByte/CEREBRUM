@@ -454,6 +454,52 @@ class CoActivationDiscretizer:
 
 
 # ---------------------------------------------------------------------------
+# Causal Significance Filter — chi-squared uniformity test
+# ---------------------------------------------------------------------------
+
+def _chi_squared_uniformity(
+    times: List[float],
+    alpha: float = 0.05,
+) -> Tuple[bool, float]:
+    """
+    Test whether the co-occurrence timestamps are uniformly distributed over time.
+
+    Returns (passed: bool, pvalue: float).
+    ``passed=True`` means the distribution is plausibly uniform (not bursty).
+    ``passed=False`` means events are significantly clustered — likely adversarial.
+
+    Falls back gracefully if scipy is unavailable (returns True, 1.0).
+    Requires at least 4 events to produce a meaningful result; fewer → passes by default.
+    """
+    if len(times) < 4:
+        return True, 1.0
+
+    sorted_times = sorted(times)
+    span = sorted_times[-1] - sorted_times[0]
+    if span == 0.0:
+        # All simultaneous — definitively bursty
+        return False, 0.0
+
+    # Bin event timestamps into k equal-width buckets over the span
+    k = max(2, min(len(times) // 2, 5))
+    bucket_width = span / k
+    observed = [0] * k
+    for t in sorted_times:
+        idx = min(int((t - sorted_times[0]) / bucket_width), k - 1)
+        observed[idx] += 1
+
+    expected_per_bucket = len(times) / k
+
+    try:
+        from scipy.stats import chisquare as _chisquare
+        _, pvalue = _chisquare(observed, f_exp=[expected_per_bucket] * k)
+        return float(pvalue) >= alpha, float(pvalue)
+    except Exception:
+        # scipy unavailable or test error — pass through (fail open)
+        return True, 1.0
+
+
+# ---------------------------------------------------------------------------
 # STDPDiscretizer — Spike-Timing Dependent Plasticity analog (Phase 13)
 # ---------------------------------------------------------------------------
 
@@ -466,7 +512,7 @@ class STDPDiscretizer:
     depressed (LTD). The magnitude of the change decays exponentially with
     the time difference |Δt|.
 
-    Parallax analog:
+    CEREBRUM analog:
         - Each source_id that calls ``process()`` is a "spike".
         - For every recent prior spike (pre-synaptic), Δt = t_post − t_pre > 0
           → potentiate weight[(pre, post)] by A_plus * exp(-Δt / tau_plus).
@@ -513,6 +559,8 @@ class STDPDiscretizer:
         weight_decay: float = 0.99,
         relation: str = "CAUSES",
         ttl: float = 0.0,
+        min_causal_span: float = 0.0,
+        use_chi_squared: bool = False,
     ):
         self.window_seconds = window_seconds
         self.tau_plus = tau_plus
@@ -524,6 +572,8 @@ class STDPDiscretizer:
         self.weight_decay = weight_decay
         self.relation = relation
         self.ttl = ttl
+        self.min_causal_span = min_causal_span
+        self.use_chi_squared = use_chi_squared
 
         # source_id → last spike timestamp
         self._last_fire: Dict[str, float] = {}
@@ -533,6 +583,29 @@ class STDPDiscretizer:
         self._counts: Dict[Tuple[str, str], int] = {}
         # edges already emitted (avoid duplicate StreamEvents per step)
         self._emitted: set = set()
+        # (pre_id, post_id) → timestamp of first LTP co-occurrence (for span filter)
+        self._first_cooccurrence: Dict[Tuple[str, str], float] = {}
+        # (pre_id, post_id) → list of LTP co-occurrence timestamps (for chi-squared)
+        self._cooccurrence_times: Dict[Tuple[str, str], List[float]] = {}
+        
+        # Lazy decay state (Hole 4 fix)
+        self._step: int = 0
+        self._last_update_step: Dict[Tuple[str, str], int] = {}
+
+    def _apply_lazy_decay(self, key: Tuple[str, str]) -> float:
+        """Apply pending geometric decay to a weight since its last update."""
+        current_w = self._weights.get(key, 0.0)
+        last_step = self._last_update_step.get(key, self._step)
+        elapsed = self._step - last_step
+        
+        if elapsed > 0 and current_w > 0:
+            # decay ^ elapsed
+            decay_factor = self.weight_decay ** elapsed
+            current_w *= decay_factor
+            self._weights[key] = current_w
+            
+        self._last_update_step[key] = self._step
+        return current_w
 
     def process(
         self,
@@ -554,11 +627,12 @@ class STDPDiscretizer:
         """
         now = timestamp if timestamp is not None else time.time()
         events: List[StreamEvent] = []
+        
+        # Increment global step for lazy decay
+        self._step += 1
 
-        # Apply per-spike weight decay to all accumulated weights
-        if self.weight_decay < 1.0:
-            for key in list(self._weights.keys()):
-                self._weights[key] *= self.weight_decay
+        # Track which pairs were updated this step (to check thresholds efficiently)
+        updated_pairs: set = set()
 
         # For each prior spike within window_seconds:
         #   Δt = now - t_pre  (positive → source_id is POST, prior is PRE)
@@ -573,29 +647,74 @@ class STDPDiscretizer:
 
             # LTP: pre → post (pre fired before current spike)
             pair_ltp = (pre_id, source_id)
+            # 1. Bring weight up to date
+            w_ltp = self._apply_lazy_decay(pair_ltp)
+            # 2. Apply LTP
             dw_ltp = self.A_plus * math.exp(-delta_t / self.tau_plus)
-            self._weights[pair_ltp] = self._weights.get(pair_ltp, 0.0) + dw_ltp
+            w_ltp += dw_ltp
+            self._weights[pair_ltp] = w_ltp
             self._counts[pair_ltp] = self._counts.get(pair_ltp, 0) + 1
+            updated_pairs.add(pair_ltp)
+
+            # Track first co-occurrence timestamp for span filter
+            if self.min_causal_span > 0.0 and pair_ltp not in self._first_cooccurrence:
+                self._first_cooccurrence[pair_ltp] = now
+
+            # Track all co-occurrence timestamps for chi-squared filter
+            if self.use_chi_squared:
+                self._cooccurrence_times.setdefault(pair_ltp, []).append(now)
 
             # LTD: post → pre direction is depressed (anti-causal direction)
             pair_ltd = (source_id, pre_id)
+            # 1. Bring weight up to date
+            w_ltd = self._apply_lazy_decay(pair_ltd)
+            # 2. Apply LTD
             dw_ltd = self.A_minus * math.exp(-delta_t / self.tau_minus)
-            self._weights[pair_ltd] = self._weights.get(pair_ltd, 0.0) - dw_ltd
-            # Clamp at 0 — weights cannot go negative
-            if self._weights[pair_ltd] < 0.0:
-                self._weights[pair_ltd] = 0.0
+            w_ltd -= dw_ltd
+            if w_ltd < 0.0:
+                w_ltd = 0.0
+            self._weights[pair_ltd] = w_ltd
+            # No need to add to updated_pairs for emission check if it decreased,
+            # but for completeness/correctness of state we updated it.
+            # Only potential emitters need checking.
 
         # Check which pairs now exceed threshold and emit CAUSES edges
-        for (pre_id, post_id), w in self._weights.items():
+        # Optimization: only check pairs that were potentiated this step
+        for (pre_id, post_id) in updated_pairs:
+            w = self._weights[(pre_id, post_id)]
             count = self._counts.get((pre_id, post_id), 0)
+            
             if w >= self.w_threshold and count >= self.n_min:
                 edge_key = (pre_id, post_id)
-                if edge_key not in self._emitted:
-                    self._emitted.add(edge_key)
+                if edge_key in self._emitted:
+                    continue
+
+                # Causal significance filter 1: minimum temporal span
+                causal_span = 0.0
+                if self.min_causal_span > 0.0:
+                    first_t = self._first_cooccurrence.get(edge_key)
+                    if first_t is None or (now - first_t) < self.min_causal_span:
+                        continue
+                    causal_span = now - first_t
+
+                # Causal significance filter 2: chi-squared uniformity test
+                causal_pvalue = 1.0
+                if self.use_chi_squared:
+                    times = self._cooccurrence_times.get(edge_key, [])
+                    passed, pvalue = _chi_squared_uniformity(times)
+                    causal_pvalue = pvalue
+                    if not passed:
+                        continue
+
+                self._emitted.add(edge_key)
                 meta = {
                     "causal_weight": round(w, 6),
                     "event_count": count,
                 }
+                if self.min_causal_span > 0.0:
+                    meta["causal_span"] = round(causal_span, 6)
+                if self.use_chi_squared:
+                    meta["causal_pvalue"] = round(causal_pvalue, 6)
                 if metadata:
                     meta.update(metadata)
                 events.append(StreamEvent(
@@ -612,7 +731,7 @@ class STDPDiscretizer:
 
     def weight(self, pre_id: str, post_id: str) -> float:
         """Return current causal weight for the (pre, post) directed pair."""
-        return self._weights.get((pre_id, post_id), 0.0)
+        return self._apply_lazy_decay((pre_id, post_id))
 
     def count(self, pre_id: str, post_id: str) -> int:
         """Return co-occurrence count for the (pre, post) directed pair."""
@@ -624,3 +743,7 @@ class STDPDiscretizer:
         self._weights.clear()
         self._counts.clear()
         self._emitted.clear()
+        self._first_cooccurrence.clear()
+        self._cooccurrence_times.clear()
+        self._step = 0
+        self._last_update_step.clear()

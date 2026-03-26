@@ -1,5 +1,5 @@
 """
-Parallax Studio -- Interactive Reasoning Interface.
+CEREBRUM Studio -- Interactive Reasoning Interface.
 
 A Gradio-based UI for exploring Knowledge Graphs using Community-Structured Attention.
 Allows users to run reasoning queries, inspect paths, and visualize the attention mechanism.
@@ -31,7 +31,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[logging.StreamHandler(sys.stdout)],
 )
-logger = logging.getLogger("ParallaxStudio")
+logger = logging.getLogger("CEREBRUMStudio")
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -52,7 +52,7 @@ from core.discretizer import ThresholdDiscretizer, BinningDiscretizer
 
 CUSTOM_CSS = """
 .gradio-container { background-color: #0b0f19 !important; }
-.parallax-card {
+.cerebrum-card {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(0, 255, 255, 0.1);
     border-radius: 8px;
@@ -60,7 +60,7 @@ CUSTOM_CSS = """
     margin-bottom: 10px;
     transition: all 0.2s;
 }
-.parallax-card:hover { border-color: #00ffff; background: rgba(0, 255, 255, 0.05); }
+.cerebrum-card:hover { border-color: #00ffff; background: rgba(0, 255, 255, 0.05); }
 .score-bar-bg { background: #333; border-radius: 4px; height: 8px; width: 100%; margin: 8px 0; }
 .score-bar-fill { background: linear-gradient(90deg, #00c6ff 0%, #0072ff 100%); height: 100%; border-radius: 4px; }
 .path-text { font-family: 'Fira Code', monospace; color: #aaa; font-size: 0.9em; }
@@ -198,7 +198,7 @@ def format_path_html(answers):
         path_str = " &rarr; ".join(f"<code>{n}</code>" for n in ans.best_path.nodes)
         score_pct = int(min(ans.score, 1.0) * 100)
         html += f"""
-        <div class='parallax-card'>
+        <div class='cerebrum-card'>
             <div style='display:flex;justify-content:space-between;align-items:center;'>
                 <span class='entity-id'>{ans.entity_id}</span>
                 <span style='color:#00ffff;font-family:monospace;'>{ans.score:.4f}</span>
@@ -565,8 +565,8 @@ def generate_stream_viz():
 # UI Layout
 # ---------------------------------------------------------------------------
 
-with gr.Blocks(title="Parallax Studio") as demo:
-    gr.Markdown("# Parallax Studio")
+with gr.Blocks(title="CEREBRUM Studio") as demo:
+    gr.Markdown("# CEREBRUM Studio")
     gr.Markdown("*Glass-Box Community-Structured Reasoning Engine*")
 
     with gr.Row():

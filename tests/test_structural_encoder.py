@@ -149,7 +149,7 @@ def test_encode_empty_input():
 
 
 def test_encode_vectors_are_float32():
-    """Encoded vectors must be float32 (the expected dtype throughout Parallax)."""
+    """Encoded vectors must be float32 (the expected dtype throughout CEREBRUM)."""
     G        = make_bridge_graph()
     features = compute_structural_features(G)
     encoded  = encode_structural_features(features, dim=64)

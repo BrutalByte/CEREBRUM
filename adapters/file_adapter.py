@@ -1,5 +1,5 @@
 """
-Universal file loader for Parallax.
+Universal file loader for CEREBRUM.
 
 Dispatches to the correct loader based on file extension. Supports:
   .csv / .tsv       — edge-list (source, target, relation columns)

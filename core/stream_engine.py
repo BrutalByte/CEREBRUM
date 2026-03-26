@@ -213,10 +213,18 @@ class IncrementalCommunityUpdater:
         neighborhood_radius: int = 2,
         min_events_before_update: int = 10,
         max_subgraph_size: int = 2000,
+        use_lpa: bool = True,
     ):
         self.neighborhood_radius = neighborhood_radius
         self.min_events_before_update = min_events_before_update
         self.max_subgraph_size = max_subgraph_size
+        self.use_lpa = use_lpa
+        """
+        When True (default), incremental subgraph updates use LPA instead of
+        DSCF.  LPA is faster and avoids the post-pass connectivity splitting
+        that causes DSCF to over-fragment star-topology subgraphs.  Full
+        re-runs triggered by ``run_full()`` still use best_of_n_dscf.
+        """
 
         self._pending_nodes: Set[str] = set()
         self._events_since_update: int = 0
@@ -277,8 +285,7 @@ class IncrementalCommunityUpdater:
         if not ego_nodes:
             return community_map
 
-        # 2. Extract subgraph and run DSCF
-        # DSCF uses nx.connected_components which requires undirected graph.
+        # 2. Extract subgraph and run community detection
         subgraph = G.subgraph(ego_nodes).copy()
         if G.is_directed():
             subgraph = subgraph.to_undirected()
@@ -291,7 +298,11 @@ class IncrementalCommunityUpdater:
                     max_cid += 1
             return community_map
 
-        new_parts = dscf_communities(subgraph, resolution=resolution, max_iter=20)
+        if self.use_lpa:
+            from core.community_engine import lpa_communities
+            new_parts = lpa_communities(subgraph)
+        else:
+            new_parts = dscf_communities(subgraph, resolution=resolution, max_iter=20)
         new_sub_map: Dict[str, int] = {}
         for i, part in enumerate(new_parts):
             for node in part:

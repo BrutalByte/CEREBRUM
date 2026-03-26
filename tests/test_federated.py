@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import networkx as nx
 from adapters.networkx_adapter import NetworkXAdapter
 from adapters.federated_adapter import FederatedAdapter
-from adapters.remote_adapter import RemoteParallaxAdapter
+from adapters.remote_adapter import RemoteCerebrumAdapter
 from core.graph_adapter import Entity, Edge
 
 @pytest.fixture
@@ -138,7 +138,7 @@ def test_remote_get_entity(mock_response):
     }
     
     with patch("requests.get", return_value=mock_response) as mock_get:
-        adapter = RemoteParallaxAdapter("http://test-api")
+        adapter = RemoteCerebrumAdapter("http://test-api")
         ent = adapter.get_entity("remote_1")
         
         assert ent is not None
@@ -153,7 +153,7 @@ def test_remote_get_neighbors(mock_response):
     ]
     
     with patch("requests.get", return_value=mock_response) as mock_get:
-        adapter = RemoteParallaxAdapter("http://test-api")
+        adapter = RemoteCerebrumAdapter("http://test-api")
         edges = adapter.get_neighbors("a")
         
         assert len(edges) == 1
@@ -173,7 +173,7 @@ def test_remote_find_entities(mock_response):
     }
     
     with patch("requests.get", return_value=mock_response) as mock_get:
-        adapter = RemoteParallaxAdapter("http://test-api")
+        adapter = RemoteCerebrumAdapter("http://test-api")
         results = adapter.find_entities("query")
         
         assert len(results) == 1

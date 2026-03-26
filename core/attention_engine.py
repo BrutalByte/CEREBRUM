@@ -23,6 +23,9 @@ from typing import Dict, Optional, Set, Tuple
 
 import numpy as np
 
+# Type alias for soft membership: {node_id: {community_id: probability}}
+SoftMemberships = Dict[str, Dict[int, float]]
+
 
 class CSAEngine:
     """
@@ -52,6 +55,8 @@ class CSAEngine:
         edge_type_weights: Optional[Dict[str, float]] = None,
         external_community_scores: Optional[Dict[Tuple[int, int], float]] = None,
         pagerank: Optional[Dict[str, float]] = None,
+        soft_memberships: Optional["SoftMemberships"] = None,
+        community_params: Optional[Dict[int, Tuple[float, float, float, float, float]]] = None,
     ):
         """
         Parameters
@@ -69,6 +74,11 @@ class CSAEngine:
         edge_type_weights : {relation_type -> weight} mapping for "Bridge Bonus"
         external_community_scores : { (cid_u, cid_v) -> score } for cross-graph links
         pagerank          : precomputed {node -> pagerank_score} dict; enables zeta term
+        soft_memberships  : output of compute_soft_memberships() — when provided,
+                            community_score() uses dot-product of membership vectors
+                            instead of hard same/adjacent/distant classification.
+                            Enables multi-domain entities to score well across all
+                            communities they partially belong to.
         """
         self.adapter           = adapter
         self.alpha             = alpha
@@ -81,6 +91,17 @@ class CSAEngine:
         self.edge_type_weights = edge_type_weights or {}
         self.external_community_scores = external_community_scores or {}
 
+        # Hole 2 — Homogeneity Trap: per-community CSA parameter overrides.
+        # {community_id: (alpha, beta, gamma, delta, epsilon)}
+        # When set, compute_weight() uses the source node's community params
+        # instead of the global defaults, allowing domain-specific attention tuning.
+        self._community_params: Dict[int, Tuple[float, float, float, float, float]] = (
+            community_params or {}
+        )
+
+        # Soft community memberships (optional): {node -> {community_id -> probability}}
+        self.soft_memberships: Optional["SoftMemberships"] = soft_memberships
+
         # PageRank prior: normalize by max so the term is always in [0, 1]
         self._pagerank: Dict[str, float] = pagerank or {}
         self._max_pr: float = max(self._pagerank.values()) if self._pagerank else 1.0
@@ -88,30 +109,88 @@ class CSAEngine:
         # Populated by set_community_graph()
         self._community_distances: Dict[Tuple[int, int], float] = {}
         self._adjacent_pairs: Set[Tuple[int, int]]              = set()
+        self._community_graph = None   # optional nx.Graph for lazy distance lookup
+
+        # Milestone 4: Adaptive Parameter Learning
+        self.meta_learner = None
+
+        # Hole 1 — Mid-Flight Community Swap: per-query community map snapshot.
+        # Set by BeamTraversal.traverse() at query start; cleared on completion.
+        # When set, community lookups use this frozen snapshot instead of the
+        # live adapter.community_map, preventing CSA inconsistency mid-query.
+        self._query_snapshot: Optional[Dict[str, int]] = None
+
+    def set_meta_learner(self, learner) -> None:
+        """Attach a MetaParameterLearner for community-specific tuning."""
+        self.meta_learner = learner
+
+    # ------------------------------------------------------------------
+    # Hole 1 — Mid-Flight Community Swap: Query Snapshot Isolation
+    # ------------------------------------------------------------------
+
+    def set_query_snapshot(self, community_map: Dict[str, int]) -> None:
+        """
+        Freeze a copy of community_map for the duration of a single query.
+
+        Called by BeamTraversal.traverse() / traverse_stream() at query start.
+        All community lookups within this query will use the snapshot,
+        preventing in-flight CSA inconsistency if GlobalRebalancer commits a
+        new partition mid-query.
+        """
+        self._query_snapshot = community_map
+
+    def clear_query_snapshot(self) -> None:
+        """Release the per-query snapshot (called in a finally block)."""
+        self._query_snapshot = None
+
+    def _get_community(self, node_id: str) -> int:
+        """Community lookup that respects the per-query snapshot when set."""
+        if self._query_snapshot is not None:
+            return self._query_snapshot.get(node_id, -1)
+        return self.adapter.get_community(node_id)
 
     def set_community_graph(
         self,
         community_distances: Dict[Tuple[int, int], float],
         adjacent_pairs: Set[Tuple[int, int]],
+        community_graph=None,
     ) -> None:
         """
         Load precomputed community-level graph metadata.
+
+        Parameters
+        ----------
+        community_graph : optional nx.Graph
+            Community-level graph (one node per community, edges where
+            cross-community edges exist).  When provided, community distances
+            are computed lazily on first access and cached, so
+            build_community_distance_matrix() need not be called upfront.
         """
         self._community_distances = community_distances
         self._adjacent_pairs      = adjacent_pairs
+        self._community_graph     = community_graph
 
     def community_score(self, u: str, v: str) -> float:
         """
         Structural community membership score for the edge u -> v.
-        
+
         Handles:
+          - Soft memberships (when set): dot-product of membership vectors
           - Same community: 1.0
           - Adjacent communities: 0.5
           - Distant communities: exp(-lambda * d)
           - Federated/Remote communities: uses external_community_scores map
         """
-        cu = self.adapter.get_community(u)
-        cv = self.adapter.get_community(v)
+        # Soft membership path: dot-product over shared communities
+        if self.soft_memberships is not None:
+            mem_u = self.soft_memberships.get(u, {})
+            mem_v = self.soft_memberships.get(v, {})
+            score = sum(mem_u.get(cid, 0.0) * prob_v
+                        for cid, prob_v in mem_v.items())
+            return min(score, 1.0)
+
+        cu = self._get_community(u)
+        cv = self._get_community(v)
 
         # Handle federated/external IDs via the external_community_scores map
         # Check specific pair first, then wildcards (-1)
@@ -136,10 +215,21 @@ class CSAEngine:
         if (cu, cv) in self._adjacent_pairs or (cv, cu) in self._adjacent_pairs:
             return 0.5
 
-        d = self._community_distances.get(
-            (cu, cv),
-            self._community_distances.get((cv, cu), 5.0),
-        )
+        d = self._community_distances.get((cu, cv),
+            self._community_distances.get((cv, cu), None))
+        if d is None:
+            if self._community_graph is not None:
+                try:
+                    import networkx as _nx
+                    d = float(_nx.shortest_path_length(
+                        self._community_graph, cu, cv))
+                except Exception:
+                    d = 5.0
+                # cache both directions so each pair is only computed once
+                self._community_distances[(cu, cv)] = d
+                self._community_distances[(cv, cu)] = d
+            else:
+                d = 5.0
         return math.exp(-self.lambda_decay * d)
 
     def compute_weight(
@@ -160,6 +250,21 @@ class CSAEngine:
             hop_decay = 1.0 / (1.0 + hop)
             raw = self.alpha * 1.0 + self.beta * 1.0 + self.gamma * 1.0 + self.epsilon * hop_decay
             return _sigmoid(raw)
+
+        # Hole 2 — Homogeneity Trap: resolve per-community parameter overrides.
+        # If the source node's community has a registered parameter vector, use it
+        # instead of the global defaults, enabling domain-specific attention tuning
+        # (e.g., high gamma for dense causal communities, high delta for temporal).
+        cu = self._get_community(u)
+        
+        if self.meta_learner is not None:
+            alpha, beta, gamma, delta, epsilon = self.meta_learner.get_params(cu)
+        elif self._community_params and cu in self._community_params:
+            alpha, beta, gamma, delta, epsilon = self._community_params[cu]
+        else:
+            alpha, beta, gamma, delta, epsilon = (
+                self.alpha, self.beta, self.gamma, self.delta, self.epsilon
+            )
 
         # 1. Embedding cosine similarity
         eu = self.adapter.get_embedding(u)
@@ -187,13 +292,13 @@ class CSAEngine:
         # closing the recall gap vs. PPR at deep hops without running random walks.
         pr_v = self._pagerank.get(v, 0.0) / self._max_pr if self._pagerank else 0.0
 
-        # 6. Assemble and sigmoid
+        # 6. Assemble and sigmoid (using resolved alpha/beta/gamma/delta/epsilon)
         raw = (
-            self.alpha   * sim
-            + self.beta  * cs
-            + self.gamma * etw
-            - self.delta * normalized_distance
-            + self.epsilon * hop_decay
+            alpha   * sim
+            + beta  * cs
+            + gamma * etw
+            - delta * normalized_distance
+            + epsilon * hop_decay
             + self.zeta  * pr_v
         )
         return _sigmoid(raw)

@@ -1,7 +1,7 @@
 """
-Persistence layer for Parallax — save/load graph state, communities, and metadata.
+Persistence layer for CEREBRUM — save/load graph state, communities, and metadata.
 
-Parallax states (especially DSCF communities and structural encodings) can
+CEREBRUM states (especially DSCF communities and structural encodings) can
 be expensive to compute on large graphs. This module provides a unified
 mechanism to serialize the current state to disk and reload it instantly.
 """
@@ -15,7 +15,7 @@ import numpy as np
 
 # Security: Define the root for all persistent data. 
 # In production, this should be configurable but restricted.
-SAFE_DATA_DIR = Path(os.getenv("PARALLAX_DATA_DIR", "data/parallax")).absolute()
+SAFE_DATA_DIR = Path(os.getenv("CEREBRUM_DATA_DIR", "data/cerebrum")).absolute()
 
 def _resolve_safe_path(file_path: str) -> Path:
     """
@@ -44,7 +44,7 @@ def save_state(
     hologram: Optional[Any] = None,
 ) -> None:
     """
-    Serialize the entire Parallax state to a binary pickle file.
+    Serialize the entire CEREBRUM state to a binary pickle file.
     Only allows paths within the SAFE_DATA_DIR sandbox.
     """
     path = _resolve_safe_path(file_path)
@@ -70,13 +70,13 @@ def save_state(
 
 def load_state(file_path: str) -> Dict[str, Any]:
     """
-    Load a Parallax state from a pickle file.
+    Load a CEREBRUM state from a pickle file.
     Only allows paths within the SAFE_DATA_DIR sandbox.
     """
     path = _resolve_safe_path(file_path)
     
     if not path.exists():
-        raise FileNotFoundError(f"Parallax state file not found: {path}")
+        raise FileNotFoundError(f"CEREBRUM state file not found: {path}")
     
     t0 = time.time()
     with open(path, "rb") as f:

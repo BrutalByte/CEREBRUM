@@ -1,5 +1,5 @@
 """
-Bootstrap a Parallax graph from an edge-list CSV file.
+Bootstrap a CEREBRUM graph from an edge-list CSV file.
 
 Expected CSV format (with header row):
     source,target,relation
@@ -8,14 +8,19 @@ Expected CSV format (with header row):
     ...
 
 Column names are configurable. The relation column is optional.
+Pass an IngestionPipeline to normalize entity IDs, relation types,
+and assign confidence/provenance at load time.
 """
 import csv
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import networkx as nx
 
 from adapters.networkx_adapter import NetworkXAdapter
+
+if TYPE_CHECKING:
+    from core.thalamus import IngestionPipeline
 
 
 def load_csv_adapter(
@@ -25,6 +30,7 @@ def load_csv_adapter(
     relation_col: str = "relation",
     directed: bool = False,
     encoding: str = "utf-8",
+    pipeline: Optional["IngestionPipeline"] = None,
 ) -> NetworkXAdapter:
     """
     Load an edge-list CSV into a NetworkXAdapter.
@@ -37,6 +43,10 @@ def load_csv_adapter(
     relation_col : column name for the relation type (optional in CSV)
     directed     : use DiGraph if True, Graph if False
     encoding     : file encoding
+    pipeline     : optional IngestionPipeline for entity/relation normalization
+                   and confidence-at-ingest. Any CSV columns beyond source,
+                   target, and relation are passed as metadata to the pipeline.
+                   If None, raw values are stored as-is (backward-compatible).
 
     Returns
     -------
@@ -44,8 +54,13 @@ def load_csv_adapter(
 
     Example:
         from adapters.csv_adapter import load_csv_adapter
-        adapter = load_csv_adapter("tests/fixtures/toy_graph.csv")
-        print(f"Loaded {adapter.node_count()} nodes")
+        from core.thalamus import IngestionPipeline
+
+        pipeline = IngestionPipeline(
+            relation_map={"activates": "ACTIVATES"},
+            confidence_fn=lambda s, t, r, m: float(m.get("score", 1.0)),
+        )
+        adapter = load_csv_adapter("kg.csv", pipeline=pipeline)
     """
     G        = nx.DiGraph() if directed else nx.Graph()
     filepath = Path(path)
@@ -59,6 +74,8 @@ def load_csv_adapter(
         if reader.fieldnames is None:
             raise ValueError(f"CSV file has no header row: {path}")
 
+        _key_cols = {source_col, target_col, relation_col}
+
         for row in reader:
             # Skip comment rows (lines starting with #)
             src = row.get(source_col, "").strip()
@@ -67,7 +84,22 @@ def load_csv_adapter(
                 continue
 
             rel = row.get(relation_col, "RELATED_TO").strip() or "RELATED_TO"
-            G.add_edge(src, tgt, relation=rel)
+
+            if pipeline is not None:
+                # Extra columns beyond the three key columns become metadata
+                meta = {k: v for k, v in row.items() if k not in _key_cols}
+                edge = pipeline.process(src, tgt, rel, meta)
+                G.add_edge(
+                    edge.source,
+                    edge.target,
+                    relation=edge.relation,
+                    confidence=edge.confidence,
+                    provenance=edge.provenance,
+                    weight=edge.weight,
+                    **edge.properties,
+                )
+            else:
+                G.add_edge(src, tgt, relation=rel)
 
     return NetworkXAdapter(G)
 

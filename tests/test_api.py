@@ -1,5 +1,5 @@
 """
-Phase 3 tests for the Parallax FastAPI REST server (api/server.py).
+Phase 3 tests for the CEREBRUM FastAPI REST server (api/server.py).
 
 Uses FastAPI's TestClient (Starlette WSGI test adapter) — no running server
 process required. All tests are fully in-process and deterministic.
@@ -350,6 +350,52 @@ class TestGraphAccess:
         assert res["id"] == "newton"
         assert res["label"] == "[REDACTED]"
         assert "score" in res
+
+
+# ---------------------------------------------------------------------------
+# POST /feedback, /search/similar
+# ---------------------------------------------------------------------------
+
+class TestAdaptiveLearning:
+
+    def test_search_similar_returns_results(self, client):
+        # 64-dim vector for toy graph RandomEngine
+        vec = [0.1] * 64
+        r = client.post("/search/similar", json={"embedding": vec, "top_k": 5})
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data["results"]) > 0
+        assert "query_vector" in data
+
+    def test_feedback_updates_model(self, client):
+        # 1. Get a real path from a query to use for feedback
+        req = {"query": "newton", "seeds": ["newton"], "top_k": 1}
+        r_query = client.post("/query", json=req)
+        path_data = r_query.json()["paths"][0]
+        
+        # Extract features and community sequence (needed for FeedbackRequest)
+        # Note: In a real scenario, these would be in the path_data if we exposed them.
+        # For the test, we'll simulate a feedback request.
+        feedback_req = {
+            "path_nodes": [n["label"] for n in path_data["path"] if n["type"] == "entity"],
+            "edge_features": [[0.9, 1.0, 0.1, 0.0, 0.5]], # simulated for 1 hop
+            "community_sequence": [0, 0], # simulated
+            "reward": 1.0
+        }
+        
+        r_fb = client.post("/feedback", json=feedback_req)
+        assert r_fb.status_code == 200
+        assert r_fb.json()["status"] == "success"
+
+    def test_feedback_unloaded_returns_501(self, unloaded_client):
+        # Unloaded client doesn't have meta_learner initialized
+        r = unloaded_client.post("/feedback", json={
+            "path_nodes": ["A", "B"],
+            "edge_features": [[0.5, 0.5, 0.5, 0.5, 0.5]],
+            "community_sequence": [0, 0],
+            "reward": 1.0
+        })
+        assert r.status_code == 501
 
 
 

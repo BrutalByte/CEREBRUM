@@ -34,7 +34,7 @@ import time
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterator, List, Optional
+from typing import Any, Callable, Dict, Iterator, List, Optional, TYPE_CHECKING
 
 import networkx as nx
 
@@ -47,7 +47,11 @@ from core.stream_engine import (
     StreamStats,
 )
 
-logger = logging.getLogger("parallax.stream")
+if TYPE_CHECKING:
+    from core.thalamus import IngestionPipeline
+    from core.rebalancer import GlobalRebalancer
+
+logger = logging.getLogger("cerebrum.stream")
 
 
 # ---------------------------------------------------------------------------
@@ -138,7 +142,7 @@ class FileTailSource(StreamSource):
       CSV:  ``source,relation,target[,metadata_json]``
       JSON: ``{"source": "...", "relation": "...", "target": "..."}``
 
-    The file may be written to by another process while Parallax reads it
+    The file may be written to by another process while CEREBRUM reads it
     (the classic tail -f pattern). New lines are yielded as they arrive.
 
     Parameters
@@ -448,7 +452,7 @@ class MQTTSource(StreamSource):
         broker: str,
         topics: List[str],
         port: int = 1883,
-        client_id: str = "parallax_stream",
+        client_id: str = "cerebrum_stream",
         username: Optional[str] = None,
         password: Optional[str] = None,
         source_col: str = "source",
@@ -524,7 +528,7 @@ class StreamAdapter(NetworkXAdapter):
     A thread-safe, live-mutable graph adapter backed by a sliding-window
     event buffer and incremental community detection.
 
-    Extends NetworkXAdapter — the full Parallax reasoning stack (CSAEngine,
+    Extends NetworkXAdapter — the full CEREBRUM reasoning stack (CSAEngine,
     BeamTraversal, etc.) works with StreamAdapter unchanged.
 
     Parameters
@@ -545,6 +549,8 @@ class StreamAdapter(NetworkXAdapter):
         min_events_before_update: int = 10,
         directed: bool = True,
         on_event_callbacks: Optional[List[Callable[[StreamEvent], None]]] = None,
+        pipeline: Optional["IngestionPipeline"] = None,
+        rebalancer: Optional["GlobalRebalancer"] = None,
     ):
         G = nx.DiGraph() if directed else nx.Graph()
         super().__init__(G)
@@ -564,6 +570,8 @@ class StreamAdapter(NetworkXAdapter):
         self._running = False
         self._on_event: List[Callable[[StreamEvent], None]] = on_event_callbacks or []
         self._mutation_listeners: List[Callable[[str, StreamEvent], None]] = []
+        self._pipeline: Optional["IngestionPipeline"] = pipeline
+        self._rebalancer: Optional["GlobalRebalancer"] = rebalancer
 
         # Public: CSA engine reference, set by Studio/API after initial setup
         self.csa_engine = None
@@ -578,7 +586,32 @@ class StreamAdapter(NetworkXAdapter):
 
         Thread-safe. Adds the edge, evicts stale edges, schedules an
         incremental community update if the update threshold is met.
+
+        If a pipeline was provided at construction time, entity IDs and
+        relation type are normalized before the edge is stored.
         """
+        # Phase 19 fix: Thalamic Bottleneck (Hole 2).
+        # Run pipeline processing OUTSIDE the lock.
+        # String normalization is CPU-heavy and shouldn't block readers.
+        if self._pipeline is not None:
+            processed = self._pipeline.process(
+                event.source, event.target, event.relation, event.metadata
+            )
+            # Rebuild event with normalized fields
+            event = StreamEvent(
+                source=processed.source,
+                target=processed.target,
+                relation=processed.relation,
+                timestamp=event.timestamp,
+                metadata={
+                    "confidence": processed.confidence,
+                    "provenance": processed.provenance,
+                    "weight": processed.weight,
+                    **processed.properties,
+                },
+                ttl=event.ttl,
+            )
+
         with self._lock:
             # Add edge to graph
             self._G.add_edge(
@@ -604,6 +637,10 @@ class StreamAdapter(NetworkXAdapter):
             self._updater.mark_affected([event.source, event.target])
             self.stats.record_event()
 
+            # Notify global rebalancer (measures Q drift, triggers full re-run if needed)
+            if self._rebalancer is not None:
+                self._rebalancer.record_event()
+
             # Trigger community update if threshold met
             if self._updater.should_update() and self.community_map is not None:
                 self.community_map = self._updater.run(self._G, self.community_map)
@@ -623,9 +660,32 @@ class StreamAdapter(NetworkXAdapter):
                 logger.warning("mutation listener error: %s", e)
 
     def ingest_batch(self, events: List[StreamEvent]) -> None:
-        """Ingest a batch of events efficiently under a single lock acquisition."""
-        with self._lock:
+        """Ingest a batch of events efficiently."""
+        # Pre-process batch OUTSIDE the lock
+        processed_events = []
+        if self._pipeline is not None:
             for ev in events:
+                p = self._pipeline.process(
+                    ev.source, ev.target, ev.relation, ev.metadata
+                )
+                processed_events.append(StreamEvent(
+                    source=p.source,
+                    target=p.target,
+                    relation=p.relation,
+                    timestamp=ev.timestamp,
+                    metadata={
+                        "confidence": p.confidence,
+                        "provenance": p.provenance,
+                        "weight": p.weight,
+                        **p.properties,
+                    },
+                    ttl=ev.ttl,
+                ))
+        else:
+            processed_events = events
+
+        with self._lock:
+            for ev in processed_events:
                 self._G.add_edge(
                     ev.source, ev.target,
                     relation=ev.relation,
@@ -643,7 +703,7 @@ class StreamAdapter(NetworkXAdapter):
                 self.community_map = self._updater.run(self._G, self.community_map)
                 self.stats.record_community_update()
 
-        for ev in events:
+        for ev in processed_events:
             for cb in self._on_event:
                 try:
                     cb(ev)
@@ -673,9 +733,15 @@ class StreamAdapter(NetworkXAdapter):
 
     # -- Thread-safe GraphAdapter overrides ---------------------------------
 
-    def get_neighbors(self, entity_id, edge_types=None, max_neighbors=50):
+    def get_neighbors(
+        self, 
+        entity_id: str, 
+        edge_types: Optional[List[str]] = None, 
+        max_neighbors: int = 50,
+        context_embedding: Optional[np.ndarray] = None,
+    ) -> List[Edge]:
         with self._lock:
-            return super().get_neighbors(entity_id, edge_types, max_neighbors)
+            return super().get_neighbors(entity_id, edge_types, max_neighbors, context_embedding)
 
     def find_entities(self, query, top_k=10):
         with self._lock:
@@ -704,7 +770,7 @@ class StreamAdapter(NetworkXAdapter):
                 target=self._ingestion_loop,
                 args=(source,),
                 daemon=True,
-                name=f"parallax-stream-{source.__class__.__name__}",
+                name=f"cerebrum-stream-{source.__class__.__name__}",
             )
             t.start()
             self._source_threads.append(t)

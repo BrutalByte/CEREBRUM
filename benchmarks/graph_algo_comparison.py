@@ -1,10 +1,10 @@
 """
-External graph algorithm comparison benchmark for Parallax.
+External graph algorithm comparison benchmark for CEREBRUM.
 
-Compares Parallax (DSCF+CSA beam traversal) against standard graph algorithms
+Compares CEREBRUM (DSCF+CSA beam traversal) against standard graph algorithms
 that are the conventional baseline for knowledge-graph multi-hop reasoning:
 
-  A  Parallax       DSCF + CSA beam search          (this project)
+  A  CEREBRUM       DSCF + CSA beam search          (this project)
   B  PPR            Personalized PageRank            (Brin & Page 1998)
   C  SP-BFS         Shortest-path BFS + PageRank rank (Dijkstra-equivalent)
   D  Degree-BFS     BFS expansion, ranked by degree   (heuristic KG baseline)
@@ -14,7 +14,7 @@ All external algorithms use only NetworkX ? no embeddings, no community
 detection, no training. They represent the "free lunch" a practitioner gets
 from standard graph libraries before reaching for a specialized KG engine.
 
-The comparison highlights when Parallax's structural attention provides a
+The comparison highlights when CEREBRUM's structural attention provides a
 meaningful lift and when simpler methods are competitive.
 
 Evaluation
@@ -59,6 +59,9 @@ from core.embedding_engine import RandomEngine
 from core.attention_engine import CSAEngine
 from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
 from reasoning.traversal import BeamTraversal
+from core.resource_governor import ResourceGovernor
+
+_BENCH_GOVERNOR = ResourceGovernor(memory_threshold_pct=99.0)
 from reasoning.answer_extractor import extract
 
 from benchmarks.metaqa_eval import (
@@ -189,10 +192,10 @@ def uniform_bfs_answers(
 
 
 # ---------------------------------------------------------------------------
-# Parallax traversal builder
+# CEREBRUM traversal builder
 # ---------------------------------------------------------------------------
 
-def build_parallax(
+def build_cerebrum(
     adapter: NetworkXAdapter,
     G: nx.Graph,
     embeddings: dict,
@@ -209,7 +212,8 @@ def build_parallax(
     csa = CSAEngine(adapter=adapter, pagerank=pagerank, zeta=zeta)
     csa.set_community_graph(dist, adj)
     return BeamTraversal(adapter=adapter, csa_engine=csa,
-                         beam_width=beam_width, max_hop=max_hop)
+                         beam_width=beam_width, max_hop=max_hop,
+                         governor=_BENCH_GOVERNOR)
 
 
 # ---------------------------------------------------------------------------
@@ -255,14 +259,14 @@ def evaluate_external(
     }
 
 
-def evaluate_parallax(
+def evaluate_cerebrum(
     traversal: BeamTraversal,
     qa_pairs: List[Tuple],
     top_k: int = 10,
     embed_fn=None,
 ) -> Dict:
     """
-    Evaluate Parallax beam traversal.
+    Evaluate CEREBRUM beam traversal.
 
     Parameters
     ----------
@@ -306,7 +310,7 @@ def evaluate_parallax(
     print()
     elapsed = time.time() - t0
     return {
-        "variant":    "Parallax (DSCF+CSA)",
+        "variant":    "CEREBRUM (DSCF+CSA)",
         "n_total":    n,
         "n_answered": found,
         "n_skipped":  skipped,
@@ -338,7 +342,7 @@ def print_results_table(results: List[Dict], title: str, hop: int) -> None:
         delta_mrr = r["mrr"]     - baseline_mrr
         marker = ""
         if r is results[0]:
-            marker = " <-- Parallax"
+            marker = " <-- CEREBRUM"
         delta_str = f"  [{delta_h1:+.4f} vs BFS]" if r is not results[-1] else ""
         print(f"  {r['variant']:<30}  {r['hits_1']:>8.4f}  {r['hits_10']:>8.4f}  "
               f"{r['mrr']:>8.4f}  {r['n_answered']:>9,}  {r['elapsed_s']:>8.2f}"
@@ -396,11 +400,11 @@ def run_synthetic(args) -> List[Dict]:
 
         results = []
 
-        # A ? Parallax
-        print("\n  [A] Parallax DSCF+CSA...")
-        trav = build_parallax(adapter, G, embeddings, args.beam_width, hop, cmap,
+        # A ? CEREBRUM
+        print("\n  [A] CEREBRUM DSCF+CSA...")
+        trav = build_cerebrum(adapter, G, embeddings, args.beam_width, hop, cmap,
                               pagerank=global_pr, zeta=0.1)
-        m_a  = evaluate_parallax(trav, qa_pairs, top_k=args.top_k, embed_fn=None)
+        m_a  = evaluate_cerebrum(trav, qa_pairs, top_k=args.top_k, embed_fn=None)
         results.append(m_a)
 
         # B ? PPR
@@ -481,7 +485,7 @@ def run_metaqa(args) -> List[Dict]:
     n_comm = len(set(cmap.values()))
     print(f"  {n_comm} communities detected")
 
-    print("Pre-computing global PageRank (for SP-BFS baseline + Parallax prior, ~30s)...")
+    print("Pre-computing global PageRank (for SP-BFS baseline + CEREBRUM prior, ~30s)...")
     t0 = time.time()
     global_pr = nx.pagerank(G, alpha=0.85, max_iter=200)
     print(f"  Done in {time.time()-t0:.1f}s")
@@ -507,11 +511,11 @@ def run_metaqa(args) -> List[Dict]:
 
         results = []
 
-        # A ? Parallax
-        print("\n  [A] Parallax DSCF+CSA...")
-        trav = build_parallax(adapter, G, embeddings, args.beam_width, hop, cmap,
+        # A ? CEREBRUM
+        print("\n  [A] CEREBRUM DSCF+CSA...")
+        trav = build_cerebrum(adapter, G, embeddings, args.beam_width, hop, cmap,
                               pagerank=global_pr, zeta=0.1)
-        m_a  = evaluate_parallax(trav, qa_pairs, top_k=args.top_k, embed_fn=embed_fn)
+        m_a  = evaluate_cerebrum(trav, qa_pairs, top_k=args.top_k, embed_fn=embed_fn)
         results.append(m_a)
 
         # B ? PPR  (expensive on 43K nodes; use nx.pagerank personalization)
@@ -564,7 +568,7 @@ def run_metaqa(args) -> List[Dict]:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Parallax vs standard graph algorithms benchmark"
+        description="CEREBRUM vs standard graph algorithms benchmark"
     )
     parser.add_argument("--mode",           choices=["synthetic", "metaqa", "both"],
                         default="synthetic",
@@ -586,11 +590,11 @@ def main():
     args = parser.parse_args()
 
     print("\n" + "="*70)
-    print("  Parallax vs Standard Graph Algorithms -Knowledge Graph QA")
+    print("  CEREBRUM vs Standard Graph Algorithms -Knowledge Graph QA")
     print("="*70)
     print()
     print("Algorithms under comparison:")
-    print("  A  Parallax (DSCF+CSA)          ? Community-Structured Attention beam search")
+    print("  A  CEREBRUM (DSCF+CSA)          ? Community-Structured Attention beam search")
     print("  B  Personalized PageRank (PPR)   ? Random walk from seed (Brin & Page 1998)")
     print("  C  SP-BFS + PageRank rank        ? All reachable nodes, ranked by authority")
     print("  D  Degree-Biased BFS             ? Reachable nodes, ranked by hub degree")

@@ -1,7 +1,7 @@
-# Parallax — Testing Methodology
+# CEREBRUM — Testing Methodology
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6
-**Last updated**: 2026-03-18
+**Last updated**: 2026-03-24
 **Status**: Living document — updated each time the test strategy evolves.
 
 ---
@@ -61,8 +61,8 @@ pip install -e ".[dev]"          # installs networkx, numpy, scipy, igraph, leid
 python -m pytest tests/ -v
 ```
 
-Expected output (without leidenalg): **38 passed, 1 skipped**
-Expected output (with leidenalg):    **39 passed, 0 skipped**
+Expected output (without leidenalg): **994 passed, 1 skipped** (v1.1.0)
+Expected output (with leidenalg):    **995 passed, 0 skipped** (v1.1.0)
 
 ### 4. Run a single test layer
 
@@ -161,6 +161,24 @@ to reduce variance, with a fixed seed.
 | `test_empty_graph_returns_empty` | Empty graph → empty feature dict (no error) |
 | `test_community_distance_matrix_symmetry` | d(A,B) == d(B,A) in undirected graph |
 | `test_adjacent_pairs_are_bidirectional` | Adjacency set contains both (A,B) and (B,A) |
+
+### Phase 20 — Relativistic Hardening Tests (v1.1.0)
+
+| File | Tests | Feature |
+|---|---|---|
+| `tests/test_query_snapshot.py` | 10 | Query Snapshot Isolation — community map frozen at query start |
+| `tests/test_community_params.py` | 9 | Community-Specific CSA Parameters — per-community (α,β,γ,δ,ε) overrides |
+| `tests/test_canonical_anchor.py` | 19 | Canonical Basis Anchor — shared Procrustes target for SignalEncoder |
+| `tests/test_path_preserving_holdout.py` | 10 | Path-Preserving Hold-out — bridge edges excluded from validation hold-out |
+
+### Phase 19 — Production Hardening Tests (v1.0.0)
+
+| File | Tests | Feature |
+|---|---|---|
+| `tests/test_zombie_bridge.py` | 12 | Zombie Bridge — `on_rebalance` hook prunes stale bridge records |
+| `tests/test_causal_flood.py` | 12 | Causal Flood Filter — `min_causal_span` + chi-squared STDP guard |
+| `tests/test_namespace.py` | 14 | Namespace Isolation — ID prefixing for IngestionPipeline + SignalEncoder |
+| `tests/test_cold_start.py` | 13 | Bayesian Cold-Start — `warm_start_strength` seeds first-hop Beta |
 
 ### Layer 3 — End-to-End Tests (test_end_to_end.py)
 

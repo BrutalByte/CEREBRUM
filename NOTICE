@@ -1,0 +1,191 @@
+CEREBRUM — Community-Structured Graph Attention for Knowledge Graph Reasoning
+Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.
+
+This product includes software and algorithms developed by Bryan Alexander Buchorn
+in collaboration with Claude Sonnet 4.6 (Anthropic). Primary author and inventor:
+Bryan Alexander Buchorn (bryan.alexander@buchorn.com).
+
+CEREBRUM is dual-licensed:
+  Non-Commercial Use: PolyForm Noncommercial License 1.0.0 (see LICENSE file)
+  Commercial Use:     Requires a separate commercial license agreement.
+
+---
+
+This product includes or depends upon the following third-party software components.
+Each component is used in accordance with its respective license terms.
+
+===============================================================================
+APACHE 2.0 LICENSED COMPONENTS
+===============================================================================
+
+1. requests
+   Copyright 2019 Kenneth Reitz
+   Licensed under the Apache License, Version 2.0
+   https://github.com/psf/requests
+
+2. sentence-transformers (optional dependency)
+   Copyright 2019 Nils Reimers
+   Licensed under the Apache License, Version 2.0
+   https://github.com/UKPLab/sentence-transformers
+
+A copy of the Apache License, Version 2.0 is available at:
+https://www.apache.org/licenses/LICENSE-2.0
+
+===============================================================================
+MIT LICENSED COMPONENTS
+===============================================================================
+
+3. PyJWT
+   Copyright 2015 Jose Padilla
+   Licensed under the MIT License
+   https://github.com/jpadilla/pyjwt
+
+4. FastAPI (optional dependency)
+   Copyright 2018 Sebastián Ramírez
+   Licensed under the MIT License
+   https://github.com/tiangolo/fastapi
+
+5. pykeen (optional dependency)
+   Copyright 2019 PyKEEN Team
+   Licensed under the MIT License
+   https://github.com/pykeen/pykeen
+
+===============================================================================
+BSD LICENSED COMPONENTS
+===============================================================================
+
+6. NetworkX
+   Copyright 2004-2024 NetworkX Developers
+   Licensed under the BSD 3-Clause License
+   https://github.com/networkx/networkx
+
+7. NumPy
+   Copyright 2005-2024 NumPy Developers
+   Licensed under the BSD 3-Clause License
+   https://github.com/numpy/numpy
+
+8. SciPy
+   Copyright 2001-2024 SciPy Developers
+   Licensed under the BSD 3-Clause License
+   https://github.com/scipy/scipy
+
+9. psutil
+   Copyright 2009 Jay Loden, Dave Daley, Giampaolo Rodola
+   Licensed under the BSD 3-Clause License
+   https://github.com/giampaolo/psutil
+
+10. uvicorn (optional dependency)
+    Copyright 2017 Encode OSS Ltd.
+    Licensed under the BSD 3-Clause License
+    https://github.com/encode/uvicorn
+
+===============================================================================
+GNU GPL v3 LICENSED COMPONENTS (OPTIONAL — NOT INCLUDED IN CORE)
+===============================================================================
+
+The following components are available as an OPTIONAL extra
+(pip install cerebrum-kg[leiden]) and are NOT part of the core CEREBRUM
+distribution. If you install this extra, you accept the GNU GPL v3 license
+terms for those components. The core DSCF algorithm does not require them.
+
+11. igraph / python-igraph
+    Copyright 2006 Tamás Nepusz, Gábor Csárdi, et al.
+    Licensed under the GNU General Public License v2 (or later)
+    https://github.com/igraph/igraph
+
+12. leidenalg
+    Copyright 2018 Vincent Traag
+    Licensed under the GNU General Public License v3
+    https://github.com/vtraag/leidenalg
+
+===============================================================================
+ACADEMIC ALGORITHMS — IMPLEMENTATION CREDIT
+===============================================================================
+
+CEREBRUM implements or builds upon the following published algorithms.
+No code from these works is copied; the algorithmic methods are our own
+implementations based on the published descriptions.
+
+- LPA (Label Propagation Algorithm)
+  Raghavan, U.N., Albert, R., & Kumara, S. (2007). Near linear time algorithm
+  to detect community structures in large-scale networks.
+  Physical Review E, 76(3), 036106.
+
+- Louvain Algorithm
+  Blondel, V.D., Guillaume, J.L., Lambiotte, R., & Lefebvre, E. (2008).
+  Fast unfolding of communities in large networks.
+  Journal of Statistical Mechanics: Theory and Experiment, 2008(10), P10008.
+
+- Leiden Algorithm
+  Traag, V.A., Waltman, L., & van Eck, N.J. (2019). From Louvain to Leiden:
+  guaranteeing well-connected communities. Scientific Reports, 9(1), 5233.
+
+- Graph Attention Networks (GATs)
+  Veličković, P., Cucurull, G., Casanova, A., Romero, A., Liò, P., &
+  Bengio, Y. (2018). Graph Attention Networks. ICLR 2018.
+
+- TransE
+  Bordes, A., Usunier, N., Garcia-Duran, A., Weston, J., & Yakhnenko, O.
+  (2013). Translating embeddings for modeling multi-relational data.
+  NeurIPS 2013.
+
+- RotatE
+  Sun, Z., Deng, Z.H., Nie, J.Y., & Tang, J. (2019). RotatE: Knowledge
+  Graph Embedding by Relational Rotation in Complex Space. ICLR 2019.
+
+- PageRank
+  Page, L., Brin, S., Motwani, R., & Winograd, T. (1999). The PageRank
+  Citation Ranking: Bringing Order to the Web. Stanford InfoLab.
+
+- Betweenness Centrality
+  Freeman, L.C. (1977). A set of measures of centrality based on betweenness.
+  Sociometry, 40(1), 35-41.
+
+- Simulated Annealing
+  Kirkpatrick, S., Gelatt, C.D., & Vecchi, M.P. (1983). Optimization by
+  simulated annealing. Science, 220(4598), 671-680.
+
+- Bloom Filters
+  Bloom, B.H. (1970). Space/time trade-offs in hash coding with allowable
+  errors. Communications of the ACM, 13(7), 422-426.
+
+- Spike-Timing Dependent Plasticity (STDP)
+  Bi, G.Q., & Poo, M.M. (1998). Synaptic modifications in cultured
+  hippocampal neurons: dependence on spike timing, synaptic strength, and
+  postsynaptic cell type. Journal of Neuroscience, 18(24), 10464-10472.
+
+  Markram, H., Lübke, J., Frotscher, M., & Sakmann, B. (1997). Regulation
+  of synaptic efficacy by coincidence of postsynaptic APs and EPSPs.
+  Science, 275(5297), 213-215.
+
+- Hebbian Learning
+  Hebb, D.O. (1949). The Organization of Behavior: A Neuropsychological
+  Theory. Wiley & Sons.
+
+- Beam Search
+  Lowerre, B.T. (1976). The HARPY Speech Recognition System. PhD thesis,
+  Carnegie Mellon University.
+
+- Sentence-BERT
+  Reimers, N., & Gurevych, I. (2019). Sentence-BERT: Sentence Embeddings
+  using Siamese BERT-Networks. EMNLP 2019.
+
+- GraphRAG
+  Edge, D., Trinh, H., Cheng, N., Bradley, J., Chao, A., Mody, A.,
+  Truitt, S., & Larson, J. (2024). From Local to Global: A Graph RAG
+  Approach to Query-Focused Summarization. Microsoft Research.
+
+- REM Sleep / Memory Consolidation
+  Diekelmann, S., & Born, J. (2010). The memory function of sleep.
+  Nature Reviews Neuroscience, 11(2), 114-126.
+  (Inspiration for the REM Cycle three-phase maintenance loop.)
+
+- Procrustes Analysis
+  Gower, J.C. (1975). Generalized Procrustes Analysis.
+  Psychometrika, 40(1), 33-51.
+  (Used in SignalEncoder cross-modal alignment via SVD rotation.)
+
+- Mid-Level Voting / Triplex Redundancy
+  Standard aerospace engineering practice for triplex-redundant avionics
+  systems using median-value selection to reject sensor outliers.
+  (Architectural inspiration for DSCF's multi-signal consensus mechanism.)

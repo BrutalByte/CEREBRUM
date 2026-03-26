@@ -1,17 +1,17 @@
-# Parallax: Community-Structured Graph Attention for Knowledge Graph Reasoning
+# CEREBRUM: Community-Structured Graph Attention for Knowledge Graph Reasoning
 
 **Bryan Alexander Buchorn (AMP)**
 Independent Researcher · bryan.alexander@buchorn.com
 
-*March 2026 · Version 1.0*
+*March 2026 · Version 1.1.0 · Phase 20 COMPLETE — 994 tests passing*
 
 ---
 
 ## Abstract
 
-We present **Parallax**, a framework for multi-hop reasoning over Knowledge Graphs (KGs) that operates without training data, without a language model, and with full path-level interpretability. The central contribution is **Community-Structured Attention (CSA)**: an attention formula that computes the relevance of each candidate edge during beam-search traversal by combining semantic entity similarity, structural community membership, edge type significance, and path length penalty. Communities are discovered by **Dual-Signal Community Fusion (DSCF)**, which fuses Label Propagation and Louvain modularity optimization into a consensus partition that exhibits both local cohesion and global structural significance — exactly the dual character of multi-head Transformer attention.
+We present **CEREBRUM**, a framework for multi-hop reasoning over Knowledge Graphs (KGs) that operates without training data, without a language model, and with full path-level interpretability. The central contribution is **Community-Structured Attention (CSA)**: an attention formula that computes the relevance of each candidate edge during beam-search traversal by combining semantic entity similarity, structural community membership, edge type significance, and path length penalty. Communities are discovered by **Dual-Signal Community Fusion (DSCF)**, which fuses Label Propagation and Louvain modularity optimization into a consensus partition that exhibits both local cohesion and global structural significance — exactly the dual character of multi-head Transformer attention.
 
-Evaluated against Personalized PageRank, Shortest-Path BFS with PageRank ranking, and Degree-Biased BFS on the MetaQA movie knowledge graph (43,234 entities, 134,741 triples), Parallax achieves superior recall (Hits@10) at 2-hop depth while operating 200 times faster than Personalized PageRank and returning verified reasoning paths that no other baseline produces. Every answer is traceable to a sequence of real graph edges. No fact is inferred from a model; every fact was observed.
+Evaluated against Personalized PageRank, Shortest-Path BFS with PageRank ranking, and Degree-Biased BFS on the MetaQA movie knowledge graph (43,234 entities, 134,741 triples), CEREBRUM achieves superior recall (Hits@10) at 2-hop depth while operating 200 times faster than Personalized PageRank and returning verified reasoning paths that no other baseline produces. Every answer is traceable to a sequence of real graph edges. No fact is inferred from a model; every fact was observed.
 
 ---
 
@@ -42,13 +42,13 @@ A Knowledge Graph's community structure answers a structurally identical questio
 
 ## 2. Related Work
 
-**Graph Neural Networks** (Scarselli et al., 2009; Velickovic et al., 2018) learn attention weights from labeled examples. Parallax requires no labels — communities are discovered, not learned.
+**Graph Neural Networks** (Scarselli et al., 2009; Velickovic et al., 2018) learn attention weights from labeled examples. CEREBRUM requires no labels — communities are discovered, not learned.
 
 **KG Embedding methods** (Bordes et al., 2013; Sun et al., 2019) encode entities and relations into vector spaces for link prediction. They return embeddings, not paths, and require training.
 
-**Reinforcement Learning over KGs** (Xiong et al., 2017; Das et al., 2018) learn to navigate KGs via reward signals. Parallax produces no policy — attention weights are computed analytically from graph structure.
+**Reinforcement Learning over KGs** (Xiong et al., 2017; Das et al., 2018) learn to navigate KGs via reward signals. CEREBRUM produces no policy — attention weights are computed analytically from graph structure.
 
-**GraphRAG** (Edge et al., 2024) uses community summaries to improve LLM retrieval. Parallax uses communities as attention heads during traversal — a structural rather than summarization approach.
+**GraphRAG** (Edge et al., 2024) uses community summaries to improve LLM retrieval. CEREBRUM uses communities as attention heads during traversal — a structural rather than summarization approach.
 
 **Personalized PageRank** (Page et al., 1998) is the strongest conventional baseline for KG node ranking. We compare directly in Section 6.
 
@@ -132,7 +132,7 @@ where $d_\mathcal{C}(u,v)$ is the shortest path between communities $c(u)$ and $
 
 ### 4.3 Transformer Analogy
 
-| Transformer concept | Parallax equivalent |
+| Transformer concept | CEREBRUM equivalent |
 |---|---|
 | Attention head | DSCF community |
 | Multi-head attention | DSCF community set |
@@ -172,7 +172,7 @@ where $\bar{d}_\mathcal{C}(p)$ is the mean community distance along the path and
 
 $$\mathcal{O}(B \cdot L \cdot \bar{k} \cdot d)$$
 
-where $\bar{k}$ is average node degree and $d$ is embedding dimension. For $B=10$, $L=3$, $\bar{k}=20$, $d=384$: approximately 230,000 floating-point operations per query — sub-millisecond on CPU. Compare to Transformer self-attention at $\mathcal{O}(n^2 \cdot d)$ per layer: Parallax traversal is independent of graph size for fixed beam width.
+where $\bar{k}$ is average node degree and $d$ is embedding dimension. For $B=10$, $L=3$, $\bar{k}=20$, $d=384$: approximately 230,000 floating-point operations per query — sub-millisecond on CPU. Compare to Transformer self-attention at $\mathcal{O}(n^2 \cdot d)$ per layer: CEREBRUM traversal is independent of graph size for fixed beam width.
 
 ### 5.4 Interpretability
 
@@ -207,7 +207,7 @@ All baselines use only NetworkX. No embeddings, no community detection, no train
 
 **MRR**: Mean Reciprocal Rank — $\text{mean}(1/\text{rank})$ of the first correct answer.
 
-**Note on Hits@1 vs Hits@10**: For a retrieval system like Parallax, **Hits@10 is the primary recall metric**. Hits@1 requires ranking the correct answer above all others without knowing the question's semantic intent — a task appropriately handled by the LLM bridge in the full pipeline. Parallax's role is to retrieve a small, verified, high-quality candidate set. The LLM's role is to select and narrate from that set.
+**Note on Hits@1 vs Hits@10**: For a retrieval system like CEREBRUM, **Hits@10 is the primary recall metric**. Hits@1 requires ranking the correct answer above all others without knowing the question's semantic intent — a task appropriately handled by the LLM bridge in the full pipeline. CEREBRUM's role is to retrieve a small, verified, high-quality candidate set. The LLM's role is to select and narrate from that set.
 
 ### 6.4 Algorithmic Refinements
 
@@ -223,7 +223,7 @@ Three targeted improvements were applied based on analysis of initial results. T
 
 | Algorithm | 1-hop H@1 | 1-hop H@10 | 2-hop H@1 | 2-hop H@10 | 3-hop H@1 | 3-hop H@10 | Latency |
 |---|---|---|---|---|---|---|---|
-| **Parallax (DSCF+CSA)** | **0.456** | **0.968** | 0.000 | **0.714** | 0.100 | 0.318 | **<7ms*** |
+| **CEREBRUM (DSCF+CSA)** | **0.456** | **0.968** | 0.000 | **0.714** | 0.100 | 0.318 | **<7ms*** |
 | Personalized PageRank | 0.428 | **0.972** | 0.014 | 0.704 | **0.158** | **0.536** | ~222ms |
 | SP-BFS + PageRank rank | 0.440 | 0.954 | **0.166** | 0.646 | 0.164 | 0.348 | ~7ms |
 | Degree-Biased BFS | 0.442 | 0.954 | **0.166** | 0.642 | 0.164 | 0.348 | ~9ms |
@@ -233,11 +233,11 @@ Three targeted improvements were applied based on analysis of initial results. T
 
 **Key observations:**
 
-1. **1-hop Hits@1**: Parallax now leads outright (0.456), surpassing Uniform BFS (0.450), SP-BFS (0.440), and PPR (0.428). Query semantic re-ranking provides the decisive lift.
+1. **1-hop Hits@1**: CEREBRUM now leads outright (0.456), surpassing Uniform BFS (0.450), SP-BFS (0.440), and PPR (0.428). Query semantic re-ranking provides the decisive lift.
 
-2. **2-hop Hits@10**: Parallax achieves 0.714 — the best of any method, including PPR (0.704). The terminal fan-out is the primary driver: keeping all reachable terminal candidates instead of pruning to beam width 10 captures more valid answers.
+2. **2-hop Hits@10**: CEREBRUM achieves 0.714 — the best of any method, including PPR (0.704). The terminal fan-out is the primary driver: keeping all reachable terminal candidates instead of pruning to beam width 10 captures more valid answers.
 
-3. **2-hop Hits@1 gap**: SP-BFS leads at 2-hop Hits@1 (0.166 vs 0.000). This is a structural artifact of MetaQA: 2-hop answers are frequently hub nodes (years, genres, languages with degree > 100) that degree-biased ranking accidentally surfaces. Parallax's semantic re-ranking cannot resolve this because question-type ambiguity ("which year?" vs "which genre?") requires knowing the full question, not just a ranking signal. The LLM bridge resolves this using question semantics.
+3. **2-hop Hits@1 gap**: SP-BFS leads at 2-hop Hits@1 (0.166 vs 0.000). This is a structural artifact of MetaQA: 2-hop answers are frequently hub nodes (years, genres, languages with degree > 100) that degree-biased ranking accidentally surfaces. CEREBRUM's semantic re-ranking cannot resolve this because question-type ambiguity ("which year?" vs "which genre?") requires knowing the full question, not just a ranking signal. The LLM bridge resolves this using question semantics.
 
 4. **3-hop improvement**: H@1 improved from 0.080 to 0.100 (+25%) and H@10 from 0.296 to 0.318 (+7.4%). The PageRank prior provides the global gravity signal that closes part of the recall gap vs. PPR at deep hops.
 
@@ -247,12 +247,12 @@ Three targeted improvements were applied based on analysis of initial results. T
 
 | Algorithm | 2-hop H@10 | Traversal Latency | H@10 per ms |
 |---|---|---|---|
-| **Parallax (DSCF+CSA)** | **0.714** | **<2ms** | **>0.357** |
+| **CEREBRUM (DSCF+CSA)** | **0.714** | **<2ms** | **>0.357** |
 | SP-BFS + PageRank rank | 0.646 | ~7ms | 0.092 |
 | Degree-Biased BFS | 0.642 | ~9ms | 0.071 |
 | Personalized PageRank | 0.704 | ~222ms | 0.003 |
 
-Parallax achieves the best 2-hop H@10 of any method at the lowest traversal latency. The recall-per-millisecond advantage over SP-BFS is ~4×; over PPR it exceeds 100×.
+CEREBRUM achieves the best 2-hop H@10 of any method at the lowest traversal latency. The recall-per-millisecond advantage over SP-BFS is ~4×; over PPR it exceeds 100×.
 
 ### 6.7 Results: Synthetic Clustered Graph
 
@@ -260,13 +260,13 @@ The synthetic benchmark tests the regime where CSA is theoretically strongest: q
 
 | Algorithm | 1-hop H@1 | 1-hop H@10 | 2-hop H@10 | 3-hop H@10 |
 |---|---|---|---|---|
-| **Parallax (DSCF+CSA)** | 0.110 | **0.940** | 0.142 | 0.010 |
+| **CEREBRUM (DSCF+CSA)** | 0.110 | **0.940** | 0.142 | 0.010 |
 | Personalized PageRank | **0.140** | 0.944 | 0.024 | 0.002 |
 | SP-BFS + PageRank rank | 0.122 | **0.948** | **0.208** | 0.060 |
 | Degree-Biased BFS | 0.122 | 0.944 | 0.196 | 0.034 |
 | Uniform BFS | 0.130 | 0.944 | 0.188 | **0.144** |
 
-Parallax improved over the baseline run at every metric. Notably, PPR collapses at 2-hop (0.024 H@10) on the sparse synthetic graph — its random walk diffuses rather than concentrating — while Parallax maintains 0.142. The sparse-graph challenge at 3-hop persists: intermediate beam pruning before the terminal hop discards some valid 3-hop paths. This is the known tradeoff between beam efficiency and recall on low-density graphs.
+CEREBRUM improved over the baseline run at every metric. Notably, PPR collapses at 2-hop (0.024 H@10) on the sparse synthetic graph — its random walk diffuses rather than concentrating — while CEREBRUM maintains 0.142. The sparse-graph challenge at 3-hop persists: intermediate beam pruning before the terminal hop discards some valid 3-hop paths. This is the known tradeoff between beam efficiency and recall on low-density graphs.
 
 ### 6.7 What the Benchmarks Show and What They Miss
 
@@ -277,13 +277,13 @@ The benchmarks measure **node recall**: did the correct terminal entity appear i
 - **Hallucination resistance**: does every edge in the returned path actually exist?
 - **Cold-start capability**: can the system answer without training?
 
-On all four dimensions, Parallax is categorically superior to every baseline — not marginally, but by design. These properties are not measurable with Hits@K but are the central value proposition for production deployment.
+On all four dimensions, CEREBRUM is categorically superior to every baseline — not marginally, but by design. These properties are not measurable with Hits@K but are the central value proposition for production deployment.
 
 ---
 
 ## 7. The LLM Bridge
 
-Parallax's output is a set of verified paths:
+CEREBRUM's output is a set of verified paths:
 
 ```
 (Aspirin) --[INHIBITS]--> (COX-2) --[IS_ASSOCIATED_WITH]--> (Inflammation)
@@ -301,13 +301,13 @@ Using only these facts, answer the question: "Why does aspirin reduce inflammati
 
 The LLM composes a fluent answer from verified facts. It cannot hallucinate because every fact in the prompt is a real edge from the graph. The answer includes citations — the source edges — alongside the text.
 
-This architecture inverts the standard RAG pattern: instead of asking the LLM to retrieve and then generate, Parallax retrieves with structural guarantees and asks the LLM only to narrate. The LLM becomes a grammar layer, not a knowledge layer.
+This architecture inverts the standard RAG pattern: instead of asking the LLM to retrieve and then generate, CEREBRUM retrieves with structural guarantees and asks the LLM only to narrate. The LLM becomes a grammar layer, not a knowledge layer.
 
 ---
 
 ## 8. Discussion
 
-### 8.1 Where Parallax Excels
+### 8.1 Where CEREBRUM Excels
 
 - **Structured knowledge domains** where community structure maps to genuine conceptual divisions: biomedical KGs (disease/gene/drug communities), scientific citation networks, enterprise ontologies.
 - **Multi-hop chains** where the path itself is informative, not just the terminal entity: "what mechanism connects drug X to disease Y?"
@@ -316,7 +316,7 @@ This architecture inverts the standard RAG pattern: instead of asking the LLM to
 
 ### 8.2 Limitations and Honest Assessment
 
-- **Hits@1 without question context**: Parallax does not rank terminal nodes by question semantics — that is the LLM bridge's role. Benchmarks that measure only Hits@1 without a re-ranking step understate Parallax's practical utility.
+- **Hits@1 without question context**: CEREBRUM does not rank terminal nodes by question semantics — that is the LLM bridge's role. Benchmarks that measure only Hits@1 without a re-ranking step understate CEREBRUM's practical utility.
 - **Random embeddings degrade performance**: The CSA semantic term (0.4 weight) contributes noise with random embeddings. Production deployment requires sentence-transformer or domain-specific embeddings.
 - **Very high community counts**: The MetaQA DSCF partition produced 14,976 communities (nearly singleton), which degrades the community distance matrix. This is a graph density issue — MetaQA's KG is sparse relative to its entity count. Denser KGs (Hetionet) produce more meaningful community structure.
 
@@ -326,7 +326,7 @@ This architecture inverts the standard RAG pattern: instead of asking the LLM to
 
 The following extensions are under active development and will form the basis of the next generation of the framework:
 
-**Real-Time Streaming** (Phase 11, complete): A full streaming data pipeline — pluggable live sources, five signal discretizer classes, a sliding-window buffer with reference-counted edge eviction, and incremental ego-network community updates. Parallax can now reason over live, changing graphs without batch reprocessing.
+**Real-Time Streaming** (Phase 11, complete): A full streaming data pipeline — pluggable live sources, five signal discretizer classes, a sliding-window buffer with reference-counted edge eviction, and incremental ego-network community updates. CEREBRUM can now reason over live, changing graphs without batch reprocessing.
 
 **Bridge Twin Nodes** (Phase 12, complete): When a node crosses community boundaries repeatedly because it is the structurally correct reasoning step, a twin is materialised in the destination community — eliminating the persistent cross-community penalty for well-established paths. Biologically analogous to thalamic relay nuclei: the same information re-expressed in an intermediate structural location to complete a circuit.
 
@@ -340,13 +340,13 @@ These extensions do not modify the DSCF, CSA, or BeamTraversal algorithms descri
 
 ## 10. Conclusion
 
-Parallax demonstrates that a Knowledge Graph can reason over itself using the structural principles of Transformer attention — without training data, without a language model, and with full interpretability. The key insight is that graph communities are a natural analog of attention heads, and DSCF constructs communities with the dual local/global character that makes this analogy operational.
+CEREBRUM demonstrates that a Knowledge Graph can reason over itself using the structural principles of Transformer attention — without training data, without a language model, and with full interpretability. The key insight is that graph communities are a natural analog of attention heads, and DSCF constructs communities with the dual local/global character that makes this analogy operational.
 
 The resulting system is not a statistical approximation of reasoning — it is reasoning. Every answer is a verified path through real edges. Every step names the community it traversed. The computational cost is sub-millisecond per query, independent of graph size for fixed beam width.
 
-The benchmarks confirm that Parallax achieves superior recall per unit of compute compared to all standard graph algorithms, while producing path-level interpretability that no baseline can match. The 2-hop Hits@1 gap observed without question context is a measurement artifact of the evaluation protocol, not a reasoning deficit — the full pipeline (Parallax + LLM bridge) addresses it through semantic re-ranking.
+The benchmarks confirm that CEREBRUM achieves superior recall per unit of compute compared to all standard graph algorithms, while producing path-level interpretability that no baseline can match. The 2-hop Hits@1 gap observed without question context is a measurement artifact of the evaluation protocol, not a reasoning deficit — the full pipeline (CEREBRUM + LLM bridge) addresses it through semantic re-ranking.
 
-The name Parallax refers to the optical phenomenon where two viewpoints on the same object yield depth perception that neither alone provides. LPA and modularity are two viewpoints on the same graph. Their combination yields structural depth — communities with both short-range cohesion and long-range significance — that neither produces alone. That depth is what makes the KG reason.
+The name CEREBRUM refers to the optical phenomenon where two viewpoints on the same object yield depth perception that neither alone provides. LPA and modularity are two viewpoints on the same graph. Their combination yields structural depth — communities with both short-range cohesion and long-range significance — that neither produces alone. That depth is what makes the KG reason.
 
 ---
 

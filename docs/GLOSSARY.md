@@ -1,0 +1,343 @@
+# CEREBRUM Glossary
+
+Definitions of all CEREBRUM-specific terms, algorithms, and architectural concepts.
+
+---
+
+## A
+
+**Answer Extractor**
+The final stage of the CORTEX reasoning pipeline. Takes ranked `ReasoningPath` objects from `PathScorer` and extracts the terminal entity of each path as a candidate answer. Returns answers with associated CSA scores, path confidence, and HMAC provenance signatures.
+
+**AsyncBeamTraversal**
+An async/await variant of `BeamTraversal` (see below) that supports streaming partial results via async generators. Used by the SSE streaming endpoints.
+
+**Attention Head (Transformer analogy)**
+In CEREBRUM, each DSCF community corresponds to one "attention head" in the Transformer analogy. Just as a Transformer's attention heads capture different semantic relationships, DSCF communities capture different structural clusters in the graph. See also: DSCF, CSA.
+
+---
+
+## B
+
+**Bayesian Beam Search**
+`BeamTraversal(probabilistic=True)` — beam search where each candidate path maintains a Beta distribution over expected quality. Path selection uses Thompson sampling, drawing from each path's Beta distribution and selecting the highest sampled value. Produces calibrated confidence estimates alongside answers.
+
+**BeamTraversal**
+The core multi-hop graph traversal engine in CORTEX. Uses beam search (configurable width and depth) guided by CSA attention weights. Supports both deterministic mode (greedy selection) and Bayesian mode (Thompson sampling).
+
+**Beta Distribution (in Beam Search)**
+Each `TraversalPath` maintains `beta_alpha` and `beta_beta` parameters defining a Beta distribution over its expected quality. After each hop, the distribution is updated: `alpha += weight * prior_scale`, `beta += (1 - weight) * prior_scale`. Thompson sampling draws from this distribution for beam selection.
+
+**Bilateral Verification**
+The `InsightValidator`'s validation protocol. A speculative edge $E_{uv}$ is probed independently in both directions: forward (start from $u$, reach $v$ without using $E_{uv}$) and reverse (start from $v$, reach $u$ without using $E_{uv}$). At least one probe must succeed with confidence ≥ 0.65 for the edge to be verified.
+
+**Bridge Bonus (EF-005)**
+An innovation in CEREBRUM's benchmark traversal strategy: the BeamTraversal's CSA weights preferentially identify structural bridges — edges connecting otherwise-isolated communities — and use them as "shortcuts" to improve multi-hop recall. Named EF-005 in the benchmark evaluation log.
+
+**Bridge Twin Engine**
+The system component that creates and manages Bridge Twin nodes (see below). Monitors edge crossing frequencies between communities; materializes a bridge twin node when a crossing threshold is exceeded (LTP analog). Prunes bridges when crossings decay (LTD analog).
+
+**Bridge Twin Node**
+An experience-dependent structural relay node that forms in the graph when two entities in different communities are traversed together repeatedly. Inspired by the thalamo-cortical relay model in neuroscience. Bridge twin nodes reduce hop count for cross-community queries and are tracked by `BridgeTwinEngine`.
+
+**BridgeRecord**
+The data structure tracking a bridge twin node: stores `twin_id`, `original_id`, `source_community`, `destination_community`, `crossing_count`, and `ltp_weight`. Pruned by `on_rebalance()` when community IDs become stale (Phase 19 fix).
+
+---
+
+## C
+
+**Canonical Basis Anchor**
+`SignalEncoder(canonical_embeddings={...})` — a fixed reference embedding space used as the target for all Procrustes SVD alignment operations across a federation. Prevents geometric drift accumulation when signal encoders are aligned to different adapters across federated hops (Phase 20 fix, Hole 7).
+
+**Causal Flood**
+An adversarial attack on the `STDPDiscretizer` where a burst of rapid spike events causes the STDP weight to exceed the materialization threshold, creating spurious `CAUSES` edges. Mitigated by `min_causal_span` and `use_chi_squared` parameters (Phase 19 fix, Hole 2).
+
+**CausalSignificanceFilter**
+The combined protection system in `STDPDiscretizer`: `min_causal_span` (minimum temporal span) + `use_chi_squared` (statistical uniformity test). Both default to off for backward compatibility.
+
+**CEREBRUM**
+The overarching product and framework name. **C**ommunity-Structur**E**d g**R**aph att**E**ntion for knowledge g**R**aph reas**O**ning with **M**ulti-hop traversal. The complete system including THALAMUS (ingestion), CORTEX (reasoning), REM Engine (maintenance), and Bridge Twin Engine.
+
+**Community (Graph)**
+A group of nodes that are more densely connected to each other than to the rest of the graph. In CEREBRUM, communities are detected by DSCF and serve as the "attention heads" for CSA reasoning. Nodes within the same community receive a bonus in the CSA formula.
+
+**Community Lock-In**
+A reasoning pathology detected by the MetaInsightEngine: more than 70% of successful reasoning paths stay within a single community. Indicates the graph's community structure may be over-dominant or the starting entity has insufficient inter-community connections.
+
+**Community-Specific CSA Parameters**
+`CSAEngine(community_params={community_id: (α, β, γ, δ, ε, ζ)})` — per-community overrides for the six CSA attention weights. Prevents homogeneity saturation in tightly-clustered communities (Phase 20 fix, Hole 6).
+
+**Community-Structured Attention (CSA)**
+The core attention formula defining the weight $a(u,v,k)$ for traversing from node $u$ to node $v$ at hop $k$:
+$$a(u,v,k) = \sigma(\alpha \cdot \cos(\vec{e}_u, \vec{e}_v) + \beta \cdot S_C(u,v) + \gamma \cdot w_{rel} - \delta \cdot d_{norm} + \varepsilon \cdot \phi(k) + \zeta \cdot PR(v))$$
+Six configurable weights with defaults: α=0.4, β=0.4, γ=0.1, δ=0.05, ε=0.05, ζ=0.1.
+
+**CORTEX**
+The core reasoning engine subsystem. Encompasses CommunityEngine (DSCF), CSAEngine (attention), BeamTraversal (search), PathScorer, and AnswerExtractor. Operates on a prepared graph produced by THALAMUS.
+
+**CSAParameterLearner**
+An online, gradient-free adapter that adjusts CSA attention weights from binary query feedback (correct/incorrect). Uses coordinate-wise moving averages with simplex projection. Maintains separate parameter sets per community when `per_community=True` (Phase 17 feature).
+
+---
+
+## D
+
+**DSCF (Dual-Signal Community Fusion)**
+The community detection algorithm at the heart of CEREBRUM. Combines local topology signal (LPA — Label Propagation Algorithm) and global modularity signal (Louvain-style modularity gain) simultaneously at each node update, rather than choosing between them. Also called TSC (Triple-Signal Consensus) when the Infomap/flow signal is included as a third signal. Produces communities with dual-signal structural character essential for high-quality CSA reasoning.
+
+**DeltaDiscretizer**
+A streaming discretizer that emits a graph edge when the rate-of-change (|Δx/Δt|) of a continuous signal exceeds a threshold.
+
+**Depth Asymmetry**
+A reasoning pathology detected by the MetaInsightEngine: more than 60% of successful query answers are found at hop 1, indicating the graph behaves more like a lookup table than a multi-hop reasoner. Suggests beam width or max_hops may need adjustment.
+
+---
+
+## E
+
+**EmbeddingEngine**
+THALAMUS component that generates vector embeddings for graph entities. Two backends: `random` (default, reproducible random vectors) and `sentence-transformers` (semantic embeddings from text). KGE backends (TransE, RotatE) are available as optional drop-ins.
+
+**Entity**
+A node in the Knowledge Graph. Represented by a unique string identifier. Carries metadata: embedding vector, structural features (PageRank, betweenness, degree), community membership.
+
+---
+
+## F
+
+**FederatedAdapter**
+An adapter that aggregates multiple remote `GraphAdapter` instances into a single logical graph. Handles cross-graph identity alignment, community map merging, and distributed traversal coordination.
+
+**Federated Discovery**
+The process by which a local CEREBRUM node discovers potentially-relevant remote graphs without revealing the full contents of either graph. Uses the Holographic Index (Bloom filters + centroids) for privacy-preserving overlap detection.
+
+---
+
+## G
+
+**Glass-Box Reasoning**
+CEREBRUM's defining property: every answer is a verifiable path through graph edges with a complete mathematical trace. Contrasted with "Black-Box" probabilistic models (LLMs) where the reasoning process is opaque.
+
+**GlobalRebalancer**
+The background component that monitors modularity drift ($\Delta Q_{cum}$) across streaming ingest events. When drift exceeds a threshold, it spawns a background DSCF re-run, then performs an atomic swap of `adapter.community_map`. Notifies `BridgeTwinEngine` via `on_rebalance()` hook (Phase 19).
+
+---
+
+## H
+
+**H@10 (Hits at 10)**
+The primary evaluation metric for CEREBRUM: the fraction of test queries where the correct answer appears in the top-10 ranked paths. CEREBRUM zero-shot benchmarks: MetaQA 1-hop=0.968, 2-hop=0.714, 3-hop=0.318 at <7ms.
+
+**Holographic Index**
+A privacy-preserving federated discovery system using Bloom filters (probabilistic membership) and community centroids (structural fingerprints). Allows remote graphs to advertise their contents without revealing individual entities.
+
+**Hop**
+One step in a multi-hop reasoning traversal: moving from node $u$ to node $v$ along edge $(u, v, r)$. Analogous to one Transformer layer depth.
+
+**HMAC-SHA256 Path Provenance**
+A cryptographic signature applied to each reasoning path output. Computed over the canonical JSON serialization of the path using the server's `CEREBRUM_HMAC_KEY`. Allows downstream systems to verify path integrity.
+
+---
+
+## I
+
+**IngestionPipeline**
+THALAMUS component that preprocesses raw entity-relation-entity triples before graph insertion. Responsibilities: entity normalization (Unicode, whitespace), alias deduplication via `entity_dedup_map`, relation normalization, confidence/provenance metadata assignment, and namespace prefixing.
+
+**InsightEngine**
+The creative component of the Verification/Metacognition layer. Generates candidate `INSIGHT_LINK` edges by detecting latent proximity (high cosine similarity without a direct edge), community boundary bridging, and path pattern completion. All generated edges enter the InsightValidator pipeline.
+
+**InsightEvent**
+A first-class graph node in the MetaInsightEngine's second-order graph. Represents a reasoning event (query, validation, bridge formation, rebalance) with attributes: event_type, timestamp, entities, confidence, communities_traversed, outcome.
+
+**InsightValidator**
+Validates speculative edges using bilateral reverse traversal and community consensus scoring. Maintains an edge state machine: SPECULATIVE → CORROBORATED → VERIFIED → GROUNDED (or → REFUTED). Integrated with the REM Cycle for batch validation.
+
+---
+
+## J
+
+**JWT (JSON Web Token)**
+The authentication mechanism for CEREBRUM's REST API. Bearer tokens use HMAC-SHA256 signing with the `CEREBRUM_JWT_SECRET` environment variable.
+
+---
+
+## K
+
+**KGE (Knowledge Graph Embedding)**
+A family of methods that learn vector representations of entities and relations from graph triples. CEREBRUM supports TransE and RotatE as optional drop-in `EmbeddingEngine` backends. KGE embeddings upgrade the semantic similarity term in CSA without changing other reasoning components.
+
+**Knowledge Graph (KG)**
+A directed graph where nodes represent entities and edges represent typed relationships (triples: subject, predicate, object). The primary data structure for all CEREBRUM reasoning.
+
+---
+
+## L
+
+**Lazy STDP Weight Decay**
+An optimization in `STDPDiscretizer` that applies weight decay lazily (only when a pair is accessed) rather than on every clock tick, reducing time complexity from $O(N)$ to $O(1)$ per event. See also: STDP.
+
+**Leiden Algorithm (Native)**
+CEREBRUM's GPL-free native reimplementation of the Leiden community detection algorithm in `core/leiden_native.py`. Replaces the `igraph`/`leidenalg` external dependencies removed in v0.2.0.
+
+**LPA (Label Propagation Algorithm)**
+A local community detection method where each node adopts the most common community label among its neighbors. Represents the "local topology signal" in DSCF. Fast ($O(E)$) but can produce poor modularity. Combined with modularity gain in DSCF to achieve both speed and quality.
+
+**LTD (Long-Term Depression)**
+The biological analog for Bridge Twin node pruning: when a bridge twin's crossing count falls below a threshold (simulating synaptic weakening from disuse), the bridge record is pruned.
+
+**LTP (Long-Term Potentiation)**
+The biological analog for Bridge Twin node creation: when two entities in different communities are traversed together beyond a threshold (simulating synaptic strengthening from repeated co-activation), a bridge twin node is materialized.
+
+---
+
+## M
+
+**MetaInsightEngine**
+The second-order reasoning component. Constructs a graph over `InsightEvent` nodes connected by typed edges (TRIGGERED_BY, CONTRADICTS, REINFORCES, CO_OCCURRED). Runs standard CSA traversal on this event graph to detect reasoning pathologies (community lock-in, relation starvation, depth asymmetry).
+
+**Modularity (Q)**
+A graph quality metric measuring the fraction of edges within communities minus the expected fraction for a random graph with the same degree sequence. Higher Q indicates more modular (community-structured) graphs. CEREBRUM's GlobalRebalancer monitors modularity drift $\Delta Q_{cum}$.
+
+**Multi-Hop Reasoning**
+Answering questions that require traversing multiple edges in sequence: e.g., "What disease is caused by the organism transmitted by the vector that bites humans in tropical regions?" requires 3+ hops through a biomedical KG.
+
+---
+
+## N
+
+**Namespace Isolation**
+`IngestionPipeline(namespace="text")` and `SignalEncoder(namespace="signal")` — prefix-based entity ID separation preventing semantic collisions between different data modalities (Phase 19 fix, Hole 3).
+
+**Namespace (Entity ID)**
+A prefix string applied to entity IDs to isolate them from other modality spaces. Format: `"namespace:entity_id"`. Example: `"signal:Temp_Sensor_1"` vs `"text:Temp_Sensor_1"`.
+
+---
+
+## P
+
+**PageRank (PR)**
+A graph centrality measure (part of StructuralEncoder) used as the sixth term in the CSA formula ($\zeta \cdot PR(v)$). High PageRank nodes receive a traversal bonus, reflecting their structural importance.
+
+**PathScorer**
+CORTEX component that ranks `ReasoningPath` objects using the composite score:
+$$\text{score}(P) = \left(\prod_{k=1}^L a(u_k, v_k, k)\right) \cdot \text{coherence}_{com}(P) \cdot \cos(\vec{h}_{final}, \vec{q})$$
+
+**Path-Preserving Hold-out**
+`InferenceValidator(path_preserving=True)` — validation methodology that skips holding out edge $(u,v)$ if no alternative path between $u$ and $v$ exists after removal. Prevents false-zero recall on sparse graphs (Phase 20 fix, Hole 8).
+
+**PatternDiscretizer**
+A streaming discretizer that emits a graph edge when a symbolic event sequence matches a configured pattern with probability ≥ $p$.
+
+**Procrustes SVD**
+The mathematical core of `SignalEncoder`'s cross-modal alignment. Computes a rotation matrix $R = V U^T$ from the SVD of the cross-covariance matrix $\Sigma = Y^T X$, where $X$ are signal embeddings and $Y$ are entity embeddings. Minimizes $||Y - XR||_F$.
+
+---
+
+## Q
+
+**Query Snapshot Isolation**
+`CSAEngine.set_query_snapshot(community_map)` — captures the community map at query start and uses it exclusively throughout the query. Prevents GlobalRebalancer mid-query atomic swaps from producing inconsistent CSA weights across hops (Phase 20 fix, Hole 5).
+
+---
+
+## R
+
+**REM Cycle (Rapid Edge Maintenance)**
+Background metacognitive maintenance loop. Runs on three schedules: Hot Path (10 min, TTL edge pruning), Cold Path (1 hour, insight validation + decay), REM Path (daily/triggered, full DSCF re-optimization). Inspired by biological sleep-cycle memory consolidation.
+
+**REM Engine**
+The system component implementing the REM Cycle. Interfaces with InsightValidator, GlobalRebalancer, and the graph persistence layer.
+
+**Relation Starvation**
+A reasoning pathology detected by the MetaInsightEngine: a relation type appears on fewer than 5% of successful paths despite representing more than 20% of graph edges. Indicates the CSA γ (relation weight) term may be underweighting this relation type.
+
+**ResourceGovernor**
+Hardware-aware query throttling: monitors CPU/memory usage and enforces per-query resource budgets. Implements the "Arousal Interrupt" that pauses REM Cycle maintenance tasks when user queries arrive.
+
+**RotatE**
+A KGE method modeling relations as rotations in complex embedding space. Supports symmetric, antisymmetric, inverse, and compositional relation patterns. Available as optional `EmbeddingEngine` backend in CEREBRUM.
+
+---
+
+## S
+
+**SignalEncoder**
+THALAMUS component for cross-modal alignment. `StatisticalSignalEncoder` (time-series statistics → embeddings) and `SpectralSignalEncoder` (waveform FFT features → embeddings). Projects sensor signals into entity embedding space via Procrustes SVD. Uses `namespace="signal"` by default.
+
+**Skepticism Factor (ρ)**
+The exponential decay multiplier applied to `INSIGHT_LINK` edges in the REM Cycle's confidence decay: $c_{t+1} = c_t \cdot (\lambda \cdot \rho)^{\Delta t}$ with $\rho = 0.8 < 1$. Prevents speculative insights from becoming entrenched without independent validation.
+
+**Soft Community Membership**
+`CommunityEngine(soft_membership=True)` — each node carries a probability distribution over communities rather than a single hard assignment. Community consensus term uses the dot product of membership distributions: $S_C^{soft}(u,v) = \sum_k p_k^{(u)} \cdot p_k^{(v)}$ (Phase 17 feature).
+
+**STDP (Spike-Timing-Dependent Plasticity)**
+The neuroscientific mechanism inspiring `STDPDiscretizer`. In biology, a synapse strengthens if the pre-synaptic neuron fires before the post-synaptic neuron (LTP), and weakens otherwise. CEREBRUM applies this principle to event streams: if entity A's events consistently precede entity B's events, a directional `CAUSES` edge is materialized.
+
+**STDPDiscretizer**
+THALAMUS component that materializes directional `CAUSES` edges from event timing patterns. Maintains per-pair STDP weights and event counts; emits edges when both thresholds are exceeded. Extended in Phase 19 with `min_causal_span` and `use_chi_squared` adversarial guards.
+
+**StreamAdapter**
+A `GraphAdapter` wrapper that accepts continuous event streams via a thread-safe queue. Supports five discretizer types, a sliding-window buffer, and integration with GlobalRebalancer.
+
+**Structural Encoder**
+THALAMUS component computing per-node structural features: PageRank, betweenness centrality, and degree. These features are used as the positional encoding analog in the Transformer/KG analogy.
+
+**Structural Hole**
+A cross-feature interaction bug where two independently-correct subsystems produce incorrect outcomes when combined. Eight structural holes were identified and patched in Phases 19–20. See SPEC_016 for full taxonomy.
+
+---
+
+## T
+
+**THALAMUS**
+The ingestion layer subsystem. Encompasses: CSV/NetworkX/Neo4j/RDF adapters, EmbeddingEngine, StructuralEncoder, STDPDiscretizer, IngestionPipeline, SignalEncoder, and StreamAdapter.
+
+**Thompson Sampling**
+The probabilistic path selection strategy in Bayesian Beam Search: for each candidate path, draw a sample from its Beta distribution; select the candidate with the highest sample. Balances exploration (uncertain paths) and exploitation (high-confidence paths).
+
+**Temporal Decay**
+The time-dependent reduction in edge weight for edges with `valid_until` timestamps: $w_{temp}(t) = w_0 \cdot \exp(-\lambda \cdot \max(0, t - t_{until}))$. Decay rate $\lambda$ is configurable per relation type (Phase 17 feature).
+
+**ThresholdDiscretizer**
+A streaming discretizer that emits a graph edge when a continuous float signal crosses a configured threshold value.
+
+**TransE**
+A KGE method modeling relations as translation vectors: a triple $(h, r, t)$ is valid iff $\vec{h} + \vec{r} \approx \vec{t}$. Available as optional `EmbeddingEngine` backend in CEREBRUM.
+
+**Traversal Path**
+A `dataclass` representing an in-progress beam search path. Carries: `nodes` (list of entities), `edges` (list of edge objects), `score` (cumulative CSA product), `beta_alpha`, `beta_beta` (Beta distribution parameters for probabilistic mode).
+
+**TSC (Triple-Signal Consensus)**
+Extension of DSCF that adds a third signal (Infomap/flow-based community assignment) to the LPA and modularity signals. All three signals are fused simultaneously at each node update. The "aircraft navigation mid-value voting" analog: consensus of three independent signals.
+
+---
+
+## U
+
+**Uncertainty Propagation**
+`BeamTraversal(propagate_uncertainty=True)` — computes per-path confidence as a variance-penalized product of edge confidences: $\text{conf}(P) = \prod_i c_i^\alpha \cdot (1 - \beta \cdot \text{Var}(\{c_i\}))$ (Phase 17 feature).
+
+---
+
+## W
+
+**Warm-Start Strength**
+`BeamTraversal(warm_start_strength=N)` — scales the first-hop Beta distribution prior using the CSA edge weight: $(\alpha, \beta)_{hop1} = (1 + w(1+s), 1 + (1-w)(1+s))$. Reduces cold-start variance 85% on sparse graphs (Phase 19 fix, Hole 4).
+
+**WindowedFrequencyDiscretizer**
+A streaming discretizer that emits a graph edge when two entities co-occur more than a minimum number of times within a sliding time window.
+
+**Wormhole Attention**
+The cross-graph attention mechanism in `FederatedAdapter` that connects structurally-analogous communities across different remote graphs. Named for the "shortcut" it provides through otherwise-disconnected graph spaces.
+
+---
+
+## Z
+
+**Zombie Bridge**
+A stale `BridgeRecord` whose `source_community` or `destination_community` IDs reference a community partition that no longer exists after a GlobalRebalancer atomic swap. Pruned by `BridgeTwinEngine.on_rebalance()` (Phase 19 fix, Hole 1).
+
+---
+**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**

@@ -1,19 +1,19 @@
-# GEMINI.md - Parallax Project Context
+# GEMINI.md - CEREBRUM Project Context
 
-This file provides essential context and instructions for Gemini CLI when working in the Parallax repository.
+This file provides essential context and instructions for Gemini CLI when working in the CEREBRUM repository.
 
 ## Project Overview
 
-**Parallax** is a **Community-Structured Graph Attention** framework for Knowledge Graph (KG) reasoning. It implements a multi-hop traversal mechanism inspired by Transformer architectures, allowing KGs to perform complex reasoning without an LLM or training data.
+**CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph (KG) reasoning. It implements a multi-hop traversal mechanism inspired by Transformer architectures, allowing KGs to perform complex reasoning without an LLM or training data.
 
-**v0.2.0 (Federated)** enables distributed reasoning across sensitive datasets using holographic indexing and privacy-preserving search.
+**v1.1.0 (Phase 20 COMPLETE)** — 994 tests passing. Includes full THALAMUS ingestion pipeline, LLM bridge, Bayesian Beam Search with warm-start, GlobalRebalancer with on_rebalance hook, Cross-Modal Alignment with canonical basis anchor, and two rounds of production hardening (eight structural holes patched across Phases 19 and 20).
 
 ### Core Innovations
 1.  **DSCF (Dual-Signal Community Fusion):** A novel community detection algorithm that fuses local (Label Propagation) and global (Modularity) signals during each node update. These communities act as "attention heads."
 2.  **CSA (Community-Structured Attention):** An attention mechanism where weights are influenced by community membership, semantic similarity, and graph structure.
 
 ### Transformer ↔ KG Analogy
-| Transformer Concept | Parallax Equivalent |
+| Transformer Concept | CEREBRUM Equivalent |
 | :--- | :--- |
 | Attention head | DSCF community |
 | Layer depth | BFS hop count |
@@ -75,13 +75,13 @@ pytest tests/test_dscf.py -v
 ### CLI Usage
 ```bash
 # Query the graph
-python -m cli.parallax query --csv tests/fixtures/toy_graph.csv "newton"
+python -m cli.cerebrum query --csv tests/fixtures/toy_graph.csv "newton"
 
 # Inspect communities
-python -m cli.parallax communities --csv tests/fixtures/toy_graph.csv
+python -m cli.cerebrum communities --csv tests/fixtures/toy_graph.csv
 
 # Start API server
-python -m cli.parallax serve --csv tests/fixtures/toy_graph.csv --port 8200
+python -m cli.cerebrum serve --csv tests/fixtures/toy_graph.csv --port 8200
 ```
 
 ### Starting the API Server
@@ -98,15 +98,18 @@ uvicorn api.server:app --port 8200 --reload
 -   **Reproducibility:** Follow the guidelines in `TESTING.md` for deterministic runs (especially for DSCF).
 -   **Documentation:** Absolute precedence is given to `PARALLAX.md` (whitepaper) and `README.md`. `CLAUDE.md` provides environment-specific guidance.
 
-## Current Project Status (Phase 13 COMPLETE)
+## Current Project Status (Phase 20 COMPLETE)
 
-Parallax is currently in **v0.3.2**. Phases 10–13 all shipped.
+CEREBRUM is currently in **v1.1.0**. All phases through 20 shipped.
 
 Key implementations:
 -   **Phase 10 — Security**: JWT Authentication, ResourceGovernor, AsyncBeamTraversal, `/query/stream`.
 -   **Phase 11 — Streaming**: StreamAdapter, SlidingWindowBuffer, 5 discretizers, SSE endpoints.
 -   **Phase 12 — Bridge Twins**: Experience-dependent structural relay formation; GET /bridges API.
--   **Phase 13 — STDP**: STDPDiscretizer — directional CAUSES edges from spike timing (275 tests passing).
+-   **Phase 13 — STDP**: STDPDiscretizer — directional CAUSES edges from spike timing.
+-   **Phase 18 — v0.4 Horizon**: IngestionPipeline, LLM bridge, Bayesian Beam Search, GlobalRebalancer, SignalEncoder.
+-   **Phase 19 — v1.0 Production Hardening**: Zombie Bridge fix (`on_rebalance` hook), Causal Flood filter (`min_causal_span` + chi-squared), Namespace Isolation, Bayesian Cold-Start warm-starting (946 tests passing).
+-   **Phase 20 — v1.1.0 Relativistic Hardening**: Query Snapshot Isolation (`CSAEngine.set_query_snapshot()`), Community-Specific CSA Parameters (`community_params={}`), Canonical Basis Anchor (`canonical_embeddings={}`), Path-Preserving Hold-out (`InferenceValidator(path_preserving=True)`). 994 tests passing.
 
 Refer to `TEST_LOG.md` for details on previous runs.
 

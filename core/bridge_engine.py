@@ -235,6 +235,51 @@ class BridgeTwinEngine:
         with self._lock:
             return node_id in self._bridges
 
+    def on_rebalance(self, new_community_map: Dict[str, int]) -> int:
+        """
+        Called by GlobalRebalancer after a full DSCF re-run commits a new
+        community_map to the adapter.
+
+        Validates each existing BridgeRecord against the new partition:
+          - ``record.source_community`` must still match the original node's
+            community in ``new_community_map``
+          - ``record.destination_community`` must still match the twin node's
+            community in ``new_community_map``
+
+        Records whose community IDs are now stale are removed from ``_bridges``
+        and ``_bridge_index``. The ``_candidates`` crossing-count dict is left
+        intact because crossing frequencies remain meaningful regardless of
+        partition changes.
+
+        Bridge twin *nodes* are NOT removed from the graph here — the existing
+        ``prune_unused()`` LTD mechanism handles node-level cleanup. This method
+        only invalidates the BridgeRecord bookkeeping.
+
+        Parameters
+        ----------
+        new_community_map : ``{entity_id: community_id}`` dict from the fresh DSCF run
+
+        Returns
+        -------
+        int — number of bridge records pruned as stale
+        """
+        with self._lock:
+            stale: List[str] = []
+            for twin_id, record in self._bridges.items():
+                current_src = new_community_map.get(record.original_id, -1)
+                current_dst = new_community_map.get(twin_id, -1)
+                if (
+                    current_src != record.source_community
+                    or current_dst != record.destination_community
+                ):
+                    stale.append(twin_id)
+
+            for twin_id in stale:
+                record = self._bridges.pop(twin_id)
+                self._bridge_index.pop((record.original_id, record.destination_community), None)
+
+        return len(stale)
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------

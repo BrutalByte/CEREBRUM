@@ -1,5 +1,5 @@
 """
-Resource Governor for Parallax.
+Resource Governor for CEREBRUM.
 
 Provides dynamic, process-aware resource management to prevent OOM
 without being premature. Tracks memory pressure and computational energy.
@@ -9,7 +9,7 @@ import psutil
 import logging
 from typing import Dict, Any
 
-logger = logging.getLogger("parallax.resource_governor")
+logger = logging.getLogger("cerebrum.resource_governor")
 
 class ResourceGovernor:
     """

@@ -5,8 +5,8 @@ Handles: headings, paragraphs, bold, italic, code blocks, tables,
 horizontal rules, bullet lists, and inline LaTeX (rendered as italic text).
 
 Usage:
-    python scripts/md_to_docx.py docs/Parallax_White_Paper.md
-    # writes docs/Parallax_White_Paper.docx
+    python scripts/md_to_docx.py docs/CEREBRUM_White_Paper.md
+    # writes docs/CEREBRUM_White_Paper.docx
 """
 from __future__ import annotations
 
@@ -222,10 +222,10 @@ def convert(md_path: Path, docx_path: Path) -> None:
 
 if __name__ == '__main__':
     targets = [
-        'docs/Parallax_White_Paper.md',
-        'docs/Parallax_Whitepaper_V1.md',
-        'docs/Parallax_White_Paper_arXiv.md',
-        'docs/Parallax_Plain_Language_Guide.md',
+        'docs/CEREBRUM_White_Paper.md',
+        'docs/CEREBRUM_Whitepaper_V1.md',
+        'docs/CEREBRUM_White_Paper_arXiv.md',
+        'docs/CEREBRUM_Plain_Language_Guide.md',
     ]
     if len(sys.argv) > 1:
         targets = sys.argv[1:]

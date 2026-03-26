@@ -1,5 +1,5 @@
 """
-Federated Security for Parallax.
+Federated Security for CEREBRUM.
 
 Provides JWT-based identity and authorization for distributed reasoning clusters.
 """
