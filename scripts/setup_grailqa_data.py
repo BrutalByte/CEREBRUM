@@ -121,6 +121,30 @@ def _load_dataset(hf_cache: Optional[str] = None):
 
 
 # ---------------------------------------------------------------------------
+# Column-oriented → row-oriented conversion helper
+# ---------------------------------------------------------------------------
+
+def _rows(col_dict) -> List[Dict]:
+    """
+    Convert a column-oriented dict (HuggingFace dataset format) to a list of row dicts.
+
+    HuggingFace stores nested structs as column dicts:
+      {"nid": [0, 1], "id": ["m.xxx", "m.yyy"]} -> [{"nid": 0, "id": "m.xxx"}, ...]
+
+    Works for any depth-1 column dict.  Returns [] for None/empty input.
+    """
+    if not col_dict:
+        return []
+    if isinstance(col_dict, list):
+        return col_dict  # already row-oriented
+    keys = list(col_dict.keys())
+    if not keys:
+        return []
+    n = len(col_dict[keys[0]])
+    return [{k: col_dict[k][i] for k in keys} for i in range(n)]
+
+
+# ---------------------------------------------------------------------------
 # graph_query introspection helpers
 # ---------------------------------------------------------------------------
 
@@ -161,15 +185,15 @@ def _extract_graph_query_triples(
     if not graph_query:
         return triples
 
-    # Build nid -> node dict
-    nodes_raw = graph_query.get("nodes") or []
+    # Build nid -> node dict (nodes may be column-oriented)
+    nodes_raw = _rows(graph_query.get("nodes") or {})
     nodes_by_nid: Dict[int, Dict] = {}
     for n in nodes_raw:
         nid = n.get("nid")
         if nid is not None:
             nodes_by_nid[nid] = n
 
-    edges_raw = graph_query.get("edges") or []
+    edges_raw = _rows(graph_query.get("edges") or {})
     for edge in edges_raw:
         start_nid = edge.get("start")
         end_nid   = edge.get("end")
@@ -198,7 +222,7 @@ def _extract_graph_query_triples(
     # and can be connected to the graph via the question node.
     # (The graph_query alone may not always include the answer node explicitly.)
     q_nodes = [n for n in nodes_raw if n.get("question_node") == 1]
-    for ans in (answers or []):
+    for ans in _rows(answers or {}):
         ans_mid = _normalise_mid(str(ans.get("answer_argument", "")))
         if not ans_mid or not _is_mid(ans_mid):
             continue
@@ -218,16 +242,15 @@ def _extract_entity_names(
     and answer entity names.  Modifies name_map in place.
     """
     if graph_query:
-        for n in (graph_query.get("nodes") or []):
+        for n in _rows(graph_query.get("nodes") or {}):
             raw_id   = str(n.get("id", "")).strip()
             fname    = str(n.get("friendly_name", "")).strip()
             norm_id  = _normalise_mid(raw_id)
             if norm_id and fname and fname.lower() not in ("", "none", "null"):
-                # Prefer shorter / more readable names; don't overwrite if already set
                 if norm_id not in name_map:
                     name_map[norm_id] = fname
 
-    for ans in (answers or []):
+    for ans in _rows(answers or {}):
         arg   = _normalise_mid(str(ans.get("answer_argument", "")).strip())
         ename = str(ans.get("entity_name", "")).strip()
         if arg and ename and ename.lower() not in ("", "none", "null"):
@@ -236,14 +259,23 @@ def _extract_entity_names(
 
 
 def _get_question_node_id(graph_query) -> Optional[str]:
-    """Return the normalised MID of the question (seed) entity node, or None."""
+    """
+    Return the normalised MID of the seed (topic) entity node, or None.
+
+    GrailQA convention:
+      question_node == 1  →  answer class/type node (NOT the seed)
+      node_type == 'entity'  →  the topic entity (seed for traversal)
+
+    We return the first entity-type node's MID as the seed.
+    """
     if not graph_query:
         return None
-    for n in (graph_query.get("nodes") or []):
-        if n.get("question_node") == 1:
+    for n in _rows(graph_query.get("nodes") or {}):
+        if str(n.get("node_type", "")).lower() == "entity":
             raw = str(n.get("id", "")).strip()
             mid = _normalise_mid(raw)
-            return mid if mid else None
+            if mid and _is_mid(mid):
+                return mid
     return None
 
 
@@ -286,12 +318,12 @@ def _build_scaffold(ds) -> Tuple[int, Dict[str, str]]:
             if seed_mid and _is_mid(seed_mid):
                 # Find the outgoing relation from the question node
                 q_nid: Optional[int] = None
-                for n in (graph_query.get("nodes") or []):
+                for n in _rows(graph_query.get("nodes") or {}):
                     if n.get("question_node") == 1:
                         q_nid = n.get("nid")
                         break
 
-                for edge in (graph_query.get("edges") or []):
+                for edge in _rows(graph_query.get("edges") or {}):
                     relation = edge.get("relation", "")
                     if not relation:
                         continue
@@ -302,7 +334,7 @@ def _build_scaffold(ds) -> Tuple[int, Dict[str, str]]:
                     # Is this edge attached to the question node?
                     if q_nid is not None and (start == q_nid or end == q_nid):
                         # Add seed->answer triples for entity answers
-                        for ans in answers:
+                        for ans in _rows(answers or {}):
                             ans_mid = _normalise_mid(
                                 str(ans.get("answer_argument", "")).strip()
                             )
@@ -385,16 +417,16 @@ def _convert_split(
             skipped += 1
             continue
 
-        # Seed friendly name
+        # Seed friendly name (from the entity-type node)
         seed_name = ""
-        for n in (graph_q.get("nodes") or []):
-            if n.get("question_node") == 1:
+        for n in _rows(graph_q.get("nodes") or {}):
+            if str(n.get("node_type", "")).lower() == "entity":
                 seed_name = str(n.get("friendly_name", "")).strip()
                 break
 
         # Build answer list
         answer_list = []
-        for ans in answers:
+        for ans in _rows(answers or {}):
             atype = str(ans.get("answer_type", "")).strip()
             aarg  = _normalise_mid(str(ans.get("answer_argument", "")).strip())
             aname = str(ans.get("entity_name", "")).strip()
