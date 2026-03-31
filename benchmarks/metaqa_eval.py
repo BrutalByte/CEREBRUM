@@ -231,30 +231,59 @@ def reciprocal_rank(answers: List[str], correct: List[str]) -> float:
 def evaluate_hop(
     hop: int,
     traversal: BeamTraversal,
-    qa_pairs: List[Tuple[str, List[str]]],
+    qa_pairs: List[Tuple],
     top_k: int = 10,
+    embedding_engine=None,
 ) -> Dict:
     """
     Evaluate one hop level. Returns a metrics dict.
+
+    Parameters
+    ----------
+    embedding_engine : optional SentenceEngine (or any engine with encode_entities).
+                       When provided, the question text is encoded and passed as
+                       query_embedding to extract(), activating the semantic
+                       alignment re-ranking signal.  Has no effect when qa_pairs
+                       were loaded without question text (include_question=False).
     """
     h1 = h10 = 0
     mrr_sum = 0.0
     skipped = found = 0
 
+    # Detect whether qa_pairs include question text (3-tuples) or not (2-tuples)
+    has_question = qa_pairs and len(qa_pairs[0]) == 3
+
     t0 = time.time()
-    for i, (seed, correct_answers) in enumerate(qa_pairs):
+    for i, qa in enumerate(qa_pairs):
+        if has_question:
+            seed, correct_answers, question_text = qa
+        else:
+            seed, correct_answers = qa
+            question_text = None
+
         if (i + 1) % 500 == 0 or (i + 1) == len(qa_pairs):
             elapsed = time.time() - t0
             print(f"    {i+1:,}/{len(qa_pairs):,} questions "
                   f"({elapsed:.1f}s elapsed)", end="\r")
 
-        paths   = traversal.traverse([seed])
+        # Encode question text for semantic re-ranking when engine is available
+        query_emb = None
+        if question_text and embedding_engine is not None:
+            try:
+                q_map = {"__query__": question_text}
+                q_vecs = embedding_engine.encode_entities(q_map)
+                query_emb = q_vecs.get("__query__")
+            except Exception:
+                pass
+
+        paths = traversal.traverse([seed], query_embedding=query_emb)
         # For exact k-hop benchmarks, exclude depth-1 noise on 2-hop questions
         # (direct neighbors of the seed are never the correct 2-hop answer).
         # For 1-hop and 3-hop, allow min_hop=1 — 3-hop correct answers can
         # occasionally be reachable via shorter shortcut edges.
         eval_min_hop = hop if hop == 2 else 1
-        answers_obj = extract(paths, top_k=top_k, min_hop=eval_min_hop)
+        answers_obj = extract(paths, top_k=top_k, min_hop=eval_min_hop,
+                              query_embedding=query_emb)
         pred    = [a.entity_id for a in answers_obj]
 
         if not pred:
@@ -383,9 +412,15 @@ def main():
     # ------------------------------------------------------------------
     results = []
 
+    # Use sentence engine for query embedding only when sentence embeddings are active
+    query_engine = engine if args.embeddings == "sentence" else None
+
     for hop in hops:
         print(f"\n--- {hop}-hop evaluation ---")
-        qa_pairs = load_qa(hop, sample=args.sample, seed=args.seed)
+        # Load with question text when sentence embeddings are active so
+        # the question can be encoded as query_embedding for re-ranking.
+        qa_pairs = load_qa(hop, sample=args.sample, seed=args.seed,
+                           include_question=(query_engine is not None))
         n_label  = f"{len(qa_pairs):,}" + (" (sample)" if args.sample else "")
         print(f"  {n_label} test questions")
 
@@ -397,7 +432,8 @@ def main():
         )
 
         print(f"  Running traversal (beam_width={args.beam_width}, max_hop={hop})...")
-        metrics = evaluate_hop(hop, traversal, qa_pairs, top_k=args.top_k)
+        metrics = evaluate_hop(hop, traversal, qa_pairs, top_k=args.top_k,
+                               embedding_engine=query_engine)
         results.append(metrics)
 
         print(f"  Hits@1  : {metrics['hits_1']:.4f}  ({metrics['hits_1']*100:.1f}%)")

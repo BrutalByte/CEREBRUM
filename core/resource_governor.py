@@ -35,8 +35,8 @@ class ResourceGovernor:
 
     def __init__(
         self,
-        memory_threshold_pct: float = 85.0,
-        safety_buffer_mb: int = 500,
+        memory_threshold_pct: float = 95.0,
+        safety_buffer_mb: int = 200,
         vram_safety_buffer_mb: int = 256,
     ):
         self.process = psutil.Process(os.getpid())

@@ -63,19 +63,19 @@ class NetworkXAdapter(GraphAdapter):
         self,
         entity_id: str,
         edge_types: Optional[List[str]] = None,
-        max_neighbors: int = 50,
+        max_neighbors: int = 100,
         context_embedding: Optional["np.ndarray"] = None,
     ) -> List[Edge]:
         if entity_id not in self._G:
             return []
 
-        edges = []
         neighbors = (
-            self._G.successors(entity_id) # type: ignore
+            self._G.successors(entity_id)  # type: ignore
             if self._G.is_directed()
             else self._G.neighbors(entity_id)
         )
 
+        edges = []
         for neighbor in neighbors:
             edge_data = self._G.get_edge_data(entity_id, neighbor) or {}
             rel_type  = edge_data.get("relation", "RELATED_TO")
@@ -97,10 +97,15 @@ class NetworkXAdapter(GraphAdapter):
                 )
             )
 
-            if len(edges) >= max_neighbors:
-                break
-
-        return edges
+        # Truncate to max_neighbors using insertion order.
+        # NOTE: cosine-similarity pre-sorting was evaluated and removed — it
+        # biases toward same-type neighbors (path embedding ≈ source entity)
+        # and suppresses correct cross-type hops (actor→movie, movie→genre).
+        # The CSA attention formula in BeamTraversal already handles relevance
+        # scoring; pre-filtering at the adapter level double-counts the wrong
+        # signal.  A larger cap (100 vs the old 50) provides better coverage
+        # without insertion-order bias affecting common-degree nodes.
+        return edges[:max_neighbors]
 
     def find_entities(self, query: str, top_k: int = 10) -> List[Entity]:
         """

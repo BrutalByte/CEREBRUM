@@ -15,8 +15,8 @@ from core.resource_governor import ResourceGovernor
 
 def test_default_construction():
     gov = ResourceGovernor()
-    assert gov.threshold == 85.0
-    assert gov.buffer_bytes == 500 * 1024 * 1024
+    assert gov.threshold == 95.0   # raised from 85% — accuracy-first
+    assert gov.buffer_bytes == 200 * 1024 * 1024  # reduced from 500 MB
 
 
 def test_custom_threshold():

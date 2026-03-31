@@ -191,7 +191,7 @@ def extract(
     weight_attention: float = 0.4,
     weight_community: float = 0.3,
     weight_semantic: float  = 0.3,
-    vote_weight: float = 0.3,
+    vote_weight: float = 0.30,
     relation_prior: Optional[Any] = None,
     weight_prior: float = 0.15,
 ) -> List[Answer]:

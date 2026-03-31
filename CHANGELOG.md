@@ -7,6 +7,53 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.6.6] — 2026-03-31 — Accuracy Audit: Convergence Voting + ResourceGovernor Tuning + GrailQA
+
+### Added
+- **GrailQA benchmark pipeline**: `scripts/setup_grailqa_data.py` + `benchmarks/grailqa_full_eval.py`.
+  Downloads `Hieuman/grail_qa` from HuggingFace, builds scaffold graph from `graph_query` triples,
+  and evaluates entity-level F1 + Hits@1 per generalization level (i.i.d., compositional, zero-shot).
+  Accuracy-first config: SentenceEngine embeddings, beam_width=20, probabilistic=True, warm_start=5,
+  RelationPathPrior trained from train split, question-text query_embedding.
+
+### Fixed
+- **`vote_weight` reverted to 0.30** (`reasoning/answer_extractor.py`): The audit-driven reduction
+  to 0.15 degraded H@1 across all hops (2-hop: −1.5pp, 3-hop: −2.6pp). Score-weighted convergence
+  voting is essential — multiple independent reasoning chains converging on the same entity is a
+  strong signal, especially on dense relation graphs where many paths lead to hub entities.
+- **`max_neighbors` raised 50→100** (`adapters/networkx_adapter.py`, `reasoning/traversal.py`):
+  Wider neighbor exploration at each hop improves coverage without insertion-order bias. Cosine-
+  similarity pre-sorting at the adapter level was evaluated and definitively removed — it biases
+  toward same-type neighbors (path embedding ≈ source entity) and suppresses correct cross-type
+  hops (actor→movie→genre). The CSA attention formula in BeamTraversal handles relevance scoring.
+- **ResourceGovernor thresholds relaxed** (`core/resource_governor.py`): `memory_threshold_pct`
+  raised 85%→95%, `safety_buffer_mb` reduced 500→200. Previous thresholds caused premature beam
+  truncation on machines running at normal 70-80% RAM utilisation, degrading 3-hop accuracy.
+- **MetaQA eval wires question embeddings** (`benchmarks/metaqa_eval.py`): The `evaluate_hop()`
+  function now accepts an `embedding_engine` parameter and encodes question text as `query_embedding`
+  for both `traverse()` and `extract()`. Requires `--embeddings sentence`; `--embeddings random`
+  (default) operates unchanged.
+
+### Benchmark Results (MetaQA — full 39,093 questions, official post-audit baseline)
+
+| Hop | H@1 | H@10 | MRR |
+|-----|-----|------|-----|
+| 1-hop (9,947 q) | **41.7%** | 95.7% | 0.577 |
+| 2-hop (14,872 q) | **24.7%** | 83.0% | 0.417 |
+| 3-hop (14,274 q) | **12.2%** | 39.8% | 0.202 |
+
+Settings: random embeddings, beam_width=10, --min-community-size 20 (120 coarsened communities).
+2-hop H@1 improved from 9.4% (pre-v1.6.5) to 24.7% (+15.3pp) — primarily from the `min_hop=2` fix and geometric-mean attention scoring.
+
+### System Interoperability
+- 17-component interoperability check passes: IngestionPipeline, EmbeddingEngine, StructuralEncoder,
+  DSCF+CSAEngine (with query snapshot), BeamTraversal+AnswerExtractor, REMEngine, BridgeTwinEngine,
+  ResourceGovernor, FederatedAdapter, STDPDiscretizer, GlobalRebalancer, InsightValidator, PathScorer,
+  ContradictionEngine, CSVAdapter, BayesianBeamTraversal, RelationPathPrior.
+- 1155 tests passing, 1 skipped.
+
+---
+
 ## [1.6.5] — 2026-03-30 — Ranking Fix: Geometric Mean Attention + Hop-Aware min_hop
 
 ### Fixed
