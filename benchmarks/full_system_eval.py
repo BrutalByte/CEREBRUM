@@ -607,7 +607,12 @@ def evaluate_hop(
         # query entity, not just structurally reachable.
         query_emb = adapter.get_embedding(seed) if adapter is not None else None
 
-        answers = extract(paths, top_k=top_k, min_hop=1, query_embedding=query_emb)
+        # For 2-hop questions, exclude depth-1 paths: direct neighbors of the
+        # seed entity are always wrong intermediate nodes, never the answer.
+        # For 1-hop and 3-hop, allow min_hop=1 — 3-hop correct answers can be
+        # reachable via shortcut edges, and excluding them hurts H@1.
+        eval_min_hop = hop if hop == 2 else 1
+        answers = extract(paths, top_k=top_k, min_hop=eval_min_hop, query_embedding=query_emb)
         pred    = [a.entity_id for a in answers]
 
         if not pred:

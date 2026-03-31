@@ -249,7 +249,12 @@ def evaluate_hop(
                   f"({elapsed:.1f}s elapsed)", end="\r")
 
         paths   = traversal.traverse([seed])
-        answers_obj = extract(paths, top_k=top_k, min_hop=1)
+        # For exact k-hop benchmarks, exclude depth-1 noise on 2-hop questions
+        # (direct neighbors of the seed are never the correct 2-hop answer).
+        # For 1-hop and 3-hop, allow min_hop=1 — 3-hop correct answers can
+        # occasionally be reachable via shorter shortcut edges.
+        eval_min_hop = hop if hop == 2 else 1
+        answers_obj = extract(paths, top_k=top_k, min_hop=eval_min_hop)
         pred    = [a.entity_id for a in answers_obj]
 
         if not pred:

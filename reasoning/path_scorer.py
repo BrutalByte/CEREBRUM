@@ -101,8 +101,14 @@ def score_path(
     if not path.attention_weights:
         return 0.5
 
-    # Attention: product of weights along the path
-    attention_score = math.prod(max(w, 1e-9) for w in path.attention_weights)
+    # Attention: geometric mean of weights along the path.
+    # Using geometric mean (= prod^(1/n)) instead of raw product ensures paths
+    # of different hop depths are scored on the same scale.  A raw product
+    # systematically penalises deeper paths (0.7^3 = 0.343 vs 0.7^1 = 0.7),
+    # causing short wrong-answer paths to rank above long correct-answer paths.
+    n = len(path.attention_weights)
+    log_sum = sum(math.log(max(w, 1e-9)) for w in path.attention_weights)
+    attention_score = math.exp(log_sum / n)
 
     # Community coherence
     coh = community_coherence(path.community_sequence)

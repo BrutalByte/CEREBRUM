@@ -627,6 +627,79 @@ def best_of_n_dscf(
 
 
 # ---------------------------------------------------------------------------
+# Adaptive Resolution Search (Phase 22)
+# ---------------------------------------------------------------------------
+
+def adaptive_resolution_search(
+    G: nx.Graph,
+    target_communities: Optional[int] = None,
+    tol: float = 0.10,
+    max_steps: int = 20,
+    min_res: float = 0.05,
+    max_res: float = 9.9,
+    seed: int = None,
+) -> float:
+    """
+    Binary-search over the DSCF resolution parameter to find a value that
+    yields approximately ``target_communities`` communities.
+
+    Parameters
+    ----------
+    G                  : NetworkX graph
+    target_communities : desired number of communities; defaults to sqrt(|V|)
+    tol                : fractional tolerance — early exit when
+                         |actual - target| / target <= tol
+    max_steps          : maximum binary-search iterations
+    min_res            : lower bound on resolution
+    max_res            : upper bound on resolution
+    seed               : random seed for reproducibility
+
+    Returns
+    -------
+    float — resolution value that best hits the target
+    """
+    if seed is not None:
+        random.seed(seed)
+
+    N = G.number_of_nodes()
+    if N == 0:
+        return 1.0
+
+    if target_communities is None:
+        target_communities = max(1, int(N ** 0.5))
+
+    if target_communities <= 0:
+        return min_res
+
+    lo, hi = min_res, max_res
+    best_res = (lo + hi) / 2.0
+
+    for _ in range(max_steps):
+        mid = (lo + hi) / 2.0
+        parts = dscf_communities(G, resolution=mid)
+        k = len(parts)
+
+        # Tolerance check
+        if target_communities > 0 and abs(k - target_communities) / target_communities <= tol:
+            return mid
+
+        if k < target_communities:
+            lo = mid  # need more communities → increase resolution
+        else:
+            hi = mid  # too many communities → decrease resolution
+
+        best_res = mid
+
+    # If bounds collapsed, return appropriate bound
+    if abs(lo - min_res) < 1e-9:
+        return min_res
+    if abs(hi - max_res) < 1e-9:
+        return max_res
+
+    return best_res
+
+
+# ---------------------------------------------------------------------------
 # Soft Community Membership (Phase 17.3)
 # ---------------------------------------------------------------------------
 

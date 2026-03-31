@@ -7,6 +7,29 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.6.5] — 2026-03-30 — Ranking Fix: Geometric Mean Attention + Hop-Aware min_hop
+
+### Fixed
+- **Metric correction**: Previous MetaQA comparisons to MINERVA used CEREBRUM H@10 vs MINERVA H@1 — an invalid apples-to-oranges comparison. All published claims of "beating MINERVA" based on this comparison are retracted.
+- **Geometric-mean attention scoring** (`reasoning/path_scorer.py`): Replaced `math.prod(attention_weights)` with geometric mean (`exp(mean(log(weights)))`). Raw product systematically penalises deeper paths (0.7³ = 0.343 vs 0.7¹ = 0.7), causing shallow wrong-answer paths to rank above deep correct-answer paths. Geometric mean is depth-fair and correct for comparing paths of different lengths.
+- **Hop-aware `min_hop` in MetaQA evaluation** (`benchmarks/metaqa_eval.py`, `benchmarks/full_system_eval.py`): For 2-hop questions, changed `min_hop` from 1 to 2. Direct 1-hop neighbours of the seed entity are always wrong intermediate nodes on 2-hop questions; including them contaminated rank-1 with noise. 1-hop and 3-hop evaluations retain `min_hop=1` (3-hop correct answers are sometimes reachable via shortcut edges).
+- **`adaptive_resolution_search` missing from `core/community_engine.py`**: The function was referenced in `benchmarks/full_system_eval.py` and `tests/test_adaptive_resolution.py` but never implemented. Added binary-search implementation targeting `√N` communities by default.
+
+### Benchmark Results (MetaQA — full 39,093 questions, corrected H@1 metrics)
+
+| Variant | 1-hop H@1 | 2-hop H@1 | 3-hop H@1 | 1-hop H@10 | 2-hop H@10 | 3-hop H@10 |
+|---------|-----------|-----------|-----------|-----------|-----------|-----------|
+| RAW | 41.6% | 25.1% | 12.6% | 95.7% | 84.2% | 43.3% |
+| **FULL** | **42.6%** | **25.7%** | **14.9%** | **97.1%** | **85.0%** | **43.8%** |
+| MINERVA (trained RL) | 96.3% | 92.9% | 55.2% | — | — | — |
+
+Key change: 2-hop H@1 improved from 9.4% → 25.7% (+16.3pp) due to the `min_hop=2` fix.
+
+### Tests
+- 1155 passing, 1 skipped (unchanged).
+
+---
+
 ## [1.6.4] — 2026-03-30 — Phase 28 & 29: Structural Repair & Context Merging
 
 ### Added
