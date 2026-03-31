@@ -127,7 +127,7 @@ The background component that monitors modularity drift ($\Delta Q_{cum}$) acros
 ## H
 
 **H@10 (Hits at 10)**
-The primary evaluation metric for CEREBRUM: the fraction of test queries where the correct answer appears in the top-10 ranked paths. CEREBRUM zero-shot benchmarks: MetaQA 1-hop=0.968, 2-hop=0.714, 3-hop=0.318 at <7ms.
+The primary evaluation metric for CEREBRUM: the fraction of test queries where the correct answer appears in the top-10 ranked paths. CEREBRUM zero-shot benchmarks: MetaQA 1-hop=0.960, 2-hop=0.713, 3-hop=0.248 at <7ms.
 
 **Holographic Index**
 A privacy-preserving federated discovery system using Bloom filters (probabilistic membership) and community centroids (structural fingerprints). Allows remote graphs to advertise their contents without revealing individual entities.
@@ -340,4 +340,4 @@ The cross-graph attention mechanism in `FederatedAdapter` that connects structur
 A stale `BridgeRecord` whose `source_community` or `destination_community` IDs reference a community partition that no longer exists after a GlobalRebalancer atomic swap. Pruned by `BridgeTwinEngine.on_rebalance()` (Phase 19 fix, Hole 1).
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

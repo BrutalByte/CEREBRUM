@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Callable, List, Dict, Any, Optional
+from typing import Callable, List, Dict, Any
 
 
 # ---------------------------------------------------------------------------

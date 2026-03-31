@@ -1,6 +1,6 @@
 # Autonomous Causal Discovery via Spike-Timing-Dependent Plasticity in Knowledge Streams
 
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
 **Status**: v1.2.0 (Hardened Enterprise)  
 **Date**: March 2026
@@ -8,7 +8,7 @@
 ---
 
 ### Abstract
-Inferring causal relationships from unstructured, high-velocity event streams is a major challenge in unsupervised learning. We propose a novel method for autonomous causal discovery by adapting the biological mechanism of **Spike-Timing-Dependent Plasticity (STDP)** to temporal Knowledge Graph triples. By treating entity mentions as "spikes" and analyzing their relative timing across a sliding window, our engine infers directional `CAUSES` relationships. We define a mathematically rigorous weighting rule based on the Bi & Poo (1998) model and introduce **Lazy Decay**, an $O(1)$ optimization that allows the engine to scale to enterprise-level event throughput by applying geometric decay only upon record access. Benchmark results demonstrate that the v1.2.0 engine maintains constant sub-millisecond latency per event regardless of the number of accumulated causal pairs, representing a critical breakthrough for real-time industrial causal monitoring.
+Inferring causal relationships from unstructured, high-velocity event streams is a major challenge in unsupervised learning. We propose a novel method for autonomous causal discovery by adapting the biological mechanism of **Spike-Timing-Dependent Plasticity (STDP)** to temporal Knowledge Graph triples. By treating entity mentions as "spikes" and analyzing their relative timing across a sliding window, our engine infers directional `CAUSES` relationships. We define a mathematically rigorous weighting rule based on the Bi & Poo \cite{bipoo1998} model and introduce **Lazy Decay**, an $O(1)$ optimization that allows the engine to scale to enterprise-level event throughput by applying geometric decay only upon record access. Benchmark results demonstrate that the v1.2.0 engine maintains constant sub-millisecond latency per event regardless of the number of accumulated causal pairs, representing a critical breakthrough for real-time industrial causal monitoring.
 
 ### 1. Introduction
 Traditional causal inference relies on static datasets and intensive counterfactual analysis. In streaming environments—such as IoT telemetry, cybersecurity logs, or financial tickers—causality must be discovered "on the fly." We posit that the temporal order and proximity of events provide a sufficient signal for preliminary causal discretization when governed by biological plasticity rules.

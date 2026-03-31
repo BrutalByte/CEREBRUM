@@ -2,7 +2,7 @@
 ## Glass-Box Reasoning without Matrix Multiplications
 
 **Status**: v1.1.0 (Phase 20 COMPLETE)  
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Natural Language Processing / Knowledge Representation / Transformer Architectures  
 **Module**: `core/attention_engine.py`
 
@@ -78,4 +78,4 @@ To ensure mathematical consistency during high-velocity streaming, CSA employs *
 *   **Precision**: Uses `float16` for embeddings and `float32` for attention weights to optimize memory throughput.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

@@ -6,7 +6,6 @@ tested indirectly via the benchmark suite. Its interface contract is covered
 by the ABC which RandomEngine satisfies.
 """
 import numpy as np
-import pytest
 
 from core.embedding_engine import RandomEngine
 

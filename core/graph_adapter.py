@@ -6,7 +6,9 @@ and the full CEREBRUM stack works with it unchanged.
 """
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Dict
+import numpy as np
+import networkx as nx
 
 
 @dataclass
@@ -48,7 +50,7 @@ class GraphAdapter(ABC):
     def get_neighbors(
         self,
         entity_id: str,
-        edge_types: List[str] = None,
+        edge_types: Optional[List[str]] = None,
         max_neighbors: int = 50,
         context_embedding: Optional["np.ndarray"] = None,
     ) -> List[Edge]:
@@ -72,7 +74,7 @@ class GraphAdapter(ABC):
         ...
 
     @abstractmethod
-    def to_networkx(self) -> "nx.Graph":  # noqa: F821
+    def to_networkx(self) -> nx.Graph:
         """
         Return the graph as a networkx Graph (or DiGraph).
         Used by community_engine for DSCF/Leiden/LPA community detection.
@@ -85,14 +87,14 @@ class GraphAdapter(ABC):
         ...
 
     @abstractmethod
-    def get_embedding(self, entity_id: str) -> Optional["np.ndarray"]: # noqa: F821
+    def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:
         """Return the embedding vector for entity_id, or None."""
         ...
 
     @abstractmethod
     def find_similar(
         self, 
-        embedding: "np.ndarray", 
+        embedding: np.ndarray, 
         top_k: int = 10
     ) -> List[Entity]:
         """

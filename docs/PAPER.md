@@ -1,10 +1,10 @@
 # CEREBRUM: Community-Structured Graph Attention for Knowledge Graph Reasoning
 
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: March 2026
-**Status**: Version 1.1.0 · Phase 20 COMPLETE — 994 tests passing
+**Status**: Version 1.2.0 · Phase 21 COMPLETE — 130 advanced tests passing, all E2E journeys passing
 **License**: Proprietary — all rights reserved
 
 ---
@@ -80,7 +80,7 @@ parallax/
 └── PAPER.md       (this file)
 ```
 
-**Current phase**: Phase 20 complete (v1.1.0). 994 tests passing. Core algorithms (CSA, DSCF/TSC) stable. Full stack shipped through Phase 20: federated reasoning (6–9), production hardening (10), real-time streaming (11), Bridge Twins (12), STDP causal inference (13), REM Cycle (14), InsightEngine (15), Verification + MetaInsight (16), algorithmic extensions incl. TransE/RotatE KGE (17), THALAMUS IngestionPipeline + LLM bridge + Bayesian Beam Search + GlobalRebalancer + SignalEncoder (18), four v1.0 structural holes patched — Zombie Bridge, Causal Flood, Namespace Isolation, Bayesian Cold-Start (19), four v1.1 relativistic holes patched — Query Snapshot Isolation, Community-Specific CSA Parameters, Canonical Basis Anchor, Path-Preserving Hold-out (20).
+**Current phase**: Phase 21 complete (v1.2.0). All core E2E journeys and 130 advanced tests passing. All Phase 18-20 features are stable, and the SignalEncoder alignment has been fixed.
 
 ---
 
@@ -1802,7 +1802,7 @@ No Home Assistant code other than Appendix D functions should be copied into CER
 
 ---
 
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 This document and the software it describes are protected by international copyright laws. Unauthorized commercial reproduction, distribution, or use without express written permission is strictly prohibited.
 
 

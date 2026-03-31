@@ -6,7 +6,7 @@ This file provides essential context and instructions for Gemini CLI when workin
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph (KG) reasoning. It implements a multi-hop traversal mechanism inspired by Transformer architectures, allowing KGs to perform complex reasoning without an LLM or training data.
 
-**v1.1.0 (Phase 20 COMPLETE)** — 994 tests passing. Includes full THALAMUS ingestion pipeline, LLM bridge, Bayesian Beam Search with warm-start, GlobalRebalancer with on_rebalance hook, Cross-Modal Alignment with canonical basis anchor, and two rounds of production hardening (eight structural holes patched across Phases 19 and 20).
+**v1.4.0 (Phase 24 COMPLETE)** — 1042 tests passing. Includes full THALAMUS ingestion pipeline, LLM bridge, Bayesian Beam Search with warm-start, GlobalRebalancer with on_rebalance hook, Cross-Modal Alignment with canonical basis anchor, enterprise scale connectors (Neo4j, AWS Neptune, PySpark), and two rounds of production hardening.
 
 ### Core Innovations
 1.  **DSCF (Dual-Signal Community Fusion):** A novel community detection algorithm that fuses local (Label Propagation) and global (Modularity) signals during each node update. These communities act as "attention heads."
@@ -98,9 +98,9 @@ uvicorn api.server:app --port 8200 --reload
 -   **Reproducibility:** Follow the guidelines in `TESTING.md` for deterministic runs (especially for DSCF).
 -   **Documentation:** Absolute precedence is given to `PARALLAX.md` (whitepaper) and `README.md`. `CLAUDE.md` provides environment-specific guidance.
 
-## Current Project Status (Phase 20 COMPLETE)
+## Current Project Status (Phase 21 COMPLETE)
 
-CEREBRUM is currently in **v1.1.0**. All phases through 20 shipped.
+CEREBRUM is currently in **v1.2.0**. All phases through 21 shipped. This release focused on establishing a comprehensive validation suite and critical reliability fixes, ensuring the framework's robustness and accuracy.
 
 Key implementations:
 -   **Phase 10 — Security**: JWT Authentication, ResourceGovernor, AsyncBeamTraversal, `/query/stream`.
@@ -110,6 +110,7 @@ Key implementations:
 -   **Phase 18 — v0.4 Horizon**: IngestionPipeline, LLM bridge, Bayesian Beam Search, GlobalRebalancer, SignalEncoder.
 -   **Phase 19 — v1.0 Production Hardening**: Zombie Bridge fix (`on_rebalance` hook), Causal Flood filter (`min_causal_span` + chi-squared), Namespace Isolation, Bayesian Cold-Start warm-starting (946 tests passing).
 -   **Phase 20 — v1.1.0 Relativistic Hardening**: Query Snapshot Isolation (`CSAEngine.set_query_snapshot()`), Community-Specific CSA Parameters (`community_params={}`), Canonical Basis Anchor (`canonical_embeddings={}`), Path-Preserving Hold-out (`InferenceValidator(path_preserving=True)`). 994 tests passing.
+-   **Phase 21 — v1.2.0 Full Validation & Reliability**: Comprehensive validation suite implemented, `SignalEncoder` alignment fix, and numerous static analysis and type safety improvements. All core E2E journeys and 130 advanced tests passing.
 
 Refer to `TEST_LOG.md` for details on previous runs.
 

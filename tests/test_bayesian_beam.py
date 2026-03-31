@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 
 from reasoning.traversal import TraversalPath, BeamTraversal, AsyncBeamTraversal
-from reasoning.answer_extractor import extract, Answer
+from reasoning.answer_extractor import extract
 
 
 # ---------------------------------------------------------------------------

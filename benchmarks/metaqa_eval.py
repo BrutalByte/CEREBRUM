@@ -57,16 +57,13 @@ Notes
 
 import argparse
 import csv
-import math
-import os
 import pickle
 import random
 import re
 import sys
 import time
 from pathlib import Path
-from typing import List, Tuple, Dict, Optional
-
+from typing import List, Tuple, Dict, Optional, Union, Any
 # Confirm repo root is on the path when run as a script
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -74,7 +71,7 @@ import networkx as nx
 
 from adapters.networkx_adapter import NetworkXAdapter
 from core.community_engine import best_of_n_dscf, merge_small_communities
-from core.embedding_engine import RandomEngine
+from core.embedding_engine import RandomEngine, SentenceEngine
 from core.attention_engine import CSAEngine
 from core.structural_encoder import (
     build_community_distance_matrix, adjacent_community_pairs, build_community_graph,
@@ -139,7 +136,7 @@ def load_qa(
     triples, where question_text has the entity brackets removed for clean encoding.
     """
     path = QA_FILES[hop]
-    pairs = []
+    pairs: List[Any] = []
     with open(path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
@@ -240,7 +237,8 @@ def evaluate_hop(
     """
     Evaluate one hop level. Returns a metrics dict.
     """
-    h1 = h10 = mrr_sum = 0
+    h1 = h10 = 0
+    mrr_sum = 0.0
     skipped = found = 0
 
     t0 = time.time()
@@ -347,9 +345,9 @@ def main():
 
     print("Building entity embeddings...")
     t0 = time.time()
+    engine: Union[RandomEngine, SentenceEngine]
     if args.embeddings == "sentence":
         try:
-            from core.embedding_engine import SentenceEngine
             engine = SentenceEngine()
             print(f"  Using SentenceEngine ({engine.dim}-dim)")
         except ImportError:
@@ -357,7 +355,7 @@ def main():
             engine = RandomEngine(dim=64)
     else:
         engine = RandomEngine(dim=64)
-        print(f"  Using RandomEngine (64-dim, community structure only)")
+        print("  Using RandomEngine (64-dim, community structure only)")
 
     labels     = {n: n for n in G.nodes()}
     embeddings = engine.encode_entities(labels)
@@ -383,7 +381,7 @@ def main():
     for hop in hops:
         print(f"\n--- {hop}-hop evaluation ---")
         qa_pairs = load_qa(hop, sample=args.sample, seed=args.seed)
-        n_label  = f"{len(qa_pairs):,}" + (f" (sample)" if args.sample else "")
+        n_label  = f"{len(qa_pairs):,}" + (" (sample)" if args.sample else "")
         print(f"  {n_label} test questions")
 
         traversal = BeamTraversal(
@@ -408,7 +406,7 @@ def main():
     # Summary table
     # ------------------------------------------------------------------
     print("\n=== Results Summary ===\n")
-    print(f"  Model     : CEREBRUM CSA + DSCF")
+    print("  Model     : CEREBRUM CSA + DSCF")
     print(f"  Embeddings: {args.embeddings}")
     print(f"  Beam width: {args.beam_width}")
     print(f"  Top-K     : {args.top_k}")

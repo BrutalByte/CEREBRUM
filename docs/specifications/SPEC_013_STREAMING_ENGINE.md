@@ -2,7 +2,7 @@
 ## Real-Time Continuous Ingest, Incremental DSCF, and SSE Push
 
 **Status**: v1.2.0 (Hardened Enterprise)
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Field**: Streaming Systems / Real-Time Reasoning / Event Processing
 **Modules**: `adapters/stream_adapter.py`, `core/discretizer.py`, `core/rebalancer.py`, `api/server.py`
 
@@ -173,4 +173,4 @@ SSE connections are managed by an async multiplexer; each subscriber receives ev
 - **Persistence**: The `Persistence` module (SPEC_005) checkpoints the sliding-window buffer periodically for crash recovery.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

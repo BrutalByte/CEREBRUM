@@ -5,8 +5,9 @@ Aggregates multiple GraphAdapter instances (local or remote) into a single
 virtual graph. Handles entity resolution and neighbor merging across 
 disparate knowledge bases.
 """
-from typing import List, Optional, Dict, Set, Tuple
+from typing import List, Optional, Dict, Set
 import numpy as np
+import networkx as nx
 from core.graph_adapter import GraphAdapter, Entity, Edge
 from core.alignment_engine import AlignmentIndex
 from core.holographic_index import HolographicIndex, CommunitySignature
@@ -74,7 +75,7 @@ class FederatedAdapter(GraphAdapter):
     def get_neighbors(
         self,
         entity_id: str,
-        edge_types: List[str] = None,
+        edge_types: Optional[List[str]] = None,
         max_neighbors: int = 50,
         context_embedding: Optional[np.ndarray] = None,
     ) -> List[Edge]:
@@ -207,7 +208,7 @@ class FederatedAdapter(GraphAdapter):
         Merged NetworkX graph. Warning: can be expensive for large federated KGs.
         """
         import networkx as nx
-        merged = nx.Graph()
+        merged: nx.Graph = nx.Graph()
         for adapter in self.adapters.values():
             merged = nx.compose(merged, adapter.to_networkx())
         return merged

@@ -7,7 +7,6 @@ SignalEncoder(namespace="signal") namespaces entity lookups in learn_alignment()
 and that the two namespaces keep distinct entities isolated.
 """
 import numpy as np
-import pytest
 
 from core.thalamus import IngestionPipeline
 from core.signal_encoder import StatisticalSignalEncoder, SpectralSignalEncoder

@@ -2,7 +2,7 @@
 ## Metacognitive Maintenance and Insight Synthesis
 
 **Status**: v1.1.0 (Phase 20 COMPLETE)  
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Metacognition / System 2 Reasoning / Autonomous Maintenance  
 **Module**: `core/rem_engine.py`
 
@@ -54,4 +54,4 @@ When triggers are met, REM spawns a background thread to:
     *   **REM Path (Daily/Triggered)**: Full modularity re-optimization.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

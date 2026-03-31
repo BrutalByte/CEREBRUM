@@ -44,4 +44,4 @@ A bank uses CEREBRUM to assess the creditworthiness of corporate loan applicants
 The Algorithmic Depth layer transforms CEREBRUM from a static reasoning engine into an adaptive, time-aware, probabilistically-calibrated intelligence system. These five enhancements compose seamlessly and independently, allowing operators to enable exactly the capabilities their deployment requires without complexity overhead.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

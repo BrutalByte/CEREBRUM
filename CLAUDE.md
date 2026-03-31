@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v1.1.0 (Phase 20 COMPLETE)** — 994 tests passing.
+**v1.6.0 (Phase 26 COMPLETE)** — 1042 tests passing.
 
 ### System Architecture Names
 | Name | Role |
@@ -138,7 +138,7 @@ Implement the abstract `GraphAdapter` interface in `core/graph_adapter.py`, foll
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)
 - Synthetic graph helpers (`make_two_cliques()`, etc.) live in `tests/` for unit tests that don't need the CSV fixture
-- 994 tests passing as of v1.1.0 (1 skipped)
+- 1016 tests passing as of v1.2.0 (1 skipped)
 
 
 

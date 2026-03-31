@@ -2,7 +2,7 @@
 ## Twelve Structural Holes: Root Causes, Fixes, and Validation
 
 **Status**: v1.2.0 (Hardened Enterprise)
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Field**: Production Systems / Correctness / Adversarial Hardening
 **Modules**: `core/bridge_engine.py`, `core/rebalancer.py`, `core/discretizer.py`, `core/thalamus.py`, `core/signal_encoder.py`, `core/attention_engine.py`, `reasoning/traversal.py`, `core/insight_validator.py`, `core/insight_engine.py`, `adapters/stream_adapter.py`, `adapters/remote_adapter.py`
 
@@ -131,4 +131,4 @@ class BridgeTwinEngine:
 - **Hardening Result**: CEREBRUM v1.2.0 is the first version suitable for mission-critical, multi-tenant federated deployment.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

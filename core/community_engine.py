@@ -691,3 +691,111 @@ def compute_soft_memberships(
     return soft
 
 
+# ---------------------------------------------------------------------------
+# Query-Guided Community Merging (Phase 29)
+# ---------------------------------------------------------------------------
+
+class QueryGuidedCommunityMerger:
+    """
+    Dynamically merges communities that are semantically relevant to a specific
+    query embedding.  By merging related clusters, the "context window" for
+    intra-community attention is effectively broadened for that query.
+
+    Parameters
+    ----------
+    similarity_threshold : float
+        Minimum cosine similarity between a community centroid and the
+        query embedding for the community to be considered "active".
+    max_merged_communities : int
+        Maximum number of communities to merge into the active set.
+    """
+
+    def __init__(
+        self,
+        similarity_threshold: float = 0.7,
+        max_merged_communities: int = 5,
+    ):
+        self.similarity_threshold = similarity_threshold
+        self.max_merged_communities = max_merged_communities
+        self._centroid_cache: Dict[int, np.ndarray] = {}
+
+    def merge(
+        self,
+        community_map: Dict[str, int],
+        query_embedding: np.ndarray,
+        adapter,
+    ) -> Dict[str, int]:
+        """
+        Return a new community map where relevant communities are merged.
+
+        All communities whose centroid similarity to query_embedding exceeds
+        threshold are merged into a single "super-community".
+        """
+        import numpy as np
+        if query_embedding is None:
+            return community_map
+
+        # 1. Build reverse index
+        rev_index: Dict[int, List[str]] = {}
+        for n, c in community_map.items():
+            rev_index.setdefault(c, []).append(n)
+
+        # 2. Compute centroids and similarities
+        active_cids: List[Tuple[int, float]] = []
+        norm_q = float(np.linalg.norm(query_embedding))
+        if norm_q == 0:
+            return community_map
+
+        for cid, members in rev_index.items():
+            centroid = self._get_centroid(cid, members, adapter)
+            if centroid is None:
+                continue
+            
+            norm_c = float(np.linalg.norm(centroid))
+            if norm_c == 0:
+                continue
+                
+            sim = float(np.dot(query_embedding, centroid) / (norm_q * norm_c))
+            if sim >= self.similarity_threshold:
+                active_cids.append((cid, sim))
+
+        if not active_cids:
+            return community_map
+
+        # 3. Select top-K to merge
+        active_cids.sort(key=lambda x: x[1], reverse=True)
+        to_merge = [cid for cid, _ in active_cids[:self.max_merged_communities]]
+        
+        if len(to_merge) <= 1:
+            return community_map
+
+        # 4. Create new map
+        target_cid = to_merge[0]
+        merge_set = set(to_merge)
+        
+        new_map = community_map.copy()
+        for node, cid in new_map.items():
+            if cid in merge_set:
+                new_map[node] = target_cid
+                
+        return new_map
+
+    def _get_centroid(self, cid: int, members: List[str], adapter) -> Optional[np.ndarray]:
+        import numpy as np
+        if cid in self._centroid_cache:
+            return self._centroid_cache[cid]
+            
+        vecs = []
+        for m in members:
+            e = adapter.get_embedding(m)
+            if e is not None:
+                vecs.append(e)
+        
+        if not vecs:
+            return None
+            
+        centroid = np.mean(vecs, axis=0)
+        self._centroid_cache[cid] = centroid
+        return centroid
+
+

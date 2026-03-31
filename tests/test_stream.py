@@ -8,7 +8,6 @@ Tests: StreamEvent, SlidingWindowBuffer, IncrementalCommunityUpdater,
 """
 import time
 import threading
-import pytest
 
 from core.stream_engine import StreamEvent, SlidingWindowBuffer, IncrementalCommunityUpdater, StreamStats
 from core.discretizer import (

@@ -1,6 +1,6 @@
 # Cross-Modal Alignment via Orthogonal Procrustes: Bridging Signals and Symbols in Knowledge Graphs
 
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
 **Status**: v1.2.0 (Hardened Enterprise)  
 **Date**: March 2026
@@ -8,7 +8,7 @@
 ---
 
 ### Abstract
-Knowledge Graphs (KGs) have historically been limited to symbolic data, creating a representational gap between unstructured physical signals (e.g., sensor telemetry, waveforms) and conceptual entities. We propose the **Signal Encoder**, a framework for projecting high-dimensional signal features into a symbolic entity embedding space $\mathcal{E}$. By utilizing **Orthogonal Procrustes Analysis (OPA)** and Singular Value Decomposition (SVD), we learn an optimal rotation matrix $R$ that maps encoded signals to their symbolic counterparts while preserving geometric topology. We define two encoding modalities: **Statistical Encoding** for low-frequency telemetry and **Spectral Encoding** (Log-FFT) for high-frequency waveforms. Furthermore, we introduce the **Canonical Basis Anchor** protocol to prevent geometric drift in multi-hop federated reasoning. The v1.2.0 implementation utilizes **Namespace Isolation** to prevent semantic collisions between signal and text entities. Our results demonstrate that this alignment enables "Blind Cross-Modal Reasoning" with sub-millisecond latency, providing a critical representational bridge for autonomous industrial and scientific AI.
+Knowledge Graphs (KGs) have historically been limited to symbolic data, creating a representational gap between unstructured physical signals (e.g., sensor telemetry, waveforms) and conceptual entities. We propose the **Signal Encoder**, a framework for projecting high-dimensional signal features into a symbolic entity embedding space $\mathcal{E}$. By utilizing **Orthogonal Procrustes Analysis (OPA)** \cite{schonemann1966procrustes, gower2004procrustes} and Singular Value Decomposition (SVD), we learn an optimal rotation matrix $R$ that maps encoded signals to their symbolic counterparts while preserving geometric topology. We define two encoding modalities: **Statistical Encoding** for low-frequency telemetry and **Spectral Encoding** (Log-FFT) for high-frequency waveforms. Furthermore, we introduce the **Canonical Basis Anchor** protocol to prevent geometric drift in multi-hop federated reasoning. The v1.2.0 implementation utilizes **Namespace Isolation** to prevent semantic collisions between signal and text entities. Our results demonstrate that this alignment enables "Blind Cross-Modal Reasoning" with sub-millisecond latency, providing a critical representational bridge for autonomous industrial and scientific AI.
 
 ### 1. Introduction
 The integration of physical signals into symbolic reasoning systems is a prerequisite for advanced autonomous systems. Current approaches often rely on intermediate text descriptions, which introduce significant latency and semantic loss. We demonstrate that direct latent space alignment via Procrustes rotation provides a more efficient and mathematically stable alternative.

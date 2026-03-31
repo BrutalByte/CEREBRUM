@@ -7,7 +7,6 @@ Use it for:
   - Testing and prototyping
   - In-memory graph construction from Python dicts or triples
 """
-import difflib
 from typing import List, Optional, Dict, TYPE_CHECKING
 
 import networkx as nx
@@ -42,6 +41,8 @@ class NetworkXAdapter(GraphAdapter):
         """
         self._G            = G
         self._entity_types = entity_types or {}
+        self.embeddings: Dict[str, np.ndarray] = {}
+        self.community_map: Dict[str, int] = {}
 
     # ------------------------------------------------------------------
     # Required GraphAdapter methods
@@ -70,7 +71,7 @@ class NetworkXAdapter(GraphAdapter):
 
         edges = []
         neighbors = (
-            self._G.successors(entity_id)
+            self._G.successors(entity_id) # type: ignore
             if self._G.is_directed()
             else self._G.neighbors(entity_id)
         )
@@ -112,15 +113,16 @@ class NetworkXAdapter(GraphAdapter):
         # 1. Exact match check (fastest)
         if query in self._G:
             exact = self.get_entity(query)
-            # Still do a fuzzy search for alternatives, but put exact first
-            fuzzy = self._fuzzy_search(query, top_k=top_k)
-            seen = {query}
-            result = [exact]
-            for e in fuzzy:
-                if e.id not in seen:
-                    result.append(e)
-                    seen.add(e.id)
-            return result[:top_k]
+            if exact:
+                # Still do a fuzzy search for alternatives, but put exact first
+                fuzzy = self._fuzzy_search(query, top_k=top_k)
+                seen = {query}
+                result = [exact]
+                for e in fuzzy:
+                    if e.id not in seen:
+                        result.append(e)
+                        seen.add(e.id)
+                return result[:top_k]
 
         return self._fuzzy_search(query, top_k=top_k)
 
@@ -176,7 +178,7 @@ class NetworkXAdapter(GraphAdapter):
             reverse=True
         )
 
-        return [self.get_entity(nid) for nid in sorted_ids[:top_k] if self.get_entity(nid)]
+        return [e for nid in sorted_ids[:top_k] if (e := self.get_entity(nid)) is not None]
 
     def _get_ngrams(self, text: str, n: int = 3) -> List[str]:
         return [text[i : i + n] for i in range(len(text) - n + 1)]
@@ -257,14 +259,14 @@ class NetworkXAdapter(GraphAdapter):
         # Sort by similarity
         sorted_eids = sorted(scores, key=lambda x: x[1], reverse=True)
         
-        return [self.get_entity(eid) for eid, _ in sorted_eids[:top_k] if self.get_entity(eid)]
+        return [e for eid, _ in sorted_eids[:top_k] if (e := self.get_entity(eid)) is not None]
 
     # ------------------------------------------------------------------
     # Optional helpers
     # ------------------------------------------------------------------
 
     def get_all_entities(self) -> List[Entity]:
-        return [self.get_entity(n) for n in self._G.nodes()]
+        return [e for n in self._G.nodes() if (e := self.get_entity(n)) is not None]
 
     def get_edge_types(self) -> List[str]:
         types = set()

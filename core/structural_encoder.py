@@ -5,7 +5,7 @@ Computes PageRank, betweenness centrality, and degree per node, then
 projects them into a d-dimensional embedding vector for use alongside
 entity embeddings in the forward pass (Section 5, STEP 2).
 """
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from core.hardware import HAS_RAPIDS, to_gpu_graph
 import networkx as nx
@@ -311,7 +311,7 @@ def build_community_distance_matrix(
         return {}
 
     # Build community-level graph
-    community_graph = nx.Graph()
+    community_graph: nx.Graph = nx.Graph()
     community_graph.add_nodes_from(communities)
 
     for u, v in G.edges():
@@ -348,7 +348,7 @@ def build_community_graph(
     lazy on-demand distance computation instead of upfront all-pairs BFS.
     """
     communities = set(community_map.values())
-    cg = nx.Graph()
+    cg: nx.Graph = nx.Graph()
     cg.add_nodes_from(communities)
     for u, v in G.edges():
         cu = community_map.get(u)

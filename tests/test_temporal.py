@@ -4,7 +4,6 @@ Tests for Phase 17.1 — Temporal Reasoning.
 Covers is_valid_at() helper and query_time filtering in BeamTraversal.
 """
 import time
-import pytest
 import networkx as nx
 
 from reasoning.traversal import is_valid_at, BeamTraversal

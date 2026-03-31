@@ -34,4 +34,4 @@ The Signal Encoder uses a proprietary implementation of **Orthogonal Procrustes 
 The Signal Encoder turns your Knowledge Graph into a "Physical Intelligence System." It provides the essential representational bridge required for the next generation of autonomous industrial and scientific AI.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

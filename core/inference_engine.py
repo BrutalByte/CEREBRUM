@@ -241,7 +241,7 @@ class InferenceReport:
             f"  Materialized : {self.materialized}",
             f"  Skipped      : {self.skipped_existing} (edge already existed)",
             f"  Duration     : {self.duration_seconds:.3f}s",
-            f"  Top derived relations:",
+            "  Top derived relations:",
         ]
         for rel, count in sorted(self.rules_applied.items(), key=lambda x: -x[1])[:10]:
             lines.append(f"    {rel:40s}  {count}")
@@ -424,11 +424,13 @@ class TransitiveInferenceEngine:
         is_directed = G.is_directed()
         is_multi    = G.is_multigraph()
 
+        from typing import cast
         for mid in G.nodes():
             # Collect in-edges and out-edges at this intermediate node
             if is_directed:
-                in_edges  = list(G.in_edges(mid, data=True))   # (u, mid, data)
-                out_edges = list(G.out_edges(mid, data=True))  # (mid, v, data)
+                dg = cast(nx.DiGraph, G)
+                in_edges  = list(dg.in_edges(mid, data=True))   # (u, mid, data)
+                out_edges = list(dg.out_edges(mid, data=True))  # (mid, v, data)
             else:
                 # Undirected: every neighbour can be either side
                 neighbours = [(mid, nbr, data) for nbr, data in G[mid].items()]

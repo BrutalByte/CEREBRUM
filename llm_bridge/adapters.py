@@ -75,9 +75,11 @@ class AnthropicAdapter:
         else:
             try:
                 import anthropic
-                self._client = anthropic.Anthropic(
-                    **({"api_key": api_key} if api_key else {})
-                )
+                # Use explicit argument if api_key is present, otherwise defaults
+                if api_key:
+                    self._client = anthropic.Anthropic(api_key=api_key)
+                else:
+                    self._client = anthropic.Anthropic()
             except ImportError:
                 raise ImportError(
                     "anthropic is required for AnthropicAdapter: pip install anthropic"

@@ -1,6 +1,6 @@
 # DSCF/TSC: A Consensus-Based Approach to Community Detection for Graph Attention
 
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
 **Status**: v1.2.0 (Hardened Enterprise)  
 **Date**: March 2026
@@ -8,7 +8,7 @@
 ---
 
 ### Abstract
-Graph partitioning is a foundational task in network science, typically optimizing for either local topological coherence or global modularity. We present **Dual-Signal Community Fusion (DSCF)** and its successor, **Triple-Signal Consensus (TSC)**, a novel approach that integrates local (Label Propagation), global (Modularity), and flow-based (PageRank Centrality) signals at the individual node update level. By employing a temperature-annealed decision rule, our method produces highly stable partitions optimized for use as "Attention Heads" in Knowledge Graph reasoning. We demonstrate that this multi-signal consensus prevents the common "Resolution Limit" and "Hub Drift" failures prevalent in standard algorithms like Leiden or Louvain. Benchmark results on synthetic caveman graphs show that vectorized TSC achieves a modularity index of **Q=0.88**, significantly outperforming standard Leiden baselines (Q=0.48) while providing a robust structural foundation for multi-hop graph attention mechanisms.
+Graph partitioning is a foundational task in network science, typically optimizing for either local topological coherence or global modularity. We present **Dual-Signal Community Fusion (DSCF)** and its successor, **Triple-Signal Consensus (TSC)**, a novel approach that integrates local (Label Propagation), global (Modularity), and flow-based (PageRank Centrality) signals at the individual node update level. By employing a temperature-annealed decision rule, our method produces highly stable partitions optimized for use as "Attention Heads" in Knowledge Graph reasoning. We demonstrate that this multi-signal consensus prevents the common "Resolution Limit" and "Hub Drift" failures prevalent in standard algorithms like Leiden \cite{traag2019louvain} or Louvain \cite{blondel2008louvain}. Benchmark results on synthetic caveman graphs show that vectorized TSC achieves a modularity index of **Q=0.88**, significantly outperforming standard Leiden baselines (Q=0.48) while providing a robust structural foundation for multi-hop graph attention mechanisms.
 
 ### 1. Introduction
 The identification of community structures in large Knowledge Graphs (KGs) is essential for efficient multi-hop reasoning. In the CEREBRUM framework, these communities serve as discrete attention heads, guiding a beam search through semantically related regions. However, standard algorithms often fluctuate between over-fragmentation (local-only) and over-merging (global-only). DSCF/TSC addresses this by treating community assignment as a consensus problem.
@@ -16,19 +16,19 @@ The identification of community structures in large Knowledge Graphs (KGs) is es
 ### 2. Methodology
 
 #### 2.1 The Local Signal ($\mathcal{L}$)
-We utilize a modified Label Propagation (LPA) signal to capture immediate topological consensus:
+We utilize a modified Label Propagation (LPA) \cite{raghavan2007lpa} signal to capture immediate topological consensus:
 $$\mathcal{L}(v, C) = \frac{|\{u \in \mathcal{N}(v) : \text{label}(u) = C\}|}{|\mathcal{N}(v)|}$$
 
 #### 2.2 The Global Signal ($\mathcal{G}$)
 We define the global signal as the modularity gain $\Delta Q$ resulting from node $v$'s movement to community $C$. This ensures the partition maximizes the Newman-Girvan modularity index.
 
 #### 2.3 The Centrality Signal ($\mathcal{F}$)
-To address "Hub Drift," TSC introduces a flow-based signal weighted by PageRank ($PR$):
+To address "Hub Drift," TSC introduces a flow-based signal weighted by PageRank ($PR$) \cite{page1999pagerank}:
 $$\mathcal{F}(v, C) = \frac{\sum_{u \in \mathcal{N}(v), \text{label}(u)=C} PR(u)}{\sum_{u \in \mathcal{N}(v)} PR(u)}$$
 
 ### 3. Temperature-Annealed Consensus
 The primary contribution of this work is the fusion equation governed by temperature $\tau$:
-$$C^* = \arg\max_{C} \left( \mathcal{L}(v, C) \cdot \tau + \widehat{\mathcal{G}}(v, C) \cdot (2 - \tau) + \mathcal{F}(v, C) \cdot \gamma \right)$$
+$$C^* = \arg\max_{C} ( \tau \mathcal{L}(v, C) + (2 - \tau) \widehat{\mathcal{G}}(v, C) + \gamma \mathcal{F}(v, C) )$$
 As $\tau$ is annealed from 2.0 to 0.5, the system transitions from exploratory local clustering to stable global optimization.
 
 ### 4. Convergence and Complexity

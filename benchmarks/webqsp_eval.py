@@ -16,13 +16,12 @@ import re
 import sys
 import time
 from pathlib import Path
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict
 
 # Confirm repo root is on the path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import networkx as nx
-import numpy as np
 
 from adapters.networkx_adapter import NetworkXAdapter
 from core.community_engine import best_of_n_dscf, lpa_communities
@@ -141,7 +140,8 @@ def evaluate_variant(
     qa_pairs: List[Tuple[str, List[str], str]],
     top_k: int = 10,
 ) -> Dict:
-    h1 = h10 = mrr_sum = 0
+    h1 = h10 = 0
+    mrr_sum = 0.0
     found = 0
     t0 = time.time()
     
@@ -225,20 +225,24 @@ def main():
             
     def run_eval(name, cmap, variant):
         print(f"\nVariant: {name}")
+
+        adapter.community_map = cmap
+        adapter.embeddings = embeddings
+
         if variant == "bfs":
-            csa = UniformCSAEngine(communities=cmap, embeddings=embeddings)
+            csa = UniformCSAEngine(adapter=adapter)
         else:
             dist = build_community_distance_matrix(G, cmap)
             adj = adjacent_community_pairs(G, cmap)
-            csa = CSAEngine(communities=cmap, embeddings=embeddings)
+            csa = CSAEngine(adapter=adapter)
             csa.set_community_graph(dist, adj)
             
         traversal = BeamTraversal(
-            adapter=adapter, csa_engine=csa, embeddings=embeddings,
-            communities=cmap, beam_width=args.beam_width, max_hop=args.max_hop,
+            adapter=adapter, csa_engine=csa, beam_width=args.beam_width, max_hop=args.max_hop,
             edge_type_weights=edge_weights if variant != "bfs" else None
         )
         return evaluate_variant(name, traversal, qa_pairs)
+
 
     results = []
     results.append(run_eval("DSCF+CSA", cmap_dscf, "dscf"))

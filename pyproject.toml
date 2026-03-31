@@ -4,7 +4,7 @@ build-backend = "setuptools.backends.legacy:build"
 
 [project]
 name = "cerebrum-kg"
-version = "0.2.0"
+version = "1.6.4"
 description = "CEREBRUM — Community-Structured Graph Attention for Knowledge Graph Reasoning"
 authors = [
     {name = "Bryan Alexander Buchorn", email = "bryan.alexander@buchorn.com"},
@@ -34,8 +34,19 @@ kge        = ["pykeen>=1.10.0"]
 api        = ["fastapi>=0.100.0", "uvicorn[standard]>=0.23.0", "pydantic>=2.0.0"]
 neo4j      = ["neo4j>=5.8.0"]
 rdf        = ["SPARQLWrapper>=2.0"]
+enterprise = ["gremlinpython>=3.7.0", "pyspark>=3.5.0", "graphframes>=0.8.0"]
 dev        = ["pytest>=7.0", "pytest-asyncio>=0.21", "matplotlib>=3.7.0"]
-all        = ["cerebrum-kg[embeddings,api,neo4j,dev]"]
+
+# ── GPU / accelerator extras ──────────────────────────────────────────────
+# Install the base torch package; the correct CUDA/ROCm/CPU-only wheel
+# is chosen at install time via the --index-url flag (see DEPLOYMENT.md).
+gpu   = ["torch>=2.0.0"]
+# Google TPU (Cloud TPU v4/v5p) and AWS Trainium / Inferentia 2
+tpu   = ["torch>=2.0.0", "torch-xla>=2.0.0"]
+# Intel Gaudi 2 / 3 (Habana Labs)
+gaudi = ["torch>=2.0.0", "habana-torch-plugin>=1.16.0"]
+
+all   = ["cerebrum-kg[embeddings,api,neo4j,dev,enterprise,gpu]"]
 
 [project.scripts]
 cerebrum = "cli.cerebrum:main"
@@ -47,5 +58,26 @@ where = ["."]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+check_untyped_defs = true
+warn_unused_ignores = true
+show_error_codes = true
 
-
+[[tool.mypy.overrides]]
+module = [
+    "spacy.*",
+    "psutil.*",
+    "pyvis.*",
+    "SPARQLWrapper.*",
+    "websocket.*",
+    "cugraph.*",
+    "cudf.*",
+    "cupy.*",
+    "sklearn.*",
+    "docx.*",
+    "habana_frameworks.*",
+    "torch_xla.*",
+]
+ignore_missing_imports = true

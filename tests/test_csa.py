@@ -4,10 +4,9 @@ Unit tests for Community-Structured Attention (CSA).
 import math
 
 import numpy as np
-import pytest
 
 from core.attention_engine import CSAEngine, _cosine_sim, _sigmoid
-from core.graph_adapter import GraphAdapter, Entity, Edge
+from core.graph_adapter import GraphAdapter
 
 
 # ---------------------------------------------------------------------------

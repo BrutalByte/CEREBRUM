@@ -6,7 +6,7 @@ Provides JWT-based identity and authorization for distributed reasoning clusters
 import os
 import time
 import jwt
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 
 # Security: In production, rotate this secret or use asymmetric RSA/EdDSA.
 SHARED_SECRET = os.getenv("PARALLAX_SHARED_SECRET", "federation-secret-change-me")

@@ -6,9 +6,10 @@ Patterns ported from Home Assistant services/knowledge_service/main.py.
 
 Requires: pip install neo4j
 """
-from typing import List, Optional
+from typing import List, Optional, Any
 
 import networkx as nx
+import numpy as np
 
 from core.graph_adapter import GraphAdapter, Entity, Edge
 
@@ -46,7 +47,7 @@ class Neo4jAdapter(GraphAdapter):
         self._node_label     = node_label
         self._name_property  = name_property
         self._max_graph_nodes = max_graph_nodes
-        self._driver         = None
+        self._driver: Any    = None
 
     # ------------------------------------------------------------------
     # Connection lifecycle
@@ -60,7 +61,8 @@ class Neo4jAdapter(GraphAdapter):
         self._driver = GraphDatabase.driver(
             self._uri, auth=(self._user, self._password)
         )
-        self._driver.verify_connectivity()
+        if self._driver:
+            self._driver.verify_connectivity()
 
     def close(self) -> None:
         if self._driver:
@@ -89,6 +91,52 @@ class Neo4jAdapter(GraphAdapter):
         if self._driver is None:
             raise RuntimeError("Call connect() before using the adapter.")
         return self._driver.session(database=self._database)
+
+    def create_indices(self) -> None:
+        """Create indices on node_label and name_property for fast lookups."""
+        cypher = f"CREATE INDEX IF NOT EXISTS FOR (n:{self._node_label}) ON (n.{self._name_property})"
+        with self._session() as s:
+            s.run(cypher)
+
+    def bulk_load(self, nodes: List[dict], edges: List[dict], batch_size: int = 10000) -> None:
+        """
+        High-performance bulk ingestion using UNWIND.
+        
+        Parameters
+        ----------
+        nodes : list of dicts. Each must contain self._name_property for the ID.
+        edges : list of dicts. Each must contain 'source', 'target', and 'relation'.
+        """
+        for i in range(0, len(nodes), batch_size):
+            batch = nodes[i:i + batch_size]
+            cypher = (
+                f"UNWIND $batch AS row "
+                f"MERGE (n:{self._node_label} {{{self._name_property}: row.{self._name_property}}}) "
+                f"SET n += row"
+            )
+            with self._session() as s:
+                s.run(cypher, {"batch": batch})
+                
+        for i in range(0, len(edges), batch_size):
+            batch = edges[i:i + batch_size]
+            # Cypher dynamic relationship types are not supported directly in MERGE with UNWIND.
+            # We must group edges by relationship type to use MERGE (or use APOC).
+            # We'll group them here in Python:
+            grouped = {}
+            for edge in batch:
+                rel = edge.get("relation", "RELATED_TO").upper()
+                grouped.setdefault(rel, []).append(edge)
+                
+            with self._session() as s:
+                for rel, rel_batch in grouped.items():
+                    cypher = (
+                        f"UNWIND $batch AS row "
+                        f"MATCH (a:{self._node_label} {{{self._name_property}: row.source}}) "
+                        f"MATCH (b:{self._node_label} {{{self._name_property}: row.target}}) "
+                        f"MERGE (a)-[r:{rel}]->(b) "
+                        f"SET r += row"
+                    )
+                    s.run(cypher, {"batch": rel_batch})
 
     # ------------------------------------------------------------------
     # Required GraphAdapter methods
@@ -154,6 +202,18 @@ class Neo4jAdapter(GraphAdapter):
             e for r in rows
             if (e := self.get_entity(r["id"])) is not None
         ]
+
+    def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:
+        """Not natively stored in Neo4j out of the box unless specified."""
+        return None
+
+    def get_community(self, entity_id: str) -> int:
+        """Community IDs are not natively maintained by default in Neo4j adapter."""
+        return -1
+
+    def find_similar(self, embedding: np.ndarray, top_k: int = 10) -> List[Entity]:
+        """Vector search requires Neo4j 5.x Vector indexes, currently stubbed."""
+        return []
 
     def to_networkx(self) -> nx.Graph:
         """

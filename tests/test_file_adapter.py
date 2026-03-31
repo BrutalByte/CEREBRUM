@@ -8,7 +8,6 @@ optional — those loaders are tested with a skip guard.
 All tests use pytest's tmp_path fixture for temp files.
 """
 import json
-import textwrap
 
 import networkx as nx
 import pytest

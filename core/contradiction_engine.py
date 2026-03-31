@@ -562,18 +562,15 @@ class ContradictionEngine:
                 # Simple graphs: adding to an occupied (u, v) would overwrite
                 # the existing edge data, destroying the original relation.
                 # Strategy: try forward direction, then reverse direction.
-                placed = False
                 for u, v in [(rec.node_a, rec.node_b), (rec.node_b, rec.node_a)]:
                     if not G.has_edge(u, v):
                         # Direction is free — safe to add
                         G.add_edge(u, v, **edge_data)
                         added += 1
-                        placed = True
                         break
                     existing = G.get_edge_data(u, v) or {}
                     if existing.get("relation") == CONTRADICTS_RELATION:
                         # CONTRADICTS already materialized in this direction
-                        placed = True  # already present — not an error
                         break
                 # If both directions are occupied by non-CONTRADICTS edges,
                 # the contradiction is still recorded in the ContradictionRecord

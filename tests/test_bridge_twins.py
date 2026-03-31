@@ -17,7 +17,6 @@ Covers:
     cross-community penalty now routes through the bridge
 """
 import time
-import math
 import threading
 
 import networkx as nx
@@ -25,7 +24,7 @@ import numpy as np
 import pytest
 
 from adapters.networkx_adapter import NetworkXAdapter
-from core.bridge_engine import BridgeTwinEngine, BridgeRecord, BRIDGE_RELATION, _cosine_sim
+from core.bridge_engine import BridgeTwinEngine, BRIDGE_RELATION, _cosine_sim
 from core.attention_engine import CSAEngine
 
 

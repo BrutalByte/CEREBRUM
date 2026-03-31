@@ -94,7 +94,8 @@ def _build_traversal(
 def _evaluate(traversal: BeamTraversal,
               qa_pairs: List[Tuple[str, List[str]]],
               top_k: int = 10) -> Dict:
-    h1 = h10 = mrr_sum = found = skipped = 0
+    h1 = h10 = found = skipped = 0
+    mrr_sum = 0.0
     t0 = time.time()
     n  = len(qa_pairs)
     for seed, correct in qa_pairs:
@@ -215,7 +216,6 @@ def section_causal(args) -> None:
         print(f"  ERROR: cannot import STDPDiscretizer: {e}")
         return
 
-    import numpy as np
 
     # Scenario parameters
     n_burst    = 200    # spikes in a short burst window
@@ -298,7 +298,6 @@ def section_namespace(args) -> None:
         print(f"  ERROR: cannot import required modules: {e}")
         return
 
-    import numpy as np
 
     # Shared entity names that would collide without namespace
     shared_names = [f"sensor_{i}" for i in range(50)]
@@ -356,7 +355,7 @@ def section_namespace(args) -> None:
     print(f"  {'StatisticalSignalEncoder default NS prefix':<45}  "
           + ("signal:X" if ns_correct else "FAIL") + f"  {'signal:X':>10}  "
           + ("OK" if ns_correct else "FAIL"))
-    print(f"  {'Encoder with namespace=\"\" passes verbatim':<45}  "
+    print("  {:<45}  ".format('Encoder with namespace="" passes verbatim')
           + (bare_id if verb_correct else "FAIL") + f"  {bare_id:>10}  "
           + ("OK" if verb_correct else "FAIL"))
 
@@ -381,7 +380,6 @@ def section_zombie(args) -> None:
 
     try:
         from core.bridge_engine import BridgeTwinEngine, BridgeRecord
-        from core.rebalancer import GlobalRebalancer
     except ImportError as e:
         print(f"  ERROR: cannot import required modules: {e}")
         return

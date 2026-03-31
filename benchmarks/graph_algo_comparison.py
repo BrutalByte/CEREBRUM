@@ -54,25 +54,23 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import networkx as nx
 
 from adapters.networkx_adapter import NetworkXAdapter
-from core.community_engine import best_of_n_dscf
 from core.embedding_engine import RandomEngine
 from core.attention_engine import CSAEngine
 from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
 from reasoning.traversal import BeamTraversal
 from core.resource_governor import ResourceGovernor
-
-_BENCH_GOVERNOR = ResourceGovernor(memory_threshold_pct=99.0)
 from reasoning.answer_extractor import extract
 
 from benchmarks.metaqa_eval import (
     load_kb, load_qa, load_or_compute_communities,
     hits_at_k, reciprocal_rank,
 )
-from benchmarks.baseline_comparison import UniformCSAEngine
 from benchmarks.synthetic_eval import (
     generate_clustered_graph, generate_qa_pairs,
     load_or_compute_communities as synth_communities,
 )
+
+_BENCH_GOVERNOR = ResourceGovernor(memory_threshold_pct=99.0)
 
 CACHE_DIR_META  = Path(__file__).parent / "data" / "metaqa" / "cache"
 CACHE_DIR_SYNTH = Path(__file__).parent / "data" / "synthetic" / "cache"
@@ -227,7 +225,8 @@ def evaluate_external(
     top_k: int = 10,
 ) -> Dict:
     """Evaluate a function-based algorithm against QA pairs."""
-    h1 = h10 = mrr_sum = found = skipped = 0
+    h1 = h10 = found = skipped = 0
+    mrr_sum = 0.0
     t0 = time.time()
     n  = len(qa_pairs)
 
@@ -275,7 +274,8 @@ def evaluate_cerebrum(
         passed to the answer extractor for semantic re-ranking (Fix 1).
         QA pairs must be (seed, answers, question_text) triples for this to activate.
     """
-    h1 = h10 = mrr_sum = found = skipped = 0
+    h1 = h10 = found = skipped = 0
+    mrr_sum = 0.0
     t0 = time.time()
     n  = len(qa_pairs)
 
@@ -339,7 +339,7 @@ def print_results_table(results: List[Dict], title: str, hop: int) -> None:
 
     for r in results:
         delta_h1  = r["hits_1"]  - baseline_h1
-        delta_mrr = r["mrr"]     - baseline_mrr
+        r["mrr"]     - baseline_mrr
         marker = ""
         if r is results[0]:
             marker = " <-- CEREBRUM"
@@ -459,7 +459,7 @@ def run_metaqa(args) -> List[Dict]:
     print("\n" + "="*70)
     print("MetaQA ? Real-World Movie Knowledge Graph")
     print("="*70)
-    print(f"  43,234 entities | 134,741 triples | 9 relation types")
+    print("  43,234 entities | 134,741 triples | 9 relation types")
     print(f"  Sample: {args.sample or 'full test set'} questions per hop\n")
 
     print("Loading MetaQA KB...")
@@ -478,7 +478,7 @@ def run_metaqa(args) -> List[Dict]:
     else:
         engine     = RandomEngine(dim=64)
         embeddings = engine.encode_entities({n: n for n in G.nodes()})
-        print(f"  Using random embeddings (64-dim)")
+        print("  Using random embeddings (64-dim)")
 
     print("Loading/computing DSCF communities (MetaQA)...")
     cmap = load_or_compute_communities(G, use_cache=not args.no_cache, dscf_seed=args.seed)
@@ -495,7 +495,8 @@ def run_metaqa(args) -> List[Dict]:
     try:
         from sentence_transformers import SentenceTransformer
         _st = SentenceTransformer("all-MiniLM-L6-v2")
-        embed_fn = lambda t: _st.encode(t, show_progress_bar=False)
+        def embed_fn(t):
+            return _st.encode(t, show_progress_bar=False)
         print("  Sentence-transformer query encoding: enabled")
     except ImportError:
         print("  Sentence-transformer not available; running without query embedding")

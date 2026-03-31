@@ -33,4 +33,4 @@ THALAMUS solves the "GIGO" (Garbage In, Garbage Out) problem at the front door.
 THALAMUS moves data ingestion from a "Batch Job" to an "Intelligent Filter." It provides the clean, high-velocity foundation required for an enterprise Knowledge Graph to function as a reliable intelligence substrate.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

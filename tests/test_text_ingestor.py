@@ -152,7 +152,7 @@ def test_ingest_known_entities_extracted(science_adapter):
         "Newton influenced Leibniz in the development of calculus.",
         dry_run=True,
     )
-    rels = {(s, r, d) for s, r, d, _ in report.added_triples}
+    {(s, r, d) for s, r, d, _ in report.added_triples}
     # Should find newton→leibniz (INFLUENCED) but it already exists → dedup
     # May find newton→calculus or leibniz→calculus as new triples
     assert isinstance(report.triples_extracted, int)

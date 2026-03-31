@@ -6,7 +6,6 @@ Covers:
   - path_confidence() function in path_scorer
   - Answer.path_confidence populated correctly by extract()
 """
-import numpy as np
 import pytest
 import networkx as nx
 
@@ -107,7 +106,6 @@ def _make_adapter_with_confidence():
 
 
 def test_answer_path_confidence_populated():
-    from adapters.networkx_adapter import NetworkXAdapter
     from core.attention_engine import CSAEngine
     from reasoning.traversal import BeamTraversal
 
@@ -124,7 +122,6 @@ def test_answer_path_confidence_populated():
 
 def test_answer_d_has_full_confidence():
     """Single hop to D through confidence=1.0 edge → path_confidence=1.0."""
-    from adapters.networkx_adapter import NetworkXAdapter
     from core.attention_engine import CSAEngine
     from reasoning.traversal import BeamTraversal
 
@@ -141,7 +138,6 @@ def test_answer_d_has_full_confidence():
 
 def test_answer_c_has_low_confidence():
     """Two-hop path to C goes through confidence=0.3 edge → weakest-link = 0.3."""
-    from adapters.networkx_adapter import NetworkXAdapter
     from core.attention_engine import CSAEngine
     from reasoning.traversal import BeamTraversal
 

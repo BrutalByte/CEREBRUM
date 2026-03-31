@@ -20,9 +20,7 @@ Tests cover:
 from __future__ import annotations
 
 import math
-import time
 
-import pytest
 
 from core.discretizer import STDPDiscretizer
 

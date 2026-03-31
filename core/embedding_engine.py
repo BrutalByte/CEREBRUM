@@ -96,13 +96,36 @@ class SentenceEngine(EmbeddingEngine):
 
     def __init__(self, model_name: str = "all-MiniLM-L6-v2", device: Optional[str] = None):
         try:
-            from core.hardware import HAS_CUDA
+            from core.hardware import (
+                HAS_CUDA, HAS_MPS, HAS_HPU, HAS_XLA,
+                IS_ARM64, IS_JETSON,
+                get_best_cuda_device,
+            )
             from sentence_transformers import SentenceTransformer
-            
-            # Hardware agnostic device selection
+
             if device is None:
-                device = "cuda" if HAS_CUDA else "cpu"
-                
+                if HAS_CUDA:
+                    device = f"cuda:{get_best_cuda_device()}"
+                elif HAS_MPS:
+                    device = "mps"
+                elif HAS_HPU:
+                    # sentence-transformers delegates to torch; HPU device
+                    # is surfaced the same way as any torch device string.
+                    device = "hpu"
+                elif HAS_XLA:
+                    # XLA devices must be obtained through xla_model; pass
+                    # the string "xla" and let SentenceTransformer/torch resolve it.
+                    device = "xla"
+                else:
+                    device = "cpu"
+                    if IS_ARM64 and not IS_JETSON:
+                        import logging as _log
+                        _log.getLogger("cerebrum.embedding").info(
+                            "ARM64 CPU detected. sentence-transformers will use "
+                            "the native CPU path. For faster inference install "
+                            "PyTorch with ARM64 optimisations or use a CUDA/MPS device."
+                        )
+
             self._model = SentenceTransformer(model_name, device=device)
             self._dim   = self._model.get_sentence_embedding_dimension()
         except ImportError as e:

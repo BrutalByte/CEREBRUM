@@ -34,4 +34,4 @@ CEREBRUM mimics the biological REM cycle to perform maintenance without interrup
 The REM Cycle moves AI from "Transient Tools" to "Stable Infrastructure." It provides the metacognitive layer required for an enterprise Knowledge Graph to evolve, learn, and maintain its integrity over years of operation.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

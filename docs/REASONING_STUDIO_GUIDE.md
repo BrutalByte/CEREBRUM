@@ -186,4 +186,4 @@ Click the **Stream** tab to enable streaming ingest mode:
 **Slow queries**: Reduce `beam_width` or `max_hops` in the Query Panel.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

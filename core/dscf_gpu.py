@@ -6,6 +6,12 @@ vectorised PyTorch operations over the complete edge set, enabling:
 
   - 10–100× speedup on graphs with N > 10 000 nodes (CPU batched)
   - CUDA GPU acceleration when a compatible device is available
+  - Apple MPS (Metal Performance Shaders) on Apple Silicon M1/M2/M3/M4
+  - Intel Gaudi / HPU acceleration via habana_frameworks or torch.hpu
+  - Google TPU / AWS Trainium / Inferentia via torch-xla
+  - Multi-GPU: automatically selects the CUDA device with the most free VRAM
+  - VRAM pre-flight: estimates required VRAM before allocation and falls back
+    to CPU if insufficient, preventing OOM crashes on small-VRAM cards
   - Seamless CPU fallback — same API, pure-Python path when torch unavailable
 
 Algorithm equivalence
@@ -19,7 +25,11 @@ produces indistinguishable modularity Q on every benchmark graph tested.
 Requirements
 ------------
     pip install torch                                           # CPU batched
-    pip install torch --index-url https://download.pytorch.org/whl/cu121  # CUDA
+    pip install torch --index-url https://download.pytorch.org/whl/cu121  # NVIDIA CUDA
+    pip install torch --index-url https://download.pytorch.org/whl/rocm6.0 # AMD ROCm
+    # Apple MPS: included in torch ≥ 2.0 for macOS
+    # Intel Gaudi: pip install habana-torch-plugin
+    # TPU / Trainium: pip install torch-xla
 
 Install check::
 
@@ -43,8 +53,8 @@ from __future__ import annotations
 import logging
 import random
 import time
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set, Tuple
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import networkx as nx
 
@@ -73,8 +83,9 @@ class GPUDSCFConfig:
 
     Attributes
     ----------
-    device          : "auto" selects CUDA if available, else CPU.
-                      "cuda" / "cpu" force a specific device.
+    device          : "auto" selects best available: CUDA (most free VRAM) →
+                      MPS → HPU → XLA → CPU.
+                      "cuda" / "mps" / "hpu" / "xla" / "cpu" force a specific device.
     alpha           : Weight for modularity gain signal (ΔQ).
     beta            : Weight for LPA majority-vote signal.
     gamma           : Weight for centrality-weighted vote signal (TSC).
@@ -195,15 +206,36 @@ class GPUDSCFEngine:
 
     @classmethod
     def device_info(cls) -> str:
-        """Return a human-readable device availability string."""
+        """Return a human-readable string describing the active compute device."""
         if not _TORCH_AVAILABLE:
             return "PyTorch not installed — CPU fallback (community_engine.dscf_communities)"
-        cuda_available = torch.cuda.is_available()
-        if cuda_available:
-            name = torch.cuda.get_device_name(0)
-            mem  = torch.cuda.get_device_properties(0).total_memory // (1024 ** 2)
-            return f"CUDA available: {name} ({mem} MB)"
-        return "PyTorch available (CPU only) — no CUDA device found"
+        from core.hardware import (
+            HAS_CUDA, HAS_ROCM, HAS_MPS, HAS_HPU, HAS_XLA,
+            IS_ARM64, IS_JETSON,
+            get_best_cuda_device, get_gpu_vram_mb,
+        )
+        if HAS_CUDA:
+            n = torch.cuda.device_count()
+            idx = get_best_cuda_device()
+            name = torch.cuda.get_device_name(idx)
+            free_mb, total_mb = get_gpu_vram_mb(idx)
+            vendor = "ROCm/AMD" if HAS_ROCM else "CUDA/NVIDIA"
+            return (
+                f"{vendor}: {n}× {name} "
+                f"(best GPU {idx} — {free_mb}/{total_mb} MB VRAM free)"
+            )
+        if HAS_MPS:
+            return "MPS: Apple Silicon GPU (Metal Performance Shaders)"
+        if HAS_HPU:
+            return "HPU: Intel Gaudi accelerator"
+        if HAS_XLA:
+            return "XLA: Google TPU / AWS Trainium / Inferentia"
+        suffix = ""
+        if IS_JETSON:
+            suffix = " [Jetson unified-memory]"
+        elif IS_ARM64:
+            suffix = " [ARM64]"
+        return f"CPU{suffix} — PyTorch available, no accelerator detected"
 
     # ------------------------------------------------------------------
     # Core PyTorch implementation
@@ -216,12 +248,37 @@ class GPUDSCFEngine:
     ) -> List[frozenset]:
         cfg = self.config
         dev = self._device
-        dtype = torch.float32 if cfg.dtype == "float32" else torch.float64
+        dev_str = str(dev)
+        # MPS, HPU, and XLA do not support float64 — clamp to float32.
+        # CUDA and CPU support both precisions.
+        _no_f64 = dev_str.startswith("mps") or dev_str.startswith("hpu") or dev_str.startswith("xla")
+        if cfg.dtype == "float64" and _no_f64:
+            log.debug("Device '%s' does not support float64 — using float32.", dev_str)
+            dtype = torch.float32
+        else:
+            dtype = torch.float32 if cfg.dtype == "float32" else torch.float64
 
         # ---- Build tensors ------------------------------------------------
         nodes      = list(G.nodes())
         node_idx   = {v: i for i, v in enumerate(nodes)}
         N          = len(nodes)
+
+        # ---- VRAM pre-flight (CUDA/ROCm only) -----------------------------
+        # Estimate dominant memory cost before allocating: k_in_flat [N × C]
+        # where C ≈ √N is a reasonable initial community count estimate.
+        # A 2.5× safety factor covers intermediate tensors during the loop.
+        if dev_str.startswith("cuda"):
+            bytes_per = 4 if dtype == torch.float32 else 8
+            num_comm_est = max(1, int(N ** 0.5))
+            est_mb = int(N * num_comm_est * bytes_per * 2.5 / (1024 ** 2)) + 256
+            from core.hardware import get_gpu_vram_mb
+            device_index = getattr(dev, "index", None) or 0
+            free_mb, _ = get_gpu_vram_mb(device_index)
+            if 0 < free_mb < est_mb:
+                raise RuntimeError(
+                    f"Insufficient VRAM: {free_mb} MB free, ~{est_mb} MB estimated "
+                    f"for N={N} nodes (C≈{num_comm_est}). Falling back to CPU."
+                )
 
         # Edge list — treat directed as undirected for community detection
         edges_raw  = list(G.edges(data="weight", default=1.0))
@@ -240,7 +297,7 @@ class GPUDSCFEngine:
         src = torch.tensor([e[0] for e in edges_both], dtype=torch.long, device=dev)
         dst = torch.tensor([e[1] for e in edges_both], dtype=torch.long, device=dev)
         ew  = torch.tensor([e[2] for e in edges_both], dtype=dtype,      device=dev)
-        E   = src.shape[0]
+        src.shape[0]
         m   = ew.sum() / 2.0  # total edge weight (undirected)
 
         # Degree of each node
@@ -325,6 +382,15 @@ class GPUDSCFEngine:
 
         # ---- Post-process: compact, enforce min size, connectivity --------
         comm, _ = _compact_ids(comm, N, dev)
+
+        # XLA requires an explicit step barrier before materialising tensors
+        if dev_str.startswith("xla"):
+            try:
+                import torch_xla.core.xla_model as xm  # type: ignore
+                xm.mark_step()
+            except ImportError:
+                pass
+
         comm_np  = comm.cpu().numpy()
 
         # Build python partition
@@ -369,10 +435,8 @@ class GPUDSCFEngine:
     def _resolve_device(self):
         if not _TORCH_AVAILABLE:
             return "cpu"
-        cfg_dev = self.config.device
-        if cfg_dev == "auto":
-            return torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        return torch.device(cfg_dev)
+        from core.hardware import resolve_torch_device
+        return resolve_torch_device(self.config.device)
 
     @staticmethod
     def _modularity_q(G: nx.Graph, partitions: List[frozenset]) -> float:
@@ -436,31 +500,31 @@ def _merge_small(
         return partitions
 
     # Build node → community index
-    node_to_part: Dict = {}
+    node_to_part: Dict[Any, int] = {}
     for i, part in enumerate(partitions):
         for v in part:
             node_to_part[v] = i
 
-    merged = [set(p) for p in partitions]
+    merged: List[Set[Any]] = [set(p) for p in partitions]
     changed = True
     while changed:
         changed = False
-        for i, part in enumerate(merged):
-            if len(part) >= min_size or not part:
+        for i, m_part in enumerate(merged):
+            if len(m_part) >= min_size or not m_part:
                 continue
             # Find best neighbour community
             cross: Dict[int, int] = {}
-            for v in part:
+            for v in m_part:
                 for nb in G.neighbors(v):
                     j = node_to_part.get(nb, i)
                     if j != i:
                         cross[j] = cross.get(j, 0) + 1
             if not cross:
                 continue
-            best_j = max(cross, key=cross.get)
-            merged[best_j] |= part
+            best_j = max(cross.keys(), key=lambda k: cross[k])
+            merged[best_j] |= m_part
             # Update node_to_part
-            for v in part:
+            for v in m_part:
                 node_to_part[v] = best_j
             merged[i] = set()
             changed = True

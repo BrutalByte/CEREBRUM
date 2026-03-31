@@ -4,8 +4,6 @@ Integration tests for the beam traversal + scoring + extraction pipeline.
 import random
 
 import networkx as nx
-import numpy as np
-import pytest
 
 from adapters.networkx_adapter import NetworkXAdapter
 from core.attention_engine import CSAEngine
@@ -13,7 +11,7 @@ from core.community_engine import dscf_communities
 from core.embedding_engine import RandomEngine
 from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
 from reasoning.answer_extractor import extract
-from reasoning.path_scorer import community_coherence, score_path
+from reasoning.path_scorer import community_coherence
 from reasoning.traversal import BeamTraversal, TraversalPath
 
 

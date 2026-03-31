@@ -15,6 +15,9 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from reasoning.path_scorer import score_path, community_coherence, path_confidence
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from reasoning.relation_path_prior import RelationPathPrior, GraphRelationPrior
 
 # Lazy import to avoid circular dependency. Falls back gracefully if unavailable.
 try:
@@ -188,6 +191,9 @@ def extract(
     weight_attention: float = 0.4,
     weight_community: float = 0.3,
     weight_semantic: float  = 0.3,
+    vote_weight: float = 0.3,
+    relation_prior: Optional[Any] = None,
+    weight_prior: float = 0.15,
 ) -> List[Answer]:
     """
     Extract the top-K answer entities from a list of TraversalPaths.
@@ -195,19 +201,26 @@ def extract(
     Steps:
       1. Filter out depth-0 seed paths (no hops taken)
       2. Re-score all paths using score_path()
-      3. Deduplicate by terminal entity (keep highest score per entity)
-      4. Return top-K sorted by score descending
+      3. Deduplicate by terminal entity, accumulating path convergence vote count
+      4. Final score = (1 - vote_weight) * path_score + vote_weight * normalised_vote_count
+      5. Return top-K sorted by combined score descending
 
     Parameters
     ----------
     paths          : list of TraversalPath objects from BeamTraversal.traverse()
     top_k          : number of answers to return
-    query_embedding: optional query vector for semantic alignment re-scoring
+    query_embedding: optional query vector for semantic alignment re-scoring.
+                     Pass the seed entity's embedding to activate the semantic
+                     alignment term in score_path().
     min_hop        : minimum hop depth to consider (default 1 — excludes seeds)
+    vote_weight    : weight given to path-convergence vote count vs path score.
+                     Higher values prefer entities reached by more distinct paths
+                     (ensemble-like voting). Default 0.3.
+                     Set to 0.0 to restore legacy behaviour (path score only).
 
     Returns
     -------
-    List of Answer objects, sorted by score descending.
+    List of Answer objects, sorted by combined score descending.
     """
     # Filter to paths with at least min_hop hops
     valid = [p for p in paths if p.hop_depth >= min_hop]
@@ -224,20 +237,44 @@ def extract(
                 weight_attention=weight_attention,
                 weight_community=weight_community,
                 weight_semantic=weight_semantic,
+                relation_prior=relation_prior,
+                weight_prior=weight_prior,
             ),
         )
         for p in valid
     ]
 
-    # Deduplicate: keep best-scoring path per terminal entity
-    best: Dict[str, tuple] = {}
+    # Deduplicate: keep best-scoring path per terminal entity AND accumulate
+    # score-weighted votes for path convergence ranking.
+    # Each path contributes its score as a vote weight — high-confidence paths
+    # count more than low-confidence paths toward the entity's vote total.
+    # More/stronger independent reasoning chains converging = stronger signal.
+    best: Dict[str, tuple] = {}        # entity -> (best_path, best_score)
+    vote_weight_sum: Dict[str, float] = {}  # entity -> sum of path scores
     for path, s in scored:
         entity = path.tail
+        vote_weight_sum[entity] = vote_weight_sum.get(entity, 0.0) + s
         if entity not in best or s > best[entity][1]:
             best[entity] = (path, s)
 
+    # Normalise weighted vote sums to [0, 1] relative to the highest-voted entity
+    max_vote_sum = max(vote_weight_sum.values()) if vote_weight_sum else 1.0
+
+    # Combine path score with normalised weighted vote sum
+    def combined(entity_id: str, path_score: float) -> float:
+        if vote_weight <= 0.0:
+            return path_score
+        norm_votes = vote_weight_sum[entity_id] / max_vote_sum
+        return (1.0 - vote_weight) * path_score + vote_weight * norm_votes
+
     # Sort and return top-K
-    ranked = sorted(best.values(), key=lambda t: t[1], reverse=True)[:top_k]
+    ranked = sorted(
+        best.items(),
+        key=lambda kv: combined(kv[0], kv[1][1]),
+        reverse=True,
+    )[:top_k]
+    # Unpack to (path, combined_score) for answer construction below
+    ranked = [(v[0], combined(k, v[1])) for k, v in ranked]
 
     answers = []
     for path, s in ranked:

@@ -170,7 +170,7 @@ def cmd_ingest(args):
                 writer.writerow([u, v, rel, conf])
         print(f"\nSaved updated graph → {args.output}")
     elif not args.dry_run and report.edges_added > 0:
-        print(f"\nGraph updated in memory. Use --output PATH to persist.")
+        print("\nGraph updated in memory. Use --output PATH to persist.")
 
 
 def cmd_chat(args):
@@ -202,8 +202,10 @@ def cmd_chat(args):
         community_map = coarsen_communities(G, community_map, target_max=500)
 
     engine = RandomEngine(dim=64)
-    labels = {n: (adapter.get_entity(n).label if adapter.get_entity(n) else n)
-              for n in G.nodes()}
+    labels = {}
+    for n in G.nodes():
+        ent = adapter.get_entity(n)
+        labels[n] = ent.label if ent else n
     embeddings = engine.encode_entities(labels)
     adapter.community_map = community_map
     adapter.embeddings    = embeddings

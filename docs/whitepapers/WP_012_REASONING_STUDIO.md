@@ -35,4 +35,4 @@ The Reasoning Studio reifies the AI's internal process as a "Physical Trace."
 The Glass-Box Reasoning Studio moves AI from "Opaque Oracle" to "Transparent Partner." It provides the visual and forensic rigor required for humans and machines to work together with absolute trust.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

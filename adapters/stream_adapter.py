@@ -37,9 +37,10 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Optional, TYPE_CHECKING
 
 import networkx as nx
+import numpy as np
 
 from adapters.networkx_adapter import NetworkXAdapter
-from core.graph_adapter import Entity, Edge
+from core.graph_adapter import Edge
 from core.stream_engine import (
     StreamEvent,
     SlidingWindowBuffer,
@@ -381,7 +382,7 @@ class WebSocketSource(StreamSource):
 
     def _ws_thread(self) -> None:
         try:
-            import websocket
+            import websocket  # type: ignore
         except ImportError:
             raise ImportError(
                 "websocket-client is required for WebSocketSource: pip install websocket-client"
@@ -729,7 +730,7 @@ class StreamAdapter(NetworkXAdapter):
     def remove_mutation_listener(
         self, callback: Callable[[str, StreamEvent], None]
     ) -> None:
-        self._mutation_listeners = [l for l in self._mutation_listeners if l is not callback]
+        self._mutation_listeners = [listener for listener in self._mutation_listeners if listener is not callback]
 
     # -- Thread-safe GraphAdapter overrides ---------------------------------
 

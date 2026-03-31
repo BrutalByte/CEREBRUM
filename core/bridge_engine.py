@@ -117,6 +117,13 @@ class BridgeTwinEngine:
 
         self._lock = threading.RLock()
 
+        # Lazily-built reverse index: community_id -> [node_ids] (built once from
+        # adapter.community_map on first _similarity_to_community call, then cached).
+        self._community_members: Optional[Dict[int, List[str]]] = None
+        # Per-community centroid embeddings: built incrementally as communities are
+        # first requested, never recomputed for the same community in a run.
+        self._centroid_cache: Dict[int, Optional[np.ndarray]] = {}
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
@@ -278,6 +285,10 @@ class BridgeTwinEngine:
                 record = self._bridges.pop(twin_id)
                 self._bridge_index.pop((record.original_id, record.destination_community), None)
 
+            # Community partition changed — invalidate reverse index and centroid cache
+            self._community_members = None
+            self._centroid_cache = {}
+
         return len(stale)
 
     # ------------------------------------------------------------------
@@ -294,30 +305,38 @@ class BridgeTwinEngine:
         Cosine similarity between node_id's embedding and the centroid of
         dest_community (mean of member embeddings).
 
-        Uses adapter.community_map to find members; gracefully returns 0.0
-        if embeddings are unavailable.
+        Reverse index and per-community centroids are computed lazily and
+        cached after first use so repeated calls are O(1) dict lookups.
         """
         node_emb = adapter.get_embedding(node_id)
         if node_emb is None:
             return 0.0
 
-        # Build the centroid from all members of dest_community
-        community_map: Dict[str, int] = getattr(adapter, "community_map", {})
-        members = [n for n, c in community_map.items() if c == dest_community]
+        # Build reverse index once: community_id -> [node_ids]
+        if self._community_members is None:
+            community_map: Dict[str, int] = getattr(adapter, "community_map", {})
+            index: Dict[int, List[str]] = {}
+            for n, c in community_map.items():
+                index.setdefault(c, []).append(n)
+            self._community_members = index
 
+        members = self._community_members.get(dest_community)
         if not members:
             return 0.0
 
-        vecs = []
-        for m in members:
-            e = adapter.get_embedding(m)
-            if e is not None:
-                vecs.append(e)
+        # Compute centroid for this community once, then cache it
+        if dest_community not in self._centroid_cache:
+            vecs = []
+            for m in members:
+                e = adapter.get_embedding(m)
+                if e is not None:
+                    vecs.append(e)
+            self._centroid_cache[dest_community] = np.mean(vecs, axis=0) if vecs else None
 
-        if not vecs:
+        centroid = self._centroid_cache[dest_community]
+        if centroid is None:
             return 0.0
 
-        centroid = np.mean(vecs, axis=0)
         return _cosine_sim(node_emb, centroid)
 
     def _create_twin(

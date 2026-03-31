@@ -8,14 +8,12 @@ Usage:
     pip install -r ui/requirements.txt
     python ui/studio.py
 """
-import os
 import sys
-import json
 import time
 import logging
 from pathlib import Path
+from typing import Union, Any
 
-import networkx as nx
 import gradio as gr
 from pyvis.network import Network
 import tempfile
@@ -36,35 +34,82 @@ logger = logging.getLogger("CEREBRUMStudio")
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from adapters.file_adapter import load_file_adapter
-from adapters.stream_adapter import StreamAdapter, PythonCallbackSource, FileTailSource, HTTPPollingSource
-from core.embedding_engine import RandomEngine, SentenceEngine
-from core.attention_engine import CSAEngine
-from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
-from reasoning.traversal import BeamTraversal
-from reasoning.answer_extractor import extract
-from core.community_engine import best_of_n_dscf, merge_small_communities
-from core.discretizer import ThresholdDiscretizer, BinningDiscretizer
+from adapters.file_adapter import load_file_adapter  # noqa: E402
+from adapters.stream_adapter import StreamAdapter, PythonCallbackSource, FileTailSource, HTTPPollingSource  # noqa: E402
+from core.embedding_engine import RandomEngine, SentenceEngine  # noqa: E402
+from core.attention_engine import CSAEngine  # noqa: E402
+from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs  # noqa: E402
+from reasoning.traversal import BeamTraversal  # noqa: E402
+from reasoning.answer_extractor import extract  # noqa: E402
+from core.community_engine import best_of_n_dscf, merge_small_communities  # noqa: E402
+from core.discretizer import ThresholdDiscretizer  # noqa: E402
+from core.rem_engine import REMEngine  # noqa: E402
+from core.insight_engine import InsightEngine  # noqa: E402
+from core.insight_validator import InsightValidator  # noqa: E402
+from core.resource_governor import ResourceGovernor  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
-CUSTOM_CSS = """
-.gradio-container { background-color: #0b0f19 !important; }
-.cerebrum-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(0, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 10px;
-    transition: all 0.2s;
+PARAM_PRESETS = {
+    "Standard (Balanced)": {"beam": 20, "hop": 3, "k": 10, "mem": 90},
+    "Deep Reasoning (High Precision)": {"beam": 50, "hop": 6, "k": 5, "mem": 85},
+    "Fast Discovery (Broad Scan)": {"beam": 10, "hop": 2, "k": 20, "mem": 95},
+    "Stress Test (Aggressive)": {"beam": 100, "hop": 10, "k": 10, "mem": 99},
 }
-.cerebrum-card:hover { border-color: #00ffff; background: rgba(0, 255, 255, 0.05); }
-.score-bar-bg { background: #333; border-radius: 4px; height: 8px; width: 100%; margin: 8px 0; }
-.score-bar-fill { background: linear-gradient(90deg, #00c6ff 0%, #0072ff 100%); height: 100%; border-radius: 4px; }
-.path-text { font-family: 'Fira Code', monospace; color: #aaa; font-size: 0.9em; }
-.entity-id { color: #00ffff; font-weight: bold; font-size: 1.1em; }
+
+def apply_preset(preset_name):
+    """Update all sliders based on the selected preset."""
+    p = PARAM_PRESETS.get(preset_name, PARAM_PRESETS["Standard (Balanced)"])
+    return p["beam"], p["hop"], p["k"], p["mem"]
+
+CUSTOM_CSS = """
+.gradio-container { background-color: #0d1117 !important; color: #c9d1d9 !important; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+.cerebrum-header {
+    background: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 210, 255, 0.2);
+}
+.cerebrum-header h1 { color: white !important; margin: 0; font-size: 2.2em; text-transform: uppercase; letter-spacing: 2px; }
+.cerebrum-header p { color: rgba(255,255,255,0.8) !important; margin: 5px 0 0 0; }
+
+.cerebrum-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cerebrum-card:hover { 
+    border-color: #58a6ff; 
+    background: #1c2128;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.score-bar-bg { background: #30363d; border-radius: 6px; height: 10px; width: 100%; margin: 10px 0; overflow: hidden; }
+.score-bar-fill { background: linear-gradient(90deg, #58a6ff 0%, #1f6feb 100%); height: 100%; border-radius: 6px; transition: width 0.5s ease-out; }
+
+.path-text { font-family: 'Cascadia Code', 'Fira Code', monospace; color: #8b949e; font-size: 0.95em; line-height: 1.6; }
+.entity-id { color: #58a6ff; font-weight: 600; font-size: 1.15em; }
+.relation-type { color: #bc8cff; font-style: italic; margin: 0 8px; }
+
+.insight-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-left: 10px;
+}
+.insight-high { background: rgba(35, 134, 54, 0.2); color: #3fb950; border: 1px solid #238636; }
+.insight-surprise { background: rgba(187, 128, 255, 0.2); color: #d2a8ff; border: 1px solid #8957e5; }
 """
 
 SUPPORTED_FORMATS = [
@@ -74,8 +119,10 @@ SUPPORTED_FORMATS = [
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CSV = str((PROJECT_ROOT / "tests" / "fixtures" / "toy_graph.csv").resolve())
 
+from typing import Dict
+...
 # Global state
-STATE = {
+STATE: Dict[str, Any] = {
     "adapter": None,
     "csa": None,
     "embeddings": None,
@@ -86,6 +133,9 @@ STATE = {
     "stream_adapter": None,
     "stream_running": False,
     "stream_event_log": [],   # list of dicts for display
+    "rem": None,
+    "insight": None,
+    "validator": None,
 }
 
 # ---------------------------------------------------------------------------
@@ -114,7 +164,7 @@ def load_graph(file_obj, csv_path_text, embedding_type):
     logger.info("Loading graph from %s with %s embeddings", path, embedding_type)
     try:
         t0 = time.time()
-        yield "Step 1/5: Initializing Adapter...", None
+        yield "Step 1/6: Initializing Adapter...", None
 
         adapter = load_file_adapter(path)
         G = adapter.to_networkx()
@@ -123,8 +173,9 @@ def load_graph(file_obj, csv_path_text, embedding_type):
         STATE["adapter"] = adapter
         STATE["n_nodes"] = n_nodes
 
-        yield f"Step 2/5: Generating Embeddings... ({n_nodes} nodes, {n_edges} edges)", None
+        yield f"Step 2/6: Generating Embeddings... ({n_nodes} nodes, {n_edges} edges)", None
 
+        engine: Union[SentenceEngine, RandomEngine]
         if embedding_type == "Sentence (all-MiniLM-L6-v2)":
             try:
                 engine = SentenceEngine()
@@ -139,7 +190,7 @@ def load_graph(file_obj, csv_path_text, embedding_type):
         adapter.embeddings = embeddings
         STATE["embeddings"] = embeddings
 
-        yield "Step 3/5: Detecting Communities (TSC/DSCF)...", None
+        yield "Step 3/6: Detecting Communities (TSC/DSCF)...", None
 
         # Scale resolution and trials with graph size
         resolution = adapter.adaptive_resolution()
@@ -166,16 +217,22 @@ def load_graph(file_obj, csv_path_text, embedding_type):
         if len(parts) > 5:
             comm_summary += f"... (+{len(parts) - 5} more)"
 
-        yield "Step 4/5: Building Community Distance Index...", comm_summary
+        yield "Step 4/6: Building Community Distance Index...", comm_summary
 
         dist = build_community_distance_matrix(G, community_map)
         adj = adjacent_community_pairs(G, community_map)
 
-        yield "Step 5/5: Initializing CSA Engine...", comm_summary
+        yield "Step 5/6: Initializing v1.4.0 Engines (CSA, REM, Insight)...", comm_summary
 
         csa = CSAEngine(adapter=adapter)
         csa.set_community_graph(dist, adj)
         STATE["csa"] = csa
+        
+        STATE["rem"] = REMEngine(adapter)
+        STATE["insight"] = InsightEngine(adapter)
+        STATE["validator"] = InsightValidator(adapter)
+        
+        yield "Step 6/6: Finalizing UI State...", comm_summary
         STATE["graph_loaded"] = True
 
         total = time.time() - t0
@@ -217,7 +274,7 @@ def format_path_html(answers):
     return html
 
 
-def run_reasoning(query, beam_width, max_hop, top_k):
+def run_reasoning(query, beam_width, max_hop, top_k, mem_threshold, governor=None):
     """Execute the reasoning pipeline."""
     if not STATE["graph_loaded"]:
         return "<h3 style='color:#ff4444;'>Please load a graph first.</h3>", None
@@ -236,9 +293,22 @@ def run_reasoning(query, beam_width, max_hop, top_k):
             )
 
         seed = seeds[0]
+        
+        # Use provided governor or create one with the user-selected threshold
+        if governor is None:
+            governor = ResourceGovernor(memory_threshold_pct=float(mem_threshold))
+            
         traversal = BeamTraversal(
-            adapter=adapter, csa_engine=csa, beam_width=int(beam_width), max_hop=int(max_hop)
+            adapter=adapter, 
+            csa_engine=csa, 
+            beam_width=int(beam_width), 
+            max_hop=int(max_hop),
+            governor=governor
         )
+        # Wire v1.4.0 engines to the traversal
+        traversal.insight_engine = STATE["insight"]
+        traversal.bridge_engine  = STATE.get("bridge_engine") # if we add it later
+        
         paths = traversal.traverse([seed])
         answers = extract(paths, top_k=int(top_k))
 
@@ -260,6 +330,7 @@ def run_reasoning(query, beam_width, max_hop, top_k):
             }
             for i, ans in enumerate(answers)
         ]
+
         return html, structured
 
     except Exception as e:
@@ -267,10 +338,182 @@ def run_reasoning(query, beam_width, max_hop, top_k):
         return f"<h3 style='color:#ff4444;'>[ERROR] {type(e).__name__}: {e}</h3>", None
 
 
+def run_rem_cycle(dry_run=True):
+    """Execute a REM maintenance cycle."""
+    if not STATE["rem"]:
+        return "ERROR: REM Engine not initialized."
+    
+    try:
+        report = STATE["rem"].run(dry_run=dry_run)
+        msg = f"REM Cycle {'(Dry Run)' if dry_run else '(COMMITTED)'} Complete.\n"
+        msg += f"Pruned: {report.pruned_count} edges\n"
+        msg += f"Synthesized: {report.synthesized_count} edges\n"
+        msg += f"Confidence Gain: {report.avg_confidence_gain:.4f}"
+        return msg
+    except Exception as e:
+        return f"ERROR in REM Cycle: {str(e)}"
+
+
+def get_insight_log():
+    """Format the insight log as HTML cards."""
+    if not STATE["insight"]:
+        return "Insight Engine not initialized."
+    
+    events = STATE["insight"].recent_events(n=10)
+    if not events:
+        return "<div style='color:#888;padding:20px;'>No significant structural insights discovered yet.</div>"
+    
+    html = "<div class='results-container'>"
+    for ev in events:
+        # surprise = ev.insight_score - (baseline logic usually lives inside engine)
+        badge_class = "insight-surprise" if ev.insight_score > 0.3 else "insight-high"
+        
+        path_str = " &rarr; ".join(ev.path.nodes) if ev.path else f"{ev.source} &rarr; {ev.target} (cold)"
+        
+        html += f"""
+        <div class='cerebrum-card'>
+            <div style='display:flex;justify-content:space-between;'>
+                <span class='entity-id'>{ev.bridging_node}</span>
+                <span class='insight-badge {badge_class}'>INSIGHT</span>
+            </div>
+            <div style='margin-top:10px;font-size:0.9em;'>
+                <strong>Score:</strong> {ev.insight_score:.4f} | 
+                <strong>Explaining:</strong> {ev.explanatory_power:.4f}
+            </div>
+            <div class='path-text' style='margin-top:8px;'>
+                {path_str}
+            </div>
+        </div>"""
+    html += "</div>"
+    return html
+
+
+def run_validation():
+    """Run structural validation on recent insights."""
+    if not STATE["validator"]:
+        return "Validator not initialized."
+    
+    try:
+        results = STATE["validator"].validate_all()
+        return f"Validation Complete. {len(results)} insights processed."
+    except Exception as e:
+        return f"ERROR in Validation: {str(e)}"
+
+
 def generate_graph_viz():
     """Generate interactive graph visualization using pyvis."""
     if not STATE["graph_loaded"]:
         return "<div style='color:#888;padding:20px;'>Load a graph first.</div>"
+
+    adapter = STATE["adapter"]
+    G = adapter.to_networkx()
+    n_nodes = G.number_of_nodes()
+
+    # Cap visualization at 500 nodes to keep the browser responsive
+    if n_nodes > 500:
+        return (
+            f"<div style='color:#ff8844;padding:20px;'>"
+            f"Graph too large for 2D visualization ({n_nodes} nodes). "
+            f"Please use the 3D Explorer tab for large-scale analysis."
+            f"</div>"
+        )
+
+    from pyvis.network import Network
+    net = Network(height="600px", width="100%", bgcolor="#0d1117", font_color="#c9d1d9")
+    
+    # Add nodes with community colors
+    colors = ["#58a6ff", "#bc8cff", "#3fb950", "#ff7b72", "#d2a8ff", "#a5d6ff", "#79c0ff"]
+    for node in G.nodes():
+        cid = adapter.get_community(node)
+        color = colors[cid % len(colors)] if cid >= 0 else "#8b949e"
+        net.add_node(str(node), label=str(node), color=color)
+
+    # Add edges
+    for u, v, data in G.edges(data=True):
+        net.add_edge(str(u), str(v), title=data.get("relation", ""))
+
+    net.toggle_physics(True)
+    
+    # Save to a temporary file
+    temp_dir = Path("tmp")
+    temp_dir.mkdir(exist_ok=True)
+    tmp_path = temp_dir / "graph_viz.html"
+    net.save_graph(str(tmp_path))
+    
+    # Return as an iframe
+    with open(tmp_path, "r", encoding="utf-8") as f:
+        html_content = f.read()
+    
+    # Avoid nested quote issues in f-string
+    safe_content = html_content.replace("'", "&apos;")
+    return f"<iframe srcdoc='{safe_content}' style='width: 100%; height: 600px; border: 1px solid #30363d; border-radius: 8px;'></iframe>"
+
+
+def generate_3d_viz(max_nodes=10000):
+    """Generate dynamic 3D Force Graph HTML."""
+    if not STATE["graph_loaded"]:
+        return "<div style='color:#888;padding:20px;'>Load a graph to initialize 3D view.</div>"
+    
+    adapter = STATE["adapter"]
+    G = adapter.to_networkx()
+    
+    # Extract nodes and links
+    nodes_data = []
+    for node in G.nodes():
+        cid = adapter.get_community(node)
+        nodes_data.append({"id": str(node), "group": int(cid) if cid >= 0 else 0})
+        
+    links_data = []
+    # Cap edges for extreme graphs to maintain smooth 60fps
+    edges = list(G.edges(data=True))
+    if len(edges) > 50000:
+        import random
+        edges = random.sample(edges, 50000)
+        
+    for u, v, data in edges:
+        links_data.append({"source": str(u), "target": str(v), "rel": data.get("relation", "LINK")})
+
+    import json
+    json_data = json.dumps({"nodes": nodes_data, "links": links_data})
+
+    html = f"""
+    <iframe srcdoc='
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <script src="https://unpkg.com/3d-force-graph"></script>
+            <style>
+                body {{ margin: 0; background: #0d1117; overflow: hidden; }}
+                #info {{ 
+                    position: absolute; bottom: 10px; left: 10px; 
+                    color: #8b949e; font-family: sans-serif; font-size: 12px;
+                    pointer-events: none;
+                }}
+            </style>
+        </head>
+        <body>
+            <div id="3d-graph"></div>
+            <div id="info">GPU Accelerated Rendering | {len(nodes_data)} nodes | {len(links_data)} edges</div>
+            <script>
+                const data = {json_data};
+                const Graph = ForceGraph3D()(document.getElementById("3d-graph"))
+                    .backgroundColor("#0d1117")
+                    .nodeLabel("id")
+                    .nodeAutoColorBy("group")
+                    .linkDirectionalArrowLength(3.5)
+                    .linkDirectionalArrowRelPos(1)
+                    .linkOpacity(0.2)
+                    .graphData(data);
+                
+                // Bloom / Visual enhancements
+                Graph.nodeRelSize(6);
+                Graph.linkWidth(1);
+            </script>
+        </body>
+        </html>
+    ' style='width: 100%; height: 750px; border: 1px solid #30363d; border-radius: 8px;'></iframe>
+    """
+    return html
 
     adapter = STATE["adapter"]
     G = adapter.to_networkx()
@@ -392,6 +635,7 @@ def start_stream(source_type, file_path_or_url, window_seconds, max_edges):
 
     # Wire the selected source
     try:
+        source: Any
         if source_type == "File Tail (CSV/JSON Lines)":
             if not file_path_or_url or not file_path_or_url.strip():
                 return "ERROR: Provide a file path to tail.", ""
@@ -497,7 +741,7 @@ def get_stream_event_log():
     )
 
 
-def run_stream_query(query, beam_width, max_hop, top_k):
+def run_stream_query(query, beam_width, max_hop, top_k, mem_threshold):
     """Run a reasoning query against the live StreamAdapter graph."""
     adapter = STATE["stream_adapter"]
     if adapter is None or adapter.node_count() == 0:
@@ -512,6 +756,7 @@ def run_stream_query(query, beam_width, max_hop, top_k):
         from core.attention_engine import CSAEngine
         from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
         from reasoning.answer_extractor import extract
+        from core.resource_governor import ResourceGovernor
 
         dist = build_community_distance_matrix(G, adapter.community_map)
         adj = adjacent_community_pairs(G, adapter.community_map)
@@ -522,8 +767,10 @@ def run_stream_query(query, beam_width, max_hop, top_k):
         if not seeds:
             return f"<div style='color:#ff8844;'>No entity found matching <code>{query}</code>.</div>", None
 
+        gov = ResourceGovernor(memory_threshold_pct=float(mem_threshold))
         traversal = BeamTraversal(adapter=adapter, csa_engine=csa,
-                                  beam_width=int(beam_width), max_hop=int(max_hop))
+                                  beam_width=int(beam_width), max_hop=int(max_hop),
+                                  governor=gov)
         paths = traversal.traverse(seeds)
         answers = extract(paths, top_k=int(top_k))
 
@@ -565,9 +812,13 @@ def generate_stream_viz():
 # UI Layout
 # ---------------------------------------------------------------------------
 
-with gr.Blocks(title="CEREBRUM Studio") as demo:
-    gr.Markdown("# CEREBRUM Studio")
-    gr.Markdown("*Glass-Box Community-Structured Reasoning Engine*")
+with gr.Blocks(title="CEREBRUM Studio v1.4.0") as demo:
+    gr.HTML("""
+        <div class='cerebrum-header'>
+            <h1>CEREBRUM STUDIO</h1>
+            <p>v1.4.0 Hardened Cognitive Architecture — "Absolute Truth" Engine</p>
+        </div>
+    """)
 
     with gr.Row():
         # ── Left sidebar ────────────────────────────────────────────────────
@@ -597,9 +848,21 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
                 load_btn = gr.Button("Load Engine", variant="primary")
 
             with gr.Accordion("Advanced Parameters", open=True):
+                preset_dropdown = gr.Dropdown(
+                    choices=list(PARAM_PRESETS.keys()),
+                    value="Standard (Balanced)",
+                    label="Parameter Presets",
+                )
                 beam_slider = gr.Slider(1, 100, value=20, step=1, label="Beam Width")
                 hop_slider  = gr.Slider(1, 10,  value=3,  step=1, label="Max Hops")
                 k_slider    = gr.Slider(1, 50,  value=10, step=1, label="Top K Answers")
+                mem_slider  = gr.Slider(50, 99, value=90, step=1, label="Memory Safety Threshold (%)")
+                
+                preset_dropdown.change(
+                    fn=apply_preset,
+                    inputs=[preset_dropdown],
+                    outputs=[beam_slider, hop_slider, k_slider, mem_slider]
+                )
 
             with gr.Group():
                 gr.Markdown("### Status")
@@ -623,12 +886,30 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
                     viz_btn    = gr.Button("Refresh Graph Visualization")
                     viz_output = gr.HTML(label="Knowledge Graph Explorer")
 
+                with gr.Tab("3D Explorer"):
+                    viz_3d_btn = gr.Button("Refresh 3D Interaction Engine")
+                    viz_3d_output = gr.HTML(label="3D Structural Attention Explorer")
+
                 with gr.Tab("Graph Stats"):
                     stats_btn    = gr.Button("Show Stats")
                     stats_output = gr.Markdown()
 
                 with gr.Tab("Structured Data"):
                     json_output = gr.JSON(label="Raw Path Metadata")
+
+                with gr.Tab("Insight & Maintenance"):
+                    with gr.Row():
+                        with gr.Column(scale=1):
+                            gr.Markdown("### REM Cycle Maintenance")
+                            rem_dry_btn = gr.Button("Run Dry-Run Cycle")
+                            rem_run_btn = gr.Button("Run Commit Cycle", variant="stop")
+                            rem_out = gr.Textbox(label="Maintenance Report", lines=8)
+                            
+                        with gr.Column(scale=2):
+                            gr.Markdown("### Structural Insights")
+                            insight_refresh_btn = gr.Button("Refresh Insights")
+                            insight_validate_btn = gr.Button("Run Global Validation", variant="primary")
+                            insight_out = gr.HTML(label="Recent Insight Discoveries")
 
                 # ── Phase 11: Live Feed tab ──────────────────────────────
                 with gr.Tab("Live Feed"):
@@ -691,24 +972,42 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
         inputs=[],
         outputs=viz_output,
     ).then(
+        fn=generate_3d_viz,
+        inputs=[],
+        outputs=viz_3d_output,
+    ).then(
         fn=get_graph_stats,
         inputs=[],
         outputs=stats_output,
     )
 
     viz_btn.click(fn=generate_graph_viz, inputs=[], outputs=viz_output)
+    viz_3d_btn.click(fn=generate_3d_viz, inputs=[], outputs=viz_3d_output)
     stats_btn.click(fn=get_graph_stats, inputs=[], outputs=stats_output)
 
     reason_btn.click(
         fn=run_reasoning,
-        inputs=[query_input, beam_slider, hop_slider, k_slider],
+        inputs=[query_input, beam_slider, hop_slider, k_slider, mem_slider],
         outputs=[chat_output, json_output],
+    ).then(
+        fn=get_insight_log,
+        inputs=[],
+        outputs=insight_out,
     )
     query_input.submit(
         fn=run_reasoning,
-        inputs=[query_input, beam_slider, hop_slider, k_slider],
+        inputs=[query_input, beam_slider, hop_slider, k_slider, mem_slider],
         outputs=[chat_output, json_output],
+    ).then(
+        fn=get_insight_log,
+        inputs=[],
+        outputs=insight_out,
     )
+
+    rem_dry_btn.click(fn=run_rem_cycle, inputs=[gr.State(True)], outputs=rem_out)
+    rem_run_btn.click(fn=run_rem_cycle, inputs=[gr.State(False)], outputs=rem_out)
+    insight_refresh_btn.click(fn=get_insight_log, inputs=[], outputs=insight_out)
+    insight_validate_btn.click(fn=run_validation, inputs=[], outputs=rem_out)
 
     # ── Stream event wiring ─────────────────────────────────────────────────
 
@@ -734,12 +1033,12 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
     )
     stream_query_btn.click(
         fn=run_stream_query,
-        inputs=[stream_query_input, beam_slider, hop_slider, k_slider],
+        inputs=[stream_query_input, beam_slider, hop_slider, k_slider, mem_slider],
         outputs=[stream_query_out, stream_query_json],
     )
     stream_query_input.submit(
         fn=run_stream_query,
-        inputs=[stream_query_input, beam_slider, hop_slider, k_slider],
+        inputs=[stream_query_input, beam_slider, hop_slider, k_slider, mem_slider],
         outputs=[stream_query_out, stream_query_json],
     )
 
@@ -753,10 +1052,8 @@ def test_logic():
 
     # 1. Load
     print("  Loading graph...")
-    result = None
     for status, comm in load_graph(None, DEFAULT_CSV, "Random (Fast)"):
         print(f"    {status}")
-        result = (status, comm)
 
     if not STATE["graph_loaded"]:
         print("  FAIL: graph load failed")
@@ -764,7 +1061,8 @@ def test_logic():
 
     # 2. Reasoning
     print("  Testing reasoning ('newton')...")
-    text, data = run_reasoning("newton", 10, 2, 5)
+    lenient_governor = ResourceGovernor(memory_threshold_pct=99.0)
+    text, data = run_reasoning("newton", 10, 2, 5, 99.0, governor=lenient_governor)
     count = len(data) if data else 0
     print(f"    Found {count} answer(s).")
     if count == 0:

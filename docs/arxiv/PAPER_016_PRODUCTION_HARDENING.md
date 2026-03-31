@@ -1,6 +1,6 @@
 # Structural Hole Patching in Production Knowledge Graph Systems: Eight Cross-Feature Interaction Bugs and Their Fixes
 
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Affiliations**: Independent Researcher · Anthropic
 **Date**: March 2026
 
@@ -62,7 +62,7 @@ This paper documents the eight structural holes found in CEREBRUM v0.4.0 and v1.
 
 #### 2.4 Hole 4: Bayesian Cold-Start Bias (Thompson Sampling × Sparse Graphs)
 
-**Root cause**: New `TraversalPath` objects initialize with `beta_alpha=1.0, beta_beta=1.0` (Beta(1,1) = uniform prior). On a cold graph segment (few traversals, no prior data), Thompson sampling draws from a nearly-flat distribution, producing high variance in beam selection. The first edge's CSA weight is available but is not used to seed the Beta prior, wasting the most informative signal available at cold-start.
+**Root cause**: New `TraversalPath` objects initialize with `beta_alpha=1.0, beta_beta=1.0` (Beta(1,1) = uniform prior). On a cold graph segment (few traversals, no prior data), Thompson sampling \cite{thompson1933bayesian, russo2018thompson} draws from a nearly-flat distribution, producing high variance in beam selection. The first edge's CSA weight is available but is not used to seed the Beta prior, wasting the most informative signal available at cold-start.
 
 **Severity**: Performance degradation — high first-hop variance in probabilistic mode leads to suboptimal beam selection, reducing H@10 by an estimated 8% on sparse graph regions.
 
@@ -82,7 +82,7 @@ where $w$ is the CSA weight and $s$ is `warm_start_strength`. This produces a mo
 
 **Severity**: Correctness violation — inconsistent community maps within a query produce unreliable path scores and non-deterministic results.
 
-**Fix**: `CSAEngine.set_query_snapshot(community_map: Dict)` — called at query start with the current community map. The CSAEngine uses the snapshot exclusively for the duration of the query; the GlobalRebalancer's atomic swap updates `adapter.community_map` but does not affect in-flight query snapshots. Snapshots are garbage-collected when queries complete.
+**Fix**: `CSAEngine.set\-query\-snapshot(community_map: Dict)` — called at query start with the current community map. The CSAEngine uses the snapshot exclusively for the duration of the query; the GlobalRebalancer's atomic swap updates `adapter.community_map` but does not affect in-flight query snapshots. Snapshots are garbage-collected when queries complete.
 
 **Validation**: 1,000 concurrent query/rebalance races — 0 snapshot isolation violations.
 
@@ -102,7 +102,7 @@ csa = CSAEngine(community_params={3: (0.5, 0.2, 0.2, 0.05, 0.05, 0.0)})
 
 #### 3.3 Hole 7: Canonical Basis Drift (SignalEncoder × Federated Hops)
 
-**Root cause**: `SignalEncoder.learn_alignment()` computes a Procrustes SVD rotation matrix $R$ that aligns sensor embeddings to the embedding space of a specific `GraphAdapter`. In a federated deployment, `FederatedAdapter` aggregates multiple remote adapters. Each adapter has a slightly different embedding space geometry. When `SignalEncoder` learns alignment against Adapter A, and a federated hop then traverses to Adapter B, the aligned sensor embeddings are compared against Adapter B's entity embeddings using a rotation matrix calibrated for Adapter A — producing geometric misalignment that accumulates multiplicatively across hops.
+**Root cause**: `SignalEncoder.learn_alignment()` computes a Procrustes \cite{schonemann1966procrustes, gower2004procrustes} SVD rotation matrix $R$ that aligns sensor embeddings to the embedding space of a specific `GraphAdapter`. In a federated deployment, `FederatedAdapter` aggregates multiple remote adapters. Each adapter has a slightly different embedding space geometry. When `SignalEncoder` learns alignment against Adapter A, and a federated hop then traverses to Adapter B, the aligned sensor embeddings are compared against Adapter B's entity embeddings using a rotation matrix calibrated for Adapter A — producing geometric misalignment that accumulates multiplicatively across hops.
 
 **Severity**: Federated reasoning quality degradation — embedding drift compounds across hops, reducing cross-modal semantic similarity accuracy by up to 67% after 3 federated hops.
 

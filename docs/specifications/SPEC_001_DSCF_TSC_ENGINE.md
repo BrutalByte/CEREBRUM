@@ -2,7 +2,7 @@
 ## Multi-Signal Consensus in Graph Partitioning
 
 **Status**: v1.1.0 (Phase 20 COMPLETE)  
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Graph Theory / Data Mining / Community Detection  
 **Module**: `core/community_engine.py`
 
@@ -140,4 +140,4 @@ For t in 0 to T_max:
 3.  **Variable Resolution**: The temperature $\tau$ acts as a continuous slider between "Resolution Limit" (Modularity) and "Over-segmentation" (LPA).
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

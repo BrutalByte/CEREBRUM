@@ -1,6 +1,5 @@
 
 import pytest
-import time
 from core.discretizer import STDPDiscretizer
 
 def test_stdp_lazy_decay_mathematical_consistency():

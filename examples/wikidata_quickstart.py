@@ -64,19 +64,21 @@ def main():
     # CSA + traversal on local graph
     from adapters.networkx_adapter import NetworkXAdapter
     local_adapter = NetworkXAdapter(nx.Graph(G))
+    local_adapter.community_map = community_map
+    local_adapter.embeddings = embeddings
+
     dist = build_community_distance_matrix(nx.Graph(G), community_map)
     adj  = adjacent_community_pairs(nx.Graph(G), community_map)
-    csa  = CSAEngine(communities=community_map, embeddings=embeddings)
+    csa  = CSAEngine(adapter=local_adapter)
     csa.set_community_graph(dist, adj)
 
     traversal = BeamTraversal(
-        adapter=local_adapter, csa_engine=csa, embeddings=embeddings,
-        communities=community_map, beam_width=5, max_hop=2,
+        adapter=local_adapter, csa_engine=csa, beam_width=5, max_hop=2,
     )
     paths   = traversal.traverse([einstein.id])
     answers = extract(paths, top_k=5)
 
-    print(f"\nTop answers from Einstein's neighborhood:")
+    print("\nTop answers from Einstein's neighborhood:")
     for ans in answers:
         print(f"  {ans.entity_id:50s}  score={ans.score:.4f}")
 

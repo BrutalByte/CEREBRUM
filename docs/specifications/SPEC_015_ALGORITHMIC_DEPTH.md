@@ -2,7 +2,7 @@
 ## Temporal Reasoning, Uncertainty Propagation, Soft Community Membership, CSAParameterLearner, and KGE Integration
 
 **Status**: v1.1.0 (Phase 20 COMPLETE)
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Field**: Temporal Reasoning / Probabilistic KG / Adaptive Attention
 **Modules**: `core/attention_engine.py`, `core/community_engine.py`, `core/kge_engine.py`, `reasoning/traversal.py`
 
@@ -179,4 +179,4 @@ All other CSA terms (community, relation weight, distance, hop decay, PageRank) 
 - **CSAParameterLearner requires opt-in feedback**: The system does not infer feedback from query success automatically. Applications must call `record_feedback()` explicitly from their validation loop.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

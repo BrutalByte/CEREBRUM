@@ -8,7 +8,6 @@ import networkx as nx
 
 from core.security import FederatedAuth
 from typing import List
-import json
 
 @pytest.fixture
 def hardened_client():
@@ -21,7 +20,7 @@ def hardened_client():
     class MockEngine:
         def encode_entities(self, labels): return {k: np.zeros(64) for k in labels}
             
-    from api.server import _state, create_app
+    from api.server import _state
     _state["adapter"] = adapter
     adapter.community_map = {n: 0 for n in g.nodes()}
     adapter.embeddings = {n: np.zeros(64) for n in g.nodes()}

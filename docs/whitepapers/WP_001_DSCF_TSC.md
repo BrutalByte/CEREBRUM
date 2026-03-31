@@ -32,4 +32,4 @@ The DSCF (Dual-Signal Community Fusion) and TSC (Triple-Signal Consensus) engine
 The DSCF/TSC Engine moves graph partitioning from a research experiment to an enterprise-grade infrastructure component. It is the structural heart of the CEREBRUM framework, enabling stable, scalable, and explainable graph intelligence.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

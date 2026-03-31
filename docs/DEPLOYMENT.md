@@ -1,6 +1,6 @@
 # CEREBRUM Deployment Guide
 
-**Version**: v1.1.0
+**Version**: v1.5.0
 **Audience**: DevOps, Platform Engineers, System Administrators
 
 ---
@@ -161,6 +161,107 @@ limit_req_zone $binary_remote_addr zone=cerebrum_api:10m rate=100r/m;
 
 ---
 
+## Hardware Compatibility
+
+CEREBRUM runs on any machine with Python 3.10+. GPU acceleration is fully
+optional and detected automatically at startup. Run `python -c "from core.hardware import device_info; print(device_info())"` to see what was detected.
+
+### Supported Hardware
+
+| Hardware | Install extra | Notes |
+|---|---|---|
+| Any CPU (x86, ARM64, RISC-V) | *(none — baseline)* | Always available |
+| NVIDIA GPU (CUDA) | `[gpu]` | RAPIDS optional for graph ops |
+| AMD GPU (ROCm) | `[gpu]` with ROCm wheel | Same API as CUDA |
+| Apple Silicon M1–M4 (MPS) | `[gpu]` — macOS only | float64 clamped to float32 |
+| Intel Gaudi 2/3 (HPU) | `[gaudi]` | Gaudi 2/3 data-centre cards |
+| Google TPU v4/v5p | `[tpu]` | GCP Cloud TPU; float64 clamped |
+| AWS Trainium / Inferentia 2 | `[tpu]` | Same torch-xla path as TPU |
+| NVIDIA Jetson (Orin/Xavier) | `[gpu]` | Unified memory — VRAM = system RAM |
+| AWS Graviton / Ampere Altra | *(none)* | ARM64 CPU; info log emitted |
+
+### GPU Acceleration Install
+
+```bash
+# CPU-only (always works)
+pip install -e "."
+
+# NVIDIA CUDA 12.x
+pip install -e ".[gpu]"
+pip install torch --index-url https://download.pytorch.org/whl/cu121
+
+# NVIDIA CUDA 11.8
+pip install -e ".[gpu]"
+pip install torch --index-url https://download.pytorch.org/whl/cu118
+
+# AMD ROCm 6.0
+pip install -e ".[gpu]"
+pip install torch --index-url https://download.pytorch.org/whl/rocm6.0
+
+# Apple Silicon MPS (macOS 12.3+, no extra index needed)
+pip install -e ".[gpu]"
+pip install torch
+
+# Intel Gaudi 2/3
+pip install -e ".[gaudi]"
+# Follow https://docs.habana.ai/en/latest/Installation_Guide/ for driver setup
+
+# Google TPU / AWS Trainium / Inferentia
+pip install -e ".[tpu]"
+# torch-xla wheel selection is environment-specific — see torch-xla docs
+```
+
+### Verifying Hardware Detection
+
+```python
+from core.hardware import device_info
+from core.dscf_gpu import GPUDSCFEngine
+
+print(device_info())           # full hardware dict
+print(GPUDSCFEngine.device_info())  # active compute device for DSCF
+```
+
+### Multi-GPU
+
+On systems with multiple NVIDIA/ROCm GPUs, CEREBRUM automatically selects
+the device with the most free VRAM for each operation. No configuration
+is needed. The selection is made per-query at runtime via
+`hardware.get_best_cuda_device()`.
+
+### VRAM Requirements (GPU DSCF)
+
+The dominant cost is the `k_in_flat` tensor: `N × C × 4 bytes` where
+`C ≈ √N`. A 2.5× safety factor covers intermediate tensors. If free VRAM
+is insufficient, CEREBRUM automatically falls back to CPU DSCF.
+
+| Graph size | Approx. VRAM needed |
+|---|---|
+| 10 000 nodes | ~30 MB |
+| 100 000 nodes | ~1 GB |
+| 500 000 nodes | ~11 GB |
+| 1 000 000 nodes | ~30 GB |
+
+For graphs that exceed single-card VRAM, use `SparkDSCFEngine` (see Enterprise section below).
+
+### NUMA / Multi-Socket Servers
+
+On dual-socket Xeon or EPYC systems, NetworkX graph operations may cross
+NUMA nodes, adding memory-access latency. Recommended mitigations:
+
+```bash
+# Pin CEREBRUM workers to a single NUMA node
+numactl --cpunodebind=0 --membind=0 uvicorn api.server:app --port 8200
+
+# Or set thread affinity via env vars (affects NumPy/SciPy BLAS)
+export OMP_NUM_THREADS=16
+export OPENBLAS_NUM_THREADS=16
+```
+
+For maximum throughput on NUMA hardware, run one CEREBRUM instance per
+NUMA node behind a load balancer.
+
+---
+
 ## Production Checklist
 
 ### Security
@@ -271,4 +372,4 @@ Key metrics to alert on:
 - `rebalance_count` growing rapidly — graph instability, check `q_drift_threshold`
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

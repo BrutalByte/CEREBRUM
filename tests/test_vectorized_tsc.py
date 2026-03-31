@@ -1,7 +1,6 @@
 
 import time
 import networkx as nx
-import numpy as np
 from core.community_engine import vectorized_tsc, dscf_communities
 
 def test_vectorized_tsc_comparison():

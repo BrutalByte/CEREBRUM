@@ -2,7 +2,7 @@
 ## Temporal Graph Plasticity in Knowledge Streams
 
 **Status**: v1.1.0 (Phase 20 COMPLETE)  
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Causal Inference / Stream Processing / Neuro-Symbolic AI  
 **Module**: `core/discretizer.py`
 
@@ -75,4 +75,4 @@ The inter-spike intervals between $u$ and $v$ are binned and tested against a un
 *   **Real-time Integration**: Discretized edges are pushed into the `StreamAdapter` buffer with a TTL (Time-to-Live), allowing the Reasoning Engine to follow "Active Causal Chains."
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

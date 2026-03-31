@@ -573,7 +573,7 @@ class TextIngestor:
         Returns empty list silently if spaCy is not installed.
         """
         try:
-            import spacy  # noqa: F401
+            import spacy
         except ImportError:
             return []
 
@@ -801,14 +801,16 @@ class TextIngestor:
             )
             edges_added += 1
 
-            self._snapshot.append({
-                "source": t.source_id,
-                "target": t.target_id,
-                "relation": t.relation,
-                "source_new": t.source_new,
-                "target_new": t.target_new,
-                "node_new": t.source_new or t.target_new,
-            })
+            snapshot = self._snapshot
+            if snapshot is not None:
+                snapshot.append({
+                    "source": t.source_id,
+                    "target": t.target_id,
+                    "relation": t.relation,
+                    "source_new": t.source_new,
+                    "target_new": t.target_new,
+                    "node_new": t.source_new or t.target_new,
+                })
 
         return edges_added, nodes_added
 

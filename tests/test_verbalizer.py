@@ -1,10 +1,9 @@
 """
 Tests for Phase 18a — PathVerbalizer.
 """
-import pytest
 from unittest.mock import MagicMock
 
-from core.verbalizer import PathVerbalizer, VerbalizationResult
+from core.verbalizer import PathVerbalizer
 from reasoning.traversal import TraversalPath
 
 
@@ -225,7 +224,7 @@ def test_verbalize_answers_top_k():
 
     answers = [
         Answer(entity_id=f"e{i}", score=1.0 - i * 0.1,
-               best_path=make_path([f"src", f"REL", f"e{i}"]))
+               best_path=make_path(["src", "REL", f"e{i}"]))
         for i in range(5)
     ]
     verb = PathVerbalizer()

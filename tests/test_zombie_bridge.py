@@ -6,12 +6,8 @@ Validates that on_rebalance() prunes stale BridgeRecords after a GlobalRebalance
 DSCF re-run produces a new community_map with different community IDs.
 """
 import threading
-import time
-from dataclasses import dataclass, field
-from typing import Dict, Tuple
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import pytest
 
 from core.bridge_engine import BridgeTwinEngine, BridgeRecord
 from core.rebalancer import GlobalRebalancer

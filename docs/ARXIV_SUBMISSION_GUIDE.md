@@ -144,4 +144,4 @@ The comprehensive umbrella paper (`docs/Parallax_White_Paper_arXiv.md`) covers a
 This paper should cite all sixteen subsystem papers by their arXiv IDs.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 
 from reasoning.traversal import TraversalPath, BeamTraversal, AsyncBeamTraversal
+from core.attention_engine import CSAEngine
 
 
 # ---------------------------------------------------------------------------
@@ -119,7 +120,8 @@ def test_warm_start_only_in_probabilistic_mode():
     adapter.find_entities.return_value = []
     adapter.get_neighbors.return_value = []
 
-    bt = BeamTraversal(adapter, None, probabilistic=False, warm_start_strength=10.0)
+    csa = MagicMock(spec=CSAEngine)
+    bt = BeamTraversal(adapter, csa, probabilistic=False, warm_start_strength=10.0)
     assert bt.warm_start_strength == 10.0
     # traverse() with no neighbors returns seed paths — no extension made
     paths = bt.traverse(["X"])
@@ -154,13 +156,13 @@ def test_warm_start_posterior_mean_reflects_weight():
 
 def test_beam_traversal_warm_start_param_stored():
     from unittest.mock import MagicMock
-    bt = BeamTraversal(MagicMock(), None, warm_start_strength=3.5)
+    bt = BeamTraversal(MagicMock(), MagicMock(spec=CSAEngine), warm_start_strength=3.5)
     assert bt.warm_start_strength == pytest.approx(3.5)
 
 
 def test_beam_traversal_warm_start_default_zero():
     from unittest.mock import MagicMock
-    bt = BeamTraversal(MagicMock(), None)
+    bt = BeamTraversal(MagicMock(), MagicMock(spec=CSAEngine))
     assert bt.warm_start_strength == pytest.approx(0.0)
 
 
@@ -170,7 +172,7 @@ def test_beam_traversal_warm_start_default_zero():
 
 def test_async_beam_warm_start():
     from unittest.mock import MagicMock
-    abt = AsyncBeamTraversal(MagicMock(), None, probabilistic=True, warm_start_strength=2.0)
+    abt = AsyncBeamTraversal(MagicMock(), MagicMock(spec=CSAEngine), probabilistic=True, warm_start_strength=2.0)
     assert abt.warm_start_strength == pytest.approx(2.0)
     assert abt.probabilistic is True
 
@@ -184,7 +186,7 @@ def test_async_beam_warm_start_traversal():
     adapter.find_entities.return_value = []
     adapter.get_neighbors.return_value = []
 
-    abt = AsyncBeamTraversal(adapter, None, probabilistic=True, warm_start_strength=3.0)
+    abt = AsyncBeamTraversal(adapter, MagicMock(spec=CSAEngine), probabilistic=True, warm_start_strength=3.0)
 
     async def _run():
         hops = []

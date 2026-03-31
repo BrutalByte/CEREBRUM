@@ -12,7 +12,6 @@ Usage:
 import subprocess
 import time
 import sys
-import os
 import requests
 from pathlib import Path
 

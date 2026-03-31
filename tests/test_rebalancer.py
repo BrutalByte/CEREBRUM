@@ -11,11 +11,9 @@ Covers:
   - dry_run check
 """
 import threading
-import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import networkx as nx
-import pytest
 
 from core.rebalancer import GlobalRebalancer, _partitions_from_map, _community_map_from_partitions
 
@@ -55,14 +53,16 @@ def _random_two_cliques(n, e):
 def _make_rebalancer(adapter=None, **kwargs):
     if adapter is None:
         adapter = _make_adapter()
-    defaults = dict(
-        check_every_n_events=10,
-        drift_threshold=0.05,
-        min_rebalance_interval=0.0,  # no rate limit for most tests
-        n_dscf_trials=1,
+    # We use explicit mapping to satisfy Mypy while keeping the flexible kwargs API
+    return GlobalRebalancer(
+        adapter,
+        check_every_n_events=int(kwargs.get("check_every_n_events", 10)),
+        drift_threshold=float(kwargs.get("drift_threshold", 0.05)),
+        min_rebalance_interval=float(kwargs.get("min_rebalance_interval", 0.0)),
+        n_dscf_trials=int(kwargs.get("n_dscf_trials", 1)),
+        dscf_seed=int(kwargs.get("dscf_seed", 42)),
+        bridge_engine=kwargs.get("bridge_engine"),
     )
-    defaults.update(kwargs)
-    return GlobalRebalancer(adapter, **defaults)
 
 
 # ---------------------------------------------------------------------------

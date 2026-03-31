@@ -8,7 +8,6 @@ Covers:
 """
 from pathlib import Path
 
-import networkx as nx
 import pytest
 
 from adapters.csv_adapter import load_csv_adapter

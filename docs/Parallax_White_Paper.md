@@ -2,7 +2,7 @@ CEREBRUM: Community-Structured Graph Attention for Knowledge Graph Reasoning
 
 A White Paper
 
-Authors: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)
+Authors: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 
 Date: March 2026
 

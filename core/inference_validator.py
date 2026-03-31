@@ -301,11 +301,15 @@ class InferenceValidator:
         seen: Set[Tuple[str, str]] = set()
 
         nodes = list(G.nodes())
+        from typing import cast
         for mid in nodes:
-            in_edges  = list(G.in_edges(mid, data=True)) if G.is_directed() \
-                        else [(nbr, mid, G[nbr][mid]) for nbr in G.neighbors(mid)]
-            out_edges = list(G.out_edges(mid, data=True)) if G.is_directed() \
-                        else [(mid, nbr, G[mid][nbr]) for nbr in G.neighbors(mid)]
+            if G.is_directed():
+                dg = cast(nx.DiGraph, G)
+                in_edges  = list(dg.in_edges(mid, data=True))
+                out_edges = list(dg.out_edges(mid, data=True))
+            else:
+                in_edges  = [(nbr, mid, G[nbr][mid]) for nbr in G.neighbors(mid)]
+                out_edges = [(mid, nbr, G[mid][nbr]) for nbr in G.neighbors(mid)]
 
             for u, _m1, data_a in in_edges:
                 rel_a = _rel(data_a)

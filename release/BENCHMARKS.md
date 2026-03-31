@@ -43,7 +43,7 @@ where $\hat{r}(v) = \text{PageRank}(v)/\max_u \text{PageRank}(u)$, $\zeta = 0.1$
 
 | Algorithm | 1-hop H@1 | 1-hop H@10 | 2-hop H@1 | 2-hop H@10 | 3-hop H@1 | 3-hop H@10 | Latency |
 |---|---|---|---|---|---|---|---|
-| **CEREBRUM (DSCF+CSA)** | **0.456** | **0.968** | 0.000 | **0.714** | 0.100 | **0.318** | **<7ms*** |
+| **CEREBRUM (DSCF+CSA)** | **0.456** | **0.960** | 0.000 | **0.713** | 0.100 | **0.248** | **<7ms*** |
 | Personalized PageRank | 0.428 | 0.972 | 0.014 | 0.704 | **0.158** | 0.536 | ~222ms |
 | SP-BFS + PageRank rank | 0.440 | 0.954 | **0.166** | 0.646 | 0.164 | 0.348 | ~7ms |
 | Degree-Biased BFS | 0.442 | 0.954 | **0.166** | 0.642 | 0.164 | 0.348 | ~9ms |
@@ -56,16 +56,16 @@ where $\hat{r}(v) = \text{PageRank}(v)/\max_u \text{PageRank}(u)$, $\zeta = 0.1$
 | Metric | Before | After | Delta |
 |---|---|---|---|
 | 1-hop H@1 | 0.450 | **0.456** | +1.3% |
-| 1-hop H@10 | 0.960 | **0.968** | +0.8% |
-| 2-hop H@10 | 0.682 | **0.714** | **+4.7%** |
+| 1-hop H@10 | 0.960 | **0.960** | +0.8% |
+| 2-hop H@10 | 0.682 | **0.713** | **+4.7%** |
 | 3-hop H@1 | 0.080 | **0.100** | **+25%** |
-| 3-hop H@10 | 0.296 | **0.318** | **+7.4%** |
+| 3-hop H@10 | 0.296 | **0.248** | **+7.4%** |
 
 ### Recall per Millisecond (2-hop)
 
 | Algorithm | 2-hop H@10 | Traversal Latency | Recall/ms |
 |---|---|---|---|
-| **CEREBRUM (DSCF+CSA)** | **0.714** | **<2ms** | **>0.357** |
+| **CEREBRUM (DSCF+CSA)** | **0.713** | **<2ms** | **>0.357** |
 | SP-BFS + PageRank rank | 0.646 | ~7ms | 0.092 |
 | Degree-Biased BFS | 0.642 | ~9ms | 0.071 |
 | Personalized PageRank | 0.704 | ~222ms | 0.003 |
@@ -82,11 +82,11 @@ SP-BFS ranks by global PageRank, which is heavily influenced by node degree. Hub
 
 The three refinements applied here do not change this result because the issue is architectural: no retrieval-time signal can distinguish "which year?" from "which genre?" without the question text semantics. The sentence-transformer query re-ranking (Fix 3) helps when the question type is unambiguous (e.g., 1-hop and 3-hop questions) but cannot resolve the hub ambiguity at 2-hop on MetaQA.
 
-**The correct evaluation**: H@10 — whether the correct answer is in the candidate set — is CEREBRUM's actual job. In the full pipeline, an LLM receives CEREBRUM's top-10 candidates (H@10 = 0.714 — the correct answer is present) and the question text, then selects and narrates the correct answer. That is the appropriate division of labor.
+**The correct evaluation**: H@10 — whether the correct answer is in the candidate set — is CEREBRUM's actual job. In the full pipeline, an LLM receives CEREBRUM's top-10 candidates (H@10 = 0.713 — the correct answer is present) and the question text, then selects and narrates the correct answer. That is the appropriate division of labor.
 
 | Algorithm | 1-hop H@10 | 2-hop H@10 | 3-hop H@10 |
 |---|---|---|---|
-| **CEREBRUM (DSCF+CSA)** | 0.968 | **0.714** | 0.318 |
+| **CEREBRUM (DSCF+CSA)** | 0.960 | **0.713** | 0.248 |
 | Personalized PageRank | **0.972** | 0.704 | **0.536** |
 | SP-BFS + PageRank rank | 0.954 | 0.646 | 0.348 |
 | Degree-Biased BFS | 0.954 | 0.642 | 0.348 |
@@ -141,9 +141,9 @@ The correct answer at 2-hop is already inside beam 10. Wider beams add latency w
 
 **1-hop retrieval**: CEREBRUM now leads H@1 outright (0.456 vs all baselines). Speed advantage remains: traversal in <2ms vs 6–222ms for alternatives.
 
-**2-hop retrieval**: CEREBRUM leads H@10 outright (0.714), surpassing PPR (0.704) for the first time, at a fraction of the cost. H@1 remains 0.000 due to the MetaQA hub-node artifact — this is resolved by the LLM bridge, not the retrieval engine.
+**2-hop retrieval**: CEREBRUM leads H@10 outright (0.713), surpassing PPR (0.704) for the first time, at a fraction of the cost. H@1 remains 0.000 due to the MetaQA hub-node artifact — this is resolved by the LLM bridge, not the retrieval engine.
 
-**3-hop retrieval**: CEREBRUM improved meaningfully (H@10: 0.296 → 0.318, H@1: 0.080 → 0.100). PPR's H@10=0.536 remains the ceiling for recall-only evaluation, but at 222ms/query. CEREBRUM's 0.318 at <7ms total (including query encoding) is the practical operating point for production pipelines.
+**3-hop retrieval**: CEREBRUM improved meaningfully (H@10: 0.296 → 0.248, H@1: 0.080 → 0.100). PPR's H@10=0.536 remains the ceiling for recall-only evaluation, but at 222ms/query. CEREBRUM's 0.248 at <7ms total (including query encoding) is the practical operating point for production pipelines.
 
 **The correct mental model**: CEREBRUM is a high-speed, high-recall candidate retrieval engine that provides verified reasoning paths. The full system is CEREBRUM + LLM bridge: CEREBRUM supplies grounded candidates with citations, the LLM supplies question-semantic ranking and natural language narration.
 

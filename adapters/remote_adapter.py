@@ -4,7 +4,9 @@ Remote CEREBRUM Adapter.
 Connects to a remote CEREBRUM API instance to perform federated graph operations.
 """
 import requests
-from typing import List, Optional, Dict
+import numpy as np
+import networkx as nx
+from typing import List, Optional, Dict, Any
 from core.graph_adapter import GraphAdapter, Entity, Edge
 
 
@@ -99,13 +101,13 @@ class RemoteCerebrumAdapter(GraphAdapter):
     def get_neighbors(
         self,
         entity_id: str,
-        edge_types: List[str] = None,
+        edge_types: Optional[List[str]] = None,
         max_neighbors: int = 50,
         context_embedding: Optional[np.ndarray] = None,
     ) -> List[Edge]:
         """Fetch neighbors from remote /neighbors endpoint."""
         try:
-            params = {"max_neighbors": max_neighbors}
+            params: Dict[str, Any] = {"max_neighbors": max_neighbors}
             if edge_types:
                 params["edge_types"] = ",".join(edge_types)
             

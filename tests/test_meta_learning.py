@@ -1,5 +1,4 @@
 
-import numpy as np
 from core.parameter_learner import MetaParameterLearner
 from reasoning.traversal import TraversalPath
 

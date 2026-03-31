@@ -1,5 +1,4 @@
 
-import pytest
 import time
 from adapters.stream_adapter import StreamAdapter
 from core.stream_engine import StreamEvent

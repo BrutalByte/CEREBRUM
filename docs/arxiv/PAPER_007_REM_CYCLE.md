@@ -1,6 +1,6 @@
 # The REM Cycle: Metacognitive Maintenance and Insight Synthesis in Autonomous Knowledge Graphs
 
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
 **Status**: v1.2.0 (Hardened Enterprise)  
 **Date**: March 2026
@@ -11,7 +11,7 @@
 Autonomous Knowledge Graphs (KGs) that continuously ingest streaming data and generate speculative insights are subject to increasing informational entropy. We propose the **REM Cycle** (Rapid Edge Maintenance), a background metacognitive framework that mimics biological sleep to ensure graph sanity and structural optimization. The REM cycle performs three primary functions: (1) **Bilateral Verification**, using transitive support and community consensus to validate speculative edges; (2) **Insight Confidence Decay**, a skepticism-weighted pruning mechanism to prevent recursive hallucination loops (v1.2.0); and (3) **Background Re-optimization**, triggering full community re-partitioning when modularity drift exceeds a critical threshold. We formalize the triangulation rules for edge verification and the skeptical decay function for speculative insights. Our results show that the REM cycle effectively maintains a high signal-to-noise ratio in dynamic graphs without interrupting active reasoning tasks.
 
 ### 1. Introduction
-The longevity of an autonomous reasoning system depends on its ability to forget as much as its ability to learn. In the absence of periodic pruning and consolidation, Knowledge Graphs accumulate spurious causal links (from STDP) and false discoveries (from the InsightEngine). The REM cycle provides the necessary "System 2" maintenance layer to govern these emergent structures.
+The longevity of an autonomous reasoning system depends on its ability to forget as much as its ability to learn \cite{diekelmann2010memory}. In the absence of periodic pruning and consolidation, Knowledge Graphs accumulate spurious causal links (from STDP) and false discoveries (from the InsightEngine). The REM cycle provides the necessary "System 2" maintenance layer to govern these emergent structures.
 
 ### 2. Methodology
 

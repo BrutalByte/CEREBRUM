@@ -8,7 +8,7 @@ commit cannot produce inconsistent CSA weights within a single query.
 """
 import threading
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import networkx as nx
 import numpy as np
@@ -199,7 +199,9 @@ def test_concurrent_rebalance_does_not_corrupt_query():
 
     t1 = threading.Thread(target=run_traverse)
     t2 = threading.Thread(target=mutate_map)
-    t1.start(); t2.start()
-    t1.join(timeout=10); t2.join(timeout=5)
+    t1.start()
+    t2.start()
+    t1.join(timeout=10)
+    t2.join(timeout=5)
 
     assert not errors, f"Errors during concurrent traversal: {errors}"

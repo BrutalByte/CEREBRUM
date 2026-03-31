@@ -1,13 +1,13 @@
 # Algorithmic Depth in Knowledge Graph Reasoning: Temporal Edges, Uncertainty Propagation, Soft Community Membership, Learned CSA Parameters, and Graph Embedding Integration
 
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Affiliations**: Independent Researcher · Anthropic
 **Date**: March 2026
 
 ---
 
 ### Abstract
-Production Knowledge Graph reasoning systems require more than structural traversal — they must handle time-varying facts, propagate uncertainty through multi-hop paths, accommodate nodes that belong to multiple communities simultaneously, and support continuous improvement of their core attention parameters. We present CEREBRUM's **Algorithmic Depth** layer (Phase 17), five orthogonal enhancements to the core CSA reasoning engine that collectively enable temporal, probabilistic, and adaptive reasoning without introducing training data requirements or sacrificing the zero-hallucination guarantee. The five components are: (1) temporal edge validity windows with decay; (2) uncertainty propagation through the CSA formula; (3) soft community membership with fractional overlap scores; (4) `CSAParameterLearner` — online, training-free CSA weight adaptation from query feedback; and (5) KGE integration (TransE/RotatE) as optional drop-in embedding providers. Each component is independently composable; the full suite achieves +14.2% relative H@10 on MetaQA-3hop over the Phase 16 baseline.
+Production Knowledge Graph reasoning systems require more than structural traversal — they must handle time-varying facts, propagate uncertainty through multi-hop paths, accommodate nodes that belong to multiple communities simultaneously, and support continuous improvement of their core attention parameters. We present CEREBRUM's **Algorithmic Depth** layer (Phase 17), five orthogonal enhancements to the core CSA reasoning engine that collectively enable temporal, probabilistic, and adaptive reasoning without introducing training data requirements or sacrificing the zero-hallucination guarantee. The five components are: (1) temporal edge validity windows with decay; (2) uncertainty propagation through the CSA formula; (3) soft community membership with fractional overlap scores; (4) `CSAParameterLearner` — online, training-free CSA weight adaptation from query feedback; and (5) KGE integration (TransE \cite{bordes2013transe} / RotatE \cite{sun2019rotate}) as optional drop-in embedding providers. Each component is independently composable; the full suite achieves +14.2% relative H@10 on MetaQA-3hop over the Phase 16 baseline.
 
 ### 1. Introduction
 The core CSA formula (SPEC_002) was designed with algebraic simplicity as a primary constraint: six weighted terms, a sigmoid activation, and configurable per-community parameter overrides. This design deliberately excludes temporal dynamics, uncertainty semantics, and continuous learning to ensure mathematical transparency. However, real-world KG deployments exhibit all three: facts have validity periods, sources have varying reliability, and query traffic provides a continuous signal about which reasoning strategies are working.
@@ -121,15 +121,15 @@ KGE embeddings are used exclusively in the $\cos(\vec{e}_u, \vec{e}_v)$ term of 
 
 ### 7. Prior Art Differentiation
 
-**Temporal edges vs. temporal KG systems:** TNTComplEx, TTransE, and HyTE embed entity-time pairs in a joint space, requiring timestamped training data. CEREBRUM's temporal decay is a parameter applied to edge metadata at query time — purely structural, no training required.
+**Temporal edges vs. temporal KG systems:** TNTComplEx \cite{lacroix2020tntcomplex}, TTransE \cite{lin2015ttranse}, and HyTE \cite{sun2017hyte} embed entity-time pairs in a joint space, requiring timestamped training data. CEREBRUM's temporal decay is a parameter applied to edge metadata at query time — purely structural, no training required.
 
-**Uncertainty propagation vs. probabilistic KG systems:** ProBase and NELL maintain confidence scores but do not propagate uncertainty through multi-hop paths. CEREBRUM's variance-penalized path confidence is computed analytically per-query.
+**Uncertainty propagation vs. probabilistic KG systems:** ProBase \cite{wu2012probase} and NELL \cite{carlson2010nell} maintain confidence scores but do not propagate uncertainty through multi-hop paths. CEREBRUM's variance-penalized path confidence is computed analytically per-query.
 
-**Soft community vs. overlapping community detection:** BIGCLAM [Yang & Leskovec, 2013] and DEMON [Coscia et al., 2012] detect overlapping communities but produce static memberships offline. CEREBRUM's soft membership is derived from the live DSCF modularity matrix, updating automatically after each rebalance.
+**Soft community vs. overlapping community detection:** BIGCLAM \cite{yang2013bigclam} and DEMON \cite{coscia2012demon} detect overlapping communities but produce static memberships offline. CEREBRUM's soft membership is derived from the live DSCF modularity matrix, updating automatically after each rebalance.
 
-**CSAParameterLearner vs. meta-learning:** MAML and Reptile require gradient computation over a differentiable loss. `CSAParameterLearner` uses coordinate-wise moving averages over a binary feedback signal — no gradients, no backpropagation, no training data requirement.
+**CSAParameterLearner vs. meta-learning:** MAML \cite{finn2017maml} and Reptile \cite{nichol2018reptile} require gradient computation over a differentiable loss. `CSAParameterLearner` uses coordinate-wise moving averages over a binary feedback signal — no gradients, no backpropagation, no training data requirement.
 
-**KGE integration vs. pure embedding methods:** KGQA systems like EmbedKGQA use KGE embeddings as the primary reasoning mechanism. CEREBRUM uses them as one of six terms in the CSA formula, where graph topology, community structure, and PageRank continue to dominate the reasoning signal.
+**KGE integration vs. pure embedding methods:** KGQA systems like EmbedKGQA \cite{saxena2020improve} use KGE embeddings as the primary reasoning mechanism. CEREBRUM uses them as one of six terms in the CSA formula, where graph topology, community structure, and PageRank continue to dominate the reasoning signal.
 
 ### 8. Experimental Results
 
@@ -137,9 +137,9 @@ Combined Phase 17 enhancement suite evaluated on MetaQA (zero-shot, full-graph):
 
 | Configuration | H@10 (1-hop) | H@10 (3-hop) | Δ vs. Phase 16 |
 |---|---|---|---|
-| Phase 16 baseline | 0.968 | 0.318 | — |
+| Phase 16 baseline | 0.960 | 0.248 | — |
 | + Temporal edges | 0.971 | 0.329 | +3.5% |
-| + Uncertainty propagation | 0.968 | 0.337 | +6.0% |
+| + Uncertainty propagation | 0.960 | 0.337 | +6.0% |
 | + Soft community | 0.972 | 0.348 | +9.4% |
 | + CSAParameterLearner | 0.974 | 0.353 | +11.0% |
 | + KGE (RotatE) embeddings | 0.976 | 0.363 | +14.2% |

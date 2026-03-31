@@ -2,7 +2,7 @@
 ## Probabilistic Graph Traversal under Topological Uncertainty
 
 **Status**: v1.1.0 (Phase 20 COMPLETE)  
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Decision Theory / Probabilistic Robotics / Graph Reasoning  
 **Module**: `reasoning/traversal.py`
 
@@ -63,4 +63,4 @@ If an answer has a high score but high uncertainty, the system flags it for **Me
 *   **Streaming Compatibility**: Beta distributions are persisted in the `TraversalPath` objects, allowing reasoning to pause and resume as new data arrives in the stream.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

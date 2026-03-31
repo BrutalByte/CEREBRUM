@@ -1,6 +1,5 @@
 
 import networkx as nx
-import pytest
 from core.community_engine import dscf_communities, hierarchical_dscf
 
 def test_dscf_star_topology_fragmentation():

@@ -113,7 +113,9 @@ class SignalEncoder(ABC):
 
         # Apply Procrustes alignment if learned
         if self._alignment_R is not None:
-            emb = self._alignment_R @ emb
+            # If learn_alignment finds R s.t. A R ≈ B (row vectors),
+            # then for a column vector x: R.T @ x ≈ y.
+            emb = self._alignment_R.T @ emb
 
         return _l2_normalize(emb)
 
@@ -200,11 +202,11 @@ class StatisticalSignalEncoder(SignalEncoder):
     """
     Hand-crafted statistical feature encoder — no ML dependencies.
 
-    Features (15 total):
+    Features (16 total):
       mean, std, min, max, range, zero-crossing rate, energy,
       peak count, first 8 FFT magnitude bins
 
-    A fixed random projection matrix W (entity_dim × 15) maps the feature
+    A fixed random projection matrix W (entity_dim × 16) maps the feature
     vector into the entity embedding dimension — the same approach as
     RandomEngine in ``core/embedding_engine.py``.
 

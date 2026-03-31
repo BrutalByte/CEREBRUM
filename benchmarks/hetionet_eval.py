@@ -47,7 +47,7 @@ import sys
 import time
 import urllib.request
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -55,7 +55,7 @@ import networkx as nx
 
 from adapters.networkx_adapter import NetworkXAdapter
 from core.community_engine import best_of_n_dscf, lpa_communities, merge_small_communities
-from core.embedding_engine import RandomEngine
+from core.embedding_engine import RandomEngine, SentenceEngine
 from core.attention_engine import CSAEngine
 from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
 from reasoning.traversal import BeamTraversal
@@ -123,7 +123,7 @@ def download_hetionet(force: bool = False) -> Path:
     if JSON_FILE.exists() and not force:
         return JSON_FILE
 
-    print(f"  Downloading Hetionet JSON from GitHub (~16 MB)...")
+    print("  Downloading Hetionet JSON from GitHub (~16 MB)...")
     print(f"  URL: {HETIONET_URL}")
     print(f"  Destination: {JSON_FILE}")
 
@@ -200,7 +200,7 @@ def load_hetionet(
     print(f"  JSON parsed in {time.time()-t0:.1f}s")
 
     G = nx.Graph() if undirected else nx.DiGraph()
-    node_type_map: Dict[str, str] = {}
+    nt_map: Dict[str, str] = {}
     filter_set = set(node_type_filter) if node_type_filter else None
 
     # Add all nodes (so isolated nodes are included in node_type_map)
@@ -209,7 +209,7 @@ def load_hetionet(
         if filter_set and kind not in filter_set:
             continue
         nid = _node_id(kind, node_data["identifier"])
-        node_type_map[nid] = kind
+        nt_map[nid] = kind
         G.add_node(nid, type=kind, name=node_data.get("name", ""))
 
     # Add edges
@@ -233,10 +233,10 @@ def load_hetionet(
         print(f"  Caching graph to {GRAPH_CACHE.name}...")
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         with open(GRAPH_CACHE, "wb") as f:
-            pickle.dump((G, node_type_map), f)
+            pickle.dump((G, nt_map), f)
         print(f"  Cached ({GRAPH_CACHE.stat().st_size / 1e6:.1f} MB)")
 
-    return NetworkXAdapter(G), node_type_map
+    return NetworkXAdapter(G), nt_map
 
 
 # ---------------------------------------------------------------------------
@@ -327,7 +327,7 @@ def load_or_compute_communities(
     else:
         print(f"  Running DSCF on {G.number_of_nodes():,} nodes "
               f"({G.number_of_edges():,} edges)...")
-        print(f"  Estimated time: 2-15 minutes depending on graph size.")
+        print("  Estimated time: 2-15 minutes depending on graph size.")
         t0    = time.time()
         parts = best_of_n_dscf(G, n_trials=n_trials, seed=dscf_seed)
         cmap  = {node: cid for cid, members in enumerate(parts) for node in members}
@@ -357,7 +357,7 @@ def load_or_compute_communities(
 def compute_type_alignment(
     node_type_map: Dict[str, str],
     detected_cmap: Dict[str, int],
-) -> Tuple[float, Dict[str, float]]:
+) -> Tuple[float, Dict[int, float]]:
     """
     Compute community purity with respect to Hetionet node types.
 
@@ -403,7 +403,8 @@ def evaluate_variant(
     top_k: int = 10,
 ) -> Dict:
     """Evaluate one variant. Returns metrics dict."""
-    h1 = h10 = mrr_sum = 0
+    h1 = h10 = 0
+    mrr_sum = 0.0
     skipped = found = 0
     t0 = time.time()
 
@@ -453,6 +454,7 @@ def build_traversal(
     if embeddings:
         adapter.embeddings = embeddings
 
+    csa: Union[CSAEngine, UniformCSAEngine]
     if variant == "bfs":
         cmap_uniform = {node: 0 for node in G.nodes()}
         adapter.community_map = cmap_uniform
@@ -461,8 +463,8 @@ def build_traversal(
                              beam_width=beam_width, max_hop=max_hop)
 
     dist = build_community_distance_matrix(G, cmap)
-    adj  = adjacent_community_pairs(G, cmap)
-    csa  = CSAEngine(adapter=adapter)
+    adj = adjacent_community_pairs(G, cmap)
+    csa = CSAEngine(adapter=adapter)
     csa.set_community_graph(dist, adj)
     return BeamTraversal(adapter=adapter, csa_engine=csa,
                          beam_width=beam_width, max_hop=max_hop,
@@ -539,7 +541,7 @@ def main():
     type_counts: Dict[str, int] = {}
     for ntype in node_type_map.values():
         type_counts[ntype] = type_counts.get(ntype, 0) + 1
-    print(f"  Node types:")
+    print("  Node types:")
     for ntype, count in sorted(type_counts.items(), key=lambda x: -x[1]):
         print(f"    {ntype:<30} {count:>7,}")
     print()
@@ -554,9 +556,9 @@ def main():
     # ------------------------------------------------------------------
     print("Building embeddings...")
     random.seed(args.seed)
+    engine: Union[RandomEngine, SentenceEngine]
     if args.embeddings == "sentence":
         try:
-            from core.embedding_engine import SentenceEngine
             engine = SentenceEngine()
             print(f"  Using SentenceEngine ({engine.dim}-dim)")
         except ImportError:
@@ -564,7 +566,7 @@ def main():
             engine = RandomEngine(dim=64)
     else:
         engine = RandomEngine(dim=64)
-        print(f"  Using RandomEngine (64-dim)")
+        print("  Using RandomEngine (64-dim)")
     labels     = {n: n for n in G.nodes()}
     embeddings = engine.encode_entities(labels)
     print(f"  {len(embeddings):,} entity vectors")
@@ -616,8 +618,8 @@ def main():
             n_questions=args.n_questions, seed=args.seed,
         )
         if not qa_pairs:
-            print(f"  No QA pairs generated — skipping (metaedge may not be in "
-                  f"loaded graph subset).")
+            print("  No QA pairs generated — skipping (metaedge may not be in "
+                  "loaded graph subset).")
             print()
             continue
         print(f"  {len(qa_pairs):,} QA pairs generated")
@@ -639,7 +641,7 @@ def main():
         print(f"      Hits@1={m_b['hits_1']:.4f}  Hits@10={m_b['hits_10']:.4f}  MRR={m_b['mrr']:.4f}")
 
         # Variant C — BFS
-        print(f"\n  [C] BFS (uniform weights)...")
+        print("\n  [C] BFS (uniform weights)...")
         t_bfs = build_traversal(adapter, G, None, embeddings,
                                 args.beam_width, hop, variant="bfs")
         m_c = evaluate_variant("BFS", t_bfs, qa_pairs, hop, args.top_k)

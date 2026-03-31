@@ -2,7 +2,7 @@
 ## Privacy-Preserving Discovery in Federated Knowledge Networks
 
 **Status**: v1.1.0 (Phase 20 COMPLETE)  
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Privacy & Security / Federated Learning / Distributed Systems  
 **Module**: `core/holographic_index.py`
 
@@ -69,4 +69,4 @@ To prevent "Semantic Drift" across federated hops, all holographic signatures ar
 *   This ensures that a "Wormhole Score" of 0.8 means the same thing in Graph A as it does in Graph B.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

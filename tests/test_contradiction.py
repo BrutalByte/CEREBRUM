@@ -17,18 +17,15 @@ Coverage:
   - Answer.contradiction_flags populated by extract()
 """
 import random
-import time
 
 import networkx as nx
 import numpy as np
-import pytest
 
 from adapters.networkx_adapter import NetworkXAdapter
 from core.attention_engine import CSAEngine
 from core.community_engine import dscf_communities
 from core.contradiction_engine import (
     CONTRADICTS_RELATION,
-    CONTRADICTION_PAIRS,
     ContradictionEngine,
     ContradictionRecord,
     is_valid_at,

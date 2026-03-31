@@ -16,7 +16,6 @@ from core.signal_encoder import (
     StatisticalSignalEncoder,
     SpectralSignalEncoder,
     _l2_normalize,
-    _statistical_features,
 )
 
 

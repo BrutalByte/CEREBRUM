@@ -6,7 +6,7 @@ Provides an explicit alignment index to unify disparate entity IDs into
 a single canonical reference.
 """
 from typing import Dict, List, Optional, Set, Tuple
-from core.graph_adapter import Entity
+from core.graph_adapter import GraphAdapter
 
 
 class AlignmentIndex:
@@ -65,7 +65,7 @@ def auto_align_by_label(adapters: Dict[str, "GraphAdapter"], threshold: float = 
     Future: Use fuzzy matching or embedding-based alignment.
     """
     index = AlignmentIndex()
-    adapter_names = list(adapters.keys())
+    list(adapters.keys())
     
     # This is O(N^2) over the sum of entities, but can be optimized with an 
     # inverted label index.

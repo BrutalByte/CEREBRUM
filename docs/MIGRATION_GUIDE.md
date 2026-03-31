@@ -175,4 +175,4 @@ stream.push_event(subject, predicate, object, timestamp, weight)
 No breaking changes. All Phase 6–9 features (FederatedAdapter, HolographicIndex, Handshake) are additive and do not affect single-graph deployments.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

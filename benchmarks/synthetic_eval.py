@@ -31,7 +31,7 @@ import random
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -46,15 +46,12 @@ from reasoning.traversal import BeamTraversal
 from reasoning.answer_extractor import extract
 from core.resource_governor import ResourceGovernor
 
-_BENCH_GOVERNOR = ResourceGovernor(memory_threshold_pct=99.0)
-
 from benchmarks.metaqa_eval import hits_at_k, reciprocal_rank
 from benchmarks.baseline_comparison import (
     UniformCSAEngine,
-    build_dscf_traversal,
-    build_lpa_traversal,
-    build_bfs_traversal,
 )
+
+_BENCH_GOVERNOR = ResourceGovernor(memory_threshold_pct=99.0)
 
 DATA_DIR  = Path(__file__).parent / "data" / "synthetic"
 CACHE_DIR = DATA_DIR / "cache"
@@ -285,7 +282,8 @@ def evaluate_variant(
     top_k: int = 10,
 ) -> Dict:
     """Evaluate one variant on one hop level. Returns metrics dict."""
-    h1 = h10 = mrr_sum = 0
+    h1 = h10 = 0
+    mrr_sum = 0.0
     skipped = found = 0
     t0 = time.time()
 
@@ -457,7 +455,7 @@ def main():
         print(f"      Hits@1={m_b['hits_1']:.4f}  Hits@10={m_b['hits_10']:.4f}  MRR={m_b['mrr']:.4f}")
 
         # Variant C — BFS
-        print(f"\n  [C] BFS (uniform weights)...")
+        print("\n  [C] BFS (uniform weights)...")
         cmap_bfs = {node: 0 for node in G.nodes()}
         
         adapter.community_map = cmap_bfs

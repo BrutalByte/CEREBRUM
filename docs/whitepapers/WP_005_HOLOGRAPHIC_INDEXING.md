@@ -34,4 +34,4 @@ Holographic Indexing allows each node in a federation to publish a "Hologram"—
 Holographic Indexing turns decentralized data into a unified, secure intelligence network. It provides the protocol for the next generation of privacy-preserving enterprise AI.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

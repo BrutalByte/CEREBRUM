@@ -34,4 +34,4 @@ Bayesian Beam Search replaces deterministic scoring with **Thompson Sampling**�
 Bayesian Beam Search moves AI from "Rigid Logic" to "Statistical Intuition." It provides the resilience and discovery power required for mission-critical enterprise intelligence.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

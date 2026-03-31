@@ -39,7 +39,7 @@ import threading
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 
 # ---------------------------------------------------------------------------
@@ -256,7 +256,6 @@ class IncrementalCommunityUpdater:
 
         Returns an updated community_map (same dict, mutated in-place).
         """
-        import networkx as nx
         from core.community_engine import dscf_communities, merge_small_communities
 
         affected = set(self._pending_nodes)

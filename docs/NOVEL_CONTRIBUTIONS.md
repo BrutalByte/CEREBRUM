@@ -3,7 +3,7 @@
 ## CEREBRUM: Community-Structured Graph Attention for Knowledge Graph Reasoning
 
 **Document Classification**: Intellectual Property Reference
-**Authors**: Bryan Alexander Buchorn (AMP)
+**Authors**: Bryan Alexander Buchorn
 **Date**: March 2026
 **Version**: v1.1.0 (Phase 20 COMPLETE)
 
@@ -182,7 +182,7 @@ $$a(u,v,k) = \sigma\left(\alpha \cdot \cos(\vec{e}_u, \vec{e}_v) + \beta \cdot S
 
 ## Legal Notice
 
-All rights, title, and interest in and to the CEREBRUM software, documentation, algorithms, and related intellectual property documented herein are and shall remain the exclusive property of **Bryan Alexander Buchorn (AMP)**.
+All rights, title, and interest in and to the CEREBRUM software, documentation, algorithms, and related intellectual property documented herein are and shall remain the exclusive property of **Bryan Alexander Buchorn**.
 
 CEREBRUM is dual-licensed:
 - **Non-Commercial Use**: PolyForm Noncommercial License 1.0.0
@@ -190,4 +190,4 @@ CEREBRUM is dual-licensed:
 
 For commercial licensing: **bryan.alexander@buchorn.com**
 
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

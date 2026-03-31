@@ -1,6 +1,6 @@
 # Holographic Indexing: Privacy-Preserving Discovery in Federated Knowledge Networks
 
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
 **Status**: v1.2.0 (Hardened Enterprise)  
 **Date**: March 2026
@@ -8,7 +8,7 @@
 ---
 
 ### Abstract
-Federated Knowledge Graph reasoning requires nodes to identify relevant information across decentralized peers without compromising data privacy or bandwidth. We present **Holographic Indexing**, a two-tier discovery protocol designed for "Blind Semantic Search." Our method combines **Bloom Filter** membership probing for exact entity matching with **Community Centroid Signatures** for semantic neighborhood approximation. This "Holographic" representation allows nodes to identify potential reasoning paths in remote peers with minimal data leakage. We formalize the construction of these signatures and the **Wormhole Attention** mechanism that enables cross-graph traversals. We further describe security enhancements in v1.2.0, including **HMAC-SHA256 Path Provenance** and **Federated Leases**, which ensure the integrity and reliability of federated reasoning in high-velocity, multi-tenant environments.
+Federated Knowledge Graph reasoning requires nodes to identify relevant information across decentralized peers without compromising data privacy or bandwidth. We present **Holographic Indexing**, a two-tier discovery protocol designed for "Blind Semantic Search." Our method combines **Bloom Filter** \cite{bloom1970} membership probing for exact entity matching with **Community Centroid Signatures** for semantic neighborhood approximation. This "Holographic" representation allows nodes to identify potential reasoning paths in remote peers with minimal data leakage. We formalize the construction of these signatures and the **Wormhole Attention** mechanism that enables cross-graph traversals. We further describe security enhancements in v1.2.0, including **HMAC-SHA256 Path Provenance** \cite{gentry2009} and **Federated Leases**, which ensure the integrity and reliability of federated reasoning in high-velocity, multi-tenant environments.
 
 ### 1. Introduction
 The expansion of decentralized Knowledge Graphs necessitates a protocol for inter-graph discovery that respects the data sovereignty of individual nodes. Traditional federated search methods often require a central index or the exchange of full node lists, both of which are unacceptable in privacy-sensitive domains (e.g., healthcare or defense). Holographic Indexing addresses this by exchanging compressed, non-reversible topological signatures.

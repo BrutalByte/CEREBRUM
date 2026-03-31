@@ -5,10 +5,8 @@ Hole 2 — Homogeneity Trap: Community-Specific CSA Parameter Overrides.
 Validates that CSAEngine uses per-community parameter vectors when provided,
 allowing domain-specific attention tuning for heterogeneous KGs.
 """
-import math
 
 import numpy as np
-import pytest
 
 from adapters.networkx_adapter import NetworkXAdapter
 from core.attention_engine import CSAEngine

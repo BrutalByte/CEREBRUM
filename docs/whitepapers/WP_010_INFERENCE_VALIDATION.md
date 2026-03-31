@@ -34,4 +34,4 @@ Inference Validator uses a "Hold-out and Rediscover" methodology designed specif
 Inference Validator turns graph reasoning from a "guessing game" into a verifiable science. It provides the automated quality assurance required for mission-critical AI systems to operate with confidence in unsupervised environments.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

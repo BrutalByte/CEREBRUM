@@ -7,11 +7,9 @@ Covers:
   - build_community_distance_matrix: symmetry, self-distance absent
   - adjacent_community_pairs: bidirectionality, cross-edge detection
 """
-import math
 
 import networkx as nx
 import numpy as np
-import pytest
 
 from core.structural_encoder import (
     adjacent_community_pairs,

@@ -40,9 +40,13 @@ def main():
         labels    = {n: n for n in G.nodes()}
         embeddings = engine.encode_entities(labels)
 
+        # Update adapter with metadata for CSAEngine to use
+        adapter.community_map = community_map
+        adapter.embeddings = embeddings
+
         dist = build_community_distance_matrix(G, community_map)
         adj  = adjacent_community_pairs(G, community_map)
-        csa  = CSAEngine(communities=community_map, embeddings=embeddings)
+        csa  = CSAEngine(adapter=adapter)
         csa.set_community_graph(dist, adj)
 
         query   = "einstein"
@@ -50,14 +54,13 @@ def main():
         print(f"Seeds for {query!r}: {seeds}")
 
         traversal = BeamTraversal(
-            adapter=adapter, csa_engine=csa, embeddings=embeddings,
-            communities=community_map, beam_width=10, max_hop=3,
+            adapter=adapter, csa_engine=csa, beam_width=10, max_hop=3,
             edge_type_weights={"KNOWS": 0.4, "WORKS_AT": 0.3},
         )
         paths   = traversal.traverse(seeds)
         answers = extract(paths, top_k=5)
 
-        print(f"\nTop answers:")
+        print("\nTop answers:")
         for ans in answers:
             print(f"  {ans.entity_id:30s}  score={ans.score:.4f}")
 

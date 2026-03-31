@@ -4,7 +4,6 @@ import networkx as nx
 from adapters.networkx_adapter import NetworkXAdapter
 from adapters.federated_adapter import FederatedAdapter
 from adapters.remote_adapter import RemoteCerebrumAdapter
-from core.graph_adapter import Entity, Edge
 
 @pytest.fixture
 def graph_a():

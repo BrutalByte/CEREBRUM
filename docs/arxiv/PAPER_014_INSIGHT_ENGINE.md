@@ -1,6 +1,6 @@
 # Metacognitive Verification in Knowledge Graph Reasoning: InsightValidator, MetaInsightEngine, and Second-Order Structural Reasoning
 
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Affiliations**: Independent Researcher · Anthropic
 **Date**: March 2026
 
@@ -29,9 +29,9 @@ The bilateral design is critical: a single forward probe could be satisfied by a
 #### 2.2 Community Consensus Augmentation
 The validator augments the traversal confidence with a **community consensus term**:
 
-$$\text{score}_{valid}(E_{uv}) = \alpha \cdot \text{conf}_{fwd} + \beta \cdot \text{conf}_{rev} + \gamma \cdot \mathbb{I}[\text{comm}(u) = \text{comm}(v)]$$
+$$S_{val}(E_{uv}) = \alpha C_{fwd} + \beta C_{rev} + \gamma \cdot \delta(c_u, c_v)$$
 
-with default weights $\alpha=0.45$, $\beta=0.45$, $\gamma=0.10$. This ensures that edges connecting nodes from different communities require higher traversal confidence to be verified, reflecting the structural implausibility of cross-community speculative links.
+with default weights $\alpha=0.45$, $\beta=0.45$, $\gamma=0.10$. Here $C$ represents traversal confidence and $\delta$ is the Kronecker delta for community membership ($c_u, c_v$). This ensures that edges connecting nodes from different communities require higher traversal confidence to be verified, reflecting the structural implausibility of cross-community speculative links.
 
 #### 2.3 Verification States
 Each tracked edge transitions through states:
@@ -73,13 +73,13 @@ When detected, these patterns are surfaced as `STRUCTURAL_BIAS` events in $G_{me
 
 ### 4. Prior Art Differentiation
 
-**vs. Post-hoc explainability methods (GNNExplainer, LIME, SHAP):** These methods explain a single inference after the fact by perturbing inputs. The InsightValidator is not an explainer — it is a *pre-emptive structural validator* that tests whether a speculative edge should remain in the graph at all. It runs before the edge is used in any query.
+**vs. Post-hoc explainability methods (GNNExplainer \cite{ying2019gnnexplainer}, LIME \cite{ribeiro2016lime}, SHAP \cite{lundberg2017shap}):** These methods explain a single inference after the fact by perturbing inputs. The InsightValidator is not an explainer — it is a *pre-emptive structural validator* that tests whether a speculative edge should remain in the graph at all. It runs before the edge is used in any query.
 
-**vs. Knowledge Base completion and link prediction:** Link prediction methods (TransE, RotatE, ComplEx) score candidate edges by the plausibility of their entity embeddings in a learned embedding space. The InsightValidator validates edges using *the existing traversal engine on the existing graph* — no trained parameters are used. Validation is pure topology.
+**vs. Knowledge Base completion and link prediction:** Link prediction methods (TransE \cite{bordes2013transe}, RotatE \cite{sun2019rotate}, ComplEx \cite{trouillon2016complex}) score candidate edges by the plausibility of their entity embeddings in a learned embedding space. The InsightValidator validates edges using *the existing traversal engine on the existing graph* — no trained parameters are used. Validation is pure topology.
 
-**vs. Inconsistency detection in Knowledge Bases:** OWL-based reasoners detect logical inconsistencies via ontology constraints. The InsightValidator detects *structural unsupportedness* — an edge that is not logically inconsistent but lacks independent topological backing. These are orthogonal quality criteria.
+**vs. Inconsistency detection in Knowledge Bases:** OWL-based reasoners \cite{horrocks2004owl} detect logical inconsistencies via ontology constraints. The InsightValidator detects *structural unsupportedness* — an edge that is not logically inconsistent but lacks independent topological backing. These are orthogonal quality criteria.
 
-**The MetaInsightEngine has no published analog:** Constructing a second-order graph over reasoning events and running standard CSA traversal on that graph to detect reasoning pathologies is, to our knowledge, entirely without precedent in the KG literature. The closest related work is meta-learning over task performance (MAML, Reptile), but these operate over gradient-based models, not over graph structure.
+**The MetaInsightEngine has no published analog:** Constructing a second-order graph over reasoning events and running standard CSA traversal on that graph to detect reasoning pathologies is, to our knowledge, entirely without precedent in the KG literature. The closest related work is meta-learning over task performance (MAML \cite{finn2017maml}, Reptile \cite{nichol2018reptile}), but these operate over gradient-based models, not over graph structure.
 
 ### 5. Experimental Results
 

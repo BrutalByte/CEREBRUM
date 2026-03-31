@@ -1,6 +1,6 @@
 # Experience-Dependent Structural Plasticity in Knowledge Graphs: The Bridge Twin Engine
 
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
 **Status**: v1.2.0 (Hardened Enterprise)  
 **Date**: March 2026
@@ -8,7 +8,7 @@
 ---
 
 ### Abstract
-We introduce the **Bridge Twin Engine**, a mechanism for autonomous topological evolution in Knowledge Graphs (KGs) based on reasoning experience. While traditional KGs maintain a static structure, the Bridge Twin Engine implements a graph-theoretic analog to biological Long-Term Potentiation (LTP). By materializing "Twin Nodes" to act as structural relays across frequently traversed community boundaries, the system short-circuits latent paths and optimizes its own geometry for future inference. We formalize the potentiation rules based on usage frequency and semantic salience, and provide a pruning mechanism (LTD) to maintain topological sanity. The v1.2.0 release incorporates an atomic re-mapping protocol to synchronize relays with background community re-partitioning, effectively solving the "Zombie Bridge" problem in dynamic environments.
+We introduce the **Bridge Twin Engine**, a mechanism for autonomous topological evolution in Knowledge Graphs (KGs) based on reasoning experience. While traditional KGs maintain a static structure, the Bridge Twin Engine implements a graph-theoretic analog to biological Long-Term Potentiation (LTP) \cite{hebb1949, bipoo1998}. By materializing "Twin Nodes" to act as structural relays across frequently traversed community boundaries, the system short-circuits latent paths and optimizes its own geometry for future inference. We formalize the potentiation rules based on usage frequency and semantic salience, and provide a pruning mechanism (LTD) to maintain topological sanity. The v1.2.0 release incorporates an atomic re-mapping protocol to synchronize relays with background community re-partitioning, effectively solving the "Zombie Bridge" problem in dynamic environments.
 
 ### 1. Introduction
 The efficiency of multi-hop reasoning in graphs is fundamentally constrained by the diameter and sparsity of the network. In large-scale KGs, semantically related concepts often reside in disparate community partitions, necessitating high-latency "Bridge" traversals. We propose that a graph should not be a static artifact, but a plastic entity that reshapes its topology to favor successful reasoning chains.

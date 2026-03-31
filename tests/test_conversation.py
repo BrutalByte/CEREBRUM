@@ -14,8 +14,6 @@ from core.conversation import (
     ConversationSession,
     ConversationTurn,
     new_session,
-    _PRONOUN_TYPE,
-    _FOLLOWUP_PREFIXES,
 )
 from reasoning.traversal import BeamTraversal
 
@@ -404,6 +402,7 @@ def test_multiple_sessions_independent():
 
 def test_session_last_active_updated(manager, session):
     before = session.last_active
-    import time; time.sleep(0.01)
+    import time
+    time.sleep(0.01)
     manager.process("What did newton influence?", session)
     assert session.last_active > before

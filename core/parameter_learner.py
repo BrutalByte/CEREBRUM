@@ -23,12 +23,12 @@ Usage::
 
 import math
 import time
-from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from core.attention_engine import CSAEngine, _cosine_sim, _sigmoid
+from core.attention_engine import CSAEngine, _sigmoid
 
 
 # ---------------------------------------------------------------------------
@@ -116,7 +116,8 @@ class MetaParameterLearner:
         # dL/dθ = -reward * ∇score
         for k, (sim, cs, etw, nd, hd) in enumerate(edge_features):
             cid = cseq[k] if k < len(cseq) else -1
-            if cid < 0: continue
+            if cid < 0:
+                continue
             
             # Current params for this community
             theta = self.community_overrides.get(cid, self.global_prior.copy())

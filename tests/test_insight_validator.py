@@ -65,7 +65,6 @@ def _make_adapter():
     community_map = {"A": 0, "B": 0, "C": 0, "D": 1, "E": 1, "F": 1}
     adapter.community_map = community_map
 
-    original_get_community = adapter.get_community
     def patched_get_community(entity_id):
         return adapter.community_map.get(entity_id, -1)
     adapter.get_community = patched_get_community

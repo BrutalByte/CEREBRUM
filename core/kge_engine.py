@@ -28,8 +28,8 @@ from __future__ import annotations
 import math
 import random
 import time
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -123,6 +123,88 @@ class _BaseKGEEngine:
             return None
         return self._relation_emb[idx].copy()
 
+    def predict_links(
+        self,
+        head_entity: str,
+        top_k: int = 10,
+        relations: Optional[List[str]] = None,
+    ) -> List[Tuple[str, str, str, float]]:
+        """
+        Predict the most plausible missing tail entities for ``head_entity``.
+
+        For each known relation (or the subset specified by ``relations``),
+        scores all entities as potential tails using the trained model's
+        scoring function and returns the top-K (head, relation, tail, score)
+        triples sorted by descending plausibility score (higher = more
+        plausible; internally the model produces *distances* that are
+        negated so the caller always sees higher = better).
+
+        Parameters
+        ----------
+        head_entity
+            Source entity ID.  Must be in the training vocabulary.
+        top_k
+            Number of (rel, tail, score) candidates to return.
+        relations
+            Optional list of relation types to consider.  If None, all
+            known relations are used.
+
+        Returns
+        -------
+        list of (head, relation, tail, score) tuples, highest score first.
+        Returns an empty list if the model has not been trained or the
+        head_entity is unknown.
+        """
+        if self._entity_emb is None or self._relation_emb is None:
+            return []
+        h_idx = self._entity_index.get(head_entity)
+        if h_idx is None:
+            return []
+
+        rel_names = relations if relations is not None else self._relation_ids
+        if not rel_names:
+            return []
+
+        h_emb = self._entity_emb[h_idx]          # (dim,)
+        n_ent = len(self._entity_ids)
+
+        all_scored: List[Tuple[str, str, str, float]] = []
+
+        for rel in rel_names:
+            r_idx = self._relation_index.get(rel)
+            if r_idx is None:
+                continue
+            r_emb = self._relation_emb[r_idx]    # (dim,)
+
+            # Broadcast score over all tail candidates at once
+            # _score_batch expects (batch, dim) arrays
+            h_batch = np.broadcast_to(h_emb, (n_ent, len(h_emb)))
+            r_batch = np.broadcast_to(r_emb, (n_ent, len(r_emb)))
+            t_batch = self._entity_emb             # (n_ent, dim)
+
+            raw_scores = self._score_batch(h_batch, r_batch, t_batch)
+            # raw_scores are *distances* (lower = more plausible for TransE/RotatE).
+            # Negate so that higher = more plausible.
+            plausibility = -raw_scores
+
+            # Grab top-k indices for this relation
+            if len(plausibility) <= top_k:
+                best_idxs = np.argsort(plausibility)[::-1]
+            else:
+                best_idxs = np.argpartition(plausibility, -top_k)[-top_k:]
+                best_idxs = best_idxs[np.argsort(plausibility[best_idxs])[::-1]]
+
+            for t_idx in best_idxs:
+                tail = self._entity_ids[int(t_idx)]
+                if tail == head_entity:
+                    continue  # skip self-prediction
+                score = float(plausibility[t_idx])
+                all_scored.append((head_entity, rel, tail, score))
+
+        # Global top-k across all relations
+        all_scored.sort(key=lambda x: x[3], reverse=True)
+        return all_scored[:top_k]
+
     def fit(self, adapter, n_epochs: int = 100) -> KGETrainingResult:
         """
         Train on all triples extracted from the adapter.
@@ -191,7 +273,7 @@ class _BaseKGEEngine:
         self._entity_index = {eid: i for i, eid in enumerate(self._entity_ids)}
 
         relations: set = set()
-        triples: List[Tuple[int, int, int]] = []
+        triples: List[Tuple[int, Any, int]] = []
         for entity in entities:
             for edge in adapter.get_neighbors(entity.id):
                 rel = edge.relation_type
@@ -207,7 +289,7 @@ class _BaseKGEEngine:
                 # Store relation string for index
                 triples[-1] = (
                     self._entity_index[entity.id],
-                    rel,                    # type: ignore[assignment]
+                    rel,
                     self._entity_index[edge.target_id],
                 )
 
@@ -232,6 +314,8 @@ class _BaseKGEEngine:
 
     def _normalise_entities(self) -> None:
         """L2-normalise all entity embeddings (TransE convention)."""
+        if self._entity_emb is None:
+            return
         norms = np.linalg.norm(self._entity_emb, axis=1, keepdims=True)
         norms = np.where(norms == 0, 1.0, norms)
         self._entity_emb /= norms
@@ -262,6 +346,9 @@ class _BaseKGEEngine:
         neg_batch = [self._corrupt(*triple) for triple in batch]
         nh_idx = np.array([t[0] for t in neg_batch])
         nt_idx = np.array([t[2] for t in neg_batch])
+
+        if self._entity_emb is None or self._relation_emb is None:
+            return 0.0
 
         h_emb  = self._entity_emb[h_idx]
         r_emb  = self._relation_emb[r_idx]
@@ -329,6 +416,8 @@ class TransEEngine(_BaseKGEEngine):
         h_emb, r_emb, t_emb, nh_emb, nt_emb,
         violating, grad_scale,
     ) -> None:
+        if self._entity_emb is None or self._relation_emb is None:
+            return
         # Gradient of ‖h + r - t‖ w.r.t. h, r, t
         pos_diff = h_emb + r_emb - t_emb
         pos_norm = np.linalg.norm(pos_diff, axis=1, keepdims=True)
@@ -414,6 +503,8 @@ class RotatEEngine(_BaseKGEEngine):
         h_emb, r_emb, t_emb, nh_emb, nt_emb,
         violating, grad_scale,
     ) -> None:
+        if self._entity_emb is None or self._relation_emb is None:
+            return
         v = violating.astype(float)[:, None]
 
         # Positive: decrease ‖h∘r - t‖

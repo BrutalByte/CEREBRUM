@@ -229,7 +229,6 @@ class InsightEngine:
         Finds high-similarity unconnected node pairs at community edges.
         Returns list of InsightEvents (edges materialized if score >= threshold).
         """
-        import networkx as nx
 
         G   = self._get_graph()
         
@@ -499,9 +498,10 @@ class InsightEngine:
                         self._schedule_cold()
 
         with self._lock:
-            self._cold_timer = threading.Timer(self.cold_scan_interval, _fire)
-            self._cold_timer.daemon = True
-            self._cold_timer.start()
+            if self.cold_scan_interval is not None:
+                self._cold_timer = threading.Timer(self.cold_scan_interval, _fire)
+                self._cold_timer.daemon = True
+                self._cold_timer.start()
 
     # ------------------------------------------------------------------
     # Internal — helpers

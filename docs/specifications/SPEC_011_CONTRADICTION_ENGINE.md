@@ -2,7 +2,7 @@
 ## Reasoning about Factual Conflict and Uncertainty
 
 **Status**: v1.1.0 (Phase 20 COMPLETE)  
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Formal Logic / Knowledge Integrity / Evidence-Based Reasoning  
 **Module**: `core/contradiction_engine.py`
 
@@ -47,4 +47,4 @@ The **CSA Engine** (SPEC_002) recognizes `CONTRADICTS` edges as "High-Surprise" 
 *   **Resolution Hooks**: Provides an API for human-in-the-loop (HITL) resolution, where a human expert can "Verify" one side of a conflict, causing the engine to prune the `CONTRADICTS` edge and its opposing fact.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

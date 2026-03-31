@@ -43,7 +43,6 @@ Usage
 from __future__ import annotations
 
 import re
-import math
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
@@ -193,7 +192,7 @@ class QueryParser:
         self._top_k          = top_k_entities
         self._min_score      = min_entity_score
         self._rel_vocab      = self._build_relation_vocab()
-        self._entity_index   = None  # built lazily
+        self._entity_index: Optional[Tuple[List[str], List[str], np.ndarray]] = None
 
     # ------------------------------------------------------------------
     # Public API
@@ -261,7 +260,7 @@ class QueryParser:
         """
         # Step 1: try exact / near-exact match on capitalised tokens
         exact_id, exact_label, exact_score = self._exact_match(question)
-        if exact_score >= 0.95:
+        if exact_id and exact_score >= 0.95:
             return exact_id, exact_label, exact_score, [(exact_id, exact_label, exact_score)]
 
         # Step 2: semantic search via embeddings
@@ -281,9 +280,9 @@ class QueryParser:
 
         best_id, best_label, best_score = sem_results[0]
         if best_score < self._min_score:
-            return None, "", best_score, sem_results
+            return None, "", float(best_score), sem_results
 
-        return best_id, best_label, best_score, sem_results[:self._top_k]
+        return best_id, best_label, float(best_score), sem_results[:self._top_k]
 
     def _exact_match(self, question: str) -> Tuple[Optional[str], str, float]:
         """
@@ -339,6 +338,7 @@ class QueryParser:
         if self._entity_index is None:
             self._entity_index = self._build_entity_index(embeddings)
 
+        assert self._entity_index is not None
         ids, labels, matrix = self._entity_index
         # Cosine similarity: matrix rows are already normalised
         sims = matrix @ q_vec  # shape (N,)

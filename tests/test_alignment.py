@@ -5,7 +5,6 @@ AlignmentIndex maps (adapter_name, entity_id) pairs to a single canonical ID,
 enabling federated queries across heterogeneous graph sources that use different
 ID schemes for the same real-world entities.
 """
-import pytest
 
 from adapters.networkx_adapter import NetworkXAdapter
 from core.alignment_engine import AlignmentIndex, auto_align_by_label

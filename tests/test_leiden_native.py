@@ -4,7 +4,6 @@ Tests for core/leiden_native.py — native Leiden reimplementation.
 Verifies output format, partition quality, connectivity guarantees,
 reproducibility, and drop-in compatibility with the existing API.
 """
-import pytest
 import networkx as nx
 from core.leiden_native import leiden_communities_native
 
@@ -62,7 +61,7 @@ def make_string_nodes():
 # ---------------------------------------------------------------------------
 
 def test_returns_list_of_frozensets():
-    G = make_two_cliques()
+    G: nx.Graph = make_two_cliques()
     parts = leiden_communities_native(G)
     assert isinstance(parts, list)
     for p in parts:
@@ -70,18 +69,18 @@ def test_returns_list_of_frozensets():
 
 
 def test_covers_all_nodes():
-    G = make_two_cliques()
+    G: nx.Graph = make_two_cliques()
     parts = leiden_communities_native(G)
-    all_nodes = set()
+    all_nodes: set[int] = set()
     for p in parts:
         all_nodes |= p
     assert all_nodes == set(G.nodes())
 
 
 def test_no_node_in_multiple_communities():
-    G = make_two_cliques()
+    G: nx.Graph = make_two_cliques()
     parts = leiden_communities_native(G)
-    all_nodes = []
+    all_nodes: list[int] = []
     for p in parts:
         all_nodes.extend(p)
     assert len(all_nodes) == len(set(all_nodes)), "Node appears in multiple communities"
@@ -95,9 +94,9 @@ def test_no_empty_communities():
 
 
 def test_string_node_ids_preserved():
-    G = make_string_nodes()
+    G: nx.Graph = make_string_nodes()
     parts = leiden_communities_native(G)
-    all_nodes = set()
+    all_nodes: set[str] = set()
     for p in parts:
         all_nodes |= p
     assert all_nodes == set(G.nodes())
@@ -110,13 +109,13 @@ def test_string_node_ids_preserved():
 # ---------------------------------------------------------------------------
 
 def test_empty_graph_returns_empty():
-    G = nx.Graph()
+    G: nx.Graph = nx.Graph()
     parts = leiden_communities_native(G)
     assert parts == []
 
 
 def test_no_edges_returns_singletons():
-    G = nx.Graph()
+    G: nx.Graph = nx.Graph()
     G.add_nodes_from([1, 2, 3, 4])
     parts = leiden_communities_native(G)
     assert len(parts) == 4
@@ -125,7 +124,7 @@ def test_no_edges_returns_singletons():
 
 
 def test_single_node():
-    G = nx.Graph()
+    G: nx.Graph = nx.Graph()
     G.add_node("solo")
     parts = leiden_communities_native(G)
     assert len(parts) == 1
@@ -133,10 +132,10 @@ def test_single_node():
 
 
 def test_single_edge():
-    G = nx.Graph()
+    G: nx.Graph = nx.Graph()
     G.add_edge("a", "b")
     parts = leiden_communities_native(G)
-    all_nodes = set()
+    all_nodes: set[str] = set()
     for p in parts:
         all_nodes |= p
     assert all_nodes == {"a", "b"}
@@ -144,7 +143,7 @@ def test_single_edge():
 
 def test_disconnected_graph():
     """Two isolated cliques with no bridge — must both be covered."""
-    G = nx.Graph()
+    G: nx.Graph = nx.Graph()
     for i in range(4):
         for j in range(i + 1, 4):
             G.add_edge(i, j)
@@ -152,7 +151,7 @@ def test_disconnected_graph():
         for j in range(i + 1, 14):
             G.add_edge(i, j)
     parts = leiden_communities_native(G)
-    all_nodes = set()
+    all_nodes: set[int] = set()
     for p in parts:
         all_nodes |= p
     assert all_nodes == set(G.nodes())
@@ -160,12 +159,12 @@ def test_disconnected_graph():
 
 def test_directed_graph_is_symmetrized():
     """Directed graph input should not raise; output covers all nodes."""
-    G = nx.DiGraph()
+    G: nx.DiGraph = nx.DiGraph()
     G.add_edge("a", "b")
     G.add_edge("b", "c")
     G.add_edge("c", "a")
     parts = leiden_communities_native(G)
-    all_nodes = set()
+    all_nodes: set[str] = set()
     for p in parts:
         all_nodes |= p
     assert all_nodes == {"a", "b", "c"}
@@ -177,7 +176,7 @@ def test_directed_graph_is_symmetrized():
 
 def test_two_cliques_detected_as_two_communities():
     """The canonical two-clique graph should yield exactly 2 communities."""
-    G = make_two_cliques(n=8)
+    G: nx.Graph = make_two_cliques(n=8)
     parts = leiden_communities_native(G, resolution=1.0, seed=0)
     assert len(parts) == 2
     sizes = sorted(len(p) for p in parts)
@@ -186,7 +185,7 @@ def test_two_cliques_detected_as_two_communities():
 
 def test_communities_are_internally_connected():
     """Leiden guarantee: every community must be internally connected."""
-    G = make_two_cliques(n=6)
+    G: nx.Graph = make_two_cliques(n=6)
     parts = leiden_communities_native(G)
     for part in parts:
         subgraph = G.subgraph(part)
@@ -195,8 +194,8 @@ def test_communities_are_internally_connected():
 
 def test_larger_graph_connectivity_guarantee():
     """Connectivity guarantee holds on a larger random graph."""
-    rng = nx.utils.create_py_random_state(99)
-    G = nx.barabasi_albert_graph(50, 3, seed=99)
+    nx.utils.create_py_random_state(99)
+    G: nx.Graph = nx.barabasi_albert_graph(50, 3, seed=99)
     parts = leiden_communities_native(G, seed=0)
     for part in parts:
         subgraph = G.subgraph(part)
@@ -205,7 +204,7 @@ def test_larger_graph_connectivity_guarantee():
 
 def test_resolution_higher_gives_more_communities():
     """Higher resolution should produce more (smaller) communities."""
-    G = make_two_cliques(n=10)
+    G: nx.Graph = make_two_cliques(n=10)
     parts_low = leiden_communities_native(G, resolution=0.5, seed=42)
     parts_high = leiden_communities_native(G, resolution=2.0, seed=42)
     assert len(parts_high) >= len(parts_low)
@@ -216,7 +215,7 @@ def test_resolution_higher_gives_more_communities():
 # ---------------------------------------------------------------------------
 
 def test_same_seed_same_result():
-    G = make_two_cliques(n=8)
+    G: nx.Graph = make_two_cliques(n=8)
     parts1 = leiden_communities_native(G, seed=7)
     parts2 = leiden_communities_native(G, seed=7)
     # Compare as sets of frozensets
@@ -225,7 +224,7 @@ def test_same_seed_same_result():
 
 def test_different_seeds_same_structure():
     """Two strong cliques — both seeds should still find 2 communities."""
-    G = make_two_cliques(n=8)
+    G: nx.Graph = make_two_cliques(n=8)
     parts_a = leiden_communities_native(G, seed=1)
     parts_b = leiden_communities_native(G, seed=999)
     assert len(parts_a) == len(parts_b) == 2
@@ -237,7 +236,7 @@ def test_different_seeds_same_structure():
 
 def test_weighted_graph():
     """Edge weights are respected — high-weight edges should stay in same community."""
-    G = nx.Graph()
+    G: nx.Graph = nx.Graph()
     # Strong cluster A
     G.add_edge("a1", "a2", weight=10.0)
     G.add_edge("a2", "a3", weight=10.0)
@@ -250,7 +249,7 @@ def test_weighted_graph():
     G.add_edge("a1", "b1", weight=0.01)
 
     parts = leiden_communities_native(G, resolution=1.0, seed=0)
-    all_nodes = set()
+    all_nodes: set[str] = set()
     for p in parts:
         all_nodes |= p
     assert all_nodes == set(G.nodes())

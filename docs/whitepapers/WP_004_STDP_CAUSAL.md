@@ -33,4 +33,4 @@ The STDP Engine adapts **Spike-Timing-Dependent Plasticity**—the same rule the
 The STDP Causal Engine transforms raw event streams into a structured, causal Knowledge Graph. It provides the "Reasoning Layer" for the modern enterprise, turning historical data into a predictive, self-learning causal network.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

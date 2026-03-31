@@ -6,11 +6,42 @@ candidate next-hop using CSA attention weights and pruning to beam_width at
 each step. Returns all explored paths for downstream ranking.
 """
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Set
+from typing import List, Dict, Optional, Set, Tuple
 import heapq
 import math
 
 import numpy as np
+
+from core.graph_adapter import GraphAdapter
+from core.attention_engine import CSAEngine
+from core.bridge_engine import BridgeTwinEngine, BRIDGE_RELATION
+from core.resource_governor import ResourceGovernor
+from reasoning.path_scorer import community_coherence
+
+
+# ---------------------------------------------------------------------------
+# CVT passthrough helpers
+# ---------------------------------------------------------------------------
+
+#: Multiplicative penalty applied when traversing through a CVT mediator hop.
+#: 0.85 discounts the path score slightly to reflect the extra indirection,
+#: while still allowing high-quality paths through CVT nodes to rank well.
+CVT_HOP_PENALTY: float = 0.85
+
+
+def _is_cvt_node(node_id: str) -> bool:
+    """
+    Return True if node_id is a Freebase CVT / MID mediator node.
+
+    CVT (Compound Value Type) nodes have opaque MID identifiers of the form
+    ``/m/xxxxx`` or ``/g/xxxxx``.  They carry no semantic label and therefore
+    produce near-zero cosine-similarity scores when used as attention targets.
+    Identifying them lets BeamTraversal collapse A→CVT→B into a single hop
+    scored on the A↔B semantic similarity instead.
+    """
+    return isinstance(node_id, str) and (
+        node_id.startswith("/m/") or node_id.startswith("/g/")
+    )
 
 
 def _sigmoid(x: float) -> float:
@@ -23,13 +54,6 @@ def _cosine_sim(a: np.ndarray, b: np.ndarray) -> float:
     if na == 0.0 or nb == 0.0:
         return 0.0
     return float(np.dot(a, b) / (na * nb))
-
-
-from core.graph_adapter import GraphAdapter
-from core.attention_engine import CSAEngine
-from core.bridge_engine import BridgeTwinEngine, BRIDGE_RELATION
-from core.resource_governor import ResourceGovernor
-from reasoning.path_scorer import community_coherence
 
 
 def is_valid_at(edge, query_time: Optional[float]) -> bool:
@@ -228,6 +252,8 @@ class BeamTraversal:
         probabilistic: bool = False,
         seed: int = 42,
         warm_start_strength: float = 0.0,
+        beam_widths: Optional[Dict[int, int]] = None,
+        cvt_passthrough: bool = False,
     ):
         self.adapter            = adapter
         self.csa                = csa_engine
@@ -243,21 +269,32 @@ class BeamTraversal:
         self.probabilistic      = probabilistic
         self._rng               = np.random.default_rng(seed)
         self.warm_start_strength = warm_start_strength
+        # Per-hop beam width overrides: {hop_number: width}.
+        # Allows wider beams at deeper intermediate hops without changing the
+        # base beam_width used for the first hop.  Only applied to intermediate
+        # hops (hop < max_hop); the terminal hop is never pruned.
+        self._beam_widths: Dict[int, int] = beam_widths or {}
+        # When True, traversal collapses Freebase CVT mediator nodes (opaque
+        # /m/ or /g/ MIDs) into transparent relay hops: A→CVT→B is treated as
+        # a single hop from A to B, scored on A↔B semantic similarity.
+        self.cvt_passthrough: bool = cvt_passthrough
 
     def traverse(
         self,
         seeds: List[str],
         query_time: Optional[float] = None,
+        query_embedding: Optional[np.ndarray] = None,
+        community_merger=None,
     ) -> List[TraversalPath]:
         """
         Run beam traversal from the given seed entity IDs.
 
         Parameters
         ----------
-        seeds      : list of entity IDs to start from
-        query_time : Unix timestamp for temporal filtering. Edges whose
-                     valid_from/valid_to windows exclude this time are skipped.
-                     None = no temporal filtering (default, backward-compatible).
+        seeds           : list of entity IDs to start from
+        query_time      : Unix timestamp for temporal filtering.
+        query_embedding : Optional[np.ndarray] of the question text.
+        community_merger: Optional[QueryGuidedCommunityMerger] instance.
         """
         emb_dim = self._infer_dim()
         self.expansions = 0
@@ -266,6 +303,11 @@ class BeamTraversal:
         # at query start so all CSA computations for this query use a consistent
         # partition, even if GlobalRebalancer commits a new map mid-traversal.
         _cmap = getattr(self.adapter, "community_map", None)
+        
+        # Phase 29: Context-Aware Community Merging
+        if community_merger is not None and query_embedding is not None and _cmap is not None:
+            _cmap = community_merger.merge(_cmap, query_embedding, self.adapter)
+
         if self.csa is not None and _cmap is not None:
             self.csa.set_query_snapshot(dict(_cmap))
         try:
@@ -320,6 +362,9 @@ class BeamTraversal:
                 )
                 self.expansions += 1
 
+                # Hoist source embedding fetch: same for all edges from this path
+                eu = self.adapter.get_embedding(path.tail)
+
                 for edge in edges:
                     v = edge.target_id
 
@@ -331,98 +376,134 @@ class BeamTraversal:
                     if v in path.seen_entities:
                         continue
 
-                    # CSA attention weight components for recording
-                    eu = self.adapter.get_embedding(path.tail)
-                    ev = self.adapter.get_embedding(v)
-                    sim = _cosine_sim(eu, ev) if (eu is not None and ev is not None) else 0.0
-                    cs = self.csa.community_score(path.tail, v)
-                    
-                    weights = self.edge_type_weights
-                    etw = weights.get(edge.relation_type, 0.0)
-                    
-                    nd = 0.0 # Default; normalized_distance logic usually lives in caller
-                    hd = 1.0 / (1.0 + hop)
-
-                    # CSA attention weight
-                    w = self.csa.compute_weight(
-                        path.tail,
-                        v,
-                        hop=hop,
-                        edge_type=edge.relation_type,
-                        edge_type_weights=self.edge_type_weights,
-                        normalized_distance=nd,
-                    )
-
-                    # Path metadata and extension
-                    v_emb = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
-                    v_cid = self.adapter.get_community(v)
-
-                    # Bridge twin detection: record cross-community crossings
-                    # and let the engine create a structural relay if warranted.
-                    u_cid = self.adapter.get_community(path.tail)
-                    if (
-                        self.bridge_engine is not None
-                        and u_cid != v_cid
-                        and u_cid >= 0
-                        and v_cid >= 0
-                        and edge.relation_type != BRIDGE_RELATION
-                    ):
-                        self.bridge_engine.record_crossing(
-                            node_id=v,
-                            source_community=v_cid,
-                            dest_community=u_cid,
-                            adapter=self.adapter,
+                    # ----------------------------------------------------------
+                    # CVT passthrough: collapse opaque Freebase mediator nodes.
+                    # When v is a CVT/MID node (/m/xxx, /g/xxx) we expand one
+                    # level further and treat each A→CVT→B pair as a single
+                    # hop from A to B, preserving the combined relation label.
+                    # A small CVT_HOP_PENALTY is applied via edge_confidence.
+                    # ----------------------------------------------------------
+                    if self.cvt_passthrough and _is_cvt_node(v):
+                        cvt_edges = self.adapter.get_neighbors(
+                            v, max_neighbors=self.max_neighbors
                         )
+                        next_steps: List[Tuple[str, str, float, str]] = []
+                        for ce in cvt_edges:
+                            vv = ce.target_id
+                            if vv not in path.seen_entities and not _is_cvt_node(vv):
+                                next_steps.append((
+                                    vv,
+                                    f"{edge.relation_type}|{ce.relation_type}",
+                                    min(edge.confidence, ce.confidence) * CVT_HOP_PENALTY,
+                                    ce.provenance,
+                                ))
+                    else:
+                        next_steps = [
+                            (v, edge.relation_type, edge.confidence, edge.provenance)
+                        ]
 
-                    # Mark bridge twin use so its idle timer resets
-                    if (
-                        self.bridge_engine is not None
-                        and edge.relation_type == BRIDGE_RELATION
-                    ):
-                        self.bridge_engine.record_twin_use(v)
+                    for (v_eff, rel_eff, conf_eff, prov_eff) in next_steps:
+                        if v_eff in path.seen_entities:
+                            continue
 
-                    # Hot path: record cross-community crossing for InsightEngine
-                    if (
-                        self.insight_engine is not None
-                        and u_cid != v_cid
-                        and u_cid >= 0
-                        and v_cid >= 0
-                    ):
-                        # new_path not built yet — pass current path; engine sees score after extension
-                        self.insight_engine.record_crossing(
-                            u=path.tail,
-                            v=v,
-                            u_cid=u_cid,
+                        ev = self.adapter.get_embedding(v_eff)
+
+                        # Single call: weight + all feature components (community_score
+                        # is memoized per query, embeddings pre-fetched above).
+                        # Falls back to compute_weight() when compute_weight_with_features
+                        # is unavailable or returns a non-tuple (e.g. mocks, old subclasses).
+                        _cwf = getattr(self.csa, 'compute_weight_with_features', None)
+                        _cwf_result = _cwf(
+                            path.tail, v_eff, hop=hop,
+                            edge_type=rel_eff,
+                            edge_type_weights=self.edge_type_weights,
+                            normalized_distance=0.0,
+                            eu=eu, ev=ev,
+                        ) if _cwf is not None else None
+                        if isinstance(_cwf_result, tuple) and len(_cwf_result) == 6:
+                            w, sim, cs, etw, nd, hd = _cwf_result
+                        else:
+                            w = float(self.csa.compute_weight(
+                                path.tail, v_eff, hop=hop,
+                                edge_type=rel_eff,
+                                edge_type_weights=self.edge_type_weights,
+                                normalized_distance=0.0,
+                            ))
+                            sim = _cosine_sim(eu, ev) if (eu is not None and ev is not None) else 0.0
+                            cs  = float(self.csa.community_score(path.tail, v_eff)) if hasattr(self.csa, 'community_score') else 0.5
+                            etw = self.edge_type_weights.get(rel_eff, 0.0)
+                            nd  = 0.0
+                            hd  = 1.0 / (1.0 + hop)
+
+                        # Path metadata and extension
+                        v_emb = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
+                        v_cid = self.adapter.get_community(v_eff)
+
+                        # Bridge twin detection: record cross-community crossings
+                        # and let the engine create a structural relay if warranted.
+                        u_cid = self.adapter.get_community(path.tail)
+                        if (
+                            self.bridge_engine is not None
+                            and u_cid != v_cid
+                            and u_cid >= 0
+                            and v_cid >= 0
+                            and rel_eff != BRIDGE_RELATION
+                        ):
+                            self.bridge_engine.record_crossing(
+                                node_id=v_eff,
+                                source_community=v_cid,
+                                dest_community=u_cid,
+                                adapter=self.adapter,
+                            )
+
+                        # Mark bridge twin use so its idle timer resets
+                        if (
+                            self.bridge_engine is not None
+                            and rel_eff == BRIDGE_RELATION
+                        ):
+                            self.bridge_engine.record_twin_use(v_eff)
+
+                        # Hot path: record cross-community crossing for InsightEngine
+                        if (
+                            self.insight_engine is not None
+                            and u_cid != v_cid
+                            and u_cid >= 0
+                            and v_cid >= 0
+                        ):
+                            self.insight_engine.record_crossing(
+                                u=path.tail,
+                                v=v_eff,
+                                u_cid=u_cid,
+                                v_cid=v_cid,
+                                path_score=path.score,
+                                path=path,
+                            )
+
+                        # Compute community coherence for the candidate step
+                        coh = community_coherence(path.community_sequence + [v_cid])
+
+                        # Warm-start: amplify the first-hop beta update to reduce cold-start variance
+                        _prior_scale = 1.0
+                        if (
+                            self.probabilistic
+                            and self.warm_start_strength > 0.0
+                            and len(path.nodes) == 1
+                        ):
+                            _prior_scale = 1.0 + self.warm_start_strength
+
+                        new_path = path.copy_with_extension(
+                            rel=rel_eff,
+                            v=v_eff,
                             v_cid=v_cid,
-                            path_score=path.score,
-                            path=path,
+                            v_emb=v_emb,
+                            weight=w,
+                            coherence_score=coh,
+                            edge_confidence=conf_eff,
+                            edge_provenance=prov_eff,
+                            prior_scale=_prior_scale,
+                            features=(sim, cs, etw, nd, hd),
                         )
-
-                    # Compute community coherence for the candidate step
-                    coh = community_coherence(path.community_sequence + [v_cid])
-
-                    # Warm-start: amplify the first-hop beta update to reduce cold-start variance
-                    _prior_scale = 1.0
-                    if (
-                        self.probabilistic
-                        and self.warm_start_strength > 0.0
-                        and len(path.nodes) == 1
-                    ):
-                        _prior_scale = 1.0 + self.warm_start_strength
-
-                    new_path = path.copy_with_extension(
-                        rel=edge.relation_type,
-                        v=v,
-                        v_cid=v_cid,
-                        v_emb=v_emb,
-                        weight=w,
-                        coherence_score=coh,
-                        edge_confidence=edge.confidence,
-                        edge_provenance=edge.provenance,
-                        prior_scale=_prior_scale,
-                        features=(sim, cs, etw, nd, hd),
-                    )
-                    candidates.append(new_path)
+                        candidates.append(new_path)
 
             if not candidates:
                 break
@@ -430,11 +511,12 @@ class BeamTraversal:
             # At the terminal hop, skip pruning — all reachable endpoints are kept
             # for the answer extractor to score and deduplicate. Pruning here discards
             # valid answers with zero benefit (no further expansion occurs).
+            hop_bw = self._beam_widths.get(hop, self.beam_width)
             if self.probabilistic:
                 _rng = self._rng
-                if hop < self.max_hop and len(candidates) > self.beam_width:
+                if hop < self.max_hop and len(candidates) > hop_bw:
                     beam = heapq.nlargest(
-                        self.beam_width, candidates,
+                        hop_bw, candidates,
                         key=lambda p: p.sample_score(_rng),
                     )
                 else:
@@ -442,8 +524,8 @@ class BeamTraversal:
                                   key=lambda p: p.sample_score(_rng),
                                   reverse=True)
             else:
-                if hop < self.max_hop and len(candidates) > self.beam_width:
-                    beam = heapq.nlargest(self.beam_width, candidates, key=lambda p: p.score)
+                if hop < self.max_hop and len(candidates) > hop_bw:
+                    beam = heapq.nlargest(hop_bw, candidates, key=lambda p: p.score)
                 else:
                     beam = sorted(candidates, key=lambda p: p.score, reverse=True)
 
@@ -481,7 +563,6 @@ class AsyncBeamTraversal(BeamTraversal):
 
         query_time : Unix timestamp for temporal filtering (see traverse()).
         """
-        import asyncio
         emb_dim = self._infer_dim()
         self.expansions = 0
 
@@ -529,7 +610,7 @@ class AsyncBeamTraversal(BeamTraversal):
                 if not self.governor.can_expand(self.expansions, self.max_budget):
                     break
 
-                # Non-blocking neighbor fetch (if adapter supports it, 
+                # Non-blocking neighbor fetch (if adapter supports it,
                 # otherwise runs in thread pool or just regular call)
                 edges = self.adapter.get_neighbors(
                     path.tail,
@@ -537,10 +618,13 @@ class AsyncBeamTraversal(BeamTraversal):
                     context_embedding=path.embedding,
                 )
                 self.expansions += 1
-                
+
                 # Small yield to prevent event loop starvation on huge graphs
                 if self.expansions % 100 == 0:
                     await asyncio.sleep(0)
+
+                # Hoist source embedding fetch: same for all edges from this path
+                eu = self.adapter.get_embedding(path.tail)
 
                 for edge in edges:
                     v = edge.target_id
@@ -552,80 +636,110 @@ class AsyncBeamTraversal(BeamTraversal):
                     if v in path.seen_entities:
                         continue
 
-                    # CSA attention weight components for recording
-                    eu = self.adapter.get_embedding(path.tail)
-                    ev = self.adapter.get_embedding(v)
-                    sim = _cosine_sim(eu, ev) if (eu is not None and ev is not None) else 0.0
-                    cs = self.csa.community_score(path.tail, v)
-                    
-                    weights = self.edge_type_weights
-                    etw = weights.get(edge.relation_type, 0.0)
-                    
-                    nd = 0.0 # Default
-                    hd = 1.0 / (1.0 + hop)
-
-                    w = self.csa.compute_weight(
-                        path.tail,
-                        v,
-                        hop=hop,
-                        edge_type=edge.relation_type,
-                        edge_type_weights=self.edge_type_weights,
-                        normalized_distance=nd,
-                    )
-
-                    v_emb = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
-                    v_cid  = self.adapter.get_community(v)
-                    u_cid_ = self.adapter.get_community(path.tail)
-
-                    # Hot path: async traversal also feeds InsightEngine
-                    if (
-                        self.insight_engine is not None
-                        and u_cid_ != v_cid
-                        and u_cid_ >= 0
-                        and v_cid >= 0
-                    ):
-                        self.insight_engine.record_crossing(
-                            u=path.tail,
-                            v=v,
-                            u_cid=u_cid_,
-                            v_cid=v_cid,
-                            path_score=path.score,
-                            path=path,
+                    # CVT passthrough (same logic as sync traversal)
+                    if self.cvt_passthrough and _is_cvt_node(v):
+                        cvt_edges = self.adapter.get_neighbors(
+                            v, max_neighbors=self.max_neighbors
                         )
+                        next_steps: List[Tuple[str, str, float, str]] = []
+                        for ce in cvt_edges:
+                            vv = ce.target_id
+                            if vv not in path.seen_entities and not _is_cvt_node(vv):
+                                next_steps.append((
+                                    vv,
+                                    f"{edge.relation_type}|{ce.relation_type}",
+                                    min(edge.confidence, ce.confidence) * CVT_HOP_PENALTY,
+                                    ce.provenance,
+                                ))
+                    else:
+                        next_steps = [
+                            (v, edge.relation_type, edge.confidence, edge.provenance)
+                        ]
 
-                    coh = community_coherence(path.community_sequence + [v_cid])
+                    for (v_eff, rel_eff, conf_eff, prov_eff) in next_steps:
+                        if v_eff in path.seen_entities:
+                            continue
 
-                    _prior_scale = 1.0
-                    if (
-                        self.probabilistic
-                        and self.warm_start_strength > 0.0
-                        and len(path.nodes) == 1
-                    ):
-                        _prior_scale = 1.0 + self.warm_start_strength
+                        ev = self.adapter.get_embedding(v_eff)
 
-                    new_path = path.copy_with_extension(
-                        rel=edge.relation_type,
-                        v=v,
-                        v_cid=v_cid,
-                        v_emb=v_emb,
-                        weight=w,
-                        coherence_score=coh,
-                        edge_confidence=edge.confidence,
-                        edge_provenance=edge.provenance,
-                        prior_scale=_prior_scale,
-                        features=(sim, cs, etw, nd, hd),
-                    )
-                    candidates.append(new_path)
+                        # Single call: weight + all feature components (with fallback)
+                        _cwf = getattr(self.csa, 'compute_weight_with_features', None)
+                        _cwf_result = _cwf(
+                            path.tail, v_eff, hop=hop,
+                            edge_type=rel_eff,
+                            edge_type_weights=self.edge_type_weights,
+                            normalized_distance=0.0,
+                            eu=eu, ev=ev,
+                        ) if _cwf is not None else None
+                        if isinstance(_cwf_result, tuple) and len(_cwf_result) == 6:
+                            w, sim, cs, etw, nd, hd = _cwf_result
+                        else:
+                            w = float(self.csa.compute_weight(
+                                path.tail, v_eff, hop=hop,
+                                edge_type=rel_eff,
+                                edge_type_weights=self.edge_type_weights,
+                                normalized_distance=0.0,
+                            ))
+                            sim = _cosine_sim(eu, ev) if (eu is not None and ev is not None) else 0.0
+                            cs  = float(self.csa.community_score(path.tail, v_eff)) if hasattr(self.csa, 'community_score') else 0.5
+                            etw = self.edge_type_weights.get(rel_eff, 0.0)
+                            nd  = 0.0
+                            hd  = 1.0 / (1.0 + hop)
+
+                        v_emb  = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
+                        v_cid  = self.adapter.get_community(v_eff)
+                        u_cid_ = self.adapter.get_community(path.tail)
+
+                        # Hot path: async traversal also feeds InsightEngine
+                        if (
+                            self.insight_engine is not None
+                            and u_cid_ != v_cid
+                            and u_cid_ >= 0
+                            and v_cid >= 0
+                        ):
+                            self.insight_engine.record_crossing(
+                                u=path.tail,
+                                v=v_eff,
+                                u_cid=u_cid_,
+                                v_cid=v_cid,
+                                path_score=path.score,
+                                path=path,
+                            )
+
+                        coh = community_coherence(path.community_sequence + [v_cid])
+
+                        _prior_scale = 1.0
+                        if (
+                            self.probabilistic
+                            and self.warm_start_strength > 0.0
+                            and len(path.nodes) == 1
+                        ):
+                            _prior_scale = 1.0 + self.warm_start_strength
+
+                        new_path = path.copy_with_extension(
+                            rel=rel_eff,
+                            v=v_eff,
+                            v_cid=v_cid,
+                            v_emb=v_emb,
+                            weight=w,
+                            coherence_score=coh,
+                            edge_confidence=conf_eff,
+                            edge_provenance=prov_eff,
+                            prior_scale=_prior_scale,
+                            features=(sim, cs, etw, nd, hd),
+                        )
+                        candidates.append(new_path)
 
             if not candidates:
                 break
 
             # At the terminal hop, skip pruning (same as sync version)
+            hop_bw = self._beam_widths.get(hop, self.beam_width)
             if self.probabilistic:
                 _rng = self._rng
-                if hop < self.max_hop and len(candidates) > self.beam_width:
+                if hop < self.max_hop and len(candidates) > hop_bw:
                     beam = heapq.nlargest(
-                        self.beam_width, candidates,
+                        hop_bw, candidates,
                         key=lambda p: p.sample_score(_rng),
                     )
                 else:
@@ -633,8 +747,8 @@ class AsyncBeamTraversal(BeamTraversal):
                                   key=lambda p: p.sample_score(_rng),
                                   reverse=True)
             else:
-                if hop < self.max_hop and len(candidates) > self.beam_width:
-                    beam = heapq.nlargest(self.beam_width, candidates, key=lambda p: p.score)
+                if hop < self.max_hop and len(candidates) > hop_bw:
+                    beam = heapq.nlargest(hop_bw, candidates, key=lambda p: p.score)
                 else:
                     beam = sorted(candidates, key=lambda p: p.score, reverse=True)
 

@@ -15,8 +15,7 @@ import sys
 from pathlib import Path
 
 from docx import Document
-from docx.shared import Pt, RGBColor, Inches
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Pt, Inches
 
 
 # ---------------------------------------------------------------------------
@@ -168,7 +167,7 @@ def convert(md_path: Path, docx_path: Path) -> None:
             text = strip_latex(m.group(2))
             text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
             text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
-            heading_style = f'Heading {min(level, 4)}'
+            f'Heading {min(level, 4)}'
             doc.add_heading(text, level=min(level, 4))
             i += 1
             continue

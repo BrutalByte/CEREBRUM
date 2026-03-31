@@ -2,7 +2,7 @@
 ## Self-Contained Precision/Recall Methodology for Unsupervised Graph Reasoning
 
 **Status**: v1.1.0 (Phase 20 COMPLETE)  
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Model Evaluation / Information Retrieval / Graph Algorithms  
 **Module**: `core/inference_validator.py`
 
@@ -52,4 +52,4 @@ The `InferenceValidator` class executes the following workflow:
 *   **Infrastructure Health**: Periodically run validation on a production graph to detect "Reasoning Decay" as data drift occurs.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

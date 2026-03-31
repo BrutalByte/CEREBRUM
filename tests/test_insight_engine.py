@@ -5,7 +5,6 @@ All tests use small in-process NetworkXAdapter instances with synthetic
 embeddings (RandomEngine). No external dependencies. No file I/O.
 """
 import time
-import threading
 
 import networkx as nx
 import numpy as np
@@ -54,7 +53,6 @@ def _adapter_two_communities():
     adapter.community_map = {"A": 0, "B": 0, "C": 0, "D": 1, "E": 1, "F": 1}
 
     # Patch get_community to use community_map
-    original_get_community = adapter.get_community
     def patched_get_community(entity_id):
         return adapter.community_map.get(entity_id, -1)
     adapter.get_community = patched_get_community
@@ -295,7 +293,6 @@ def test_propagate_reward_caps_at_one():
 
 def test_propagate_reward_proportional_to_insight_score():
     """Stronger insights produce larger confidence boosts."""
-    import copy
 
     adapter1 = _adapter_two_communities()
     adapter2 = _adapter_two_communities()
@@ -322,7 +319,6 @@ def test_explanatory_power_disconnected():
     """Adding an edge between two separate components → high explanatory power."""
     adapter = _adapter_two_communities()
     ie = _make_engine(adapter)
-    G = adapter._G
 
     # Build a disconnected graph: two separate cliques
     G2 = nx.DiGraph()
@@ -368,7 +364,6 @@ def test_recent_events_capped_at_n():
     _flood_baseline(ie, 0, 1, 0.1)
 
     # Fire multiple events directly
-    G = adapter._G
     for i in range(15):
         ev = InsightEvent(
             bridging_node="D", source="C", target="D",

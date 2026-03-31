@@ -287,13 +287,17 @@ class ConversationManager:
         focus_shift  = False
 
         # Determine effective seed entity
+        seed_id: Optional[str] = None
+        seed_label: str = ""
+        seed_score: float = 0.0
+
         if is_followup and session.focus_entity:
             seed_id    = session.focus_entity
             seed_label = session.focus_entity_label
             seed_score = 1.0
         elif parsed.seed_entity_id is not None:
             seed_id    = parsed.seed_entity_id
-            seed_label = parsed.seed_entity_label or seed_id
+            seed_label = parsed.seed_entity_label or str(seed_id)
             seed_score = parsed.seed_entity_score
             if session.focus_entity and seed_id != session.focus_entity:
                 focus_shift = True
@@ -555,8 +559,8 @@ class ConversationManager:
         options: List[Tuple[str, str]],
     ) -> str:
         lines = [
-            f"I found multiple possible matches for your question. "
-            f"Which did you mean?",
+            "I found multiple possible matches for your question. "
+            "Which did you mean?",
             "",
         ]
         for i, (eid, label) in enumerate(options, 1):

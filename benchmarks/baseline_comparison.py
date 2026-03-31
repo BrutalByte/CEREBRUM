@@ -31,14 +31,12 @@ import random
 import sys
 import time
 from pathlib import Path
-from typing import List, Tuple, Dict, Optional
+from typing import Optional, Dict, Tuple
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import networkx as nx
 
-from adapters.networkx_adapter import NetworkXAdapter
-from core.community_engine import best_of_n_dscf, lpa_communities
+from core.community_engine import lpa_communities
 from core.embedding_engine import RandomEngine
 from core.attention_engine import CSAEngine
 from core.structural_encoder import (
@@ -46,20 +44,20 @@ from core.structural_encoder import (
     coarsen_communities, build_community_graph,
 )
 
-_COARSEN_TARGET = 500  # max communities before CSA signal degrades
 from reasoning.traversal import BeamTraversal
-from reasoning.answer_extractor import extract
 from core.resource_governor import ResourceGovernor
+
+from benchmarks.metaqa_eval import (
+    load_kb, load_qa, load_or_compute_communities,
+    evaluate_hop,
+)
+
+_COARSEN_TARGET = 500  # max communities before CSA signal degrades
 
 # Benchmarks measure algorithmic quality, not governor behavior.
 # Use a near-unlimited governor (99% threshold) so memory pressure on the
 # host machine doesn't silently throttle CEREBRUM to zero answers.
 _BENCH_GOVERNOR = ResourceGovernor(memory_threshold_pct=99.0)
-
-from benchmarks.metaqa_eval import (
-    load_kb, load_qa, load_or_compute_communities,
-    hits_at_k, reciprocal_rank, evaluate_hop,
-)
 
 DATA_DIR  = Path(__file__).parent / "data" / "metaqa"
 CACHE_DIR = DATA_DIR / "cache"
@@ -79,7 +77,15 @@ class UniformCSAEngine(CSAEngine):
     Weight = sigmoid(0) = 0.5 for all edges (all coefficients zeroed out).
     """
 
-    def compute_weight(self, u, v, hop, edge_type="", edge_type_weights=None) -> float:
+    def compute_weight(
+        self,
+        u: str,
+        v: str,
+        hop: int,
+        edge_type: str = "",
+        edge_type_weights: Optional[Dict[str, float]] = None,
+        normalized_distance: float = 0.0,
+    ) -> float:
         return 0.5   # sigmoid(0) — perfectly neutral
 
 
@@ -89,7 +95,7 @@ class UniformCSAEngine(CSAEngine):
 
 def build_dscf_traversal(
     adapter, G, embeddings, beam_width, max_hop, dscf_seed=42, use_cache=True
-) -> BeamTraversal:
+) -> Tuple[BeamTraversal, Dict[str, int]]:
     """Variant A: full DSCF + CSA."""
     cmap = load_or_compute_communities(G, use_cache=use_cache, dscf_seed=dscf_seed)
     if len(set(cmap.values())) > _COARSEN_TARGET:
@@ -103,7 +109,7 @@ def build_dscf_traversal(
     adapter.community_map = cmap
     adapter.embeddings = embeddings
 
-    csa  = CSAEngine(adapter=adapter)
+    csa = CSAEngine(adapter=adapter)
     csa.set_community_graph(dist, adj, community_graph=cg)
     return BeamTraversal(
         adapter=adapter,
@@ -116,7 +122,7 @@ def build_dscf_traversal(
 
 def build_lpa_traversal(
     adapter, G, embeddings, beam_width, max_hop
-) -> BeamTraversal:
+) -> Tuple[BeamTraversal, Dict[str, int]]:
     """Variant B: LPA communities + CSA."""
     print("  Computing LPA communities...")
     t0    = time.time()
@@ -134,7 +140,7 @@ def build_lpa_traversal(
     adapter.community_map = cmap
     adapter.embeddings = embeddings
 
-    csa  = CSAEngine(adapter=adapter)
+    csa = CSAEngine(adapter=adapter)
     csa.set_community_graph(dist, adj, community_graph=cg)
     return BeamTraversal(
         adapter=adapter,
@@ -147,7 +153,7 @@ def build_lpa_traversal(
 
 def build_bfs_traversal(
     adapter, G, embeddings, beam_width, max_hop
-) -> BeamTraversal:
+) -> Tuple[BeamTraversal, Dict[str, int]]:
     """Variant C: BFS — no community structure, uniform weights."""
     # Community map assigns all nodes to community 0 (irrelevant since weights are uniform)
     cmap = {node: 0 for node in G.nodes()}
@@ -155,7 +161,7 @@ def build_bfs_traversal(
     adapter.community_map = cmap
     adapter.embeddings = embeddings
     
-    csa  = UniformCSAEngine(adapter=adapter)
+    csa = UniformCSAEngine(adapter=adapter)
     return BeamTraversal(
         adapter=adapter,
         csa_engine=csa,

@@ -44,4 +44,4 @@ A drug discovery platform uses CEREBRUM to identify novel therapeutic targets. O
 The Verification and Metacognition layer gives CEREBRUM a self-correcting intelligence that no other KG reasoning system possesses. By treating speculation with structural skepticism and monitoring its own reasoning patterns for systemic biases, CEREBRUM provides the epistemic rigor required for deployment in high-stakes research, clinical, and regulatory environments.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

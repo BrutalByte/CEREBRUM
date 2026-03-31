@@ -1,7 +1,6 @@
 """
 Tests for Phase 19 — TransitiveInferenceEngine.
 """
-import time
 import pytest
 import networkx as nx
 
@@ -9,7 +8,6 @@ from adapters.networkx_adapter import NetworkXAdapter
 from core.inference_engine import (
     TransitiveInferenceEngine,
     InferenceRule,
-    InferenceProposal,
     InferenceReport,
     INFERENCE_RULES,
     _build_rule_index,

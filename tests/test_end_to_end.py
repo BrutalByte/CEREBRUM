@@ -19,8 +19,6 @@ operates as described in the CEREBRUM white paper.
 import random
 from pathlib import Path
 
-import numpy as np
-import pytest
 
 from adapters.csv_adapter import load_csv_adapter
 from core.attention_engine import CSAEngine

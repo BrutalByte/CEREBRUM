@@ -6,7 +6,6 @@ No external dependencies. No file I/O.
 """
 import threading
 import time
-from unittest.mock import patch
 
 import networkx as nx
 import numpy as np

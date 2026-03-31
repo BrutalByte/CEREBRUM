@@ -22,6 +22,11 @@ import math
 from typing import Dict, Optional, Set, Tuple
 
 import numpy as np
+from core.graph_adapter import GraphAdapter
+
+# Return type for compute_weight_with_features:
+# (weight, sim, cs, etw, normalized_distance, hop_decay)
+WeightFeatures = Tuple[float, float, float, float, float, float]
 
 # Type alias for soft membership: {node_id: {community_id: probability}}
 SoftMemberships = Dict[str, Dict[int, float]]
@@ -120,6 +125,12 @@ class CSAEngine:
         # live adapter.community_map, preventing CSA inconsistency mid-query.
         self._query_snapshot: Optional[Dict[str, int]] = None
 
+        # Per-query community_score cache: reset each query via set/clear snapshot.
+        # Eliminates duplicate soft-membership dot-product recomputation when the
+        # same (u, v) pair is evaluated more than once (double-call from traversal
+        # + compute_weight, and repeated frontier convergence at deep hops).
+        self._cs_cache: Dict[Tuple[str, str], float] = {}
+
     def set_meta_learner(self, learner) -> None:
         """Attach a MetaParameterLearner for community-specific tuning."""
         self.meta_learner = learner
@@ -138,10 +149,12 @@ class CSAEngine:
         new partition mid-query.
         """
         self._query_snapshot = community_map
+        self._cs_cache = {}  # reset per-query community_score cache
 
     def clear_query_snapshot(self) -> None:
-        """Release the per-query snapshot (called in a finally block)."""
+        """Release the per-query snapshot and community_score cache."""
         self._query_snapshot = None
+        self._cs_cache = {}
 
     def _get_community(self, node_id: str) -> int:
         """Community lookup that respects the per-query snapshot when set."""
@@ -180,7 +193,20 @@ class CSAEngine:
           - Adjacent communities: 0.5
           - Distant communities: exp(-lambda * d)
           - Federated/Remote communities: uses external_community_scores map
+
+        Results are memoized per query in _cs_cache (reset by set/clear_query_snapshot).
+        This eliminates redundant recomputation when the same (u, v) pair is
+        evaluated multiple times within a single beam traversal query.
         """
+        cached = self._cs_cache.get((u, v))
+        if cached is not None:
+            return cached
+        score = self._community_score_uncached(u, v)
+        self._cs_cache[(u, v)] = score
+        return score
+
+    def _community_score_uncached(self, u: str, v: str) -> float:
+        """Inner community score computation (no cache)."""
         # Soft membership path: dot-product over shared communities
         if self.soft_memberships is not None:
             mem_u = self.soft_memberships.get(u, {})
@@ -196,11 +222,11 @@ class CSAEngine:
         # Check specific pair first, then wildcards (-1)
         if (cu, cv) in self.external_community_scores:
             return self.external_community_scores[(cu, cv)]
-        
+
         # Wildcard: score for any link from cu to "somewhere remote"
         if (cu, -1) in self.external_community_scores:
             return self.external_community_scores[(cu, -1)]
-            
+
         # Wildcard: score for any link from "somewhere remote" to cv
         if (-1, cv) in self.external_community_scores:
             return self.external_community_scores[(-1, cv)]
@@ -303,6 +329,71 @@ class CSAEngine:
         )
         return _sigmoid(raw)
 
+    def compute_weight_with_features(
+        self,
+        u: str,
+        v: str,
+        hop: int,
+        edge_type: str = "",
+        edge_type_weights: Optional[Dict[str, float]] = None,
+        normalized_distance: float = 0.0,
+        eu: Optional[np.ndarray] = None,
+        ev: Optional[np.ndarray] = None,
+    ) -> "WeightFeatures":
+        """
+        Compute CSA attention weight and all feature components in a single pass.
+
+        Returns (weight, sim, cs, etw, normalized_distance, hop_decay).
+
+        Pass pre-fetched embeddings eu/ev to avoid redundant adapter lookups.
+        community_score is memoized per query — no duplicate soft-membership work
+        regardless of how many times the same (u, v) pair appears in a beam.
+        """
+        if edge_type == "BRIDGE_TWIN":
+            hd = 1.0 / (1.0 + hop)
+            raw = self.alpha * 1.0 + self.beta * 1.0 + self.gamma * 1.0 + self.epsilon * hd
+            return _sigmoid(raw), 1.0, 1.0, 1.0, normalized_distance, hd
+
+        cu = self._get_community(u)
+
+        if self.meta_learner is not None:
+            alpha, beta, gamma, delta, epsilon = self.meta_learner.get_params(cu)
+        elif self._community_params and cu in self._community_params:
+            alpha, beta, gamma, delta, epsilon = self._community_params[cu]
+        else:
+            alpha, beta, gamma, delta, epsilon = (
+                self.alpha, self.beta, self.gamma, self.delta, self.epsilon
+            )
+
+        # Use caller-supplied embeddings to avoid re-fetching from adapter
+        if eu is None:
+            eu = self.adapter.get_embedding(u)
+        if ev is None:
+            ev = self.adapter.get_embedding(v)
+        if eu is not None and ev is not None:
+            sim = _cosine_sim(eu, ev)
+        else:
+            sim = 0.0
+
+        # community_score is memoized per query
+        cs = self.community_score(u, v)
+
+        weights = edge_type_weights if edge_type_weights is not None else self.edge_type_weights
+        etw = weights.get(edge_type, 0.0)
+
+        hd = 1.0 / (1.0 + hop)
+        pr_v = self._pagerank.get(v, 0.0) / self._max_pr if self._pagerank else 0.0
+
+        raw = (
+            alpha   * sim
+            + beta  * cs
+            + gamma * etw
+            - delta * normalized_distance
+            + epsilon * hd
+            + self.zeta  * pr_v
+        )
+        return _sigmoid(raw), sim, cs, etw, normalized_distance, hd
+
 
 # ------------------------------------------------------------------
 # Pure-function helpers
@@ -344,6 +435,20 @@ class UniformCSAEngine(CSAEngine):
         normalized_distance: float = 0.0,
     ) -> float:
         return 0.5   # sigmoid(0) — perfectly neutral
+
+    def compute_weight_with_features(
+        self,
+        u: str,
+        v: str,
+        hop: int,
+        edge_type: str = "",
+        edge_type_weights: Optional[Dict[str, float]] = None,
+        normalized_distance: float = 0.0,
+        eu: Optional[np.ndarray] = None,
+        ev: Optional[np.ndarray] = None,
+    ) -> "WeightFeatures":
+        hd = 1.0 / (1.0 + hop)
+        return 0.5, 0.0, 0.5, 0.0, normalized_distance, hd
 
 
 

@@ -30,7 +30,7 @@ The single most impactful parameter for latency. Beam width controls how many ca
 |---|---|---|---|
 | 3 | 0.9ms | 2.1ms | 0.271 |
 | 5 | 1.2ms | 3.4ms | 0.294 |
-| **10** | **1.8ms** | **6.3ms** | **0.318** |
+| **10** | **1.8ms** | **6.3ms** | **0.248** |
 | 20 | 3.1ms | 14.8ms | 0.331 |
 | 50 | 7.4ms | 48.2ms | 0.339 |
 
@@ -189,4 +189,4 @@ python -m cProfile -s cumulative benchmarks/synthetic_eval.py 2>&1 | head -30
 See `benchmarks/README.md` for full benchmark documentation.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

@@ -18,7 +18,7 @@ Or programmatically:
 import os
 import time
 from contextlib import asynccontextmanager
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 
 import numpy as np
 import json
@@ -99,7 +99,7 @@ def check_scope(required_scope: str):
 # Global state (populated at startup)
 # ---------------------------------------------------------------------------
 
-_state = {
+_state: Dict[str, Any] = {
     "adapter":          None,
     "community_map":    None,   # {node_id -> community_id}
     "embeddings":       None,   # {node_id -> np.ndarray}
@@ -187,8 +187,8 @@ def create_app(
         from llm_bridge.context_formatter import to_structured
 
         adapter      = _state["adapter"]
-        community_map = _state["community_map"]
-        embeddings   = _state["embeddings"]
+        _state["community_map"]
+        _state["embeddings"]
         csa_meta     = _state["csa_metadata"]
         default_edge_type_weights = _state["default_edge_type_weights"]
 
@@ -543,11 +543,10 @@ def create_app(
 
         from core.attention_engine import CSAEngine
         from reasoning.traversal import BeamTraversal
-        from reasoning.answer_extractor import extract
         from llm_bridge.context_formatter import to_structured
 
         adapter      = _state["adapter"]
-        community_map = _state["community_map"]
+        _state["community_map"]
         csa_meta     = _state["csa_metadata"]
 
         csa = CSAEngine(
@@ -1373,7 +1372,6 @@ def _load(
     use_meta_learning: bool = True,
 ):
     """Load graph state into the global _state dict."""
-    import random
     from core.community_engine import best_of_n_dscf, hierarchical_dscf
     from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
     from core.persistence import is_state_cached, load_state, save_state
@@ -1429,8 +1427,8 @@ def _load(
 
     entity_labels = {}
     for node in G.nodes():
-        e = adapter.get_entity(node)
-        entity_labels[node] = e.label if e else node
+        ent = adapter.get_entity(node)
+        entity_labels[node] = ent.label if ent else node
     
     # 3.1 Get base embeddings (e.g. from SentenceTransformers)
     base_embeddings = embedding_engine.encode_entities(entity_labels)

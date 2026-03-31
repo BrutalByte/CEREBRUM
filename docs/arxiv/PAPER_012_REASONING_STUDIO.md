@@ -1,6 +1,6 @@
 # Glass-Box Reasoning Studio: Visualizing Graph Attention and Latent Multi-Hop Inference
 
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
 **Status**: v1.2.0 (Hardened Enterprise)  
 **Date**: March 2026
@@ -8,7 +8,7 @@
 ---
 
 ### Abstract
-The "Black-Box" nature of modern Graph Neural Networks (GNNs) and Transformer-based reasoning systems limits their utility in domains requiring high auditability. We present the **Glass-Box Reasoning Studio**, an interactive visualization framework designed for the forensic audit of multi-hop Knowledge Graph inference. The Studio reifies the "Reasoning Beam" as a dynamic topological trace, where edges are scaled by their **Community-Structured Attention (CSA)** weights and nodes are color-coded by their **DSCF/TSC** community partitions. We introduce a "Forensic Score Breakdown" interface that exposes the latent mathematical signals (semantic similarity, community guidance, and structural centrality) driving each traversal hop. Furthermore, we describe a real-time "Live Feed" visualization for streaming graphs that animates **STDP spike events** and the materialization of speculative causal links. The v1.2.0 release adds adaptive node clustering to support visual scaling for graphs exceeding $10^5$ nodes. Our results show that this interactive "Glass-Box" approach significantly reduces the time required for human experts to verify complex AI-generated hypotheses.
+The "Black-Box" nature of modern Graph Neural Networks (GNNs) and Transformer-based reasoning systems limits their utility in domains requiring high auditability. We present the **Glass-Box Reasoning Studio**, an interactive visualization framework designed for the forensic audit of multi-hop Knowledge Graph inference. The Studio reifies the "Reasoning Beam" as a dynamic topological trace, where edges are scaled by their **Community-Structured Attention (CSA)** weights and nodes are color-coded by their **DSCF/TSC** community partitions. We introduce a "Forensic Score Breakdown" interface that exposes the latent mathematical signals (semantic similarity, community guidance, and structural centrality) driving each traversal hop, building on foundational Explainable AI (XAI) principles \cite{samek2017explainable, ribeiro2016lime, lundberg2017shap}. Furthermore, we describe a real-time "Live Feed" visualization for streaming graphs that animates **STDP spike events** and the materialization of speculative causal links. The v1.2.0 release adds adaptive node clustering to support visual scaling for graphs exceeding $10^5$ nodes. Our results show that this interactive "Glass-Box" approach significantly reduces the time required for human experts to verify complex AI-generated hypotheses.
 
 ### 1. Introduction
 Explainability in AI (XAI) has traditionally focused on post-hoc interpretations of neural weights (e.g., saliency maps). In graph-based reasoning, however, the explanation is the path itself. The Glass-Box Reasoning Studio provides the first integrated environment for visualizing graph attention as a physical, navigatable flow.

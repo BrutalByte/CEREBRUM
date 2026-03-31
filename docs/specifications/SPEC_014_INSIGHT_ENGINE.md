@@ -2,7 +2,7 @@
 ## InsightValidator, InsightEngine, and MetaInsightEngine
 
 **Status**: v1.2.0 (Hardened Enterprise)
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Field**: Metacognition / Self-Verification / Second-Order Reasoning
 **Modules**: `core/insight_validator.py`, `core/meta_insight_engine.py`
 
@@ -138,4 +138,4 @@ meta.query_second_order(start_event_id: str, max_hops: int = 2) -> List[InsightP
 - **Verification**: 1,012+ tests passing as of v1.2.0 Hardened Enterprise.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

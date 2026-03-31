@@ -16,16 +16,17 @@ from core.discretizer import STDPDiscretizer, _chi_squared_uniformity
 
 def _make_stdp(**kwargs) -> STDPDiscretizer:
     """Create an STDPDiscretizer with low thresholds for fast testing."""
-    defaults = dict(
-        window_seconds=2.0,
-        tau_plus=0.5,
-        A_plus=0.2,
-        w_threshold=0.3,
-        n_min=3,
-        weight_decay=1.0,  # no decay for deterministic tests
+    # We use explicit mapping to satisfy Mypy while keeping the flexible kwargs API
+    return STDPDiscretizer(
+        window_seconds=float(kwargs.get("window_seconds", 2.0)),
+        tau_plus=float(kwargs.get("tau_plus", 0.5)),
+        A_plus=float(kwargs.get("A_plus", 0.2)),
+        w_threshold=float(kwargs.get("w_threshold", 0.3)),
+        n_min=int(kwargs.get("n_min", 3)),
+        weight_decay=float(kwargs.get("weight_decay", 1.0)),
+        min_causal_span=float(kwargs.get("min_causal_span", 0.0)),
+        use_chi_squared=bool(kwargs.get("use_chi_squared", False)),
     )
-    defaults.update(kwargs)
-    return STDPDiscretizer(**defaults)
 
 
 def _fire_burst(stdp, pre, post, n=10, start=0.0, interval=0.0001):

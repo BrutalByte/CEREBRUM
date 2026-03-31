@@ -1,7 +1,6 @@
 """
 Tests for Phase 18b — QueryParser.
 """
-import numpy as np
 import pytest
 import networkx as nx
 

@@ -2,7 +2,7 @@
 ## Cross-Modal Alignment via Orthogonal Procrustes
 
 **Status**: v1.1.0 (Phase 20 COMPLETE)  
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Signal Processing / Latent Space Alignment / Multi-Modal AI  
 **Module**: `core/signal_encoder.py`
 
@@ -64,4 +64,4 @@ To prevent this, CEREBRUM enforces a **Canonical Basis Anchor**:
 *   **Learnability**: The `learn_alignment()` method can be triggered by the **REM Cycle** if the alignment error $\| RX - Y \|$ exceeds a drift threshold.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

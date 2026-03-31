@@ -16,7 +16,6 @@ Covers:
   - Negative sampling produces different triple
   - Reproducibility with same seed
 """
-import math
 import pytest
 import networkx as nx
 import numpy as np
@@ -226,3 +225,130 @@ def test_rotate_complex_mul_identity():
     h = np.array([[1.0, 2.0, 3.0, 4.0, 0.1, 0.2, 0.3, 0.4]])      # (1, 8)
     result = kge._complex_mul(h, identity)
     np.testing.assert_allclose(result, h, atol=1e-9)
+
+
+# ---------------------------------------------------------------------------
+# predict_links — Phase 28C
+# ---------------------------------------------------------------------------
+
+class TestPredictLinks:
+    def test_returns_list(self):
+        kge, _, _ = _train_transe()
+        result = kge.predict_links("A", top_k=3)
+        assert isinstance(result, list)
+
+    def test_length_at_most_top_k(self):
+        kge, _, _ = _train_transe()
+        result = kge.predict_links("A", top_k=2)
+        assert len(result) <= 2
+
+    def test_tuple_format(self):
+        """Each entry is (head, relation, tail, score)."""
+        kge, _, _ = _train_transe()
+        for entry in kge.predict_links("A", top_k=3):
+            assert len(entry) == 4
+            head, rel, tail, score = entry
+            assert isinstance(head, str)
+            assert isinstance(rel, str)
+            assert isinstance(tail, str)
+            assert isinstance(score, float)
+
+    def test_head_matches_query(self):
+        kge, _, _ = _train_transe()
+        for (h, r, t, s) in kge.predict_links("A", top_k=5):
+            assert h == "A"
+
+    def test_no_self_predictions(self):
+        kge, _, _ = _train_transe()
+        for (h, r, t, s) in kge.predict_links("A", top_k=10):
+            assert t != "A"
+
+    def test_scores_descending(self):
+        kge, _, _ = _train_transe()
+        results = kge.predict_links("A", top_k=5)
+        scores = [s for (_, _, _, s) in results]
+        assert scores == sorted(scores, reverse=True)
+
+    def test_unknown_entity_returns_empty(self):
+        kge, _, _ = _train_transe()
+        assert kge.predict_links("UNKNOWN_ENTITY_XYZ", top_k=5) == []
+
+    def test_untrained_returns_empty(self):
+        kge = TransEEngine(dim=16, seed=0)
+        assert kge.predict_links("A", top_k=5) == []
+
+    def test_relation_filter(self):
+        """When relations= is specified, only those relations appear in results."""
+        kge, _, _ = _train_transe()
+        results = kge.predict_links("A", top_k=10, relations=["KNOWS"])
+        for (h, r, t, s) in results:
+            assert r == "KNOWS"
+
+    def test_empty_relation_filter_returns_empty(self):
+        kge, _, _ = _train_transe()
+        assert kge.predict_links("A", top_k=5, relations=[]) == []
+
+    def test_rotate_also_works(self):
+        kge, _, _ = _train_rotate()
+        result = kge.predict_links("A", top_k=3)
+        assert isinstance(result, list)
+        if result:
+            assert len(result[0]) == 4
+
+
+class TestKgeRepairIntegration:
+    """predict_links plugs into IncompletenessRepairEngine._kge_score."""
+
+    def test_kge_score_top_candidate_returns_one(self):
+        """The top-ranked candidate by KGE should get score 1.0."""
+        import networkx as nx
+        from adapters.networkx_adapter import NetworkXAdapter
+        from core.repair_engine import IncompletenessRepairEngine
+        from unittest.mock import MagicMock
+
+        G = nx.DiGraph()
+        G.add_edge("A", "B", relation="r")
+        G.add_edge("B", "C", relation="r")
+        adapter_mock = MagicMock()
+        adapter_mock.community_map = {}
+        adapter_mock.get_embedding.return_value = None
+
+        kge = TransEEngine(dim=16, seed=0)
+        kge.fit(NetworkXAdapter(G), n_epochs=30)
+
+        engine = IncompletenessRepairEngine(adapter_mock, kge_engine=kge)
+        preds = kge.predict_links("A", top_k=5)
+        if preds:
+            top_tail = preds[0][2]
+            score = engine._kge_score("A", top_tail)
+            assert score == 1.0  # rank 0 → 1/(1+0) = 1.0
+
+    def test_kge_score_not_in_top_returns_zero(self):
+        """A tail not in top-20 predictions should return 0.0."""
+        import networkx as nx
+        from adapters.networkx_adapter import NetworkXAdapter
+        from core.repair_engine import IncompletenessRepairEngine
+        from unittest.mock import MagicMock
+
+        G = nx.DiGraph()
+        G.add_edge("A", "B", relation="r")
+        G.add_edge("B", "C", relation="r")
+        adapter_mock = MagicMock()
+        adapter_mock.community_map = {}
+
+        kge = TransEEngine(dim=16, seed=0)
+        kge.fit(NetworkXAdapter(G), n_epochs=10)
+
+        engine = IncompletenessRepairEngine(adapter_mock, kge_engine=kge)
+        score = engine._kge_score("A", "ENTITY_NOT_IN_VOCAB_XYZ")
+        assert score == 0.0
+
+    def test_kge_none_returns_neutral(self):
+        """No KGE engine → _kge_score returns 0.5 (neutral)."""
+        from core.repair_engine import IncompletenessRepairEngine
+        from unittest.mock import MagicMock
+
+        adapter_mock = MagicMock()
+        adapter_mock.community_map = {}
+        engine = IncompletenessRepairEngine(adapter_mock, kge_engine=None)
+        assert engine._kge_score("A", "B") == 0.5

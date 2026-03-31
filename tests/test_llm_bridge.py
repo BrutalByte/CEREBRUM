@@ -11,11 +11,8 @@ Covers:
 All tests use synthetic Answer/TraversalPath objects.
 No external API calls are made.
 """
-import random
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 from reasoning.traversal import TraversalPath
 from reasoning.answer_extractor import Answer
@@ -303,7 +300,8 @@ class TestGenerate:
 
     def test_plain_lambda_works_as_llm_fn(self):
         """Any callable(str)->str is a valid llm_fn — no adapter required."""
-        fn = lambda prompt: f"Processed: {len(prompt)} chars"
+        def fn(prompt):
+            return f"Processed: {len(prompt)} chars"
         result = generate([ANSWER_A], query="test", llm_fn=fn)
         assert result.response.startswith("Processed:")
 

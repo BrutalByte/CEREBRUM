@@ -9,7 +9,6 @@ Covers:
 Uses tmp_path and monkeypatching of PARALLAX_DATA_DIR to keep all I/O
 within pytest's managed temporary directory.
 """
-import os
 import numpy as np
 import pytest
 

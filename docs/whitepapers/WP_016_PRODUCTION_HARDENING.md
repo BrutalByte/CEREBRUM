@@ -72,4 +72,4 @@ This methodology is now standard practice for all new CEREBRUM feature developme
 The eight structural holes documented in this white paper represent an honest accounting of the failure modes discovered during CEREBRUM's production readiness audit. Their systematic identification and remediation — with backward-compatible fixes totaling 147 lines of production code — demonstrates the kind of rigorous engineering discipline required for AI systems deployed in critical business operations.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

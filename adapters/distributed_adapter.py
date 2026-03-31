@@ -69,7 +69,7 @@ import hashlib
 import logging
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 log = logging.getLogger("cerebrum.distributed")
@@ -214,7 +214,6 @@ class ShardManager:
             else:
                 # community-based: keep community→worker assignments
                 for eid in entities:
-                    comm_id = None
                     for cid, wurl in self._community_map.items():
                         pass  # simplified: use hash as fallback
                     h = int(hashlib.md5(eid.encode()).hexdigest(), 16)

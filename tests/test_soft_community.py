@@ -7,10 +7,10 @@ Covers:
   - Soft path (dot-product) vs hard path (same/adjacent/distant)
   - Integration: BeamTraversal end-to-end with soft memberships
 """
-import math
 import pytest
 import networkx as nx
 import numpy as np
+from typing import Optional
 
 from core.community_engine import compute_soft_memberships
 from core.attention_engine import CSAEngine
@@ -132,12 +132,19 @@ def _minimal_soft_memberships():
     }
 
 
-class _MockAdapter:
+from core.graph_adapter import GraphAdapter
+
+class _MockAdapter(GraphAdapter):
     """Minimal adapter stub — community_score() should use soft_memberships, not this."""
-    def get_community(self, node):
+    def get_community(self, node: str) -> int:
         raise AssertionError("get_community() should not be called when soft_memberships is set")
-    def get_embedding(self, node):
+    def get_embedding(self, node: str) -> Optional[np.ndarray]:
         return None
+    def find_similar(self, *args, **kwargs) -> list: return []
+    def find_entities(self, *args, **kwargs) -> list: return []
+    def get_entity(self, entity_id: str): return None
+    def to_networkx(self): return None
+    def get_neighbors(self, *args, **kwargs) -> list: return []
 
 
 def test_soft_community_score_same_community_nodes():

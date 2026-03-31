@@ -1,17 +1,22 @@
 import numpy as np
-import pytest
+from typing import Optional
 from core.attention_engine import CSAEngine
 
-class MockAdapter:
+from core.graph_adapter import GraphAdapter
+
+class MockAdapter(GraphAdapter):
     def __init__(self, communities, embeddings):
         self.community_map = communities
         self.embeddings = embeddings
-    def get_community(self, node):
-        return self.community_map.get(node)
-    def get_embedding(self, node):
+    def get_community(self, node: str) -> int:
+        return self.community_map.get(node, -1)
+    def get_embedding(self, node: str) -> Optional[np.ndarray]:
         return self.embeddings.get(node)
-    def get_neighbors(self, *args, **kwargs): return []
-    def find_similar(self, *args, **kwargs): return []
+    def get_neighbors(self, *args, **kwargs) -> list: return []
+    def find_similar(self, *args, **kwargs) -> list: return []
+    def find_entities(self, *args, **kwargs) -> list: return []
+    def get_entity(self, entity_id: str): return None
+    def to_networkx(self): return None
 
 def test_bridge_bonus_influence():
     # Simple setup

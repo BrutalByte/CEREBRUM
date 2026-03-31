@@ -5,7 +5,6 @@ All tests use real psutil calls (no mocking) because the governor's whole
 purpose is to read real system state. Tests are written to be robust on any
 machine regardless of current memory pressure.
 """
-import pytest
 
 from core.resource_governor import ResourceGovernor
 

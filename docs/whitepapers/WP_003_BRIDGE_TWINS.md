@@ -33,4 +33,4 @@ The Bridge Twin Engine acts as an "Artificial Thalamus" for your graph. When the
 The Bridge Twin Engine moves Knowledge Graphs from "Digital Archives" to "Living Intelligence Systems." By physically adapting to reasoning experience, it ensures your AI infrastructure remains fast, lean, and precise.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

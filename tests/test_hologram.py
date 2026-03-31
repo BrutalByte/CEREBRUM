@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 from core.holographic_index import (
     SimpleBloomFilter, CommunitySignature, HolographicIndex, build_signatures
 )

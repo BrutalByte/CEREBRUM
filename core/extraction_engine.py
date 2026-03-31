@@ -84,10 +84,11 @@ except ImportError:
     _SPACY_AVAILABLE = False
 
 try:
-    from transformers import pipeline as _hf_pipeline
+    from transformers import pipeline as _hf_pipeline, Text2TextGenerationPipeline
     _TRANSFORMERS_AVAILABLE = True
 except ImportError:
-    _hf_pipeline = None  # type: ignore
+    _hf_pipeline = None
+    Text2TextGenerationPipeline = Any # type: ignore
     _TRANSFORMERS_AVAILABLE = False
 
 
@@ -344,12 +345,14 @@ class ExtractionEngine:
     def rollback(self, report: ExtractionReport) -> int:
         """Remove all edges that were added during an ingest_text() call."""
         removed = 0
+        G = self._adapter.to_networkx()
         for triple in report.triples:
             try:
-                self._adapter.remove_edge(triple.subject, triple.object, triple.predicate)
-                removed += 1
-            except Exception:
-                pass
+                if G.has_edge(triple.subject, triple.object):
+                    G.remove_edge(triple.subject, triple.object)
+                    removed += 1
+            except Exception as exc:
+                log.debug("ExtractionEngine.rollback error: %s", exc)
         log.info("ExtractionEngine.rollback: removed %d edges.", removed)
         return removed
 
@@ -364,17 +367,17 @@ class ExtractionEngine:
         """
         from core.text_ingestor import TextIngestor
 
-        ingestor = TextIngestor(self._adapter)
+        ingestor = TextIngestor(self._adapter, min_confidence=self._config.min_confidence)
         report   = ingestor.ingest_text(text, dry_run=True)
 
         triples: List[ExtractedTriple] = []
-        for item in getattr(report, "candidates", []):
+        for src, rel, dst, conf in report.added_triples:
             triples.append(ExtractedTriple(
-                subject=item.get("subject", ""),
-                predicate=item.get("relation", "RELATED_TO"),
-                object=item.get("object", ""),
-                confidence=float(item.get("confidence", 0.6)),
-                source_text=item.get("source_text", ""),
+                subject=src,
+                predicate=rel,
+                object=dst,
+                confidence=conf,
+                source_text=text[:200] + "...", # Best effort as sentence isn't in report
                 source_doc=doc_id,
                 extraction_method="local_verb",
             ))
@@ -756,29 +759,41 @@ JSON:"""
         """Commit accepted triples to the graph via IngestionPipeline."""
         from core.thalamus import IngestionPipeline
 
-        pipeline = IngestionPipeline(
-            self._adapter,
-            namespace=self._config.namespace or "",
-        )
-        known_before = set(self._adapter.to_networkx().nodes())
+        # IngestionPipeline handles normalization and confidence clamping.
+        # We don't pass namespace here because _link_entities (called in extract())
+        # has already applied it to the triple subject/object.
+        pipeline = IngestionPipeline()
+        G = self._adapter.to_networkx()
+        known_before = set(G.nodes())
 
         for triple in triples:
             if triple.confidence < self._config.min_confidence:
                 continue
             try:
-                pipeline.process(
-                    subject=triple.subject,
-                    predicate=triple.predicate,
-                    object_=triple.object,
-                    confidence=triple.confidence,
-                    provenance=f"extraction:{triple.extraction_method}",
-                    source_text=triple.source_text[:500],
+                processed = pipeline.process(
+                    source=triple.subject,
+                    target=triple.object,
+                    relation=triple.predicate,
+                    metadata={
+                        "confidence": triple.confidence,
+                        "provenance": f"extraction:{triple.extraction_method}",
+                        "source_text": triple.source_text[:500],
+                    }
+                )
+                G.add_edge(
+                    processed.source,
+                    processed.target,
+                    relation=processed.relation,
+                    confidence=processed.confidence,
+                    provenance=processed.provenance,
+                    weight=processed.weight,
+                    **processed.properties,
                 )
                 report.edges_added += 1
             except Exception as exc:
                 log.debug("ExtractionEngine commit error: %s", exc)
 
-        known_after = set(self._adapter.to_networkx().nodes())
+        known_after = set(G.nodes())
         report.entities_added = len(known_after - known_before)
         self._refresh_entity_set()
 
@@ -839,13 +854,12 @@ JSON:"""
                         "text2text-generation",
                         model=self._config.rebel_model,
                         tokenizer=self._config.rebel_model,
+                        pipeline_class=Text2TextGenerationPipeline, # type: ignore
                     )
                     log.info("ExtractionEngine: loaded REBEL model '%s'.", self._config.rebel_model)
                 except Exception as exc:
                     log.warning("ExtractionEngine: could not load REBEL: %s", exc)
-        return self._rebel
-
-
+                return self._rebel
 # ---------------------------------------------------------------------------
 # Module-level helpers
 # ---------------------------------------------------------------------------

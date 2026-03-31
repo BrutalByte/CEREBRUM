@@ -1,11 +1,9 @@
 
-import pytest
 import numpy as np
 import networkx as nx
 from adapters.networkx_adapter import NetworkXAdapter
 from adapters.federated_adapter import FederatedAdapter
 from core.holographic_index import build_signatures
-from core.graph_adapter import Edge
 
 def test_federated_wormhole_discovery():
     """

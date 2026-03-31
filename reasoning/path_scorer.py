@@ -5,9 +5,10 @@ Combines:
   - Attention weight product (coverage of the reasoning chain)
   - Community coherence (domain consistency across hops)
   - Semantic alignment to the query (optional)
+  - Relation path prior (optional) — frequency bonus for productive sequences
 """
 import math
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import numpy as np
 
@@ -69,29 +70,35 @@ def score_path(
     weight_attention: float = 0.4,
     weight_community: float = 0.3,
     weight_semantic: float  = 0.3,
+    relation_prior: Optional[Any] = None,
+    weight_prior: float = 0.15,
 ) -> float:
     """
-    Final path score combining attention, community coherence, and semantic alignment.
+    Final path score combining attention, community coherence, semantic
+    alignment, and an optional relation path frequency prior.
 
-    score(P) = weight_attention * prod(attention_weights)
-             + weight_community * community_coherence(P)
-             + weight_semantic  * semantic_alignment(h_final, query_emb)
+    score(P) = w_attn  * prod(attention_weights)
+             + w_comm  * community_coherence(P)
+             + w_sem   * semantic_alignment(h_final, query_emb)   [optional]
+             + w_prior * relation_prior.score(P)                  [optional]
 
-    When query_embedding is None, semantic weight is redistributed to the
-    other two signals proportionally.
+    When query_embedding is None, its weight is redistributed to the other
+    active signals proportionally.  When relation_prior is None, its weight
+    is similarly redistributed.
 
     Parameters
     ----------
     path             : TraversalPath object
     query_embedding  : optional query vector for semantic alignment check
-    weight_*         : linear combination weights (should sum to 1.0)
+    weight_*         : linear combination weights
+    relation_prior   : optional RelationPathPrior or GraphRelationPrior
+    weight_prior     : weight given to the relation prior term (default 0.15)
 
     Returns
     -------
     float in [0, 1]
     """
     if not path.attention_weights:
-        # Depth-0 seed path — neutral score
         return 0.5
 
     # Attention: product of weights along the path
@@ -100,28 +107,39 @@ def score_path(
     # Community coherence
     coh = community_coherence(path.community_sequence)
 
-    # Semantic alignment to query
-    if query_embedding is not None and path.embedding is not None:
+    # Determine which optional signals are active
+    has_semantic = query_embedding is not None and path.embedding is not None
+    has_prior    = relation_prior is not None
+
+    # Compute active signal scores
+    w_attn = weight_attention
+    w_comm = weight_community
+    w_sem  = weight_semantic if has_semantic else 0.0
+    w_pri  = weight_prior    if has_prior    else 0.0
+
+    score = w_attn * attention_score + w_comm * coh
+
+    if has_semantic:
         qn = float(np.linalg.norm(query_embedding))
         pn = float(np.linalg.norm(path.embedding))
         if qn > 0 and pn > 0:
             raw_sim  = float(np.dot(query_embedding, path.embedding) / (qn * pn))
-            semantic = (raw_sim + 1.0) / 2.0   # map [-1, 1] -> [0, 1]
+            semantic = (raw_sim + 1.0) / 2.0
         else:
             semantic = 0.5
-        return (
-            weight_attention * attention_score
-            + weight_community * coh
-            + weight_semantic  * semantic
-        )
-    else:
-        # No query embedding — redistribute semantic weight
-        total = weight_attention + weight_community
-        if total == 0:
-            return 0.0
-        wa = weight_attention / total
-        wc = weight_community / total
-        return wa * attention_score + wc * coh
+        score += w_sem * semantic
+
+    if has_prior:
+        prior_s = relation_prior.score_with_prefix(path) if hasattr(
+            relation_prior, "score_with_prefix"
+        ) else relation_prior.score(path)
+        score += w_pri * prior_s
+
+    # Normalise by total active weight
+    total_w = w_attn + w_comm + w_sem + w_pri
+    if total_w <= 0:
+        return 0.0
+    return float(np.clip(score / total_w, 0.0, 1.0))
 
 
 

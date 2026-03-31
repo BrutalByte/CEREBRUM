@@ -7,7 +7,6 @@ beyond networkx, igraph, and leidenalg.
 Usage:
     python examples/csv_quickstart.py
 """
-import random
 import sys
 from pathlib import Path
 
@@ -46,10 +45,14 @@ def main():
     labels    = {n: n for n in G.nodes()}
     embeddings = engine.encode_entities(labels)
 
+    # Update adapter with metadata for CSAEngine to use
+    adapter.community_map = community_map
+    adapter.embeddings = embeddings
+
     # 4. Build CSA engine
     dist = build_community_distance_matrix(G, community_map)
     adj  = adjacent_community_pairs(G, community_map)
-    csa  = CSAEngine(communities=community_map, embeddings=embeddings)
+    csa  = CSAEngine(adapter=adapter)
     csa.set_community_graph(dist, adj)
 
     # 5. Traverse from "newton"
@@ -59,8 +62,6 @@ def main():
     traversal = BeamTraversal(
         adapter=adapter,
         csa_engine=csa,
-        embeddings=embeddings,
-        communities=community_map,
         beam_width=10,
         max_hop=3,
         edge_type_weights=edge_weights,

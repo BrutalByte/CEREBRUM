@@ -9,6 +9,7 @@ Requires: pip install SPARQLWrapper
 from typing import List, Optional
 
 import networkx as nx
+import numpy as np
 
 from core.graph_adapter import GraphAdapter, Entity, Edge
 
@@ -70,7 +71,6 @@ class RDFAdapter(GraphAdapter):
         return self._sparql
 
     def _query(self, sparql_body: str) -> list:
-        from SPARQLWrapper import JSON
         sw = self._get_sparql()
         sw.setQuery(self._prefixes + "\n" + sparql_body)
         result = sw.queryAndConvert()
@@ -142,13 +142,29 @@ class RDFAdapter(GraphAdapter):
             "  FILTER(isIRI(?s) && isIRI(?o))"
             "} LIMIT 10000"
         )
-        G = nx.DiGraph()
+        G: nx.DiGraph = nx.DiGraph()
         for row in rows:
             s   = row["s"]["value"]
             o   = row["o"]["value"]
             rel = row["p"]["value"].split("/")[-1].split("#")[-1]
             G.add_edge(s, o, relation=rel)
         return G
+
+    def get_community(self, entity_id: str) -> int:
+        """RDF endpoints rarely have community metadata; return -1."""
+        return -1
+
+    def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:
+        """RDF endpoints rarely store embeddings; return None."""
+        return None
+
+    def find_similar(
+        self,
+        embedding: np.ndarray,
+        top_k: int = 10
+    ) -> List[Entity]:
+        """SPARQL does not support vector similarity search natively."""
+        return []
 
 
 

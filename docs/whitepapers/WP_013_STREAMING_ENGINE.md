@@ -46,4 +46,4 @@ A manufacturing plant monitors 800 sensors across a production line. CEREBRUM's 
 The Streaming Engine transforms CEREBRUM from a query-response tool into a continuous intelligence infrastructure. It provides the real-time awareness required in today's high-velocity data environments while maintaining the glass-box transparency and zero-hallucination guarantee that distinguish CEREBRUM from probabilistic AI alternatives.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

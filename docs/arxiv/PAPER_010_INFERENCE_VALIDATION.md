@@ -1,6 +1,6 @@
 # Inference Validator: A Self-Contained Precision/Recall Harness for Unsupervised Graph Reasoning
 
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
 **Status**: v1.2.0 (Hardened Enterprise)  
 **Date**: March 2026
@@ -8,7 +8,7 @@
 ---
 
 ### Abstract
-We present **Inference Validator**, a methodology for evaluating the performance of unsupervised graph reasoning engines without external ground-truth labels. The framework operates by treating the Knowledge Graph's (KG) own topology as a proxy for truth through a specialized hold-out strategy. We introduce the **Path-Preserving Hold-out** constraint, which ensures that held-out edges are only selected if an alternative multi-hop path exists, thereby guaranteeing that the reasoning task is solvable from the remaining structure. We define metrics for **Unsupervised Recall ($R@K$)** and **Confidence Calibration Error**, providing a rigorous benchmark for assessing attention-steered traversals (CSA). In v1.2.0, we utilize this harness to validate that **quantized float16 embeddings** maintain an MRR loss of $< 0.002$ while reducing memory footprint by **48%**. Our results demonstrate that this self-contained harness allows for autonomous parameter tuning and stability monitoring in production Knowledge Graphs.
+We present **Inference Validator**, a methodology for evaluating the performance of unsupervised graph reasoning engines without external ground-truth labels. The framework operates by treating the Knowledge Graph's (KG) own topology as a proxy for truth through a specialized hold-out strategy. We introduce the **Path-Preserving Hold-out** constraint, which ensures that held-out edges are only selected if an alternative multi-hop path exists, thereby guaranteeing that the reasoning task is solvable from the remaining structure. We define metrics for **Unsupervised Recall ($R@K$)** and **Confidence Calibration Error**, providing a rigorous benchmark for assessing attention-steered traversals (CSA). In v1.2.0, we utilize this harness to validate that **quantized float16 embeddings** maintain an MRR loss of $< 0.002$ while reducing memory footprint by **48%**. We benchmark performance using the **MetaQA** \cite{metaqa2017} dataset. Our results demonstrate that this self-contained harness allows for autonomous parameter tuning and stability monitoring in production Knowledge Graphs.
 
 ### 1. Introduction
 The evaluation of reasoning in KGs is typically constrained by the scarcity of gold-standard datasets. In autonomous or proprietary environments, external validation is often unavailable. We propose that a reasoning engine's quality can be measured by its ability to rediscover "hidden" facts that are structurally supported by the surrounding network topology.

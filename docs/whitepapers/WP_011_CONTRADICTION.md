@@ -33,4 +33,4 @@ CEREBRUM's Contradiction Engine acts as a "Structural Skeptic." It identifies lo
 The Contradiction Materialization Engine turns factual conflict into a research signal. it provides the sophisticated, evidence-based reasoning required for high-stakes decision-making in the modern enterprise.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

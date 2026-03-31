@@ -2,7 +2,7 @@
 ## Interactive Visualization and Forensic Audit of Graph Attention
 
 **Status**: v1.1.0 (Phase 20 COMPLETE)  
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Human-Computer Interaction / Explainable AI (XAI) / Data Visualization  
 **Module**: `ui/studio.py`
 
@@ -44,4 +44,4 @@ The Studio allows users to "drill down" into the community hierarchy:
 *   **Scale**: Utilizes adaptive node clustering to prevent visual clutter, automatically coarsening the view for graphs exceeding 10,000 nodes.
 
 ---
-**Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

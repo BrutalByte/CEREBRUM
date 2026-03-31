@@ -6,7 +6,6 @@ Validates that InferenceValidator only withholds edges where an alternative
 multi-hop path exists, preventing false-zero recall on sparse graphs.
 """
 import networkx as nx
-import pytest
 from unittest.mock import MagicMock, patch
 
 from core.inference_validator import InferenceValidator
@@ -58,7 +57,7 @@ def _bridge_graph():
 def test_has_alternative_path_with_triangle():
     G = _dense_graph()
     adapter = _make_adapter(G)
-    v = InferenceValidator(adapter)
+    InferenceValidator(adapter)
     # A-B has alternative path A→(C←B) via reverse, or B→C→A
     # For directed: A→C is via C→A reversed — check A→B removal
     # With directed graph: A→B removed; A→? still has A? not reachable to B
@@ -138,7 +137,7 @@ def test_path_preserving_false_no_filter():
     candidates = [("A", "C", "KNOWS")]  # synthetic inferable edge
     with patch.object(v_pp,  "_find_inferable_edges", return_value=candidates):
         with patch.object(v_raw, "_find_inferable_edges", return_value=candidates):
-            report_pp  = v_pp.validate(dry_run=True)
+            v_pp.validate(dry_run=True)
             report_raw = v_raw.validate(dry_run=True)
 
     # path_preserving=False should keep the candidate

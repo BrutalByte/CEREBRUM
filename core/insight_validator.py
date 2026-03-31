@@ -28,7 +28,6 @@ strongly prefers paths that have been independently verified.
 from __future__ import annotations
 
 import threading
-from typing import Optional
 
 import networkx as nx
 
@@ -229,7 +228,7 @@ class InsightValidator:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _get_graph(self):
+    def _get_graph(self) -> nx.Graph:
         G = getattr(self.adapter, "_G", None)
         if G is None:
             raise AttributeError(

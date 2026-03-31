@@ -1,6 +1,6 @@
 # THALAMUS: Intelligent Ingestion and Namespace Isolation for Heterogeneous Knowledge Graphs
 
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
 **Status**: v1.2.0 (Hardened Enterprise)  
 **Date**: March 2026
@@ -16,7 +16,7 @@ The "GIGO" (Garbage In, Garbage Out) principle is the primary failure mode for a
 ### 2. Methodology
 
 #### 2.1 Normalization and Deduplication
-THALAMUS maintains a stateful mapping $\mathcal{M}: \{a_1, a_2, \dots, a_n\} \to e_{canonical}$. All incoming triples are projected through $\mathcal{M}$ before ingestion. This deduplication process utilizes both exact string matching and n-gram based fuzzy resolution.
+THALAMUS maintains a stateful mapping $\mathcal{M}: \{a_1, a_2, \dots, a_n\} \to e_{canonical}$. All incoming triples are projected through $\mathcal{M}$ before ingestion. This deduplication process \cite{doan2012principles} utilizes both exact string matching and n-gram based fuzzy resolution.
 
 #### 2.2 Modal Isolation
 In multi-modal graphs, "Identity Collapse" occurs when a symbolic entity (text) and a physical signal (sensor) share a label. We formalize the isolation rule $\mathcal{I}$:
