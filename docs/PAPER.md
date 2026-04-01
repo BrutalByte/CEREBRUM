@@ -3,8 +3,8 @@
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
-**Date**: March 2026
-**Status**: Version 1.2.0 · Phase 21 COMPLETE — 130 advanced tests passing, all E2E journeys passing
+**Date**: April 2026
+**Status**: Version 1.7.1 · Phase 32 IN PROGRESS — 1222 tests passing, stability fix merged
 **License**: Proprietary — all rights reserved
 
 ---
@@ -80,7 +80,7 @@ parallax/
 └── PAPER.md       (this file)
 ```
 
-**Current phase**: Phase 21 complete (v1.2.0). All core E2E journeys and 130 advanced tests passing. All Phase 18-20 features are stable, and the SignalEncoder alignment has been fixed.
+**Current phase**: Phase 32 in progress (v1.7.1). Federated reasoning infrastructure implemented and GPUDSCFEngine stability fix merged. 1222 tests passing.
 
 ---
 

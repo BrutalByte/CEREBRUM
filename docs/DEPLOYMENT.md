@@ -1,6 +1,6 @@
 # CEREBRUM Deployment Guide
 
-**Version**: v1.5.0
+**Version**: v1.7.1
 **Audience**: DevOps, Platform Engineers, System Administrators
 
 ---

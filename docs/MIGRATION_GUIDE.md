@@ -4,7 +4,41 @@ This guide covers what operators and developers need to **do** (not just what ch
 
 ---
 
-## v1.0.0 → v1.1.0 (Phase 20: Relativistic Hardening)
+## v1.7.0 → v1.7.1 (Phase 32: Federated Reasoning)
+
+### Required actions: GraphAdapter subclasses
+If you have custom `GraphAdapter` implementations outside the core library, you should implement the new `get_reasoning_branches` method. While it has a base implementation that returns an empty list, providing a real implementation enables delegated reasoning.
+
+```python
+# In your custom adapter:
+def get_reasoning_branches(self, seed_id, context_embedding=None, max_hop=2, beam_width=5):
+    # Optional: run local reasoning and return serialized TraversalPaths
+    return []
+```
+
+### Recommended changes
+
+**1. Switch to `DistributedBeamTraversal` for Federated deployments**
+
+If you are using `FederatedAdapter` with `RemoteCerebrumAdapter`, replace `BeamTraversal` with `DistributedBeamTraversal` to enable multi-hop delegation. This significantly reduces network overhead by fetching full reasoning branches instead of individual neighbors.
+
+```python
+# Before
+from reasoning.traversal import BeamTraversal
+traversal = BeamTraversal(adapter=federated, ...)
+
+# After
+from reasoning.distributed_traversal import DistributedBeamTraversal
+traversal = DistributedBeamTraversal(adapter=federated, ...)
+```
+
+**2. Update Remote Node API Keys**
+
+The new `/traverse` endpoint requires the `query` scope. Ensure your JWT tokens for remote nodes include this scope.
+
+---
+
+## v1.1.0 → v1.7.0 (Phases 21–30: Pipeline & Bridge)
 
 ### Required actions: none
 All four Phase 20 fixes use backward-compatible defaults. No existing code breaks.
