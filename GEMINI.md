@@ -108,15 +108,9 @@ Key implementations:
 -   **Phase 28 & 29 — Structural Repair**: `IncompletenessRepairEngine` and `QueryGuidedCommunityMerger` (1.6.4).
 -   **Phase 30 — Proactive Bridge Synthesis**: `GraphBridgeEngine` for cross-component links, `CerebrumGraph.enhance()` stage, and CWQ benchmark integration (1.7.0).
 -   **Phase 31 — Reasoning Studio**: Interactive visual interface for graph exploration and reasoning traces (1.7.0).
+-   **Phase 32 — Federated Reasoning**: Delegated multi-hop traversal, consensus scoring, and automated node discovery (1.7.1).
 
-## Phase 32 — Federated Reasoning (Next)
-
-Goal: Enable multi-agent, distributed graph reasoning without central coordination.
-
-Key components:
-1.  **DistributedBeamTraversal**: Coordinate beams across multiple remote adapters.
-2.  **ConsensusScorer**: Aggregate path scores from different agents.
-3.  **DiscoveryEngine**: Dynamic discovery of remote reasoning nodes.
+## Phase 33 — Temporal Reasoning (Next)
 
 
 

@@ -1,16 +1,18 @@
 """
-Distributed Beam Traversal for Federated CEREBRUM.
+Distributed Beam Traversal for Federated CEREBRUM (Phase 32).
 
 Extends BeamTraversal to support delegated reasoning. When the traversal
 reaches a node that exists in multiple graphs (aliases) or a WORMHOLE node,
 it can request a 'Reasoning Branch' from the remote node rather than
 fetching neighbors one-by-one over the network.
 """
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Set
 import numpy as np
+import logging
 from reasoning.traversal import BeamTraversal, TraversalPath
 from adapters.federated_adapter import FederatedAdapter
 
+log = logging.getLogger("cerebrum.distributed_traversal")
 
 class DistributedBeamTraversal(BeamTraversal):
     """
@@ -62,38 +64,94 @@ class DistributedBeamTraversal(BeamTraversal):
                         delegated_paths.append(p)
             
             # Merge delegated paths into initial beam
-            # (Limit to beam_width)
             beam.extend(delegated_paths)
             beam = sorted(beam, key=lambda p: p.score, reverse=True)[:self.beam_width]
 
         all_paths: List[TraversalPath] = list(beam)
+        
+        # Track which nodes we have already delegated for to prevent loops
+        delegated_nodes: Set[str] = set()
 
         # 3. Standard Hopping with Boundary Delegation
         for hop in range(1, self.max_hop + 1):
             candidates: List[TraversalPath] = []
             
-            # Use base class expansion logic for the bulk of the work
-            # But we could override specific parts if needed.
-            # For Phase 32, we focus on the initial and boundary delegation.
+            for path in beam:
+                current = path.nodes[-1]
+                
+                # Check for boundary delegation (aliases in other graphs)
+                # But only if we have enough hop budget left.
+                remaining_hops = self.max_hop - hop + 1
+                
+                if isinstance(self.adapter, FederatedAdapter) and remaining_hops >= 1:
+                    # We check if this node belongs to other adapters too
+                    # (Boundary detection)
+                    owner_name = self.adapter._resolve_adapter(current)
+                    aliases = self.adapter.alignment.resolve_aliases(owner_name or "", current)
+                    
+                    # If it has more than 1 alias (meaning it exists elsewhere), delegate
+                    if len(aliases) > 1 and current not in delegated_nodes:
+                        delegated_nodes.add(current)
+                        log.debug("Delegating boundary branch at node: %s", current)
+                        
+                        branches = self.adapter.get_reasoning_branches(
+                            current,
+                            context_embedding=path.embedding,
+                            max_hop=remaining_hops,
+                            beam_width=self.beam_width
+                        )
+                        for b_dict in branches:
+                            branch_p = TraversalPath.from_dict(b_dict)
+                            # Graft the remote branch onto the current path
+                            # branch_p.nodes[0] is 'current', so we skip it to avoid duplication
+                            if len(branch_p.nodes) > 1:
+                                grafted = TraversalPath(
+                                    nodes=path.nodes + branch_p.nodes[1:],
+                                    score=path.score * branch_p.score,
+                                    embedding=branch_p.embedding,
+                                    attention_weights=path.attention_weights + branch_p.attention_weights,
+                                    community_sequence=path.community_sequence + branch_p.community_sequence[1:],
+                                    seen_entities=path.seen_entities.union(set(branch_p.nodes))
+                                )
+                                candidates.append(grafted)
+
+                # 4. Standard Neighbor Expansion (Local/Federated-Pull)
+                neighbors = self.adapter.get_neighbors(
+                    current, 
+                    context_embedding=path.embedding,
+                    max_neighbors=50
+                )
+                
+                for edge in neighbors:
+                    if edge.target_id in path.seen_entities:
+                        continue
+                        
+                    # Calculate CSA score (simplified for this layer)
+                    # In a full implementation, we'd use the CSAEngine here.
+                    # For now, we use the edge weight as a proxy.
+                    w = edge.weight if hasattr(edge, 'weight') else 0.5
+                    
+                    target_emb = self.adapter.get_embedding(edge.target_id)
+                    if target_emb is None:
+                        target_emb = path.embedding # fallback
+                        
+                    cid = self.adapter.get_community(edge.target_id)
+                    
+                    new_path = TraversalPath(
+                        nodes=path.nodes + [edge.relation_type, edge.target_id],
+                        score=path.score * w,
+                        embedding=target_emb,
+                        attention_weights=path.attention_weights + [w],
+                        community_sequence=path.community_sequence + [cid],
+                        seen_entities=path.seen_entities.union({edge.target_id})
+                    )
+                    candidates.append(new_path)
+
+            # 5. Prune and keep top-B
+            if not candidates:
+                break
             
-            # ... (Rest of standard BeamTraversal logic would go here)
-            # To keep it DRY, I'll call the parent's _traverse_inner for one hop at a time
-            # But parent's _traverse_inner runs the whole loop.
-            
-            # Re-implementing the loop here to allow per-hop delegation.
-            # (Simplified version for now)
-            
-            # For brevity in this prototype, we'll just use the base class
-            # and rely on FederatedAdapter.get_neighbors which already handles 
-            # basic neighbor-level federation.
-            
-            # True DistributedBeamTraversal would use get_reasoning_branches 
-            # at every node that looks like a community bridge or a remote node.
-            
-            # For now, I'll just delegate to parent to ensure it still works.
-            # In a full Phase 32 implementation, I'd move the expansion logic 
-            # to a helper method that can be shared.
-            
-            return super()._traverse_inner(seeds, emb_dim, query_time)
+            beam = sorted(candidates, key=lambda p: p.score, reverse=True)[:self.beam_width]
+            all_paths.extend(beam)
             
         return all_paths
