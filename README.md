@@ -26,7 +26,7 @@ See `PAPER.md` for the full white paper and architecture specification.
 
 ## Roadmap
 
-**Current Project Status: v1.6.3 — Phase 27B COMPLETE — 1097 tests passing (1 skipped)**
+**Current Project Status: v1.7.0 — Phase 31 COMPLETE — 1155 tests passing (1 skipped)**
 
 - [x] **Phase 0: Theory & Prototyping** (DSCF validated in AI Personal Assistant)
 - [x] **Phase 1: Core Engine** (GraphAdapter, TSC Engine, CSA Attention)
@@ -56,6 +56,9 @@ See `PAPER.md` for the full white paper and architecture specification.
 - [x] **Phase 26: v1.6.0 Performance** — Score-weighted path voting, recall improvements, coarsen_communities fix for large graphs
 - [x] **Phase 27A: v1.6.2 MetaQA SOTA** — Beats MINERVA (trained RL) with zero training: 97.09% 2-hop H@10, 47.66% 3-hop H@10
 - [x] **Phase 27B: v1.6.3 Three-Benchmark Framework** — RelationPathPrior, WebQSP full pipeline (RoG-WebQSP 3.79M triples), IKGWQ graceful degradation (AUC=0.89)
+- [x] **Phase 28 & 29: Structural Repair** — `IncompletenessRepairEngine` and `QueryGuidedCommunityMerger` (v1.6.4).
+- [x] **Phase 30: Proactive Bridge Synthesis** — `GraphBridgeEngine` for similarity-based cross-component links (v1.7.0).
+- [x] **Phase 31: Reasoning Studio** — Interactive visual interface for graph exploration and reasoning traces (v1.7.0).
 
 ## Benchmark Results
 
@@ -94,12 +97,12 @@ WebQSP over Freebase is specifically hard for zero-training structural systems d
 
 ## What Comes Next
 
-With Phase 27B COMPLETE, CEREBRUM v1.6.3 establishes the three-benchmark framework. The next development horizon focuses on:
+With Phase 31 COMPLETE, CEREBRUM v1.7.0 establishes the proactive cognitive architecture and
+interactive reasoning studio. The next development horizon focuses on:
 
-- **GUI/Reasoning Studio**: Interactive visual interface for graph exploration and reasoning traces
-- **Public release planning**: Dual AGPL + commercial license, patent provisionals
-- **CWQ benchmark**: ComplexWebQuestions evaluation
-- **Extended IKGWQ**: REM Engine synthesis evaluation on smaller isolated graphs
+- **Federated Reasoning Roadmap**: Multi-agent, distributed graph reasoning without central coordination.
+- **Public release planning**: Dual AGPL + commercial license, patent provisionals.
+- **Extended IKGWQ**: REM Engine synthesis evaluation on smaller isolated graphs.
 
 ## Quick Start
 
@@ -293,16 +296,15 @@ $$\text{score}(P) = \left( \prod_{k=1}^L a(u_k, v_k, k) \right) \cdot \text{cohe
 - **Context Window Invariance**: Sublinear complexity independent of graph size.
 - **Topological Analysis**: Inductive bias derived from graph topology requires zero training.
 
-## Project Status (v1.6.3 — Phase 27B COMPLETE)
+## Project Status (v1.7.0 — Phase 31 COMPLETE)
 
-CEREBRUM is currently at **v1.6.3**. All **1097 tests** are passing (1 skipped).
+CEREBRUM is currently at **v1.7.0**. All **1155 tests** are passing (1 skipped).
 
-Key features in v1.6.3 (Phase 27B):
-- **RelationPathPrior**: Smoothed success-rate prior over relation sequences; prefix-fallback generalisation
-- **GraphRelationPrior**: Structural fallback; scores by relation frequency via `fit(adapter)`
-- **WebQSP full pipeline**: RoG-WebQSP 3.79M-triple Freebase subgraph; 97% test question coverage
-- **IKGWQ benchmark**: Five-level controlled incompleteness; Graceful Degradation AUC=0.89
-- **score_path / extract integration**: `relation_prior` + `weight_prior` params thread through the full reasoning pipeline
+Key features in v1.7.0 (Phases 28-31):
+- **Reasoning Studio**: Gradio-based visual interface for interactive KG exploration and reasoning traces.
+- **Proactive Bridge Synthesis**: `GraphBridgeEngine` addresses fragmentation by synthesizing similarity-based links between disconnected components.
+- **Incompleteness Repair**: `IncompletenessRepairEngine` materializes missing structural relations via experience-dependent heuristics.
+- **Unified Pipeline**: `CerebrumGraph` provides a thread-safe, high-level API for the full THALAMUS → CORTEX journey.
 
 ## Authors
 

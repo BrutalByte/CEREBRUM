@@ -1,5 +1,5 @@
 """
-CEREBRUM WebQSP Full-System Benchmark — Phase 27B
+CEREBRUM WebQSP Full-System Benchmark -- Phase 27B
 ==================================================
 
 WebQSP: 1,639 test questions over Freebase.  Primary metric: Hits@1.
@@ -14,29 +14,29 @@ WebQSP is harder for structural KG reasoners:
 
 Three variants run head-to-head:
 
-  RAW   — Graph loaded directly, random embeddings, no processing.
+  RAW   -- Graph loaded directly, random embeddings, no processing.
            Shows what a naive structural approach gives.
 
-  FULL  — Complete THALAMUS pipeline:
-           • IngestionPipeline  relation normalisation
-           • SentenceEngine     384-dim question + entity embeddings
-           • coarsen_communities meaningful attention heads
-           • Bayesian beam      warm_start_strength=3
-           • Score-weighted path convergence voting
-           • Question-text embedding as semantic query signal
+  FULL  -- Complete THALAMUS pipeline:
+           * IngestionPipeline  relation normalisation
+           * SentenceEngine     384-dim question + entity embeddings
+           * coarsen_communities meaningful attention heads
+           * Bayesian beam      warm_start_strength=3
+           * Score-weighted path convergence voting
+           * Question-text embedding as semantic query signal
 
-  OPT   — FULL + Phase 27B improvements:
-           • GraphRelationPrior  structural relation frequency bonus
-           • PageRank prior       hub-node authority boost
-           • Soft community memberships
-           • Learned CSA parameters (from graph-traversal pairs)
-           • BridgeTwinEngine    cross-community relay nodes
+  OPT   -- FULL + Phase 27B improvements:
+           * GraphRelationPrior  structural relation frequency bonus
+           * PageRank prior       hub-node authority boost
+           * Soft community memberships
+           * Learned CSA parameters (from graph-traversal pairs)
+           * BridgeTwinEngine    cross-community relay nodes
 
 Why CEREBRUM is still novel at this level
 -----------------------------------------
 All top WebQSP systems (RoG, ToG, R2-KG) rely on LLMs (GPT-4, LLaMA) for
 reasoning.  Their high scores on WebQSP come from the LLM's prior knowledge
-of Freebase facts — not from the KG itself.  Ask them about a proprietary
+of Freebase facts -- not from the KG itself.  Ask them about a proprietary
 enterprise graph (unknown to any LLM) and they fail.
 
 CEREBRUM uses NO LLM for reasoning.  Every answer is a verified path through
@@ -45,7 +45,7 @@ representations, not for reasoning.  This gives:
   - Zero hallucination risk
   - Full auditability (every answer cites its path)
   - Sub-30ms latency (vs 500ms-30s for LLM inference)
-  - Works on any novel graph — no prior knowledge required
+  - Works on any novel graph -- no prior knowledge required
 
 Usage
 -----
@@ -103,11 +103,11 @@ _KB_2HOP  = DATA_DIR / "freebase_2hop.txt"
 _KB_OLD   = DATA_DIR / "freebase_subset.txt"
 KB_FILE   = _KB_2HOP if _KB_2HOP.exists() else _KB_OLD
 TEST_JSON = DATA_DIR / "WebQSP.test.json"
-TRAIN_JSON = DATA_DIR / "WebQSP.train.json"   # optional — used if present
+TRAIN_JSON = DATA_DIR / "WebQSP.train.json"   # optional -- used if present
 CACHE_DIR = DATA_DIR / "cache"
 
 # ---------------------------------------------------------------------------
-# Freebase relation map — canonical uppercase for CSA edge_type_weight
+# Freebase relation map -- canonical uppercase for CSA edge_type_weight
 # ---------------------------------------------------------------------------
 
 def _rel_canonical(rel: str) -> str:
@@ -178,7 +178,7 @@ def _parse_json_qa(
     Parameters
     ----------
     json_path        : path to WebQSP.test.json or WebQSP.train.json
-    graph            : NetworkX graph — used to filter by coverage
+    graph            : NetworkX graph -- used to filter by coverage
     sample           : if set, randomly sample this many QA pairs
     seed             : random seed for sampling
     require_in_graph : if True, skip questions where seed/answers not in graph
@@ -354,7 +354,7 @@ def encode_questions(
     cache_path: Path,
     use_cache: bool = True,
 ) -> Dict[str, np.ndarray]:
-    """Encode question texts — used as query_embedding in extract()."""
+    """Encode question texts -- used as query_embedding in extract()."""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     if use_cache and cache_path.exists():
         print(f"    Loading cached question embeddings from {cache_path.name}")
@@ -428,7 +428,7 @@ def build_csa(
     return csa
 
 # ---------------------------------------------------------------------------
-# Relation path prior — built from train QA or graph structure
+# Relation path prior -- built from train QA or graph structure
 # ---------------------------------------------------------------------------
 
 def build_relation_prior(
@@ -455,7 +455,7 @@ def build_relation_prior(
         paths = traversal.traverse([seed])
         prior.update(paths, set(answers))
     prior.freeze()
-    print(f"    Prior built in {time.time()-t0:.1f}s — "
+    print(f"    Prior built in {time.time()-t0:.1f}s -- "
           f"{len(prior._total):,} unique relation sequences tracked")
 
     with open(cache_path, "wb") as f:
@@ -583,7 +583,7 @@ def main():
     print()
     print("=" * 72)
     print("  CEREBRUM WebQSP Full-System Benchmark")
-    print("  Phase 27B — Relation Path Prior + Question Embeddings")
+    print("  Phase 27B -- Relation Path Prior + Question Embeddings")
     print("=" * 72)
     if args.sample:
         print(f"  Sample: {args.sample:,} questions  |  beam_width={bw}")
@@ -592,10 +592,10 @@ def main():
     print()
 
     # ===================================================================
-    # VARIANT A — RAW
+    # VARIANT A -- RAW
     # ===================================================================
     print("-" * 72)
-    print("  VARIANT A — RAW  (no pipeline, random embeddings)")
+    print("  VARIANT A -- RAW  (no pipeline, random embeddings)")
     print("-" * 72)
 
     print("  Loading graph (raw)...")
@@ -641,10 +641,10 @@ def main():
     print()
 
     # ===================================================================
-    # VARIANT B — FULL (THALAMUS pipeline)
+    # VARIANT B -- FULL (THALAMUS pipeline)
     # ===================================================================
     print("-" * 72)
-    print("  VARIANT B — FULL  (THALAMUS pipeline + semantic embeddings)")
+    print("  VARIANT B -- FULL  (THALAMUS pipeline + semantic embeddings)")
     print("-" * 72)
 
     print("  Loading graph through IngestionPipeline...")
@@ -672,7 +672,7 @@ def main():
     n_after = len(set(cmap_full.values()))
     print(f"  {n_after:,} communities after coarsening  ({time.time()-t0:.1f}s)")
 
-    print("  Embeddings (SentenceEngine — semantic)...")
+    print("  Embeddings (SentenceEngine -- semantic)...")
     sentence_engine = SentenceEngine()
     emb_full = get_embeddings_sentence(
         G_full, CACHE_DIR / "wq_embeddings_sentence.pkl",
@@ -698,7 +698,7 @@ def main():
     # Check for train split
     train_qa_full = load_train_qa(G_full, seed=args.seed)
     if train_qa_full:
-        print(f"  Train split available: {len(train_qa_full):,} questions — "
+        print(f"  Train split available: {len(train_qa_full):,} questions -- "
               f"building RelationPathPrior...")
         t_traversal = BeamTraversal(
             adapter=adapter_full, csa_engine=csa_full,
@@ -711,7 +711,7 @@ def main():
             use_cache=use_cache,
         )
     else:
-        print("  No train split found — using GraphRelationPrior as structural prior")
+        print("  No train split found -- using GraphRelationPrior as structural prior")
         rel_prior_full = graph_prior_full
 
     print(f"\n  [FULL]  {len(qa_full):,} questions")
@@ -735,21 +735,21 @@ def main():
     print()
 
     # ===================================================================
-    # VARIANT C — OPTIMIZED
+    # VARIANT C -- OPTIMIZED
     # ===================================================================
     result_opt: Dict = {}
     n_opt_after: int = 0
 
     if args.optimized:
         print("-" * 72)
-        print("  VARIANT C — OPTIMIZED  (Phase 27B: RelationPrior + PageRank +")
+        print("  VARIANT C -- OPTIMIZED  (Phase 27B: RelationPrior + PageRank +")
         print("                          Soft-Memberships + Param Learning +")
         print(f"                          BridgeTwinEngine + beam_width={args.opt_beam_width})")
         print("-" * 72)
 
         opt_bw = args.opt_beam_width
 
-        # Reuse G_full — same THALAMUS ingestion
+        # Reuse G_full -- same THALAMUS ingestion
         adapter_opt = NetworkXAdapter(G_full)
 
         # Communities with partition for soft memberships
@@ -833,9 +833,9 @@ def main():
                 result_l = learner.fit(t_pairs, verbose=False)
                 learned_alpha, learned_beta, learned_gamma, learned_delta, learned_epsilon = \
                     result_l.params
-                print(f"  Learned params: α={learned_alpha:.3f} β={learned_beta:.3f} "
-                      f"γ={learned_gamma:.3f} δ={learned_delta:.3f} ε={learned_epsilon:.3f}")
-                print(f"  Loss: {result_l.initial_loss:.4f} → {result_l.final_loss:.4f}  "
+                print(f"  Learned params: alpha={learned_alpha:.3f} beta={learned_beta:.3f} "
+                      f"gamma={learned_gamma:.3f} delta={learned_delta:.3f} eps={learned_epsilon:.3f}")
+                print(f"  Loss: {result_l.initial_loss:.4f} -> {result_l.final_loss:.4f}  "
                       f"({time.time()-t0:.1f}s)")
 
         # Rebuild CSA with learned params
@@ -852,7 +852,7 @@ def main():
 
         # Question embeddings (reuse from FULL)
         qa_opt = load_test_qa(G_full, sample=args.sample, seed=args.seed)
-        q_embs_opt = q_embs_full   # same question texts → same embeddings
+        q_embs_opt = q_embs_full   # same question texts -> same embeddings
 
         # Build relation prior from training data (better than graph prior if available)
         print("  Building RelationPathPrior for OPT...")
@@ -911,7 +911,7 @@ def main():
     # ===================================================================
     has_opt = bool(result_opt)
     print("=" * 72)
-    print("  RESULTS — WebQSP (Freebase subset)")
+    print("  RESULTS -- WebQSP (Freebase subset)")
     print("=" * 72)
     print()
     print(f"  Note: {result_full['n_total']:,}/{1639} test questions have seed+answer in")
@@ -949,7 +949,7 @@ def main():
     print()
 
     # Reference scores + honest analysis
-    print("  Reference scores (from published papers — full Freebase graph):")
+    print("  Reference scores (from published papers -- full Freebase graph):")
     print(f"  {'EmbedKGQA (trained, Freebase)':30}  {'~46-66%':>8}  (Hits@1)")
     print(f"  {'NSM (trained, Freebase)':30}  {'~74%':>8}  (Hits@1)")
     print(f"  {'UniKGQA (trained, Freebase)':30}  {'~75%':>8}  (Hits@1)")

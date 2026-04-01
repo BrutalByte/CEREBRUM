@@ -1,6 +1,6 @@
 # CEREBRUM Integration Guide
 
-**Version**: v1.1.0
+**Version**: v1.7.1
 **Audience**: Python developers integrating CEREBRUM into an application
 
 This guide covers the Python API directly. For the REST API, see `docs/API_REFERENCE.md`. For deployment, see `docs/DEPLOYMENT.md`.
@@ -261,18 +261,27 @@ stream.push_event("sensor_a", "READS", "temp_42", timestamp=time.time(), weight=
 ## 8. Federated Deployment
 
 ```python
-from adapters.remote_adapter import RemoteAdapter
+from adapters.remote_adapter import RemoteCerebrumAdapter
 from adapters.federated_adapter import FederatedAdapter
+from reasoning.distributed_traversal import DistributedBeamTraversal
 
 # Connect to remote CEREBRUM nodes
-node_a = RemoteAdapter("https://node-a.example.com", token=os.environ["NODE_A_TOKEN"])
-node_b = RemoteAdapter("https://node-b.example.com", token=os.environ["NODE_B_TOKEN"])
+node_a = RemoteCerebrumAdapter("https://node-a.example.com", token=os.environ["NODE_A_TOKEN"])
+node_b = RemoteCerebrumAdapter("https://node-b.example.com", token=os.environ["NODE_B_TOKEN"])
 
 # Create federated view
-federated = FederatedAdapter([local_adapter, node_a, node_b])
+federated = FederatedAdapter({"local": local_adapter, "node_a": node_a, "node_b": node_b})
 
-# Query traverses all nodes transparently
-traversal = BeamTraversal(adapter=federated, csa_engine=csa, ...)
+# DistributedBeamTraversal supports delegated multi-hop exploration (Phase 32)
+# It requests reasoning branches from remote nodes instead of fetching neighbors.
+traversal = DistributedBeamTraversal(
+    adapter=federated, 
+    csa_engine=csa, 
+    max_hop=3, 
+    beam_width=10
+)
+
+paths = traversal.traverse(["Marie Curie"])
 ```
 
 ---

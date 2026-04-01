@@ -79,9 +79,18 @@ The core reasoning engine subsystem. Encompasses CommunityEngine (DSCF), CSAEngi
 **CSAParameterLearner**
 An online, gradient-free adapter that adjusts CSA attention weights from binary query feedback (correct/incorrect). Uses coordinate-wise moving averages with simplex projection. Maintains separate parameter sets per community when `per_community=True` (Phase 17 feature).
 
+**Consensus Scorer**
+The Phase 32 component that aggregates and normalizes reasoning path scores from multiple remote agents. Uses weighted averaging and Procrustes-aligned embedding similarity to resolve score discrepancies between disparate knowledge bases.
+
 ---
 
 ## D
+
+**Discovery Engine**
+The Phase 32 federated component that automates the dynamic discovery of remote CEREBRUM reasoning nodes. Uses the Holographic Index to identify nodes with relevant community overlaps or entity aliases.
+
+**Distributed Beam Traversal**
+A Phase 32 extension of `BeamTraversal` that supports delegated reasoning. Instead of fetching neighbors one-by-one over the network, it requests full "Reasoning Branches" (sub-beams) from remote nodes when the traversal reaches an alias or a community boundary.
 
 **DSCF (Dual-Signal Community Fusion)**
 The community detection algorithm at the heart of CEREBRUM. Combines local topology signal (LPA — Label Propagation Algorithm) and global modularity signal (Louvain-style modularity gain) simultaneously at each node update, rather than choosing between them. Also called TSC (Triple-Signal Consensus) when the Infomap/flow signal is included as a third signal. Produces communities with dual-signal structural character essential for high-quality CSA reasoning.

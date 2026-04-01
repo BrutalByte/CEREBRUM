@@ -292,6 +292,36 @@ class RemoteCerebrumAdapter(GraphAdapter):
             pass
         return None
 
+    def get_reasoning_branches(
+        self,
+        seed_id: str,
+        context_embedding: Optional[np.ndarray] = None,
+        max_hop: int = 2,
+        beam_width: int = 5,
+    ) -> List[Dict]:
+        """Request remote reasoning branches via /traverse endpoint."""
+        try:
+            payload = {
+                "seed_id": seed_id,
+                "context_embedding": context_embedding.tolist() if context_embedding is not None else None,
+                "max_hop": max_hop,
+                "beam_width": beam_width
+            }
+            resp = requests.post(
+                f"{self.base_url}/traverse", 
+                json=payload, 
+                headers=self._get_headers(),
+                timeout=self.timeout
+            )
+            if resp.status_code == 200:
+                if not self._verify_signature(resp):
+                    return []
+                data = resp.json()
+                return data.get("branches", [])
+        except Exception:
+            pass
+        return []
+
     def node_count(self) -> int:
         try:
             resp = requests.get(

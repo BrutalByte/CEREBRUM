@@ -1,5 +1,5 @@
 """
-MetaQA benchmark evaluation for CEREBRUM (Phase 4).
+MetaQA benchmark evaluation for CEREBRUM.
 
 Dataset
 -------
@@ -15,12 +15,11 @@ Metrics
 -------
   Hits@1   fraction of questions where correct answer is the top-1 result
   Hits@10  fraction of questions where correct answer is in top-10 results
-  MRR      Mean Reciprocal Rank: mean(1 / rank_of_first_correct_answer)
-           where rank = 0 (i.e. not found) contributes 0
+  MRR      Mean Reciprocal Rank
 
 Question format (vanilla splits)
 ---------------------------------
-  <question with [seed entity] in brackets>\t<answer1>|<answer2>|...
+  <question with [seed entity] in brackets>\\t<answer1>|<answer2>|...
 
 KB format
 ---------
@@ -37,47 +36,36 @@ Usage
   # Quick development run (500 questions per hop):
   python -m benchmarks.metaqa_eval --sample 500
 
-  # Wider beam for better recall at cost of speed:
-  python -m benchmarks.metaqa_eval --beam-width 20
+  # Sentence-transformer embeddings (more accurate, requires sentence-transformers):
+  python -m benchmarks.metaqa_eval --embeddings sentence
 
-  # Use cached communities (skip DSCF recomputation):
-  python -m benchmarks.metaqa_eval --use-cache
+  # Wider beam for better recall:
+  python -m benchmarks.metaqa_eval --beam-width 20
 
 Notes
 -----
-  - KB is loaded as an undirected graph so traversal works in both directions.
-    This is standard practice for MetaQA (see EmbedKGQA, NSM, KGT5 papers).
-  - Default embedding engine is RandomEngine. This means the alpha
-    (semantic similarity) term in CSA is noise; attention is driven by
-    community structure (beta term) alone. For sentence-transformer results,
-    install sentence-transformers and pass --embeddings sentence.
-  - Community detection (DSCF) on 43K nodes takes ~60-120s on first run.
-    Results are pickled to benchmarks/data/metaqa/cache/ for reuse.
+  - KB is loaded as undirected (standard MetaQA practice — traversal works
+    in both directions without needing InverseRule).
+  - With --embeddings random the CSA alpha (semantic) term is noise; attention
+    is driven by community structure (beta) alone.
+  - With --embeddings sentence entity names ("Tom Hanks", "The Green Mile")
+    produce meaningful cosine-similarity attention.
+  - Community detection on 43K nodes takes ~60s on first run; cached after.
 """
 
 import argparse
 import csv
 import pickle
-import random
 import re
+import random
 import sys
 import time
 from pathlib import Path
-from typing import List, Tuple, Dict, Optional, Union, Any
-# Confirm repo root is on the path when run as a script
+from typing import Dict, List, Optional, Tuple, Any
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import networkx as nx
-
-from adapters.networkx_adapter import NetworkXAdapter
-from core.community_engine import best_of_n_dscf, merge_small_communities
-from core.embedding_engine import RandomEngine, SentenceEngine
-from core.attention_engine import CSAEngine
-from core.structural_encoder import (
-    build_community_distance_matrix, adjacent_community_pairs, build_community_graph,
-)
-from reasoning.traversal import BeamTraversal
-from reasoning.answer_extractor import extract
+from core.cerebrum import CerebrumGraph
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -93,47 +81,28 @@ QA_FILES = {
     3: DATA_DIR / "3-hop" / "vanilla" / "qa_test.txt",
 }
 
-# ---------------------------------------------------------------------------
-# KB loading
-# ---------------------------------------------------------------------------
-
-def load_kb(undirected: bool = True) -> NetworkXAdapter:
-    """
-    Load MetaQA kb.txt into a NetworkXAdapter.
-
-    The KB is loaded as undirected by default so that traversal can follow
-    edges in both directions (standard MetaQA practice).
-    """
-    G = nx.Graph() if undirected else nx.DiGraph()
-    with open(KB_FILE, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            parts = line.split("|")
-            if len(parts) != 3:
-                continue
-            subj, rel, obj = parts
-            G.add_edge(subj.strip(), obj.strip(), relation=rel.strip())
-    return NetworkXAdapter(G)
-
+TRAIN_FILES = {
+    1: DATA_DIR / "1-hop" / "vanilla" / "qa_train.txt",
+    2: DATA_DIR / "2-hop" / "vanilla" / "qa_train.txt",
+    3: DATA_DIR / "3-hop" / "vanilla" / "qa_train.txt",
+}
 
 # ---------------------------------------------------------------------------
-# QA file parsing
+# QA file parsing  (benchmark-specific, not part of CerebrumGraph)
 # ---------------------------------------------------------------------------
 
 def load_qa(
-    hop: int,
-    sample: Optional[int] = None,
-    seed: int = 42,
-    include_question: bool = False,
+    hop:              int,
+    sample:           Optional[int] = None,
+    seed:             int           = 42,
+    include_question: bool          = False,
 ) -> List[Tuple]:
     """
     Load QA pairs for a given hop level.
 
-    Returns list of (seed_entity, [answer_entity, ...]) tuples by default.
-    When include_question=True, returns (seed_entity, [answer_entity, ...], question_text)
-    triples, where question_text has the entity brackets removed for clean encoding.
+    Returns list of (seed_entity, [answer_entity, ...]) 2-tuples by default.
+    When include_question=True, returns 3-tuples
+    (seed_entity, [answer_entity, ...], question_text).
     """
     path = QA_FILES[hop]
     pairs: List[Any] = []
@@ -154,8 +123,6 @@ def load_qa(
             seed_entity = m.group(1).strip()
             if seed_entity and answers:
                 if include_question:
-                    # Strip brackets so "what movies did [Tom Hanks] direct"
-                    # becomes "what movies did Tom Hanks direct" for encoding
                     clean_q = re.sub(r"\[(.+?)\]", r"\1", question)
                     pairs.append((seed_entity, answers, clean_q))
                 else:
@@ -164,59 +131,18 @@ def load_qa(
     if sample is not None and sample < len(pairs):
         rng = random.Random(seed)
         pairs = rng.sample(pairs, sample)
-
     return pairs
 
 
 # ---------------------------------------------------------------------------
-# Community detection with disk cache
-# ---------------------------------------------------------------------------
-
-def load_or_compute_communities(
-    G: nx.Graph,
-    use_cache: bool = True,
-    n_trials: int = 3,
-    dscf_seed: int = 42,
-) -> Dict[str, int]:
-    """
-    Run DSCF on the graph and return {node -> community_id}.
-    Caches the result to CACHE_DIR/communities.pkl.
-    """
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    cache_file = CACHE_DIR / "communities.pkl"
-
-    if use_cache and cache_file.exists():
-        print(f"  Loading cached communities from {cache_file}")
-        with open(cache_file, "rb") as f:
-            return pickle.load(f)
-
-    print(f"  Running DSCF on {G.number_of_nodes():,} nodes "
-          f"({G.number_of_edges():,} edges) — this may take 1-2 minutes...")
-    t0    = time.time()
-    parts = best_of_n_dscf(G, n_trials=n_trials, seed=dscf_seed)
-    cmap  = {node: cid for cid, members in enumerate(parts) for node in members}
-    elapsed = time.time() - t0
-    print(f"  DSCF complete: {len(parts)} communities in {elapsed:.1f}s")
-
-    with open(cache_file, "wb") as f:
-        pickle.dump(cmap, f)
-    print(f"  Communities cached to {cache_file}")
-
-    return cmap
-
-
-# ---------------------------------------------------------------------------
-# Metrics
+# Metrics  (benchmark-specific)
 # ---------------------------------------------------------------------------
 
 def hits_at_k(answers: List[str], correct: List[str], k: int) -> int:
-    """1 if any correct answer is in top-k answers, else 0."""
-    top_k_set = set(answers[:k])
-    return int(any(c in top_k_set for c in correct))
+    return int(any(c in set(answers[:k]) for c in correct))
 
 
 def reciprocal_rank(answers: List[str], correct: List[str]) -> float:
-    """1/rank of first correct answer, or 0 if not found."""
     correct_set = set(correct)
     for rank, ans in enumerate(answers, 1):
         if ans in correct_set:
@@ -225,33 +151,134 @@ def reciprocal_rank(answers: List[str], correct: List[str]) -> float:
 
 
 # ---------------------------------------------------------------------------
-# Single-hop evaluation
+# RelationPathPrior  (optional, 2-hop and 3-hop only)
+# ---------------------------------------------------------------------------
+
+def build_or_load_prior(
+    hop:           int,
+    graph:         CerebrumGraph,
+    beam_width:    int,
+    use_cache:     bool,
+    force_rebuild: bool,
+    train_sample:  int = 20000,
+):
+    """
+    Build a RelationPathPrior for the given hop level from the training split.
+
+    The prior is learned from (paths, correct_answers) pairs on training data —
+    it counts which relation-sequence patterns most often reach correct answers.
+    This is a frequency heuristic over the *search*, not a modification to the
+    *graph structure* or the *answer claims*.
+
+    Only applied for 2-hop and 3-hop: the 1-hop prior has only 9 unique patterns
+    (one per relation type) and does not improve results.
+
+    Caches to CACHE_DIR/prior_{hop}hop.pkl.
+    """
+    from reasoning.relation_path_prior import RelationPathPrior
+    from reasoning.traversal import BeamTraversal
+
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache_file = CACHE_DIR / f"prior_{hop}hop.pkl"
+
+    if use_cache and not force_rebuild and cache_file.exists():
+        print(f"    Loading cached {hop}-hop prior from {cache_file.name}")
+        with open(cache_file, "rb") as f:
+            return pickle.load(f)
+
+    path = TRAIN_FILES[hop]
+    if not path.exists():
+        print(f"    Training file not found: {path} — skipping prior")
+        return None
+
+    # Load training QA — read from train file, not test file.
+    # Cap at train_sample to keep prior-building time under ~2 minutes.
+    train_path = TRAIN_FILES[hop]
+    all_train: List[Tuple] = []
+    with open(train_path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split("\t")
+            if len(parts) < 2:
+                continue
+            question = parts[0]
+            answers  = [a.strip() for a in parts[1].split("|") if a.strip()]
+            m = re.search(r"\[(.+?)\]", question)
+            if not m:
+                continue
+            seed_e = m.group(1).strip()
+            if seed_e and answers:
+                all_train.append((seed_e, answers))
+
+    if train_sample < len(all_train):
+        rng = random.Random(99)   # fixed seed — different from eval seed 42
+        train_pairs = rng.sample(all_train, train_sample)
+    else:
+        train_pairs = all_train
+    G = graph.adapter.to_networkx()
+
+    n_train = len(train_pairs)
+    print(f"    Building {hop}-hop prior from {n_train:,} training questions "
+          f"(of {len(all_train):,} total)...")
+    prior  = RelationPathPrior(smoothing=1.0, max_len=3, min_count=3)
+    trav   = BeamTraversal(
+        adapter       = graph.adapter,
+        csa_engine    = graph._csa,
+        beam_width    = beam_width,
+        max_hop       = hop,
+        max_neighbors = 100,
+    )
+    t0 = time.time()
+    for seed_e, correct in train_pairs:
+        if seed_e not in G:
+            continue
+        paths = trav.traverse([seed_e])
+        prior.update(paths, set(correct))
+    prior.freeze()
+    elapsed = time.time() - t0
+    print(f"    {len(prior._total):,} unique sequences in {elapsed:.1f}s")
+
+    with open(cache_file, "wb") as f:
+        pickle.dump(prior, f)
+    return prior
+
+
+# ---------------------------------------------------------------------------
+# Per-hop evaluation  (thin harness over CerebrumGraph.query)
 # ---------------------------------------------------------------------------
 
 def evaluate_hop(
-    hop: int,
-    traversal: BeamTraversal,
-    qa_pairs: List[Tuple],
-    top_k: int = 10,
+    hop:              int,
+    graph:            CerebrumGraph,
+    qa_pairs:         List[Tuple],
+    top_k:            int            = 10,
     embedding_engine=None,
+    relation_prior=None,
 ) -> Dict:
     """
-    Evaluate one hop level. Returns a metrics dict.
+    Evaluate one hop level using the unified CerebrumGraph.query() interface.
 
     Parameters
     ----------
-    embedding_engine : optional SentenceEngine (or any engine with encode_entities).
-                       When provided, the question text is encoded and passed as
-                       query_embedding to extract(), activating the semantic
-                       alignment re-ranking signal.  Has no effect when qa_pairs
-                       were loaded without question text (include_question=False).
+    hop              : 1, 2, or 3
+    graph            : built CerebrumGraph instance
+    qa_pairs         : list of (seed, answers) or (seed, answers, question_text)
+    top_k            : number of answers to return per query
+    embedding_engine : optional engine for encoding question text as query_embedding.
+                       Pass when --embeddings sentence is active.
+    relation_prior   : optional RelationPathPrior for re-ranking (2-hop, 3-hop).
     """
     h1 = h10 = 0
-    mrr_sum = 0.0
-    skipped = found = 0
+    mrr_sum  = 0.0
+    skipped  = found = 0
 
-    # Detect whether qa_pairs include question text (3-tuples) or not (2-tuples)
     has_question = qa_pairs and len(qa_pairs[0]) == 3
+
+    # For 2-hop: exclude depth-1 paths (direct neighbors are never the right answer).
+    # For 1-hop and 3-hop: allow min_hop=1 (shortcuts are valid).
+    eval_min_hop = 2 if hop == 2 else 1
 
     t0 = time.time()
     for i, qa in enumerate(qa_pairs):
@@ -259,52 +286,53 @@ def evaluate_hop(
             seed, correct_answers, question_text = qa
         else:
             seed, correct_answers = qa
-            question_text = None
+            question_text         = None
 
         if (i + 1) % 500 == 0 or (i + 1) == len(qa_pairs):
-            elapsed = time.time() - t0
-            print(f"    {i+1:,}/{len(qa_pairs):,} questions "
-                  f"({elapsed:.1f}s elapsed)", end="\r")
+            print(
+                f"    {i+1:,}/{len(qa_pairs):,} questions "
+                f"({time.time()-t0:.1f}s elapsed)",
+                end="\r",
+            )
 
-        # Encode question text for semantic re-ranking when engine is available
+        # Encode question text as query_embedding when engine is available
         query_emb = None
         if question_text and embedding_engine is not None:
             try:
-                q_map = {"__query__": question_text}
-                q_vecs = embedding_engine.encode_entities(q_map)
-                query_emb = q_vecs.get("__query__")
+                q_vecs    = embedding_engine.encode_entities({"__q__": question_text})
+                query_emb = q_vecs.get("__q__")
             except Exception:
                 pass
 
-        paths = traversal.traverse([seed], query_embedding=query_emb)
-        # For exact k-hop benchmarks, exclude depth-1 noise on 2-hop questions
-        # (direct neighbors of the seed are never the correct 2-hop answer).
-        # For 1-hop and 3-hop, allow min_hop=1 — 3-hop correct answers can
-        # occasionally be reachable via shorter shortcut edges.
-        eval_min_hop = hop if hop == 2 else 1
-        answers_obj = extract(paths, top_k=top_k, min_hop=eval_min_hop,
-                              query_embedding=query_emb)
-        pred    = [a.entity_id for a in answers_obj]
+        answers_obj = graph.query(
+            seeds           = [seed],
+            top_k           = top_k,
+            min_hop         = eval_min_hop,
+            max_hop         = hop,
+            query_embedding = query_emb,
+            relation_prior  = relation_prior,
+        )
+        pred = [a.entity_id for a in answers_obj]
 
         if not pred:
             skipped += 1
             continue
 
-        found  += 1
-        h1     += hits_at_k(pred, correct_answers, k=1)
-        h10    += hits_at_k(pred, correct_answers, k=10)
+        found   += 1
+        h1      += hits_at_k(pred, correct_answers, k=1)
+        h10     += hits_at_k(pred, correct_answers, k=10)
         mrr_sum += reciprocal_rank(pred, correct_answers)
 
     elapsed = time.time() - t0
+    print()
     n = len(qa_pairs)
-    print()  # newline after progress
 
     return {
         "hop":        hop,
         "n_total":    n,
         "n_answered": found,
         "n_skipped":  skipped,
-        "hits_1":     h1 / n,
+        "hits_1":     h1  / n,
         "hits_10":    h10 / n,
         "mrr":        mrr_sum / n,
         "elapsed_s":  elapsed,
@@ -321,19 +349,18 @@ def main():
                         help="Evaluate only this hop level (1, 2, or 3). Default: all.")
     parser.add_argument("--sample",     type=int,   default=None,
                         help="Evaluate on a random sample of N questions per hop.")
-    parser.add_argument("--beam-width", type=int,   default=10,
-                        help="Beam width for traversal (default: 10).")
-    parser.add_argument("--top-k",      type=int,   default=10,
-                        help="Extract top-K answers per query (default: 10).")
-    parser.add_argument("--use-cache",  action="store_true", default=True,
-                        help="Use cached DSCF communities if available (default: True).")
+    parser.add_argument("--beam-width", type=int,   default=10)
+    parser.add_argument("--top-k",      type=int,   default=10)
+    parser.add_argument("--use-cache",  action="store_true", default=True)
     parser.add_argument("--no-cache",   action="store_true",
-                        help="Recompute DSCF even if cache exists.")
-    parser.add_argument("--embeddings", choices=["random", "sentence"], default="random",
-                        help="Embedding engine (default: random).")
+                        help="Recompute DSCF and embeddings even if cached.")
+    parser.add_argument("--embeddings", choices=["random", "sentence"], default="random")
     parser.add_argument("--min-community-size", type=int, default=0,
-                        help="Merge communities smaller than this into best neighbor. "
-                             "0 = disabled. Recommended: 20 for MetaQA.")
+                        help="Merge communities smaller than this. "
+                             "Recommended: 20 for MetaQA.")
+    parser.add_argument("--use-prior",  action="store_true", default=False,
+                        help="Build and use RelationPathPrior from training data "
+                             "for 2-hop and 3-hop re-ranking (cached after first run).")
     parser.add_argument("--seed",       type=int,   default=42)
     args = parser.parse_args()
 
@@ -343,9 +370,9 @@ def main():
     hops = [args.hop] if args.hop else [1, 2, 3]
 
     # ------------------------------------------------------------------
-    # Setup (done once, shared across all hop evaluations)
+    # Validate data files exist
     # ------------------------------------------------------------------
-    print("\n=== CEREBRUM — MetaQA Benchmark ===\n")
+    print("\n=== CEREBRUM MetaQA Benchmark ===\n")
 
     if not KB_FILE.exists():
         print(f"ERROR: kb.txt not found at {KB_FILE}")
@@ -357,83 +384,80 @@ def main():
             print(f"ERROR: QA file for {hop}-hop not found: {QA_FILES[hop]}")
             sys.exit(1)
 
+    # ------------------------------------------------------------------
+    # Build CerebrumGraph  (THALAMUS pipeline — done once for all hops)
+    # ------------------------------------------------------------------
     print("Loading knowledge graph...")
-    t0      = time.time()
-    adapter = load_kb(undirected=True)
-    G       = adapter.to_networkx()
-    print(f"  {G.number_of_nodes():,} entities, {G.number_of_edges():,} edges "
+    t0 = time.time()
+
+    graph = CerebrumGraph.from_kb(
+        KB_FILE,
+        sep       = "|",
+        directed  = False,           # MetaQA standard: undirected
+        embeddings= args.embeddings,
+        beam_width= args.beam_width,
+        max_hop   = 3,               # always 3; min_hop filters at extract time
+        max_neighbors = 100,
+    )
+    print(f"  {graph.node_count:,} entities, {graph.edge_count:,} edges "
           f"({time.time()-t0:.1f}s)")
 
     print("Computing/loading community structure...")
-    random.seed(args.seed)
-    cmap = load_or_compute_communities(G, use_cache=args.use_cache, dscf_seed=args.seed)
-    n_communities = len(set(cmap.values()))
-    print(f"  {n_communities} communities (raw DSCF)")
+    graph.build(
+        cache_dir           = CACHE_DIR,
+        min_community_size  = args.min_community_size,
+        force_rebuild       = not args.use_cache,
+        seed                = args.seed,
+    )
+    print(f"  {graph.community_count} communities")
 
-    if args.min_community_size > 0:
-        print(f"  Merging communities smaller than {args.min_community_size} members...")
-        t0 = time.time()
-        cmap = merge_small_communities(cmap, G, min_size=args.min_community_size)
-        n_communities = len(set(cmap.values()))
-        print(f"  {n_communities} communities after merge ({time.time()-t0:.1f}s)")
-
-    print("Building entity embeddings...")
-    t0 = time.time()
-    engine: Union[RandomEngine, SentenceEngine]
+    # ------------------------------------------------------------------
+    # Optional: sentence engine for question-text query embeddings
+    # ------------------------------------------------------------------
+    query_engine = None
     if args.embeddings == "sentence":
-        try:
-            engine = SentenceEngine()
-            print(f"  Using SentenceEngine ({engine.dim}-dim)")
-        except ImportError:
-            print("  sentence-transformers not installed — falling back to RandomEngine")
-            engine = RandomEngine(dim=64)
-    else:
-        engine = RandomEngine(dim=64)
-        print("  Using RandomEngine (64-dim, community structure only)")
+        query_engine = graph._embedding_engine
 
-    labels     = {n: n for n in G.nodes()}
-    embeddings = engine.encode_entities(labels)
-    print(f"  {len(embeddings):,} entity vectors ({time.time()-t0:.1f}s)")
-
-    print("Building CSA engine...")
-    distances = build_community_distance_matrix(G, cmap)
-    adj       = adjacent_community_pairs(G, cmap)
-    cg        = build_community_graph(G, cmap)   # community-level graph for lazy distance
-
-    # Attach communities and embeddings to adapter for lookups
-    adapter.community_map = cmap
-    adapter.embeddings = embeddings
-
-    csa = CSAEngine(adapter=adapter)
-    csa.set_community_graph(distances, adj, community_graph=cg)
+    # ------------------------------------------------------------------
+    # Optional: RelationPathPrior for 2-hop and 3-hop re-ranking
+    # ------------------------------------------------------------------
+    priors: Dict[int, Any] = {}
+    if args.use_prior:
+        print("\nBuilding RelationPathPrior (2-hop and 3-hop)...")
+        for hop in hops:
+            if hop == 1:
+                continue   # 1-hop has only 9 patterns; prior does not help
+            prior = build_or_load_prior(
+                hop           = hop,
+                graph         = graph,
+                beam_width    = args.beam_width,
+                use_cache     = args.use_cache,
+                force_rebuild = not args.use_cache,
+            )
+            if prior is not None:
+                priors[hop] = prior
 
     # ------------------------------------------------------------------
     # Evaluate each hop level
     # ------------------------------------------------------------------
     results = []
 
-    # Use sentence engine for query embedding only when sentence embeddings are active
-    query_engine = engine if args.embeddings == "sentence" else None
-
     for hop in hops:
         print(f"\n--- {hop}-hop evaluation ---")
-        # Load with question text when sentence embeddings are active so
-        # the question can be encoded as query_embedding for re-ranking.
-        qa_pairs = load_qa(hop, sample=args.sample, seed=args.seed,
-                           include_question=(query_engine is not None))
-        n_label  = f"{len(qa_pairs):,}" + (" (sample)" if args.sample else "")
-        print(f"  {n_label} test questions")
-
-        traversal = BeamTraversal(
-            adapter=adapter,
-            csa_engine=csa,
-            beam_width=args.beam_width,
-            max_hop=hop,
+        qa_pairs = load_qa(
+            hop,
+            sample           = args.sample,
+            seed             = args.seed,
+            include_question = (query_engine is not None),
         )
+        n_label = f"{len(qa_pairs):,}" + (" (sample)" if args.sample else "")
+        print(f"  {n_label} test questions")
+        prior_label = " + RelationPrior" if hop in priors else ""
+        print(f"  Running traversal (beam_width={args.beam_width}, max_hop={hop}{prior_label})...")
 
-        print(f"  Running traversal (beam_width={args.beam_width}, max_hop={hop})...")
-        metrics = evaluate_hop(hop, traversal, qa_pairs, top_k=args.top_k,
-                               embedding_engine=query_engine)
+        metrics = evaluate_hop(hop, graph, qa_pairs,
+                               top_k=args.top_k, embedding_engine=query_engine,
+                               relation_prior=priors.get(hop))
         results.append(metrics)
 
         print(f"  Hits@1  : {metrics['hits_1']:.4f}  ({metrics['hits_1']*100:.1f}%)")
@@ -447,10 +471,11 @@ def main():
     # Summary table
     # ------------------------------------------------------------------
     print("\n=== Results Summary ===\n")
-    print("  Model     : CEREBRUM CSA + DSCF")
+    print(f"  Model     : CEREBRUM CSA + DSCF")
     print(f"  Embeddings: {args.embeddings}")
     print(f"  Beam width: {args.beam_width}")
     print(f"  Top-K     : {args.top_k}")
+    print(f"  Prior     : {'yes (2-hop, 3-hop)' if args.use_prior else 'no'}")
     if args.sample:
         print(f"  Sample    : {args.sample} per hop")
     print()
@@ -461,25 +486,22 @@ def main():
               f"{m['hits_1']:>8.4f} {m['hits_10']:>9.4f} {m['mrr']:>8.4f}")
 
     # ------------------------------------------------------------------
-    # Save results to file
+    # Save to CSV
     # ------------------------------------------------------------------
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     results_file = CACHE_DIR / "metaqa_results.csv"
     with open(results_file, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=[
             "hop", "n_total", "n_answered", "n_skipped",
-            "hits_1", "hits_10", "mrr", "beam_width", "embeddings", "elapsed_s"
+            "hits_1", "hits_10", "mrr", "beam_width", "embeddings", "elapsed_s",
         ])
         writer.writeheader()
         for m in results:
-            writer.writerow({**m, "beam_width": args.beam_width, "embeddings": args.embeddings})
+            writer.writerow({**m, "beam_width": args.beam_width,
+                             "embeddings": args.embeddings})
 
     print(f"\n  Results saved to {results_file}")
-    print()
 
 
 if __name__ == "__main__":
     main()
-
-
-

@@ -98,21 +98,25 @@ uvicorn api.server:app --port 8200 --reload
 -   **Reproducibility:** Follow the guidelines in `TESTING.md` for deterministic runs (especially for DSCF).
 -   **Documentation:** Absolute precedence is given to `PARALLAX.md` (whitepaper) and `README.md`. `CLAUDE.md` provides environment-specific guidance.
 
-## Current Project Status (Phase 21 COMPLETE)
+## Current Project Status (Phase 30 COMPLETE)
 
-CEREBRUM is currently in **v1.2.0**. All phases through 21 shipped. This release focused on establishing a comprehensive validation suite and critical reliability fixes, ensuring the framework's robustness and accuracy.
+CEREBRUM is currently in **v1.7.0**. All phases through 30 shipped. This release focused on proactive graph enhancement via `GraphBridgeEngine`, unified pipeline integration via `CerebrumGraph`, and benchmark hardening for ComplexWebQuestions (CWQ).
 
 Key implementations:
--   **Phase 10 — Security**: JWT Authentication, ResourceGovernor, AsyncBeamTraversal, `/query/stream`.
--   **Phase 11 — Streaming**: StreamAdapter, SlidingWindowBuffer, 5 discretizers, SSE endpoints.
--   **Phase 12 — Bridge Twins**: Experience-dependent structural relay formation; GET /bridges API.
--   **Phase 13 — STDP**: STDPDiscretizer — directional CAUSES edges from spike timing.
--   **Phase 18 — v0.4 Horizon**: IngestionPipeline, LLM bridge, Bayesian Beam Search, GlobalRebalancer, SignalEncoder.
--   **Phase 19 — v1.0 Production Hardening**: Zombie Bridge fix (`on_rebalance` hook), Causal Flood filter (`min_causal_span` + chi-squared), Namespace Isolation, Bayesian Cold-Start warm-starting (946 tests passing).
--   **Phase 20 — v1.1.0 Relativistic Hardening**: Query Snapshot Isolation (`CSAEngine.set_query_snapshot()`), Community-Specific CSA Parameters (`community_params={}`), Canonical Basis Anchor (`canonical_embeddings={}`), Path-Preserving Hold-out (`InferenceValidator(path_preserving=True)`). 994 tests passing.
--   **Phase 21 — v1.2.0 Full Validation & Reliability**: Comprehensive validation suite implemented, `SignalEncoder` alignment fix, and numerous static analysis and type safety improvements. All core E2E journeys and 130 advanced tests passing.
+-   **Phase 24 — Performance**: 1042 tests passing, optimized inference.
+-   **Phase 27B — WebQSP**: Full system evaluation on WebQSP (1.6.3).
+-   **Phase 28 & 29 — Structural Repair**: `IncompletenessRepairEngine` and `QueryGuidedCommunityMerger` (1.6.4).
+-   **Phase 30 — Proactive Bridge Synthesis**: `GraphBridgeEngine` for cross-component links, `CerebrumGraph.enhance()` stage, and CWQ benchmark integration (1.7.0).
+-   **Phase 31 — Reasoning Studio**: Interactive visual interface for graph exploration and reasoning traces (1.7.0).
 
-Refer to `TEST_LOG.md` for details on previous runs.
+## Phase 32 — Federated Reasoning (Next)
+
+Goal: Enable multi-agent, distributed graph reasoning without central coordination.
+
+Key components:
+1.  **DistributedBeamTraversal**: Coordinate beams across multiple remote adapters.
+2.  **ConsensusScorer**: Aggregate path scores from different agents.
+3.  **DiscoveryEngine**: Dynamic discovery of remote reasoning nodes.
 
 
 

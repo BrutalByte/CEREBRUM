@@ -103,6 +103,22 @@ class GraphAdapter(ABC):
         """
         ...
 
+    def get_reasoning_branches(
+        self,
+        seed_id: str,
+        context_embedding: Optional[np.ndarray] = None,
+        max_hop: int = 2,
+        beam_width: int = 5,
+    ) -> List[Dict]:
+        """
+        Optional: Return a list of reasoning paths (beams) starting from seed_id.
+        Used by FederatedAdapter to delegate multi-hop exploration to remote agents.
+
+        Returns:
+            List[Dict] — Serialized TraversalPath objects.
+        """
+        return []
+
     def find_entities_masked(self, query: str, top_k: int = 10) -> List[Dict]:
         """
         Find entities but return masked results (ID + Score only).

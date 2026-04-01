@@ -147,6 +147,56 @@ class FederatedAdapter(GraphAdapter):
                     
         return all_edges[:max_neighbors]
 
+    def get_reasoning_branches(
+        self,
+        seed_id: str,
+        context_embedding: Optional[np.ndarray] = None,
+        max_hop: int = 2,
+        beam_width: int = 5,
+        max_budget: int = 500,
+    ) -> List[Dict]:
+        """
+        Aggregate reasoning branches from all sub-adapters.
+        Applies alignment rotations to any returned embeddings.
+        """
+        all_branches: List[Dict] = []
+        
+        # 1. Identify which adapters might have this entity
+        # We query all adapters that have the entity (primary or aliases)
+        owner_name = self._resolve_adapter(seed_id)
+        queried_adapters: Set[str] = set()
+
+        if owner_name:
+            aliases = self.alignment.resolve_aliases(owner_name, seed_id)
+            for adapter_name, alias_id in aliases:
+                if adapter_name not in self.adapters:
+                    continue
+                
+                adapter = self.adapters[adapter_name]
+                branches = adapter.get_reasoning_branches(
+                    alias_id, 
+                    context_embedding=context_embedding,
+                    max_hop=max_hop,
+                    beam_width=beam_width,
+                    max_budget=max_budget
+                )
+                queried_adapters.add(adapter_name)
+                
+                # Apply rotation if this is a secondary adapter
+                R = self._alignment_rotations.get(adapter_name)
+                if R is not None:
+                    for b in branches:
+                        if b.get("embedding"):
+                            emb = np.array(b["embedding"], dtype=np.float32)
+                            b["embedding"] = (emb @ R).tolist()
+                
+                all_branches.extend(branches)
+
+        # 2. Blind Discovery branches could also be added here in the future
+        # (e.g. by querying find_similar and then traversing from results)
+        
+        return all_branches
+
     def find_similar(
         self, 
         embedding: np.ndarray, 

@@ -237,6 +237,44 @@ class NetworkXAdapter(GraphAdapter):
             return self.embeddings.get(entity_id)
         return None
 
+    def get_reasoning_branches(
+        self,
+        seed_id: str,
+        context_embedding: Optional[np.ndarray] = None,
+        max_hop: int = 2,
+        beam_width: int = 5,
+        max_budget: int = 500,
+    ) -> List[Dict]:
+        """Local reasoning branch expansion using BeamTraversal."""
+        # Use local imports to avoid circularity
+        from core.attention_engine import CSAEngine
+        from reasoning.traversal import BeamTraversal
+        
+        # 1. Setup local reasoning context
+        # Note: This uses default weights and requires community_map/embeddings 
+        # to be attached to the adapter (Standard CEREBRUM server behavior).
+        csa = CSAEngine(adapter=self)
+        # If we have community graph metadata, attach it
+        if hasattr(self, "csa_metadata") and self.csa_metadata:
+            csa.set_community_graph(
+                self.csa_metadata.get("distances", {}),
+                self.csa_metadata.get("adjacent_pairs", set())
+            )
+        
+        # 2. Run local beam search
+        traversal = BeamTraversal(
+            adapter=self,
+            csa_engine=csa,
+            beam_width=beam_width,
+            max_hop=max_hop,
+            max_budget=max_budget
+        )
+        
+        paths = traversal.traverse([seed_id], query_embedding=context_embedding)
+        
+        # 3. Serialize
+        return [p.to_dict() for p in paths if len(p.nodes) > 1]
+
     def find_similar(
         self, 
         embedding: "np.ndarray", 

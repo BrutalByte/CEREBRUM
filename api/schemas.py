@@ -141,6 +141,33 @@ class HandshakeResponse(BaseModel):
     community_count: int
 
 
+class TraversalPathSchema(BaseModel):
+    """Serialized TraversalPath for federated reasoning."""
+    nodes: List[str]
+    score: float
+    embedding: Optional[List[float]] = None
+    attention_weights: List[float] = []
+    community_sequence: List[int] = []
+    edge_confidences: List[float] = []
+    edge_provenances: List[str] = []
+    edge_features: List[List[float]] = []
+    beta_alpha: float = 1.0
+    beta_beta: float = 1.0
+
+
+class TraversalBranchRequest(BaseModel):
+    seed_id: str
+    context_embedding: Optional[List[float]] = None
+    max_hop: int = Field(default=2, ge=1, le=3)
+    beam_width: int = Field(default=5, ge=1, le=20)
+    max_budget: int = Field(default=500, ge=10, le=2000)
+
+
+class TraversalBranchResponse(BaseModel):
+    seed_id: str
+    branches: List[TraversalPathSchema]
+
+
 class ReasoningCallbackRequest(BaseModel):
     source_id: str
     target_id: str

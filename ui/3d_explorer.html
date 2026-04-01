@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEREBRUM 3D | Knowledge Graph Explorer</title>
+    <script src="https://unpkg.com/3d-force-graph"></script>
+    <script src="https://unpkg.com/three"></script>
+    <script src="https://unpkg.com/three-spritetext"></script>
+    <style>
+        body { margin: 0; background-color: #000; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(13, 17, 23, 0.8);
+            border: 1px solid #30363d;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 100;
+            width: 300px;
+            backdrop-filter: blur(10px);
+        }
+        h1 { margin: 0 0 10px 0; font-size: 1.2rem; color: #58a6ff; letter-spacing: 2px; }
+        .hint { font-size: 0.8rem; color: #8b949e; margin-bottom: 15px; }
+        .btn {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+        .btn:hover { background: #2ea043; }
+        #info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            text-align: right;
+            color: #8b949e;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="controls">
+        <h1>CEREBRUM 3D</h1>
+        <p class="hint">Left-click to Rotate. Right-click to Pan. Mouse-wheel to Zoom. Hover nodes for details.</p>
+        <div style="margin-bottom:15px;">
+            <label style="font-size:0.8rem; display:block; margin-bottom:5px;">Load Local Data (CSV/JSON)</label>
+            <input type="file" id="fileInput" accept=".csv,.json" style="font-size:0.7rem;">
+        </div>
+        <button class="btn" onclick="loadDemo()">Load Toy Graph Demo</button>
+        <div id="node-info" style="margin-top:20px; border-top:1px solid #333; padding-top:10px; display:none;">
+            <div id="node-name" style="color:#58a6ff; font-weight:bold; font-size:1.1rem;"></div>
+            <div id="node-meta" style="font-size:0.8rem; margin-top:5px; color:#aaa;"></div>
+        </div>
+    </div>
+
+    <div id="3d-graph"></div>
+
+    <div id="info">
+        v1.4.0 Hardened Edition<br>
+        3D Structural Attention Explorer
+    </div>
+
+    <script>
+        const Graph = ForceGraph3D()(document.getElementById('3d-graph'))
+            .backgroundColor('#000000')
+            .showNavInfo(false)
+            .nodeLabel('id')
+            .nodeAutoColorBy('group')
+            .linkOpacity(0.2)
+            .linkDirectionalArrowLength(3.5)
+            .linkDirectionalArrowRelPos(1)
+            .onNodeHover(node => {
+                const info = document.getElementById('node-info');
+                if (node) {
+                    info.style.display = 'block';
+                    document.getElementById('node-name').textContent = node.id;
+                    document.getElementById('node-meta').textContent = `Community: ${node.group || 'N/A'}`;
+                } else {
+                    info.style.display = 'none';
+                }
+            });
+
+        // Demo Data - Match toy_graph.csv structure
+        const demoData = {
+            nodes: [
+                {id: "newton", group: 1}, {id: "einstein", group: 1}, {id: "faraday", group: 1},
+                {id: "darwin", group: 2}, {id: "curie", group: 1}, {id: "maxwell", group: 1},
+                {id: "bohr", group: 1}, {id: "caesar", group: 3}, {id: "cleopatra", group: 3},
+                {id: "augustus", group: 3}, {id: "napoleon", group: 3}, {id: "alexander", group: 3},
+                {id: "cicero", group: 3}, {id: "hannibal", group: 3}, {id: "rome", group: 4},
+                {id: "athens", group: 4}, {id: "alexandria", group: 4}, {id: "paris", group: 4},
+                {id: "london", group: 4}, {id: "carthage", group: 4}, {id: "babylon", group: 4}
+            ],
+            links: [
+                {source: "newton", target: "einstein"}, {source: "newton", target: "faraday"},
+                {source: "einstein", target: "bohr"}, {source: "darwin", target: "curie"},
+                {source: "faraday", target: "maxwell"}, {source: "einstein", target: "curie"},
+                {source: "maxwell", target: "bohr"}, {source: "darwin", target: "faraday"},
+                {source: "caesar", target: "cleopatra"}, {source: "caesar", target: "augustus"},
+                {source: "napoleon", target: "caesar"}, {source: "alexander", target: "cleopatra"},
+                {source: "augustus", target: "cicero"}, {source: "napoleon", target: "cicero"},
+                {source: "alexander", target: "caesar"}, {source: "hannibal", target: "caesar"},
+                {source: "rome", target: "athens"}, {source: "rome", target: "alexandria"},
+                {source: "paris", target: "london"}, {source: "athens", target: "alexandria"},
+                {source: "london", target: "athens"}, {source: "paris", target: "rome"},
+                {source: "carthage", target: "rome"}, {source: "babylon", target: "alexandria"},
+                {source: "caesar", target: "rome"}, {source: "napoleon", target: "paris"},
+                {source: "cleopatra", target: "alexandria"}, {source: "newton", target: "london"},
+                {source: "einstein", target: "athens"}, {source: "hannibal", target: "carthage"}
+            ]
+        };
+
+        function loadDemo() {
+            Graph.graphData(demoData);
+            // Add bloom effect after load
+            const bloomPass = new THREE.ShaderPass(THREE.BloomShader); // Note: Simple placeholder logic
+        }
+
+        // File Loading Logic
+        document.getElementById('fileInput').addEventListener('change', event => {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = e => {
+                const content = e.target.result;
+                if (file.name.endsWith('.csv')) {
+                    parseCSV(content);
+                } else {
+                    Graph.graphData(JSON.parse(content));
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const nodes = new Set();
+            const links = [];
+            const header = lines[0].split(',');
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const cols = lines[i].split(',');
+                nodes.add(cols[0].trim());
+                nodes.add(cols[1].trim());
+                links.push({source: cols[0].trim(), target: cols[1].trim(), rel: cols[2]});
+            }
+
+            const graphData = {
+                nodes: Array.from(nodes).map(id => ({id, group: Math.floor(Math.random() * 5)})),
+                links: links
+            };
+            Graph.graphData(graphData);
+        }
+
+        // Auto-load demo
+        window.onload = loadDemo;
+    </script>
+</body>
+</html>

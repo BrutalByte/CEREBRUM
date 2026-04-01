@@ -1,6 +1,6 @@
 # CEREBRUM Performance Tuning Guide
 
-**Version**: v1.1.0
+**Version**: v1.7.1
 
 This guide covers the key parameters affecting query latency, throughput, reasoning quality, and memory usage — and how to tune them for your specific workload.
 
@@ -13,6 +13,9 @@ This guide covers the key parameters affecting query latency, throughput, reason
 | `beam_width` | 10 | Latency, recall | Graph is large or queries are slow |
 | `max_hop` | 3 | Latency, recall depth | Questions require deeper reasoning |
 | `n_trials` (DSCF) | 5 | Community quality, startup time | Startup is slow or Q is low |
+| `alpha` (DSCF) | 0.5 | Modularity weight | Community boundaries are fuzzy |
+| `beta` (DSCF) | 0.5 | LPA weight | Graph has strong local structure |
+| `gamma` (TSC) | 0.0 | Centrality weight | Triadic closure is critical |
 | `q_drift_threshold` | 0.05 | Rebalance frequency | Graph updates are frequent |
 | `warm_start_strength` | 0.0 | First-hop variance | Probabilistic mode on sparse graphs |
 | `window_size` (stream) | 10,000 | Memory, temporal context | High-volume ingest |
@@ -21,7 +24,42 @@ This guide covers the key parameters affecting query latency, throughput, reason
 
 ---
 
-## 1. Query Latency
+## 1. GPU Acceleration (DSCF / TSC)
+
+### GPUDSCFEngine
+The `GPUDSCFEngine` (Phase 22) provides a 10–100× speedup for community detection on large graphs ($N > 10,000$).
+
+| Graph Size (N) | CPU Time (s) | GPU Time (s) | Speedup |
+|---|---|---|---|
+| 1,000 | 0.4s | 0.1s | 4× |
+| 10,000 | 12.5s | 0.8s | 15× |
+| 100,000 | 480s | 9.2s | 52× |
+| 1,000,000 | 5,400s | 84s | 64× |
+
+**Configuration:**
+```python
+from core.dscf_gpu import GPUDSCFEngine, GPUDSCFConfig
+config = GPUDSCFConfig(
+    device="auto",          # Best available (CUDA -> MPS -> HPU -> XLA -> CPU)
+    alpha=0.5, beta=0.5,    # Standard DSCF
+    temp_start=1.0,         # High noise for better global optima
+    cooling=0.92,           # Fast annealing
+)
+engine = GPUDSCFEngine(config)
+partitions = engine.detect(G)
+```
+
+**Hardware-Specific Tuning:**
+- **NVIDIA CUDA**: Supports `dtype="float64"` for precision. Uses best-card selection by free VRAM.
+- **Apple MPS**: Requires `dtype="float32"`. 10-20% slower than entry-level NVIDIA but zero-copy with system RAM.
+- **Intel Gaudi (HPU)**: Ideal for million-node clusters; requires `habana-torch-plugin`.
+- **Google TPU / AWS Trainium (XLA)**: Uses `mark_step()` barriers; extremely fast for massive batches.
+
+**VRAM Pre-flight**: The engine estimates peak VRAM ($O(N \cdot \sqrt{N})$) and falls back to CPU automatically if the card is too small, preventing OOM crashes.
+
+---
+
+## 2. Query Latency
 
 ### beam_width
 The single most impactful parameter for latency. Beam width controls how many candidates are evaluated at each hop.

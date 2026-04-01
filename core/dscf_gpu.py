@@ -169,20 +169,8 @@ class GPUDSCFEngine:
         -------
         List[frozenset] — same format as dscf_communities() in community_engine.py.
         """
-        if G.number_of_nodes() == 0:
-            return []
-        if G.number_of_edges() == 0:
-            return [frozenset([v]) for v in G.nodes()]
-
-        if not _TORCH_AVAILABLE:
-            log.warning("PyTorch not installed — falling back to CPU DSCF.")
-            return self._cpu_fallback(G, centrality_weights)
-
-        try:
-            return self._detect_torch(G, centrality_weights)
-        except Exception as exc:
-            log.warning("GPU DSCF failed (%s) — falling back to CPU DSCF.", exc)
-            return self._cpu_fallback(G, centrality_weights)
+        partitions, _ = self.detect_with_stats(G, centrality_weights)
+        return partitions
 
     def detect_with_stats(
         self,
@@ -190,19 +178,53 @@ class GPUDSCFEngine:
         centrality_weights: Optional[Dict[str, float]] = None,
     ) -> Tuple[List[frozenset], GPURunStats]:
         """Same as detect() but also returns profiling statistics."""
-        t0 = time.perf_counter()
-        partitions = self.detect(G, centrality_weights)
-        wall_ms = (time.perf_counter() - t0) * 1000.0
+        if G.number_of_nodes() == 0:
+            return [], GPURunStats(device_used=str(self._device))
+        
+        if G.number_of_edges() == 0:
+            parts = [frozenset([v]) for v in G.nodes()]
+            return parts, GPURunStats(
+                device_used=str(self._device),
+                n_nodes=G.number_of_nodes(),
+                n_communities=len(parts)
+            )
 
+        if not _TORCH_AVAILABLE:
+            log.warning("PyTorch not installed — falling back to CPU DSCF.")
+            return self._cpu_fallback_with_stats(G, centrality_weights)
+
+        try:
+            return self._detect_torch(G, centrality_weights)
+        except Exception as exc:
+            log.warning("GPU DSCF failed (%s) — falling back to CPU DSCF.", exc)
+            return self._cpu_fallback_with_stats(G, centrality_weights)
+
+    def _cpu_fallback_with_stats(
+        self,
+        G: nx.Graph,
+        centrality_weights: Optional[Dict[str, float]],
+    ) -> Tuple[List[frozenset], GPURunStats]:
+        t0 = time.perf_counter()
+        from core.community_engine import dscf_communities
+        parts = dscf_communities(
+            G,
+            resolution=self.config.resolution,
+            max_iter=self.config.max_iter,
+            temp_start=self.config.temp_start,
+            cooling=self.config.cooling,
+            force_connectivity=self.config.force_connectivity,
+            centrality_weights=centrality_weights,
+        )
+        wall_ms = (time.perf_counter() - t0) * 1000.0
         stats = GPURunStats(
-            device_used=str(self._device),
+            device_used="cpu",
             n_nodes=G.number_of_nodes(),
             n_edges=G.number_of_edges(),
-            n_communities=len(partitions),
-            modularity_q=self._modularity_q(G, partitions),
-            wall_ms=wall_ms,
+            n_communities=len(parts),
+            modularity_q=self._modularity_q(G, parts),
+            wall_ms=wall_ms
         )
-        return partitions, stats
+        return parts, stats
 
     @classmethod
     def device_info(cls) -> str:
@@ -245,7 +267,8 @@ class GPUDSCFEngine:
         self,
         G: nx.Graph,
         centrality_weights: Optional[Dict[str, float]],
-    ) -> List[frozenset]:
+    ) -> Tuple[List[frozenset], GPURunStats]:
+        t_start = time.perf_counter()
         cfg = self.config
         dev = self._device
         dev_str = str(dev)
@@ -259,14 +282,12 @@ class GPUDSCFEngine:
             dtype = torch.float32 if cfg.dtype == "float32" else torch.float64
 
         # ---- Build tensors ------------------------------------------------
+        t_build0 = time.perf_counter()
         nodes      = list(G.nodes())
         node_idx   = {v: i for i, v in enumerate(nodes)}
         N          = len(nodes)
 
         # ---- VRAM pre-flight (CUDA/ROCm only) -----------------------------
-        # Estimate dominant memory cost before allocating: k_in_flat [N × C]
-        # where C ≈ √N is a reasonable initial community count estimate.
-        # A 2.5× safety factor covers intermediate tensors during the loop.
         if dev_str.startswith("cuda"):
             bytes_per = 4 if dtype == torch.float32 else 8
             num_comm_est = max(1, int(N ** 0.5))
@@ -292,12 +313,17 @@ class GPUDSCFEngine:
             edges_both.append((vi, ui, float(w) if w else 1.0))
 
         if not edges_both:
-            return [frozenset([v]) for v in nodes]
+            stats = GPURunStats(
+                device_used=dev_str,
+                n_nodes=N,
+                n_communities=N,
+                wall_ms=(time.perf_counter() - t_start) * 1000.0
+            )
+            return [frozenset([v]) for v in nodes], stats
 
         src = torch.tensor([e[0] for e in edges_both], dtype=torch.long, device=dev)
         dst = torch.tensor([e[1] for e in edges_both], dtype=torch.long, device=dev)
         ew  = torch.tensor([e[2] for e in edges_both], dtype=dtype,      device=dev)
-        src.shape[0]
         m   = ew.sum() / 2.0  # total edge weight (undirected)
 
         # Degree of each node
@@ -313,15 +339,19 @@ class GPUDSCFEngine:
         else:
             cent = None
 
+        t_build_ms = (time.perf_counter() - t_build0) * 1000.0
+
         # ---- Initialise: each node in its own community -------------------
         comm = torch.arange(N, dtype=torch.long, device=dev)  # [N]
 
         temperature = cfg.temp_start
         converged   = False
+        iters_run   = 0
+        t_iter0     = time.perf_counter()
 
         for iteration in range(cfg.max_iter):
+            iters_run = iteration + 1
             # -- Compact community IDs to 0..C-1 ----------------------------
-            # (necessary because argmax requires dense community space)
             comm, num_comm = _compact_ids(comm, N, dev)
 
             # -- sigma_tot[c] = sum of degrees of nodes in community c ------
@@ -329,7 +359,6 @@ class GPUDSCFEngine:
             sigma_tot.scatter_add_(0, comm, degree)
 
             # -- k_in[u, c] = sum of edge weights from u to nodes in c ------
-            # Flat index into [N × num_comm] matrix
             tgt_comm  = comm[dst]                    # community of each edge's target
             flat_idx  = src * num_comm + tgt_comm    # [E]
             k_in_flat = torch.zeros(N * num_comm, dtype=dtype, device=dev)
@@ -337,7 +366,6 @@ class GPUDSCFEngine:
             k_in = k_in_flat.view(N, num_comm)       # [N, num_comm]
 
             # -- Modularity gain signal -------------------------------------
-            # dQ[u,c] = k_in[u,c]/m - resolution * sigma_tot[c] * degree[u] / (2m²)
             dQ = k_in / m - cfg.resolution * sigma_tot.unsqueeze(0) * degree.unsqueeze(1) / (2.0 * m * m)
 
             # -- LPA signal (normalised k_in) --------------------------------
@@ -345,7 +373,7 @@ class GPUDSCFEngine:
 
             # -- Centrality signal (optional TSC) ---------------------------
             if cent is not None:
-                cent_w      = cent[dst]                         # centw per edge
+                cent_w      = cent[dst]
                 flat_cent   = src * num_comm + tgt_comm
                 cent_flat   = torch.zeros(N * num_comm, dtype=dtype, device=dev)
                 cent_flat.scatter_add_(0, flat_cent, cent_w * ew)
@@ -355,9 +383,11 @@ class GPUDSCFEngine:
                 cent_norm   = torch.zeros_like(lpa)
 
             # -- Fused score ------------------------------------------------
-            # Normalise dQ to [0,1] range for comparability with LPA
             dq_norm   = (dQ - dQ.min()) / (dQ.max() - dQ.min() + 1e-9)
             score     = cfg.alpha * dq_norm + cfg.beta * lpa + cfg.gamma * cent_norm
+
+            # Add current community bias (0.05) to break symmetry and prevent oscillation
+            score.scatter_add_(1, comm.unsqueeze(1), torch.full((N, 1), 0.05, dtype=dtype, device=dev))
 
             # -- Stochastic assignment via Gumbel noise ---------------------
             if temperature > 0.01:
@@ -365,10 +395,15 @@ class GPUDSCFEngine:
                 score  = score + temperature * gumbel
 
             # -- New community = argmax of fused score ----------------------
-            new_comm = score.argmax(dim=1)  # [N]
+            candidate_comm = score.argmax(dim=1)  # [N]
 
             # -- Convergence check ------------------------------------------
-            changed_frac = (new_comm != comm).float().mean().item()
+            # Use candidate_comm (true intent) for convergence check to prevent
+            # premature stopping when the random mask blocks all updates.
+            changed_frac = (candidate_comm != comm).float().mean().item()
+            
+            mask = torch.rand(N, device=dev) < 0.5
+            new_comm = torch.where(mask, candidate_comm, comm)
             comm = new_comm
             temperature *= cfg.cooling
 
@@ -377,13 +412,14 @@ class GPUDSCFEngine:
                 log.debug("GPU DSCF converged at iteration %d (Δ=%.4f)", iteration, changed_frac)
                 break
 
+        t_iter_ms = (time.perf_counter() - t_iter0) * 1000.0
+
         if not converged:
             log.debug("GPU DSCF reached max_iter=%d without convergence.", cfg.max_iter)
 
         # ---- Post-process: compact, enforce min size, connectivity --------
         comm, _ = _compact_ids(comm, N, dev)
 
-        # XLA requires an explicit step barrier before materialising tensors
         if dev_str.startswith("xla"):
             try:
                 import torch_xla.core.xla_model as xm  # type: ignore
@@ -392,8 +428,6 @@ class GPUDSCFEngine:
                 pass
 
         comm_np  = comm.cpu().numpy()
-
-        # Build python partition
         buckets: Dict[int, Set] = {}
         for i, c in enumerate(comm_np):
             buckets.setdefault(int(c), set()).add(nodes[i])
@@ -406,7 +440,21 @@ class GPUDSCFEngine:
         if cfg.min_comm_size > 1:
             partitions = _merge_small(G, partitions, cfg.min_comm_size)
 
-        return partitions
+        wall_ms = (time.perf_counter() - t_start) * 1000.0
+        stats = GPURunStats(
+            device_used=dev_str,
+            n_nodes=N,
+            n_edges=G.number_of_edges(),
+            n_communities=len(partitions),
+            modularity_q=self._modularity_q(G, partitions),
+            iterations=iters_run,
+            converged=converged,
+            wall_ms=wall_ms,
+            tensor_build_ms=t_build_ms,
+            iteration_ms=t_iter_ms
+        )
+
+        return partitions, stats
 
     # ------------------------------------------------------------------
     # CPU fallback (delegates to community_engine)
@@ -417,16 +465,8 @@ class GPUDSCFEngine:
         G: nx.Graph,
         centrality_weights: Optional[Dict[str, float]],
     ) -> List[frozenset]:
-        from core.community_engine import dscf_communities
-        return dscf_communities(
-            G,
-            resolution=self.config.resolution,
-            max_iter=self.config.max_iter,
-            temp_start=self.config.temp_start,
-            cooling=self.config.cooling,
-            force_connectivity=self.config.force_connectivity,
-            centrality_weights=centrality_weights,
-        )
+        parts, _ = self._cpu_fallback_with_stats(G, centrality_weights)
+        return parts
 
     # ------------------------------------------------------------------
     # Helpers

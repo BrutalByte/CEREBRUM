@@ -224,6 +224,38 @@ class TraversalPath:
         )
         return f"TraversalPath(score={self.score:.4f}, path={chain})"
 
+    def to_dict(self) -> Dict:
+        """Serialize for federated reasoning (API transmission)."""
+        return {
+            "nodes": self.nodes,
+            "score": self.score,
+            "embedding": self.embedding.tolist() if self.embedding is not None else None,
+            "attention_weights": self.attention_weights,
+            "community_sequence": self.community_sequence,
+            "edge_confidences": self.edge_confidences,
+            "edge_provenances": self.edge_provenances,
+            "edge_features": [list(f) for f in self.edge_features],
+            "beta_alpha": self.beta_alpha,
+            "beta_beta": self.beta_beta,
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict) -> "TraversalPath":
+        """Deserialize from federated reasoning (API reception)."""
+        emb = np.array(d["embedding"], dtype=np.float32) if d.get("embedding") else None
+        return cls(
+            nodes=d["nodes"],
+            score=d["score"],
+            embedding=emb,
+            attention_weights=d.get("attention_weights", []),
+            community_sequence=d.get("community_sequence", []),
+            edge_confidences=d.get("edge_confidences", []),
+            edge_provenances=d.get("edge_provenances", []),
+            edge_features=[tuple(f) for f in d.get("edge_features", [])],
+            beta_alpha=d.get("beta_alpha", 1.0),
+            beta_beta=d.get("beta_beta", 1.0),
+        )
+
 
 class BeamTraversal:
     """

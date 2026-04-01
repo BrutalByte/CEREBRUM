@@ -1,0 +1,12 @@
+\subsubsection{2.2 Streaming Discre\-tizers}
+Discre\-tizers transform continuous input signals into discrete symbolic edges. The core discr\-etizers include:
+
+\begin{itemize}
+\item \textbf{Threshold Discretizer}: Continuous float stream $\to$ Edge emitted when value crosses threshold $\theta$.
+\item \textbf{STDP-Discretizer}: Spike/event timestamps $\to$ Directional \texttt{CAUSES} edge based on temporal co-occurrence ($\Delta t$).
+\item \textbf{Delta-Discretizer}: Rate-of-change signal $\to$ Edge emitted when $|\Delta x / \Delta t| \geq \theta_{rate}$.
+\item \textbf{Windowed-Frequency-Discretizer}: Event counts per window $\to$ Edge emitted when co-occurrence frequency exceeds $f_{min}$.
+\item \textbf{Pattern-Discretizer}: Symbolic event sequence $\to$ Edge emitted when pattern match probability $\geq p_{match}$.
+
+\end{itemize}
+Each discretizer maintains a small internal sliding buffer and is stateless with respect to the adapter graph. This isolation ensures discretizer failures cannot corrupt the persistent Knowledge Graph.

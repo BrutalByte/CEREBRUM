@@ -1,0 +1,74 @@
+# CEREBRUM EXPLAINED
+## A Plain-Language Guide to the Research
+**Version 3.0 (v1.2.4 Hardened Edition) — March 2026**
+
+![CEREBRUM Visionary Hero](file:///C:/Users/bryan/.gemini/antigravity/brain/77bb37a0-e733-41be-824d-b07e7cce5a6f/cerebrum_hero_v77bb37a0_e730_41be_824d_b07e7cce5a6f_png_1774651388694.png)
+
+---
+
+### **Who this is for**
+You're comfortable with computers and technology, but you don't have a background in machine learning or knowledge graphs. This guide explains CEREBRUM's individual pieces, name each piece in plain English, and walk through how the whole system works.
+
+---
+
+### **How to Read This Guide**
+Each chapter builds on the last. If you're already comfortable with a concept, feel free to skip ahead. Every technical term is explained when it first appears. Formulas appear in clearly marked "Math, Unpacked" sections — you can read around them without losing the narrative, or dive in for a full understanding.
+
+| Chapter | Topic | You'll Understand |
+|---|---|---|
+| 1 | What is a Knowledge Graph? | The database behind CEREBRUM |
+| 2 | What is an LLM? | What ChatGPT and its peers actually are |
+| 3 | The problem with current AI reasoning | Why we need something new |
+| 4 | What is attention in AI? | The mechanism CEREBRUM borrows |
+| 5 | What is community detection? | The other key concept |
+| 6 | What is CEREBRUM? | The full picture — including THALAMUS and CORTEX |
+| 7 | Why does it matter? | Real-world stakes |
+| 8 | What are we trying to prove? | The research questions |
+| 9 | Does it work? | Validation results (v1.2.4) |
+| 10 | The Studio: Seeing it live | The interactive interface |
+| 11 | Real-time streaming data | Sensors, signals, and live feeds |
+| 12 | What kinds of data can it use? | Beyond spreadsheets |
+| 13 | Bayesian Beam Search | Reasoning under uncertainty |
+| 14 | The REM Cycle | Self-maintenance and synthesis |
+| 15 | Insight Learning | When the graph has a Eureka moment |
+| 16 | The Formal Journey | ArXiv, Margins, and Academic Rigor |
+
+---
+
+## CHAPTER 1 — What Is a Knowledge Graph?
+Most databases are like spreadsheets: rows and columns. A **Knowledge Graph** is different. It's a collection of entities (nodes) and the relationships (edges) between them. Instead of a row for "Tom Hanks," a Knowledge Graph has a circle for **Tom Hanks**. That circle is connected by a line labeled **ACTED_IN** to another circle labeled **Forrest Gump**. This format is how humans think — we think in connections, not table rows.
+
+---
+
+## CHAPTER 3 — The Problem With AI Reasoning
+Because LLMs are statistical, they "hallucinate." If they don't know an answer, they'll often make one up that *sounds* perfectly plausible. **CEREBRUM is different.** It moves the reasoning out of the probabilistic "Black Box" and into the graph itself. It only follows lines that actually exist in your data.
+
+---
+
+## CHAPTER 9 — Does It Work? (v1.2.4 Results)
+As of late March 2026, CEREBRUM has been validated on several large-scale datasets and is operating at **v1.2.4 "Camera-Ready"** status.
+
+**What the tests showed:**
+1. **Unrivaled Stability**: The framework now passes **1,042 automated tests**, including 130+ advanced "edge-case" scenarios.
+2. **Medical accuracy**: On the Hetionet biomedical graph, CEREBRUM was over **183% more accurate** than simple search at finding connections between diseases and genes.
+3. **Reasoning Recall**: On MetaQA 3-hop reasoning, recall improved by **+350%** relative to non-attention baselines.
+4. **Zero training required**: Most AI systems require weeks of expensive training. CEREBRUM achieved these results with no training at all — it reasons purely from the structure of the graph it's given.
+
+---
+
+## CHAPTER 16 — The Formal Journey: ArXiv and Beyond
+The transition from a laboratory project to a formal **ArXiv Manuscript** required a process called **Hardening**. This included:
+- **Margin Remediation**: Ensuring every equation and table fits perfectly into a professional two-column academic layout.
+- **Structural Hole Repair**: Identifying 12 subtle failure modes (like "Zombie Bridges" or "Causal Floods") and building mathematical guards against them.
+- **Branding Audit**: Ensuring absolute privacy and professional attribution across thousands of lines of code.
+
+---
+
+### **Acknowledgments & Credits**
+CEREBRUM stands on the shoulders of decades of foundational research in Graph Theory, Neuroscience, and Machine Learning.
+
+**Questions? Contact the author:**
+**Bryan Alexander Buchorn** — bryan.alexander@buchorn.com
+
+---
+*Generated: March 2026 — Project CEREBRUM v1.2.4 — Final Rebranding*

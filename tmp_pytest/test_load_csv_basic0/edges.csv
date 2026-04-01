@@ -1,0 +1,3 @@
+source,target,relation
+alice,bob,KNOWS
+bob,carol,WORKS_WITH

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEREBRUM | The AI That Thinks For Itself</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-dim: #8b949e;
+            --primary: #58a6ff;
+            --secondary: #bc8cff;
+            --accent: #3fb950;
+            --gradient: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+
+        header {
+            padding: 4rem 0;
+            text-align: center;
+            background: radial-gradient(circle at top, rgba(88, 166, 255, 0.1) 0%, transparent 70%);
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            color: var(--text-dim);
+            max-width: 700px;
+            margin: 0 auto 2rem;
+        }
+
+        .cta-group { display: flex; gap: 1rem; justify-content: center; margin-bottom: 4rem; }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+        .btn-outline:hover { background: rgba(88, 166, 255, 0.1); }
+
+        .section { padding: 6rem 0; border-top: 1px solid var(--border); }
+        .section-title { font-size: 2.5rem; margin-bottom: 3rem; text-align: center; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: var(--primary); }
+        .card h3 { color: var(--primary); margin-bottom: 1rem; font-size: 1.4rem; }
+        .card p { color: var(--text-dim); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            background: #000;
+            padding: 2rem;
+            border-radius: 12px;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+        }
+        .stat-item { padding: 1rem; border-left: 2px solid var(--secondary); }
+        .stat-value { font-size: 1.8rem; font-weight: bold; color: white; display: block; }
+        .stat-label { font-size: 0.9rem; color: var(--text-dim); }
+
+        .features-list { list-style: none; }
+        .features-list li {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+            position: relative;
+        }
+        .features-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        footer {
+            padding: 4rem 0;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        .highlight { color: var(--secondary); font-weight: bold; }
+
+        @media (max-width: 768px) {
+            .hero-title { font-size: 2.5rem; }
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container">
+            <h1 class="hero-title">CEREBRUM</h1>
+            <p class="hero-subtitle">The first "Absolute Truth" reasoning engine for Knowledge Graphs. No hallucinations. Complete auditability. Zero training required.</p>
+            <div class="cta-group">
+                <a href="#" class="btn btn-primary">Get the Whitepaper</a>
+                <a href="#" class="btn btn-outline">Explore the Studio</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="section">
+            <div class="container">
+                <h2 class="section-title">Why CEREBRUM?</h2>
+                <div class="grid">
+                    <div class="card">
+                        <h3>Zero Hallucination</h3>
+                        <p>Unlike LLMs, CEREBRUM reasons over <span class="highlight">verified graph edges</span>. If a path doesn't exist, the system says so. It never invents facts.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Forensic Interpretability</h3>
+                        <p>Every conclusion comes with a full <span class="highlight">reasoning trace</span>. See every score, every community, and every mathematical signal used.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Sub-10ms Latency</h3>
+                        <p>Optimized for enterprise scale. Perform deep 3-hop reasoning across 100k+ nodes in milliseconds on <span class="highlight">commodity hardware</span>.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <div class="grid" style="align-items: center;">
+                    <div>
+                        <h2 class="section-title" style="text-align: left;">Hardened for High-Stakes Performance</h2>
+                        <ul class="features-list">
+                            <li><strong>Community-Structured Attention (CSA)</strong>: Mimics the focused reasoning of the human cortex.</li>
+                            <li><strong>Dual-Signal Fusion (DSCF)</strong>: Self-organizing knowledge neighborhoods that correct their own errors.</li>
+                            <li><strong>REM Cycle Maintenance</strong>: Nightly autonomous graph cleanup and memory consolidation.</li>
+                            <li><strong>Signal Encoding</strong>: Bridge the gap between raw physical sensor data and symbolic reasoning.</li>
+                        </ul>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-value">0%</span>
+                            <span class="stat-label">Hallucination Rate</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">+183%</span>
+                            <span class="stat-label">Accuracy vs. Search</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">&lt;7ms</span>
+                            <span class="stat-label">3-Hop Latency</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">1,042</span>
+                            <span class="stat-label">Hardened Tests Passing</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" style="background: rgba(188, 140, 255, 0.03);">
+            <div class="container">
+                <h2 class="section-title">The "Glass-Box" Studio</h2>
+                <p style="text-align: center; color: var(--text-dim); margin-bottom: 3rem;">Experience reasoning in real-time with our interactive visual environment.</p>
+                <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+                    <div style="aspect-ratio: 16/9; background: #000; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #333;">
+                        [Interactive Visualization Preview]
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Project CEREBRUM. v1.4.0 "Hardened Manuscript" Edition.</p>
+            <p style="margin-top: 0.5rem;">Bryan Alexander Buchorn | Independent Researcher</p>
+        </div>
+    </footer>
+
+</body>
+</html>

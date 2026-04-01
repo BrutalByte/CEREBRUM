@@ -7,6 +7,153 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.7.1] — 2026-04-01 — Federated Reasoning + GPU Stability
+
+### Added
+- **Federated Reasoning Infrastructure (Phase 32)**:
+    - **`api/server.py` — `/traverse` endpoint**: New delegated reasoning endpoint that returns serialized `TraversalPath` branches starting from a seed entity.
+    - **`reasoning/traversal.py` — `TraversalPath.to_dict() / from_dict()`**: Native serialization for cross-network path transmission with full metadata (scores, attention weights, community sequences).
+    - **`reasoning/distributed_traversal.py` — `DistributedBeamTraversal`**: New traversal engine that supports initial and boundary delegation to remote CEREBRUM nodes.
+    - **`adapters/federated_adapter.py` — `get_reasoning_branches()`**: Aggregates reasoning branches from sub-adapters (local or remote) and applies Procrustes alignment rotations to returned embeddings.
+    - **`adapters/remote_adapter.py` — `get_reasoning_branches()`**: Client-side implementation that calls the `/traverse` endpoint on remote CEREBRUM instances.
+    - **`adapters/networkx_adapter.py` — `get_reasoning_branches()`**: Local implementation that runs a sub-beam search to provide branches to federated callers.
+    - **`tests/test_federated_reasoning.py`**: Integration tests for the new `/traverse` API and federated delegation logic.
+
+### Fixed
+- **`core/dscf_gpu.py` — Convergence Stability**: 
+    - Fixed a critical flakiness bug in `GPUDSCFEngine` where small symmetric structures (like triangles) could oscillate indefinitely under synchronous updates. 
+    - Implemented **Block-Asynchronous Updates** using a 50% random Bernoulli mask to break symmetry and ensure convergence.
+    - Updated `changed_frac` calculation to use the unmasked "intent" vector for more robust termination.
+    - Added current-community score bias (0.05) to further stabilize near-tie community assignments.
+    - Populated all `GPURunStats` profiling fields (tensor_build_ms, iteration_ms, iterations, converged) which were previously zero or uninitialized.
+
+---
+
+## [1.7.0] — 2026-04-01 — Proactive Bridge Synthesis (Phase 30)
+
+### Added
+- **`core/graph_bridge.py` — `GraphBridgeEngine`**: Proactive cross-component bridge synthesizer. Detects disconnected components and connects "frontier nodes" (peripheral nodes in small components) using pre-trained `SentenceEngine` embeddings. This addresses the multi-hop recall bottleneck on fragmented scaffold graphs (e.g., CWQ) without requiring task-specific training.
+- **`CerebrumGraph.enhance()`** (`core/cerebrum.py`): New pipeline stage: `THALAMUS → complete() → enhance() → build() → CORTEX`. Supports proactive enhancers that require embeddings or heuristics, complementing the purely logical `complete()` stage.
+- **`CerebrumGraph.build(community_engine=...)`**: Added support for choosing between `dscf` (default), `leiden`, and `lpa` engines. `leiden` provides a 10-100x speedup on multi-million node graphs on CPU compared to the standard DSCF loop.
+- **`tests/test_graph_bridge.py`**: Comprehensive unit tests for bridge synthesis, covering component discovery, frontier selection, and similarity-based link materialization.
+
+### Fixed
+- **`GraphBridgeEngine` cap strictness**: Fixed a bug where bidirectional edges could exceed the `max_bridges` limit by one.
+- **`GraphBridgeEngine` robustness**: Added bounds checking for `top_k` in `np.argpartition` to prevent `ValueError` on small components.
+- **`scripts/setup_cwq_data.py`**: Added `entity_names.json` generation logic to ensure `SentenceEngine` correctly labels MIDs using the name-string format already present in the CWQ scaffold.
+
+---
+
+## [1.6.9] — 2026-03-31 — CWQ Benchmark + Unit Tests + WebQSP Fix
+
+### Added
+- **`scripts/setup_cwq_data.py`**: One-time data download and scaffold graph construction for
+  ComplexWebQuestions (CWQ, 3,519 test / 27,639 train questions from `rmanluo/RoG-cwq` on
+  HuggingFace).  Supplements with WebQSP Freebase triples (same ontology).  Outputs
+  `cwq_scaffold.txt`, `entity_names.json` (placeholder), `CWQ.test.json`, `CWQ.train.json`.
+- **`benchmarks/cwq_eval.py`**: Full CWQ evaluation harness.  Refactored to use the unified
+  `CerebrumGraph` pipeline. Supports sentence embeddings with friendly names, DSCF + coarsening,
+  question-embedding-guided traversal, and entity-level F1 + Hits@1.  Reports per-type breakdown.
+- **`tests/test_cerebrum.py`**: 36 unit tests for `CerebrumGraph` public API covering all four
+  factory methods (`from_kb`, `from_csv`, `from_triples`, `from_adapter`), `complete()`,
+  `build()`, and `query()` (including `max_hop` override, `min_hop` filtering, uniqueness, sorting,
+  multi-seed, chaining).
+- **`tests/test_graph_completion.py`**: 22 unit tests for `InverseRule` and `CompositionRule`
+  covering synthetic flag, confidence inheritance (weakest-link), provenance format,
+  `min_occurrences`, `max_edges`, cycle avoidance, idempotency, and `describe()`.
+
+### Fixed
+- **`benchmarks/webqsp_full_eval.py` line 836**: `UnicodeEncodeError` on Windows cp1252 console
+  caused by printing Greek letters (α β γ δ ε) in the CSAParameterLearner output block.
+  Replaced with ASCII equivalents (`alpha`, `beta`, `gamma`, `delta`, `eps`).  The `--optimized`
+  variant of the WebQSP benchmark can now run to completion on Windows.
+
+---
+
+## [1.6.8] — 2026-03-31 — RelationPathPrior for MetaQA
+
+### Added
+- **`--use-prior` flag in `benchmarks/metaqa_eval.py`**: Builds a `RelationPathPrior` from training
+  data for 2-hop and 3-hop re-ranking. The prior counts which relation-sequence patterns most
+  frequently reach correct answers across 20K training questions (sampled from 118K/114K available).
+  It is a frequency heuristic over the *search process*, not a modification to graph structure or
+  answer claims. Priors are cached to `CACHE_DIR/prior_{N}hop.pkl` after the first run (~5 min
+  one-time cost for 3-hop; negligible on subsequent runs).
+- **`build_or_load_prior()` helper** in `metaqa_eval.py`: handles train-file parsing, sampling
+  (default 20K, avoids 30+ min full training traversal), BeamTraversal per hop, and disk cache.
+- **1-hop intentionally excluded** from prior: the 1-hop prior has only 9 unique relation patterns
+  (one per relation type) and provides no discriminating signal; empirically hurts H@10 if applied.
+
+### Fixed
+- `build_or_load_prior` reads from `TRAIN_FILES[hop]` (training split), not `QA_FILES[hop]` (test).
+- Training sample capped at 20,000 questions per hop — full 118K/114K training sets would take
+  30+ minutes per hop; 20K gives effectively the same 70–217 unique patterns (saturation point).
+
+### Benchmark Results (MetaQA — full 39,093 questions, sentence + RelationPrior, OFFICIAL v1.6.8)
+
+Settings: SentenceEngine, beam_width=10, --min-community-size 20, --use-prior.
+Prior built from 20K training samples per hop (2-hop and 3-hop only).
+
+| Hop | H@1 | H@10 | MRR | vs v1.6.7 (no prior) |
+|-----|-----|------|-----|----------------------|
+| 1-hop (9,947 q) | **46.1%** | **96.6%** | **0.614** | — (no prior applied) |
+| 2-hop (14,872 q) | **30.0%** | **86.3%** | **0.463** | +0.7pp H@1, +1.2pp H@10 |
+| 3-hop (14,274 q) | **12.5%** | **50.3%** | **0.225** | +0.7pp H@1, **+5.8pp H@10** |
+
+3-hop H@10 crosses 50% for the first time. The prior provides strongest signal on 3-hop because
+long-chain relation sequences (e.g., starred_actors→directed_by→written_by) are highly consistent
+in MetaQA's movie domain.
+
+---
+
+## [1.6.7] — 2026-03-31 — Unified Pipeline + Sentence Embeddings + max_hop Fix
+
+### Added
+- **`core/cerebrum.py` — `CerebrumGraph` unified pipeline class**: Single entry point that encapsulates
+  the full THALAMUS → CORTEX stack. Factory methods: `from_kb()`, `from_csv()`, `from_triples()`,
+  `from_adapter()`. Replaces manual wiring in benchmark scripts.
+  ```python
+  graph = CerebrumGraph.from_kb("kb.txt", sep="|", directed=False, embeddings="sentence")
+  graph.complete([InverseRule("starred_actors")])
+  graph.build(cache_dir="cache/", min_community_size=20)
+  answers = graph.query(["Tom Hanks"], top_k=10, min_hop=1, max_hop=1)
+  ```
+- **`core/graph_completion.py` — Provable inference rules**: `InverseRule` and `CompositionRule` add
+  synthetic edges with full logical provenance. No statistical predictions — only deductions from
+  existing graph structure. Every synthetic edge carries `synthetic=True`, `confidence=min(backing)`,
+  and a provenance string citing the exact rule and evidence: e.g.,
+  `"rule:inverse:starred_actors→starred_actors|source:Tom Hanks→Philadelphia"`.
+- **`CerebrumGraph.query()` `max_hop` parameter**: Per-query traversal depth override. Essential for
+  hop-specific evaluation — 1-hop queries must not explore 3-hop paths, which floods the result
+  pool with deep candidates and suppresses correct shallow answers.
+- **MetaQA rewritten to use `CerebrumGraph`** (`benchmarks/metaqa_eval.py`): All manual THALAMUS
+  wiring replaced with `CerebrumGraph.from_kb()` + `graph.build()` + `graph.query()`.
+
+### Fixed
+- **`max_hop` regression in unified pipeline**: `CerebrumGraph` was built with `max_hop=3` for all
+  evaluations. Without per-query `max_hop`, the 1-hop eval traversed 3 hops deep, flooding the
+  answer pool and dropping 1-hop H@1 from 41.7% → 9.4%. Fixed by adding `max_hop` to `query()`;
+  metaqa_eval now passes `max_hop=hop` per evaluation level.
+- **`dscf_communities()` seed argument**: Function does not accept `seed` parameter. Build pipeline
+  now calls `dscf_communities(G_und)` for n_trials=1, and `best_of_n_dscf(G_und, n_trials, seed)`
+  for n_trials>1.
+
+### Benchmark Results (MetaQA — full 39,093 questions, sentence embeddings, new canonical config)
+
+Settings: SentenceEngine (all-MiniLM-L6-v2, 384-dim), beam_width=10, --min-community-size 20.
+
+| Hop | H@1 | H@10 | MRR | vs random (v1.6.6) |
+|-----|-----|------|-----|--------------------|
+| 1-hop (9,947 q) | **46.2%** | **96.7%** | **0.615** | +4.5pp H@1 |
+| 2-hop (14,872 q) | **29.3%** | **85.1%** | **0.458** | +4.6pp H@1 |
+| 3-hop (14,274 q) | **11.8%** | **44.5%** | **0.209** | +4.7pp H@10 |
+
+Sentence embeddings provide meaningful semantic signal for MetaQA (entity names are human-readable:
+"Tom Hanks", "The Green Mile"). Random embeddings drive CSA via community structure alone; sentence
+embeddings add cosine-similarity alignment that benefits all hop levels.
+
+---
+
 ## [1.6.6] — 2026-03-31 — Accuracy Audit: Convergence Voting + ResourceGovernor Tuning + GrailQA
 
 ### Added

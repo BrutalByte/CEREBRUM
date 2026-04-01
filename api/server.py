@@ -36,7 +36,7 @@ from api.schemas import (
     CommunityResponse, EmbeddingResponse,
     MaskedEntityResponse, MaskedSearchResponse,
     CommunitySignatureSchema, HologramResponse,
-    HandshakeResponse, ReasoningCallbackRequest, ReasoningCallbackResponse,
+    HandshakeResponse, TraversalBranchRequest, TraversalBranchResponse, ReasoningCallbackRequest, ReasoningCallbackResponse,
     StreamIngestRequest, StreamIngestResponse, StreamStatusResponse,
     BridgeRecordSchema, BridgesResponse,
     REMRunRequest, REMReportSchema, REMStatusResponse, REMRollbackResponse,
@@ -531,6 +531,54 @@ def create_app(
             node_count=adapter.node_count(),
             community_count=len(set(cm.values()))
         )
+
+    @app.post("/traverse", response_model=TraversalBranchResponse, tags=["federated"])
+    async def traverse_callback(req: TraversalBranchRequest, node: Dict = Depends(check_scope("query"))):
+        """
+        Delegate multi-hop reasoning branches to this node.
+        Returns serialized TraversalPaths starting from seed_id.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Service not ready")
+
+        from core.attention_engine import CSAEngine
+        from reasoning.traversal import BeamTraversal
+
+        adapter      = _state["adapter"]
+        csa_meta     = _state["csa_metadata"]
+        default_weights = _state["default_edge_type_weights"]
+
+        # 1. Setup local reasoning context
+        csa = CSAEngine(
+            adapter=adapter,
+            edge_type_weights=default_weights,
+            community_params=csa_meta.get("community_params")
+        )
+        csa.set_community_graph(csa_meta["distances"], csa_meta["adjacent_pairs"])
+        
+        if _state["meta_learner"]:
+            csa.set_meta_learner(_state["meta_learner"])
+
+        # 2. Run local beam search
+        traversal = BeamTraversal(
+            adapter=adapter,
+            csa_engine=csa,
+            beam_width=req.beam_width,
+            max_hop=req.max_hop,
+            max_budget=req.max_budget,
+        )
+        
+        # Use context_embedding if provided to seed the traversal
+        context_emb = np.array(req.context_embedding, dtype=np.float32) if req.context_embedding else None
+        
+        # We start a fresh traversal from seed_id
+        # Future: allow passing a partial TraversalPath to resume
+        paths = traversal.traverse([req.seed_id], query_embedding=context_emb)
+        
+        # 3. Serialize results
+        branches = [p.to_dict() for p in paths if len(p.nodes) > 1] # Only return actual paths
+        
+        return TraversalBranchResponse(seed_id=req.seed_id, branches=branches)
 
     @app.post("/reason", response_model=ReasoningCallbackResponse, tags=["federated"])
     async def reason_callback(req: ReasoningCallbackRequest, node: Dict = Depends(check_scope("query"))):

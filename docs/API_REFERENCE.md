@@ -1,8 +1,22 @@
 # CEREBRUM REST API Reference
 
 **Base URL**: `http://localhost:8200`
-**API Version**: v1.1.0
+**API Version**: v1.7.1
 **Authentication**: JWT Bearer token (all endpoints except `/health`)
+
+---
+
+## High-Level API (`CerebrumGraph`)
+
+While the REST API provides remote access, the primary programmatic entry point for local integration is the `CerebrumGraph` class in `core/cerebrum.py`.
+
+### `CerebrumGraph` Lifecycle
+
+1.  **Initialize**: `graph = CerebrumGraph.from_kb("path/to/kb.csv", embeddings="sentence")`
+2.  **Complete (Optional)**: `graph.complete([InverseRule(), CompositionRule()])`
+3.  **Enhance (Optional)**: `graph.enhance([GraphBridgeEngine()])`
+4.  **Build**: `graph.build(cache_dir="cache/", community_engine="dscf")`
+5.  **Query**: `answers = graph.query(["start_node"], top_k=10)`
 
 ---
 
@@ -90,6 +104,60 @@ Simple GET-style query for integrations that cannot send POST bodies.
 **Query parameters:** `entity` (required), `max_hops` (default: 3), `top_k` (default: 10)
 
 **Response:** Same schema as `POST /query`.
+
+---
+
+### Federated Reasoning
+
+#### `POST /traverse`
+Delegate multi-hop reasoning branch expansion to this node. Returns a set of `TraversalPath` objects (sub-beams) starting from the provided seed.
+
+**Request body:**
+```json
+{
+    "seed_id": "Marie Curie",
+    "context_embedding": [0.12, -0.05, ...],
+    "max_hop": 2,
+    "beam_width": 5,
+    "max_budget": 500
+}
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `seed_id` | string | required | Entity to start the local expansion from |
+| `context_embedding` | list[float] | null | Optional semantic vector to seed the CSA attention |
+| `max_hop` | int | 2 | Maximum depth for this sub-branch |
+| `beam_width` | int | 5 | Width of the local beam search |
+| `max_budget` | int | 500 | Max edges to explore in this branch |
+
+**Response (200 OK):**
+```json
+{
+    "seed_id": "Marie Curie",
+    "branches": [
+        {
+            "nodes": ["Marie Curie", "discovered", "Polonium"],
+            "score": 0.892,
+            "embedding": [0.11, 0.04, ...],
+            "attention_weights": [0.95, 0.88],
+            "community_sequence": [0, 0, 0],
+            "edge_confidences": [1.0, 1.0],
+            "edge_provenances": ["", ""],
+            "beta_alpha": 1.0,
+            "beta_beta": 1.0
+        }
+    ]
+}
+```
+
+**curl example:**
+```bash
+curl -X POST http://localhost:8200/traverse \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"seed_id": "Marie Curie", "max_hop": 2}'
+```
 
 ---
 

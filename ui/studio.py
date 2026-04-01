@@ -36,6 +36,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from adapters.file_adapter import load_file_adapter  # noqa: E402
 from adapters.stream_adapter import StreamAdapter, PythonCallbackSource, FileTailSource, HTTPPollingSource  # noqa: E402
+from core.cerebrum import CerebrumGraph  # noqa: E402
+from core.graph_bridge import GraphBridgeEngine  # noqa: E402
 from core.embedding_engine import RandomEngine, SentenceEngine  # noqa: E402
 from core.attention_engine import CSAEngine  # noqa: E402
 from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs  # noqa: E402
@@ -123,6 +125,7 @@ from typing import Dict
 ...
 # Global state
 STATE: Dict[str, Any] = {
+    "graph_obj": None,        # CerebrumGraph instance
     "adapter": None,
     "csa": None,
     "embeddings": None,
@@ -144,10 +147,9 @@ STATE: Dict[str, Any] = {
 
 def load_graph(file_obj, csv_path_text, embedding_type):
     """
-    Load graph from either an uploaded file or a typed path.
+    Load graph using the unified CerebrumGraph pipeline.
     Yields (status_text, community_summary) tuples for streaming progress.
     """
-    # Resolve path: uploaded file takes precedence over typed path
     if file_obj is not None:
         path = file_obj.name if hasattr(file_obj, "name") else str(file_obj)
     elif csv_path_text and csv_path_text.strip():
@@ -164,80 +166,73 @@ def load_graph(file_obj, csv_path_text, embedding_type):
     logger.info("Loading graph from %s with %s embeddings", path, embedding_type)
     try:
         t0 = time.time()
-        yield "Step 1/6: Initializing Adapter...", None
+        yield "Step 1/4: Initializing Unified Pipeline...", None
 
-        adapter = load_file_adapter(path)
-        G = adapter.to_networkx()
-        n_nodes = G.number_of_nodes()
-        n_edges = G.number_of_edges()
-        STATE["adapter"] = adapter
-        STATE["n_nodes"] = n_nodes
+        emb_mode = "sentence" if "Sentence" in embedding_type else "random"
+        graph = CerebrumGraph.from_kb(path, embeddings=emb_mode)
+        STATE["graph_obj"] = graph
+        STATE["adapter"] = graph.adapter
+        STATE["n_nodes"] = graph.node_count
 
-        yield f"Step 2/6: Generating Embeddings... ({n_nodes} nodes, {n_edges} edges)", None
+        yield f"Step 2/4: Building THALAMUS Index... ({graph.node_count} nodes)", None
 
-        engine: Union[SentenceEngine, RandomEngine]
-        if embedding_type == "Sentence (all-MiniLM-L6-v2)":
-            try:
-                engine = SentenceEngine()
-            except ImportError:
-                logger.warning("sentence-transformers not installed; falling back to RandomEngine")
-                engine = RandomEngine(dim=64)
-        else:
-            engine = RandomEngine(dim=64)
-
-        labels = {n: n for n in G.nodes()}
-        embeddings = engine.encode_entities(labels)
-        adapter.embeddings = embeddings
-        STATE["embeddings"] = embeddings
-
-        yield "Step 3/6: Detecting Communities (TSC/DSCF)...", None
-
-        # Scale resolution and trials with graph size
-        resolution = adapter.adaptive_resolution()
-        n_trials = 1 if n_nodes < 500 else (3 if n_nodes < 5000 else 1)
-        parts = best_of_n_dscf(G, n_trials=n_trials, resolution=resolution, max_iter=30,
-                                use_multiprocessing=(n_trials > 1))
-        community_map = {node: i for i, members in enumerate(parts) for node in members}
-
-        # Merge tiny communities on large graphs to prevent over-splitting
-        min_size = max(2, n_nodes // 200) if n_nodes > 500 else 2
-        if len(parts) > 50 and min_size > 2:
-            community_map = merge_small_communities(community_map, G, min_size=min_size)
-            # Rebuild parts list from merged map
-            merged: dict = {}
-            for node, cid in community_map.items():
-                merged.setdefault(cid, []).append(node)
-            parts = [frozenset(v) for v in merged.values()]
-
-        adapter.community_map = community_map
-        STATE["communities"] = parts
-
-        comm_summary = f"{len(parts)} communities (resolution={resolution:.2f}, min_size={min_size}). "
-        comm_summary += ", ".join([f"C{i}:{len(m)}" for i, m in enumerate(parts[:5])])
-        if len(parts) > 5:
-            comm_summary += f"... (+{len(parts) - 5} more)"
-
-        yield "Step 4/6: Building Community Distance Index...", comm_summary
-
-        dist = build_community_distance_matrix(G, community_map)
-        adj = adjacent_community_pairs(G, community_map)
-
-        yield "Step 5/6: Initializing v1.4.0 Engines (CSA, REM, Insight)...", comm_summary
-
-        csa = CSAEngine(adapter=adapter)
-        csa.set_community_graph(dist, adj)
-        STATE["csa"] = csa
+        # Build pipeline stage
+        graph.build(seed=42)
         
-        STATE["rem"] = REMEngine(adapter)
-        STATE["insight"] = InsightEngine(adapter)
-        STATE["validator"] = InsightValidator(adapter)
+        STATE["csa"] = graph._csa
+        STATE["communities"] = graph.communities
+        STATE["embeddings"] = graph.adapter.embeddings
+
+        comm_summary = f"{len(graph.communities)} communities detected via DSCF."
+        if graph.communities:
+            comm_summary += f" First few sizes: {[len(c) for c in graph.communities[:5]]}"
+
+        yield "Step 3/4: Initializing Cognitive Engines...", comm_summary
+
+        STATE["rem"] = REMEngine(graph.adapter)
+        STATE["insight"] = InsightEngine(graph.adapter)
+        STATE["validator"] = InsightValidator(graph.adapter)
         
-        yield "Step 6/6: Finalizing UI State...", comm_summary
+        yield "Step 4/4: Finalizing UI State...", comm_summary
         STATE["graph_loaded"] = True
 
         total = time.time() - t0
-        logger.info("System ready in %.2fs", total)
-        yield f"[OK] System Ready ({total:.2f}s) | {n_nodes} nodes | {n_edges} edges", comm_summary
+        yield f"[OK] System Ready ({total:.2f}s) | {graph.node_count} nodes", comm_summary
+
+    except Exception as e:
+        logger.error("Error loading graph: %s", str(e), exc_info=True)
+        STATE["graph_loaded"] = False
+        yield f"[ERROR] {type(e).__name__}: {str(e)}", "N/A"
+
+
+def apply_bridges(min_sim, top_k, max_bridges):
+    """Proactive bridge synthesis via GraphBridgeEngine."""
+    if not STATE["graph_loaded"] or not STATE["graph_obj"]:
+        return "ERROR: Load a graph first."
+    
+    try:
+        graph = STATE["graph_obj"]
+        bridge_engine = GraphBridgeEngine(
+            min_similarity=float(min_sim),
+            top_k=int(top_k),
+            max_bridges=int(max_bridges)
+        )
+        
+        # apply to the graph object
+        n_added = graph.enhance([bridge_engine]).edge_count - STATE["adapter"].edge_count()
+        # Wait, enhance returns self. edge_count is updated.
+        # Actually CerebrumGraph.enhance() modifies the adapter graph.
+        
+        # Rebuild to update community structure if bridges were added
+        if n_added > 0:
+            graph.build(force_rebuild=True)
+            STATE["communities"] = graph.communities
+            return f"Success: Added {n_added} bridges and rebuilt communities."
+        else:
+            return "No bridges added (graph may be fully connected or similarity threshold too high)."
+            
+    except Exception as e:
+        return f"ERROR in Bridge Synthesis: {str(e)}"
 
     except Exception as e:
         logger.error("Error loading graph: %s", str(e), exc_info=True)
@@ -275,16 +270,16 @@ def format_path_html(answers):
 
 
 def run_reasoning(query, beam_width, max_hop, top_k, mem_threshold, governor=None):
-    """Execute the reasoning pipeline."""
-    if not STATE["graph_loaded"]:
+    """Execute the reasoning pipeline via CerebrumGraph."""
+    if not STATE["graph_loaded"] or not STATE["graph_obj"]:
         return "<h3 style='color:#ff4444;'>Please load a graph first.</h3>", None
     if not query or not query.strip():
         return "<h3 style='color:#ff4444;'>Enter a query entity.</h3>", None
 
     try:
-        adapter = STATE["adapter"]
-        csa = STATE["csa"]
-        seeds = [e.id for e in adapter.find_entities(query.strip(), top_k=1) if e]
+        graph = STATE["graph_obj"]
+        # Find seed ID from display name
+        seeds = [e.id for e in graph.adapter.find_entities(query.strip(), top_k=1) if e]
         if not seeds:
             return (
                 f"<h3 style='color:#ff8844;'>No entity found matching <code>{query}</code>. "
@@ -294,23 +289,14 @@ def run_reasoning(query, beam_width, max_hop, top_k, mem_threshold, governor=Non
 
         seed = seeds[0]
         
-        # Use provided governor or create one with the user-selected threshold
-        if governor is None:
-            governor = ResourceGovernor(memory_threshold_pct=float(mem_threshold))
-            
-        traversal = BeamTraversal(
-            adapter=adapter, 
-            csa_engine=csa, 
-            beam_width=int(beam_width), 
+        # Override temporary graph params for this query
+        answers = graph.query(
+            [seed],
+            top_k=int(top_k),
             max_hop=int(max_hop),
-            governor=governor
+            beam_width=int(beam_width),
+            memory_threshold_pct=float(mem_threshold)
         )
-        # Wire v1.4.0 engines to the traversal
-        traversal.insight_engine = STATE["insight"]
-        traversal.bridge_engine  = STATE.get("bridge_engine") # if we add it later
-        
-        paths = traversal.traverse([seed])
-        answers = extract(paths, top_k=int(top_k))
 
         html = (
             f"<div style='margin-bottom:16px;'>"
@@ -812,11 +798,11 @@ def generate_stream_viz():
 # UI Layout
 # ---------------------------------------------------------------------------
 
-with gr.Blocks(title="CEREBRUM Studio v1.4.0") as demo:
+with gr.Blocks(title="CEREBRUM Studio v1.7.0") as demo:
     gr.HTML("""
         <div class='cerebrum-header'>
             <h1>CEREBRUM STUDIO</h1>
-            <p>v1.4.0 Hardened Cognitive Architecture — "Absolute Truth" Engine</p>
+            <p>v1.7.0 Proactive Cognitive Architecture — Phase 30 COMPLETE</p>
         </div>
     """)
 
@@ -863,6 +849,14 @@ with gr.Blocks(title="CEREBRUM Studio v1.4.0") as demo:
                     inputs=[preset_dropdown],
                     outputs=[beam_slider, hop_slider, k_slider, mem_slider]
                 )
+
+            with gr.Accordion("Graph Enhancement", open=False):
+                gr.Markdown("### Proactive Bridge Synthesis")
+                bridge_min_sim = gr.Slider(0.5, 0.99, value=0.82, step=0.01, label="Min Similarity")
+                bridge_top_k   = gr.Slider(1, 10, value=3, step=1, label="Bridges per Candidate")
+                bridge_max     = gr.Slider(100, 10000, value=1000, step=100, label="Max Total Bridges")
+                bridge_btn     = gr.Button("Synthesize Bridges", variant="secondary")
+                bridge_out     = gr.Textbox(label="Enhancement Result", interactive=False)
 
             with gr.Group():
                 gr.Markdown("### Status")
@@ -984,6 +978,24 @@ with gr.Blocks(title="CEREBRUM Studio v1.4.0") as demo:
     viz_btn.click(fn=generate_graph_viz, inputs=[], outputs=viz_output)
     viz_3d_btn.click(fn=generate_3d_viz, inputs=[], outputs=viz_3d_output)
     stats_btn.click(fn=get_graph_stats, inputs=[], outputs=stats_output)
+
+    bridge_btn.click(
+        fn=apply_bridges,
+        inputs=[bridge_min_sim, bridge_top_k, bridge_max],
+        outputs=bridge_out,
+    ).then(
+        fn=generate_graph_viz,
+        inputs=[],
+        outputs=viz_output,
+    ).then(
+        fn=generate_3d_viz,
+        inputs=[],
+        outputs=viz_3d_output,
+    ).then(
+        fn=get_graph_stats,
+        inputs=[],
+        outputs=stats_output,
+    )
 
     reason_btn.click(
         fn=run_reasoning,

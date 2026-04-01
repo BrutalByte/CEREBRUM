@@ -1,0 +1,3 @@
+source,target,relation
+#comment,skip,this
+alice,bob,KNOWS

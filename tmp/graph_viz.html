@@ -1,0 +1,155 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 600px;
+                 background-color: #0d1117;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#58a6ff", "font": {"color": "#c9d1d9"}, "id": "newton", "label": "newton", "shape": "dot"}, {"color": "#58a6ff", "font": {"color": "#c9d1d9"}, "id": "INFLUENCED", "label": "INFLUENCED", "shape": "dot"}, {"color": "#bc8cff", "font": {"color": "#c9d1d9"}, "id": "einstein", "label": "einstein", "shape": "dot"}, {"color": "#bc8cff", "font": {"color": "#c9d1d9"}, "id": "COLLABORATED", "label": "COLLABORATED", "shape": "dot"}, {"color": "#3fb950", "font": {"color": "#c9d1d9"}, "id": "darwin", "label": "darwin", "shape": "dot"}, {"color": "#3fb950", "font": {"color": "#c9d1d9"}, "id": "CONTEMPORARIES", "label": "CONTEMPORARIES", "shape": "dot"}, {"color": "#58a6ff", "font": {"color": "#c9d1d9"}, "id": "faraday", "label": "faraday", "shape": "dot"}, {"color": "#bc8cff", "font": {"color": "#c9d1d9"}, "id": "CORRESPONDED", "label": "CORRESPONDED", "shape": "dot"}, {"color": "#ff7b72", "font": {"color": "#c9d1d9"}, "id": "maxwell", "label": "maxwell", "shape": "dot"}, {"color": "#ff7b72", "font": {"color": "#c9d1d9"}, "id": "PEERS", "label": "PEERS", "shape": "dot"}, {"color": "#d2a8ff", "font": {"color": "#c9d1d9"}, "id": "caesar", "label": "caesar", "shape": "dot"}, {"color": "#d2a8ff", "font": {"color": "#c9d1d9"}, "id": "ALLIED", "label": "ALLIED", "shape": "dot"}, {"color": "#d2a8ff", "font": {"color": "#c9d1d9"}, "id": "PREDECESSOR", "label": "PREDECESSOR", "shape": "dot"}, {"color": "#a5d6ff", "font": {"color": "#c9d1d9"}, "id": "napoleon", "label": "napoleon", "shape": "dot"}, {"color": "#a5d6ff", "font": {"color": "#c9d1d9"}, "id": "ADMIRED", "label": "ADMIRED", "shape": "dot"}, {"color": "#79c0ff", "font": {"color": "#c9d1d9"}, "id": "alexander", "label": "alexander", "shape": "dot"}, {"color": "#79c0ff", "font": {"color": "#c9d1d9"}, "id": "ANCESTOR_OF", "label": "ANCESTOR_OF", "shape": "dot"}, {"color": "#58a6ff", "font": {"color": "#c9d1d9"}, "id": "augustus", "label": "augustus", "shape": "dot"}, {"color": "#58a6ff", "font": {"color": "#c9d1d9"}, "id": "CONTEMPORARY", "label": "CONTEMPORARY", "shape": "dot"}, {"color": "#a5d6ff", "font": {"color": "#c9d1d9"}, "id": "STUDIED", "label": "STUDIED", "shape": "dot"}, {"color": "#79c0ff", "font": {"color": "#c9d1d9"}, "id": "INSPIRED", "label": "INSPIRED", "shape": "dot"}, {"color": "#bc8cff", "font": {"color": "#c9d1d9"}, "id": "hannibal", "label": "hannibal", "shape": "dot"}, {"color": "#bc8cff", "font": {"color": "#c9d1d9"}, "id": "ENEMY_OF", "label": "ENEMY_OF", "shape": "dot"}, {"color": "#3fb950", "font": {"color": "#c9d1d9"}, "id": "rome", "label": "rome", "shape": "dot"}, {"color": "#3fb950", "font": {"color": "#c9d1d9"}, "id": "RIVALED", "label": "RIVALED", "shape": "dot"}, {"color": "#3fb950", "font": {"color": "#c9d1d9"}, "id": "TRADE_ROUTE", "label": "TRADE_ROUTE", "shape": "dot"}, {"color": "#d2a8ff", "font": {"color": "#c9d1d9"}, "id": "paris", "label": "paris", "shape": "dot"}, {"color": "#d2a8ff", "font": {"color": "#c9d1d9"}, "id": "NEIGHBORS", "label": "NEIGHBORS", "shape": "dot"}, {"color": "#58a6ff", "font": {"color": "#c9d1d9"}, "id": "athens", "label": "athens", "shape": "dot"}, {"color": "#a5d6ff", "font": {"color": "#c9d1d9"}, "id": "london", "label": "london", "shape": "dot"}, {"color": "#bc8cff", "font": {"color": "#c9d1d9"}, "id": "carthage", "label": "carthage", "shape": "dot"}, {"color": "#3fb950", "font": {"color": "#c9d1d9"}, "id": "babylon", "label": "babylon", "shape": "dot"}, {"color": "#d2a8ff", "font": {"color": "#c9d1d9"}, "id": "RULED", "label": "RULED", "shape": "dot"}, {"color": "#a5d6ff", "font": {"color": "#c9d1d9"}, "id": "LED", "label": "LED", "shape": "dot"}, {"color": "#d2a8ff", "font": {"color": "#c9d1d9"}, "id": "cleopatra", "label": "cleopatra", "shape": "dot"}, {"color": "#58a6ff", "font": {"color": "#c9d1d9"}, "id": "LIVED_IN", "label": "LIVED_IN", "shape": "dot"}, {"color": "#bc8cff", "font": {"color": "#c9d1d9"}, "id": "VISITED", "label": "VISITED", "shape": "dot"}, {"color": "#bc8cff", "font": {"color": "#c9d1d9"}, "id": "FROM", "label": "FROM", "shape": "dot"}]);
+                  edges = new vis.DataSet([{"from": "newton", "title": "faraday", "to": "INFLUENCED"}, {"from": "newton", "title": "london", "to": "LIVED_IN"}, {"from": "einstein", "title": "bohr", "to": "COLLABORATED"}, {"from": "einstein", "title": "curie", "to": "CORRESPONDED"}, {"from": "einstein", "title": "athens", "to": "VISITED"}, {"from": "darwin", "title": "faraday", "to": "CONTEMPORARIES"}, {"from": "faraday", "title": "maxwell", "to": "INFLUENCED"}, {"from": "maxwell", "title": "bohr", "to": "PEERS"}, {"from": "caesar", "title": "cleopatra", "to": "ALLIED"}, {"from": "caesar", "title": "augustus", "to": "PREDECESSOR"}, {"from": "caesar", "title": "rome", "to": "RULED"}, {"from": "napoleon", "title": "caesar", "to": "ADMIRED"}, {"from": "napoleon", "title": "cicero", "to": "STUDIED"}, {"from": "napoleon", "title": "paris", "to": "LED"}, {"from": "alexander", "title": "cleopatra", "to": "ANCESTOR_OF"}, {"from": "alexander", "title": "caesar", "to": "INSPIRED"}, {"from": "augustus", "title": "cicero", "to": "CONTEMPORARY"}, {"from": "hannibal", "title": "caesar", "to": "ENEMY_OF"}, {"from": "hannibal", "title": "carthage", "to": "FROM"}, {"from": "rome", "title": "athens", "to": "RIVALED"}, {"from": "rome", "title": "alexandria", "to": "TRADE_ROUTE"}, {"from": "paris", "title": "london", "to": "NEIGHBORS"}, {"from": "paris", "title": "rome", "to": "ALLIED"}, {"from": "athens", "title": "alexandria", "to": "INFLUENCED"}, {"from": "london", "title": "athens", "to": "ADMIRED"}, {"from": "carthage", "title": "rome", "to": "ENEMY_OF"}, {"from": "babylon", "title": "alexandria", "to": "TRADE_ROUTE"}, {"from": "cleopatra", "title": "alexandria", "to": "RULED"}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": true,
+            "type": "dynamic"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
