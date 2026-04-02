@@ -364,7 +364,18 @@ class NetworkXAdapter(GraphAdapter):
                     **edge.properties,
                 )
             else:
-                G.add_edge(s, o, relation=p)
+                # Direct addition from triples (no normalization)
+                # Ensure core metadata keys make it to edge attributes
+                G.add_edge(
+                    s, o, 
+                    relation=p, 
+                    weight=meta.get("weight", 1.0),
+                    confidence=meta.get("confidence", 1.0),
+                    provenance=meta.get("provenance", "triples"),
+                    valid_from=meta.get("valid_from"),
+                    valid_to=meta.get("valid_to"),
+                    **{k: v for k, v in meta.items() if k not in ["weight", "confidence", "provenance", "valid_from", "valid_to"]}
+                )
         return cls(G)
 
 

@@ -338,7 +338,10 @@ class CerebrumGraph:
             build_community_graph,
             adjacent_community_pairs,
             coarsen_communities,
+            compute_structural_features,
+            encode_structural_features,
         )
+        import time
 
         cache = Path(cache_dir) if cache_dir else None
         if cache:
@@ -381,7 +384,37 @@ class CerebrumGraph:
                     pickle.dump(self.adapter.embeddings, f)
 
         # ----------------------------------------------------------
-        # 2. Community detection
+        # 2. Structural & Temporal Enrichment (Phase 33)
+        # ----------------------------------------------------------
+        # Compute raw graph features (PageRank, Betweenness, Recency)
+        logger.info("Computing structural features (Phase 33)...")
+        struct_features = compute_structural_features(G, current_time=time.time())
+        
+        # If we didn't load from cache, apply structural enrichment to embeddings
+        if force_rebuild or not (cache / "embeddings.pkl" if cache else None) or not (cache / "embeddings.pkl").exists():
+            # Encode features into a vector of the same dimension as existing embeddings
+            # We use a residual connection: h = LayerNorm(h + structural_encoding)
+            if self.adapter.embeddings:
+                sample_emb = next(iter(self.adapter.embeddings.values()))
+                emb_dim = len(sample_emb)
+                
+                logger.info("Encoding structural features (dim=%d)...", emb_dim)
+                encoded_struct = encode_structural_features(struct_features, dim=emb_dim, seed=seed)
+                
+                # Residual addition + normalization
+                for node, s_vec in encoded_struct.items():
+                    if node in self.adapter.embeddings:
+                        h = self.adapter.embeddings[node] + s_vec
+                        norm = np.linalg.norm(h)
+                        if norm > 0:
+                            self.adapter.embeddings[node] = h / norm
+
+                if emb_cache:
+                    with open(emb_cache, "wb") as f:
+                        pickle.dump(self.adapter.embeddings, f)
+
+        # ----------------------------------------------------------
+        # 3. Community detection
         # ----------------------------------------------------------
         comm_cache = cache / "communities.pkl" if cache else None
         G_und      = G.to_undirected() if G.is_directed() else G
@@ -447,6 +480,10 @@ class CerebrumGraph:
 
         self._csa = CSAEngine(self.adapter)
         self._csa.set_community_graph(distances, adj, community_graph=cg)
+
+        # Phase 33: Pass PageRank from structural features to CSA
+        pr_map = {node: data.get("pagerank", 0.0) for node, data in struct_features.items()}
+        self._csa.set_pagerank(pr_map)
 
         # ----------------------------------------------------------
         # 5. BeamTraversal

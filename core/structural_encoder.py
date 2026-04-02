@@ -10,14 +10,49 @@ from typing import Dict, Optional
 from core.hardware import HAS_RAPIDS, to_gpu_graph
 import networkx as nx
 import numpy as np
+import time
+
+# Assuming a maximum meaningful time difference for normalization (e.g., 1 year in seconds)
+# This will scale recency scores. Adjust as needed for domain.
+MAX_TIME_DIFF = 365 * 24 * 60 * 60  # 1 year in seconds
+
+
+def _compute_node_recency_score(G: nx.Graph, node_id: str, current_time: float) -> float:
+    """
+    Compute a recency score for a node based on the 'valid_to' timestamps of its outgoing edges.
+    A higher score indicates more recent activity.
+    """
+    max_valid_to = 0.0
+    found_temporal_info = False
+    # Use G.edges(node_id, data=True) as it works for both directed and undirected graphs
+    for _, _, data in G.edges(node_id, data=True):
+        valid_to = data.get("valid_to")
+        if valid_to is not None:
+            max_valid_to = max(max_valid_to, valid_to)
+            found_temporal_info = True
+
+    if not found_temporal_info:
+        return 0.0  # No temporal information, assume least recent
+
+    # Normalize recency score:
+    # Scale based on time difference from current_time to max_valid_to.
+    # Scores closer to 1 are more recent.
+    time_diff = current_time - max_valid_to
+    # Clamp to prevent negative values or extremely large values
+    normalized_time_diff = max(0.0, min(time_diff, MAX_TIME_DIFF))
+    
+    # Invert and normalize to get a recency score (1.0 = most recent, 0.0 = least recent)
+    recency_score = 1.0 - (normalized_time_diff / MAX_TIME_DIFF)
+    return recency_score
 
 
 def compute_structural_features(
     G: nx.DiGraph,
     sample_limit: int = 800,
+    current_time: Optional[float] = None,
 ) -> Dict[str, dict]:
     """
-    Compute PageRank, betweenness centrality, and degree for every node.
+    Compute PageRank, betweenness centrality, degree, and temporal recency for every node.
 
     GPU (RAPIDS) is used if available for O(10-100x) speedup on large graphs.
     Betweenness is O(V*E) — sampled on large graphs (>sample_limit nodes)
@@ -25,10 +60,14 @@ def compute_structural_features(
 
     Returns
     -------
-    {node_id: {pagerank, betweenness, degree, in_degree, out_degree}}
+    {node_id: {pagerank, betweenness, degree, in_degree, out_degree, temporal_score}}
     """
     if G.number_of_nodes() == 0:
         return {}
+
+    if current_time is None:
+        import time as _time
+        current_time = _time.time() # Reference time for recency calculation
 
     # Check for GPU acceleration
     if HAS_RAPIDS:
@@ -55,6 +94,11 @@ def compute_structural_features(
                 degree     = dict(G.degree())
                 in_degree  = dict(G.in_degree()) if G.is_directed() else dict(G.degree())
                 out_degree = dict(G.out_degree()) if G.is_directed() else dict(G.degree())
+
+                # 4. Temporal Recency Score
+                temporal_scores = {
+                    node: _compute_node_recency_score(G, node, current_time) for node in G.nodes()
+                }
                 
                 return {
                     node: {
@@ -63,6 +107,7 @@ def compute_structural_features(
                         "degree":      degree.get(node, 0),
                         "in_degree":   in_degree.get(node, 0),
                         "out_degree":  out_degree.get(node, 0),
+                        "temporal_score": temporal_scores.get(node, 0.0),
                     }
                     for node in G.nodes()
                 }
@@ -83,6 +128,11 @@ def compute_structural_features(
     else:
         betweenness = nx.betweenness_centrality(G, normalized=True)
 
+    # Compute temporal scores for CPU fallback path
+    temporal_scores = {
+        node: _compute_node_recency_score(G, node, current_time) for node in G.nodes()
+    }
+
     return {
         node: {
             "pagerank":    round(pagerank.get(node, 0.0), 7),
@@ -90,6 +140,7 @@ def compute_structural_features(
             "degree":      degree.get(node, 0),
             "in_degree":   in_degree.get(node, 0),
             "out_degree":  out_degree.get(node, 0),
+            "temporal_score": temporal_scores.get(node, 0.0),
         }
         for node in G.nodes()
     }
@@ -101,11 +152,11 @@ def encode_structural_features(
     seed: int = 42,
 ) -> Dict[str, np.ndarray]:
     """
-    Project {pagerank, betweenness, log(degree+1)} per node into a
+    Project {pagerank, betweenness, log(degree+1), temporal_score} per node into a
     d-dimensional float32 vector using a fixed random projection.
 
     Steps:
-      1. Build raw [N x 3] feature matrix
+      1. Build raw [N x 4] feature matrix (now includes temporal_score)
       2. Normalize each column to [0, 1]
       3. Project into d-dimensions via a fixed random matrix W_pos
 
@@ -128,6 +179,7 @@ def encode_structural_features(
                 features[n]["pagerank"],
                 features[n]["betweenness"],
                 float(np.log1p(features[n]["degree"])),
+                features[n]["temporal_score"],  # Include the new temporal score
             ]
             for n in nodes
         ],
@@ -139,12 +191,12 @@ def encode_structural_features(
     col_max[col_max == 0] = 1.0
     raw = raw / col_max
 
-    n_features = raw.shape[1]
+    n_features = raw.shape[1]  # This will now be 4
     if dim == n_features:
         result_matrix = raw
     else:
         # Fixed random projection matrix (W_pos)
-        # This mixes the 3 structural signals across all d dimensions.
+        # This mixes the structural and temporal signals across all d dimensions.
         rng = np.random.default_rng(seed)
         # Use uniform distribution [0, 1] to keep results non-negative
         W_pos = rng.uniform(0, 1, (n_features, dim)).astype(np.float32)

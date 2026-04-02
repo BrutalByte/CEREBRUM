@@ -97,10 +97,9 @@ WebQSP over Freebase is specifically hard for zero-training structural systems d
 
 ## What Comes Next
 
-With Phase 31 COMPLETE, CEREBRUM v1.7.0 establishes the proactive cognitive architecture and
-interactive reasoning studio. The next development horizon focuses on:
+With Phase 32 COMPLETE, CEREBRUM v1.7.1 establishes a fully federated, proactive cognitive architecture and interactive reasoning studio. The next development horizon focuses on:
 
-- **Federated Reasoning Roadmap**: Multi-agent, distributed graph reasoning without central coordination.
+- **Temporal Reasoning enhancements**: Deeper integration of temporal distance into structural encoding and path scoring.
 - **Public release planning**: Dual AGPL + commercial license, patent provisionals.
 - **Extended IKGWQ**: REM Engine synthesis evaluation on smaller isolated graphs.
 
@@ -255,7 +254,7 @@ graph LR
     subgraph CEREBRUM
         P1[DSCF community]
         P2[BFS hop count]
-        P3[PageRank + betweenness + degree]
+        P3[PageRank + betweenness + degree + Temporal Recency]
         P4[CSA formula]
         P5[Ego-network radius R]
         P6[Materialized path store]

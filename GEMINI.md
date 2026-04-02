@@ -98,9 +98,9 @@ uvicorn api.server:app --port 8200 --reload
 -   **Reproducibility:** Follow the guidelines in `TESTING.md` for deterministic runs (especially for DSCF).
 -   **Documentation:** Absolute precedence is given to `PARALLAX.md` (whitepaper) and `README.md`. `CLAUDE.md` provides environment-specific guidance.
 
-## Current Project Status (Phase 30 COMPLETE)
+## Current Project Status (Phase 33 COMPLETE)
 
-CEREBRUM is currently in **v1.7.0**. All phases through 30 shipped. This release focused on proactive graph enhancement via `GraphBridgeEngine`, unified pipeline integration via `CerebrumGraph`, and benchmark hardening for ComplexWebQuestions (CWQ).
+CEREBRUM is currently in **v1.7.1**. All phases through 33 shipped. This release focused on temporal reasoning enhancements, building on proactive graph enhancement via `GraphBridgeEngine`, unified pipeline integration via `CerebrumGraph`, and benchmark hardening for ComplexWebQuestions (CWQ).
 
 Key implementations:
 -   **Phase 24 — Performance**: 1042 tests passing, optimized inference.
@@ -109,8 +109,7 @@ Key implementations:
 -   **Phase 30 — Proactive Bridge Synthesis**: `GraphBridgeEngine` for cross-component links, `CerebrumGraph.enhance()` stage, and CWQ benchmark integration (1.7.0).
 -   **Phase 31 — Reasoning Studio**: Interactive visual interface for graph exploration and reasoning traces (1.7.0).
 -   **Phase 32 — Federated Reasoning**: Delegated multi-hop traversal, consensus scoring, and automated node discovery (1.7.1).
-
-## Phase 33 — Temporal Reasoning (Next)
+-   **Phase 33 — Temporal Reasoning**: Deeper integration of temporal distance into structural encoding and path scoring (1.7.1).
 
 
 

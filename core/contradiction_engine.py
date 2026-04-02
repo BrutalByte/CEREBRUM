@@ -474,6 +474,35 @@ class ContradictionEngine:
 
         return records
 
+    def detect_contradictions_in_path(self, path) -> List[ContradictionRecord]:
+        """
+        Scan a single path for internal contradictions.
+        Example: A --[ACTIVATES]--> B ... B --[INHIBITS]--> A
+        """
+        records: List[ContradictionRecord] = []
+        nodes = path.nodes
+        
+        # Extract all edges: (u, rel, v)
+        path_edges = []
+        for i in range(0, len(nodes) - 2, 2):
+            path_edges.append((nodes[i], nodes[i+1], nodes[i+2]))
+            
+        for i, (u1, r1, v1) in enumerate(path_edges):
+            for j, (u2, r2, v2) in enumerate(path_edges):
+                if j <= i:
+                    continue
+                
+                # Direct internal contradiction: same pair, opposing relations
+                if {u1, v1} == {u2, v2}:
+                    if relations_contradict(r1, r2):
+                        records.append(ContradictionRecord(
+                            node_a=u1, node_b=v1,
+                            relation_a=r1, relation_b=r2,
+                            contradiction_type="internal_path",
+                            note=f"Path internally contradicts on pair ({u1}, {v1})"
+                        ))
+        return records
+
     # ------------------------------------------------------------------
     # Full scan (index time)
     # ------------------------------------------------------------------

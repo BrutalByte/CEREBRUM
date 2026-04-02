@@ -64,23 +64,54 @@ def community_coherence(community_sequence: List[int]) -> float:
     return (intra * 1.0 + cross * 0.5) / total
 
 
+def grounding_score(path) -> float:
+    """
+    Score the evidential grounding of a path based on edge confidence and provenance.
+
+    - Edge confidence: combined via product (probabilistic intersection).
+    - Provenance: penalty applied if an edge lacks a specific source.
+
+    Returns
+    -------
+    float in [0, 1]
+    """
+    confs = getattr(path, "edge_confidences", [])
+    provs = getattr(path, "edge_provenances", [])
+    if not confs:
+        return 1.0
+
+    # 1. Combined confidence
+    score = 1.0
+    for c in confs:
+        score *= c
+
+    # 2. Provenance penalty: -0.1 per edge with empty/generic provenance
+    for p in provs:
+        if not p or p in ["triples", "manual", "unknown"]:
+            score *= 0.9  # 10% penalty for ungrounded hop
+
+    return float(np.clip(score, 0.0, 1.0))
+
+
 def score_path(
     path,
     query_embedding: Optional[np.ndarray] = None,
-    weight_attention: float = 0.4,
-    weight_community: float = 0.3,
-    weight_semantic: float  = 0.3,
+    weight_attention: float = 0.35,
+    weight_community: float = 0.25,
+    weight_semantic: float  = 0.2,
+    weight_grounding: float = 0.2,
     relation_prior: Optional[Any] = None,
     weight_prior: float = 0.15,
 ) -> float:
     """
     Final path score combining attention, community coherence, semantic
-    alignment, and an optional relation path frequency prior.
+    alignment, grounding (Phase 35), and an optional relation path frequency prior.
 
-    score(P) = w_attn  * prod(attention_weights)
+    score(P) = w_attn  * attention_score
              + w_comm  * community_coherence(P)
-             + w_sem   * semantic_alignment(h_final, query_emb)   [optional]
-             + w_prior * relation_prior.score(P)                  [optional]
+             + w_sem   * semantic_alignment(h_final, query_emb)
+             + w_grnd  * grounding_score(P)
+             + w_prior * relation_prior.score(P)
 
     When query_embedding is None, its weight is redistributed to the other
     active signals proportionally.  When relation_prior is None, its weight
@@ -120,10 +151,11 @@ def score_path(
     # Compute active signal scores
     w_attn = weight_attention
     w_comm = weight_community
-    w_sem  = weight_semantic if has_semantic else 0.0
-    w_pri  = weight_prior    if has_prior    else 0.0
+    w_sem  = weight_semantic  if has_semantic else 0.0
+    w_grnd = weight_grounding
+    w_pri  = weight_prior     if has_prior    else 0.0
 
-    score = w_attn * attention_score + w_comm * coh
+    score = w_attn * attention_score + w_comm * coh + w_grnd * grounding_score(path)
 
     if has_semantic:
         qn = float(np.linalg.norm(query_embedding))
@@ -142,7 +174,7 @@ def score_path(
         score += w_pri * prior_s
 
     # Normalise by total active weight
-    total_w = w_attn + w_comm + w_sem + w_pri
+    total_w = w_attn + w_comm + w_sem + w_grnd + w_pri
     if total_w <= 0:
         return 0.0
     return float(np.clip(score / total_w, 0.0, 1.0))

@@ -315,7 +315,13 @@ class CSAParameterLearner:
         if edge_features:
             a, b, g, d, e = params
             total = 0.0
-            for k, (sim, cs, etw, nd, hd) in enumerate(edge_features):
+            for k, feat in enumerate(edge_features):
+                # Handle both legacy (5) and updated (7) edge feature tuples
+                if len(feat) == 7:
+                    sim, cs, etw, nd, hd, pr_v, td = feat
+                else:
+                    sim, cs, etw, nd, hd = feat
+                
                 raw = a * sim + b * cs + g * etw - d * nd + e * hd
                 total += math.log(max(_sigmoid(raw), 1e-9))
             return total

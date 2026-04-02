@@ -56,25 +56,29 @@ def _cosine_sim(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.dot(a, b) / (na * nb))
 
 
-def is_valid_at(edge, query_time: Optional[float]) -> bool:
+def is_valid_at(edge, query_time: Optional[float], hard_filter: bool = True) -> bool:
     """
     Return True if the edge is temporally active at query_time.
 
     Rules:
       - query_time is None  → no temporal filter, always valid
       - valid_from is None  → edge has no start constraint
-      - valid_to   is None  → edge has no end constraint
-
-    An edge is active when query_time falls within [valid_from, valid_to].
+      
+    An edge is active when query_time >= valid_from.
+    If hard_filter is True, it also checks query_time <= valid_to.
+    When hard_filter is False, valid_to is used for decay scoring instead of pruning.
     """
     if query_time is None:
         return True
     vf = getattr(edge, "valid_from", None)
-    vt = getattr(edge, "valid_to", None)
     if vf is not None and query_time < vf:
         return False
-    if vt is not None and query_time > vt:
-        return False
+        
+    if hard_filter:
+        vt = getattr(edge, "valid_to", None)
+        if vt is not None and query_time > vt:
+            return False
+            
     return True
 
 
@@ -109,8 +113,8 @@ class TraversalPath:
     edge_provenances: List[str] = field(default_factory=list)
     """Per-edge provenance strings along the path (from Edge.provenance)."""
 
-    edge_features: List[Tuple[float, float, float, float, float]] = field(default_factory=list)
-    """Raw feature components for parameter learning: (sim, cs, etw, nd, hd)."""
+    edge_features: List[Tuple[float, float, float, float, float, float, float]] = field(default_factory=list)
+    """Raw feature components for parameter learning: (sim, cs, etw, nd, hd, pr, td)."""
 
     beta_alpha: float = 1.0
     """Beta distribution α — accumulated effective successes (sum of edge weights)."""
@@ -181,7 +185,7 @@ class TraversalPath:
         edge_confidence: float = 1.0,
         edge_provenance: str = "",
         prior_scale: float = 1.0,
-        features: Optional[Tuple[float, float, float, float, float]] = None,
+        features: Optional[Tuple[float, float, float, float, float, float, float]] = None,
     ) -> "TraversalPath":
         """
         Create a new path by extending this one with an edge.
@@ -286,6 +290,8 @@ class BeamTraversal:
         warm_start_strength: float = 0.0,
         beam_widths: Optional[Dict[int, int]] = None,
         cvt_passthrough: bool = False,
+        symbolic_validator = None, # Optional[SymbolicValidator]
+        calibration_engine = None, # Optional[CalibrationEngine]
     ):
         self.adapter            = adapter
         self.csa                = csa_engine
@@ -310,6 +316,9 @@ class BeamTraversal:
         # /m/ or /g/ MIDs) into transparent relay hops: A→CVT→B is treated as
         # a single hop from A to B, scored on A↔B semantic similarity.
         self.cvt_passthrough: bool = cvt_passthrough
+        self.symbolic_validator = symbolic_validator
+        self.calibration_engine = calibration_engine
+        self.uncertainty_log: List[Dict[str, Any]] = []
 
     def traverse(
         self,
@@ -340,13 +349,16 @@ class BeamTraversal:
         if community_merger is not None and query_embedding is not None and _cmap is not None:
             _cmap = community_merger.merge(_cmap, query_embedding, self.adapter)
 
-        if self.csa is not None and _cmap is not None:
-            self.csa.set_query_snapshot(dict(_cmap))
+        if self.csa is not None:
+            if _cmap is not None:
+                self.csa.set_query_snapshot(dict(_cmap))
+            self.csa.set_query_time(query_time)
         try:
             return self._traverse_inner(seeds, emb_dim, query_time)
         finally:
             if self.csa is not None:
                 self.csa.clear_query_snapshot()
+                self.csa.set_query_time(None)
 
     def _traverse_inner(
         self,
@@ -401,12 +413,17 @@ class BeamTraversal:
                     v = edge.target_id
 
                     # Temporal validity filter
-                    if not is_valid_at(edge, query_time):
+                    if not is_valid_at(edge, query_time, hard_filter=not self.csa.use_temporal_decay):
                         continue
 
                     # Avoid revisiting entities already in the path (O(1) now)
                     if v in path.seen_entities:
                         continue
+
+                    # Symbolic Guardrails (Phase 34)
+                    if self.symbolic_validator is not None:
+                        if not self.symbolic_validator.validate_step(path.tail, edge.relation_type, v, path=path):
+                            continue
 
                     # ----------------------------------------------------------
                     # CVT passthrough: collapse opaque Freebase mediator nodes.
@@ -419,7 +436,7 @@ class BeamTraversal:
                         cvt_edges = self.adapter.get_neighbors(
                             v, max_neighbors=self.max_neighbors
                         )
-                        next_steps: List[Tuple[str, str, float, str]] = []
+                        next_steps: List[Tuple[str, str, float, str, Optional[float], Optional[float]]] = []
                         for ce in cvt_edges:
                             vv = ce.target_id
                             if vv not in path.seen_entities and not _is_cvt_node(vv):
@@ -428,13 +445,15 @@ class BeamTraversal:
                                     f"{edge.relation_type}|{ce.relation_type}",
                                     min(edge.confidence, ce.confidence) * CVT_HOP_PENALTY,
                                     ce.provenance,
+                                    ce.valid_from,
+                                    ce.valid_to,
                                 ))
                     else:
                         next_steps = [
-                            (v, edge.relation_type, edge.confidence, edge.provenance)
+                            (v, edge.relation_type, edge.confidence, edge.provenance, edge.valid_from, edge.valid_to)
                         ]
 
-                    for (v_eff, rel_eff, conf_eff, prov_eff) in next_steps:
+                    for (v_eff, rel_eff, conf_eff, prov_eff, vf_eff, vt_eff) in next_steps:
                         if v_eff in path.seen_entities:
                             continue
 
@@ -450,22 +469,28 @@ class BeamTraversal:
                             edge_type=rel_eff,
                             edge_type_weights=self.edge_type_weights,
                             normalized_distance=0.0,
+                            valid_from=vf_eff,
+                            valid_to=vt_eff,
                             eu=eu, ev=ev,
                         ) if _cwf is not None else None
-                        if isinstance(_cwf_result, tuple) and len(_cwf_result) == 6:
-                            w, sim, cs, etw, nd, hd = _cwf_result
+                        if isinstance(_cwf_result, tuple) and len(_cwf_result) == 8:
+                            w, sim, cs, etw, nd, hd, pr_v, td = _cwf_result
                         else:
                             w = float(self.csa.compute_weight(
                                 path.tail, v_eff, hop=hop,
                                 edge_type=rel_eff,
                                 edge_type_weights=self.edge_type_weights,
                                 normalized_distance=0.0,
+                                valid_from=vf_eff,
+                                valid_to=vt_eff,
                             ))
                             sim = _cosine_sim(eu, ev) if (eu is not None and ev is not None) else 0.0
                             cs  = float(self.csa.community_score(path.tail, v_eff)) if hasattr(self.csa, 'community_score') else 0.5
                             etw = self.edge_type_weights.get(rel_eff, 0.0)
                             nd  = 0.0
                             hd  = 1.0 / (1.0 + hop)
+                            pr_v = 0.0
+                            td  = 0.0
 
                         # Path metadata and extension
                         v_emb = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
@@ -533,12 +558,29 @@ class BeamTraversal:
                             edge_confidence=conf_eff,
                             edge_provenance=prov_eff,
                             prior_scale=_prior_scale,
-                            features=(sim, cs, etw, nd, hd),
+                            features=(sim, cs, etw, nd, hd, pr_v, td),
                         )
                         candidates.append(new_path)
 
             if not candidates:
                 break
+
+            # Phase 37: Self-Doubt (Calibration)
+            if self.calibration_engine is not None and len(candidates) >= 2:
+                weights = [p.attention_weights[-1] for p in candidates]
+                tails   = [p.tail for p in candidates]
+                result  = self.calibration_engine.calibrate_hop(weights, tails)
+                
+                if result.is_uncertain:
+                    self.uncertainty_log.append({
+                        "hop": hop,
+                        "entropy": result.entropy,
+                        "candidates": result.top_candidates,
+                        "message": result.message
+                    })
+                    # Penalize all candidates by the uncertainty multiplier
+                    for p in candidates:
+                        p.score *= result.confidence_multiplier
 
             # At the terminal hop, skip pruning — all reachable endpoints are kept
             # for the answer extractor to score and deduplicate. Pruning here discards
@@ -600,14 +642,17 @@ class AsyncBeamTraversal(BeamTraversal):
 
         # Hole 1 — Mid-Flight Community Swap: snapshot at stream start.
         _cmap = getattr(self.adapter, "community_map", None)
-        if self.csa is not None and _cmap is not None:
-            self.csa.set_query_snapshot(dict(_cmap))
+        if self.csa is not None:
+            if _cmap is not None:
+                self.csa.set_query_snapshot(dict(_cmap))
+            self.csa.set_query_time(query_time)
         try:
             async for hop_result in self._traverse_stream_inner(seeds, emb_dim, query_time):
                 yield hop_result
         finally:
             if self.csa is not None:
                 self.csa.clear_query_snapshot()
+                self.csa.set_query_time(None)
 
     async def _traverse_stream_inner(self, seeds, emb_dim, query_time):
         import asyncio
@@ -662,18 +707,23 @@ class AsyncBeamTraversal(BeamTraversal):
                     v = edge.target_id
 
                     # Temporal validity filter
-                    if not is_valid_at(edge, query_time):
+                    if not is_valid_at(edge, query_time, hard_filter=not self.csa.use_temporal_decay):
                         continue
 
                     if v in path.seen_entities:
                         continue
+
+                    # Symbolic Guardrails (Phase 34)
+                    if self.symbolic_validator is not None:
+                        if not self.symbolic_validator.validate_step(path.tail, edge.relation_type, v, path=path):
+                            continue
 
                     # CVT passthrough (same logic as sync traversal)
                     if self.cvt_passthrough and _is_cvt_node(v):
                         cvt_edges = self.adapter.get_neighbors(
                             v, max_neighbors=self.max_neighbors
                         )
-                        next_steps: List[Tuple[str, str, float, str]] = []
+                        next_steps: List[Tuple[str, str, float, str, Optional[float], Optional[float]]] = []
                         for ce in cvt_edges:
                             vv = ce.target_id
                             if vv not in path.seen_entities and not _is_cvt_node(vv):
@@ -682,13 +732,15 @@ class AsyncBeamTraversal(BeamTraversal):
                                     f"{edge.relation_type}|{ce.relation_type}",
                                     min(edge.confidence, ce.confidence) * CVT_HOP_PENALTY,
                                     ce.provenance,
+                                    ce.valid_from,
+                                    ce.valid_to,
                                 ))
                     else:
                         next_steps = [
-                            (v, edge.relation_type, edge.confidence, edge.provenance)
+                            (v, edge.relation_type, edge.confidence, edge.provenance, edge.valid_from, edge.valid_to)
                         ]
 
-                    for (v_eff, rel_eff, conf_eff, prov_eff) in next_steps:
+                    for (v_eff, rel_eff, conf_eff, prov_eff, vf_eff, vt_eff) in next_steps:
                         if v_eff in path.seen_entities:
                             continue
 
@@ -701,22 +753,28 @@ class AsyncBeamTraversal(BeamTraversal):
                             edge_type=rel_eff,
                             edge_type_weights=self.edge_type_weights,
                             normalized_distance=0.0,
+                            valid_from=vf_eff,
+                            valid_to=vt_eff,
                             eu=eu, ev=ev,
                         ) if _cwf is not None else None
-                        if isinstance(_cwf_result, tuple) and len(_cwf_result) == 6:
-                            w, sim, cs, etw, nd, hd = _cwf_result
+                        if isinstance(_cwf_result, tuple) and len(_cwf_result) == 8:
+                            w, sim, cs, etw, nd, hd, pr_v, td = _cwf_result
                         else:
                             w = float(self.csa.compute_weight(
                                 path.tail, v_eff, hop=hop,
                                 edge_type=rel_eff,
                                 edge_type_weights=self.edge_type_weights,
                                 normalized_distance=0.0,
+                                valid_from=vf_eff,
+                                valid_to=vt_eff,
                             ))
                             sim = _cosine_sim(eu, ev) if (eu is not None and ev is not None) else 0.0
                             cs  = float(self.csa.community_score(path.tail, v_eff)) if hasattr(self.csa, 'community_score') else 0.5
                             etw = self.edge_type_weights.get(rel_eff, 0.0)
                             nd  = 0.0
                             hd  = 1.0 / (1.0 + hop)
+                            pr_v = 0.0
+                            td = 0.0
 
                         v_emb  = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
                         v_cid  = self.adapter.get_community(v_eff)
@@ -758,12 +816,29 @@ class AsyncBeamTraversal(BeamTraversal):
                             edge_confidence=conf_eff,
                             edge_provenance=prov_eff,
                             prior_scale=_prior_scale,
-                            features=(sim, cs, etw, nd, hd),
+                            features=(sim, cs, etw, nd, hd, pr_v, td),
                         )
                         candidates.append(new_path)
 
             if not candidates:
                 break
+
+            # Phase 37: Self-Doubt (Calibration)
+            if self.calibration_engine is not None and len(candidates) >= 2:
+                weights = [p.attention_weights[-1] for p in candidates]
+                tails   = [p.tail for p in candidates]
+                result  = self.calibration_engine.calibrate_hop(weights, tails)
+                
+                if result.is_uncertain:
+                    self.uncertainty_log.append({
+                        "hop": hop,
+                        "entropy": result.entropy,
+                        "candidates": result.top_candidates,
+                        "message": result.message
+                    })
+                    # Penalize all candidates by the uncertainty multiplier
+                    for p in candidates:
+                        p.score *= result.confidence_multiplier
 
             # At the terminal hop, skip pruning (same as sync version)
             hop_bw = self._beam_widths.get(hop, self.beam_width)

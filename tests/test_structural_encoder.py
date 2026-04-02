@@ -74,7 +74,7 @@ def test_structural_features_keys_present():
     """Every node entry must have pagerank, betweenness, degree, in_degree, out_degree."""
     G        = make_bridge_graph()
     features = compute_structural_features(G)
-    required = {"pagerank", "betweenness", "degree", "in_degree", "out_degree"}
+    required = {"pagerank", "betweenness", "degree", "in_degree", "out_degree", "temporal_score"}
     for node, data in features.items():
         assert required == set(data.keys()), f"Missing keys for node {node!r}"
 

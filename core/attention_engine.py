@@ -25,8 +25,17 @@ import numpy as np
 from core.graph_adapter import GraphAdapter
 
 # Return type for compute_weight_with_features:
-# (weight, sim, cs, etw, normalized_distance, hop_decay)
-WeightFeatures = Tuple[float, float, float, float, float, float]
+# (weight, sim, cs, etw, normalized_distance, hop_decay, pr_v, temporal_decay)
+WeightFeatures = Tuple[float, float, float, float, float, float, float, float]
+
+# Default exponential decay rates (λ) for temporal reasoning (SPEC_015).
+# Weight = weight * exp(-λ * elapsed_time)
+RELATION_DECAY_DEFAULTS = {
+    "CURRENT_PRICE": 0.693,  # Half-life: 1 second
+    "REPORTED_AS":   0.010,  # Half-life: 69 seconds
+    "AFFILIATED_WITH": 0.001, # Half-life: ~11.5 minutes
+    "BORN_IN":       0.0,    # Never decays
+}
 
 # Type alias for soft membership: {node_id: {community_id: probability}}
 SoftMemberships = Dict[str, Dict[int, float]]
@@ -62,6 +71,8 @@ class CSAEngine:
         pagerank: Optional[Dict[str, float]] = None,
         soft_memberships: Optional["SoftMemberships"] = None,
         community_params: Optional[Dict[int, Tuple[float, float, float, float, float]]] = None,
+        use_temporal_decay: bool = False,
+        eta: float = 0.1,
     ):
         """
         Parameters
@@ -84,6 +95,8 @@ class CSAEngine:
                             instead of hard same/adjacent/distant classification.
                             Enables multi-domain entities to score well across all
                             communities they partially belong to.
+        use_temporal_decay: If True, apply exponential decay based on edge validity windows.
+        eta               : weight (multiplier) for the temporal decay component.
         """
         self.adapter           = adapter
         self.alpha             = alpha
@@ -92,6 +105,8 @@ class CSAEngine:
         self.delta             = delta
         self.epsilon           = epsilon
         self.zeta              = zeta
+        self.eta               = eta
+        self.use_temporal_decay = use_temporal_decay
         self.lambda_decay      = lambda_decay
         self.edge_type_weights = edge_type_weights or {}
         self.external_community_scores = external_community_scores or {}
@@ -125,6 +140,9 @@ class CSAEngine:
         # live adapter.community_map, preventing CSA inconsistency mid-query.
         self._query_snapshot: Optional[Dict[str, int]] = None
 
+        # Per-query temporal filtering
+        self._query_time: Optional[float] = None
+
         # Per-query community_score cache: reset each query via set/clear snapshot.
         # Eliminates duplicate soft-membership dot-product recomputation when the
         # same (u, v) pair is evaluated more than once (double-call from traversal
@@ -134,6 +152,15 @@ class CSAEngine:
     def set_meta_learner(self, learner) -> None:
         """Attach a MetaParameterLearner for community-specific tuning."""
         self.meta_learner = learner
+
+    def set_pagerank(self, pagerank: Dict[str, float]) -> None:
+        """Update the PageRank prior map (used for the zeta term)."""
+        self._pagerank = pagerank
+        self._max_pr = max(pagerank.values()) if pagerank else 1.0
+
+    def set_query_time(self, query_time: Optional[float]) -> None:
+        """Set the reference time for temporal reasoning in the current query."""
+        self._query_time = query_time
 
     # ------------------------------------------------------------------
     # Hole 1 — Mid-Flight Community Swap: Query Snapshot Isolation
@@ -266,6 +293,8 @@ class CSAEngine:
         edge_type: str = "",
         edge_type_weights: Optional[Dict[str, float]] = None,
         normalized_distance: float = 0.0,
+        valid_from: Optional[float] = None, # New parameter
+        valid_to: Optional[float] = None,   # New parameter
     ) -> float:
         # Bridge twin shortcut: crossing to your structural relay is free.
         # The twin has the same embedding (sim=1.0) and is explicitly placed
@@ -318,7 +347,17 @@ class CSAEngine:
         # closing the recall gap vs. PPR at deep hops without running random walks.
         pr_v = self._pagerank.get(v, 0.0) / self._max_pr if self._pagerank else 0.0
 
-        # 6. Assemble and sigmoid (using resolved alpha/beta/gamma/delta/epsilon)
+        # 6. Temporal Decay (Phase 33)
+        temporal_decay_term = 0.0
+        if self.use_temporal_decay and self._query_time is not None and valid_to is not None:
+            # Calculate elapsed time since edge was valid
+            time_elapsed = self._query_time - valid_to
+            if time_elapsed > 0:
+                # Use edge-type specific decay rate if available, otherwise a default
+                decay_rate = RELATION_DECAY_DEFAULTS.get(edge_type, self.lambda_decay)
+                temporal_decay_term = -self.eta * math.exp(-decay_rate * time_elapsed)
+        
+        # 7. Assemble and sigmoid (using resolved alpha/beta/gamma/delta/epsilon)
         raw = (
             alpha   * sim
             + beta  * cs
@@ -326,6 +365,7 @@ class CSAEngine:
             - delta * normalized_distance
             + epsilon * hop_decay
             + self.zeta  * pr_v
+            + temporal_decay_term # Add the temporal decay term
         )
         return _sigmoid(raw)
 
@@ -337,45 +377,32 @@ class CSAEngine:
         edge_type: str = "",
         edge_type_weights: Optional[Dict[str, float]] = None,
         normalized_distance: float = 0.0,
+        valid_from: Optional[float] = None,
+        valid_to: Optional[float] = None,
         eu: Optional[np.ndarray] = None,
         ev: Optional[np.ndarray] = None,
-    ) -> "WeightFeatures":
+    ) -> ReasoningLogit:
         """
         Compute CSA attention weight and all feature components in a single pass.
-
-        Returns (weight, sim, cs, etw, normalized_distance, hop_decay).
-
-        Pass pre-fetched embeddings eu/ev to avoid redundant adapter lookups.
-        community_score is memoized per query — no duplicate soft-membership work
-        regardless of how many times the same (u, v) pair appears in a beam.
+        Returns a ReasoningLogit object.
         """
         if edge_type == "BRIDGE_TWIN":
             hd = 1.0 / (1.0 + hop)
-            raw = self.alpha * 1.0 + self.beta * 1.0 + self.gamma * 1.0 + self.epsilon * hd
-            return _sigmoid(raw), 1.0, 1.0, 1.0, normalized_distance, hd
+            return ReasoningLogit(sim=1.0, cs=1.0, etw=1.0, nd=normalized_distance, hd=hd)
 
         cu = self._get_community(u)
 
         if self.meta_learner is not None:
-            alpha, beta, gamma, delta, epsilon = self.meta_learner.get_params(cu)
+            a, b, g, d, e = self.meta_learner.get_params(cu)
         elif self._community_params and cu in self._community_params:
-            alpha, beta, gamma, delta, epsilon = self._community_params[cu]
+            a, b, g, d, e = self._community_params[cu]
         else:
-            alpha, beta, gamma, delta, epsilon = (
-                self.alpha, self.beta, self.gamma, self.delta, self.epsilon
-            )
+            a, b, g, d, e = (self.alpha, self.beta, self.gamma, self.delta, self.epsilon)
 
-        # Use caller-supplied embeddings to avoid re-fetching from adapter
-        if eu is None:
-            eu = self.adapter.get_embedding(u)
-        if ev is None:
-            ev = self.adapter.get_embedding(v)
-        if eu is not None and ev is not None:
-            sim = _cosine_sim(eu, ev)
-        else:
-            sim = 0.0
+        if eu is None: eu = self.adapter.get_embedding(u)
+        if ev is None: ev = self.adapter.get_embedding(v)
+        sim = _cosine_sim(eu, ev) if (eu is not None and ev is not None) else 0.0
 
-        # community_score is memoized per query
         cs = self.community_score(u, v)
 
         weights = edge_type_weights if edge_type_weights is not None else self.edge_type_weights
@@ -384,15 +411,15 @@ class CSAEngine:
         hd = 1.0 / (1.0 + hop)
         pr_v = self._pagerank.get(v, 0.0) / self._max_pr if self._pagerank else 0.0
 
-        raw = (
-            alpha   * sim
-            + beta  * cs
-            + gamma * etw
-            - delta * normalized_distance
-            + epsilon * hd
-            + self.zeta  * pr_v
-        )
-        return _sigmoid(raw), sim, cs, etw, normalized_distance, hd
+        td = 0.0
+        if self.use_temporal_decay and self._query_time is not None and valid_to is not None:
+            time_elapsed = self._query_time - valid_to
+            if time_elapsed > 0:
+                decay_rate = RELATION_DECAY_DEFAULTS.get(edge_type, self.lambda_decay)
+                td = -self.eta * math.exp(-decay_rate * time_elapsed)
+
+        return ReasoningLogit(sim, cs, etw, normalized_distance, hd, pr_v, td, 1.0)
+
 
 
 # ------------------------------------------------------------------
@@ -444,11 +471,14 @@ class UniformCSAEngine(CSAEngine):
         edge_type: str = "",
         edge_type_weights: Optional[Dict[str, float]] = None,
         normalized_distance: float = 0.0,
+        valid_from: Optional[float] = None,
+        valid_to: Optional[float] = None,
         eu: Optional[np.ndarray] = None,
         ev: Optional[np.ndarray] = None,
-    ) -> "WeightFeatures":
+    ) -> ReasoningLogit:
         hd = 1.0 / (1.0 + hop)
-        return 0.5, 0.0, 0.5, 0.0, normalized_distance, hd
+        return ReasoningLogit(cs=0.5, nd=normalized_distance, hd=hd, grounding=1.0)
+
 
 
 

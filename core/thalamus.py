@@ -82,6 +82,8 @@ class ProcessedEdge:
     confidence: float = 1.0
     provenance: str = ""
     weight: float = 1.0
+    valid_from: Optional[float] = None
+    valid_to: Optional[float] = None
     properties: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -162,12 +164,14 @@ class IngestionPipeline:
         confidence_fn: Optional[Callable] = None,
         provenance_fn: Optional[Callable] = None,
         namespace: str = "",
+        strict_provenance: bool = False,
     ) -> None:
         self._entity_norm   = entity_normalizer or _default_entity_normalizer
         self._dedup_map     = entity_dedup_map or {}
         self._confidence_fn = confidence_fn
         self._provenance_fn = provenance_fn
         self._namespace     = namespace
+        self._strict_prov   = strict_provenance
 
         # Build relation normalizer from whatever the caller passed
         if relation_map is None:
@@ -255,15 +259,23 @@ class IngestionPipeline:
         else:
             prov = str(meta.get("provenance", ""))
 
+        # Phase 35: Strict Provenance Enforcement
+        if self._strict_prov and not prov:
+            conf = 0.1  # Ungrounded claims are penalized to near-zero confidence
+
         # 6. Weight (pass through from metadata)
         try:
             weight = float(meta.get("weight", 1.0))
         except (TypeError, ValueError):
             weight = 1.0
 
+        # 7. Temporal windows (pass through from metadata)
+        vf = meta.get("valid_from")
+        vt = meta.get("valid_to")
+
         # Remaining metadata — fields already promoted to first-class attrs
         # are excluded so they don't double-up as edge properties
-        _promoted = {"confidence", "provenance", "weight"}
+        _promoted = {"confidence", "provenance", "weight", "valid_from", "valid_to"}
         props = {k: v for k, v in meta.items() if k not in _promoted}
 
         return ProcessedEdge(
@@ -273,6 +285,8 @@ class IngestionPipeline:
             confidence=conf,
             provenance=prov,
             weight=weight,
+            valid_from=vf,
+            valid_to=vt,
             properties=props,
         )
 
