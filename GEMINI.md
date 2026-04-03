@@ -98,16 +98,15 @@ uvicorn api.server:app --port 8200 --reload
 -   **Reproducibility:** Follow the guidelines in `TESTING.md` for deterministic runs (especially for DSCF).
 -   **Documentation:** Absolute precedence is given to `PARALLAX.md` (whitepaper) and `README.md`. `CLAUDE.md` provides environment-specific guidance.
 
-## Current Project Status (Phase 40 COMPLETE)
+## Current Project Status (Phase 41 COMPLETE)
 
-CEREBRUM is currently in **v1.7.2**. All phases through 40 shipped and verified. This release focused on reasoning hardening, asynchronous processing for scale, and extreme-sparsity benchmark validation.
+CEREBRUM is currently in **v1.7.3**. All phases through 41 shipped and verified. This release focused on temporal reasoning accuracy, cross-component synthesis, and unified logit stabilization.
 
 Key implementations:
+-   **Phase 41 — Temporal & REM Synthesis**: Corrected reversed recency bias, integrated Node Recency (9-feature logit), and implemented cross-component "Wormhole" detection in REMEngine.
 -   **Phase 38 — Reasoning Hardening**: Unified `ReasoningLogit` signal pipeline.
 -   **Phase 39 — Async Bridge Synthesis**: Decoupled `BridgeTwinEngine` and `InsightEngine` via `TaskQueue`.
 -   **Phase 40 — IKGWQ Hardening**: Full system validation under 50% edge removal (v1.7.2).
--   **Temporal Reasoning Fix**: Corrected reversed recency bias in `CSAEngine` and synchronized with the logit framework.
--   **Node Recency Prior**: Integrated node-level recency (`nr_v`) into the unified 9-feature `ReasoningLogit`.
 -   **Phase 37 — Calibration**: Entropy-based self-doubt and confidence adjustment.
 -   **Phase 34 — Symbolic Guardrails**: Hard-logic integrity constraints for path pruning.
 -   **Phase 33 — Temporal Reasoning**: Integration of temporal distance into structural encoding.

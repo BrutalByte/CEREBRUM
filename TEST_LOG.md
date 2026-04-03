@@ -2784,7 +2784,7 @@ BridgeTwinEngine: 256 bridges at 1-hop, 956 at 2-hop, 1,146 at 3-hop (was 0 befo
 
 ---
 
-## Run 016 — Phase 39 & 40: Asynchronous Hardening & IKGWQ Stability
+## Run 016 ï¿½ Phase 39 & 40: Asynchronous Hardening & IKGWQ Stability
 
 | Field             | Value |
 |---|---|
@@ -2823,4 +2823,39 @@ BridgeTwinEngine: 256 bridges at 1-hop, 956 at 2-hop, 1,146 at 3-hop (was 0 befo
 - `pytest tests/test_uncertainty.py`: 12 passed
 - `pytest tests/test_csa.py`: 13 passed
 - **Total passing**: 1,168
+
+---
+
+## Run 017 â€” Temporal & REM Synthesis (Phase 41 Preview)
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-02 |
+| **Phase**         | Phase 41 (Temporal Reasoning & REM Synthesis) |
+| **Purpose**       | Temporal bias correction and cross-component graph bridging |
+| **Operator**      | Gemini CLI / Bryan Alexander Buchorn |
+| **Version**       | v1.7.3 |
+
+### Summary of Actions
+1. **Fixed Temporal Bias**: Corrected the recency formula in `CSAEngine` to properly favor newer edges ($+\exp(-\lambda t)$).
+2. **Integrated Node Recency**: Added `nr_v` (Node Recency) to `ReasoningLogit`, expanding the unified feature vector to 9 dimensions.
+3. **Cross-Component Synthesis**: Implemented "Wormhole" detection in `REMEngine` to bridge disconnected components based on high embedding similarity ($>0.85$ default).
+4. **Traversal Sync**: Updated both sync and async `BeamTraversal` to handle 9-element feature vectors.
+
+### Benchmarks
+
+#### 1. Temporal Scoring Regression
+*Verified via `tests/test_temporal_scoring.py`*
+- Recent edges score higher than old edges: **PASSED**
+- Node recency correctly influences path score: **PASSED**
+
+#### 2. REM Wormhole Validation
+*Verified via `tests/test_rem_wormhole.py`*
+- Detection of high-similarity pairs across disconnected components: **PASSED**
+- Avoidance of wormhole proposals for already-connected nodes: **PASSED**
+
+### Tests
+- `pytest tests/test_temporal_scoring.py`: 4 passed
+- `pytest tests/test_rem_wormhole.py`: 2 passed
+- **Total passing**: 1,241
 

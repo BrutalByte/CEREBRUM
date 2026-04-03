@@ -101,6 +101,9 @@ class REMEngine:
     synthesis_similarity_threshold : float
         Minimum cosine similarity for a node pair to be considered for a
         synthetic edge. Default 0.8.
+    cross_component_similarity_threshold : float
+        Minimum cosine similarity for a node pair in disconnected components
+        to be considered for a cross-component synthetic edge. Default 0.85.
     max_synthesis_proposals : int
         Maximum number of synthetic edges to propose per cycle. Default 50.
     synthesis_confidence : float
@@ -115,6 +118,7 @@ class REMEngine:
         adapter: GraphAdapter,
         prune_confidence_threshold: float = 0.2,
         synthesis_similarity_threshold: float = 0.8,
+        cross_component_similarity_threshold: float = 0.85,
         max_synthesis_proposals: int = 50,
         synthesis_confidence: float = 0.3,
         interval_seconds: float = 3600.0,
@@ -122,6 +126,7 @@ class REMEngine:
         self.adapter = adapter
         self.prune_confidence_threshold = prune_confidence_threshold
         self.synthesis_similarity_threshold = synthesis_similarity_threshold
+        self.cross_component_similarity_threshold = cross_component_similarity_threshold
         self.max_synthesis_proposals = max_synthesis_proposals
         self.synthesis_confidence = synthesis_confidence
         self.interval_seconds = interval_seconds
@@ -363,6 +368,47 @@ class REMEngine:
                     continue
 
                 proposals.append((u, v, "rem_synthesized"))
+
+        # --- Phase 3b: Cross-Component Synthesis (Wormhole Detection) ---
+        # Find high-similarity pairs in disconnected components.
+        if len(proposals) < self.max_synthesis_proposals:
+            components = list(nx.connected_components(G_und))
+            if len(components) > 1:
+                # Map nodes to component index for fast lookup
+                node_to_comp = {}
+                for idx, comp in enumerate(components):
+                    for node in comp:
+                        node_to_comp[node] = idx
+                
+                # Check cross-component pairs
+                for i, u in enumerate(nodes):
+                    if len(proposals) >= self.max_synthesis_proposals:
+                        break
+                    emb_u = emb_cache[u]
+                    if emb_u is None: continue
+                    norm_u = float(np.linalg.norm(emb_u))
+                    if norm_u == 0: continue
+                    
+                    u_comp = node_to_comp[u]
+
+                    for j in range(i + 1, len(nodes)):
+                        if len(proposals) >= self.max_synthesis_proposals:
+                            break
+                        v = nodes[j]
+                        if node_to_comp[v] == u_comp:
+                            continue # Already in same component
+                        
+                        emb_v = emb_cache[v]
+                        if emb_v is None: continue
+                        norm_v = float(np.linalg.norm(emb_v))
+                        if norm_v == 0: continue
+
+                        similarity = float(np.dot(emb_u, emb_v) / (norm_u * norm_v))
+                        # Higher threshold for cross-component to avoid noisy bridges
+                        if similarity < self.cross_component_similarity_threshold:
+                            continue
+
+                        proposals.append((u, v, "rem_synthesized_wormhole"))
 
         # Apply mutations (real runs only)
         if not dry_run:
