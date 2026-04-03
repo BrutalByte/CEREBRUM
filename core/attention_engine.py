@@ -23,6 +23,7 @@ from typing import Dict, Optional, Set, Tuple
 
 import numpy as np
 from core.graph_adapter import GraphAdapter
+from core.reasoning_logit import ReasoningLogit # New: Unified logit framework
 
 # Return type for compute_weight_with_features:
 # (weight, sim, cs, etw, normalized_distance, hop_decay, pr_v, temporal_decay)
@@ -69,10 +70,12 @@ class CSAEngine:
         edge_type_weights: Optional[Dict[str, float]] = None,
         external_community_scores: Optional[Dict[Tuple[int, int], float]] = None,
         pagerank: Optional[Dict[str, float]] = None,
+        node_recency: Optional[Dict[str, float]] = None,
         soft_memberships: Optional["SoftMemberships"] = None,
         community_params: Optional[Dict[int, Tuple[float, float, float, float, float]]] = None,
         use_temporal_decay: bool = False,
         eta: float = 0.1,
+        iota: float = 0.05,
     ):
         """
         Parameters
@@ -90,13 +93,15 @@ class CSAEngine:
         edge_type_weights : {relation_type -> weight} mapping for "Bridge Bonus"
         external_community_scores : { (cid_u, cid_v) -> score } for cross-graph links
         pagerank          : precomputed {node -> pagerank_score} dict; enables zeta term
+        node_recency      : precomputed {node -> recency_score} dict; enables iota term
         soft_memberships  : output of compute_soft_memberships() — when provided,
                             community_score() uses dot-product of membership vectors
                             instead of hard same/adjacent/distant classification.
                             Enables multi-domain entities to score well across all
                             communities they partially belong to.
         use_temporal_decay: If True, apply exponential decay based on edge validity windows.
-        eta               : weight (multiplier) for the temporal decay component.
+        eta               : weight (multiplier) for the temporal decay component (edge).
+        iota              : weight (multiplier) for the node recency component.
         """
         self.adapter           = adapter
         self.alpha             = alpha
@@ -106,6 +111,7 @@ class CSAEngine:
         self.epsilon           = epsilon
         self.zeta              = zeta
         self.eta               = eta
+        self.iota              = iota
         self.use_temporal_decay = use_temporal_decay
         self.lambda_decay      = lambda_decay
         self.edge_type_weights = edge_type_weights or {}
@@ -125,6 +131,9 @@ class CSAEngine:
         # PageRank prior: normalize by max so the term is always in [0, 1]
         self._pagerank: Dict[str, float] = pagerank or {}
         self._max_pr: float = max(self._pagerank.values()) if self._pagerank else 1.0
+
+        # Node recency: pre-normalized [0, 1]
+        self._node_recency: Dict[str, float] = node_recency or {}
 
         # Populated by set_community_graph()
         self._community_distances: Dict[Tuple[int, int], float] = {}
@@ -347,6 +356,10 @@ class CSAEngine:
         # closing the recall gap vs. PPR at deep hops without running random walks.
         pr_v = self._pagerank.get(v, 0.0) / self._max_pr if self._pagerank else 0.0
 
+        # 5b. Node recency prior: normalized recency score for destination node [0, 1].
+        # Gives the beam a bias toward recently active nodes.
+        nr_v = self._node_recency.get(v, 0.0)
+
         # 6. Temporal Decay (Phase 33)
         temporal_decay_term = 0.0
         if self.use_temporal_decay and self._query_time is not None and valid_to is not None:
@@ -355,7 +368,8 @@ class CSAEngine:
             if time_elapsed > 0:
                 # Use edge-type specific decay rate if available, otherwise a default
                 decay_rate = RELATION_DECAY_DEFAULTS.get(edge_type, self.lambda_decay)
-                temporal_decay_term = -self.eta * math.exp(-decay_rate * time_elapsed)
+                # Recency bias: newer edges (small time_elapsed) get higher score
+                temporal_decay_term = self.eta * math.exp(-decay_rate * time_elapsed)
         
         # 7. Assemble and sigmoid (using resolved alpha/beta/gamma/delta/epsilon)
         raw = (
@@ -365,6 +379,7 @@ class CSAEngine:
             - delta * normalized_distance
             + epsilon * hop_decay
             + self.zeta  * pr_v
+            + self.iota  * nr_v
             + temporal_decay_term # Add the temporal decay term
         )
         return _sigmoid(raw)
@@ -410,15 +425,33 @@ class CSAEngine:
 
         hd = 1.0 / (1.0 + hop)
         pr_v = self._pagerank.get(v, 0.0) / self._max_pr if self._pagerank else 0.0
+        nr_v = self._node_recency.get(v, 0.0)
 
         td = 0.0
         if self.use_temporal_decay and self._query_time is not None and valid_to is not None:
             time_elapsed = self._query_time - valid_to
             if time_elapsed > 0:
                 decay_rate = RELATION_DECAY_DEFAULTS.get(edge_type, self.lambda_decay)
-                td = -self.eta * math.exp(-decay_rate * time_elapsed)
+                # Raw feature: exp(-λ*t) in [0, 1]. Recency bias = +eta * td
+                td = math.exp(-decay_rate * time_elapsed)
 
-        return ReasoningLogit(sim, cs, etw, normalized_distance, hd, pr_v, td, 1.0)
+        return ReasoningLogit(sim, cs, etw, normalized_distance, hd, pr_v, td, nr_v, 1.0)
+
+    def get_current_params(self, u: Optional[str] = None) -> Tuple[float, float, float, float, float, float, float, float, float]:
+        """
+        Return the 9-element parameter vector for the current query/community context.
+        Order: (alpha, beta, gamma, delta, epsilon, zeta, eta, iota, theta)
+        """
+        cu = self._get_community(u) if u is not None else -1
+        
+        if self.meta_learner is not None and cu >= 0:
+            a, b, g, d, e = self.meta_learner.get_params(cu)
+        elif self._community_params and cu in self._community_params:
+            a, b, g, d, e = self._community_params[cu]
+        else:
+            a, b, g, d, e = (self.alpha, self.beta, self.gamma, self.delta, self.epsilon)
+            
+        return (a, b, g, d, e, self.zeta, self.eta, self.iota, 1.0) # theta=1.0 by default
 
 
 

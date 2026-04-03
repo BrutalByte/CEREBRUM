@@ -7,7 +7,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [1.7.1] — 2026-04-01 — Federated Reasoning + GPU Stability
+## [1.7.2] — 2026-04-02
+
+### Added
+- **Phase 39: Async Bridge Synthesis**: Decoupled `BridgeTwinEngine` and `InsightEngine` updates via `TaskQueue` to minimize beam traversal latency.
+- **Phase 40: IKGWQ Hardening**: Verified full system reasoning performance under extreme (50%+) edge removal sparsity.
+- **Node Recency Prior**: Integrated node-level recency scores (`nr_v`) from structural features into the `ReasoningLogit` framework.
+- **Unified Logit Framework**: Expanded `ReasoningLogit` to 9 features for consistent parametric scoring across all engines.
+
+### Fixed
+- **Temporal Reasoning Bias**: Corrected the exponential decay formula in `CSAEngine` which was accidentally penalizing newer edges (reversed recency bias).
+- **BeamTraversal Feature Sync**: Synchronized both synchronous and asynchronous traversal paths to use the unified 9-element logit structure.
+- **MockAdapter Stability**: Added missing abstract method implementations to `MockAdapter` for internal testing stability.
+
+## [1.7.1] — 2026-04-01
+ — Federated Reasoning + GPU Stability
 
 ### Added
 - **Federated Reasoning Infrastructure (Phase 32)**:

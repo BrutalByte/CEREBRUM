@@ -20,26 +20,27 @@ class ReasoningLogit:
     nd: float = 0.0           # Normalized Distance
     hd: float = 0.0           # Hop Decay
     pr_v: float = 0.0         # PageRank Prior
-    td: float = 0.0           # Temporal Decay
+    td: float = 0.0           # Temporal Decay (Edge)
+    nr_v: float = 0.0         # Node Recency Prior
     grounding: float = 1.0    # Grounding/Confidence Score
 
     def to_vector(self) -> np.ndarray:
         """Convert to flat vector for parametric learning."""
         return np.array([
-            self.sim, self.cs, self.etw, self.nd, self.hd, self.pr_v, self.td, self.grounding
+            self.sim, self.cs, self.etw, self.nd, self.hd, self.pr_v, self.td, self.nr_v, self.grounding
         ], dtype=np.float32)
 
     @classmethod
     def from_tuple(cls, t: Tuple[float, ...]) -> "ReasoningLogit":
-        """Create from the legacy 8-element tuple."""
+        """Create from the legacy or updated tuple."""
         return cls(*t)
 
     def score(self, params: Tuple[float, ...]) -> float:
         """
         Apply learned weights to compute logit score.
-        params: (alpha, beta, gamma, delta, epsilon, zeta, eta, theta)
+        params: (alpha, beta, gamma, delta, epsilon, zeta, eta, iota, theta)
         """
-        a, b, g, d, e, z, eta, theta = params
+        a, b, g, d, e, z, eta, iota, theta = params
         raw = (
             a * self.sim
             + b * self.cs
@@ -48,6 +49,7 @@ class ReasoningLogit:
             + e * self.hd
             + z * self.pr_v
             + eta * self.td
+            + iota * self.nr_v
             + theta * self.grounding
         )
         return 1.0 / (1.0 + np.exp(-raw))

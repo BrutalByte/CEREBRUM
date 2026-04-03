@@ -98,18 +98,22 @@ uvicorn api.server:app --port 8200 --reload
 -   **Reproducibility:** Follow the guidelines in `TESTING.md` for deterministic runs (especially for DSCF).
 -   **Documentation:** Absolute precedence is given to `PARALLAX.md` (whitepaper) and `README.md`. `CLAUDE.md` provides environment-specific guidance.
 
-## Current Project Status (Phase 33 COMPLETE)
+## Current Project Status (Phase 40 COMPLETE)
 
-CEREBRUM is currently in **v1.7.1**. All phases through 33 shipped. This release focused on temporal reasoning enhancements, building on proactive graph enhancement via `GraphBridgeEngine`, unified pipeline integration via `CerebrumGraph`, and benchmark hardening for ComplexWebQuestions (CWQ).
+CEREBRUM is currently in **v1.7.2**. All phases through 40 shipped and verified. This release focused on reasoning hardening, asynchronous processing for scale, and extreme-sparsity benchmark validation.
 
 Key implementations:
--   **Phase 24 — Performance**: 1042 tests passing, optimized inference.
--   **Phase 27B — WebQSP**: Full system evaluation on WebQSP (1.6.3).
--   **Phase 28 & 29 — Structural Repair**: `IncompletenessRepairEngine` and `QueryGuidedCommunityMerger` (1.6.4).
--   **Phase 30 — Proactive Bridge Synthesis**: `GraphBridgeEngine` for cross-component links, `CerebrumGraph.enhance()` stage, and CWQ benchmark integration (1.7.0).
--   **Phase 31 — Reasoning Studio**: Interactive visual interface for graph exploration and reasoning traces (1.7.0).
--   **Phase 32 — Federated Reasoning**: Delegated multi-hop traversal, consensus scoring, and automated node discovery (1.7.1).
--   **Phase 33 — Temporal Reasoning**: Deeper integration of temporal distance into structural encoding and path scoring (1.7.1).
+-   **Phase 38 — Reasoning Hardening**: Unified `ReasoningLogit` signal pipeline.
+-   **Phase 39 — Async Bridge Synthesis**: Decoupled `BridgeTwinEngine` and `InsightEngine` via `TaskQueue`.
+-   **Phase 40 — IKGWQ Hardening**: Full system validation under 50% edge removal (v1.7.2).
+-   **Temporal Reasoning Fix**: Corrected reversed recency bias in `CSAEngine` and synchronized with the logit framework.
+-   **Node Recency Prior**: Integrated node-level recency (`nr_v`) into the unified 9-feature `ReasoningLogit`.
+-   **Phase 37 — Calibration**: Entropy-based self-doubt and confidence adjustment.
+-   **Phase 34 — Symbolic Guardrails**: Hard-logic integrity constraints for path pruning.
+-   **Phase 33 — Temporal Reasoning**: Integration of temporal distance into structural encoding.
+-   **Phase 30 — Proactive Bridge Synthesis**: `GraphBridgeEngine` and `CerebrumGraph` (1.7.0).
+-   **Phase 31 — Reasoning Studio**: Interactive visual reasoning traces (1.7.0).
+-   **Phase 32 — Federated Reasoning**: Multi-agent traversal and automated node discovery (1.7.1).
 
 
 

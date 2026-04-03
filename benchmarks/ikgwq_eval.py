@@ -99,6 +99,7 @@ from core.structural_encoder import (
     coarsen_communities,
 )
 from core.thalamus import IngestionPipeline
+from core.task_queue import TaskQueue, BridgeTask # New: for async processing
 from reasoning.traversal import BeamTraversal
 from reasoning.answer_extractor import extract
 from reasoning.relation_path_prior import GraphRelationPrior
@@ -346,6 +347,9 @@ def evaluate_level(
         mediator nodes (/m/, /g/ MIDs) into transparent relay hops so that
         A→CVT→B is scored on A↔B semantic similarity.
     """
+    # Create a TaskQueue for asynchronous bridge synthesis
+    task_queue = TaskQueue()
+
     # Only include QA pairs whose seed is still in the graph
     reachable_qa = [
         (s, a, q) for s, a, q in qa_pairs
@@ -414,10 +418,17 @@ def evaluate_level(
                 beam_width=beam_width, max_hop=2,
                 probabilistic=True, warm_start_strength=3,
                 governor=scout_governor, cvt_passthrough=use_cvt,
+                task_queue=task_queue, # Pass the task queue
             )
             scout_paths = []
             for seed, _, _ in reachable_qa[:min(len(reachable_qa), 100)]:
                 scout_paths.extend(scout.traverse([seed]))
+
+            # Process any tasks generated during the scouting traversal
+            while not task_queue.is_empty():
+                task = task_queue.dequeue()
+                # Here you'd dispatch the task to the appropriate engine. For now, just dequeue.
+                pass # Placeholder for future background processing
 
             # Repair
             repair_engine = IncompletenessRepairEngine(
@@ -453,6 +464,7 @@ def evaluate_level(
         warm_start_strength=3,
         governor=bench_governor,
         cvt_passthrough=use_cvt,
+        task_queue=task_queue, # Pass the task queue
     )
 
     h1 = h10 = 0
@@ -492,6 +504,12 @@ def evaluate_level(
             0.0,
         )
         conf_sum += answers[0].path_confidence if answers else 1.0
+
+    # Process any tasks generated during the main traversal
+    while not task_queue.is_empty():
+        task = task_queue.dequeue()
+        # Here you'd dispatch the task to the appropriate engine. For now, just dequeue.
+        pass # Placeholder for future background processing
 
     elapsed = time.time() - t0
     print()

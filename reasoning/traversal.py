@@ -16,11 +16,13 @@ from core.graph_adapter import GraphAdapter
 from core.attention_engine import CSAEngine
 from core.bridge_engine import BridgeTwinEngine, BRIDGE_RELATION
 from core.resource_governor import ResourceGovernor
+from core.task_queue import BridgeTask, TaskQueue
+from core.reasoning_logit import ReasoningLogit # New: Unified logit framework
 from reasoning.path_scorer import community_coherence
 
+# Default parameters for CSAEngine (alpha, beta, gamma, delta, epsilon, zeta, eta, iota, theta)
+_DEFAULT_INIT_PARAMS = (0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 1.0)
 
-# ---------------------------------------------------------------------------
-# CVT passthrough helpers
 # ---------------------------------------------------------------------------
 
 #: Multiplicative penalty applied when traversing through a CVT mediator hop.
@@ -113,8 +115,8 @@ class TraversalPath:
     edge_provenances: List[str] = field(default_factory=list)
     """Per-edge provenance strings along the path (from Edge.provenance)."""
 
-    edge_features: List[Tuple[float, float, float, float, float, float, float]] = field(default_factory=list)
-    """Raw feature components for parameter learning: (sim, cs, etw, nd, hd, pr, td)."""
+    edge_features: List[Tuple[float, float, float, float, float, float, float, float, float]] = field(default_factory=list)
+    """Raw feature components for parameter learning: (sim, cs, etw, nd, hd, pr, td, nr, grounding)."""
 
     beta_alpha: float = 1.0
     """Beta distribution α — accumulated effective successes (sum of edge weights)."""
@@ -185,7 +187,7 @@ class TraversalPath:
         edge_confidence: float = 1.0,
         edge_provenance: str = "",
         prior_scale: float = 1.0,
-        features: Optional[Tuple[float, float, float, float, float, float, float]] = None,
+        features: Optional[Tuple[float, float, float, float, float, float, float, float, float]] = None,
     ) -> "TraversalPath":
         """
         Create a new path by extending this one with an edge.
@@ -292,6 +294,7 @@ class BeamTraversal:
         cvt_passthrough: bool = False,
         symbolic_validator = None, # Optional[SymbolicValidator]
         calibration_engine = None, # Optional[CalibrationEngine]
+        task_queue: Optional[TaskQueue] = None, # New: TaskQueue for async operations
     ):
         self.adapter            = adapter
         self.csa                = csa_engine
@@ -319,6 +322,7 @@ class BeamTraversal:
         self.symbolic_validator = symbolic_validator
         self.calibration_engine = calibration_engine
         self.uncertainty_log: List[Dict[str, Any]] = []
+        self.task_queue = task_queue # Store the TaskQueue instance
 
     def traverse(
         self,
@@ -461,8 +465,6 @@ class BeamTraversal:
 
                         # Single call: weight + all feature components (community_score
                         # is memoized per query, embeddings pre-fetched above).
-                        # Falls back to compute_weight() when compute_weight_with_features
-                        # is unavailable or returns a non-tuple (e.g. mocks, old subclasses).
                         _cwf = getattr(self.csa, 'compute_weight_with_features', None)
                         _cwf_result = _cwf(
                             path.tail, v_eff, hop=hop,
@@ -473,9 +475,18 @@ class BeamTraversal:
                             valid_to=vt_eff,
                             eu=eu, ev=ev,
                         ) if _cwf is not None else None
-                        if isinstance(_cwf_result, tuple) and len(_cwf_result) == 8:
-                            w, sim, cs, etw, nd, hd, pr_v, td = _cwf_result
+
+                        w: float
+                        features_vector: Optional[np.ndarray] = None
+
+                        if isinstance(_cwf_result, ReasoningLogit):
+                            logit_obj = _cwf_result
+                            # Calculate weight using parameters, default to neutral if learner not present
+                            csa_params = self.csa.get_current_params(path.tail) if hasattr(self.csa, 'get_current_params') else _DEFAULT_INIT_PARAMS
+                            w = logit_obj.score(csa_params)
+                            features_vector = logit_obj.to_vector()
                         else:
+                            # Fallback for older CSAEngine or mocks (should be deprecated soon)
                             w = float(self.csa.compute_weight(
                                 path.tail, v_eff, hop=hop,
                                 edge_type=rel_eff,
@@ -484,6 +495,7 @@ class BeamTraversal:
                                 valid_from=vf_eff,
                                 valid_to=vt_eff,
                             ))
+                            # Reconstruct minimal features for compatibility
                             sim = _cosine_sim(eu, ev) if (eu is not None and ev is not None) else 0.0
                             cs  = float(self.csa.community_score(path.tail, v_eff)) if hasattr(self.csa, 'community_score') else 0.5
                             etw = self.edge_type_weights.get(rel_eff, 0.0)
@@ -491,50 +503,15 @@ class BeamTraversal:
                             hd  = 1.0 / (1.0 + hop)
                             pr_v = 0.0
                             td  = 0.0
+                            grounding = 1.0 # Default grounding for legacy paths
+                            # Convert to vector representation for consistency
+                            features_vector = ReasoningLogit(sim, cs, etw, nd, hd, pr_v, td, grounding).to_vector()
+
 
                         # Path metadata and extension
                         v_emb = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
                         v_cid = self.adapter.get_community(v_eff)
-
-                        # Bridge twin detection: record cross-community crossings
-                        # and let the engine create a structural relay if warranted.
                         u_cid = self.adapter.get_community(path.tail)
-                        if (
-                            self.bridge_engine is not None
-                            and u_cid != v_cid
-                            and u_cid >= 0
-                            and v_cid >= 0
-                            and rel_eff != BRIDGE_RELATION
-                        ):
-                            self.bridge_engine.record_crossing(
-                                node_id=v_eff,
-                                source_community=v_cid,
-                                dest_community=u_cid,
-                                adapter=self.adapter,
-                            )
-
-                        # Mark bridge twin use so its idle timer resets
-                        if (
-                            self.bridge_engine is not None
-                            and rel_eff == BRIDGE_RELATION
-                        ):
-                            self.bridge_engine.record_twin_use(v_eff)
-
-                        # Hot path: record cross-community crossing for InsightEngine
-                        if (
-                            self.insight_engine is not None
-                            and u_cid != v_cid
-                            and u_cid >= 0
-                            and v_cid >= 0
-                        ):
-                            self.insight_engine.record_crossing(
-                                u=path.tail,
-                                v=v_eff,
-                                u_cid=u_cid,
-                                v_cid=v_cid,
-                                path_score=path.score,
-                                path=path,
-                            )
 
                         # Compute community coherence for the candidate step
                         coh = community_coherence(path.community_sequence + [v_cid])
@@ -558,8 +535,76 @@ class BeamTraversal:
                             edge_confidence=conf_eff,
                             edge_provenance=prov_eff,
                             prior_scale=_prior_scale,
-                            features=(sim, cs, etw, nd, hd, pr_v, td),
+                            features=tuple(features_vector) if features_vector is not None else None,
                         )
+
+                        # Phase 39: Asynchronous BridgeTwinEngine and InsightEngine updates
+                        if self.task_queue is not None:
+                            if (self.bridge_engine is not None and
+                                u_cid != v_cid and u_cid >= 0 and v_cid >= 0 and
+                                rel_eff != BRIDGE_RELATION):
+                                self.task_queue.enqueue(BridgeTask(
+                                    node_id=v_eff,
+                                    source_community=v_cid,
+                                    dest_community=u_cid,
+                                ))
+                            
+                            if (self.bridge_engine is not None and rel_eff == BRIDGE_RELATION):
+                                self.task_queue.enqueue(BridgeTask(
+                                    node_id=v_eff,
+                                    source_community=-1, # Not applicable for twin use
+                                    dest_community=-1, # Not applicable for twin use
+                                    is_twin_use=True,
+                                ))
+                            
+                            if (self.insight_engine is not None and
+                                u_cid != v_cid and u_cid >= 0 and v_cid >= 0):
+                                self.task_queue.enqueue(BridgeTask(
+                                    node_id=v_eff,
+                                    source_community=u_cid,
+                                    dest_community=v_cid,
+                                    path_score=new_path.score,
+                                    path=new_path,
+                                    u_node=path.tail,
+                                    v_node=v_eff,
+                                ))
+                        else:
+                            # Fallback to synchronous calls if no task queue (e.g. testing)
+                            if (
+                                self.bridge_engine is not None
+                                and u_cid != v_cid
+                                and u_cid >= 0
+                                and v_cid >= 0
+                                and rel_eff != BRIDGE_RELATION
+                            ):
+                                self.bridge_engine.record_crossing(
+                                    node_id=v_eff,
+                                    source_community=v_cid,
+                                    dest_community=u_cid,
+                                    adapter=self.adapter,
+                                )
+
+                            if (
+                                self.bridge_engine is not None
+                                and rel_eff == BRIDGE_RELATION
+                            ):
+                                self.bridge_engine.record_twin_use(v_eff)
+
+                            if (
+                                self.insight_engine is not None
+                                and u_cid != v_cid
+                                and u_cid >= 0
+                                and v_cid >= 0
+                            ):
+                                self.insight_engine.record_crossing(
+                                    u=path.tail,
+                                    v=v_eff,
+                                    u_cid=u_cid,
+                                    v_cid=v_cid,
+                                    path_score=path.score,
+                                    path=path,
+                                )
+                        
                         candidates.append(new_path)
 
             if not candidates:
@@ -757,9 +802,18 @@ class AsyncBeamTraversal(BeamTraversal):
                             valid_to=vt_eff,
                             eu=eu, ev=ev,
                         ) if _cwf is not None else None
-                        if isinstance(_cwf_result, tuple) and len(_cwf_result) == 8:
-                            w, sim, cs, etw, nd, hd, pr_v, td = _cwf_result
+
+                        w: float
+                        features_vector: Optional[np.ndarray] = None
+
+                        if isinstance(_cwf_result, ReasoningLogit):
+                            logit_obj = _cwf_result
+                            # Calculate weight using parameters, default to neutral if learner not present
+                            csa_params = self.csa.get_current_params(path.tail) if hasattr(self.csa, 'get_current_params') else _DEFAULT_INIT_PARAMS
+                            w = logit_obj.score(csa_params)
+                            features_vector = logit_obj.to_vector()
                         else:
+                            # Fallback for older CSAEngine or mocks (should be deprecated soon)
                             w = float(self.csa.compute_weight(
                                 path.tail, v_eff, hop=hop,
                                 edge_type=rel_eff,
@@ -768,6 +822,7 @@ class AsyncBeamTraversal(BeamTraversal):
                                 valid_from=vf_eff,
                                 valid_to=vt_eff,
                             ))
+                            # Reconstruct minimal features for compatibility
                             sim = _cosine_sim(eu, ev) if (eu is not None and ev is not None) else 0.0
                             cs  = float(self.csa.community_score(path.tail, v_eff)) if hasattr(self.csa, 'community_score') else 0.5
                             etw = self.edge_type_weights.get(rel_eff, 0.0)
@@ -775,6 +830,9 @@ class AsyncBeamTraversal(BeamTraversal):
                             hd  = 1.0 / (1.0 + hop)
                             pr_v = 0.0
                             td = 0.0
+                            nr_v = 0.0
+                            grounding = 1.0
+                            features_vector = ReasoningLogit(sim, cs, etw, nd, hd, pr_v, td, nr_v, grounding).to_vector()
 
                         v_emb  = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
                         v_cid  = self.adapter.get_community(v_eff)
@@ -816,7 +874,7 @@ class AsyncBeamTraversal(BeamTraversal):
                             edge_confidence=conf_eff,
                             edge_provenance=prov_eff,
                             prior_scale=_prior_scale,
-                            features=(sim, cs, etw, nd, hd, pr_v, td),
+                            features=tuple(features_vector) if features_vector is not None else None,
                         )
                         candidates.append(new_path)
 
