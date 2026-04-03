@@ -17,6 +17,11 @@ from typing import Union, Any
 import gradio as gr
 from pyvis.network import Network
 import tempfile
+import pandas as pd
+import numpy as np
+import networkx as nx
+import plotly.express as px
+import plotly.graph_objects as go
 
 # Windows: ensure stdout/stderr use utf-8 so emoji don't crash the terminal.
 if sys.platform == "win32":
@@ -240,6 +245,99 @@ def apply_bridges(min_sim, top_k, max_bridges):
         yield f"[ERROR] {type(e).__name__}: {str(e)}", "N/A"
 
 
+def generate_param_radar(alpha, beta, gamma, delta, epsilon, zeta, eta, iota, theta):
+    """Generate a radar chart for the current parameter configuration."""
+    categories = [
+        'Semantic (α)', 'Community (β)', 'Edge Type (γ)', 'Distance (δ)', 
+        'Hop Decay (ε)', 'PageRank (ζ)', 'Temp Edge (η)', 'Node Recency (ι)', 'Grounding (θ)'
+    ]
+    
+    # delta is a penalty, but we visualize its magnitude
+    r_values = [alpha, beta, gamma, abs(delta), epsilon, zeta, eta, iota, theta]
+    
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r=r_values,
+        theta=categories,
+        fill='toself',
+        name='Parameter Profile',
+        line_color='#bc8cff'
+    ))
+
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 1], gridcolor="#30363d"),
+            angularaxis=dict(gridcolor="#30363d")
+        ),
+        showlegend=False,
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=40, r=40, t=20, b=20),
+        height=300
+    )
+    return fig
+
+
+def generate_attention_radar(feature_tuple):
+    """Generate a radar chart for a 9-element feature vector."""
+    if not feature_tuple or len(feature_tuple) < 9:
+        return go.Figure()
+
+    categories = [
+        'Similarity', 'Community', 'Edge Weight', 'Distance (inv)', 
+        'Hop Decay', 'PageRank', 'Temp Decay', 'Node Recency', 'Grounding'
+    ]
+    
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r=feature_tuple,
+        theta=categories,
+        fill='toself',
+        name='Step Attention',
+        line_color='#58a6ff'
+    ))
+
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 1], gridcolor="#30363d"),
+            angularaxis=dict(gridcolor="#30363d")
+        ),
+        showlegend=False,
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=40, r=40, t=20, b=20),
+        height=300
+    )
+    return fig
+    if not answers:
+        return "<div style='color:#888;padding:20px;'>No paths found. Try increasing beam width or max hops.</div>"
+
+    html = "<div class='results-container'>"
+    for ans in answers:
+        path_str = " &rarr; ".join(f"<code>{n}</code>" for n in ans.best_path.nodes)
+        score_pct = int(min(ans.score, 1.0) * 100)
+        html += f"""
+        <div class='cerebrum-card'>
+            <div style='display:flex;justify-content:space-between;align-items:center;'>
+                <span class='entity-id'>{ans.entity_id}</span>
+                <span style='color:#00ffff;font-family:monospace;'>{ans.score:.4f}</span>
+            </div>
+            <div class='score-bar-bg'>
+                <div class='score-bar-fill' style='width:{score_pct}%;'></div>
+            </div>
+            <div class='path-text'>{path_str}</div>
+            <div style='font-size:0.8em;color:#666;margin-top:5px;'>
+                Comm: {ans.score_breakdown.get('community', 0):.2f} |
+                Sim: {ans.score_breakdown.get('semantic', 0):.2f} |
+                Edge: {ans.score_breakdown.get('edge', 0):.2f}
+            </div>
+        </div>"""
+    html += "</div>"
+    return html
+
+
 def format_path_html(answers):
     """Create HTML cards for reasoning results."""
     if not answers:
@@ -272,9 +370,9 @@ def format_path_html(answers):
 def run_reasoning(query, beam_width, max_hop, top_k, mem_threshold, governor=None):
     """Execute the reasoning pipeline via CerebrumGraph."""
     if not STATE["graph_loaded"] or not STATE["graph_obj"]:
-        return "<h3 style='color:#ff4444;'>Please load a graph first.</h3>", None
+        return "<h3 style='color:#ff4444;'>Please load a graph first.</h3>", None, go.Figure()
     if not query or not query.strip():
-        return "<h3 style='color:#ff4444;'>Enter a query entity.</h3>", None
+        return "<h3 style='color:#ff4444;'>Enter a query entity.</h3>", None, go.Figure()
 
     try:
         graph = STATE["graph_obj"]
@@ -285,6 +383,7 @@ def run_reasoning(query, beam_width, max_hop, top_k, mem_threshold, governor=Non
                 f"<h3 style='color:#ff8844;'>No entity found matching <code>{query}</code>. "
                 f"Try a different name or check the graph.</h3>",
                 None,
+                go.Figure()
             )
 
         seed = seeds[0]
@@ -297,6 +396,15 @@ def run_reasoning(query, beam_width, max_hop, top_k, mem_threshold, governor=Non
             beam_width=int(beam_width),
             memory_threshold_pct=float(mem_threshold)
         )
+
+        # Calculate mean features for the top path (Attention Glass-Box)
+        radar_fig = go.Figure()
+        if answers:
+            best_ans = answers[0]
+            if hasattr(best_ans.best_path, 'edge_features') and best_ans.best_path.edge_features:
+                feats = np.array(best_ans.best_path.edge_features)
+                mean_feats = np.mean(feats, axis=0)
+                radar_fig = generate_attention_radar(mean_feats.tolist())
 
         html = (
             f"<div style='margin-bottom:16px;'>"
@@ -317,14 +425,27 @@ def run_reasoning(query, beam_width, max_hop, top_k, mem_threshold, governor=Non
             for i, ans in enumerate(answers)
         ]
 
-        return html, structured
+        return html, structured, radar_fig
 
     except Exception as e:
         logger.error("Reasoning error: %s", str(e), exc_info=True)
-        return f"<h3 style='color:#ff4444;'>[ERROR] {type(e).__name__}: {e}</h3>", None
+        return f"<h3 style='color:#ff4444;'>[ERROR] {type(e).__name__}: {e}</h3>", None, go.Figure()
 
 
 def run_rem_cycle(dry_run=True):
+    """Execute a REM maintenance cycle."""
+    if not STATE["rem"]:
+        return "ERROR: REM Engine not initialized."
+    
+    try:
+        report = STATE["rem"].run(dry_run=dry_run)
+        msg = f"REM Cycle {'(Dry Run)' if dry_run else '(COMMITTED)'} Complete.\n"
+        msg += f"Pruned: {report.pruned_count} edges\n"
+        msg += f"Synthesized: {report.synthesized_count} edges\n"
+        msg += f"Confidence Gain: {report.avg_confidence_gain:.4f}"
+        return msg
+    except Exception as e:
+        return f"ERROR in REM Cycle: {str(e)}"
     """Execute a REM maintenance cycle."""
     if not STATE["rem"]:
         return "ERROR: REM Engine not initialized."
@@ -588,22 +709,91 @@ def generate_3d_viz(max_nodes=10000):
 
 
 def get_graph_stats():
-    """Return a markdown summary of the loaded graph."""
+    """Return an interactive Structural Analytics dashboard."""
     if not STATE["graph_loaded"]:
-        return "No graph loaded."
+        return None, "No graph loaded."
+    
     adapter = STATE["adapter"]
     G = adapter.to_networkx()
-    parts = STATE["communities"] or []
+    
+    # 1. Degree Analysis
+    degrees = [d for n, d in G.degree()]
+    df_deg = pd.DataFrame({"Degree": degrees})
+    fig_deg = px.histogram(
+        df_deg, x="Degree", 
+        title="Degree Distribution",
+        color_discrete_sequence=["#58a6ff"],
+        template="plotly_dark"
+    )
+    fig_deg.update_layout(
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=20, r=20, t=40, b=20)
+    )
+
+    # 2. Community Analysis
+    communities = STATE["communities"] or []
+    if communities:
+        comm_sizes = [len(c) for c in communities]
+        df_comm = pd.DataFrame({
+            "Community": [f"Comm {i}" for i in range(len(comm_sizes))],
+            "Size": comm_sizes
+        })
+        fig_comm = px.pie(
+            df_comm, values="Size", names="Community",
+            title="Community Composition (DSCF)",
+            hole=0.4,
+            template="plotly_dark"
+        )
+        fig_comm.update_traces(textposition='inside', textinfo='percent+label')
+        fig_comm.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            margin=dict(l=20, r=20, t=40, b=20)
+        )
+    else:
+        fig_comm = go.Figure()
+
+    # 3. Summary Markdown
     edge_types = adapter.get_edge_types() if hasattr(adapter, "get_edge_types") else []
-    lines = [
-        f"**Nodes**: {G.number_of_nodes()}",
-        f"**Edges**: {G.number_of_edges()}",
-        f"**Communities**: {len(parts)}",
-        f"**Directed**: {G.is_directed()}",
-        f"**Edge types**: {len(edge_types)} — {', '.join(edge_types[:10])}{'...' if len(edge_types) > 10 else ''}",
-        f"**Avg degree**: {(2 * G.number_of_edges() / max(G.number_of_nodes(), 1)):.2f}",
-    ]
-    return "\n\n".join(lines)
+    summary = (
+        f"### Global Metrics\n"
+        f"- **Nodes**: {G.number_of_nodes()}\n"
+        f"- **Edges**: {G.number_of_edges()}\n"
+        f"- **Communities**: {len(communities)}\n"
+        f"- **Avg Degree**: {(2 * G.number_of_edges() / max(G.number_of_nodes(), 1)):.2f}\n"
+        f"- **Density**: {nx.density(G):.4f}\n"
+        f"- **Is Directed**: {G.is_directed()}\n\n"
+        f"### Schema Insights\n"
+        f"- **Relation Types**: {len(edge_types)}\n"
+        f"- **Top Relations**: {', '.join(edge_types[:10])}{'...' if len(edge_types) > 10 else ''}"
+    )
+
+    # Combine plots into a multi-panel figure
+    from plotly.subplots import make_subplots
+    fig = go.Figure()
+    # For now, return the primary degree plot or a custom combined one
+    # Gradio Plot component can only take one figure, so we use subplots
+    
+    fig_final = make_subplots(
+        rows=1, cols=2, 
+        specs=[[{"type": "xy"}, {"type": "domain"}]],
+        subplot_titles=("Structural Topology", "Community Distribution")
+    )
+    
+    # Add Histogram
+    for trace in fig_deg.data:
+        fig_final.add_trace(trace, row=1, col=1)
+    
+    # Add Pie
+    if communities:
+        for trace in fig_comm.data:
+            fig_final.add_trace(trace, row=1, col=2)
+            
+    fig_final.update_layout(template="plotly_dark", height=400, showlegend=False)
+    fig_final.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+
+    return fig_final, summary
 
 
 # ---------------------------------------------------------------------------
@@ -870,16 +1060,28 @@ with gr.Blocks(title="CEREBRUM Studio v1.7.0") as demo:
                     value="Standard (Balanced)",
                     label="Parameter Presets",
                 )
-                beam_slider = gr.Slider(1, 100, value=20, step=1, label="Beam Width")
-                hop_slider  = gr.Slider(1, 10,  value=3,  step=1, label="Max Hops")
-                k_slider    = gr.Slider(1, 50,  value=10, step=1, label="Top K Answers")
-                mem_slider  = gr.Slider(50, 99, value=90, step=1, label="Memory Safety Threshold (%)")
                 
-                preset_dropdown.change(
-                    fn=apply_preset,
-                    inputs=[preset_dropdown],
-                    outputs=[beam_slider, hop_slider, k_slider, mem_slider]
-                )
+                with gr.Row():
+                    with gr.Column():
+                        beam_slider = gr.Slider(1, 100, value=20, step=1, label="Beam Width")
+                        hop_slider  = gr.Slider(1, 10,  value=3,  step=1, label="Max Hops")
+                        k_slider    = gr.Slider(1, 50,  value=10, step=1, label="Top K Answers")
+                        mem_slider  = gr.Slider(50, 99, value=90, step=1, label="Memory Safety %")
+                    
+                with gr.Accordion("CSA Weight Profiler (Cognitive Tuning)", open=False):
+                    param_radar = gr.Plot(label="Cognitive Profile")
+                    
+                    p_alpha = gr.Slider(0, 1, value=0.4, step=0.05, label="Semantic (α)")
+                    p_beta  = gr.Slider(0, 1, value=0.4, step=0.05, label="Community (β)")
+                    p_gamma = gr.Slider(0, 1, value=0.1, step=0.05, label="Edge Type (γ)")
+                    p_delta = gr.Slider(0, 1, value=0.05, step=0.01, label="Distance Penalty (δ)")
+                    p_epsilon = gr.Slider(0, 1, value=0.05, step=0.01, label="Hop Decay (ε)")
+                    p_zeta = gr.Slider(0, 1, value=0.1, step=0.05, label="PageRank Prior (ζ)")
+                    p_eta  = gr.Slider(0, 1, value=0.1, step=0.05, label="Temp Edge Decay (η)")
+                    p_iota = gr.Slider(0, 1, value=0.05, step=0.05, label="Node Recency (ι)")
+                    p_theta = gr.Slider(0, 1, value=1.0, step=0.1, label="Grounding (θ)")
+                    
+                    apply_params_btn = gr.Button("Commit Parameters to Engine", variant="secondary")
 
             with gr.Accordion("Graph Enhancement", open=False):
                 gr.Markdown("### Proactive Bridge Synthesis")
@@ -899,13 +1101,19 @@ with gr.Blocks(title="CEREBRUM Studio v1.7.0") as demo:
             with gr.Tabs():
                 with gr.Tab("Reasoning"):
                     with gr.Row():
-                        query_input = gr.Textbox(
-                            label="Query Entity",
-                            placeholder="Type a node name (e.g. 'newton')...",
-                            scale=4,
-                        )
-                        reason_btn = gr.Button("Run Reasoning", variant="primary", scale=1)
-                    chat_output = gr.HTML(label="Reasoning Trace")
+                        with gr.Column(scale=2):
+                            with gr.Row():
+                                query_input = gr.Textbox(
+                                    label="Query Entity",
+                                    placeholder="Type a node name (e.g. 'newton')...",
+                                    scale=4,
+                                )
+                                reason_btn = gr.Button("Run Reasoning", variant="primary", scale=1)
+                            chat_output = gr.HTML(label="Reasoning Trace")
+                        with gr.Column(scale=1):
+                            gr.Markdown("### Attention Glass-Box")
+                            attention_plot = gr.Plot(label="Signal Vector (Mean Path Attention)")
+                            gr.Markdown("<small>Visualization of the 9-parameter ReasoningLogit vector across the top reasoning path.</small>")
 
                 with gr.Tab("Interactive Graph"):
                     viz_btn    = gr.Button("Refresh Graph Visualization")
@@ -915,9 +1123,12 @@ with gr.Blocks(title="CEREBRUM Studio v1.7.0") as demo:
                     viz_3d_btn = gr.Button("Refresh 3D Interaction Engine")
                     viz_3d_output = gr.HTML(label="3D Structural Attention Explorer")
 
-                with gr.Tab("Graph Stats"):
-                    stats_btn    = gr.Button("Show Stats")
-                    stats_output = gr.Markdown()
+                with gr.Tab("Structural Analytics"):
+                    with gr.Row():
+                        stats_plot = gr.Plot(label="Topology & Community Distribution")
+                    with gr.Row():
+                        stats_markdown = gr.Markdown(label="Global Metrics")
+                    stats_btn = gr.Button("Refresh Analytics", variant="secondary")
 
                 with gr.Tab("Structured Data"):
                     json_output = gr.JSON(label="Raw Path Metadata")
@@ -988,10 +1199,25 @@ with gr.Blocks(title="CEREBRUM Studio v1.7.0") as demo:
 
     # ── Event wiring ────────────────────────────────────────────────────────
 
+    # CSA weight profiler wiring
+    weight_inputs = [p_alpha, p_beta, p_gamma, p_delta, p_epsilon, p_zeta, p_eta, p_iota, p_theta]
+    for w_in in weight_inputs:
+        w_in.change(fn=generate_param_radar, inputs=weight_inputs, outputs=param_radar)
+    
+    apply_params_btn.click(
+        fn=commit_params,
+        inputs=weight_inputs,
+        outputs=status_output
+    )
+
     load_btn.click(
         fn=load_graph,
         inputs=[file_upload, csv_input, emb_input],
         outputs=[status_output, comm_output],
+    ).then(
+        fn=generate_param_radar,
+        inputs=weight_inputs,
+        outputs=param_radar
     ).then(
         fn=generate_graph_viz,
         inputs=[],
@@ -1003,12 +1229,12 @@ with gr.Blocks(title="CEREBRUM Studio v1.7.0") as demo:
     ).then(
         fn=get_graph_stats,
         inputs=[],
-        outputs=stats_output,
+        outputs=[stats_plot, stats_markdown],
     )
 
     viz_btn.click(fn=generate_graph_viz, inputs=[], outputs=viz_output)
     viz_3d_btn.click(fn=generate_3d_viz, inputs=[], outputs=viz_3d_output)
-    stats_btn.click(fn=get_graph_stats, inputs=[], outputs=stats_output)
+    stats_btn.click(fn=get_graph_stats, inputs=[], outputs=[stats_plot, stats_markdown])
 
     bridge_btn.click(
         fn=apply_bridges,
@@ -1025,13 +1251,13 @@ with gr.Blocks(title="CEREBRUM Studio v1.7.0") as demo:
     ).then(
         fn=get_graph_stats,
         inputs=[],
-        outputs=stats_output,
+        outputs=[stats_plot, stats_markdown],
     )
 
     reason_btn.click(
         fn=run_reasoning,
         inputs=[query_input, beam_slider, hop_slider, k_slider, mem_slider],
-        outputs=[chat_output, json_output],
+        outputs=[chat_output, json_output, attention_plot],
     ).then(
         fn=get_insight_log,
         inputs=[],
@@ -1040,7 +1266,7 @@ with gr.Blocks(title="CEREBRUM Studio v1.7.0") as demo:
     query_input.submit(
         fn=run_reasoning,
         inputs=[query_input, beam_slider, hop_slider, k_slider, mem_slider],
-        outputs=[chat_output, json_output],
+        outputs=[chat_output, json_output, attention_plot],
     ).then(
         fn=get_insight_log,
         inputs=[],
@@ -1105,11 +1331,14 @@ def test_logic():
     # 2. Reasoning
     print("  Testing reasoning ('newton')...")
     lenient_governor = ResourceGovernor(memory_threshold_pct=99.0)
-    text, data = run_reasoning("newton", 10, 2, 5, 99.0, governor=lenient_governor)
+    text, data, radar = run_reasoning("newton", 10, 2, 5, 99.0, governor=lenient_governor)
     count = len(data) if data else 0
     print(f"    Found {count} answer(s).")
     if count == 0:
         print("  FAIL: no answers returned")
+        return False
+    if radar is None:
+        print("  FAIL: no radar chart returned")
         return False
 
     # 3. Visualization
