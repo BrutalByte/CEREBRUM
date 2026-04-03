@@ -416,7 +416,19 @@ def generate_graph_viz():
 
     # Add edges
     for u, v, data in G.edges(data=True):
-        net.add_edge(str(u), str(v), title=data.get("relation", ""))
+        rel = data.get("relation", "")
+        # Visual differentiation for synthetic edges
+        is_synthetic = "rem_synthesized" in rel
+        is_wormhole = "wormhole" in rel
+        
+        edge_opts = {
+            "title": rel,
+            "width": 1 if not is_synthetic else 2,
+            "dashes": is_synthetic,
+            "color": "#ff8844" if is_wormhole else ("#30363d" if not is_synthetic else "#8b949e"),
+            "arrows": "to"
+        }
+        net.add_edge(str(u), str(v), **edge_opts)
 
     net.toggle_physics(True)
     
@@ -457,7 +469,22 @@ def generate_3d_viz(max_nodes=10000):
         edges = random.sample(edges, 50000)
         
     for u, v, data in edges:
-        links_data.append({"source": str(u), "target": str(v), "rel": data.get("relation", "LINK")})
+        rel = data.get("relation", "")
+        is_synthetic = "rem_synthesized" in rel
+        is_wormhole = "wormhole" in rel
+        
+        color = "#8b949e" if is_synthetic else "#ffffff"
+        if is_wormhole:
+            color = "#ff8844"
+            
+        links_data.append({
+            "source": str(u), 
+            "target": str(v), 
+            "rel": rel,
+            "is_synthetic": is_synthetic,
+            "is_wormhole": is_wormhole,
+            "color": color
+        })
 
     import json
     json_data = json.dumps({"nodes": nodes_data, "links": links_data})
@@ -488,7 +515,11 @@ def generate_3d_viz(max_nodes=10000):
                     .nodeAutoColorBy("group")
                     .linkDirectionalArrowLength(3.5)
                     .linkDirectionalArrowRelPos(1)
-                    .linkOpacity(0.2)
+                    .linkColor(link => link.color)
+                    .linkCurvature(link => link.is_wormhole ? 0.2 : 0)
+                    .linkDirectionalParticles(link => link.is_synthetic ? 2 : 0)
+                    .linkDirectionalParticleSpeed(link => link.is_wormhole ? 0.01 : 0.005)
+                    .linkOpacity(0.3)
                     .graphData(data);
                 
                 // Bloom / Visual enhancements

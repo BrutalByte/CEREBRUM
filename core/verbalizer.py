@@ -149,6 +149,14 @@ _BUILTIN_TEMPLATES: Dict[str, Tuple[str, str, str]] = {
     "STUDENT_OF":       ("{src} was a student of {dst}",
                          "{dst} taught {src}",
                          "who was a student of"),
+
+    # Synthetic / Inference (REM)
+    "REM_SYNTHESIZED":  ("{src} is highly similar to {dst} (synthetic link)",
+                         "{dst} is highly similar to {src} (synthetic link)",
+                         "which is highly similar to"),
+    "REM_SYNTHESIZED_WORMHOLE": ("{src} bridges to {dst} via high similarity (cross-component wormhole)",
+                                 "{dst} bridges to {src} via high similarity (cross-component wormhole)",
+                                 "which bridges via high similarity to"),
     "CORRESPONDED_WITH":("{src} corresponded with {dst}",
                          "{dst} corresponded with {src}",
                          "who corresponded with"),

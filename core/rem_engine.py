@@ -413,10 +413,10 @@ class REMEngine:
         # Apply mutations (real runs only)
         if not dry_run:
             synthetic_pairs = []
-            for u, v, _ in proposals:
+            for u, v, rel in proposals:
                 G.add_edge(
                     u, v,
-                    relation="rem_synthesized",
+                    relation=rel,
                     confidence=self.synthesis_confidence,
                     provenance="rem_synthesized",
                     weight=0.5,
