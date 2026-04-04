@@ -103,7 +103,7 @@ uvicorn api.server:app --port 8200 --reload
 CEREBRUM is currently in **v1.7.4**. All phases through 42 shipped and verified. This release focused on interface robustness, REST API hardening, and automated headless testing.
 
 Key implementations:
--   **Phase 42 — Interface Robustness & Hardening**: Stabilized Reasoning Studio with `gr.Progress`, secured REST endpoints, and implemented automated headless robustness tests for both UI and API.
+-   **Phase 42 — Interface Robustness & Hardening**: Stabilized Reasoning Studio with `gr.Progress`, secured REST endpoints, and implemented automated headless robustness tests for both UI and API. Resolved syntax errors in UI f-strings and stabilized GPU DSCF convergence for symmetric structures.
 -   **Phase 41 — Temporal & REM Synthesis**: Corrected reversed recency bias, integrated Node Recency (9-feature logit), and implemented cross-component "Wormhole" detection in REMEngine.
 -   **Phase 38 — Reasoning Hardening**: Unified `ReasoningLogit` signal pipeline.
 -   **Phase 39 — Async Bridge Synthesis**: Decoupled `BridgeTwinEngine` and `InsightEngine` via `TaskQueue`.

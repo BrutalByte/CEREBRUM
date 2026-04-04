@@ -7,6 +7,29 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.7.4] — 2026-04-04
+
+### Added
+- **Phase 42: Interface Robustness & API Hardening**:
+    - **UI Stabilization**: Refactored `load_graph` in `Reasoning Studio` to use `gr.Progress` for more stable loading feedback.
+    - **REST API Hardening**: Secured the `/health` endpoint and ensured 9-parameter score breakdowns are returned consistently.
+    - **Automated Robustness Tests**: Added `tests/test_studio_robustness.py` and `tests/test_api_robustness.py`.
+    - **Community Scaling**: Implemented automatic community coarsening in `core/cerebrum.py` for large-scale datasets.
+
+### Fixed
+- **UI Syntax Errors**: Resolved multiple `SyntaxError` issues in `ui/studio.py` caused by incorrectly escaped triple quotes and illegal backslashes in f-strings.
+- **Security Test Alignment**: Updated `tests/test_security.py` to correctly expect `401 Unauthorized` for the now-secured `/health` endpoint.
+- **GPU DSCF Stability**: Stabilized `tests/test_dscf_gpu.py` by ensuring deterministic community detection for triangle graphs.
+- **Robustness Test Sync**: Synchronized `api_name`s in robustness tests with the actual Gradio implementation.
+
+## [1.7.3] — 2026-04-02
+
+### Added
+- **Phase 41: Temporal Reasoning & REM Synthesis**:
+    - **Temporal Bias Correction**: Corrected the recency formula in `CSAEngine` to properly favor newer edges ($+\exp(-\lambda t)$).
+    - **Node Recency Integration**: Added `nr_v` (Node Recency) to `ReasoningLogit` framework (9-feature vector).
+    - **Wormhole Detection**: Implemented similarity-based bridging of disconnected components in `REMEngine`.
+
 ## [1.7.2] — 2026-04-02
 
 ### Added

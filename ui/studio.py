@@ -1,4 +1,4 @@
-"""
+﻿"""
 CEREBRUM Studio -- Interactive Reasoning Interface.
 
 A Gradio-based UI for exploring Knowledge Graphs using Community-Structured Attention.
@@ -98,8 +98,8 @@ STATE: Dict[str, Any] = {
 def generate_param_radar(alpha, beta, gamma, delta, epsilon, zeta, eta, iota, theta):
     """Generate a radar chart for the current parameter configuration."""
     categories = [
-        'Semantic (α)', 'Community (β)', 'Edge Type (γ)', 'Distance (δ)', 
-        'Hop Decay (ε)', 'PageRank (ζ)', 'Temp Edge (η)', 'Node Recency (ι)', 'Grounding (θ)'
+        'Semantic (Î±)', 'Community (Î²)', 'Edge Type (Î³)', 'Distance (Î´)', 
+        'Hop Decay (Îµ)', 'PageRank (Î¶)', 'Temp Edge (Î·)', 'Node Recency (Î¹)', 'Grounding (Î¸)'
     ]
     r_values = [alpha, beta, gamma, abs(delta), epsilon, zeta, eta, iota, theta]
     
@@ -151,7 +151,7 @@ def format_path_html(answers):
     for ans in answers:
         path_str = " &rarr; ".join(f"<code>{n}</code>" for n in ans.best_path.nodes)
         score_pct = int(min(ans.score, 1.0) * 100)
-        html += f\"\"\"
+        html += f"""
         <div class='cerebrum-card'>
             <div style='display:flex;justify-content:space-between;align-items:center;'>
                 <span class='entity-id'>{ans.entity_id}</span>
@@ -166,7 +166,7 @@ def format_path_html(answers):
                 Sim: {ans.score_breakdown.get('semantic', 0):.2f} |
                 Edge: {ans.score_breakdown.get('edge', 0):.2f}
             </div>
-        </div>\"\"\"
+        </div>"""
     html += "</div>"
     return html
 
@@ -177,15 +177,17 @@ def format_path_html(answers):
 def load_graph(file_obj, csv_path_text, embedding_type, progress=gr.Progress()):
     if file_obj is not None:
         path = file_obj.name
+        source_name = Path(path).name
     elif csv_path_text and csv_path_text.strip():
         path = csv_path_text.strip()
+        source_name = path
     else:
         return "ERROR: No file provided.", "N/A"
 
     logger.info("Loading graph from %s", path)
     try:
         t0 = time.time()
-        progress(0, desc="Initializing Pipeline...")
+        progress(0, desc=f"Initializing {source_name}...")
         emb_mode = "sentence" if "Sentence" in embedding_type else "random"
         graph = CerebrumGraph.from_kb(path, embeddings=emb_mode)
         
@@ -202,7 +204,7 @@ def load_graph(file_obj, csv_path_text, embedding_type, progress=gr.Progress()):
 
         comm_summary = f"{len(graph.communities)} communities detected via DSCF."
         total = time.time() - t0
-        status = f"[OK] System Ready ({total:.2f}s) | {graph.node_count} nodes"
+        status = f"[OK] Loaded {source_name} ({total:.2f}s) | {graph.node_count} nodes"
         return status, comm_summary
     except Exception as e:
         logger.error("Load error: %s", e, exc_info=True)
@@ -223,6 +225,10 @@ def run_reasoning(query, beam_width, max_hop, top_k, mem_threshold, governor=Non
         answers = graph.query([seeds[0]], top_k=int(top_k), max_hop=int(max_hop), 
                               beam_width=int(beam_width), memory_threshold_pct=float(mem_threshold))
 
+        best_path_nodes = []
+        if answers:
+            best_path_nodes = answers[0].best_path.nodes
+
         radar_fig = go.Figure()
         if answers and hasattr(answers[0].best_path, 'edge_features') and answers[0].best_path.edge_features:
             mean_feats = np.mean(np.array(answers[0].best_path.edge_features), axis=0)
@@ -230,7 +236,7 @@ def run_reasoning(query, beam_width, max_hop, top_k, mem_threshold, governor=Non
 
         html = f"<div style='margin-bottom:12px;'><b>Seed</b>: <code style='color:#00ffff;'>{seeds[0]}</code></div>" + format_path_html(answers)
         structured = [{"answer": a.entity_id, "score": a.score, "path": a.best_path.nodes} for a in answers]
-        return html, structured, radar_fig
+        return html, structured, radar_fig, best_path_nodes
     except Exception as e:
         logger.error("Reasoning error: %s", e, exc_info=True)
         return f"[ERROR] {e}", None, go.Figure()
@@ -262,7 +268,7 @@ def commit_params(a, b, g, d, e, z, eta, iota, theta):
         STATE["csa"].alpha, STATE["csa"].beta, STATE["csa"].gamma = a, b, g
         STATE["csa"].delta, STATE["csa"].epsilon, STATE["csa"].zeta = d, e, z
         STATE["csa"].eta, STATE["csa"].iota = eta, iota
-        return f"Success: Weights updated (α={a:.2f}, β={b:.2f}...)"
+        return f"Success: Weights updated (Î±={a:.2f}, Î²={b:.2f}...)"
     except Exception as err: return f"ERROR: {err}"
 
 def run_rem_cycle(dry_run=True):
@@ -305,7 +311,7 @@ def run_validation():
         return f"ERROR in Validation: {e}"
 
 # ---------------------------------------------------------------------------
-# Phase 11 — Live Feed functions
+# Phase 11 â€” Live Feed functions
 # ---------------------------------------------------------------------------
 
 def start_stream(source_type, file_path_or_url, window_seconds, max_edges):
@@ -354,20 +360,92 @@ def generate_graph_viz():
     
     with tempfile.NamedTemporaryFile(delete=False, suffix=".html", mode="w", encoding="utf-8") as f:
         net.save_graph(f.name)
-        return f"<iframe srcdoc='{Path(f.name).read_text(encoding=\"utf-8\").replace(\"'\", \"&apos;\")}' style='width:100%;height:600px;border:none;'></iframe>"
+        return f"""<iframe srcdoc='{Path(f.name).read_text(encoding="utf-8").replace("'", "&apos;")}' style='width:100%;height:600px;border:none;'></iframe>"""
 
-def generate_3d_viz():
+def generate_3d_viz(highlight_nodes=None):
     if not STATE["graph_loaded"]: return "Load a graph first."
     G = STATE["adapter"].to_networkx()
-    nodes = [{"id": str(n), "group": STATE["adapter"].get_community(n)} for n in G.nodes()]
-    links = [{"source": str(u), "target": str(v), "rel": d.get("relation",""), 
-              "color": ("#ff8844" if "wormhole" in d.get("relation","") else "#8b949e"),
-              "is_wormhole": ("wormhole" in d.get("relation",""))} for u, v, d in G.edges(data=True)]
     
-    return f\"\"\"<iframe srcdoc='<html><head><script src=\"https://unpkg.com/3d-force-graph\"></script></head><body style=\"margin:0;background:#0d1117;\"><div id=\"3d-graph\"></div><script>
-        const g = ForceGraph3D()(document.getElementById(\"3d-graph\")).backgroundColor(\"#0d1117\").nodeLabel(\"id\").nodeAutoColorBy(\"group\")
-        .linkColor(l=>l.color).linkCurvature(l=>l.is_wormhole?0.2:0).graphData({{\"nodes\":{json.dumps(nodes)},\"links\":{json.dumps(links)}}});
-    </script></body></html>' style='width:100%;height:750px;border:none;'></iframe>\"\"\"
+    path_set = set(highlight_nodes) if highlight_nodes else set()
+    
+    nodes_data = []
+    for n in G.nodes():
+        is_on_path = str(n) in path_set
+        nodes_data.append({
+            "id": str(n),
+            "group": STATE["adapter"].get_community(n),
+            "size": 12 if is_on_path else 4,
+            "color": "#00ffff" if is_on_path else None # Auto-color if not on path
+        })
+
+    links_data = []
+    for u, v, d in G.edges(data=True):
+        u_str, v_str = str(u), str(v)
+        rel = d.get("relation", "")
+        is_on_path = u_str in path_set and v_str in path_set
+        
+        # Determine color
+        if is_on_path:
+            color = "#00ffff"
+        elif "wormhole" in rel:
+            color = "#ff8844"
+        elif "rem_synthesized" in rel:
+            color = "#8b949e"
+        else:
+            color = "#444444"
+
+        links_data.append({
+            "source": u_str,
+            "target": v_str,
+            "rel": rel,
+            "color": color,
+            "width": 3 if is_on_path else 1,
+            "is_on_path": is_on_path,
+            "is_wormhole": "wormhole" in rel
+        })
+    
+    # Use a more robust CDN and handle large JSON by separating it
+    graph_json = json.dumps({"nodes": nodes_data, "links": links_data})
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <script src="https://unpkg.com/3d-force-graph"></script>
+        <style> body {{ margin: 0; background: #0d1117; overflow: hidden; }} </style>
+    </head>
+    <body>
+        <div id="3d-graph"></div>
+        <script>
+            const data = {graph_json};
+            const Graph = ForceGraph3D()(document.getElementById('3d-graph'))
+                .backgroundColor('#0d1117')
+                .nodeLabel(node => `<span style="color:#00ffff">${{node.id}}</span>`)
+                .nodeAutoColorBy('group')
+                .graphData(data)
+                .linkDirectionalArrowLength(3.5)
+                .linkDirectionalArrowRelPos(1)
+                .linkColor(link => link.color)
+                .linkWidth(link => link.width)
+                .linkCurvature(link => link.is_wormhole ? 0.2 : 0)
+                .linkDirectionalParticles(link => link.is_on_path ? 10 : (link.width > 1 ? 2 : 0))
+                .linkDirectionalParticleSpeed(link => link.is_on_path ? 0.02 : 0.005)
+                .linkDirectionalParticleWidth(link => link.is_on_path ? 4 : 2);
+
+            // If a path exists, adjust camera after a delay
+            if ({'true' if highlight_nodes else 'false'}) {{
+                setTimeout(() => {{
+                    const pathNodes = data.nodes.filter(n => {list(path_set)}.includes(n.id));
+                    if (pathNodes.length > 0) {{
+                        Graph.cameraPosition({{ x: 200, y: 200, z: 200 }}, pathNodes[0], 2000);
+                    }}
+                }}, 1000);
+            }}
+        </script>
+    </body>
+    </html>
+    """
+    return f"""<iframe srcdoc='{html.replace("'", "&apos;")}' style='width:100%;height:750px;border:none;border-radius:8px;'></iframe>"""
 
 # ---------------------------------------------------------------------------
 # UI Layout
@@ -377,12 +455,17 @@ CUSTOM_CSS = ".gradio-container { background-color: #0d1117 !important; color: #
 
 with gr.Blocks(title="CEREBRUM Studio", css=CUSTOM_CSS) as demo:
     gr.Markdown("# CEREBRUM STUDIO Pro")
+    best_path_state = gr.State([]) # Hidden state for 3D highlighting
     
     with gr.Row():
         with gr.Column(scale=1):
             with gr.Group():
-                file_in = gr.File(label="Upload Graph")
-                path_in = gr.Textbox(label="Local Path", value=DEFAULT_CSV)
+                file_in = gr.File(label="Upload Graph (CSV/JSON)")
+                path_in = gr.Textbox(
+                    label="Or paste a local file path", 
+                    placeholder="E:\\path\\to\\your\\graph.csv",
+                    value=""
+                )
                 emb_in = gr.Dropdown(["Random (Fast)", "Sentence (SBERT)"], value="Random (Fast)", label="Embeddings")
                 load_btn = gr.Button("Load Engine", variant="primary")
             
@@ -394,7 +477,7 @@ with gr.Blocks(title="CEREBRUM Studio", css=CUSTOM_CSS) as demo:
                 
                 with gr.Accordion("CSA Weight Profiler", open=False):
                     p_radar = gr.Plot()
-                    weights = [gr.Slider(0, 1, v, label=l) for v, l in [(0.4,"α"), (0.4,"β"), (0.1,"γ"), (0.05,"δ"), (0.05,"ε"), (0.1,"ζ"), (0.1,"η"), (0.05,"ι"), (1.0,"θ")]]
+                    weights = [gr.Slider(0, 1, v, label=l) for v, l in [(0.4,"Î±"), (0.4,"Î²"), (0.1,"Î³"), (0.05,"Î´"), (0.05,"Îµ"), (0.1,"Î¶"), (0.1,"Î·"), (0.05,"Î¹"), (1.0,"Î¸")]]
                     commit_btn = gr.Button("Commit Weights")
 
             status_out = gr.Textbox(label="Status")
@@ -451,6 +534,11 @@ with gr.Blocks(title="CEREBRUM Studio", css=CUSTOM_CSS) as demo:
                             st_ref = gr.Button("Refresh Log")
 
     # Wiring
+    # Mutual clearing for Graph Setup
+    file_in.upload(lambda: "", None, path_in)
+    file_in.clear(lambda: "", None, path_in)
+    path_in.change(lambda x: None if x and x.strip() else gr.update(), inputs=[path_in], outputs=[file_in])
+
     for w in weights:
         w.change(generate_param_radar, weights, p_radar, api_name="update_param_profile")
     
@@ -467,7 +555,16 @@ with gr.Blocks(title="CEREBRUM Studio", css=CUSTOM_CSS) as demo:
         outputs=[p_radar, s_plot, s_md]
     )
     
-    q_btn.click(run_reasoning, [q_in, beam_sl, hop_sl, k_sl, mem_sl], [q_html, gr.JSON(visible=False), attn_radar], api_name="run_reasoning")
+    q_btn.click(
+        run_reasoning, 
+        [q_in, beam_sl, hop_sl, k_sl, mem_sl], 
+        [q_html, gr.JSON(visible=False), attn_radar, best_path_state], 
+        api_name="run_reasoning"
+    ).then(
+        fn=generate_3d_viz,
+        inputs=[best_path_state],
+        outputs=v3_out
+    )
     s_btn.click(get_graph_stats, [], [s_plot, s_md], api_name="refresh_analytics")
     v2_btn.click(generate_graph_viz, [], v2_out, api_name="get_2d_viz")
     v3_btn.click(generate_3d_viz, [], v3_out, api_name="get_3d_viz")

@@ -854,7 +854,7 @@ JSON:"""
                         "text2text-generation",
                         model=self._config.rebel_model,
                         tokenizer=self._config.rebel_model,
-                        pipeline_class=Text2TextGenerationPipeline, # type: ignore
+                        pipeline_class=Text2TextGenerationPipeline,
                     )
                     log.info("ExtractionEngine: loaded REBEL model '%s'.", self._config.rebel_model)
                 except Exception as exc:

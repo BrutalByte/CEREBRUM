@@ -295,15 +295,15 @@ $$\text{score}(P) = \left( \prod_{k=1}^L a(u_k, v_k, k) \right) \cdot \text{cohe
 - **Context Window Invariance**: Sublinear complexity independent of graph size.
 - **Topological Analysis**: Inductive bias derived from graph topology requires zero training.
 
-## Project Status (v1.7.0 — Phase 31 COMPLETE)
+## Project Status (v1.7.4 — Phase 42 COMPLETE)
 
-CEREBRUM is currently at **v1.7.0**. All **1155 tests** are passing (1 skipped).
+CEREBRUM is currently at **v1.7.4**. All **1249 tests** are passing (1 skipped).
 
-Key features in v1.7.0 (Phases 28-31):
+Key features in v1.7.4 (Phases 31-42):
+- **Phase 42: Interface Robustness**: Secured REST API endpoints, stabilized Gradio UI f-string syntax, and implemented automated headless robustness tests for the full Reasoning Studio pipeline.
+- **Phase 41: Temporal Reasoning**: Corrected recency bias and integrated 9-feature `ReasoningLogit` framework for unified scoring across temporal and structural signals.
 - **Reasoning Studio**: Gradio-based visual interface for interactive KG exploration and reasoning traces.
 - **Proactive Bridge Synthesis**: `GraphBridgeEngine` addresses fragmentation by synthesizing similarity-based links between disconnected components.
-- **Incompleteness Repair**: `IncompletenessRepairEngine` materializes missing structural relations via experience-dependent heuristics.
-- **Unified Pipeline**: `CerebrumGraph` provides a thread-safe, high-level API for the full THALAMUS → CORTEX journey.
 
 ## Authors
 

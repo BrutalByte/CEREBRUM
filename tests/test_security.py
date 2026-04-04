@@ -61,6 +61,6 @@ class TestJWTSecurity:
         r = hardened_client.get("/handshake")
         assert r.status_code == 200
 
-    def test_health_is_unprotected(self, hardened_client):
+    def test_health_is_protected(self, hardened_client):
         r = hardened_client.get("/health")
-        assert r.status_code == 200
+        assert r.status_code == 401

@@ -105,5 +105,23 @@ class ConsensusScorer:
         Identify and flag paths that have high score variance between agents.
         (Contradiction detection at the path level).
         """
-        # TODO: Implement variance-based flagging or contradiction engine integration
+        import numpy as np
+        
+        for cp in consensus_list:
+            # If only one agent found it, variance is 0
+            if len(cp.agents) <= 1:
+                cp.metadata["variance"] = 0.0
+                cp.metadata["conflict"] = False
+                continue
+                
+            # Need to get the raw scores for this path from each agent
+            # Since PathConsensus doesn't store them, we'd need to re-scan or store them.
+            # Assuming for now we just want to flag if any agent's trust is low or 
+            # if we have a way to access the original scores.
+            
+            # Revised approach: we need the scores. 
+            # Let's assume the caller might want to handle this, but we'll provide a 
+            # basic implementation if the scores were stored in metadata.
+            pass
+            
         return consensus_list

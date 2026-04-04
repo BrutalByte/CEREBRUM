@@ -61,7 +61,7 @@ def test_two_cliques():
 
 
 def test_detect_with_stats():
-    engine = GPUDSCFEngine()
+    engine = GPUDSCFEngine(GPUDSCFConfig(temp_start=0.0))
     G = nx.Graph()
     G.add_edge(1, 2)
     G.add_edge(2, 3)

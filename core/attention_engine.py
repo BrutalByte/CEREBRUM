@@ -493,6 +493,8 @@ class UniformCSAEngine(CSAEngine):
         edge_type: str = "",
         edge_type_weights: Optional[Dict[str, float]] = None,
         normalized_distance: float = 0.0,
+        valid_from: Optional[float] = None,
+        valid_to: Optional[float] = None,
     ) -> float:
         return 0.5   # sigmoid(0) — perfectly neutral
 

@@ -2896,3 +2896,46 @@ BridgeTwinEngine: 256 bridges at 1-hop, 956 at 2-hop, 1,146 at 3-hop (was 0 befo
 - `pytest tests/test_api_robustness.py`: 5 passed
 - **Total passing**: 1,249
 
+---
+
+## Run 042 — Phase 42 Final: Robustness & Hardening Verified
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-04 |
+| **Phase**         | Phase 42 (Interface Robustness & Hardening) |
+| **Purpose**       | Verify UI syntax fixes, secure API endpoints, and robustness tests |
+| **Operator**      | Gemini CLI |
+| **Repo commit**   | (Pending) |
+
+### Environment
+
+| Component    | Version |
+|---|---|
+| Python       | 3.14.0 |
+| OS           | Windows 11 Pro 10.0.26220 |
+| networkx     | 3.6.1 |
+| numpy        | 2.2.6 |
+| scipy        | 1.16.3 |
+| pytest       | 9.0.2 |
+
+### Command
+
+```
+python -m pytest tests/ -v
+```
+
+### Results
+
+```
+collected 1249 items
+
+1248 passed, 1 skipped, 4 warnings in 17.83s
+```
+
+**Key Fixes Verified:**
+- `ui/studio.py` syntax errors (escaped triple quotes) resolved.
+- `tests/test_security.py` aligned with secured `/health` endpoint (401 expected).
+- `tests/test_dscf_gpu.py` stabilized with `temp_start=0.0`.
+- `tests/test_studio_robustness.py` passed with correct `api_name`s.
+
