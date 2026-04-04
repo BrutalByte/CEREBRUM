@@ -453,6 +453,11 @@ class CerebrumGraph:
         # ----------------------------------------------------------
         # 3. Optional coarsening
         # ----------------------------------------------------------
+        # Automatic coarsen if over 2000 (structural matrix cap)
+        if n_raw > 2000 and coarsen_target is None and min_community_size == 0:
+            coarsen_target = 2000
+            logger.warning("Community count %d exceeds 2000. Auto-coarsening to 2000.", n_raw)
+
         if min_community_size > 0:
             from core.structural_encoder import coarsen_communities as _size_coarsen
             # merge_small_communities is in metaqa_eval; use structural_encoder's version
