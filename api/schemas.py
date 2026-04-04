@@ -90,7 +90,7 @@ class SimilarSearchResponse(BaseModel):
 
 class FeedbackRequest(BaseModel):
     path_nodes: List[str] = Field(..., description="The sequence of nodes in the path")
-    edge_features: List[List[float]] = Field(..., description="Recorded (sim, cs, etw, nd, hd) for each hop")
+    edge_features: List[List[float]] = Field(..., description="Recorded (sim, cs, etw, nd, hd, pr, td, nr, g) for each hop")
     community_sequence: List[int] = Field(..., description="Community ID for each node in the path")
     reward: float = Field(..., description="Feedback value: 1.0 for helpful, -1.0 for noise")
 

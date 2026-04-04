@@ -2859,3 +2859,40 @@ BridgeTwinEngine: 256 bridges at 1-hop, 956 at 2-hop, 1,146 at 3-hop (was 0 befo
 - `pytest tests/test_rem_wormhole.py`: 2 passed
 - **Total passing**: 1,241
 
+---
+
+## Run 018 — Interface Robustness (v1.7.4 Preview)
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-03 |
+| **Phase**         | Phase 42 (Interface Robustness & API Hardening) |
+| **Purpose**       | Stabilize UI/REST and ensure backend-agnostic interop |
+| **Operator**      | Gemini CLI / Bryan Alexander Buchorn |
+| **Version**       | v1.7.4 |
+
+### Summary of Actions
+1. **UI Stabilization**: Refactored `load_graph` in `Reasoning Studio` to use `gr.Progress` instead of flaky SSE generators, resolving "Method not implemented" browser errors.
+2. **REST API Hardening**: Secured the `/health` endpoint and fixed logic in `api/server.py` to ensure full 9-parameter score breakdowns are returned.
+3. **Automated Robustness Tests**: Created `tests/test_studio_robustness.py` (headless UI testing via `gradio_client`) and `tests/test_api_robustness.py` (FastAPI TestClient validation).
+4. **Community Scaling**: Implemented automatic community coarsening in `core/cerebrum.py` to handle large-scale datasets (Hetionet 100k) within structural matrix constraints.
+
+### Benchmarks
+
+#### 1. UI Headless Validation
+*Verified via `tests/test_studio_robustness.py`*
+- Programmatic graph loading: **PASSED**
+- reasoning query execution: **PASSED**
+- Analytics & Radar plots: **PASSED**
+
+#### 2. REST API Interop
+*Verified via `tests/test_api_robustness.py`*
+- 9-parameter query support: **PASSED**
+- Security boundary (/health): **PASSED**
+- Streaming fallback support: **PASSED**
+
+### Tests
+- `pytest tests/test_studio_robustness.py`: 3 passed
+- `pytest tests/test_api_robustness.py`: 5 passed
+- **Total passing**: 1,249
+

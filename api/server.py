@@ -164,7 +164,7 @@ def create_app(
     )
 
     @app.get("/health", response_model=HealthResponse, tags=["system"])
-    async def health():
+    async def health(node: Dict = Depends(get_authenticated_node)):
         cm  = _state["community_map"] or {}
         emb = _state["embeddings"] or {}
         return HealthResponse(
@@ -224,7 +224,10 @@ def create_app(
             max_budget=req.max_budget,
         )
         paths   = traversal.traverse(seeds)
-        answers = extract(paths, top_k=req.top_k)
+        
+        # Pass seed embedding as query signal for semantic re-ranking
+        q_emb = adapter.get_embedding(seeds[0]) if seeds else None
+        answers = extract(paths, top_k=req.top_k, query_embedding=q_emb)
 
         # Format response
         structured = to_structured(answers, query=req.query, adapter=adapter)
@@ -292,10 +295,11 @@ def create_app(
             )
 
             hop_count = 0
+            q_emb = adapter.get_embedding(seeds[0]) if seeds else None
             async for hop_paths in traversal.traverse_stream(seeds):
                 # Format this hop's paths
                 # convert paths to Answers for to_structured
-                answers = extract(hop_paths, top_k=req.top_k, min_hop=0)
+                answers = extract(hop_paths, top_k=req.top_k, min_hop=0, query_embedding=q_emb)
                 structured = to_structured(answers, query=req.query, adapter=adapter)
                 
                 # Add metadata

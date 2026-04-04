@@ -174,25 +174,25 @@ def format_path_html(answers):
 # Core Callbacks
 # ---------------------------------------------------------------------------
 
-def load_graph(file_obj, csv_path_text, embedding_type):
+def load_graph(file_obj, csv_path_text, embedding_type, progress=gr.Progress()):
     if file_obj is not None:
         path = file_obj.name
     elif csv_path_text and csv_path_text.strip():
         path = csv_path_text.strip()
     else:
-        yield "ERROR: No file provided.", "N/A"
-        return
+        return "ERROR: No file provided.", "N/A"
 
     logger.info("Loading graph from %s", path)
     try:
         t0 = time.time()
-        yield "Step 1/4: Initializing Unified Pipeline...", None
+        progress(0, desc="Initializing Pipeline...")
         emb_mode = "sentence" if "Sentence" in embedding_type else "random"
         graph = CerebrumGraph.from_kb(path, embeddings=emb_mode)
         
-        yield f"Step 2/4: Building Index... ({graph.node_count} nodes)", None
+        progress(0.3, desc=f"Building Index... ({graph.node_count} nodes)")
         graph.build(seed=42)
         
+        progress(0.7, desc="Finalizing Engines...")
         STATE.update({
             "graph_obj": graph, "adapter": graph.adapter, "csa": graph._csa,
             "communities": graph.communities, "n_nodes": graph.node_count, "graph_loaded": True,
@@ -202,10 +202,11 @@ def load_graph(file_obj, csv_path_text, embedding_type):
 
         comm_summary = f"{len(graph.communities)} communities detected via DSCF."
         total = time.time() - t0
-        yield f"[OK] System Ready ({total:.2f}s) | {graph.node_count} nodes", comm_summary
+        status = f"[OK] System Ready ({total:.2f}s) | {graph.node_count} nodes"
+        return status, comm_summary
     except Exception as e:
         logger.error("Load error: %s", e, exc_info=True)
-        yield f"[ERROR] {type(e).__name__}: {e}", "N/A"
+        return f"[ERROR] {type(e).__name__}: {e}", "N/A"
 
 def run_reasoning(query, beam_width, max_hop, top_k, mem_threshold, governor=None):
     if not STATE["graph_loaded"] or not STATE["graph_obj"]:
@@ -397,6 +398,7 @@ with gr.Blocks(title="CEREBRUM Studio", css=CUSTOM_CSS) as demo:
                     commit_btn = gr.Button("Commit Weights")
 
             status_out = gr.Textbox(label="Status")
+            comm_output = gr.Textbox(label="Community Summary", visible=True)
 
         with gr.Column(scale=3):
             with gr.Tabs():
@@ -450,28 +452,36 @@ with gr.Blocks(title="CEREBRUM Studio", css=CUSTOM_CSS) as demo:
 
     # Wiring
     for w in weights:
-        w.change(generate_param_radar, weights, p_radar)
+        w.change(generate_param_radar, weights, p_radar, api_name="update_param_profile")
     
-    commit_btn.click(commit_params, weights, status_out)
+    commit_btn.click(commit_params, weights, status_out, api_name="commit_weights")
     
-    load_btn.click(load_graph, [file_in, path_in, emb_in], [status_out, status_out]).then(
-        generate_param_radar, weights, p_radar).then(get_graph_stats, [], [s_plot, s_md])
+    load_btn.click(
+        load_graph, 
+        [file_in, path_in, emb_in], 
+        [status_out, comm_output],
+        api_name="load_graph"
+    ).then(
+        fn=lambda *args: (generate_param_radar(*args), *get_graph_stats()),
+        inputs=weights,
+        outputs=[p_radar, s_plot, s_md]
+    )
     
-    q_btn.click(run_reasoning, [q_in, beam_sl, hop_sl, k_sl, mem_sl], [q_html, gr.JSON(visible=False), attn_radar])
-    s_btn.click(get_graph_stats, [], [s_plot, s_md])
-    v2_btn.click(generate_graph_viz, [], v2_out)
-    v3_btn.click(generate_3d_viz, [], v3_out)
+    q_btn.click(run_reasoning, [q_in, beam_sl, hop_sl, k_sl, mem_sl], [q_html, gr.JSON(visible=False), attn_radar], api_name="run_reasoning")
+    s_btn.click(get_graph_stats, [], [s_plot, s_md], api_name="refresh_analytics")
+    v2_btn.click(generate_graph_viz, [], v2_out, api_name="get_2d_viz")
+    v3_btn.click(generate_3d_viz, [], v3_out, api_name="get_3d_viz")
 
     # Insight & REM Wiring
-    rem_dry_btn.click(run_rem_cycle, [gr.State(True)], rem_out)
-    rem_run_btn.click(run_rem_cycle, [gr.State(False)], rem_out)
-    ins_btn.click(get_insight_log, [], ins_out)
-    val_btn.click(run_validation, [], rem_out).then(get_insight_log, [], ins_out)
+    rem_dry_btn.click(run_rem_cycle, [gr.State(True)], rem_out, api_name="rem_dry_run")
+    rem_run_btn.click(run_rem_cycle, [gr.State(False)], rem_out, api_name="rem_commit")
+    ins_btn.click(get_insight_log, [], ins_out, api_name="get_insights")
+    val_btn.click(run_validation, [], rem_out, api_name="validate_insights").then(get_insight_log, [], ins_out)
 
     # Stream Wiring
-    st_start.click(start_stream, [st_type, st_path, st_win, gr.State(5000)], [status_out, st_status])
-    st_stop.click(stop_stream, [], st_status)
-    st_ref.click(get_stream_event_log, [], st_log)
+    st_start.click(start_stream, [st_type, st_path, st_win, gr.State(5000)], [status_out, st_status], api_name="start_stream")
+    st_stop.click(stop_stream, [], st_status, api_name="stop_stream")
+    st_ref.click(get_stream_event_log, [], st_log, api_name="get_stream_log")
 
 if __name__ == "__main__":
     if "--test" in sys.argv:

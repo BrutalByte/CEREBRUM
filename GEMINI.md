@@ -98,11 +98,12 @@ uvicorn api.server:app --port 8200 --reload
 -   **Reproducibility:** Follow the guidelines in `TESTING.md` for deterministic runs (especially for DSCF).
 -   **Documentation:** Absolute precedence is given to `PARALLAX.md` (whitepaper) and `README.md`. `CLAUDE.md` provides environment-specific guidance.
 
-## Current Project Status (Phase 41 COMPLETE)
+## Current Project Status (Phase 42 COMPLETE)
 
-CEREBRUM is currently in **v1.7.3**. All phases through 41 shipped and verified. This release focused on temporal reasoning accuracy, cross-component synthesis, and unified logit stabilization.
+CEREBRUM is currently in **v1.7.4**. All phases through 42 shipped and verified. This release focused on interface robustness, REST API hardening, and automated headless testing.
 
 Key implementations:
+-   **Phase 42 — Interface Robustness & Hardening**: Stabilized Reasoning Studio with `gr.Progress`, secured REST endpoints, and implemented automated headless robustness tests for both UI and API.
 -   **Phase 41 — Temporal & REM Synthesis**: Corrected reversed recency bias, integrated Node Recency (9-feature logit), and implemented cross-component "Wormhole" detection in REMEngine.
 -   **Phase 38 — Reasoning Hardening**: Unified `ReasoningLogit` signal pipeline.
 -   **Phase 39 — Async Bridge Synthesis**: Decoupled `BridgeTwinEngine` and `InsightEngine` via `TaskQueue`.
