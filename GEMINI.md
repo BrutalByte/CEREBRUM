@@ -98,11 +98,12 @@ uvicorn api.server:app --port 8200 --reload
 -   **Reproducibility:** Follow the guidelines in `TESTING.md` for deterministic runs (especially for DSCF).
 -   **Documentation:** Absolute precedence is given to `PARALLAX.md` (whitepaper) and `README.md`. `CLAUDE.md` provides environment-specific guidance.
 
-## Current Project Status (Phase 42 COMPLETE)
+## Current Project Status (Phase 43 COMPLETE)
 
-CEREBRUM is currently in **v1.7.4**. All phases through 42 shipped and verified. This release focused on interface robustness, REST API hardening, and automated headless testing.
+CEREBRUM is currently in **v1.7.5**. All phases through 43 shipped and verified. This release focused on advanced temporal reasoning, REM synthesis evaluation, and logit unification.
 
 Key implementations:
+-   **Phase 43 — Temporal Context & REM Synthesis**: Implemented temporal sliding windows, 10-parameter `ReasoningLogit` with Synthesis Density (`sd`), and verified REM "Wormhole" synthesis effectiveness on sparse graphs (IKGWQ-S).
 -   **Phase 42 — Interface Robustness & Hardening**: Stabilized Reasoning Studio with `gr.Progress`, secured REST endpoints, and implemented automated headless robustness tests for both UI and API. Resolved syntax errors in UI f-strings and stabilized GPU DSCF convergence for symmetric structures.
 -   **Phase 41 — Temporal & REM Synthesis**: Corrected reversed recency bias, integrated Node Recency (9-feature logit), and implemented cross-component "Wormhole" detection in REMEngine.
 -   **Phase 38 — Reasoning Hardening**: Unified `ReasoningLogit` signal pipeline.

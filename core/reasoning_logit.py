@@ -22,12 +22,14 @@ class ReasoningLogit:
     pr_v: float = 0.0         # PageRank Prior
     td: float = 0.0           # Temporal Decay (Edge)
     nr_v: float = 0.0         # Node Recency Prior
+    sd: float = 0.0           # Synthesis Density (REM/Wormhole)
     grounding: float = 1.0    # Grounding/Confidence Score
 
     def to_vector(self) -> np.ndarray:
         """Convert to flat vector for parametric learning."""
         return np.array([
-            self.sim, self.cs, self.etw, self.nd, self.hd, self.pr_v, self.td, self.nr_v, self.grounding
+            self.sim, self.cs, self.etw, self.nd, self.hd, 
+            self.pr_v, self.td, self.nr_v, self.sd, self.grounding
         ], dtype=np.float32)
 
     @classmethod
@@ -38,9 +40,16 @@ class ReasoningLogit:
     def score(self, params: Tuple[float, ...]) -> float:
         """
         Apply learned weights to compute logit score.
-        params: (alpha, beta, gamma, delta, epsilon, zeta, eta, iota, theta)
+        params: (alpha, beta, gamma, delta, epsilon, zeta, eta, iota, mu, theta)
+        mu is the penalty for synthetic/synthesis density.
         """
-        a, b, g, d, e, z, eta, iota, theta = params
+        if len(params) == 9:
+            # Backward compatibility
+            a, b, g, d, e, z, eta, iota, theta = params
+            mu = 0.0
+        else:
+            a, b, g, d, e, z, eta, iota, mu, theta = params
+
         raw = (
             a * self.sim
             + b * self.cs
@@ -50,6 +59,7 @@ class ReasoningLogit:
             + z * self.pr_v
             + eta * self.td
             + iota * self.nr_v
+            - mu * self.sd
             + theta * self.grounding
         )
         return 1.0 / (1.0 + np.exp(-raw))

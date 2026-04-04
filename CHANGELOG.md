@@ -7,6 +7,20 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.7.5] — 2026-04-04
+
+### Added
+- **Phase 43: Temporal Context & REM Synthesis Evaluation**:
+    - **Temporal Sliding Window**: Implemented `temporal_window_size` in `CSAEngine` to penalize edges older than a specified window.
+    - **Synthesis Density Scoring**: Added `sd` (Synthesis Density) feature to `ReasoningLogit` to track and penalize synthetic REM/Wormhole edges.
+    - **Dynamic Parameter Overrides**: Refactored `CSAEngine.compute_weight` to support per-call parameter overrides (alpha, beta, etc.).
+    - **REM Synthesis Benchmark**: Added `benchmarks/rem_synthesis_eval.py` (IKGWQ-S) to verify that REM bridges improve reachability in disconnected graphs.
+
+### Changed
+- **Unified Logit**: Upgraded `ReasoningLogit` to 10 parameters to include Synthesis Density (`sd`).
+- **CSA Backward Compatibility**: Enhanced `set_community_graph` to accept flexible positional and keyword arguments.
+- **Improved BRIDGE_TWIN**: Secured `BRIDGE_TWIN` edges as high-confidence structural relays.
+
 ## [1.7.4] — 2026-04-04
 
 ### Added

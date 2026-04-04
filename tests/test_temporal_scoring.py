@@ -48,8 +48,8 @@ def test_temporal_decay_feature_in_logit():
     assert pytest.approx(logit.td, rel=1e-5) == expected_td
     
     # ReasoningLogit.score should apply the eta from params
-    # params: (alpha, beta, gamma, delta, epsilon, zeta, eta, iota, theta)
-    params = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0) # Only eta=2.0
+    # params: (alpha, beta, gamma, delta, epsilon, zeta, eta, iota, mu, theta)
+    params = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0) # Only eta=2.0, theta=0.0
     # raw_score = 2.0 * logit.td
     expected_raw = 2.0 * expected_td
     expected_sigmoid = 1.0 / (1.0 + math.exp(-expected_raw))
@@ -63,13 +63,13 @@ def test_node_recency_scoring():
     
     # compute_weight
     # Score = ... + iota * nr_v
-    # Default params are all 0 except what we set? No, compute_weight uses internal params.
-    # Default alpha=0.4, beta=0.4, gamma=0.1, delta=0.05, epsilon=0.05, zeta=0.1, eta=0.1, iota=2.0
+    # Default alpha=0.4, beta=0.4, gamma=0.1, delta=0.05, epsilon=0.05, zeta=0.1, eta=0.1, iota=2.0, mu=0.1, theta=1.0
     # pr_v = 0, td = 0, sim = 0, cs = 1.0 (same comm), etw = 0, nd = 0, hd = 0.5 (hop 1)
-    # raw = 0.4*0 + 0.4*1.0 + 0.1*0 - 0.05*0 + 0.05*0.5 + 0.1*0 + 2.0*0.8 + 0.1*0 = 0.4 + 0.025 + 1.6 = 2.025
+    # raw = beta*cs + epsilon*hd + iota*nr_v + theta*grounding
+    #     = 0.4*1.0 + 0.05*0.5 + 2.0*0.8 + 1.0*1.0 = 0.4 + 0.025 + 1.6 + 1.0 = 3.025
     
     w = csa.compute_weight("u", "v", hop=1)
-    expected_raw = 0.4*1.0 + 0.05*0.5 + 2.0*0.8
+    expected_raw = 3.025
     expected_w = 1.0 / (1.0 + math.exp(-expected_raw))
     
     assert pytest.approx(w, rel=1e-5) == expected_w

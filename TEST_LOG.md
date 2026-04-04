@@ -2894,7 +2894,50 @@ BridgeTwinEngine: 256 bridges at 1-hop, 956 at 2-hop, 1,146 at 3-hop (was 0 befo
 ### Tests
 - `pytest tests/test_studio_robustness.py`: 3 passed
 - `pytest tests/test_api_robustness.py`: 5 passed
-- **Total passing**: 1,249
+- **Total passing**: 1,250
+
+---
+
+## Run 043 — Phase 43 Final: Temporal & Synthesis Verified
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-04 |
+| **Phase**         | Phase 43 (Temporal Context & REM Synthesis) |
+| **Purpose**       | Verify temporal window, 10-parameter logit, and REM synthesis |
+| **Operator**      | Gemini CLI |
+| **Repo commit**   | (Pending) |
+
+### Environment
+
+| Component    | Version |
+|---|---|
+| Python       | 3.14.0 |
+| OS           | Windows 11 Pro 10.0.26220 |
+| networkx     | 3.6.1 |
+| numpy        | 2.2.6 |
+| scipy        | 1.16.3 |
+| pytest       | 9.0.2 |
+
+### Command
+
+```
+python -m pytest tests/ -v
+```
+
+### Results
+
+```
+collected 1251 items
+
+1250 passed, 1 skipped, 4 warnings in 20.24s
+```
+
+**Key Features Verified:**
+- \`CSAEngine\` temporal sliding window and multi-scale decay.
+- \`ReasoningLogit\` upgraded to 10 parameters (added \`sd\` - Synthesis Density).
+- \`REMEngine\` "Wormhole" synthesis successfully bridges disconnected graphs.
+- Full regression suite maintained at 1,250 passing tests.
 
 ---
 
