@@ -271,6 +271,73 @@ def run_rem_cycle(dry_run=True):
         return f"REM Complete. Pruned: {rep.pruned_count}, Synthesized: {rep.synthesized_count}"
     except Exception as e: return f"ERROR: {e}"
 
+def get_insight_log():
+    if not STATE["insight"]: return "Insight Engine not initialized."
+    events = STATE["insight"].recent_events(n=10)
+    if not events: return "<div style='color:#888;padding:20px;'>No significant structural insights discovered yet.</div>"
+    html = "<div class='results-container'>"
+    for ev in events:
+        badge_class = "insight-surprise" if ev.insight_score > 0.3 else "insight-high"
+        path_str = " &rarr; ".join(ev.path.nodes) if ev.path else f"{ev.source} &rarr; {ev.target} (cold)"
+        html += f"""
+        <div class='cerebrum-card'>
+            <div style='display:flex;justify-content:space-between;'>
+                <span class='entity-id'>{ev.bridging_node}</span>
+                <span class='insight-badge {badge_class}'>INSIGHT</span>
+            </div>
+            <div style='margin-top:10px;font-size:0.9em;'>
+                <strong>Score:</strong> {ev.insight_score:.4f} | <strong>Status:</strong> {ev.validation_status}
+            </div>
+            <div class='path-text' style='margin-top:8px;'>{path_str}</div>
+        </div>"""
+    html += "</div>"
+    return html
+
+def run_validation():
+    if not STATE["validator"] or not STATE["insight"]:
+        return "Validator or Insight Engine not initialized."
+    try:
+        events = STATE["insight"].recent_events(n=100)
+        results = STATE["validator"].validate_all(events)
+        return f"Validation Complete. {len(results)} insights processed."
+    except Exception as e:
+        return f"ERROR in Validation: {e}"
+
+# ---------------------------------------------------------------------------
+# Phase 11 — Live Feed functions
+# ---------------------------------------------------------------------------
+
+def start_stream(source_type, file_path_or_url, window_seconds, max_edges):
+    if STATE["stream_running"]: return "Stream already running.", ""
+    adapter = StreamAdapter(time_window_seconds=float(window_seconds), max_edges=int(max_edges))
+    STATE["stream_adapter"] = adapter
+    STATE["stream_event_log"] = []
+    
+    def on_mutation(action, event):
+        STATE["stream_event_log"].append({"action": action, "source": event.source, "relation": event.relation, "target": event.target, "ts": event.timestamp})
+        if len(STATE["stream_event_log"]) > 200: STATE["stream_event_log"].pop(0)
+    
+    adapter.add_mutation_listener(on_mutation)
+    try:
+        if "File" in source_type: adapter.add_source(FileTailSource(file_path_or_url.strip()))
+        elif "HTTP" in source_type: adapter.add_source(HTTPPollingSource(file_path_or_url.strip()))
+        elif "Simulated" in source_type:
+            temp_disc = ThresholdDiscretizer("temp", low=15, high=35)
+            adapter.add_source(PythonCallbackSource(lambda: temp_disc.process(random.gauss(25,5)), poll_interval=1.0))
+        adapter.start()
+        STATE["stream_running"] = True
+        return f"Stream started: {source_type}", "Active"
+    except Exception as e: return f"Error: {e}", "Failed"
+
+def stop_stream():
+    if STATE["stream_adapter"]: STATE["stream_adapter"].stop()
+    STATE["stream_running"] = False
+    return "Stream stopped", "Inactive"
+
+def get_stream_event_log():
+    rows = "".join([f"<tr><td>{e['action']}</td><td>{e['source']}</td><td>{e['relation']}</td><td>{e['target']}</td></tr>" for e in reversed(STATE["stream_event_log"])])
+    return f"<table>{rows}</table>"
+
 def generate_graph_viz():
     if not STATE["graph_loaded"]: return "Load a graph first."
     G = STATE["adapter"].to_networkx()
@@ -355,6 +422,32 @@ with gr.Blocks(title="CEREBRUM Studio", css=CUSTOM_CSS) as demo:
                     v3_btn = gr.Button("Refresh 3D")
                     v3_out = gr.HTML()
 
+                with gr.Tab("Insight & Maintenance"):
+                    with gr.Row():
+                        with gr.Column(scale=1):
+                            gr.Markdown("### REM Cycle")
+                            rem_dry_btn = gr.Button("Run Dry-Run")
+                            rem_run_btn = gr.Button("Run Commit", variant="stop")
+                            rem_out = gr.Textbox(label="REM Report")
+                        with gr.Column(scale=2):
+                            gr.Markdown("### Insights")
+                            ins_btn = gr.Button("Refresh Insights")
+                            val_btn = gr.Button("Validate All", variant="primary")
+                            ins_out = gr.HTML()
+
+                with gr.Tab("Live Feed"):
+                    with gr.Row():
+                        with gr.Column(scale=1):
+                            st_type = gr.Dropdown(["Simulated", "File Tail", "HTTP Polling"], value="Simulated", label="Source")
+                            st_path = gr.Textbox(label="Path/URL")
+                            st_win = gr.Slider(5, 300, 60, label="Window (s)")
+                            st_start = gr.Button("Start", variant="primary")
+                            st_stop = gr.Button("Stop", variant="stop")
+                            st_status = gr.Textbox(label="Stream Status")
+                        with gr.Column(scale=2):
+                            st_log = gr.HTML(label="Mutation Log")
+                            st_ref = gr.Button("Refresh Log")
+
     # Wiring
     for w in weights:
         w.change(generate_param_radar, weights, p_radar)
@@ -368,6 +461,17 @@ with gr.Blocks(title="CEREBRUM Studio", css=CUSTOM_CSS) as demo:
     s_btn.click(get_graph_stats, [], [s_plot, s_md])
     v2_btn.click(generate_graph_viz, [], v2_out)
     v3_btn.click(generate_3d_viz, [], v3_out)
+
+    # Insight & REM Wiring
+    rem_dry_btn.click(run_rem_cycle, [gr.State(True)], rem_out)
+    rem_run_btn.click(run_rem_cycle, [gr.State(False)], rem_out)
+    ins_btn.click(get_insight_log, [], ins_out)
+    val_btn.click(run_validation, [], rem_out).then(get_insight_log, [], ins_out)
+
+    # Stream Wiring
+    st_start.click(start_stream, [st_type, st_path, st_win, gr.State(5000)], [status_out, st_status])
+    st_stop.click(stop_stream, [], st_status)
+    st_ref.click(get_stream_event_log, [], st_log)
 
 if __name__ == "__main__":
     if "--test" in sys.argv:
