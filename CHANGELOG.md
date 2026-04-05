@@ -7,6 +7,23 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.9.0] — 2026-04-04
+
+### Added
+- **Phase 45: 10-Parameter Learner Upgrade**:
+    - **`CSAParameterLearner` — Full 10-param support**: Upgraded from 5 to 10 learnable parameters `(alpha, beta, gamma, delta, epsilon, zeta, eta, iota, mu, theta)` matching the Phase 43 CSA formula. Numerical gradient descent, fit loop, and `_score_path_parametric` all operate on the full parameter vector.
+    - **`MetaParameterLearner` — Full 10-param support**: Online SGD update now uses all 10 feature dimensions with correct signs (`nd` and `sd` are penalised). Backward compatible with legacy 5-element edge_features via zero-padding.
+    - **`CSAEngine.get_current_params()` — 10-param-aware**: Fixed 5-element destructure to safely unpack any-length param vector from `MetaParameterLearner`, with per-engine fallbacks for unmanaged params.
+    - **`LearningResult` — Updated type**: `params` field is now `Tuple[float, ...]` (variable-length).
+    - **Backward Compatibility**: `_score_path_parametric` zero-pads legacy 5- or 7-element edge_features to avoid breaking existing callers.
+    - **New Tests**: Added `test_legacy_5element_edge_features_backward_compat`, `test_gradient_length_matches_param_count`, and `test_meta_parameter_legacy_5element_compat`.
+
+### Fixed
+- **`CSAEngine.get_current_params()`**: `ValueError: too many values to unpack (expected 5)` when `MetaParameterLearner` returned 10 values.
+
+### Changed
+- **v1.9.0 Release**: Parameter learning subsystem is now fully aligned with the Phase 43 10-parameter CSA formula.
+
 ## [1.8.0] — 2026-04-04
 
 ### Added

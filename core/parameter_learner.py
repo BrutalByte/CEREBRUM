@@ -1,9 +1,24 @@
 """
-Phase 17.4 — Learned CSA Parameters.
+Phase 45 — Learned CSA Parameters (10-parameter upgrade).
 
-CSAParameterLearner optimises the five attention coefficients
-(alpha, beta, gamma, delta, epsilon) via numerical gradient descent
-on a path-ranking loss.
+CSAParameterLearner optimises all ten attention coefficients
+(alpha, beta, gamma, delta, epsilon, zeta, eta, iota, mu, theta)
+via numerical gradient descent on a path-ranking loss.
+
+The ten parameters correspond to the Phase 43 CSAEngine formula:
+
+  a(u, v, k) = sigmoid(
+      alpha   * sim          # semantic similarity
+    + beta    * cs           # community score
+    + gamma   * etw          # edge-type weight
+    - delta   * nd           # normalised distance penalty
+    + epsilon * hd           # hop decay
+    + zeta    * pr_v         # PageRank prior
+    + eta     * td           # temporal decay
+    + iota    * nr_v         # node recency
+    - mu      * sd           # synthesis-density penalty
+    + theta   * grounding    # confidence / grounding score
+  )
 
 Loss (pairwise margin ranking):
   For each (positive_path, negative_path) pair drawn from training data,
@@ -13,12 +28,18 @@ Loss (pairwise margin ranking):
 Gradient is approximated with symmetric finite differences:
   dL/dθ_i ≈ (L(θ + h*e_i) - L(θ - h*e_i)) / (2h)
 
+Edge feature tuple format (10 elements):
+  (sim, cs, etw, nd, hd, pr_v, td, nr_v, sd, grounding)
+
+Shorter tuples (e.g. legacy 5-element) are zero-padded for
+backward compatibility.
+
 Usage::
 
     learner = CSAParameterLearner(adapter)
     learner.fit(training_pairs)  # list of (positive_path, negative_path)
-    alpha, beta, gamma, delta, epsilon = learner.params
-    csa = CSAEngine(adapter, alpha=alpha, beta=beta, ...)
+    params = learner.params      # 10-tuple
+    csa = CSAEngine(adapter, alpha=params[0], beta=params[1], ...)
 """
 
 import math
@@ -32,6 +53,35 @@ from core.attention_engine import CSAEngine, _sigmoid
 
 
 # ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+_PARAM_NAMES = (
+    "alpha", "beta", "gamma", "delta", "epsilon",
+    "zeta", "eta", "iota", "mu", "theta",
+)
+# Defaults match CSAEngine.__init__ defaults (Phase 43)
+_DEFAULT_INIT: Tuple[float, ...] = (
+    0.4,   # alpha  — semantic similarity
+    0.4,   # beta   — community score
+    0.1,   # gamma  — edge-type weight
+    0.05,  # delta  — distance penalty (applied with − sign)
+    0.05,  # epsilon — hop decay
+    0.1,   # zeta   — PageRank prior
+    0.1,   # eta    — temporal decay
+    0.05,  # iota   — node recency
+    0.1,   # mu     — synthesis-density penalty (applied with − sign)
+    1.0,   # theta  — grounding / confidence
+)
+
+# Signs applied to each feature in the dot-product formula.
+# Positive = add, negative = subtract.
+_FEATURE_SIGNS = np.array([1, 1, 1, -1, 1, 1, 1, 1, -1, 1], dtype=np.float32)
+
+_N_PARAMS = len(_PARAM_NAMES)  # 10
+
+
+# ---------------------------------------------------------------------------
 # Result container
 # ---------------------------------------------------------------------------
 
@@ -39,8 +89,8 @@ from core.attention_engine import CSAEngine, _sigmoid
 class LearningResult:
     """Outcome of a CSAParameterLearner.fit() call."""
 
-    params: Tuple[float, float, float, float, float]
-    """Learned (alpha, beta, gamma, delta, epsilon)."""
+    params: Tuple[float, ...]
+    """Learned 10-parameter vector (alpha … theta)."""
 
     initial_loss: float
     final_loss: float
@@ -49,60 +99,63 @@ class LearningResult:
     converged: bool
 
     def __repr__(self) -> str:  # pragma: no cover
-        a, b, g, d, e = self.params
+        names = _PARAM_NAMES
+        pairs = ", ".join(f"{n}={v:.4f}" for n, v in zip(names, self.params))
         return (
-            f"LearningResult(α={a:.4f}, β={b:.4f}, γ={g:.4f}, δ={d:.4f}, ε={e:.4f}, "
+            f"LearningResult({pairs}, "
             f"loss={self.final_loss:.6f}, iters={self.n_iterations}, "
             f"converged={self.converged})"
         )
 
 
 # ---------------------------------------------------------------------------
-# Learner
+# MetaParameterLearner
 # ---------------------------------------------------------------------------
-
-_PARAM_NAMES = ("alpha", "beta", "gamma", "delta", "epsilon")
-_DEFAULT_INIT = (0.4, 0.4, 0.1, 0.05, 0.05)
-
 
 class MetaParameterLearner:
     """
-    Adaptive Parameter Learning — Phase 22 (Milestone 4).
-    
-    Maintains community-specific overrides for CSA attention coefficients.
-    Adapts parameters online from query feedback using local gradient descent.
+    Adaptive Parameter Learning — Phase 22 / Phase 45 upgrade.
+
+    Maintains community-specific overrides for all 10 CSA attention
+    coefficients.  Adapts parameters online from query feedback using
+    local gradient descent with momentum.
     """
 
     def __init__(
         self,
-        global_prior: Tuple[float, float, float, float, float] = _DEFAULT_INIT,
+        global_prior: Tuple[float, ...] = _DEFAULT_INIT,
         learning_rate: float = 0.05,
         momentum: float = 0.9,
     ):
         self.global_prior = np.array(global_prior, dtype=np.float32)
+        self._n = len(self.global_prior)
         self.learning_rate = learning_rate
         self.momentum = momentum
-        
+
         # {community_id -> parameter_vector}
         self.community_overrides: Dict[int, np.ndarray] = {}
         # {community_id -> accumulated_gradient}
         self._velocity: Dict[int, np.ndarray] = {}
 
-    def get_params(self, community_id: int) -> Tuple[float, float, float, float, float]:
+    def get_params(self, community_id: int) -> Tuple[float, ...]:
         """Return the parameter vector for a specific community."""
         p = self.community_overrides.get(community_id, self.global_prior)
         return tuple(p.tolist())
 
     def update_from_feedback(
-        self, 
-        path, 
-        reward: float, 
-        margin: float = 0.1
-    ):
+        self,
+        path,
+        reward: float,
+        margin: float = 0.1,
+    ) -> None:
         """
         Perform a local gradient update based on a single path and its reward.
-        
+
         reward: 1.0 for positive feedback, -1.0 for negative.
+
+        Edge features are read from path.edge_features as 10-element tuples
+        (sim, cs, etw, nd, hd, pr_v, td, nr_v, sd, grounding).
+        Shorter legacy tuples are zero-padded to 10 elements.
         """
         edge_features = getattr(path, "edge_features", None)
         if not edge_features:
@@ -112,48 +165,58 @@ class MetaParameterLearner:
         if not cseq:
             return
 
-        # Simple online SGD update
-        # dL/dθ = -reward * ∇score
-        for k, (sim, cs, etw, nd, hd) in enumerate(edge_features):
+        signs = _FEATURE_SIGNS[:self._n]
+
+        # Simple online SGD update: dL/dθ = -reward * ∇score
+        for k, feat_raw in enumerate(edge_features):
             cid = cseq[k] if k < len(cseq) else -1
             if cid < 0:
                 continue
-            
+
+            # Pad to self._n if shorter (backward compat)
+            feat = np.zeros(self._n, dtype=np.float32)
+            feat[: len(feat_raw)] = feat_raw
+
             # Current params for this community
             theta = self.community_overrides.get(cid, self.global_prior.copy())
-            
+
             # Local score gradient (approximated for sigmoid)
-            # score = log(sigmoid(theta dot features))
-            # d_score/d_theta = (1 - sigmoid) * features
-            raw = np.dot(theta, np.array([sim, cs, etw, -nd, hd]))
+            # score = log(sigmoid(theta ⊙ signs · features))
+            # d_score/d_theta_i = (1 - sigmoid) * sign_i * feat_i
+            signed_feat = signs * feat
+            raw = float(np.dot(theta, signed_feat))
             sig = _sigmoid(raw)
-            grad = (1.0 - sig) * np.array([sim, cs, etw, -nd, hd])
-            
+            grad = (1.0 - sig) * signed_feat
+
             # Update step
             delta = self.learning_rate * reward * grad
-            
+
             # Apply momentum
-            v = self._velocity.get(cid, np.zeros(5, dtype=np.float32))
+            v = self._velocity.get(cid, np.zeros(self._n, dtype=np.float32))
             v = self.momentum * v + delta
             self._velocity[cid] = v
-            
-            theta += v
-            # Clip
+
+            theta = theta + v
             theta = np.clip(theta, 0.0, 2.0)
             self.community_overrides[cid] = theta
 
 
+# ---------------------------------------------------------------------------
+# CSAParameterLearner
+# ---------------------------------------------------------------------------
+
 class CSAParameterLearner:
     """
-    Learn CSA attention coefficients from pairwise path-ranking supervision.
+    Learn all 10 CSA attention coefficients from pairwise path-ranking
+    supervision.
 
     Parameters
     ----------
-    adapter          : GraphAdapter — used to create CSAEngine instances for scoring.
-    init_params      : starting (α,β,γ,δ,ε); defaults to paper zero-shot values.
+    adapter          : GraphAdapter — used to create CSAEngine instances.
+    init_params      : starting 10-tuple; defaults to Phase 43 zero-shot values.
     learning_rate    : gradient descent step size.
     max_iterations   : iteration cap.
-    margin           : ranking margin; paths scored margin apart are "correctly ranked".
+    margin           : ranking margin; paths scored margin apart are correct.
     finite_diff_h    : finite-difference step for numerical gradient.
     tolerance        : stop early when loss improvement < tolerance.
     clip             : keep each parameter in [clip_lo, clip_hi].
@@ -162,7 +225,7 @@ class CSAParameterLearner:
     def __init__(
         self,
         adapter,
-        init_params: Tuple[float, float, float, float, float] = _DEFAULT_INIT,
+        init_params: Tuple[float, ...] = _DEFAULT_INIT,
         learning_rate: float = 0.01,
         max_iterations: int = 200,
         margin: float = 0.1,
@@ -170,13 +233,13 @@ class CSAParameterLearner:
         tolerance: float = 1e-6,
         clip: Tuple[float, float] = (0.0, 2.0),
     ):
-        self.adapter       = adapter
-        self._params       = list(init_params)
-        self.learning_rate = learning_rate
+        self.adapter        = adapter
+        self._params        = list(init_params)
+        self.learning_rate  = learning_rate
         self.max_iterations = max_iterations
-        self.margin        = margin
-        self.h             = finite_diff_h
-        self.tolerance     = tolerance
+        self.margin         = margin
+        self.h              = finite_diff_h
+        self.tolerance      = tolerance
         self.clip_lo, self.clip_hi = clip
 
         self._result: Optional[LearningResult] = None
@@ -186,9 +249,9 @@ class CSAParameterLearner:
     # ------------------------------------------------------------------
 
     @property
-    def params(self) -> Tuple[float, float, float, float, float]:
-        """Current (alpha, beta, gamma, delta, epsilon)."""
-        return tuple(self._params)  # type: ignore[return-value]
+    def params(self) -> Tuple[float, ...]:
+        """Current 10-parameter tuple (alpha … theta)."""
+        return tuple(self._params)
 
     @property
     def result(self) -> Optional[LearningResult]:
@@ -204,22 +267,9 @@ class CSAParameterLearner:
         """
         Optimise parameters on a list of (positive_path, negative_path) pairs.
 
-        Each element of training_pairs must be a 2-tuple of objects that have:
-          - .attention_weights  : list[float]
-          - .community_sequence : list[int]
-
-        The score used is the same log-product attention score used in
-        PathScorer.score_path() for the attention component:
-          score = sum(log(max(w, 1e-9)) for w in path.attention_weights)
-
-        More precisely, we rebuild a lightweight scalar score directly from
-        the raw CSA formula components so the gradient sees how the parameters
-        affect individual edge weights.
-
-        Parameters
-        ----------
-        training_pairs : list of (positive_path, negative_path)
-        verbose        : if True, print loss every 20 iterations
+        Each path object should carry:
+          - .edge_features      : list of 10-tuples (or shorter, zero-padded)
+          - .attention_weights  : list[float]  (fallback when edge_features absent)
 
         Returns
         -------
@@ -247,9 +297,8 @@ class CSAParameterLearner:
             grad = self._numerical_gradient(training_pairs)
 
             # Gradient descent step
-            for i in range(5):
+            for i in range(len(self._params)):
                 self._params[i] -= self.learning_rate * grad[i]
-                # Clip to keep parameters in valid range
                 self._params[i] = max(self.clip_lo, min(self.clip_hi, self._params[i]))
 
             loss = self._compute_loss(training_pairs)
@@ -278,23 +327,16 @@ class CSAParameterLearner:
     # ------------------------------------------------------------------
 
     def _make_engine(self, params: List[float]) -> CSAEngine:
-        a, b, g, d, e = params
-        return CSAEngine(
-            adapter=self.adapter,
-            alpha=a,
-            beta=b,
-            gamma=g,
-            delta=d,
-            epsilon=e,
-        )
+        n = len(params)
+        kwargs = {}
+        names = _PARAM_NAMES
+        for i, name in enumerate(names):
+            if i < n:
+                kwargs[name] = params[i]
+        return CSAEngine(adapter=self.adapter, **kwargs)
 
     def _score_path(self, path, engine: CSAEngine) -> float:
-        """
-        Score a single path using this engine's attention weights.
-
-        If the path has pre-computed attention_weights, use log-product of those.
-        Otherwise fall back to 0.0 (neutral).
-        """
+        """Score a path via log-product of stored attention_weights."""
         weights = getattr(path, "attention_weights", None)
         if not weights:
             return 0.0
@@ -302,37 +344,32 @@ class CSAParameterLearner:
 
     def _score_path_parametric(self, path, params: List[float]) -> float:
         """
-        Re-score a path by re-computing edge weights with given params.
+        Re-score a path using given params against its edge features.
 
-        Reads (u, v, edge_type) tuples from path.edge_triples if available,
-        otherwise falls back to the stored attention_weights rescaled by
-        the ratio of new/default sigmoid inputs.
+        Edge features format: 10-tuple
+          (sim, cs, etw, nd, hd, pr_v, td, nr_v, sd, grounding)
+        Shorter tuples are zero-padded for backward compatibility.
 
-        For paths that carry raw edge feature tuples (sim, cs, etw, nd, hd):
-          score = sum(log(sigmoid(a*sim + b*cs + g*etw - d*nd + e*hd)))
+        score = sum over edges of log(sigmoid(params ⊙ signs · features))
+        where signs = [+1,+1,+1,-1,+1,+1,+1,+1,-1,+1]
         """
         edge_features = getattr(path, "edge_features", None)
         if edge_features:
-            a, b, g, d, e = params
+            n = len(params)
+            signs = _FEATURE_SIGNS[:n]
+            p = np.array(params, dtype=np.float64)
             total = 0.0
-            for k, feat in enumerate(edge_features):
-                # Handle both legacy (5) and updated (7) edge feature tuples
-                if len(feat) == 7:
-                    sim, cs, etw, nd, hd, pr_v, td = feat
-                else:
-                    sim, cs, etw, nd, hd = feat
-                
-                raw = a * sim + b * cs + g * etw - d * nd + e * hd
+            for feat_raw in edge_features:
+                feat = np.zeros(n, dtype=np.float64)
+                feat[: len(feat_raw)] = feat_raw
+                raw = float(np.dot(p, signs * feat))
                 total += math.log(max(_sigmoid(raw), 1e-9))
             return total
         # Fallback: use stored weights (no gradient signal through params)
         return self._score_path(path, self._make_engine(params))
 
     def _compute_loss(self, training_pairs: List[Tuple]) -> float:
-        """
-        Pairwise margin ranking loss.
-        L = mean(max(0, margin - score(pos) + score(neg)))
-        """
+        """Pairwise margin ranking loss."""
         total = 0.0
         for pos_path, neg_path in training_pairs:
             s_pos = self._score_path_parametric(pos_path, self._params)
@@ -341,11 +378,9 @@ class CSAParameterLearner:
         return total / max(len(training_pairs), 1)
 
     def _numerical_gradient(self, training_pairs: List[Tuple]) -> List[float]:
-        """
-        Symmetric finite-difference gradient of the loss w.r.t. each parameter.
-        """
+        """Symmetric finite-difference gradient of the loss w.r.t. each param."""
         grad = []
-        for i in range(5):
+        for i in range(len(self._params)):
             original = self._params[i]
 
             self._params[i] = original + self.h

@@ -201,13 +201,31 @@ class CSAEngine:
     def get_current_params(self, u: Optional[str] = None) -> Tuple[float, ...]:
         cu = self._get_community(u) if u is not None else -1
         if self.meta_learner is not None and cu >= 0:
-            a, b, g, d, e = self.meta_learner.get_params(cu)
+            p = self.meta_learner.get_params(cu)
+            # MetaParameterLearner now returns 10 params; fall back to engine
+            # values for any params beyond what the learner manages.
+            a   = p[0] if len(p) > 0 else self.alpha
+            b   = p[1] if len(p) > 1 else self.beta
+            g   = p[2] if len(p) > 2 else self.gamma
+            d   = p[3] if len(p) > 3 else self.delta
+            e   = p[4] if len(p) > 4 else self.epsilon
+            zeta    = p[5] if len(p) > 5 else self.zeta
+            eta     = p[6] if len(p) > 6 else self.eta
+            iota    = p[7] if len(p) > 7 else self.iota
+            mu      = p[8] if len(p) > 8 else self.mu
+            theta   = p[9] if len(p) > 9 else self.theta
         elif cu in self._community_params:
             a, b, g, d, e = self._community_params[cu]
+            zeta, eta, iota, mu, theta = (
+                self.zeta, self.eta, self.iota, self.mu, self.theta
+            )
         else:
             a, b, g, d, e = (self.alpha, self.beta, self.gamma, self.delta, self.epsilon)
-            
-        return (a, b, g, d, e, self.zeta, self.eta, self.iota, self.mu, self.theta)
+            zeta, eta, iota, mu, theta = (
+                self.zeta, self.eta, self.iota, self.mu, self.theta
+            )
+
+        return (a, b, g, d, e, zeta, eta, iota, mu, theta)
 
 def _cosine_sim(a, b):
     na, nb = np.linalg.norm(a), np.linalg.norm(b)

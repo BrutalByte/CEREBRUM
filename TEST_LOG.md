@@ -2898,6 +2898,51 @@ BridgeTwinEngine: 256 bridges at 1-hop, 956 at 2-hop, 1,146 at 3-hop (was 0 befo
 
 ---
 
+## Run 045 — Phase 45 Final: 10-Parameter Learner Verified
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-04 |
+| **Phase**         | Phase 45 (10-Parameter Learner Upgrade) |
+| **Purpose**       | Verify CSAParameterLearner and MetaParameterLearner 10-param upgrade |
+| **Operator**      | Claude Code |
+| **Repo commit**   | (Phase 45 commit) |
+
+### Environment
+
+| Component    | Version |
+|---|---|
+| Python       | 3.14.0 |
+| OS           | Windows 11 Pro 10.0.26220 |
+| networkx     | 3.6.1 |
+| numpy        | 2.2.6 |
+| scipy        | 1.16.3 |
+| pytest       | 9.0.2 |
+
+### Command
+
+```
+python -m pytest tests/ --tb=no -q --ignore=tests/test_studio_robustness.py
+```
+
+### Results
+
+```
+collected 1252 items
+
+1250 passed, 1 skipped, 4 warnings in 15.47s
+```
+
+**Key Features Verified:**
+- `CSAParameterLearner` upgrades to 10-parameter vector matching Phase 43 CSA formula.
+- `MetaParameterLearner.update_from_feedback()` uses all 10 feature dimensions with correct signs.
+- `CSAEngine.get_current_params()` safely unpacks variable-length param vectors.
+- Legacy 5-element `edge_features` backward compatibility confirmed.
+- `test_legacy_5element_edge_features_backward_compat` and `test_meta_parameter_legacy_5element_compat` added.
+- `CSAEngine` `ValueError` (too many values to unpack) resolved.
+
+---
+
 ## Run 044 — Phase 44 Final: IKGWQ-MetaQA Benchmark Verified
 
 | Field             | Value |
