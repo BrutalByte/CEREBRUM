@@ -327,7 +327,8 @@ class CerebrumGraph:
         n_trials            : DSCF runs to take the best of (default 1).
         seed                : random seed for reproducibility.
         force_rebuild       : ignore cache and recompute everything.
-        community_engine    : 'dscf', 'leiden', or 'lpa' (default 'dscf').
+        community_engine    : 'dscf', 'leiden', 'lpa', or 'tsc' (default 'dscf').
+                              'tsc' runs vectorized Triple-Signal Consensus with auto-PageRank.
                               'leiden' is significantly faster for large graphs (>1M nodes).
 
         Returns self for chaining.
@@ -438,6 +439,10 @@ class CerebrumGraph:
                 parts = leiden_communities(G_und)
             elif community_engine == "lpa":
                 parts = lpa_communities(G_und)
+            elif community_engine == "tsc":
+                from core.community_engine import tsc_communities
+                pr_weights = {n: d.get("pagerank", 1.0) for n, d in struct_features.items()}
+                parts = tsc_communities(G_und, resolution=resolution, centrality_weights=pr_weights)
             else:
                 raise ValueError(f"Unknown community_engine {community_engine!r}")
 

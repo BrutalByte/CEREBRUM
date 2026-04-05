@@ -13,6 +13,8 @@ from core.community_engine import (
     lpa_communities,
     modularity_score,
     best_of_n_dscf,
+    tsc_communities,
+    tsc_quality_metrics,
 )
 
 
@@ -164,6 +166,56 @@ def test_lpa_covers_all_nodes():
     for c in parts:
         covered.update(c)
     assert covered == all_nodes
+
+
+# ---------------------------------------------------------------------------
+# Phase 49 — TSC Explicit Mode tests
+# ---------------------------------------------------------------------------
+
+def test_tsc_two_cliques_returns_two_communities():
+    G = make_two_cliques(n=6, bridge=1)
+    parts = tsc_communities(G)
+    assert len(parts) == 2, f"Expected 2 communities, got {len(parts)}"
+
+
+def test_tsc_covers_all_nodes():
+    G = make_two_cliques(n=6, bridge=1)
+    parts = tsc_communities(G)
+    all_nodes = set(G.nodes())
+    covered = set()
+    for c in parts:
+        covered.update(c)
+    assert covered == all_nodes
+
+
+def test_tsc_no_empty_communities():
+    G = make_two_cliques(n=6, bridge=1)
+    parts = tsc_communities(G)
+    for c in parts:
+        assert len(c) > 0, "Found empty community"
+
+
+def test_tsc_with_explicit_centrality():
+    G = make_two_cliques(n=6, bridge=1)
+    cent = {n: 1.0 for n in G.nodes()}
+    parts = tsc_communities(G, centrality_weights=cent)
+    all_nodes = set(G.nodes())
+    covered = set()
+    for c in parts:
+        assert len(c) > 0
+        covered.update(c)
+    assert covered == all_nodes
+
+
+def test_tsc_quality_metrics_keys():
+    G = make_two_cliques(n=6, bridge=1)
+    parts = tsc_communities(G)
+    metrics = tsc_quality_metrics(G, parts)
+    assert set(metrics.keys()) == {"modularity", "community_count", "min_size", "max_size", "mean_size"}
+    assert metrics["community_count"] == len(parts)
+    assert metrics["min_size"] >= 1
+    assert metrics["max_size"] >= metrics["min_size"]
+    assert metrics["mean_size"] > 0.0
 
 
 

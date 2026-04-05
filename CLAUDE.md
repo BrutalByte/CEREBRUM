@@ -51,7 +51,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v1.6.0 (Phase 26 COMPLETE)** — 1042 tests passing.
+**v1.9.3 (Phase 48 COMPLETE)** — 1268 tests passing.
 
 ### System Architecture Names
 | Name | Role |
@@ -64,7 +64,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 ### Core Concepts
 - **DSCF/TSC**: Dual/Triple signal community fusion (part of CORTEX).
-- **CSA**: Community-Structured Attention formula (part of CORTEX).
+- **CSA**: Community-Structured Attention formula (part of CORTEX). Now a 10-parameter formula (Phase 43/45).
 - **THALAMUS**: Ingestion layer — adapters, EmbeddingEngine, StructuralEncoder, STDPDiscretizer, IngestionPipeline.
 - **Federated**: Aggregating multiple graphs via `FederatedAdapter`.
 - **Hologram**: Bloom filters + centroids for blind discovery of remote graphs.
@@ -75,11 +75,19 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 - **Bayesian Beam Search**: `BeamTraversal(probabilistic=True, warm_start_strength=N)` — Beta-distribution path model + Thompson sampling. Warm-start seeds first-hop Beta from CSA score to reduce cold-start variance (Phase 19).
 - **SignalEncoder**: Cross-modal alignment — `StatisticalSignalEncoder` and `SpectralSignalEncoder` project sensor signals into entity embedding space via Procrustes SVD. `namespace="signal"` prefix isolates signal IDs from text entity IDs (Phase 18/19).
 - **Namespace Isolation**: `IngestionPipeline(namespace="text")` prefixes all entity IDs. Prevents semantic collisions between text and signal entity spaces (Phase 19).
-- **CausalSignificanceFilter**: `STDPDiscretizer(min_causal_span=N, use_chi_squared=True)` — blocks adversarial jitter floods by requiring minimum temporal span and optionally chi-squared uniformity of spike distribution before materializing CAUSES edges (Phase 19).
-- **Query Snapshot Isolation**: `BeamTraversal.traverse()` snapshots `adapter.community_map` at query start via `CSAEngine.set_query_snapshot()`. Prevents mid-flight community swap — GlobalRebalancer rebalances cannot produce inconsistent CSA weights within a single query (Phase 20).
-- **Community-Specific CSA Parameters**: `CSAEngine(community_params={cid: (α,β,γ,δ,ε)})` — per-community parameter overrides let the engine reason differently in heterogeneous graph domains (e.g., high γ for causal communities, high δ for temporal ones) (Phase 20).
-- **Canonical Basis Anchor**: `SignalEncoder(canonical_embeddings={...})` — all Procrustes alignments target a fixed root embedding space instead of chaining through adapters, preventing geometric drift accumulation across federated hops (Phase 20).
-- **Path-Preserving Hold-out**: `InferenceValidator(path_preserving=True)` (default) — only holds out edge (u,v) if an alternative multi-hop path exists after removal, preventing false-zero recall on sparse graphs due to connectivity shatter (Phase 20).
+- **CausalSignificanceFilter**: `STDPDiscretizer(min_causal_span=N, use_chi_squared=True)` — blocks adversarial jitter floods (Phase 19).
+- **Query Snapshot Isolation**: `BeamTraversal.traverse()` snapshots `adapter.community_map` at query start via `CSAEngine.set_query_snapshot()`. Prevents mid-flight community swap (Phase 20).
+- **Community-Specific CSA Parameters**: `CSAEngine(community_params={cid: (α,β,γ,δ,ε)})` — per-community overrides (Phase 20).
+- **Canonical Basis Anchor**: `SignalEncoder(canonical_embeddings={...})` — prevents Procrustes geometric drift (Phase 20).
+- **Path-Preserving Hold-out**: `InferenceValidator(path_preserving=True)` (default) — prevents sparse-graph false-zero recall (Phase 20).
+- **10-Parameter CSA Formula**: `CSAEngine` uses 10 learnable weights `(alpha, beta, gamma, delta, epsilon, zeta, eta, iota, mu, theta)` covering semantic similarity, community score, edge-type weight, distance penalty, hop decay, PageRank prior, temporal decay, node recency, synthesis-density penalty, and grounding confidence (Phase 43/45).
+- **ReasoningLogit**: Unified 10-feature logit vector threading through all scoring and learning code.
+- **Online Parameter Learning**: `MetaParameterLearner` adapts per-community CSA params online from `POST /feedback` via SGD (Phase 22/45).
+- **Batch Parameter Retraining**: `CSAParameterLearner.fit()` updates the global prior from accumulated (pos, neg) path pairs via `POST /retrain` (Phase 48).
+- **Params Persistence**: `MetaParameterLearner.to_dict()` / `from_dict()` enables checkpoint/restore via `POST /params`; `--params-file` CLI flag loads at startup (Phase 47).
+- **IKGWQ Protocol**: Incomplete Knowledge Graph evaluation — edge removal at 5 levels (0–50%) with optional REM synthesis; `benchmarks/ikgwq_metaqa.py` (Phase 44).
+- **Federated Reasoning**: `DistributedBeamTraversal` + `/traverse` endpoint for cross-node path delegation (Phase 32).
+- **Wormhole Synthesis (REM)**: `REMEngine` bridges disconnected graph components; `sd` (synthesis density) feature penalizes over-reliance on synthetic edges (Phase 41/43).
 
 ## Install & Development Commands
 
@@ -112,6 +120,7 @@ uvicorn api.server:app --port 8200 --reload
 python -m cli.cerebrum query --csv tests/fixtures/toy_graph.csv "newton"
 python -m cli.cerebrum communities --csv tests/fixtures/toy_graph.csv
 python -m cli.cerebrum serve --csv tests/fixtures/toy_graph.csv --port 8200
+python -m cli.cerebrum serve --csv tests/fixtures/toy_graph.csv --port 8200 --params-file checkpoint.json
 ```
 
 ## Architecture
@@ -122,19 +131,27 @@ python -m cli.cerebrum serve --csv tests/fixtures/toy_graph.csv --port 8200
 | Attention head | DSCF community |
 | Layer depth | BFS hop count |
 | Positional encoding | PageRank + betweenness + degree |
-| Attention weight | CSA formula |
+| Attention weight | CSA formula (10 params) |
 | Context window | Ego-network radius R |
+| Fine-tuning | CSAParameterLearner.fit() via POST /retrain |
 
-### CSA Attention Formula
+### CSA Attention Formula (Phase 43 — 10 parameters)
 ```
 a(u,v,k) = sigmoid(
-    0.4 * cosine_sim(emb(u), emb(v))     # semantic similarity
-  + 0.4 * community_score(u, v)           # structural membership
-  + 0.1 * edge_type_weight                # relation type
-  - 0.05 * normalized_distance            # path length penalty
-  + 0.05 * hop_decay(k)                   # depth discount
+    alpha   * sim          # semantic similarity (cosine)
+  + beta    * cs           # community score (structural membership)
+  + gamma   * etw          # edge-type weight
+  - delta   * nd           # normalised distance penalty
+  + epsilon * hd           # hop decay
+  + zeta    * pr_v         # PageRank prior
+  + eta     * td           # temporal decay
+  + iota    * nr_v         # node recency
+  - mu      * sd           # synthesis-density penalty
+  + theta   * grounding    # confidence / grounding score
 )
 ```
+
+Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`
 
 ### Module Map
 
@@ -143,23 +160,44 @@ a(u,v,k) = sigmoid(
 | `adapters/` | **THALAMUS** | Pluggable graph backends: NetworkX, Neo4j, RDF/SPARQL, CSV, StreamAdapter |
 | `core/embedding_engine.py` | **THALAMUS** | Entity embeddings (random or sentence-transformers) |
 | `core/structural_encoder.py` | **THALAMUS** | PageRank, betweenness, degree features |
-| `core/discretizer.py` | **THALAMUS** | STDPDiscretizer — causal edge inference from spike timing; CausalSignificanceFilter (min_causal_span, chi-squared) |
-| `core/thalamus.py` | **THALAMUS** | IngestionPipeline — entity normalization/dedup, relation normalization, confidence/provenance, namespace isolation |
-| `core/signal_encoder.py` | **THALAMUS** | Cross-modal alignment — StatisticalSignalEncoder, SpectralSignalEncoder + Procrustes SVD; namespace isolation |
-| `core/community_engine.py` | **CORTEX** | DSCF/Leiden/LPA community detection |
-| `core/leiden_native.py` | **CORTEX** | Native GPL-free Leiden reimplementation (no igraph/leidenalg) |
-| `core/attention_engine.py` | **CORTEX** | CSA attention formula; CSAParameterLearner |
-| `reasoning/` | **CORTEX** | BeamTraversal (+ probabilistic/Bayesian mode, warm_start_strength), PathScorer, AnswerExtractor |
-| `core/rebalancer.py` | **CORTEX** | GlobalRebalancer — modularity drift detection + background DSCF re-run + bridge_engine post-rebalance hook |
-| `core/rem_engine.py` | **REM Engine** | Prune/consolidate/synthesize graph maintenance |
+| `core/discretizer.py` | **THALAMUS** | STDPDiscretizer — causal edge inference from spike timing; CausalSignificanceFilter |
+| `core/thalamus.py` | **THALAMUS** | IngestionPipeline — entity normalization/dedup, relation normalization, confidence/provenance |
+| `core/signal_encoder.py` | **THALAMUS** | Cross-modal alignment — StatisticalSignalEncoder, SpectralSignalEncoder + Procrustes SVD |
+| `core/community_engine.py` | **CORTEX** | DSCF/TSC/Leiden/LPA community detection |
+| `core/leiden_native.py` | **CORTEX** | Native GPL-free Leiden reimplementation |
+| `core/attention_engine.py` | **CORTEX** | 10-parameter CSA attention formula; `set_meta_learner()` for online adaptation |
+| `core/reasoning_logit.py` | **CORTEX** | `ReasoningLogit` — unified 10-feature logit vector; `score(params)` method |
+| `core/parameter_learner.py` | **CORTEX** | `CSAParameterLearner` (batch, gradient descent) + `MetaParameterLearner` (online SGD); `to_dict()`/`from_dict()` |
+| `reasoning/` | **CORTEX** | BeamTraversal (+ probabilistic/Bayesian), PathScorer, AnswerExtractor |
+| `reasoning/distributed_traversal.py` | **CORTEX** | `DistributedBeamTraversal` — federated cross-node delegation |
+| `core/rebalancer.py` | **CORTEX** | GlobalRebalancer — modularity drift detection + background DSCF re-run |
+| `core/rem_engine.py` | **REM Engine** | Prune/consolidate/synthesize; wormhole bridge synthesis |
 | `core/bridge_engine.py` | **Bridge Twin Engine** | Experience-dependent structural relay formation |
+| `core/graph_bridge.py` | **Bridge Twin Engine** | `GraphBridgeEngine` — proactive cross-component bridge synthesis |
 | `core/insight_validator.py` | Verification | Bilateral reverse traversal + corroboration |
 | `core/meta_insight_engine.py` | Metacognition | Second-order reasoning over InsightEvents |
 | `core/kge_engine.py` | Optional | TransE/RotatE graph-native embedding training |
-| `api/` | Interface | FastAPI REST server — `/health`, `/query`, `/communities`, `/bridges`, `/stream/*` |
-| `cli/` | Interface | CLI entry point (`cerebrum query`, `communities`, `serve`) |
-| `llm_bridge/` | Optional | `generate()` + `GenerationResult`; adapters for Anthropic, OpenAI, Ollama, HuggingFace |
+| `api/` | Interface | FastAPI REST server (see API Endpoints below) |
+| `api/schemas.py` | Interface | All Pydantic request/response models |
+| `cli/` | Interface | CLI entry point (`cerebrum query`, `communities`, `serve --params-file`) |
+| `llm_bridge/` | Optional | `generate()` + adapters for Anthropic, OpenAI, Ollama, HuggingFace |
+| `benchmarks/` | Evaluation | WebQSP, MetaQA, GrailQA, Hetionet, IKGWQ eval harnesses |
 | `tests/` | — | pytest suite; fixture: `tests/fixtures/toy_graph.csv` (21 nodes, 30 edges) |
+
+### Key API Endpoints
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/health` | GET | System readiness + node/community counts |
+| `/query` | POST | KG reasoning — returns ranked paths with `edge_features` + `community_sequence` |
+| `/feedback` | POST | Online SGD update (MetaParameterLearner); buffers pair for `/retrain` |
+| `/retrain` | POST | Batch retrain global prior via CSAParameterLearner.fit() on buffered pairs |
+| `/params` | GET | Inspect current 10-param global vector + community overrides |
+| `/params` | POST | Restore a checkpoint (global_prior + community_overrides) |
+| `/communities` | GET | Community partition map |
+| `/bridges` | GET | Bridge twin records |
+| `/stream/query` | GET | Streaming NDJSON reasoning |
+| `/traverse` | POST | Federated — delegated branch reasoning for DistributedBeamTraversal |
 
 ### Data Flow
 **THALAMUS** (ingestion):
@@ -168,13 +206,18 @@ a(u,v,k) = sigmoid(
 3. **EmbeddingEngine** generates entity embeddings
 4. **StructuralEncoder** computes PageRank, betweenness, degree features
 5. **STDPDiscretizer** (optional) infers causal edge direction from timing
-6. **SignalEncoder** (optional) encodes non-textual signals (waveforms, time-series) into entity embedding space
+6. **SignalEncoder** (optional) encodes non-textual signals into entity embedding space
 
 **CORTEX** (reasoning):
-5. **CommunityEngine** runs DSCF to partition nodes into communities
-6. **CSAEngine** computes attention weights for each candidate edge
-7. **BeamTraversal** performs beam-search over the graph
-8. **PathScorer** + **AnswerExtractor** rank and return final answers
+7. **CommunityEngine** runs DSCF/TSC to partition nodes into communities
+8. **CSAEngine** computes 10-parameter attention weights per candidate edge
+9. **BeamTraversal** performs beam-search over the graph
+10. **PathScorer** + **AnswerExtractor** rank and return final answers
+
+**Adaptive Learning** (online):
+11. User sends `POST /feedback` → online SGD on community-specific params
+12. Feedback buffered → `POST /retrain` → batch gradient descent on global prior
+13. `GET /params` → export checkpoint → `POST /params` or `--params-file` → restore
 
 ### Adding a New Graph Backend
 Implement the abstract `GraphAdapter` interface in `core/graph_adapter.py`, following the pattern in `adapters/networkx_adapter.py`.
@@ -183,7 +226,5 @@ Implement the abstract `GraphAdapter` interface in `core/graph_adapter.py`, foll
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)
 - Synthetic graph helpers (`make_two_cliques()`, etc.) live in `tests/` for unit tests that don't need the CSV fixture
-- 1016 tests passing as of v1.2.0 (1 skipped)
-
-
-
+- **1268 tests passing as of v1.9.3 / Phase 48** (1 skipped)
+- Type checker: no mypy/ruff configured as hard gate; run `python -m pytest tests/` as verification

@@ -872,3 +872,70 @@ class QueryGuidedCommunityMerger:
         return centroid
 
 
+# ---------------------------------------------------------------------------
+# Phase 49 — TSC Explicit Mode
+# ---------------------------------------------------------------------------
+
+def tsc_communities(
+    G: nx.Graph,
+    resolution: float = 1.0,
+    max_iter: int = 50,
+    centrality_weights: Optional[dict] = None,
+) -> List[frozenset]:
+    """
+    Triple-Signal Consensus community detection (explicit public API).
+
+    Automatically computes PageRank centrality weights if not provided,
+    then delegates to vectorized_tsc for the matrix-based three-signal fusion.
+
+    Signals
+    -------
+    1. LPA       — local label propagation (neighborhood majority vote)
+    2. Modularity — global modularity gain (dQ)
+    3. Centrality — PageRank-weighted neighbor consensus
+
+    Parameters
+    ----------
+    G                  : NetworkX graph
+    resolution         : modularity resolution parameter (higher = more communities)
+    max_iter           : maximum iterations before forced stop
+    centrality_weights : optional {node_id -> float}; computed from PageRank if None
+
+    Returns
+    -------
+    List of frozensets, one per community.
+    """
+    if centrality_weights is None:
+        try:
+            centrality_weights = nx.pagerank(G, alpha=0.85)
+        except Exception:
+            centrality_weights = {n: 1.0 for n in G.nodes()}
+    return vectorized_tsc(
+        G,
+        resolution=resolution,
+        max_iter=max_iter,
+        centrality_weights=centrality_weights,
+    )
+
+
+def tsc_quality_metrics(G: nx.Graph, partition: List[frozenset]) -> dict:
+    """
+    Compute quality metrics for a TSC (or any) partition.
+
+    Returns
+    -------
+    dict with keys:
+      modularity       — Newman-Girvan Q score
+      community_count  — number of communities
+      min_size         — smallest community size
+      max_size         — largest community size
+      mean_size        — average community size
+    """
+    sizes = sorted(len(c) for c in partition)
+    return {
+        "modularity": modularity_score(G, partition),
+        "community_count": len(partition),
+        "min_size": sizes[0] if sizes else 0,
+        "max_size": sizes[-1] if sizes else 0,
+        "mean_size": sum(sizes) / len(sizes) if sizes else 0.0,
+    }
