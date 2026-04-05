@@ -367,25 +367,86 @@ class TestAdaptiveLearning:
         assert len(data["results"]) > 0
         assert "query_vector" in data
 
-    def test_feedback_updates_model(self, client):
-        # 1. Get a real path from a query to use for feedback
-        req = {"query": "newton", "seeds": ["newton"], "top_k": 1}
-        r_query = client.post("/query", json=req)
+    def test_query_path_includes_edge_features(self, client):
+        """Phase 46: /query paths must expose edge_features for /feedback use."""
+        r = client.post("/query", json={"query": "newton", "seeds": ["newton"], "top_k": 1})
+        assert r.status_code == 200
+        path = r.json()["paths"][0]
+        assert "edge_features" in path
+        assert isinstance(path["edge_features"], list)
+        # Each feature tuple should be a non-empty list of floats
+        for feat in path["edge_features"]:
+            assert isinstance(feat, list)
+            assert len(feat) > 0
+
+    def test_query_path_includes_community_sequence(self, client):
+        """Phase 46: /query paths must expose community_sequence for /feedback use."""
+        r = client.post("/query", json={"query": "newton", "seeds": ["newton"], "top_k": 1})
+        assert r.status_code == 200
+        path = r.json()["paths"][0]
+        assert "community_sequence" in path
+        assert isinstance(path["community_sequence"], list)
+        assert len(path["community_sequence"]) > 0
+
+    def test_feedback_uses_query_edge_features(self, client):
+        """Phase 46: /feedback round-trip using edge_features from /query response."""
+        # 1. Get a real path including edge_features
+        r_query = client.post("/query", json={"query": "newton", "seeds": ["newton"], "top_k": 1})
+        assert r_query.status_code == 200
         path_data = r_query.json()["paths"][0]
-        
-        # Extract features and community sequence (needed for FeedbackRequest)
-        # Note: In a real scenario, these would be in the path_data if we exposed them.
-        # For the test, we'll simulate a feedback request.
+
+        # 2. Use the actual edge_features and community_sequence from the query response
+        entity_nodes = [n["label"] for n in path_data["path"] if n["type"] == "entity"]
         feedback_req = {
-            "path_nodes": [n["label"] for n in path_data["path"] if n["type"] == "entity"],
-            "edge_features": [[0.9, 1.0, 0.1, 0.0, 0.5]], # simulated for 1 hop
-            "community_sequence": [0, 0], # simulated
-            "reward": 1.0
+            "path_nodes": entity_nodes,
+            "edge_features": path_data["edge_features"],
+            "community_sequence": path_data["community_sequence"],
+            "reward": 1.0,
         }
-        
+
         r_fb = client.post("/feedback", json=feedback_req)
         assert r_fb.status_code == 200
         assert r_fb.json()["status"] == "success"
+
+    def test_params_endpoint_returns_structure(self, client):
+        """Phase 46: GET /params returns 10-param vector and community overrides."""
+        r = client.get("/params")
+        assert r.status_code == 200
+        body = r.json()
+        assert "param_names" in body
+        assert "global_params" in body
+        assert "community_count" in body
+        assert "community_overrides" in body
+        assert len(body["param_names"]) == 10
+        assert len(body["global_params"]) == 10
+        assert body["param_names"][0] == "alpha"
+        assert body["param_names"][9] == "theta"
+
+    def test_params_community_overrides_update_after_feedback(self, client):
+        """Phase 46: After /feedback, /params should show at least one community override."""
+        # 1. Get a path with community_sequence
+        r_query = client.post("/query", json={"query": "newton", "seeds": ["newton"], "top_k": 1})
+        path_data = r_query.json()["paths"][0]
+
+        # 2. Send feedback for a community that exists
+        cseq = path_data["community_sequence"]
+        if not cseq:
+            return  # skip if no community info (e.g. trivial graph)
+
+        feedback_req = {
+            "path_nodes": [n["label"] for n in path_data["path"] if n["type"] == "entity"],
+            "edge_features": path_data["edge_features"],
+            "community_sequence": cseq,
+            "reward": 1.0,
+        }
+        client.post("/feedback", json=feedback_req)
+
+        # 3. /params should now show at least one community override
+        r_params = client.get("/params")
+        assert r_params.status_code == 200
+        body = r_params.json()
+        assert body["community_count"] >= 1
+        assert len(body["community_overrides"]) >= 1
 
     def test_feedback_unloaded_returns_501(self, unloaded_client):
         # Unloaded client doesn't have meta_learner initialized
@@ -393,7 +454,7 @@ class TestAdaptiveLearning:
             "path_nodes": ["A", "B"],
             "edge_features": [[0.5, 0.5, 0.5, 0.5, 0.5]],
             "community_sequence": [0, 0],
-            "reward": 1.0
+            "reward": 1.0,
         })
         assert r.status_code == 501
 

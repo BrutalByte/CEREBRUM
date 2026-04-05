@@ -48,6 +48,7 @@ from api.schemas import (
     InsightValidateResponse, InsightValidateAllResponse,
     MetaInsightEventSchema, MetaInsightStatusResponse,
     InsightGraphNodeSchema, InsightGraphEdgeSchema, InsightGraphResponse,
+    ParamsResponse,
 )
 
 # ---------------------------------------------------------------------------
@@ -232,13 +233,16 @@ def create_app(
         # Format response
         structured = to_structured(answers, query=req.query, adapter=adapter)
         path_results = []
-        for p in structured["paths"]:
+        for p, answer in zip(structured["paths"], answers):
+            best_path = answer.best_path
             path_results.append(PathResult(
                 rank=p["rank"],
                 answer_entity=p["answer_entity"],
                 score=p["score"],
                 score_breakdown=p["score_breakdown"],
                 path=[PathNode(**n) for n in p["path"]],
+                edge_features=[list(f) for f in best_path.edge_features],
+                community_sequence=list(best_path.community_sequence),
             ))
 
         return QueryResponse(
@@ -332,8 +336,37 @@ def create_app(
         )
         
         _state["meta_learner"].update_from_feedback(dummy_path, req.reward)
-        
+
         return {"status": "success", "message": "Feedback recorded, model updated"}
+
+    @app.get("/params", response_model=ParamsResponse, tags=["reasoning"])
+    async def get_params(node: Dict = Depends(check_scope("query"))):
+        """
+        Return the current learned CSA parameter state.
+
+        Shows the global 10-parameter vector and any per-community overrides
+        accumulated via POST /feedback.  Use this to inspect or checkpoint
+        the online-learned parameter state.
+        """
+        from core.parameter_learner import _PARAM_NAMES, _DEFAULT_INIT
+
+        ml = _state["meta_learner"]
+        if ml is None:
+            global_params = list(_DEFAULT_INIT)
+            overrides: Dict[str, list] = {}
+        else:
+            global_params = [float(v) for v in ml.global_prior]
+            overrides = {
+                str(cid): [float(v) for v in vec]
+                for cid, vec in ml.community_overrides.items()
+            }
+
+        return ParamsResponse(
+            param_names=list(_PARAM_NAMES),
+            global_params=global_params,
+            community_count=len(overrides),
+            community_overrides=overrides,
+        )
 
     @app.get("/communities", response_model=CommunitiesResponse, tags=["graph"])
     async def communities(node: Dict = Depends(get_authenticated_node)):

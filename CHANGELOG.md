@@ -7,6 +7,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.9.1] — 2026-04-04
+
+### Added
+- **Phase 46: Live Feedback Loop & /params Endpoint**:
+    - **`GET /params` endpoint**: Returns the current 10-parameter global vector and all per-community overrides accumulated via `POST /feedback`. Enables parameter inspection and client-side checkpointing.
+    - **`PathResult.edge_features`**: Query responses now include the per-hop 10-element feature vectors `(sim, cs, etw, nd, hd, pr_v, td, nr_v, sd, grounding)` so clients can pass them directly to `POST /feedback` without client-side reconstruction.
+    - **`PathResult.community_sequence`**: Query responses now include the community ID sequence for each entity node, also required for `/feedback`.
+    - **`ParamsResponse` schema**: New Pydantic model for `/params` output.
+
+### Fixed
+- **`_DEFAULT_INIT_PARAMS` in `reasoning/traversal.py`**: Was a 9-tuple `(…, iota, theta)` missing `mu=0.1`. Now correctly a 10-tuple matching the Phase 43 CSA formula. This prevented the synthesis-density penalty from being applied when the fallback param path was taken.
+- **`FeedbackRequest.edge_features` description**: Updated to document all 10 features including `sd` (synthesis density).
+
 ## [1.9.0] — 2026-04-04
 
 ### Added

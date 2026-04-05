@@ -2898,6 +2898,51 @@ BridgeTwinEngine: 256 bridges at 1-hop, 956 at 2-hop, 1,146 at 3-hop (was 0 befo
 
 ---
 
+## Run 046 — Phase 46 Final: Live Feedback Loop Verified
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-04 |
+| **Phase**         | Phase 46 (Live Feedback Loop & /params Endpoint) |
+| **Purpose**       | Verify /params endpoint, edge_features in QueryResponse, _DEFAULT_INIT_PARAMS fix |
+| **Operator**      | Claude Code |
+| **Repo commit**   | (Phase 46 commit) |
+
+### Environment
+
+| Component    | Version |
+|---|---|
+| Python       | 3.14.0 |
+| OS           | Windows 11 Pro 10.0.26220 |
+| networkx     | 3.6.1 |
+| numpy        | 2.2.6 |
+| scipy        | 1.16.3 |
+| pytest       | 9.0.2 |
+
+### Command
+
+```
+python -m pytest tests/ --tb=no -q --ignore=tests/test_studio_robustness.py
+```
+
+### Results
+
+```
+collected 1256 items
+
+1254 passed, 1 skipped, 4 warnings in 14.77s
+```
+
+**Key Features Verified:**
+- `GET /params` returns 10-param global vector and community overrides.
+- `POST /query` paths include `edge_features` and `community_sequence` for direct use with `/feedback`.
+- `POST /feedback` round-trip using actual query response fields verified.
+- Community overrides propagate correctly after feedback.
+- `_DEFAULT_INIT_PARAMS` bug fixed (9→10 elements, `mu=0.1` restored).
+- Net +4 new tests (5 new, removed 1 old simulated test).
+
+---
+
 ## Run 045 — Phase 45 Final: 10-Parameter Learner Verified
 
 | Field             | Value |

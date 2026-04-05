@@ -20,8 +20,8 @@ from core.task_queue import BridgeTask, TaskQueue
 from core.reasoning_logit import ReasoningLogit # New: Unified logit framework
 from reasoning.path_scorer import community_coherence
 
-# Default parameters for CSAEngine (alpha, beta, gamma, delta, epsilon, zeta, eta, iota, theta)
-_DEFAULT_INIT_PARAMS = (0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 1.0)
+# Default parameters for CSAEngine (alpha, beta, gamma, delta, epsilon, zeta, eta, iota, mu, theta)
+_DEFAULT_INIT_PARAMS = (0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)
 
 # ---------------------------------------------------------------------------
 

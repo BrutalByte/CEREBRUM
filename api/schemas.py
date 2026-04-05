@@ -27,6 +27,18 @@ class PathResult(BaseModel):
     score: float
     score_breakdown: Dict[str, float]
     path: List[PathNode]
+    edge_features: List[List[float]] = Field(
+        default_factory=list,
+        description=(
+            "Per-hop 10-element feature vectors "
+            "(sim, cs, etw, nd, hd, pr_v, td, nr_v, sd, grounding). "
+            "Pass directly to POST /feedback to enable online parameter learning."
+        ),
+    )
+    community_sequence: List[int] = Field(
+        default_factory=list,
+        description="Community ID for each entity node along this path (required for /feedback).",
+    )
 
 
 class QueryResponse(BaseModel):
@@ -90,9 +102,25 @@ class SimilarSearchResponse(BaseModel):
 
 class FeedbackRequest(BaseModel):
     path_nodes: List[str] = Field(..., description="The sequence of nodes in the path")
-    edge_features: List[List[float]] = Field(..., description="Recorded (sim, cs, etw, nd, hd, pr, td, nr, g) for each hop")
-    community_sequence: List[int] = Field(..., description="Community ID for each node in the path")
+    edge_features: List[List[float]] = Field(
+        ...,
+        description=(
+            "Per-hop 10-element feature vectors "
+            "(sim, cs, etw, nd, hd, pr_v, td, nr_v, sd, grounding). "
+            "Use the edge_features field from POST /query PathResult directly."
+        ),
+    )
+    community_sequence: List[int] = Field(..., description="Community ID for each entity node in the path")
     reward: float = Field(..., description="Feedback value: 1.0 for helpful, -1.0 for noise")
+
+
+class ParamsResponse(BaseModel):
+    param_names: List[str] = Field(description="Names of the 10 CSA parameters (alpha … theta)")
+    global_params: List[float] = Field(description="Current global parameter vector")
+    community_count: int = Field(description="Number of communities with learned overrides")
+    community_overrides: Dict[str, List[float]] = Field(
+        description="Per-community parameter overrides {community_id -> [alpha…theta]}",
+    )
 
 
 class CommunityResponse(BaseModel):
