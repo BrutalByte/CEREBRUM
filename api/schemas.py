@@ -632,3 +632,94 @@ class HypothesisStatusResponse(BaseModel):
     proposal_count: int
     can_rollback: bool
     materialized_count: int
+
+
+# ---------------------------------------------------------------------------
+# Phase 51 — ResearchAgent schemas
+# ---------------------------------------------------------------------------
+
+class ResearchCandidateSchema(BaseModel):
+    source_id: str
+    target_id: str
+    discovery_potential: float
+    gap_score: float
+    community_distance: int
+    seeded_by: str
+    created_at: float
+
+
+class ResearchFindingSchema(BaseModel):
+    finding_id: str
+    candidate: ResearchCandidateSchema
+    proposals: List[HypothesisProposalSchema]
+    best_confidence: float
+    literature_status: str
+    found_at: float
+
+
+class ResearchStatusResponse(BaseModel):
+    running: bool
+    scan_interval: float
+    total_scans: int
+    total_findings: int
+    pending_findings: int
+    last_scan_at: Optional[float]
+
+
+class ResearchScanResponse(BaseModel):
+    findings: List[ResearchFindingSchema]
+    candidates_evaluated: int
+    duration_seconds: float
+
+
+class ResearchApproveResponse(BaseModel):
+    finding_id: str
+    edges_added: int
+
+
+class ResearchRejectResponse(BaseModel):
+    finding_id: str
+    removed: bool
+
+
+# ---------------------------------------------------------------------------
+# Phase 52 — ExternalValidator schemas
+# ---------------------------------------------------------------------------
+
+class LiteratureHitSchema(BaseModel):
+    adapter: str
+    external_id: str
+    title: str
+    year: Optional[int] = None
+    relevance_score: float
+
+
+class ValidationReportSchema(BaseModel):
+    hypothesis_id: str
+    source_id: str
+    target_id: str
+    derived_relation: str
+    literature_status: str
+    novelty_score: float
+    hit_count: int
+    hits: List[LiteratureHitSchema]
+    adapters_queried: List[str]
+    checked_at: float
+    error: Optional[str] = None
+
+
+class ValidateProposalsRequest(BaseModel):
+    hypothesis_ids: List[str] = Field(
+        default_factory=list,
+        description="Proposal IDs to validate; empty = all from last hypothesize run",
+    )
+    adapters: List[str] = Field(
+        default_factory=list,
+        description="Adapter names to use; empty = all available",
+    )
+
+
+class ValidateProposalsResponse(BaseModel):
+    validated: int
+    reports: List[ValidationReportSchema]
+    duration_seconds: float

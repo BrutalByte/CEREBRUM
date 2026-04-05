@@ -55,6 +55,10 @@ from api.schemas import (
     HypothesisProposalSchema, HypothesizeRequest, HypothesizeResponse,
     HypothesisMaterializeRequest, HypothesisMaterializeResponse,
     HypothesisStatusResponse, TraversalPathSchema,
+    ResearchCandidateSchema, ResearchFindingSchema, ResearchStatusResponse,
+    ResearchScanResponse, ResearchApproveResponse, ResearchRejectResponse,
+    LiteratureHitSchema, ValidationReportSchema,
+    ValidateProposalsRequest, ValidateProposalsResponse,
 )
 
 # ---------------------------------------------------------------------------
@@ -118,6 +122,8 @@ _state: Dict[str, Any] = {
     "rem_engine":       None,   # REMEngine (lazy-initialized on first /rem call)
     "infer_engine":     None,   # TransitiveInferenceEngine (lazy-initialized on first /infer call)
     "hypothesis_engine": None,  # HypothesisEngine (lazy-initialized on first /hypothesize call)
+    "research_agent":   None,   # ResearchAgent (lazy-initialized on first /research call)
+    "external_validator": None, # ExternalValidator (lazy-initialized on first /research/validate call)
     "chat_manager":     None,   # ConversationManager (lazy-initialized on first /chat call)
     "chat_sessions":    {},     # session_id -> ConversationSession
     "text_ingestor":    None,   # TextIngestor (lazy-initialized on first /ingest call)
@@ -1532,6 +1538,240 @@ def create_app(
             can_rollback=engine.can_rollback,
             materialized_count=engine.materialized_count,
         )
+
+    # ------------------------------------------------------------------
+    # Research endpoints  (/research/*)
+    # ------------------------------------------------------------------
+
+    def _get_research_agent():
+        from core.research_agent import ResearchAgent
+        if _state["research_agent"] is None:
+            if not _is_ready():
+                raise HTTPException(status_code=503, detail="Graph not loaded")
+            _state["research_agent"] = ResearchAgent(
+                adapter=_state["adapter"],
+                hypothesis_engine=_get_hypothesis_engine(),
+                insight_engine=_state.get("insight_engine"),
+            )
+        return _state["research_agent"]
+
+    def _get_external_validator():
+        from core.external_validator import ExternalValidator
+        if _state["external_validator"] is None:
+            _state["external_validator"] = ExternalValidator()
+        return _state["external_validator"]
+
+    def _finding_to_schema(f) -> ResearchFindingSchema:
+        cand = f.candidate
+        return ResearchFindingSchema(
+            finding_id=f.finding_id,
+            candidate=ResearchCandidateSchema(
+                source_id=cand.source_id,
+                target_id=cand.target_id,
+                discovery_potential=cand.discovery_potential,
+                gap_score=cand.gap_score,
+                community_distance=cand.community_distance,
+                seeded_by=cand.seeded_by,
+                created_at=cand.created_at,
+            ),
+            proposals=[_proposal_to_schema(p) for p in f.proposals],
+            best_confidence=f.best_confidence,
+            literature_status=f.literature_status,
+            found_at=f.found_at,
+        )
+
+    def _validation_report_to_schema(r) -> ValidationReportSchema:
+        return ValidationReportSchema(
+            hypothesis_id=r.hypothesis_id,
+            source_id=r.source_id,
+            target_id=r.target_id,
+            derived_relation=r.derived_relation,
+            literature_status=r.literature_status,
+            novelty_score=r.novelty_score,
+            hit_count=r.hit_count,
+            hits=[
+                LiteratureHitSchema(
+                    adapter=h.adapter,
+                    external_id=h.external_id,
+                    title=h.title,
+                    year=h.year,
+                    relevance_score=h.relevance_score,
+                )
+                for h in r.hits
+            ],
+            adapters_queried=r.adapters_queried,
+            checked_at=r.checked_at,
+            error=r.error,
+        )
+
+    @app.get("/research/status", response_model=ResearchStatusResponse, tags=["research"])
+    async def research_status(node: Dict = Depends(get_authenticated_node)):
+        """Return ResearchAgent running state and scan statistics."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        agent = _get_research_agent()
+        s = agent.status
+        return ResearchStatusResponse(**s)
+
+    @app.post("/research/start", response_model=ResearchStatusResponse, tags=["research"])
+    async def research_start(node: Dict = Depends(get_authenticated_node)):
+        """Start the background scanning daemon (idempotent)."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        agent = _get_research_agent()
+        agent.start()
+        return ResearchStatusResponse(**agent.status)
+
+    @app.post("/research/stop", response_model=ResearchStatusResponse, tags=["research"])
+    async def research_stop(node: Dict = Depends(get_authenticated_node)):
+        """Stop the background scanning daemon."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        agent = _get_research_agent()
+        agent.stop()
+        return ResearchStatusResponse(**agent.status)
+
+    @app.post("/research/scan", response_model=ResearchScanResponse, tags=["research"])
+    async def research_scan(node: Dict = Depends(get_authenticated_node)):
+        """Trigger an immediate one-shot scan and return any new findings."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        agent = _get_research_agent()
+        t0 = __import__("time").time()
+        findings = agent.scan_once()
+        return ResearchScanResponse(
+            findings=[_finding_to_schema(f) for f in findings],
+            candidates_evaluated=len(findings),
+            duration_seconds=__import__("time").time() - t0,
+        )
+
+    @app.get("/research/proposals", response_model=ResearchScanResponse, tags=["research"])
+    async def research_proposals(node: Dict = Depends(get_authenticated_node)):
+        """List all pending findings in the ring buffer."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        agent = _get_research_agent()
+        findings = agent.findings
+        return ResearchScanResponse(
+            findings=[_finding_to_schema(f) for f in findings],
+            candidates_evaluated=len(findings),
+            duration_seconds=0.0,
+        )
+
+    @app.post(
+        "/research/approve/{finding_id}",
+        response_model=ResearchApproveResponse,
+        tags=["research"],
+    )
+    async def research_approve(
+        finding_id: str,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Materialize all proposals in a finding to the graph."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        agent = _get_research_agent()
+        try:
+            edges_added = agent.approve(finding_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+        return ResearchApproveResponse(finding_id=finding_id, edges_added=edges_added)
+
+    @app.post(
+        "/research/reject/{finding_id}",
+        response_model=ResearchRejectResponse,
+        tags=["research"],
+    )
+    async def research_reject(
+        finding_id: str,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Discard a finding from the ring buffer."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        agent = _get_research_agent()
+        try:
+            agent.reject(finding_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+        return ResearchRejectResponse(finding_id=finding_id, removed=True)
+
+    @app.post(
+        "/research/validate",
+        response_model=ValidateProposalsResponse,
+        tags=["research"],
+    )
+    async def research_validate(
+        req: ValidateProposalsRequest,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """
+        Validate hypothesis proposals against external literature databases
+        (PubMed, ClinicalTrials.gov, arXiv, OpenAlex).
+
+        Pass ``hypothesis_ids`` to target specific proposals; omit to validate
+        all proposals from the most recent /hypothesize run.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        validator = _get_external_validator()
+        hyp_engine = _get_hypothesis_engine()
+        last = hyp_engine.last_proposals or []
+
+        if req.hypothesis_ids:
+            id_set = set(req.hypothesis_ids)
+            to_validate = [p for p in last if p.hypothesis_id in id_set]
+        else:
+            to_validate = list(last)
+
+        if not to_validate:
+            return ValidateProposalsResponse(validated=0, reports=[], duration_seconds=0.0)
+
+        t0 = __import__("time").time()
+        try:
+            reports = validator.validate_batch(to_validate)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=str(exc))
+
+        return ValidateProposalsResponse(
+            validated=len(reports),
+            reports=[_validation_report_to_schema(r) for r in reports],
+            duration_seconds=__import__("time").time() - t0,
+        )
+
+    @app.get(
+        "/research/validate/{hypothesis_id}",
+        response_model=ValidationReportSchema,
+        tags=["research"],
+    )
+    async def research_validate_one(
+        hypothesis_id: str,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """
+        Get the cached validation report for a specific proposal.
+        Returns 404 if the proposal has not been validated yet.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        hyp_engine = _get_hypothesis_engine()
+        last = hyp_engine.last_proposals or []
+        proposal = next((p for p in last if p.hypothesis_id == hypothesis_id), None)
+        if proposal is None:
+            raise HTTPException(status_code=404, detail=f"Proposal {hypothesis_id!r} not found")
+
+        validator = _get_external_validator()
+        # Check cache only — do not trigger a new network call
+        cache_key = (proposal.source, proposal.derived_relation, proposal.target)
+        with validator._lock:
+            cached = validator._cache.get(cache_key)
+        if cached is None:
+            raise HTTPException(
+                status_code=404,
+                detail="No validation report found. Call POST /research/validate first.",
+            )
+        _, report = cached
+        return _validation_report_to_schema(report)
 
     # ------------------------------------------------------------------
     # Chat endpoints  (/chat/*)
