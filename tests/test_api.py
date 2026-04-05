@@ -515,5 +515,73 @@ class TestAdaptiveLearning:
         r = client.post("/params", json={"global_prior": [0.5, 0.5, 0.5], "community_overrides": {}})
         assert r.status_code == 422
 
+    # ------------------------------------------------------------------
+    # Phase 48: Auto-Retrain Scheduler
+    # ------------------------------------------------------------------
+
+    def _send_feedback(self, client, reward: float):
+        """Helper: get a query path and send feedback with given reward."""
+        r = client.post("/query", json={"query": "newton", "seeds": ["newton"], "top_k": 1})
+        path_data = r.json()["paths"][0]
+        client.post("/feedback", json={
+            "path_nodes": [n["label"] for n in path_data["path"] if n["type"] == "entity"],
+            "edge_features": path_data["edge_features"],
+            "community_sequence": path_data["community_sequence"],
+            "reward": reward,
+        })
+
+    def test_retrain_requires_mixed_feedback(self, client):
+        """Phase 48: /retrain with only positive feedback returns 422."""
+        # Reset buffer
+        from core.parameter_learner import _DEFAULT_INIT
+        client.post("/params", json={"global_prior": list(_DEFAULT_INIT), "community_overrides": {}})
+        # Send only positive feedback
+        self._send_feedback(client, reward=1.0)
+        r = client.post("/retrain")
+        assert r.status_code == 422
+
+    def test_retrain_with_mixed_feedback(self, client):
+        """Phase 48: /retrain succeeds when buffer has both pos and neg items."""
+        self._send_feedback(client, reward=1.0)
+        self._send_feedback(client, reward=-1.0)
+        r = client.post("/retrain")
+        assert r.status_code == 200
+        body = r.json()
+        assert body["status"] == "success"
+        assert body["pairs_used"] >= 1
+        assert "learned_params" in body
+        assert set(body["learned_params"].keys()) == {
+            "alpha", "beta", "gamma", "delta", "epsilon",
+            "zeta", "eta", "iota", "mu", "theta",
+        }
+
+    def test_retrain_updates_global_prior(self, client):
+        """Phase 48: /retrain learned_params are reflected in GET /params global_params."""
+        self._send_feedback(client, reward=1.0)
+        self._send_feedback(client, reward=-1.0)
+        r = client.post("/retrain", json={"max_iterations": 50, "learning_rate": 0.1})
+        assert r.status_code == 200
+        learned = r.json()["learned_params"]
+
+        # GET /params should reflect the new global prior
+        params_body = client.get("/params").json()
+        for i, name in enumerate(params_body["param_names"]):
+            assert params_body["global_params"][i] == pytest.approx(learned[name], abs=1e-4)
+
+    def test_retrain_clears_buffer_by_default(self, client):
+        """Phase 48: buffer_remaining == 0 after default retrain."""
+        self._send_feedback(client, reward=1.0)
+        self._send_feedback(client, reward=-1.0)
+        r = client.post("/retrain")
+        assert r.json()["buffer_remaining"] == 0
+
+    def test_retrain_keep_buffer(self, client):
+        """Phase 48: buffer_remaining > 0 when clear_buffer=False."""
+        self._send_feedback(client, reward=1.0)
+        self._send_feedback(client, reward=-1.0)
+        r = client.post("/retrain", json={"clear_buffer": False})
+        assert r.status_code == 200
+        assert r.json()["buffer_remaining"] >= 2
+
 
 

@@ -50,6 +50,8 @@ from api.schemas import (
     InsightGraphNodeSchema, InsightGraphEdgeSchema, InsightGraphResponse,
     ParamsResponse,
     ParamsImportRequest,
+    RetrainRequest,
+    RetrainResponse,
 )
 
 # ---------------------------------------------------------------------------
@@ -109,6 +111,7 @@ _state: Dict[str, Any] = {
     "default_edge_type_weights": None,
     "hologram":         None,   # List[CommunitySignature]
     "meta_learner":     None,   # MetaParameterLearner (Milestone 4)
+    "feedback_buffer":  [],     # list of {"path": TraversalPath, "reward": float}
     "rem_engine":       None,   # REMEngine (lazy-initialized on first /rem call)
     "infer_engine":     None,   # TransitiveInferenceEngine (lazy-initialized on first /infer call)
     "chat_manager":     None,   # ConversationManager (lazy-initialized on first /chat call)
@@ -338,7 +341,14 @@ def create_app(
         
         _state["meta_learner"].update_from_feedback(dummy_path, req.reward)
 
-        return {"status": "success", "message": "Feedback recorded, model updated"}
+        # Buffer for batch retraining (POST /retrain)
+        _state["feedback_buffer"].append({"path": dummy_path, "reward": req.reward})
+
+        return {
+            "status": "success",
+            "message": "Feedback recorded, model updated",
+            "buffer_size": len(_state["feedback_buffer"]),
+        }
 
     @app.get("/params", response_model=ParamsResponse, tags=["reasoning"])
     async def get_params(node: Dict = Depends(check_scope("query"))):
@@ -420,6 +430,83 @@ def create_app(
             global_params=[float(v) for v in ml.global_prior],
             community_count=len(overrides),
             community_overrides=overrides,
+        )
+
+    @app.post("/retrain", response_model=RetrainResponse, tags=["reasoning"])
+    async def retrain(
+        req: RetrainRequest = RetrainRequest(),
+        node: Dict = Depends(check_scope("query")),
+    ):
+        """
+        Run batch parameter retraining on accumulated feedback pairs.
+
+        Collects all positive-reward and negative-reward paths buffered by
+        POST /feedback, cross-pairs them, and runs CSAParameterLearner.fit()
+        using the current global prior as the starting point.  The learned
+        10-parameter vector replaces MetaParameterLearner.global_prior so that
+        all future queries (including communities with no specific override) use
+        the improved values.
+
+        Requires at least one positive-reward AND one negative-reward item in
+        the buffer; returns 422 if either is absent.
+        """
+        import random as _random
+        from core.parameter_learner import CSAParameterLearner, _PARAM_NAMES
+
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Service not ready")
+
+        ml = _state["meta_learner"]
+        if ml is None:
+            raise HTTPException(status_code=501, detail="Meta-learning is not enabled")
+
+        buf = _state["feedback_buffer"]
+        positives = [item["path"] for item in buf if item["reward"] > 0]
+        negatives = [item["path"] for item in buf if item["reward"] < 0]
+
+        if not positives or not negatives:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Need ≥1 positive and ≥1 negative feedback item. "
+                    f"Buffer has {len(positives)} positive, {len(negatives)} negative."
+                ),
+            )
+
+        # Build cross-product pairs, capped at max_pairs
+        all_pairs = [(p, n) for p in positives for n in negatives]
+        if len(all_pairs) > req.max_pairs:
+            all_pairs = _random.sample(all_pairs, req.max_pairs)
+
+        learner = CSAParameterLearner(
+            adapter=_state["adapter"],
+            init_params=tuple(float(v) for v in ml.global_prior),
+            learning_rate=req.learning_rate,
+            max_iterations=req.max_iterations,
+        )
+        result = learner.fit(all_pairs)
+
+        # Update global prior with learned values; reset stale momentum
+        import numpy as np
+        ml.global_prior = np.array(result.params, dtype=np.float32)
+        ml._velocity = {}
+
+        if req.clear_buffer:
+            _state["feedback_buffer"] = []
+
+        learned_params = {
+            name: float(val)
+            for name, val in zip(_PARAM_NAMES, result.params)
+        }
+        return RetrainResponse(
+            status="success",
+            pairs_used=len(all_pairs),
+            iterations=result.n_iterations,
+            initial_loss=result.initial_loss,
+            final_loss=result.final_loss,
+            converged=result.converged,
+            learned_params=learned_params,
+            buffer_remaining=len(_state["feedback_buffer"]),
         )
 
     @app.get("/communities", response_model=CommunitiesResponse, tags=["graph"])

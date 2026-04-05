@@ -144,6 +144,47 @@ class ParamsImportRequest(BaseModel):
     )
 
 
+class RetrainRequest(BaseModel):
+    """Optional body for POST /retrain."""
+
+    max_pairs: int = Field(
+        default=500,
+        ge=1,
+        description="Maximum number of (positive, negative) training pairs to sample.",
+    )
+    max_iterations: int = Field(
+        default=200,
+        ge=1,
+        description="Iteration cap for CSAParameterLearner.fit().",
+    )
+    learning_rate: float = Field(
+        default=0.01,
+        gt=0.0,
+        description="Gradient descent step size for this retrain run.",
+    )
+    clear_buffer: bool = Field(
+        default=True,
+        description="Clear the feedback buffer after retraining (default True).",
+    )
+
+
+class RetrainResponse(BaseModel):
+    """Result of POST /retrain."""
+
+    status: str
+    pairs_used: int = Field(description="Number of (positive, negative) pairs used.")
+    iterations: int
+    initial_loss: float
+    final_loss: float
+    converged: bool
+    learned_params: Dict[str, float] = Field(
+        description="New global parameter values {param_name -> value}.",
+    )
+    buffer_remaining: int = Field(
+        description="Feedback items remaining in buffer after this call.",
+    )
+
+
 class CommunityResponse(BaseModel):
     entity_id: str
     community_id: int

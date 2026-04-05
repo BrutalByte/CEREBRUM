@@ -7,6 +7,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.9.3] — 2026-04-05
+
+### Added
+- **Phase 48: Auto-Retrain Scheduler**:
+    - **Feedback buffer** (`_state["feedback_buffer"]`): Every `POST /feedback` call now appends `{path, reward}` to an in-memory buffer alongside the existing online SGD update. The response includes `buffer_size` so clients can track accumulation.
+    - **`POST /retrain` endpoint**: Runs `CSAParameterLearner.fit()` on cross-paired positive/negative paths from the buffer. Uses the current `MetaParameterLearner.global_prior` as the starting point, then replaces it with the learned 10-parameter vector. Returns `RetrainResponse` with loss trajectory, convergence flag, and all learned param values.
+    - **`RetrainRequest` schema**: `max_pairs` (default 500), `max_iterations` (200), `learning_rate` (0.01), `clear_buffer` (True).
+    - **`RetrainResponse` schema**: `pairs_used`, `iterations`, `initial_loss`, `final_loss`, `converged`, `learned_params`, `buffer_remaining`.
+    - 5 new tests covering mixed-feedback requirement, response structure, global prior sync, buffer clear/keep.
+
+### Changed
+- `POST /feedback` response now includes `buffer_size` field.
+
 ## [1.9.2] — 2026-04-05
 
 ### Added

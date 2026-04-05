@@ -2898,6 +2898,50 @@ BridgeTwinEngine: 256 bridges at 1-hop, 956 at 2-hop, 1,146 at 3-hop (was 0 befo
 
 ---
 
+## Run 048 — Phase 48 Final: Auto-Retrain Scheduler Verified
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-05 |
+| **Phase**         | Phase 48 (Auto-Retrain Scheduler) |
+| **Purpose**       | Verify feedback buffer, POST /retrain, global prior update |
+| **Operator**      | Claude Code |
+| **Repo commit**   | (Phase 48 commit) |
+
+### Environment
+
+| Component    | Version |
+|---|---|
+| Python       | 3.14.0 |
+| OS           | Windows 11 Pro 10.0.26220 |
+| networkx     | 3.6.1 |
+| numpy        | 2.2.6 |
+| scipy        | 1.16.3 |
+| pytest       | 9.0.2 |
+
+### Command
+
+```
+python -m pytest tests/ --tb=no -q --ignore=tests/test_studio_robustness.py
+```
+
+### Results
+
+```
+collected 1270 items
+
+1268 passed, 1 skipped, 4 warnings in 14.70s
+```
+
+**Key Features Verified:**
+- Feedback buffer populated by POST /feedback.
+- POST /retrain: 422 on only-positive buffer, 200 with mixed feedback.
+- Learned params reflected in GET /params global_params.
+- Buffer clears by default; `clear_buffer=False` retains items.
+- Net +5 new tests.
+
+---
+
 ## Run 047 — Phase 47 Final: Params Persistence Verified
 
 | Field             | Value |
