@@ -567,3 +567,68 @@ class IngestReportSchema(BaseModel):
     provenance: str
     dry_run: bool
     timestamp: float
+
+
+# ---------------------------------------------------------------------------
+# Phase 50 — HypothesisEngine schemas
+# ---------------------------------------------------------------------------
+
+class HypothesisProposalSchema(BaseModel):
+    """A single proposed edge from multi-path abductive reasoning."""
+    hypothesis_id: str
+    source: str
+    target: str
+    derived_relation: str
+    confidence: float
+    path_count: int
+    independence_scores: List[float]
+    contradiction_score: float
+    derivation_text: str
+    supporting_paths: List[TraversalPathSchema]
+    intersection_nodes: List[str] = Field(
+        default_factory=list,
+        description="Intermediate nodes appearing in ≥2 independent paths (equifinality hubs).",
+    )
+
+
+class HypothesizeRequest(BaseModel):
+    source_id: str = Field(..., description="Source entity ID")
+    target_id: str = Field(..., description="Target entity ID")
+    max_paths: int = Field(default=10, ge=1, le=50, description="Max target-reaching paths to evaluate")
+    max_hop: int = Field(default=3, ge=1, le=5)
+    beam_width: int = Field(default=10, ge=1, le=30)
+    max_budget: int = Field(default=500, ge=10, le=2000)
+    min_confidence: float = Field(default=0.30, ge=0.0, le=1.0)
+    auto_materialize: bool = Field(default=False, description="Immediately write proposals to graph")
+
+
+class HypothesizeResponse(BaseModel):
+    source_id: str
+    target_id: str
+    proposals: List[HypothesisProposalSchema]
+    paths_explored: int
+    duration_seconds: float
+
+
+class HypothesisMaterializeRequest(BaseModel):
+    hypothesis_ids: List[str] = Field(
+        default_factory=list,
+        description="Specific proposal IDs to materialize; empty list = all from last run",
+    )
+    min_confidence: float = Field(
+        default=0.0,
+        description="Only materialize proposals at or above this confidence",
+    )
+
+
+class HypothesisMaterializeResponse(BaseModel):
+    materialized: int
+    edges_added: int
+
+
+class HypothesisStatusResponse(BaseModel):
+    last_source: Optional[str]
+    last_target: Optional[str]
+    proposal_count: int
+    can_rollback: bool
+    materialized_count: int

@@ -52,6 +52,9 @@ from api.schemas import (
     ParamsImportRequest,
     RetrainRequest,
     RetrainResponse,
+    HypothesisProposalSchema, HypothesizeRequest, HypothesizeResponse,
+    HypothesisMaterializeRequest, HypothesisMaterializeResponse,
+    HypothesisStatusResponse, TraversalPathSchema,
 )
 
 # ---------------------------------------------------------------------------
@@ -114,6 +117,7 @@ _state: Dict[str, Any] = {
     "feedback_buffer":  [],     # list of {"path": TraversalPath, "reward": float}
     "rem_engine":       None,   # REMEngine (lazy-initialized on first /rem call)
     "infer_engine":     None,   # TransitiveInferenceEngine (lazy-initialized on first /infer call)
+    "hypothesis_engine": None,  # HypothesisEngine (lazy-initialized on first /hypothesize call)
     "chat_manager":     None,   # ConversationManager (lazy-initialized on first /chat call)
     "chat_sessions":    {},     # session_id -> ConversationSession
     "text_ingestor":    None,   # TextIngestor (lazy-initialized on first /ingest call)
@@ -1362,6 +1366,171 @@ def create_app(
             last_report=schema,
             can_rollback=infer.can_rollback,
             active_rule_count=infer.rule_count(),
+        )
+
+    # ------------------------------------------------------------------
+    # Hypothesis endpoints  (/hypothesize/*)
+    # ------------------------------------------------------------------
+
+    def _get_hypothesis_engine():
+        from core.hypothesis_engine import HypothesisEngine
+        if _state["hypothesis_engine"] is None:
+            _state["hypothesis_engine"] = HypothesisEngine(
+                adapter=_state["adapter"],
+                csa_metadata=_state["csa_metadata"],
+            )
+        return _state["hypothesis_engine"]
+
+    def _proposal_to_schema(prop) -> HypothesisProposalSchema:
+        return HypothesisProposalSchema(
+            hypothesis_id=prop.hypothesis_id,
+            source=prop.source,
+            target=prop.target,
+            derived_relation=prop.derived_relation,
+            confidence=prop.confidence,
+            path_count=prop.path_count,
+            independence_scores=prop.independence_scores,
+            contradiction_score=prop.contradiction_score,
+            derivation_text=prop.derivation_text,
+            intersection_nodes=prop.intersection_nodes,
+            supporting_paths=[
+                TraversalPathSchema(
+                    nodes=p.nodes,
+                    score=p.score,
+                    attention_weights=p.attention_weights,
+                    community_sequence=p.community_sequence,
+                    edge_confidences=p.edge_confidences,
+                    edge_provenances=p.edge_provenances,
+                    edge_features=[list(f) for f in p.edge_features],
+                    beta_alpha=p.beta_alpha,
+                    beta_beta=p.beta_beta,
+                )
+                for p in prop.supporting_paths
+            ],
+        )
+
+    @app.post("/hypothesize", response_model=HypothesizeResponse, tags=["hypothesis"])
+    async def hypothesize(
+        req: HypothesizeRequest,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """
+        Find multi-hop paths between source_id and target_id, compose
+        relation chains, and return hypothesis proposals backed by
+        Noisy-OR combined evidence (equifinality).
+
+        Set ``auto_materialize=true`` to immediately write accepted
+        proposals to the graph.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        if req.source_id == req.target_id:
+            raise HTTPException(status_code=422, detail="source_id and target_id must be different")
+
+        adapter = _state["adapter"]
+        if adapter.get_entity(req.source_id) is None:
+            raise HTTPException(status_code=404, detail=f"Source entity not found: {req.source_id!r}")
+        if adapter.get_entity(req.target_id) is None:
+            raise HTTPException(status_code=404, detail=f"Target entity not found: {req.target_id!r}")
+
+        engine = _get_hypothesis_engine()
+        t0 = __import__("time").time()
+
+        try:
+            proposals = engine.generate(
+                source_id=req.source_id,
+                target_id=req.target_id,
+                max_paths=req.max_paths,
+                max_hop=req.max_hop,
+                beam_width=req.beam_width,
+                max_budget=req.max_budget,
+            )
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=str(exc))
+
+        if req.auto_materialize and proposals:
+            filtered = [p for p in proposals if p.confidence >= req.min_confidence]
+            engine.materialize(filtered)
+
+        return HypothesizeResponse(
+            source_id=req.source_id,
+            target_id=req.target_id,
+            proposals=[_proposal_to_schema(p) for p in proposals],
+            paths_explored=len(proposals),
+            duration_seconds=__import__("time").time() - t0,
+        )
+
+    @app.post(
+        "/hypothesize/materialize",
+        response_model=HypothesisMaterializeResponse,
+        tags=["hypothesis"],
+    )
+    async def hypothesize_materialize(
+        req: HypothesisMaterializeRequest,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """
+        Materialize proposals from the most recent /hypothesize run.
+
+        Pass ``hypothesis_ids`` to select specific proposals; omit (or pass
+        an empty list) to materialize all proposals above ``min_confidence``.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        engine = _get_hypothesis_engine()
+        last = engine.last_proposals
+        if not last:
+            raise HTTPException(status_code=409, detail="No proposals available. Call POST /hypothesize first.")
+
+        if req.hypothesis_ids:
+            id_set = set(req.hypothesis_ids)
+            to_mat = [p for p in last if p.hypothesis_id in id_set and p.confidence >= req.min_confidence]
+        else:
+            to_mat = [p for p in last if p.confidence >= req.min_confidence]
+
+        try:
+            added = engine.materialize(to_mat)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=str(exc))
+
+        return HypothesisMaterializeResponse(materialized=len(to_mat), edges_added=added)
+
+    @app.post(
+        "/hypothesize/rollback",
+        response_model=HypothesisMaterializeResponse,
+        tags=["hypothesis"],
+    )
+    async def hypothesize_rollback(node: Dict = Depends(get_authenticated_node)):
+        """
+        Remove all edges added by the most recent materialize call.
+        Raises 409 if nothing to roll back.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        engine = _get_hypothesis_engine()
+        try:
+            removed = engine.rollback()
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc))
+        return HypothesisMaterializeResponse(materialized=0, edges_added=-removed)
+
+    @app.get(
+        "/hypothesize/status",
+        response_model=HypothesisStatusResponse,
+        tags=["hypothesis"],
+    )
+    async def hypothesize_status(node: Dict = Depends(get_authenticated_node)):
+        """Return the last hypothesis run info and rollback availability."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        engine = _get_hypothesis_engine()
+        last = engine.last_proposals or []
+        return HypothesisStatusResponse(
+            last_source=engine.last_source,
+            last_target=engine.last_target,
+            proposal_count=len(last),
+            can_rollback=engine.can_rollback,
+            materialized_count=engine.materialized_count,
         )
 
     # ------------------------------------------------------------------
