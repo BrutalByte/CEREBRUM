@@ -49,6 +49,7 @@ from api.schemas import (
     MetaInsightEventSchema, MetaInsightStatusResponse,
     InsightGraphNodeSchema, InsightGraphEdgeSchema, InsightGraphResponse,
     ParamsResponse,
+    ParamsImportRequest,
 )
 
 # ---------------------------------------------------------------------------
@@ -364,6 +365,59 @@ def create_app(
         return ParamsResponse(
             param_names=list(_PARAM_NAMES),
             global_params=global_params,
+            community_count=len(overrides),
+            community_overrides=overrides,
+        )
+
+    @app.post("/params", response_model=ParamsResponse, tags=["reasoning"])
+    async def set_params(req: ParamsImportRequest, node: Dict = Depends(check_scope("query"))):
+        """
+        Restore a previously exported parameter state.
+
+        Accepts the payload produced by GET /params (or a subset thereof) and
+        replaces the running MetaParameterLearner's global prior and community
+        overrides.  Use this to:
+
+        - Reload a checkpoint after a server restart.
+        - Deploy a batch-trained parameter set (from CSAParameterLearner.fit()).
+        - Reset learned parameters to defaults (pass empty community_overrides).
+        """
+        from core.parameter_learner import MetaParameterLearner, _PARAM_NAMES, _DEFAULT_INIT
+        import numpy as np
+
+        ml = _state["meta_learner"]
+        if ml is None:
+            # Meta-learning not enabled; create a learner to hold the imported state.
+            ml = MetaParameterLearner()
+            _state["meta_learner"] = ml
+
+        # Validate global_prior length
+        if len(req.global_prior) != len(_DEFAULT_INIT):
+            raise HTTPException(
+                status_code=422,
+                detail=f"global_prior must have {len(_DEFAULT_INIT)} elements, got {len(req.global_prior)}",
+            )
+
+        ml.global_prior = np.array(req.global_prior, dtype=np.float32)
+        ml._n = len(ml.global_prior)
+        ml.community_overrides = {
+            int(cid): np.array(vec, dtype=np.float32)
+            for cid, vec in req.community_overrides.items()
+        }
+        if req.learning_rate is not None:
+            ml.learning_rate = req.learning_rate
+        if req.momentum is not None:
+            ml.momentum = req.momentum
+        # Reset velocity — stale momentum from previous run is misleading.
+        ml._velocity = {}
+
+        overrides = {
+            str(cid): [float(v) for v in vec]
+            for cid, vec in ml.community_overrides.items()
+        }
+        return ParamsResponse(
+            param_names=list(_PARAM_NAMES),
+            global_params=[float(v) for v in ml.global_prior],
             community_count=len(overrides),
             community_overrides=overrides,
         )

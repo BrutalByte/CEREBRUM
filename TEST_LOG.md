@@ -2898,6 +2898,50 @@ BridgeTwinEngine: 256 bridges at 1-hop, 956 at 2-hop, 1,146 at 3-hop (was 0 befo
 
 ---
 
+## Run 047 — Phase 47 Final: Params Persistence Verified
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-05 |
+| **Phase**         | Phase 47 (Params Persistence) |
+| **Purpose**       | Verify MetaParameterLearner serialisation, POST /params, --params-file |
+| **Operator**      | Claude Code |
+| **Repo commit**   | (Phase 47 commit) |
+
+### Environment
+
+| Component    | Version |
+|---|---|
+| Python       | 3.14.0 |
+| OS           | Windows 11 Pro 10.0.26220 |
+| networkx     | 3.6.1 |
+| numpy        | 2.2.6 |
+| scipy        | 1.16.3 |
+| pytest       | 9.0.2 |
+
+### Command
+
+```
+python -m pytest tests/ --tb=no -q --ignore=tests/test_studio_robustness.py
+```
+
+### Results
+
+```
+collected 1265 items
+
+1263 passed, 1 skipped, 4 warnings in 14.34s
+```
+
+**Key Features Verified:**
+- `MetaParameterLearner.to_dict()` / `from_dict()` JSON round-trip correct.
+- `POST /params` restores global prior, community overrides; 422 on wrong length.
+- Export → reset → re-import cycle preserves community count.
+- `test_temporal_sliding_window` flakiness fixed (deterministic embeddings).
+- Net +9 new tests.
+
+---
+
 ## Run 046 — Phase 46 Final: Live Feedback Loop Verified
 
 | Field             | Value |

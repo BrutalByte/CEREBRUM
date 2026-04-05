@@ -10,9 +10,10 @@ def test_temporal_sliding_window():
     G.add_edge("A", "C", relation="works_at", valid_to=190.0)
     
     adapter = NetworkXAdapter(G)
-    # 384-dim random embeddings
+    # Identical unit embeddings so cosine_sim == 1.0 for all pairs,
+    # ensuring only the temporal decay term drives the assertion.
     for node in G.nodes():
-        adapter.embeddings[node] = np.random.rand(384)
+        adapter.embeddings[node] = np.ones(384)
     
     # query_time = 200
     # "A" -> "C" (valid_to=190, elapsed=10) -> higher td

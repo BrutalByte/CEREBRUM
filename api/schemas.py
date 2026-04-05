@@ -123,6 +123,27 @@ class ParamsResponse(BaseModel):
     )
 
 
+class ParamsImportRequest(BaseModel):
+    """Body for POST /params — restore a previously exported parameter state."""
+
+    global_prior: List[float] = Field(
+        ...,
+        description="10-element global parameter vector (alpha … theta).",
+    )
+    community_overrides: Dict[str, List[float]] = Field(
+        default_factory=dict,
+        description="Per-community overrides to restore {community_id -> [alpha…theta]}.",
+    )
+    learning_rate: Optional[float] = Field(
+        default=None,
+        description="Override the learning rate (leave null to keep current).",
+    )
+    momentum: Optional[float] = Field(
+        default=None,
+        description="Override momentum (leave null to keep current).",
+    )
+
+
 class CommunityResponse(BaseModel):
     entity_id: str
     community_id: int

@@ -458,5 +458,62 @@ class TestAdaptiveLearning:
         })
         assert r.status_code == 501
 
+    def test_post_params_restores_global_prior(self, client):
+        """Phase 47: POST /params replaces the global prior and returns it."""
+        custom = [0.1, 0.2, 0.3, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.5]
+        r = client.post("/params", json={"global_prior": custom, "community_overrides": {}})
+        assert r.status_code == 200
+        body = r.json()
+        assert body["global_params"] == pytest.approx(custom, abs=1e-5)
+        assert body["community_count"] == 0
+
+    def test_post_params_restores_community_overrides(self, client):
+        """Phase 47: POST /params restores per-community overrides."""
+        custom_prior = [0.4] * 10
+        custom_overrides = {"5": [0.9, 0.1, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]}
+        r = client.post("/params", json={
+            "global_prior": custom_prior,
+            "community_overrides": custom_overrides,
+        })
+        assert r.status_code == 200
+        body = r.json()
+        assert "5" in body["community_overrides"]
+        assert body["community_overrides"]["5"] == pytest.approx(custom_overrides["5"], abs=1e-5)
+
+    def test_post_params_export_import_roundtrip(self, client):
+        """Phase 47: GET /params → POST /params produces identical state."""
+        # 1. Send some feedback to create community overrides
+        r_query = client.post("/query", json={"query": "newton", "seeds": ["newton"], "top_k": 1})
+        path_data = r_query.json()["paths"][0]
+        client.post("/feedback", json={
+            "path_nodes": [n["label"] for n in path_data["path"] if n["type"] == "entity"],
+            "edge_features": path_data["edge_features"],
+            "community_sequence": path_data["community_sequence"],
+            "reward": 1.0,
+        })
+
+        # 2. Export
+        r_export = client.get("/params")
+        exported = r_export.json()
+
+        # 3. Reset by posting default params
+        from core.parameter_learner import _DEFAULT_INIT
+        client.post("/params", json={"global_prior": list(_DEFAULT_INIT), "community_overrides": {}})
+        assert client.get("/params").json()["community_count"] == 0
+
+        # 4. Re-import exported state
+        r_import = client.post("/params", json={
+            "global_prior": exported["global_params"],
+            "community_overrides": exported["community_overrides"],
+        })
+        assert r_import.status_code == 200
+        reimported = r_import.json()
+        assert reimported["community_count"] == exported["community_count"]
+
+    def test_post_params_wrong_length_returns_422(self, client):
+        """Phase 47: POST /params with wrong-length vector returns 422."""
+        r = client.post("/params", json={"global_prior": [0.5, 0.5, 0.5], "community_overrides": {}})
+        assert r.status_code == 422
+
 
 

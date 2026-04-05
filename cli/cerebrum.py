@@ -472,13 +472,28 @@ def cmd_serve(args):
                     k, v = pair.split(":")
                     bridge_weights[k] = float(v)
 
-    app     = create_app(
+    app = create_app(
         adapter=adapter,
         embedding_engine=engine,
         hierarchical_dscf_enabled=args.hierarchical,
         target_communities=args.target_communities,
         default_edge_type_weights=bridge_weights,
     )
+
+    # Restore learned parameters from file if provided
+    params_file = getattr(args, "params_file", None)
+    if params_file:
+        import json as _json
+        from core.parameter_learner import MetaParameterLearner
+        from api.server import _state
+        try:
+            with open(params_file) as fh:
+                data = _json.load(fh)
+            _state["meta_learner"] = MetaParameterLearner.from_dict(data)
+            n_overrides = len(_state["meta_learner"].community_overrides)
+            print(f"  [CLI] Loaded params from {params_file} ({n_overrides} community overrides)")
+        except Exception as exc:
+            print(f"  [CLI] Warning: could not load params from {params_file}: {exc}", file=sys.stderr)
 
     print(f"Serving CEREBRUM API on http://localhost:{args.port}")
     uvicorn.run(app, host="0.0.0.0", port=args.port)
@@ -561,6 +576,17 @@ def main():
     s.add_argument("--hierarchical", action="store_true", help="Use hierarchical DSCF for API server")
     s.add_argument("--target-communities", type=int, default=500, dest="target_communities", help="Target communities for hierarchical DSCF")
     s.add_argument("--bridge-bonus", help="JSON or 'key:val,key:val' for default API edge weights")
+    s.add_argument(
+        "--params-file",
+        dest="params_file",
+        default=None,
+        metavar="FILE",
+        help=(
+            "Path to a JSON file containing learned CSA parameters "
+            "(produced by GET /params). Restores the MetaParameterLearner state "
+            "at startup so online-learned parameters survive server restarts."
+        ),
+    )
 
     args = parser.parse_args()
 

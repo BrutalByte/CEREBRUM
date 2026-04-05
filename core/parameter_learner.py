@@ -200,6 +200,49 @@ class MetaParameterLearner:
             theta = np.clip(theta, 0.0, 2.0)
             self.community_overrides[cid] = theta
 
+    # ------------------------------------------------------------------
+    # Serialization
+    # ------------------------------------------------------------------
+
+    def to_dict(self) -> dict:
+        """
+        Serialise the learned state to a JSON-compatible dict.
+
+        Schema::
+
+            {
+                "global_prior": [float, ...],   # length 10
+                "learning_rate": float,
+                "momentum": float,
+                "community_overrides": {"<cid>": [float, ...]},
+            }
+        """
+        return {
+            "global_prior": self.global_prior.tolist(),
+            "learning_rate": self.learning_rate,
+            "momentum": self.momentum,
+            "community_overrides": {
+                str(cid): vec.tolist()
+                for cid, vec in self.community_overrides.items()
+            },
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "MetaParameterLearner":
+        """
+        Restore a MetaParameterLearner from a dict produced by ``to_dict()``.
+        """
+        obj = cls(
+            global_prior=tuple(data["global_prior"]),
+            learning_rate=data.get("learning_rate", 0.05),
+            momentum=data.get("momentum", 0.9),
+        )
+        obj.community_overrides = {
+            int(cid): np.array(vec, dtype=np.float32)
+            for cid, vec in data.get("community_overrides", {}).items()
+        }
+        return obj
+
 
 # ---------------------------------------------------------------------------
 # CSAParameterLearner

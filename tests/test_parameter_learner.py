@@ -21,6 +21,7 @@ import networkx as nx
 from core.parameter_learner import (
     CSAParameterLearner,
     LearningResult,
+    MetaParameterLearner,
     _DEFAULT_INIT,
     _N_PARAMS,
 )
@@ -299,3 +300,71 @@ def test_converges_on_trivially_separable_pairs():
     )
     result = learner.fit(pairs)
     assert result.final_loss == pytest.approx(0.0, abs=0.05)
+
+
+# ---------------------------------------------------------------------------
+# MetaParameterLearner serialisation (Phase 47)
+# ---------------------------------------------------------------------------
+
+def _make_meta_learner_with_overrides() -> MetaParameterLearner:
+    """Return a MetaParameterLearner that has accumulated a community override."""
+    from reasoning.traversal import TraversalPath
+    ml = MetaParameterLearner(learning_rate=0.1)
+    path = TraversalPath(
+        nodes=["A", "r", "B"],
+        edge_features=[(0.9, 1.0, 0.1, 0.0, 0.5, 0.5, 0.5, 0.5, 0.0, 1.0)],
+        community_sequence=[42],
+    )
+    ml.update_from_feedback(path, reward=1.0)
+    return ml
+
+
+def test_meta_to_dict_roundtrip():
+    """to_dict / from_dict restores global_prior, overrides, and hyperparams."""
+    original = _make_meta_learner_with_overrides()
+    data = original.to_dict()
+
+    restored = MetaParameterLearner.from_dict(data)
+
+    assert list(restored.global_prior) == pytest.approx(list(original.global_prior))
+    assert set(restored.community_overrides.keys()) == set(original.community_overrides.keys())
+    for cid in original.community_overrides:
+        assert list(restored.community_overrides[cid]) == pytest.approx(
+            list(original.community_overrides[cid])
+        )
+    assert restored.learning_rate == pytest.approx(original.learning_rate)
+    assert restored.momentum == pytest.approx(original.momentum)
+
+
+def test_meta_to_dict_schema_keys():
+    """to_dict produces the expected top-level keys."""
+    ml = MetaParameterLearner()
+    d = ml.to_dict()
+    assert set(d.keys()) == {"global_prior", "learning_rate", "momentum", "community_overrides"}
+
+
+def test_meta_from_dict_empty_overrides():
+    """from_dict with no community_overrides produces an empty override dict."""
+    data = {"global_prior": list(_DEFAULT_INIT), "learning_rate": 0.05, "momentum": 0.9}
+    ml = MetaParameterLearner.from_dict(data)
+    assert ml.community_overrides == {}
+
+
+def test_meta_to_dict_community_override_values_are_floats():
+    """Community override lists contain plain Python floats (JSON-serialisable)."""
+    import json
+    ml = _make_meta_learner_with_overrides()
+    d = ml.to_dict()
+    # Must not raise
+    json.dumps(d)
+
+
+def test_meta_from_dict_get_params_uses_restored_override():
+    """After from_dict, get_params(cid) returns the restored override."""
+    original = _make_meta_learner_with_overrides()
+    expected = original.get_params(42)
+
+    data = original.to_dict()
+    restored = MetaParameterLearner.from_dict(data)
+
+    assert restored.get_params(42) == pytest.approx(expected)

@@ -7,6 +7,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.9.2] — 2026-04-05
+
+### Added
+- **Phase 47: Params Persistence**:
+    - **`MetaParameterLearner.to_dict()` / `from_dict()`**: Full JSON serialisation of the learned state (global prior, community overrides, hyperparams). Enables checkpoint/restore across server restarts.
+    - **`POST /params` endpoint**: Accepts a `ParamsImportRequest` (global_prior + community_overrides) and replaces the running learner state. Supports the full export → restart → import workflow. Returns the new `ParamsResponse` so callers can verify the applied state. Invalid vector lengths return 422.
+    - **`ParamsImportRequest` schema**: New Pydantic model with optional `learning_rate` and `momentum` overrides.
+    - **`--params-file FILE` CLI flag** (`cerebrum serve`): Loads a JSON checkpoint at startup, restoring the MetaParameterLearner before the server begins accepting requests.
+    - 9 new tests covering `to_dict`/`from_dict` round-trip, `POST /params` restore/422, and full export→reset→import cycle.
+
+### Fixed
+- **`test_temporal_sliding_window` flakiness**: Replaced `np.random.rand(384)` embeddings with `np.ones(384)` so cosine similarity is equal for all pairs, making the temporal decay signal the sole differentiator.
+
 ## [1.9.1] — 2026-04-04
 
 ### Added
