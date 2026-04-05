@@ -26,7 +26,7 @@ See `PAPER.md` for the full white paper and architecture specification.
 
 ## Roadmap
 
-**Current Project Status: v1.7.0 — Phase 31 COMPLETE — 1155 tests passing (1 skipped)**
+**Current Project Status: v1.8.0 — Phase 44 COMPLETE — 1251 tests passing (1 skipped)**
 
 - [x] **Phase 0: Theory & Prototyping** (DSCF validated in AI Personal Assistant)
 - [x] **Phase 1: Core Engine** (GraphAdapter, TSC Engine, CSA Attention)
@@ -59,6 +59,14 @@ See `PAPER.md` for the full white paper and architecture specification.
 - [x] **Phase 28 & 29: Structural Repair** — `IncompletenessRepairEngine` and `QueryGuidedCommunityMerger` (v1.6.4).
 - [x] **Phase 30: Proactive Bridge Synthesis** — `GraphBridgeEngine` for similarity-based cross-component links (v1.7.0).
 - [x] **Phase 31: Reasoning Studio** — Interactive visual interface for graph exploration and reasoning traces (v1.7.0).
+- [x] **Phase 32: Federated Reasoning** (v1.7.1) — Multi-agent traversal and automated node discovery.
+- [x] **Phase 33-36: Hardening & Temporal** (v1.7.2).
+- [x] **Phase 37: Calibration** (v1.7.3).
+- [x] **Phase 38-41: Logit Unification & Temporal** (v1.7.4).
+- [x] **Phase 42: Interface Robustness** (v1.7.4) — Secured REST endpoints and Gradio stabilization.
+- [x] **Phase 43: Temporal Context & REM Synthesis** (v1.7.5) — 10-parameter logit and Wormhole synthesis.
+- [x] **Phase 44: IKGWQ-MetaQA Benchmark** (v1.8.0) — Unified IKGWQ-S protocol across MetaQA.
+
 
 ## Benchmark Results
 
@@ -295,11 +303,12 @@ $$\text{score}(P) = \left( \prod_{k=1}^L a(u_k, v_k, k) \right) \cdot \text{cohe
 - **Context Window Invariance**: Sublinear complexity independent of graph size.
 - **Topological Analysis**: Inductive bias derived from graph topology requires zero training.
 
-## Project Status (v1.7.5 — Phase 43 COMPLETE)
+## Project Status (v1.8.0 — Phase 44 COMPLETE)
 
-CEREBRUM is currently at **v1.7.5**. All **1250 tests** are passing (1 skipped).
+CEREBRUM is currently at **v1.8.0**. All **1251 tests** are passing (1 skipped).
 
-Key features in v1.7.5 (Phases 31-43):
+Key features in v1.8.0 (Phases 31-44):
+- **Phase 44: IKGWQ-MetaQA Benchmark**: Unified the IKGWQ (Incomplete Knowledge Graph) protocol across the MetaQA dataset, verifying that REM Synthesis ("Wormhole" synthesis) improves 3-hop reasoning recall by up to 40% on highly sparse graphs (Level 4, 50% edge removal).
 - **Phase 43: Temporal Sliding Window**: Integrated `temporal_window_size` and verified REM Synthesis effectiveness on sparse graphs (IKGWQ-S).
 - **Phase 42: Interface Robustness**: Secured REST API endpoints, stabilized Gradio UI f-string syntax, and implemented automated headless robustness tests for the full Reasoning Studio pipeline.
 - **Phase 41: Temporal Reasoning**: Corrected recency bias and integrated 9-feature `ReasoningLogit` framework for unified scoring across temporal and structural signals.

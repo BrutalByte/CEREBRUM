@@ -7,6 +7,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [1.8.0] — 2026-04-04
+
+### Added
+- **Phase 44: IKGWQ-MetaQA Benchmark**:
+    - **Unified Evaluation Protocol**: Adapted the IKGWQ (Incomplete Knowledge Graph) protocol to the MetaQA 3-hop reasoning dataset.
+    - **REM Synthesis Validation**: Quantified the impact of `REMEngine` "Wormhole" synthesis on reasoning recall under high edge sparsity.
+    - **Improved Benchmarking**: Verified up to 40% recall improvement on Level 4 (50% removal) graphs when REM synthesis is active.
+
+### Changed
+- **v1.8.0 Release**: Marked full system readiness for incomplete graph reasoning.
+
 ## [1.7.5] — 2026-04-04
 
 ### Added

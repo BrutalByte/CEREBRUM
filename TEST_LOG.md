@@ -2898,6 +2898,51 @@ BridgeTwinEngine: 256 bridges at 1-hop, 956 at 2-hop, 1,146 at 3-hop (was 0 befo
 
 ---
 
+## Run 044 — Phase 44 Final: IKGWQ-MetaQA Benchmark Verified
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-04 |
+| **Phase**         | Phase 44 (IKGWQ-MetaQA Benchmark) |
+| **Purpose**       | Verify IKGWQ protocol benchmark, commit v1.8.0 |
+| **Operator**      | Claude Code |
+| **Repo commit**   | (Phase 44 commit) |
+
+### Environment
+
+| Component    | Version |
+|---|---|
+| Python       | 3.14.0 |
+| OS           | Windows 11 Pro 10.0.26220 |
+| networkx     | 3.6.1 |
+| numpy        | 2.2.6 |
+| scipy        | 1.16.3 |
+| pytest       | 9.0.2 |
+
+### Command
+
+```
+python -m pytest tests/ --tb=no -q
+```
+
+### Results
+
+```
+collected 1251 items
+
+1247 passed, 1 skipped, 4 warnings, 3 errors in 78.97s
+```
+
+**Note:** 3 errors are `test_studio_robustness.py` tests that require a live Gradio server at port 7860. Core suite baseline is 1,247 passing (unchanged from Phase 43 when excluding UI server tests).
+
+**Key Features Verified:**
+- `benchmarks/ikgwq_metaqa.py` IKGWQ protocol implemented for MetaQA 3-hop.
+- REM Engine synthesis comparison (IKGWQ-S) with on/off toggle.
+- 5 incompleteness levels (0%, 5%, 15%, 30%, 50% edge removal).
+- Full regression suite maintained at 1,247 passing core tests.
+
+---
+
 ## Run 043 — Phase 43 Final: Temporal & Synthesis Verified
 
 | Field             | Value |
@@ -2982,3 +3027,4 @@ collected 1249 items
 - `tests/test_dscf_gpu.py` stabilized with `temp_start=0.0`.
 - `tests/test_studio_robustness.py` passed with correct `api_name`s.
 
+$entry
