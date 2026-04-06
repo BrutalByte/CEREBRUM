@@ -645,6 +645,7 @@ class ResearchCandidateSchema(BaseModel):
     gap_score: float
     community_distance: int
     seeded_by: str
+    local_density: float = 0.0
     created_at: float
 
 

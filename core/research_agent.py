@@ -62,6 +62,9 @@ class ResearchCandidate:
     seeded_by: str
     """Origin: ``"embedding_scan"`` | ``"insight_engine"`` | ``"manual"``."""
 
+    local_density: float = 0.0
+    """Connection density of the local 2-hop neighbourhood (0 = sparse, 1 = dense)."""
+
     created_at: float = field(default_factory=time.time)
 
 
@@ -316,12 +319,17 @@ class ResearchAgent:
                 self._evaluated_pairs.add(pair)
 
             try:
+                strategy = self._select_strategy(cand.local_density)
+                logger.debug(
+                    "ResearchAgent strategy for (%s→%s): density=%.3f "
+                    "→ hop=%d beam=%d budget=%d",
+                    cand.source_id, cand.target_id, cand.local_density,
+                    strategy["max_hop"], strategy["beam_width"], strategy["max_budget"],
+                )
                 proposals = self._hypothesis_engine.generate(
                     source_id=cand.source_id,
                     target_id=cand.target_id,
-                    max_hop=self.max_hop,
-                    beam_width=self.beam_width,
-                    max_budget=self.max_budget,
+                    **strategy,
                 )
             except Exception as exc:
                 logger.debug("HypothesisEngine.generate(%s, %s) failed: %s",
@@ -428,7 +436,7 @@ class ResearchAgent:
                     cid_v = cmap.get(v, 0)
                     community_dist = 0 if cid_u == cid_v else 1
 
-                    potential = self._score_discovery_potential(
+                    potential, density = self._score_discovery_potential(
                         gap_score=gap_score,
                         community_dist=community_dist,
                         G=G,
@@ -446,6 +454,7 @@ class ResearchAgent:
                         gap_score=gap_score,
                         community_distance=community_dist,
                         seeded_by="embedding_scan",
+                        local_density=density,
                     ))
 
             # --- InsightEngine seeding ---
@@ -476,7 +485,7 @@ class ResearchAgent:
                         cid_v = cmap.get(v, 0)
                         community_dist = 0 if cid_u == cid_v else 1
 
-                        potential = self._score_discovery_potential(
+                        potential, density = self._score_discovery_potential(
                             gap_score=gap_score,
                             community_dist=community_dist,
                             G=G,
@@ -491,6 +500,7 @@ class ResearchAgent:
                             gap_score=gap_score,
                             community_distance=community_dist,
                             seeded_by="insight_engine",
+                            local_density=density,
                         ))
                 except Exception as exc:
                     logger.debug("InsightEngine seeding error: %s", exc)
@@ -503,6 +513,25 @@ class ResearchAgent:
         candidates.sort(key=lambda c: c.discovery_potential, reverse=True)
         return candidates[:self.candidate_limit]
 
+    def _select_strategy(self, local_density: float) -> Dict[str, int]:
+        """
+        Choose beam search parameters based on local graph density.
+
+        Dense  (> 0.4) — paths are short and abundant: shallow + narrow beam.
+        Sparse (< 0.1) — paths are long and rare: deep + wide beam.
+        Transitional   — use the agent's configured defaults.
+        """
+        if local_density > 0.4:
+            return {"max_hop": 2, "beam_width": 5, "max_budget": 150}
+        elif local_density < 0.1:
+            return {"max_hop": 4, "beam_width": 12, "max_budget": 500}
+        else:
+            return {
+                "max_hop": self.max_hop,
+                "beam_width": self.beam_width,
+                "max_budget": self.max_budget,
+            }
+
     def _score_discovery_potential(
         self,
         gap_score: float,
@@ -511,9 +540,9 @@ class ResearchAgent:
         u: str,
         v: str,
         cmap: Dict[str, int],
-    ) -> float:
+    ) -> Tuple[float, float]:
         """
-        Compute discovery_potential ∈ [0, 1].
+        Compute (discovery_potential, local_density), both ∈ [0, 1].
 
         Formula:
             0.4 * gap_score           (semantic gap — want high)
@@ -541,4 +570,4 @@ class ResearchAgent:
             + 0.4 * (1.0 - min(1.0, conn_density))
             + 0.2 * cross_community
         )
-        return min(1.0, max(0.0, potential))
+        return min(1.0, max(0.0, potential)), conn_density

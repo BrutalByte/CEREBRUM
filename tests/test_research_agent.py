@@ -95,14 +95,14 @@ def test_research_agent_mine_candidates_disconnected():
 
 
 def test_research_agent_score_discovery_potential_range():
-    """_score_discovery_potential always returns a value in [0, 1]."""
+    """_score_discovery_potential returns (potential, density) both in [0, 1]."""
     G = nx.DiGraph()
     G.add_edge("A", "C", relation="REL")
     G.add_edge("C", "B", relation="REL")
     adapter = _make_adapter(G)
     agent = _make_agent(adapter)
     cmap = {"A": 0, "B": 1, "C": 0}
-    score = agent._score_discovery_potential(
+    potential, density = agent._score_discovery_potential(
         gap_score=0.4,
         community_dist=1,
         G=G,
@@ -110,7 +110,8 @@ def test_research_agent_score_discovery_potential_range():
         v="B",
         cmap=cmap,
     )
-    assert 0.0 <= score <= 1.0
+    assert 0.0 <= potential <= 1.0
+    assert 0.0 <= density <= 1.0
 
 
 def test_research_agent_scan_once_returns_list():
@@ -245,3 +246,63 @@ def test_research_agent_capacity_cap():
     assert len(ids) == 3
     assert "f0" not in ids   # oldest dropped
     assert "f4" in ids        # newest kept
+
+
+# ---------------------------------------------------------------------------
+# Phase 53 — Adaptive strategy tests
+# ---------------------------------------------------------------------------
+
+def test_research_agent_strategy_dense():
+    """Dense neighbourhood (>0.4) → shallow narrow beam."""
+    G, nodes, adapter = _linear_graph(["PART_OF", "PART_OF"])
+    agent = _make_agent(adapter)
+    strategy = agent._select_strategy(0.6)
+    assert strategy["max_hop"] == 2
+    assert strategy["beam_width"] == 5
+    assert strategy["max_budget"] == 150
+
+
+def test_research_agent_strategy_sparse():
+    """Sparse neighbourhood (<0.1) → deep wide beam."""
+    G, nodes, adapter = _linear_graph(["PART_OF", "PART_OF"])
+    agent = _make_agent(adapter)
+    strategy = agent._select_strategy(0.05)
+    assert strategy["max_hop"] == 4
+    assert strategy["beam_width"] == 12
+    assert strategy["max_budget"] == 500
+
+
+def test_research_agent_strategy_transitional():
+    """Transitional density (0.1–0.4) → agent's configured defaults."""
+    G, nodes, adapter = _linear_graph(["PART_OF", "PART_OF"])
+    agent = _make_agent(adapter)  # defaults: max_hop=3, beam_width=8
+    strategy = agent._select_strategy(0.25)
+    assert strategy["max_hop"] == agent.max_hop
+    assert strategy["beam_width"] == agent.beam_width
+    assert strategy["max_budget"] == agent.max_budget
+
+
+def test_research_agent_candidate_has_local_density():
+    """Candidates produced by _mine_candidates() carry local_density in [0, 1]."""
+    G = nx.DiGraph()
+    # Build a small connected graph so density is non-trivial
+    for i in range(4):
+        G.add_edge(f"N{i}", f"N{(i+1) % 4}", relation="REL")
+    G.add_node("X")
+    G.add_node("Y")
+    adapter = NetworkXAdapter(G)
+    rng = np.random.default_rng(5)
+    dim = 8
+    base = np.ones(dim, dtype=np.float32)
+    # X and Y get similar embeddings so they pass the similarity filter
+    adapter.embeddings = {
+        n: base + rng.random(dim).astype(np.float32) * 0.2
+        for n in G.nodes()
+    }
+    adapter.community_map = {n: 0 for n in G.nodes()}
+    agent = _make_agent(adapter)
+    candidates = agent._mine_candidates()
+    for c in candidates:
+        assert 0.0 <= c.local_density <= 1.0, (
+            f"local_density {c.local_density} out of range for ({c.source_id}, {c.target_id})"
+        )

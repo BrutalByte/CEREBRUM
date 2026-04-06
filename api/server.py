@@ -1572,6 +1572,7 @@ def create_app(
                 gap_score=cand.gap_score,
                 community_distance=cand.community_distance,
                 seeded_by=cand.seeded_by,
+                local_density=cand.local_density,
                 created_at=cand.created_at,
             ),
             proposals=[_proposal_to_schema(p) for p in f.proposals],
