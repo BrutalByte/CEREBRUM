@@ -46,6 +46,8 @@ class QueryResponse(BaseModel):
     seeds_used: List[str]
     paths: List[PathResult]
     total_paths_explored: int
+    partial: bool = False
+    error: Optional[str] = None
 
 
 class CommunityInfo(BaseModel):

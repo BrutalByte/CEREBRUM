@@ -297,23 +297,35 @@ def create_app(
             max_hop=req.max_hop,
             max_budget=req.max_budget,
         )
-        paths   = traversal.traverse(seeds)
+        _traversal_error: Optional[str] = None
+        try:
+            paths = traversal.traverse(seeds)
+        except Exception as exc:
+            _api_log.warning("/query traversal failed (seeds=%s): %s", seeds, exc)
+            paths = traversal._partial_paths  # return whatever completed before the failure
+            _traversal_error = str(exc)
 
         # Pass seed embedding as query signal for semantic re-ranking
         q_emb = adapter.get_embedding(seeds[0]) if seeds else None
         answers = extract(paths, top_k=req.top_k, query_embedding=q_emb)
 
-        # Persist query result for AAAK warm-up on next restart
-        if _state["query_log"] is not None:
-            _state["query_log"].record(seeds, answers)
-        if _state["aaak_cache"] is not None and answers:
-            for ans in answers:
-                if ans.best_path is not None:
-                    from reasoning.aaak_steered_traversal import _path_rel_sequence
-                    rel_seq = _path_rel_sequence(ans.best_path)
-                    if rel_seq:
-                        weight = max(1, int(ans.score * 10))
-                        _state["aaak_cache"].record(rel_seq, weight=weight)
+        # Persist query result for AAAK warm-up on next restart (fire-and-forget — never crash the response)
+        try:
+            if _state["query_log"] is not None:
+                _state["query_log"].record(seeds, answers)
+        except Exception as exc:
+            _api_log.warning("QueryLog.record failed: %s", exc)
+        try:
+            if _state["aaak_cache"] is not None and answers:
+                from reasoning.aaak_steered_traversal import _path_rel_sequence
+                for ans in answers:
+                    if ans.best_path is not None:
+                        rel_seq = _path_rel_sequence(ans.best_path)
+                        if rel_seq:
+                            weight = max(1, int(ans.score * 10))
+                            _state["aaak_cache"].record(rel_seq, weight=weight)
+        except Exception as exc:
+            _api_log.warning("AAAKCache.record failed: %s", exc)
 
         # Format response
         structured = to_structured(answers, query=req.query, adapter=adapter)
@@ -335,6 +347,8 @@ def create_app(
             seeds_used=seeds,
             paths=path_results,
             total_paths_explored=len(paths),
+            partial=bool(_traversal_error),
+            error=_traversal_error,
         )
 
     @app.post("/query/stream", tags=["reasoning"])

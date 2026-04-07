@@ -327,6 +327,7 @@ class BeamTraversal:
         self.calibration_engine = calibration_engine
         self.uncertainty_log: List[Dict[str, Any]] = []
         self.task_queue = task_queue # Store the TaskQueue instance
+        self._partial_paths: List[TraversalPath] = []  # checkpointed per-hop; survives exceptions
 
     def traverse(
         self,
@@ -654,6 +655,7 @@ class BeamTraversal:
             # valid answers with zero benefit (no further expansion occurs).
             beam = self._prune_candidates(candidates, hop)
             all_paths.extend(beam)
+            self._partial_paths = list(all_paths)  # checkpoint: survives mid-hop exceptions
 
         return all_paths
 

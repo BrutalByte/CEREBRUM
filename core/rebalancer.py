@@ -200,6 +200,15 @@ class GlobalRebalancer:
 
     def _rebalance_worker(self) -> None:
         """Worker: run best-of-N DSCF and commit result under adapter lock."""
+        try:
+            self._rebalance_worker_inner()
+        except Exception as exc:
+            logger.error(
+                "Rebalance worker crashed unexpectedly: %s", exc, exc_info=True
+            )
+
+    def _rebalance_worker_inner(self) -> None:
+        """Inner rebalance logic — called by _rebalance_worker inside a top-level guard."""
         from core.community_engine import dscf_communities, modularity_score
 
         G = self._adapter._G
