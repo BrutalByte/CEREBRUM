@@ -94,7 +94,7 @@ class SentenceEngine(EmbeddingEngine):
     Default model: all-MiniLM-L6-v2 (384-dim, fast, good quality)
     """
 
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2", device: Optional[str] = None):
+    def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5", device: Optional[str] = None):
         try:
             from core.hardware import (
                 HAS_CUDA, HAS_MPS, HAS_HPU, HAS_XLA,
@@ -109,12 +109,8 @@ class SentenceEngine(EmbeddingEngine):
                 elif HAS_MPS:
                     device = "mps"
                 elif HAS_HPU:
-                    # sentence-transformers delegates to torch; HPU device
-                    # is surfaced the same way as any torch device string.
                     device = "hpu"
                 elif HAS_XLA:
-                    # XLA devices must be obtained through xla_model; pass
-                    # the string "xla" and let SentenceTransformer/torch resolve it.
                     device = "xla"
                 else:
                     device = "cpu"
@@ -126,7 +122,10 @@ class SentenceEngine(EmbeddingEngine):
                             "PyTorch with ARM64 optimisations or use a CUDA/MPS device."
                         )
 
+            # BGE models typically require a query instruction prefix
             self._model = SentenceTransformer(model_name, device=device)
+            # BGE instructions (v1.5)
+            self._instruction = "Represent this sentence for searching relevant passages: "
             self._dim   = self._model.get_sentence_embedding_dimension()
         except ImportError as e:
             raise ImportError(
@@ -139,12 +138,24 @@ class SentenceEngine(EmbeddingEngine):
         return self._dim
 
     def encode(self, texts: List[str]) -> np.ndarray:
+        # Backward compatibility: no instruction for base encoding
         vecs = self._model.encode(
             texts,
             normalize_embeddings=True,
             show_progress_bar=False,
             convert_to_numpy=True,
-        ).astype(np.float32)          # normalize in float32 for precision
+        ).astype(np.float32)
+        return vecs.astype(np.float16)
+
+    def encode_query(self, texts: List[str]) -> np.ndarray:
+        # BGE models perform better with instructions for queries
+        input_texts = [self._instruction + t for t in texts]
+        vecs = self._model.encode(
+            input_texts,
+            normalize_embeddings=True,
+            show_progress_bar=False,
+            convert_to_numpy=True,
+        ).astype(np.float32)
         return vecs.astype(np.float16)
 
 

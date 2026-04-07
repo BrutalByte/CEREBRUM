@@ -220,6 +220,12 @@ class StudioEngine:
 
         try:
             graph = self.graph_obj
+            # Use BGE instruction-enhanced encoding for query
+            if hasattr(graph._embedding_engine, 'encode_query'):
+                query_vec = graph._embedding_engine.encode_query([query.strip()])[0]
+            else:
+                query_vec = graph._embedding_engine.encode([query.strip()])[0]
+            
             seeds = [e.id for e in graph.adapter.find_entities(query.strip(), top_k=1) if e]
             if not seeds:
                 return f"No entity matching '{query}'", None, empty_fig, []
