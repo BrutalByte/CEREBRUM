@@ -1,13 +1,17 @@
 """
-Fault-tolerance tests — Phase 56.
+Fault-tolerance tests — Phase 56 / Phase 57.
 
-Covers four hardened scenarios:
+Covers hardened scenarios:
 1. QueryResponse schema backward-compatibility (new optional fields)
 2. BeamTraversal._partial_paths checkpoint survives a mid-hop exception
 3. /query endpoint returns 200 with partial=True on traversal failure
 4. QueryLog / AAAKCache write failures are isolated — they never crash /query
 5. GlobalRebalancer worker crash is logged and thread restarts on next trigger
+6. /query/stream yields terminal error chunk on traversal failure (Phase 57)
+7. best_of_n_dscf falls back to sequential when ProcessPoolExecutor fails (Phase 57)
+8. AAAKCache save/load roundtrip preserves affinity counts (Phase 57)
 """
+import json
 import logging
 import threading
 from pathlib import Path
@@ -35,7 +39,7 @@ def client():
     adapter = load_csv_adapter(TOY_CSV)
     engine  = RandomEngine(dim=64)
     G       = adapter.to_networkx()
-    parts   = best_of_n_dscf(G, n_trials=3, seed=42)
+    parts   = best_of_n_dscf(G, n_trials=3, seed=42, use_multiprocessing=False)
     cmap    = {node: cid for cid, members in enumerate(parts) for node in members}
     app = create_app(
         adapter=adapter,
@@ -277,3 +281,102 @@ class TestRebalancerWorkerCrashRecovery:
     def test_rebalancer_inner_method_exists(self):
         from core.rebalancer import GlobalRebalancer
         assert callable(getattr(GlobalRebalancer, "_rebalance_worker_inner", None))
+
+
+# ---------------------------------------------------------------------------
+# 6. /query/stream traversal guard (Phase 57)
+# ---------------------------------------------------------------------------
+
+class TestStreamTraversalGuard:
+    def test_stream_error_yields_terminal_chunk(self, client):
+        """/query/stream must yield a terminal error NDJSON chunk when traversal crashes."""
+        with patch(
+            "reasoning.traversal.AsyncBeamTraversal.traverse_stream",
+            side_effect=RuntimeError("injected stream crash"),
+        ):
+            resp = client.post("/query/stream", json={"query": "newton", "top_k": 3})
+        assert resp.status_code == 200
+        lines = [ln for ln in resp.text.strip().splitlines() if ln.strip()]
+        last = json.loads(lines[-1])
+        assert last.get("status") == "error"
+        assert last.get("partial") is True
+        assert "injected stream crash" in last.get("error", "")
+
+    def test_normal_stream_has_no_error_chunk(self, client):
+        """/query/stream must not contain an error chunk on a successful query."""
+        resp = client.post("/query/stream", json={"query": "newton", "top_k": 3})
+        assert resp.status_code == 200
+        chunks = [json.loads(ln) for ln in resp.text.strip().splitlines() if ln.strip()]
+        assert all(c.get("status") != "error" for c in chunks)
+
+
+# ---------------------------------------------------------------------------
+# 7. ProcessPoolExecutor fallback in best_of_n_dscf (Phase 57)
+# ---------------------------------------------------------------------------
+
+class TestProcessPoolFallback:
+    def test_executor_failure_returns_valid_partition(self):
+        """best_of_n_dscf must return valid partitions even when the executor raises."""
+        from concurrent.futures import BrokenExecutor
+        from adapters.csv_adapter import load_csv_adapter
+        from core.community_engine import best_of_n_dscf
+        adapter = load_csv_adapter(TOY_CSV)
+        G = adapter.to_networkx()
+        # ProcessPoolExecutor is imported locally inside best_of_n_dscf, so patch
+        # it at the source module (concurrent.futures).
+        with patch(
+            "concurrent.futures.ProcessPoolExecutor",
+            side_effect=BrokenExecutor("paging file too small"),
+        ):
+            parts = best_of_n_dscf(G, n_trials=2, seed=0, use_multiprocessing=True)
+        all_nodes = {n for p in parts for n in p}
+        assert all_nodes == set(G.nodes())
+
+    def test_executor_failure_logs_warning(self):
+        """best_of_n_dscf must log a WARNING when executor falls back to sequential."""
+        from concurrent.futures import BrokenExecutor
+        from adapters.csv_adapter import load_csv_adapter
+        from core.community_engine import best_of_n_dscf
+        adapter = load_csv_adapter(TOY_CSV)
+        G = adapter.to_networkx()
+        with _capture_logs(logging.WARNING) as records:
+            with patch(
+                "concurrent.futures.ProcessPoolExecutor",
+                side_effect=BrokenExecutor("injected executor failure"),
+            ):
+                best_of_n_dscf(G, n_trials=2, seed=0, use_multiprocessing=True)
+        assert any("falling back to sequential DSCF" in r.getMessage() for r in records)
+
+
+# ---------------------------------------------------------------------------
+# 8. AAAKCache persistence roundtrip (Phase 57)
+# ---------------------------------------------------------------------------
+
+class TestAAAKCachePersistence:
+    def test_save_creates_file(self, tmp_path):
+        """save_if_path must write a JSON file with the stored patterns."""
+        from reasoning.aaak_steered_traversal import AAAKCache
+        cache = AAAKCache()
+        cache._counts[("CAUSES", "TREATS")] = 3
+        target = str(tmp_path / "aaak_cache.json")
+        cache.save_if_path(target)
+        assert (tmp_path / "aaak_cache.json").exists()
+        import json as _json
+        data = _json.loads((tmp_path / "aaak_cache.json").read_text())
+        assert data["version"] == 1
+        assert any(pair[1] == 3 for pair in data["counts"])
+
+    def test_load_roundtrip_preserves_counts(self, tmp_path):
+        """AAAKCache.load must restore affinity counts written by save."""
+        from reasoning.aaak_steered_traversal import AAAKCache
+        original = AAAKCache()
+        seq = ("CAUSES", "TREATS")
+        original._counts[seq] = 5
+        original._max_count = 5
+        path = str(tmp_path / "aaak.json")
+        original.save(path)
+
+        restored = AAAKCache.load(path)
+        assert restored._counts.get(seq) == 5
+        # Affinity score must be non-zero for the stored sequence
+        assert restored.affinity(seq) > 0

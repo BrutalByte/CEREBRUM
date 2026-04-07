@@ -594,20 +594,26 @@ def best_of_n_dscf(
         cpus = multiprocessing.cpu_count()
         workers = min(n_trials, cpus)
         
-        with ProcessPoolExecutor(max_workers=workers) as executor:
-            # We must pass arguments to dscf_communities. 
-            # Note: G must be pickleable (NetworkX graphs are).
-            futures = [
-                executor.submit(
-                    dscf_communities, 
-                    G, 
-                    resolution=resolution, 
-                    max_iter=max_iter,
-                    # Each process will have its own random state.
-                )
+        try:
+            with ProcessPoolExecutor(max_workers=workers) as executor:
+                futures = [
+                    executor.submit(
+                        dscf_communities,
+                        G,
+                        resolution=resolution,
+                        max_iter=max_iter,
+                    )
+                    for _ in range(n_trials)
+                ]
+                results = [f.result() for f in futures]
+        except Exception as exc:
+            logger.warning(
+                "ProcessPoolExecutor failed (%s) — falling back to sequential DSCF", exc
+            )
+            results = [
+                dscf_communities(G, resolution=resolution, max_iter=max_iter)
                 for _ in range(n_trials)
             ]
-            results = [f.result() for f in futures]
     else:
         results = [
             dscf_communities(G, resolution=resolution, max_iter=max_iter)

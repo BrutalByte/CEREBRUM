@@ -146,6 +146,19 @@ def _is_ready() -> bool:
 
 
 # ---------------------------------------------------------------------------
+# App factory helpers
+# ---------------------------------------------------------------------------
+
+def _aaak_cache_path(cache_path: Optional[str]) -> Optional[str]:
+    """Derive the AAAKCache JSON path from the graph cache_path (or data dir)."""
+    from core.persistence import SAFE_DATA_DIR
+    from pathlib import Path
+    if cache_path:
+        return str(Path(cache_path).parent / "aaak_cache.json")
+    return str(SAFE_DATA_DIR / "aaak_cache.json")
+
+
+# ---------------------------------------------------------------------------
 # App factory
 # ---------------------------------------------------------------------------
 
@@ -179,7 +192,12 @@ def create_app(
                 cache_path,
                 use_meta_learning=use_meta_learning,
             )
-        yield
+        try:
+            yield
+        finally:
+            acache = _state.get("aaak_cache")
+            if acache is not None:
+                acache.save_if_path(_aaak_cache_path(cache_path))
 
     app = FastAPI(
         title="CEREBRUM KG Reasoning API",
@@ -399,20 +417,23 @@ def create_app(
 
             hop_count = 0
             q_emb = adapter.get_embedding(seeds[0]) if seeds else None
-            async for hop_paths in traversal.traverse_stream(seeds):
-                # Format this hop's paths
-                # convert paths to Answers for to_structured
-                answers = extract(hop_paths, top_k=req.top_k, min_hop=0, query_embedding=q_emb)
-                structured = to_structured(answers, query=req.query, adapter=adapter)
-                
-                # Add metadata
-                chunk = {
-                    "hop": hop_count,
-                    "paths": structured["paths"],
-                    "status": "complete" if hop_count == req.max_hop else "reasoning"
-                }
-                yield json.dumps(chunk) + "\n"
-                hop_count += 1
+            try:
+                async for hop_paths in traversal.traverse_stream(seeds):
+                    # Format this hop's paths
+                    # convert paths to Answers for to_structured
+                    answers = extract(hop_paths, top_k=req.top_k, min_hop=0, query_embedding=q_emb)
+                    structured = to_structured(answers, query=req.query, adapter=adapter)
+
+                    chunk = {
+                        "hop": hop_count,
+                        "paths": structured["paths"],
+                        "status": "complete" if hop_count == req.max_hop else "reasoning"
+                    }
+                    yield json.dumps(chunk) + "\n"
+                    hop_count += 1
+            except Exception as exc:
+                _api_log.warning("/query/stream traversal failed (seeds=%s): %s", seeds, exc)
+                yield json.dumps({"status": "error", "partial": True, "error": str(exc)}) + "\n"
 
         return StreamingResponse(generate(), media_type="application/x-ndjson")
 
@@ -2163,10 +2184,12 @@ def _load(
             })
             if use_meta_learning:
                 _state["meta_learner"] = MetaParameterLearner()
+            from pathlib import Path
             from core.persistence import QueryLog
             from reasoning.aaak_steered_traversal import AAAKCache
             qlog = QueryLog()
-            acache = AAAKCache()
+            _aaak_p = _aaak_cache_path(cache_path)
+            acache = AAAKCache.load(_aaak_p) if (_aaak_p and Path(_aaak_p).exists()) else AAAKCache()
             replayed = qlog.replay_into_cache(acache)
             if replayed:
                 print(f"  [API] AAAKCache warmed: {replayed} relation sequences replayed")
@@ -2239,11 +2262,13 @@ def _load(
     if use_meta_learning:
         _state["meta_learner"] = MetaParameterLearner()
 
-    # 5b. AAAK relation-prior warm-up from durable query log
+    # 5b. AAAK relation-prior warm-up from durable query log (two-tier)
+    from pathlib import Path
     from core.persistence import QueryLog
     from reasoning.aaak_steered_traversal import AAAKCache
     qlog = QueryLog()
-    acache = AAAKCache()
+    _aaak_p = _aaak_cache_path(cache_path)
+    acache = AAAKCache.load(_aaak_p) if (_aaak_p and Path(_aaak_p).exists()) else AAAKCache()
     replayed = qlog.replay_into_cache(acache)
     if replayed:
         _api_log.info("[API] AAAKCache warmed: %d relation sequences replayed", replayed)
