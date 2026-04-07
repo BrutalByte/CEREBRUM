@@ -8,9 +8,13 @@ each step. Returns all explored paths for downstream ranking.
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Set, Tuple
 import heapq
+import logging
 import math
+import time as _time
 
 import numpy as np
+
+_log = logging.getLogger("cerebrum.traversal")
 
 from core.graph_adapter import GraphAdapter
 from core.attention_engine import CSAEngine
@@ -343,12 +347,18 @@ class BeamTraversal:
         """
         emb_dim = self._infer_dim()
         self.expansions = 0
+        _t0 = _time.perf_counter()
+
+        _log.info(
+            "Traversal START  seeds=%s  max_hop=%d  beam_width=%d  max_budget=%d",
+            seeds, self.max_hop, self.beam_width, self.max_budget,
+        )
 
         # Hole 1 — Mid-Flight Community Swap: snapshot the community map once
         # at query start so all CSA computations for this query use a consistent
         # partition, even if GlobalRebalancer commits a new map mid-traversal.
         _cmap = getattr(self.adapter, "community_map", None)
-        
+
         # Phase 29: Context-Aware Community Merging
         if community_merger is not None and query_embedding is not None and _cmap is not None:
             _cmap = community_merger.merge(_cmap, query_embedding, self.adapter)
@@ -358,7 +368,13 @@ class BeamTraversal:
                 self.csa.set_query_snapshot(dict(_cmap))
             self.csa.set_query_time(query_time)
         try:
-            return self._traverse_inner(seeds, emb_dim, query_time)
+            paths = self._traverse_inner(seeds, emb_dim, query_time)
+            _dt = (_time.perf_counter() - _t0) * 1000
+            _log.info(
+                "Traversal END    paths=%d  expansions=%d  elapsed=%.1fms",
+                len(paths), self.expansions, _dt,
+            )
+            return paths
         finally:
             if self.csa is not None:
                 self.csa.clear_query_snapshot()
@@ -394,6 +410,7 @@ class BeamTraversal:
             )
 
         all_paths: List[TraversalPath] = list(beam)
+        _log.debug("Beam initialised with %d seed path(s)", len(beam))
 
         for hop in range(1, self.max_hop + 1):
             candidates: List[TraversalPath] = []
@@ -604,10 +621,15 @@ class BeamTraversal:
                                     path_score=path.score,
                                     path=path,
                                 )
-                        
+
                         candidates.append(new_path)
 
+            _log.debug(
+                "Hop %d: beam=%d  candidates=%d  expansions_so_far=%d",
+                hop, len(beam), len(candidates), self.expansions,
+            )
             if not candidates:
+                _log.debug("Hop %d: no candidates — stopping early", hop)
                 break
 
             # Phase 37: Self-Doubt (Calibration)
@@ -630,27 +652,41 @@ class BeamTraversal:
             # At the terminal hop, skip pruning — all reachable endpoints are kept
             # for the answer extractor to score and deduplicate. Pruning here discards
             # valid answers with zero benefit (no further expansion occurs).
-            hop_bw = self._beam_widths.get(hop, self.beam_width)
-            if self.probabilistic:
-                _rng = self._rng
-                if hop < self.max_hop and len(candidates) > hop_bw:
-                    beam = heapq.nlargest(
-                        hop_bw, candidates,
-                        key=lambda p: p.sample_score(_rng),
-                    )
-                else:
-                    beam = sorted(candidates,
-                                  key=lambda p: p.sample_score(_rng),
-                                  reverse=True)
-            else:
-                if hop < self.max_hop and len(candidates) > hop_bw:
-                    beam = heapq.nlargest(hop_bw, candidates, key=lambda p: p.score)
-                else:
-                    beam = sorted(candidates, key=lambda p: p.score, reverse=True)
-
+            beam = self._prune_candidates(candidates, hop)
             all_paths.extend(beam)
 
         return all_paths
+
+    def _prune_candidates(
+        self,
+        candidates: "List[TraversalPath]",
+        hop: int,
+    ) -> "List[TraversalPath]":
+        """
+        Prune *candidates* to beam width and return the surviving beam.
+
+        Override in subclasses to inject alternative scoring strategies
+        (e.g. AAAK-steered pruning).  The default implementation sorts by
+        raw path score (or Thompson-sampled Beta score in probabilistic mode).
+
+        The terminal hop is never pruned — all candidates are returned sorted
+        so the answer extractor has the full frontier to deduplicate.
+        """
+        hop_bw = self._beam_widths.get(hop, self.beam_width)
+        if self.probabilistic:
+            _rng = self._rng
+            if hop < self.max_hop and len(candidates) > hop_bw:
+                return heapq.nlargest(
+                    hop_bw, candidates,
+                    key=lambda p: p.sample_score(_rng),
+                )
+            return sorted(candidates,
+                          key=lambda p: p.sample_score(_rng),
+                          reverse=True)
+        else:
+            if hop < self.max_hop and len(candidates) > hop_bw:
+                return heapq.nlargest(hop_bw, candidates, key=lambda p: p.score)
+            return sorted(candidates, key=lambda p: p.score, reverse=True)
 
     def _infer_dim(self) -> int:
         """Infer embedding dimension from the adapter."""

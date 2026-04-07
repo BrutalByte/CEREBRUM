@@ -51,7 +51,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v1.9.3 (Phase 48 COMPLETE)** — 1268 tests passing.
+**v2.0.0 (Phase 55 COMPLETE)** — 1490+ tests passing.
 
 ### System Architecture Names
 | Name | Role |
@@ -88,6 +88,10 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 - **IKGWQ Protocol**: Incomplete Knowledge Graph evaluation — edge removal at 5 levels (0–50%) with optional REM synthesis; `benchmarks/ikgwq_metaqa.py` (Phase 44).
 - **Federated Reasoning**: `DistributedBeamTraversal` + `/traverse` endpoint for cross-node path delegation (Phase 32).
 - **Wormhole Synthesis (REM)**: `REMEngine` bridges disconnected graph components; `sd` (synthesis density) feature penalizes over-reliance on synthetic edges (Phase 41/43).
+- **GraphSAGE Smoothing**: `smooth_with_graphsage(embeddings, G)` — one-pass mean neighbourhood aggregation applied after base encoding. `CerebrumGraph.build(use_graphsage=True)` enriches every entity embedding with its neighbours' context, making the CSA `alpha` (semantic) term significantly more effective (Phase 55).
+- **AAAK-Steered Traversal**: `AAAKCache` + `AAAKBeamTraversal` — persistent relation-pattern cache derived from previous successful AAAK traces. Biases beam pruning toward known-productive reasoning chains via a multiplicative affinity boost on `_prune_candidates()` (Phase 55).
+- **TemporalCalibrator**: Grid-search calibration of `eta` (temporal decay) and `iota` (node recency) against a labelled validation set to maximise Recall@K. `calibrate()` / `apply()` / `measure_recall()` API; restores original CSA params after each evaluation (Phase 55).
+- **QueryLog**: Append-only NDJSON query history in `core/persistence.py`. Records seeds, answers, and relation sequences after each reasoning call. `replay_into_cache(aaak_cache)` warms up `AAAKCache` on restart so learned relation patterns survive process restarts (Phase 55).
 
 ## Install & Development Commands
 
@@ -177,6 +181,10 @@ Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`
 | `core/insight_validator.py` | Verification | Bilateral reverse traversal + corroboration |
 | `core/meta_insight_engine.py` | Metacognition | Second-order reasoning over InsightEvents |
 | `core/kge_engine.py` | Optional | TransE/RotatE graph-native embedding training |
+| `core/embedding_engine.py` | **THALAMUS** | `smooth_with_graphsage()` — GraphSAGE one-pass neighbourhood smoother |
+| `reasoning/aaak_steered_traversal.py` | **CORTEX** | `AAAKCache` + `AAAKBeamTraversal` — AAAK-pattern-steered beam pruning |
+| `core/temporal_calibrator.py` | **CORTEX** | `TemporalCalibrator` — grid-search calibration of eta/iota for Recall@K |
+| `core/persistence.py` | Persistence | `save_state()` / `load_state()` / `QueryLog` — durable query history + AAAK cache warm-up |
 | `api/` | Interface | FastAPI REST server (see API Endpoints below) |
 | `api/schemas.py` | Interface | All Pydantic request/response models |
 | `cli/` | Interface | CLI entry point (`cerebrum query`, `communities`, `serve --params-file`) |
@@ -226,5 +234,5 @@ Implement the abstract `GraphAdapter` interface in `core/graph_adapter.py`, foll
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)
 - Synthetic graph helpers (`make_two_cliques()`, etc.) live in `tests/` for unit tests that don't need the CSV fixture
-- **1268 tests passing as of v1.9.3 / Phase 48** (1 skipped)
+- **1490+ tests passing as of v2.0.0 / Phase 55** (1 skipped)
 - Type checker: no mypy/ruff configured as hard gate; run `python -m pytest tests/` as verification

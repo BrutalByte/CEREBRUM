@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEREBRUM Dashboard</title>
+
+  <!-- GridStack 10 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack.min.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack-extra.min.css"/>
+
+  <!-- Chart.js 4 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+
+  <!-- vis-network (local) -->
+  <script src="lib/vis-9.1.2/vis-network.min.js"></script>
+
+  <style>
+    /* ── CSS Variables ─────────────────────────────────────────────── */
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #21262d;
+      --border:    #30363d;
+      --text:      #c9d1d9;
+      --text-dim:  #8b949e;
+      --primary:   #58a6ff;
+      --secondary: #bc8cff;
+      --accent:    #3fb950;
+      --danger:    #f85149;
+      --warning:   #d29922;
+      --gradient:  linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
+      --font-mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      overflow-x: hidden;
+    }
+
+    /* ── Top Bar ───────────────────────────────────────────────────── */
+    #topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 48px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      z-index: 1000;
+    }
+
+    #topbar .logo {
+      font-weight: 800;
+      font-size: 1.1rem;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    #topbar .sep { width: 1px; height: 24px; background: var(--border); }
+
+    #status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    #status-pill .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--text-dim);
+    }
+    #status-pill.ok .dot   { background: var(--accent); }
+    #status-pill.err .dot  { background: var(--danger); }
+    #status-pill.warn .dot { background: var(--warning); }
+
+    #topbar .spacer { flex: 1; }
+
+    .domain-btn {
+      padding: 4px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.15s;
+    }
+    .domain-btn:hover, .domain-btn.active {
+      background: var(--surface2);
+      color: var(--text);
+      border-color: var(--primary);
+    }
+
+    .topbar-btn {
+      padding: 5px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      font-size:12px;
+      transition: all 0.15s;
+    }
+    .topbar-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .topbar-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ── Palette Sidebar ───────────────────────────────────────────── */
+    #palette {
+      position: fixed;
+      top: 48px; left: 0; bottom: 0;
+      width: 180px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      z-index: 900;
+      padding: 12px 8px;
+    }
+
+    #palette h3 {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      padding: 4px 8px 8px;
+    }
+
+    .palette-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      cursor: pointer;
+      margin-bottom: 6px;
+      transition: all 0.15s;
+      font-size: 12px;
+    }
+    .palette-item:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .palette-item .picon { font-size: 16px; }
+
+    /* ── Main Grid Area ────────────────────────────────────────────── */
+    #grid-container {
+      margin-top: 48px;
+      margin-left: 180px;
+      padding: 12px;
+      min-height: calc(100vh - 48px);
+    }
+
+    /* ── GridStack overrides ───────────────────────────────────────── */
+    .grid-stack { background: transparent; }
+    .grid-stack-item-content { overflow: hidden; border-radius: 0; }
+
+    /* ── Widget Cards ──────────────────────────────────────────────── */
+    .widget-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .widget-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      cursor: grab;
+      user-select: none;
+      flex-shrink: 0;
+    }
+    .widget-header:active { cursor: grabbing; }
+
+    .widget-icon { font-size: 14px; }
+    .widget-title { font-weight: 600; font-size: 13px; flex: 1; }
+    .widget-actions { display: flex; gap: 4px; }
+
+    .wbtn {
+      width: 22px; height: 22px;
+      border-radius: 4px;
+      border: none;
+      background: transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .wbtn:hover { background: var(--border); color: var(--text); }
+    .wbtn.close:hover { background: var(--danger); color: white; }
+
+    .widget-body {
+      flex: 1;
+      overflow: auto;
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+
+    .widget-loading, .widget-error {
+      display: flex; align-items: center; justify-content: center;
+      height: 100%; color: var(--text-dim); font-style: italic;
+    }
+    .widget-error { color: var(--danger); }
+
+    /* ── Shared widget UI components ───────────────────────────────── */
+    .w-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+
+    .w-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      padding: 5px 8px;
+      font-size: 12px;
+      min-width: 80px;
+    }
+    .w-input:focus { outline: none; border-color: var(--primary); }
+
+    .w-btn {
+      padding: 5px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .w-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .w-btn.primary { background: var(--primary); border-color: var(--primary); color: #0d1117; font-weight: 600; }
+    .w-btn.primary:hover { filter: brightness(1.1); }
+    .w-btn.success { border-color: var(--accent); color: var(--accent); }
+    .w-btn.danger  { border-color: var(--danger);  color: var(--danger); }
+
+    /* Stats row for StatusBar */
+    .stat-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+    .stat-pill {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 14px;
+      text-align: center;
+    }
+    .stat-pill .sv { font-size: 1.4rem; font-weight: 700; color: var(--primary); font-family: var(--font-mono); }
+    .stat-pill .sl { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Proposal cards */
+    .proposal-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .proposal-card:hover { border-color: var(--secondary); }
+    .prop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .prop-relation { font-weight: 600; color: var(--secondary); font-size: 13px; }
+    .prop-conf { font-family: var(--font-mono); font-size: 12px; color: var(--text-dim); }
+    .conf-bar-bg { background: var(--border); border-radius: 3px; height: 6px; margin-bottom: 6px; }
+    .conf-bar-fill { background: var(--gradient); border-radius: 3px; height: 6px; transition: width 0.4s; }
+    .prop-meta { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+    .hub-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+    .hub-tag {
+      background: rgba(88, 166, 255, 0.1);
+      border: 1px solid var(--primary);
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-size: 11px;
+      color: var(--primary);
+      cursor: pointer;
+    }
+    .hub-tag:hover { background: rgba(88, 166, 255, 0.2); }
+    .prop-actions { display: flex; gap: 6px; margin-top: 6px; }
+
+    /* Findings table */
+    .findings-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .findings-table th {
+      text-align: left;
+      padding: 4px 8px;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+    }
+    .findings-table td {
+      padding: 5px 8px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .findings-table tr:hover td { background: var(--surface2); }
+    .finding-pair { font-family: var(--font-mono); font-size: 11px; }
+    .mini-bar-bg { background: var(--border); border-radius: 2px; height: 4px; width: 60px; display: inline-block; margin-right: 4px; vertical-align: middle; }
+    .mini-bar-fill { background: var(--gradient); border-radius: 2px; height: 4px; }
+
+    /* Density dot */
+    .density-dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+    .density-dot.dense  { background: #f0883e; }
+    .density-dot.sparse { background: #58a6ff; }
+    .density-dot.mid    { background: var(--text-dim); }
+
+    /* Lit status badges */
+    .lit-badge {
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 3px;
+    }
+    .lit-novel       { color: #d29922; }
+    .lit-active      { color: var(--accent); }
+    .lit-established { color: var(--danger); }
+    .lit-contested   { color: var(--warning); }
+    .lit-unvalidated { color: var(--text-dim); }
+
+    /* Path cards */
+    .path-card {
+      background: var(--surface2);
+      border-left: 3px solid var(--primary);
+      padding: 6px 10px;
+      margin-bottom: 6px;
+      border-radius: 0 4px 4px 0;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .path-score { color: var(--primary); font-weight: 600; }
+
+    /* Community chip */
+    .community-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(188, 140, 255, 0.1);
+      border: 1px solid rgba(188, 140, 255, 0.3);
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-size: 11px;
+      color: var(--secondary);
+      margin: 2px;
+    }
+
+    /* REM report */
+    .rem-section { margin-bottom: 10px; }
+    .rem-section h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); margin-bottom: 4px; }
+    .rem-value { font-family: var(--font-mono); font-size: 13px; color: var(--text); }
+
+    /* Slider row */
+    .param-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .param-name { font-family: var(--font-mono); font-size: 11px; color: var(--secondary); width: 50px; flex-shrink: 0; }
+    .param-slider { flex: 1; accent-color: var(--primary); }
+    .param-val { font-family: var(--font-mono); font-size: 11px; color: var(--text); width: 42px; text-align: right; }
+
+    /* Insight feed */
+    .insight-item {
+      padding: 6px 10px;
+      border-left: 3px solid var(--secondary);
+      background: var(--surface2);
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+    .insight-item .i-head { display: flex; justify-content: space-between; margin-bottom: 2px; }
+    .insight-item .i-node { font-weight: 600; color: var(--secondary); }
+    .insight-item .i-score { font-family: var(--font-mono); color: var(--primary); }
+    .insight-item .i-meta { color: var(--text-dim); font-size: 11px; }
+
+    /* ── Config Modal ──────────────────────────────────────────────── */
+    dialog {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 24px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    }
+    dialog::backdrop { background: rgba(0,0,0,0.7); }
+    dialog h2 { margin-bottom: 16px; font-size: 1.1rem; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 4px; }
+    .form-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      padding: 7px 10px;
+      font-size: 13px;
+    }
+    .form-input:focus { outline: none; border-color: var(--primary); }
+    .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+    /* ── Scrollbar ─────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+    /* ── vis-network container ─────────────────────────────────────── */
+    .vis-container { width: 100%; height: 100%; min-height: 200px; }
+
+    /* ── Chart container ───────────────────────────────────────────── */
+    .chart-wrap { position: relative; width: 100%; height: 180px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Top Bar ──────────────────────────────────────────────────────── -->
+<header id="topbar">
+  <a href="index.html" class="logo">CEREBRUM</a>
+  <div class="sep"></div>
+  <div id="status-pill">
+    <div class="dot"></div>
+    <span id="status-text">connecting…</span>
+  </div>
+  <div class="sep"></div>
+  <span style="font-size:11px;color:var(--text-dim);">Preset:</span>
+  <button class="domain-btn active" data-domain="biomedical">Biomedical</button>
+  <button class="domain-btn" data-domain="academic">Academic</button>
+  <button class="domain-btn" data-domain="enterprise">Enterprise</button>
+  <button class="domain-btn" data-domain="developer">Developer</button>
+  <div class="spacer"></div>
+  <button class="topbar-btn" id="btn-save-layout">Save Layout</button>
+  <button class="topbar-btn danger" id="btn-reset-layout">Reset</button>
+  <button class="topbar-btn" id="btn-config">⚙ Settings</button>
+</header>
+
+<!-- ── Palette ──────────────────────────────────────────────────────── -->
+<aside id="palette">
+  <h3>Widgets</h3>
+  <div class="palette-item" data-wtype="status">   <span class="picon">🟢</span> Status Bar </div>
+  <div class="palette-item" data-wtype="loader">   <span class="picon">📂</span> Data Loader </div>
+  <div class="palette-item" data-wtype="graph2d">  <span class="picon">🕸</span> Graph 2D </div>
+  <div class="palette-item" data-wtype="query">    <span class="picon">🔍</span> Query Runner </div>
+  <div class="palette-item" data-wtype="hypothesis"><span class="picon">💡</span> Hypothesis Lab </div>
+  <div class="palette-item" data-wtype="research"> <span class="picon">🤖</span> Research Agent </div>
+  <div class="palette-item" data-wtype="literature"><span class="picon">📚</span> Literature </div>
+  <div class="palette-item" data-wtype="insight">  <span class="picon">✨</span> Insight Feed </div>
+  <div class="palette-item" data-wtype="rem">      <span class="picon">🔧</span> REM Control </div>
+  <div class="palette-item" data-wtype="params">   <span class="picon">🎛</span> Parameters </div>
+</aside>
+
+<!-- ── Grid ─────────────────────────────────────────────────────────── -->
+<main id="grid-container">
+  <div class="grid-stack"></div>
+</main>
+
+<!-- ── Config Modal ─────────────────────────────────────────────────── -->
+<dialog id="config-modal">
+  <h2>⚙ CEREBRUM Settings</h2>
+  <div class="form-group">
+    <label>API Base URL</label>
+    <input class="form-input" id="cfg-api-url" type="text" placeholder="http://localhost:8200"/>
+  </div>
+  <div class="form-group">
+    <label>API Key</label>
+    <input class="form-input" id="cfg-api-key" type="text" placeholder="dev-secret"/>
+  </div>
+  <div class="form-group">
+    <label>Status poll interval (ms)</label>
+    <input class="form-input" id="cfg-poll" type="number" value="10000" min="2000"/>
+  </div>
+  <div class="dialog-actions">
+    <button class="w-btn" id="cfg-cancel">Cancel</button>
+    <button class="w-btn primary" id="cfg-save">Save &amp; Reconnect</button>
+  </div>
+</dialog>
+
+<!-- ================================================================
+     WIDGET TEMPLATES
+     ================================================================ -->
+
+<!-- StatusBar -->
+<template id="tpl-status">
+  <div class="widget-card">
+    <div class="widget-header">
+      <span class="widget-icon">🟢</span>
+      <span class="widget-title">Status Bar</span>
+      <div class="widget-actions">
+        <button class="wbtn" title="Refresh" data-action="refresh">↻</button>
+        <button class="wbtn close" title="Close" data-action="close">✕</button>
+      </div>
+    </div>
+    <div class="widget-body" style="display:flex;align-items:center;">
+      <div class="stat-pills" id="WSLOT-status-stats">
+        <div class="stat-pill"><span class="sv">—</span><span class="sl">Nodes</span></div>
+        <div class="stat-pill"><span class="sv">—</span><span class="sl">Edges</span></div>
+        <div class="stat-pill"><span class="sv">—</span><span class="sl">Communities</span></div>
+        <div class="stat-pill"><span class="sv">—</span><span class="sl">Embeddings</span></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- DataLoader -->
+<template id="tpl-loader">
+  <div class="widget-card">
+    <div class="widget-header">
+      <span class="widget-icon">📂</span>
+      <span class="widget-title">Data Loader</span>
+      <div class="widget-actions">
+        <button class="wbtn close" title="Close" data-action="close">✕</button>
+      </div>
+    </div>
+    <div class="widget-body">
+      <div class="w-row">
+        <input class="w-input" type="file" id="WSLOT-loader-file" accept=".csv,.json" style="flex:1;"/>
+      </div>
+      <div class="w-row">
+        <input class="w-input" id="WSLOT-loader-url" placeholder="Or CSV URL…"/>
+        <button class="w-btn primary" id="WSLOT-loader-submit">Load</button>
+      </div>
+      <div id="WSLOT-loader-status" style="color:var(--text-dim);font-size:12px;margin-top:6px;"></div>
+    </div>
+  </div>
+</template>
+
+<!-- GraphExplorer2D -->
+<template id="tpl-graph2d">
+  <div class="widget-card">
+    <div class="widget-header">
+      <span class="widget-icon">🕸</span>
+      <span class="widget-title">Graph Explorer</span>
+      <div class="widget-actions">
+        <input class="w-input" id="WSLOT-g2d-search" placeholder="Search node…" style="width:120px;margin-right:4px;"/>
+        <button class="wbtn" title="Refresh" data-action="refresh">↻</button>
+        <button class="wbtn close" title="Close" data-action="close">✕</button>
+      </div>
+    </div>
+    <div class="widget-body" style="padding:0;">
+      <div id="WSLOT-g2d-net" class="vis-container"></div>
+    </div>
+  </div>
+</template>
+
+<!-- QueryRunner -->
+<template id="tpl-query">
+  <div class="widget-card">
+    <div class="widget-header">
+      <span class="widget-icon">🔍</span>
+      <span class="widget-title">Query Runner</span>
+      <div class="widget-actions">
+        <button class="wbtn close" title="Close" data-action="close">✕</button>
+      </div>
+    </div>
+    <div class="widget-body">
+      <div class="w-row">
+        <input class="w-input" id="WSLOT-query-input" placeholder="e.g. newton"/>
+        <input class="w-input" id="WSLOT-query-target" placeholder="Target (optional)" style="max-width:140px;"/>
+        <button class="w-btn primary" id="WSLOT-query-run">Run</button>
+      </div>
+      <div id="WSLOT-query-results"></div>
+    </div>
+  </div>
+</template>
+
+<!-- HypothesisLab -->
+<template id="tpl-hypothesis">
+  <div class="widget-card">
+    <div class="widget-header">
+      <span class="widget-icon">💡</span>
+      <span class="widget-title">Hypothesis Lab</span>
+      <div class="widget-actions">
+        <button class="wbtn close" title="Close" data-action="close">✕</button>
+      </div>
+    </div>
+    <div class="widget-body">
+      <div class="w-row">
+        <input class="w-input" id="WSLOT-hyp-src" placeholder="Source entity"/>
+        <span style="color:var(--text-dim);">→</span>
+        <input class="w-input" id="WSLOT-hyp-tgt" placeholder="Target entity"/>
+        <button class="w-btn primary" id="WSLOT-hyp-run">Hypothesize</button>
+      </div>
+      <div class="w-row" style="font-size:11px;color:var(--text-dim);">
+        <label>Max hops: <input class="w-input" id="WSLOT-hyp-hops" type="number" value="3" min="1" max="6" style="width:48px;"/></label>
+        <label>Beam: <input class="w-input" id="WSLOT-hyp-beam" type="number" value="8" min="1" max="20" style="width:48px;"/></label>
+        <label>Min conf: <input class="w-input" id="WSLOT-hyp-minconf" type="number" value="0.0" min="0" max="1" step="0.05" style="width:54px;"/></label>
+      </div>
+      <div id="WSLOT-hyp-results"></div>
+    </div>
+  </div>
+</template>
+
+<!-- ResearchAgent -->
+<template id="tpl-research">
+  <div class="widget-card">
+    <div class="widget-header">
+      <span class="widget-icon">🤖</span>
+      <span class="widget-title">Research Agent</span>
+      <div class="widget-actions">
+        <button class="wbtn" title="Refresh" data-action="refresh">↻</button>
+        <button class="wbtn close" title="Close" data-action="close">✕</button>
+      </div>
+    </div>
+    <div class="widget-body">
+      <div class="w-row">
+        <button class="w-btn success" id="WSLOT-ra-start">▶ Start</button>
+        <button class="w-btn danger"  id="WSLOT-ra-stop">■ Stop</button>
+        <button class="w-btn"         id="WSLOT-ra-scan">⚡ Scan Now</button>
+        <span id="WSLOT-ra-status" style="font-size:12px;color:var(--text-dim);">●&nbsp;Idle</span>
+      </div>
+      <div id="WSLOT-ra-findings"></div>
+    </div>
+  </div>
+</template>
+
+<!-- Literature -->
+<template id="tpl-literature">
+  <div class="widget-card">
+    <div class="widget-header">
+      <span class="widget-icon">📚</span>
+      <span class="widget-title">Literature Validator</span>
+      <div class="widget-actions">
+        <button class="wbtn close" title="Close" data-action="close">✕</button>
+      </div>
+    </div>
+    <div class="widget-body">
+      <div class="w-row">
+        <input class="w-input" id="WSLOT-lit-ids" placeholder="Hypothesis IDs (comma-sep, blank=last run)"/>
+        <button class="w-btn primary" id="WSLOT-lit-run">Validate</button>
+      </div>
+      <div id="WSLOT-lit-results"></div>
+    </div>
+  </div>
+</template>
+
+<!-- InsightFeed -->
+<template id="tpl-insight">
+  <div class="widget-card">
+    <div class="widget-header">
+      <span class="widget-icon">✨</span>
+      <span class="widget-title">Insight Feed</span>
+      <div class="widget-actions">
+        <button class="wbtn" title="Refresh" data-action="refresh">↻</button>
+        <button class="wbtn close" title="Close" data-action="close">✕</button>
+      </div>
+    </div>
+    <div class="widget-body">
+      <div id="WSLOT-insight-feed"></div>
+    </div>
+  </div>
+</template>
+
+<!-- REMControl -->
+<template id="tpl-rem">
+  <div class="widget-card">
+    <div class="widget-header">
+      <span class="widget-icon">🔧</span>
+      <span class="widget-title">REM Control</span>
+      <div class="widget-actions">
+        <button class="wbtn" title="Refresh" data-action="refresh">↻</button>
+        <button class="wbtn close" title="Close" data-action="close">✕</button>
+      </div>
+    </div>
+    <div class="widget-body">
+      <div class="w-row">
+        <button class="w-btn" id="WSLOT-rem-dry">Dry Run</button>
+        <button class="w-btn primary" id="WSLOT-rem-run">Run REM</button>
+        <button class="w-btn danger" id="WSLOT-rem-rollback">Rollback</button>
+      </div>
+      <div id="WSLOT-rem-report"></div>
+    </div>
+  </div>
+</template>
+
+<!-- ParameterTuner -->
+<template id="tpl-params">
+  <div class="widget-card">
+    <div class="widget-header">
+      <span class="widget-icon">🎛</span>
+      <span class="widget-title">Parameter Tuner</span>
+      <div class="widget-actions">
+        <button class="wbtn" title="Refresh" data-action="refresh">↻</button>
+        <button class="wbtn close" title="Close" data-action="close">✕</button>
+      </div>
+    </div>
+    <div class="widget-body">
+      <div id="WSLOT-params-sliders"></div>
+      <div class="chart-wrap" style="height:160px;margin-top:8px;">
+        <canvas id="WSLOT-params-chart"></canvas>
+      </div>
+      <div class="w-row" style="margin-top:8px;">
+        <button class="w-btn primary" id="WSLOT-params-save">Save Params</button>
+        <button class="w-btn" id="WSLOT-params-reload">Reload</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ================================================================
+     JAVASCRIPT
+     ================================================================ -->
+<script src="https://cdn.jsdelivr.net/npm/gridstack@10/dist/gridstack-all.js"></script>
+<script>
+/* ── Config ──────────────────────────────────────────────────────── */
+const CFG = {
+  get apiUrl()  { return localStorage.getItem('cerebrum_api_url') || 'http://localhost:8200'; },
+  get apiKey()  { return localStorage.getItem('cerebrum_api_key') || 'dev-secret'; },
+  get pollMs()  { return parseInt(localStorage.getItem('cerebrum_poll_ms') || '10000'); },
+  set apiUrl(v) { localStorage.setItem('cerebrum_api_url', v); },
+  set apiKey(v) { localStorage.setItem('cerebrum_api_key', v); },
+  set pollMs(v) { localStorage.setItem('cerebrum_poll_ms', String(v)); },
+};
+
+/* ── API Client ──────────────────────────────────────────────────── */
+const API = {
+  async _fetch(method, path, body) {
+    const opts = {
+      method,
+      headers: { 'X-API-Key': CFG.apiKey, 'Content-Type': 'application/json' },
+    };
+    if (body !== undefined) opts.body = JSON.stringify(body);
+    const r = await fetch(CFG.apiUrl + path, opts);
+    if (!r.ok) {
+      const txt = await r.text().catch(() => r.statusText);
+      throw new Error(`${r.status} ${txt}`);
+    }
+    return r.json();
+  },
+  get(path)        { return this._fetch('GET', path); },
+  post(path, body) { return this._fetch('POST', path, body ?? {}); },
+
+  health()                  { return this.get('/health'); },
+  query(q, tgt, opts)       { return this.post('/query', { query: q, target_id: tgt || undefined, ...opts }); },
+  hypothesize(src, tgt, o)  { return this.post('/hypothesize', { source_id: src, target_id: tgt, ...o }); },
+  materialize(hid)          { return this.post('/hypothesize/materialize', { hypothesis_id: hid }); },
+  rollback(hid)             { return this.post('/hypothesize/rollback', { hypothesis_id: hid }); },
+  researchStatus()          { return this.get('/research/status'); },
+  researchStart()           { return this.post('/research/start'); },
+  researchStop()            { return this.post('/research/stop'); },
+  researchScan()            { return this.post('/research/scan'); },
+  researchProposals()       { return this.get('/research/proposals'); },
+  researchApprove(id)       { return this.post(`/research/approve/${id}`); },
+  researchReject(id)        { return this.post(`/research/reject/${id}`); },
+  researchValidate(ids)     { return this.post('/research/validate', { hypothesis_ids: ids }); },
+  insightStatus()           { return this.get('/insight/status'); },
+  communities()             { return this.get('/communities'); },
+  remStatus()               { return this.get('/rem/status'); },
+  remRun(dry)               { return this.post('/rem/run', { dry_run: dry }); },
+  remRollback()             { return this.post('/rem/rollback'); },
+  params()                  { return this.get('/params'); },
+  saveParams(p)             { return this.post('/params', p); },
+  search(q)                 { return this.get(`/search?q=${encodeURIComponent(q)}`); },
+};
+
+/* ── Helpers ─────────────────────────────────────────────────────── */
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function confBar(v) {
+  const pct = Math.round((v ?? 0) * 100);
+  return `<div class="conf-bar-bg"><div class="conf-bar-fill" style="width:${pct}%"></div></div>`;
+}
+function miniBar(v) {
+  const pct = Math.round((v ?? 0) * 100);
+  return `<span class="mini-bar-bg"><span class="mini-bar-fill" style="width:${pct}%"></span></span>`;
+}
+function densityDot(d) {
+  const cls = d > 0.4 ? 'dense' : d < 0.1 ? 'sparse' : 'mid';
+  const title = d > 0.4 ? 'Dense — shallow search' : d < 0.1 ? 'Sparse — deep search' : 'Mid density';
+  return `<span class="density-dot ${cls}" title="${title}"></span>`;
+}
+function litBadge(s) {
+  const map = {
+    novel:       ['🟡', 'novel',       'lit-novel'],
+    active_research: ['🟢', 'active',  'lit-active'],
+    established: ['🔴', 'established', 'lit-established'],
+    contested:   ['⚠️', 'contested',  'lit-contested'],
+    unvalidated: ['⚪', 'unvalidated','lit-unvalidated'],
+  };
+  const [icon, label, cls] = map[s] || map.unvalidated;
+  return `<span class="lit-badge ${cls}">${icon} ${label}</span>`;
+}
+
+/* ── Widget base class ───────────────────────────────────────────── */
+class Widget {
+  constructor(id, el) {
+    this.id = id;
+    this.el = el;
+    this._timers = [];
+  }
+  async refresh() {}
+  onResize() {}
+  destroy() { this._timers.forEach(t => clearInterval(t)); }
+
+  _body()        { return this.el.querySelector('.widget-body'); }
+  setContent(h)  { const b = this._body(); if (b) b.innerHTML = h; }
+  setError(msg)  { this.setContent(`<div class="widget-error">⚠ ${esc(msg)}</div>`); }
+  setLoading()   { this.setContent(`<div class="widget-loading">Loading…</div>`); }
+  startPolling(ms, fn) {
+    const t = setInterval(fn || (() => this.refresh()), ms);
+    this._timers.push(t);
+    return t;
+  }
+  _slot(name) { return this.el.querySelector(`[id$="-${name}"]`); }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   StatusWidget
+   ────────────────────────────────────────────────────────────────── */
+class StatusWidget extends Widget {
+  constructor(id, el) {
+    super(id, el);
+    this.refresh();
+    this.startPolling(CFG.pollMs);
+  }
+  async refresh() {
+    try {
+      const h = await API.health();
+      const pill = document.getElementById('status-pill');
+      pill.className = h.status === 'ok' ? 'ok' : 'warn';
+      document.getElementById('status-text').textContent =
+        h.status === 'ok' ? `${h.node_count} nodes · ${h.community_count} communities` : h.status;
+
+      const stats = this.el.querySelector('[id$="-status-stats"]');
+      if (!stats) return;
+      stats.innerHTML = `
+        <div class="stat-pill"><span class="sv">${h.node_count ?? '—'}</span><span class="sl">Nodes</span></div>
+        <div class="stat-pill"><span class="sv">${h.edge_count ?? '—'}</span><span class="sl">Edges</span></div>
+        <div class="stat-pill"><span class="sv">${h.community_count ?? '—'}</span><span class="sl">Communities</span></div>
+        <div class="stat-pill"><span class="sv">${h.embeddings_loaded ? '✓' : '✗'}</span><span class="sl">Embeddings</span></div>
+      `;
+    } catch(e) {
+      const pill = document.getElementById('status-pill');
+      pill.className = 'err';
+      document.getElementById('status-text').textContent = 'API offline';
+    }
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   DataLoaderWidget
+   ────────────────────────────────────────────────────────────────── */
+class DataLoaderWidget extends Widget {
+  constructor(id, el) {
+    super(id, el);
+    const btn = this.el.querySelector('[id$="-loader-submit"]');
+    if (btn) btn.addEventListener('click', () => this._load());
+  }
+  async _load() {
+    const fileEl = this.el.querySelector('[id$="-loader-file"]');
+    const statEl = this.el.querySelector('[id$="-loader-status"]');
+    const file   = fileEl?.files?.[0];
+
+    if (!file) {
+      if (statEl) statEl.textContent = 'Select a CSV file first.';
+      return;
+    }
+    if (statEl) statEl.innerHTML = `<span style="color:var(--warning)">Uploading ${esc(file.name)}…</span>`;
+
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const r = await fetch(CFG.apiUrl + '/build', {
+        method: 'POST',
+        headers: { 'X-API-Key': CFG.apiKey },
+        body: form,
+      });
+      if (!r.ok) {
+        const txt = await r.text().catch(() => r.statusText);
+        throw new Error(`${r.status} ${txt}`);
+      }
+      const data = await r.json();
+      if (statEl) statEl.innerHTML =
+        `<span style="color:var(--accent)">✓ Loaded <strong>${esc(data.filename)}</strong>` +
+        ` — ${data.node_count} nodes, ${data.edge_count} edges</span>`;
+      // Refresh status bar and graph if present
+      _widgetOf('status')?.refresh();
+      _widgetOf('graph2d')?.refresh();
+    } catch(e) {
+      if (statEl) statEl.innerHTML = `<span style="color:var(--danger)">✗ ${esc(e.message)}</span>`;
+    }
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   GraphExplorer2DWidget
+   ────────────────────────────────────────────────────────────────── */
+class GraphExplorer2DWidget extends Widget {
+  constructor(id, el) {
+    super(id, el);
+    this._net = null;
+    this._nodes = new vis.DataSet();
+    this._edges = new vis.DataSet();
+    setTimeout(() => this._init(), 50);
+    const si = this.el.querySelector('[id$="-g2d-search"]');
+    if (si) si.addEventListener('keydown', e => { if (e.key === 'Enter') this._highlight(si.value.trim()); });
+    this.refresh();
+  }
+  _init() {
+    const container = this.el.querySelector('[id$="-g2d-net"]');
+    if (!container || typeof vis === 'undefined') return;
+    this._net = new vis.Network(container, { nodes: this._nodes, edges: this._edges }, {
+      nodes: { shape: 'dot', size: 8, font: { color: '#c9d1d9', size: 11 }, color: { background: '#58a6ff', border: '#30363d', highlight: { background: '#bc8cff', border: '#bc8cff' } } },
+      edges: { color: { color: '#30363d', highlight: '#58a6ff' }, arrows: { to: { enabled: true, scaleFactor: 0.5 } }, font: { color: '#8b949e', size: 9 } },
+      physics: { stabilization: { iterations: 100 } },
+      interaction: { tooltipDelay: 200, navigationButtons: false },
+      layout: { improvedLayout: false },
+    });
+  }
+  async refresh() {
+    try {
+      const data = await API.communities();
+      const cmap = data.communities || {};
+      const colors = ['#58a6ff','#bc8cff','#3fb950','#f0883e','#d29922','#f85149','#79c0ff','#d2a8ff'];
+      const nodeArr = Object.entries(cmap).map(([id, cid]) => ({
+        id, label: id, color: { background: colors[cid % colors.length], border: '#30363d' }
+      }));
+      this._nodes.clear(); this._nodes.add(nodeArr);
+    } catch(e) { /* silent */ }
+  }
+  _highlight(term) {
+    if (!this._net || !term) return;
+    this._net.selectNodes(
+      this._nodes.getIds().filter(id => String(id).toLowerCase().includes(term.toLowerCase()))
+    );
+  }
+  onResize() { if (this._net) this._net.fit(); }
+  destroy() { super.destroy(); if (this._net) { this._net.destroy(); this._net = null; } }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   QueryRunnerWidget
+   ────────────────────────────────────────────────────────────────── */
+class QueryRunnerWidget extends Widget {
+  constructor(id, el) {
+    super(id, el);
+    const btn = this.el.querySelector('[id$="-query-run"]');
+    if (btn) btn.addEventListener('click', () => this._run());
+    const inp = this.el.querySelector('[id$="-query-input"]');
+    if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') this._run(); });
+  }
+  async _run() {
+    const src  = this.el.querySelector('[id$="-query-input"]')?.value.trim();
+    const tgt  = this.el.querySelector('[id$="-query-target"]')?.value.trim();
+    const res  = this.el.querySelector('[id$="-query-results"]');
+    if (!src || !res) return;
+    res.innerHTML = '<div class="widget-loading">Running…</div>';
+    try {
+      const data = await API.query(src, tgt, { max_paths: 6, max_hop: 3 });
+      const paths = data.paths || [];
+      if (!paths.length) { res.innerHTML = '<div class="widget-loading">No paths found.</div>'; return; }
+      res.innerHTML = paths.map(p => {
+        const steps = (p.path || []).join(' → ');
+        return `<div class="path-card">
+          <span class="path-score">${(p.score ?? 0).toFixed(3)}</span>
+          &nbsp;${esc(steps)}
+        </div>`;
+      }).join('');
+    } catch(e) { res.innerHTML = `<div class="widget-error">✗ ${esc(e.message)}</div>`; }
+  }
+  // Called by HypothesisLab hub-tag click
+  queryEntity(entity) {
+    const inp = this.el.querySelector('[id$="-query-input"]');
+    if (inp) { inp.value = entity; this._run(); }
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   HypothesisLabWidget
+   ────────────────────────────────────────────────────────────────── */
+class HypothesisLabWidget extends Widget {
+  constructor(id, el) {
+    super(id, el);
+    this._lastProposals = [];
+    const btn = this.el.querySelector('[id$="-hyp-run"]');
+    if (btn) btn.addEventListener('click', () => this._run());
+  }
+  async _run() {
+    const src  = this.el.querySelector('[id$="-hyp-src"]')?.value.trim();
+    const tgt  = this.el.querySelector('[id$="-hyp-tgt"]')?.value.trim();
+    const hops = parseInt(this.el.querySelector('[id$="-hyp-hops"]')?.value || '3');
+    const beam = parseInt(this.el.querySelector('[id$="-hyp-beam"]')?.value || '8');
+    const minc = parseFloat(this.el.querySelector('[id$="-hyp-minconf"]')?.value || '0.0');
+    const res  = this.el.querySelector('[id$="-hyp-results"]');
+    if (!src || !tgt || !res) return;
+    res.innerHTML = '<div class="widget-loading">Reasoning…</div>';
+    try {
+      const data = await API.hypothesize(src, tgt, { max_hop: hops, beam_width: beam, min_confidence: minc, max_paths: 10 });
+      this._lastProposals = data.proposals || [];
+      this._render(res, this._lastProposals);
+    } catch(e) { res.innerHTML = `<div class="widget-error">✗ ${esc(e.message)}</div>`; }
+  }
+  _render(container, proposals) {
+    if (!proposals.length) { container.innerHTML = '<div class="widget-loading">No proposals generated.</div>'; return; }
+    container.innerHTML = proposals.map((p, i) => {
+      const hubs = (p.intersection_hubs || []).slice(0, 5)
+        .map(h => `<span class="hub-tag" data-hub="${esc(h)}">${esc(h)}</span>`).join('');
+      const paths = (p.supporting_paths || p.paths || []).slice(0, 3)
+        .map(path => `<div class="path-card" style="font-size:10px;">${esc(Array.isArray(path) ? path.join(' → ') : String(path))}</div>`).join('');
+      return `
+        <div class="proposal-card">
+          <div class="prop-header">
+            <span class="prop-relation">${esc(p.derived_relation || p.relation || 'RELATED_TO')}</span>
+            <span class="prop-conf">conf: ${(p.confidence ?? 0).toFixed(3)}</span>
+          </div>
+          ${confBar(p.confidence)}
+          <div class="prop-meta">
+            Paths: ${p.path_count ?? (p.supporting_paths || p.paths || []).length}
+            &nbsp;·&nbsp; Contradiction: ${(p.contradiction_score ?? 0).toFixed(2)}
+          </div>
+          ${hubs ? `<div class="hub-tags">${hubs}</div>` : ''}
+          <details style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">
+            <summary style="cursor:pointer;color:var(--primary);">Supporting paths</summary>
+            <div style="margin-top:4px;">${paths || '<span style="color:var(--text-dim)">—</span>'}</div>
+          </details>
+          <div class="prop-actions">
+            <button class="w-btn" style="font-size:11px;" data-hyp-materialize="${esc(p.hypothesis_id)}">Materialize</button>
+            <button class="w-btn" style="font-size:11px;" data-hyp-validate="${esc(p.hypothesis_id)}">Validate Literature</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Hub tag clicks → QueryRunner
+    container.querySelectorAll('.hub-tag').forEach(tag => {
+      tag.addEventListener('click', () => {
+        const qw = _widgetOf('query');
+        if (qw) qw.queryEntity(tag.dataset.hub);
+      });
+    });
+    // Materialize
+    container.querySelectorAll('[data-hyp-materialize]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try {
+          await API.materialize(btn.dataset.hypMaterialize);
+          btn.textContent = 'Materialized ✓';
+          btn.disabled = true;
+          btn.insertAdjacentHTML('afterend', ` <button class="w-btn danger" style="font-size:11px;" data-hyp-rollback="${esc(btn.dataset.hypMaterialize)}">Rollback</button>`);
+        } catch(e) { btn.textContent = '✗ ' + e.message; }
+      });
+    });
+    // Rollback (delegated — may appear after materialize)
+    container.addEventListener('click', async e => {
+      const btn = e.target.closest('[data-hyp-rollback]');
+      if (!btn) return;
+      try {
+        await API.rollback(btn.dataset.hypRollback);
+        btn.textContent = 'Rolled back ✓'; btn.disabled = true;
+      } catch(err) { btn.textContent = '✗ ' + err.message; }
+    });
+    // Validate Literature → open Literature widget
+    container.querySelectorAll('[data-hyp-validate]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lw = _widgetOf('literature');
+        if (lw) lw.validateById(btn.dataset.hypValidate);
+        else alert('Add a Literature widget to the dashboard first.');
+      });
+    });
+  }
+  // Expose last proposals for pre-population
+  getLastProposals() { return this._lastProposals; }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   ResearchAgentWidget
+   ────────────────────────────────────────────────────────────────── */
+class ResearchAgentWidget extends Widget {
+  constructor(id, el) {
+    super(id, el);
+    this._running = false;
+    const start = this.el.querySelector('[id$="-ra-start"]');
+    const stop  = this.el.querySelector('[id$="-ra-stop"]');
+    const scan  = this.el.querySelector('[id$="-ra-scan"]');
+    if (start) start.addEventListener('click', () => this._start());
+    if (stop)  stop.addEventListener ('click', () => this._stop());
+    if (scan)  scan.addEventListener ('click', () => this._scan());
+    this.refresh();
+    this.startPolling(15000);
+  }
+  async refresh() {
+    try {
+      const st  = await API.researchStatus();
+      const findings = await API.researchProposals();
+      this._running = st.running;
+      const statEl = this.el.querySelector('[id$="-ra-status"]');
+      if (statEl) {
+        statEl.innerHTML = st.running
+          ? `<span style="color:var(--accent)">● Running</span> — scan #${st.scan_count ?? '?'}, ${st.findings_count ?? 0} findings`
+          : `<span style="color:var(--text-dim)">● Idle</span> — ${st.findings_count ?? 0} findings`;
+      }
+      this._renderFindings(findings.findings || []);
+    } catch(e) {
+      const statEl = this.el.querySelector('[id$="-ra-status"]');
+      if (statEl) statEl.innerHTML = `<span style="color:var(--danger)">✗ ${esc(e.message)}</span>`;
+    }
+  }
+  _renderFindings(findings) {
+    const container = this.el.querySelector('[id$="-ra-findings"]');
+    if (!container) return;
+    if (!findings.length) { container.innerHTML = '<div class="widget-loading" style="height:60px;">No findings yet.</div>'; return; }
+    container.innerHTML = `
+      <table class="findings-table">
+        <thead><tr>
+          <th>Source → Target</th>
+          <th>Conf.</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr></thead>
+        <tbody>
+          ${findings.map(f => {
+            const cand = f.candidate || {};
+            const conf = f.best_confidence ?? 0;
+            const dd   = densityDot(cand.local_density ?? 0.2);
+            return `<tr>
+              <td class="finding-pair">${dd}${esc(cand.source_id)} → ${esc(cand.target_id)}</td>
+              <td>${miniBar(conf)}<span style="font-size:11px;font-family:var(--font-mono)">${conf.toFixed(2)}</span></td>
+              <td>${litBadge(f.literature_status || 'unvalidated')}</td>
+              <td style="white-space:nowrap;">
+                <button class="w-btn success" style="padding:2px 8px;font-size:11px;" data-ra-approve="${esc(f.finding_id)}" title="Approve">✓</button>
+                <button class="w-btn danger"  style="padding:2px 8px;font-size:11px;" data-ra-reject="${esc(f.finding_id)}"  title="Reject">✗</button>
+                <button class="w-btn"         style="padding:2px 8px;font-size:11px;" data-ra-open="${esc(f.finding_id)}"    title="Open in Lab">🔍</button>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+    // Button events
+    container.addEventListener('click', async e => {
+      const a = e.target.closest('[data-ra-approve]');
+      const r = e.target.closest('[data-ra-reject]');
+      const o = e.target.closest('[data-ra-open]');
+      if (a) { try { await API.researchApprove(a.dataset.raApprove); this.refresh(); } catch(err) { alert(err.message); } }
+      if (r) { try { await API.researchReject(r.dataset.raReject);   this.refresh(); } catch(err) { alert(err.message); } }
+      if (o) {
+        const f  = findings.find(x => x.finding_id === o.dataset.raOpen);
+        const hw = _widgetOf('hypothesis');
+        if (hw && f?.candidate) {
+          const srcEl = hw.el.querySelector('[id$="-hyp-src"]');
+          const tgtEl = hw.el.querySelector('[id$="-hyp-tgt"]');
+          if (srcEl) srcEl.value = f.candidate.source_id;
+          if (tgtEl) tgtEl.value = f.candidate.target_id;
+        }
+      }
+    }, { once: false });
+  }
+  async _start()  { try { await API.researchStart();  this.refresh(); } catch(e) { alert(e.message); } }
+  async _stop()   { try { await API.researchStop();   this.refresh(); } catch(e) { alert(e.message); } }
+  async _scan()   {
+    const statEl = this.el.querySelector('[id$="-ra-status"]');
+    if (statEl) statEl.innerHTML = '<span style="color:var(--warning)">⚡ Scanning…</span>';
+    try { await API.researchScan(); this.refresh(); } catch(e) { alert(e.message); }
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   LiteratureWidget
+   ────────────────────────────────────────────────────────────────── */
+class LiteratureWidget extends Widget {
+  constructor(id, el) {
+    super(id, el);
+    const btn = this.el.querySelector('[id$="-lit-run"]');
+    if (btn) btn.addEventListener('click', () => this._validate());
+  }
+  async _validate() {
+    const idsEl = this.el.querySelector('[id$="-lit-ids"]');
+    const res   = this.el.querySelector('[id$="-lit-results"]');
+    if (!res) return;
+    const raw = idsEl?.value.trim();
+    const ids = raw ? raw.split(',').map(s => s.trim()).filter(Boolean) : [];
+    res.innerHTML = '<div class="widget-loading">Validating…</div>';
+    try {
+      const data = await API.researchValidate(ids);
+      this._render(res, data.reports || []);
+    } catch(e) { res.innerHTML = `<div class="widget-error">✗ ${esc(e.message)}</div>`; }
+  }
+  validateById(id) {
+    const idsEl = this.el.querySelector('[id$="-lit-ids"]');
+    if (idsEl) idsEl.value = id;
+    this._validate();
+  }
+  _render(container, reports) {
+    if (!reports.length) { container.innerHTML = '<div class="widget-loading">No reports.</div>'; return; }
+    container.innerHTML = reports.map(r => {
+      const topHits = (r.hits || []).slice(0, 3).map(h =>
+        `<div style="font-size:11px;color:var(--text-dim);margin-top:2px;">${esc(h.title)} <span style="color:var(--primary)">[${esc(h.adapter)}]</span></div>`
+      ).join('');
+      const novelPct = Math.round((r.novelty_score ?? 1) * 100);
+      return `
+        <div class="proposal-card">
+          <div class="prop-header">
+            <span class="prop-relation">${esc(r.source_id)} → ${esc(r.target_id)}</span>
+            ${litBadge(r.literature_status)}
+          </div>
+          <div class="prop-meta">
+            Novelty: ${novelPct}% &nbsp;·&nbsp; Hits: ${r.hit_count ?? 0}
+            &nbsp;·&nbsp; Adapters: ${(r.adapters_queried || []).join(', ') || '—'}
+          </div>
+          ${confBar(1 - (r.novelty_score ?? 1))}
+          ${topHits}
+        </div>`;
+    }).join('');
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   InsightFeedWidget
+   ────────────────────────────────────────────────────────────────── */
+class InsightFeedWidget extends Widget {
+  constructor(id, el) {
+    super(id, el);
+    this.refresh();
+    this.startPolling(15000);
+  }
+  async refresh() {
+    const feed = this.el.querySelector('[id$="-insight-feed"]');
+    if (!feed) return;
+    try {
+      const data = await API.insightStatus();
+      const events = (data.recent_events || data.events || []).slice(0, 20);
+      if (!events.length) { feed.innerHTML = '<div class="widget-loading">No insights yet.</div>'; return; }
+      feed.innerHTML = events.map(ev => `
+        <div class="insight-item">
+          <div class="i-head">
+            <span class="i-node">${esc(ev.bridging_node || ev.node_id || '?')}</span>
+            <span class="i-score">${(ev.score ?? 0).toFixed(3)}</span>
+          </div>
+          <div class="i-meta">
+            Communities: ${esc(ev.community_a ?? '?')} → ${esc(ev.community_b ?? '?')}
+            &nbsp;·&nbsp; ${esc(ev.validation_status || 'unvalidated')}
+          </div>
+        </div>`).join('');
+    } catch(e) { feed.innerHTML = `<div class="widget-error">✗ ${esc(e.message)}</div>`; }
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   REMControlWidget
+   ────────────────────────────────────────────────────────────────── */
+class REMControlWidget extends Widget {
+  constructor(id, el) {
+    super(id, el);
+    const dry  = this.el.querySelector('[id$="-rem-dry"]');
+    const run  = this.el.querySelector('[id$="-rem-run"]');
+    const roll = this.el.querySelector('[id$="-rem-rollback"]');
+    if (dry)  dry.addEventListener ('click', () => this._run(true));
+    if (run)  run.addEventListener ('click', () => this._run(false));
+    if (roll) roll.addEventListener('click', () => this._rollback());
+    this.refresh();
+  }
+  async refresh() {
+    const rep = this.el.querySelector('[id$="-rem-report"]');
+    if (!rep) return;
+    try {
+      const data = await API.remStatus();
+      const r = data.last_report;
+      rep.innerHTML = r
+        ? `<div class="rem-section">
+             <h4>Last REM Cycle</h4>
+             <div class="rem-value">
+               Pruned: ${r.edges_pruned ?? 0} &nbsp;·&nbsp;
+               Merged: ${r.nodes_merged ?? 0} &nbsp;·&nbsp;
+               Synth: ${r.edges_synthesized ?? 0}
+             </div>
+             <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">${r.completed_at || ''}</div>
+           </div>`
+        : '<div class="widget-loading" style="height:50px;">No REM cycle run yet.</div>';
+    } catch(e) { if (rep) rep.innerHTML = `<div class="widget-error">✗ ${esc(e.message)}</div>`; }
+  }
+  async _run(dry) {
+    const rep = this.el.querySelector('[id$="-rem-report"]');
+    if (rep) rep.innerHTML = '<div class="widget-loading">Running REM…</div>';
+    try { await API.remRun(dry); this.refresh(); } catch(e) { if (rep) rep.innerHTML = `<div class="widget-error">✗ ${esc(e.message)}</div>`; }
+  }
+  async _rollback() {
+    try { await API.remRollback(); this.refresh(); } catch(e) { alert(e.message); }
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   ParameterTunerWidget
+   ────────────────────────────────────────────────────────────────── */
+const PARAM_NAMES = ['alpha','beta','gamma','delta','epsilon','zeta','eta','iota','mu','theta'];
+const PARAM_LABELS = ['Sim','Community','EdgeType','Distance','HopDecay','PageRank','Temporal','Recency','Synthesis','Grounding'];
+
+class ParameterTunerWidget extends Widget {
+  constructor(id, el) {
+    super(id, el);
+    this._chart = null;
+    this._values = [0.4,0.4,0.1,0.05,0.05,0.1,0.1,0.05,0.1,1.0];
+    const save   = this.el.querySelector('[id$="-params-save"]');
+    const reload = this.el.querySelector('[id$="-params-reload"]');
+    if (save)   save.addEventListener  ('click', () => this._save());
+    if (reload) reload.addEventListener('click', () => this.refresh());
+    this.refresh();
+  }
+  async refresh() {
+    try {
+      const data = await API.params();
+      const p = data.global_prior || {};
+      PARAM_NAMES.forEach((n,i) => { if (p[n] !== undefined) this._values[i] = p[n]; });
+    } catch(e) { /* use defaults */ }
+    this._renderSliders();
+    this._updateChart();
+  }
+  _renderSliders() {
+    const container = this.el.querySelector('[id$="-params-sliders"]');
+    if (!container) return;
+    container.innerHTML = PARAM_NAMES.map((n,i) => `
+      <div class="param-row">
+        <span class="param-name" title="${n}">${PARAM_LABELS[i]}</span>
+        <input type="range" class="param-slider" min="0" max="2" step="0.01"
+               value="${this._values[i]}" data-param="${n}" data-idx="${i}"/>
+        <span class="param-val" id="pv-${this.id}-${n}">${this._values[i].toFixed(2)}</span>
+      </div>`).join('');
+    container.querySelectorAll('.param-slider').forEach(sl => {
+      sl.addEventListener('input', () => {
+        const i = parseInt(sl.dataset.idx);
+        this._values[i] = parseFloat(sl.value);
+        const lbl = document.getElementById(`pv-${this.id}-${sl.dataset.param}`);
+        if (lbl) lbl.textContent = this._values[i].toFixed(2);
+        this._updateChart();
+      });
+    });
+  }
+  _updateChart() {
+    const canvas = this.el.querySelector('[id$="-params-chart"]');
+    if (!canvas) return;
+    if (this._chart) { this._chart.data.datasets[0].data = this._values; this._chart.update(); return; }
+    this._chart = new Chart(canvas, {
+      type: 'radar',
+      data: {
+        labels: PARAM_LABELS,
+        datasets: [{ data: this._values, backgroundColor: 'rgba(88,166,255,0.15)', borderColor: '#58a6ff', pointBackgroundColor: '#58a6ff', borderWidth: 2 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: { r: { min: 0, max: 2, ticks: { color: '#8b949e', stepSize: 0.5, font: { size: 9 } }, grid: { color: '#30363d' }, pointLabels: { color: '#8b949e', font: { size: 9 } } } },
+        plugins: { legend: { display: false } },
+      }
+    });
+  }
+  async _save() {
+    const obj = {};
+    PARAM_NAMES.forEach((n,i) => obj[n] = this._values[i]);
+    try {
+      await API.saveParams({ global_prior: obj });
+      const btn = this.el.querySelector('[id$="-params-save"]');
+      if (btn) { btn.textContent = 'Saved ✓'; setTimeout(() => btn.textContent = 'Save Params', 2000); }
+    } catch(e) { alert(e.message); }
+  }
+  destroy() { super.destroy(); if (this._chart) { this._chart.destroy(); this._chart = null; } }
+}
+
+/* ── Widget registry ─────────────────────────────────────────────── */
+const WIDGET_CLASSES = {
+  status:     StatusWidget,
+  loader:     DataLoaderWidget,
+  graph2d:    GraphExplorer2DWidget,
+  query:      QueryRunnerWidget,
+  hypothesis: HypothesisLabWidget,
+  research:   ResearchAgentWidget,
+  literature: LiteratureWidget,
+  insight:    InsightFeedWidget,
+  rem:        REMControlWidget,
+  params:     ParameterTunerWidget,
+};
+const WIDGET_TITLES = {
+  status: 'Status Bar', loader: 'Data Loader', graph2d: 'Graph Explorer',
+  query: 'Query Runner', hypothesis: 'Hypothesis Lab', research: 'Research Agent',
+  literature: 'Literature', insight: 'Insight Feed', rem: 'REM Control', params: 'Parameters',
+};
+
+// Active widget instances: widgetId → Widget instance
+const _widgets = new Map();
+
+function _widgetOf(type) {
+  for (const [id, w] of _widgets) {
+    if (id === type || id.startsWith(type + '-')) return w;
+  }
+  return null;
+}
+
+/* ── Domain Presets ──────────────────────────────────────────────── */
+const PRESETS = {
+  biomedical: [
+    { id:'status',     x:0, y:0, w:12, h:2 },
+    { id:'hypothesis', x:0, y:2, w:6,  h:6 },
+    { id:'research',   x:6, y:2, w:6,  h:6 },
+    { id:'literature', x:0, y:8, w:4,  h:5 },
+    { id:'graph2d',    x:4, y:8, w:8,  h:5 },
+  ],
+  academic: [
+    { id:'status',     x:0, y:0,  w:12, h:2 },
+    { id:'query',      x:0, y:2,  w:5,  h:5 },
+    { id:'graph2d',    x:5, y:2,  w:7,  h:5 },
+    { id:'research',   x:0, y:7,  w:6,  h:5 },
+    { id:'insight',    x:6, y:7,  w:6,  h:5 },
+  ],
+  enterprise: [
+    { id:'status',  x:0, y:0, w:12, h:2 },
+    { id:'query',   x:0, y:2, w:6,  h:6 },
+    { id:'graph2d', x:6, y:2, w:6,  h:6 },
+    { id:'rem',     x:0, y:8, w:4,  h:5 },
+    { id:'params',  x:4, y:8, w:4,  h:5 },
+    { id:'insight', x:8, y:8, w:4,  h:5 },
+  ],
+  developer: [
+    { id:'status',     x:0,  y:0,  w:12, h:2 },
+    { id:'loader',     x:0,  y:2,  w:3,  h:4 },
+    { id:'params',     x:3,  y:2,  w:4,  h:4 },
+    { id:'insight',    x:7,  y:2,  w:5,  h:4 },
+    { id:'query',      x:0,  y:6,  w:5,  h:5 },
+    { id:'graph2d',    x:5,  y:6,  w:7,  h:5 },
+    { id:'hypothesis', x:0,  y:11, w:6,  h:6 },
+    { id:'research',   x:6,  y:11, w:6,  h:6 },
+    { id:'literature', x:0,  y:17, w:4,  h:5 },
+    { id:'rem',        x:8,  y:17, w:4,  h:5 },
+  ],
+};
+
+/* ── GridStack setup ─────────────────────────────────────────────── */
+let grid;
+let _currentDomain = 'biomedical';
+
+function _makeGridItem(spec) {
+  const tplId  = `tpl-${spec.id}`;
+  const tpl    = document.getElementById(tplId);
+  if (!tpl) return null;
+  const frag   = tpl.content.cloneNode(true);
+  const card   = frag.querySelector('.widget-card');
+
+  // Unique-ify slot IDs by appending widget id
+  card.querySelectorAll('[id^="WSLOT-"]').forEach(el => {
+    el.id = el.id.replace('WSLOT-', `W-${spec.id}-`);
+  });
+
+  // Wire header action buttons
+  card.querySelectorAll('[data-action]').forEach(btn => {
+    if (btn.dataset.action === 'close') {
+      btn.addEventListener('click', () => {
+        const gsItem = btn.closest('.grid-stack-item');
+        if (gsItem) grid.removeWidget(gsItem);
+      });
+    }
+  });
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'grid-stack-item';
+  wrapper.setAttribute('gs-x', spec.x);
+  wrapper.setAttribute('gs-y', spec.y);
+  wrapper.setAttribute('gs-w', spec.w);
+  wrapper.setAttribute('gs-h', spec.h);
+  wrapper.dataset.widgetId = spec.id;
+
+  const content = document.createElement('div');
+  content.className = 'grid-stack-item-content';
+  content.appendChild(frag);
+  wrapper.appendChild(content);
+  return wrapper;
+}
+
+function _instantiateWidget(spec, el) {
+  const Cls = WIDGET_CLASSES[spec.id];
+  if (!Cls) return;
+  const w = new Cls(spec.id, el);
+  _widgets.set(spec.id, w);
+
+  // Wire header refresh button
+  el.querySelectorAll('[data-action="refresh"]').forEach(btn => {
+    btn.addEventListener('click', () => w.refresh());
+  });
+}
+
+function _destroyWidget(id) {
+  const w = _widgets.get(id);
+  if (w) { w.destroy(); _widgets.delete(id); }
+}
+
+function loadPreset(domain) {
+  _currentDomain = domain;
+
+  // Destroy existing widgets
+  _widgets.forEach(w => w.destroy());
+  _widgets.clear();
+
+  // Remove all grid items
+  grid.removeAll();
+
+  // Check for saved layout
+  const saved = localStorage.getItem(`cerebrum_layout_${domain}`);
+  const items = saved ? JSON.parse(saved) : PRESETS[domain] || PRESETS.biomedical;
+
+  items.forEach(spec => {
+    const el = _makeGridItem(spec);
+    if (!el) return;
+    grid.addWidget(el);
+    _instantiateWidget(spec, el);
+  });
+
+  // Update domain buttons
+  document.querySelectorAll('.domain-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.domain === domain);
+  });
+}
+
+function saveLayout() {
+  const serialized = [];
+  document.querySelectorAll('.grid-stack-item').forEach(item => {
+    const id = item.dataset.widgetId;
+    if (!id) return;
+    serialized.push({
+      id,
+      x: parseInt(item.getAttribute('gs-x') || 0),
+      y: parseInt(item.getAttribute('gs-y') || 0),
+      w: parseInt(item.getAttribute('gs-w') || 4),
+      h: parseInt(item.getAttribute('gs-h') || 4),
+    });
+  });
+  localStorage.setItem(`cerebrum_layout_${_currentDomain}`, JSON.stringify(serialized));
+  const btn = document.getElementById('btn-save-layout');
+  if (btn) { btn.textContent = 'Saved ✓'; setTimeout(() => btn.textContent = 'Save Layout', 2000); }
+}
+
+/* ── Init ────────────────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  // Init GridStack
+  grid = GridStack.init({
+    column: 12,
+    cellHeight: 60,
+    animate: true,
+    resizable: { handles: 'se' },
+    draggable: { handle: '.widget-header' },
+    margin: 6,
+  });
+
+  // GridStack resize event → notify widgets
+  grid.on('resizestop', (_e, el) => {
+    const id = el.dataset.widgetId;
+    const w  = _widgets.get(id);
+    if (w) w.onResize();
+  });
+
+  // GridStack remove event → destroy widget instance
+  grid.on('removed', (_e, items) => {
+    (items || []).forEach(item => {
+      const id = item.el?.dataset?.widgetId;
+      if (id) _destroyWidget(id);
+    });
+  });
+
+  // Palette — click to add widget
+  document.querySelectorAll('.palette-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const type = item.dataset.wtype;
+      if (_widgets.has(type)) return; // already on grid
+      const spec  = { id: type, x: 0, y: 0, w: 4, h: 4 };
+      const el    = _makeGridItem(spec);
+      if (!el) return;
+      grid.addWidget(el);
+      _instantiateWidget(spec, el);
+    });
+  });
+
+  // Domain preset buttons
+  document.querySelectorAll('.domain-btn').forEach(btn => {
+    btn.addEventListener('click', () => loadPreset(btn.dataset.domain));
+  });
+
+  // Save / Reset
+  document.getElementById('btn-save-layout')?.addEventListener('click', saveLayout);
+  document.getElementById('btn-reset-layout')?.addEventListener('click', () => {
+    localStorage.removeItem(`cerebrum_layout_${_currentDomain}`);
+    loadPreset(_currentDomain);
+  });
+
+  // Config modal
+  const modal   = document.getElementById('config-modal');
+  const cfgOpen = document.getElementById('btn-config');
+  const cfgCancel = document.getElementById('cfg-cancel');
+  const cfgSave   = document.getElementById('cfg-save');
+  if (cfgOpen)   cfgOpen.addEventListener('click', () => {
+    document.getElementById('cfg-api-url').value = CFG.apiUrl;
+    document.getElementById('cfg-api-key').value = CFG.apiKey;
+    document.getElementById('cfg-poll').value    = CFG.pollMs;
+    modal.showModal();
+  });
+  if (cfgCancel) cfgCancel.addEventListener('click', () => modal.close());
+  if (cfgSave)   cfgSave.addEventListener('click', () => {
+    CFG.apiUrl  = document.getElementById('cfg-api-url').value.trim() || 'http://localhost:8200';
+    CFG.apiKey  = document.getElementById('cfg-api-key').value.trim() || 'dev-secret';
+    CFG.pollMs  = parseInt(document.getElementById('cfg-poll').value) || 10000;
+    modal.close();
+    loadPreset(_currentDomain); // re-init widgets with new config
+  });
+
+  // Load default preset (biomedical)
+  loadPreset('biomedical');
+});
+</script>
+</body>
+</html>

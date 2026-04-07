@@ -15,16 +15,24 @@ Or programmatically:
     from api.server import create_app
     app = create_app(adapter, embedding_engine, community_map)
 """
+import logging
 import os
 import time
 from contextlib import asynccontextmanager
 from typing import Optional, Dict, List, Any
 
+from core.log_config import setup_logging, get_ring_handler
+
+setup_logging()
+_api_log = logging.getLogger("cerebrum.api")
+
 import numpy as np
 import json
-from fastapi import FastAPI, HTTPException, Depends, Security
+from fastapi import FastAPI, HTTPException, Depends, Security, UploadFile, File
 from fastapi.security import APIKeyHeader, HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.status import HTTP_403_FORBIDDEN, HTTP_401_UNAUTHORIZED
 from core.security import FederatedAuth
 
@@ -128,6 +136,8 @@ _state: Dict[str, Any] = {
     "chat_sessions":    {},     # session_id -> ConversationSession
     "text_ingestor":    None,   # TextIngestor (lazy-initialized on first /ingest call)
     "insight_engine":   None,   # InsightEngine (lazy-initialized on first /insight call)
+    "query_log":        None,   # QueryLog — durable NDJSON query history
+    "aaak_cache":       None,   # AAAKCache — relation-pattern prior (warmed from query_log)
 }
 
 
@@ -177,6 +187,55 @@ def create_app(
         version="1.2.0",
         lifespan=lifespan,
     )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_headers=["*"],
+    )
+
+    # ── Request / response logging middleware ────────────────────────
+    @app.middleware("http")
+    async def _log_requests(request, call_next):
+        t0 = time.perf_counter()
+        response = await call_next(request)
+        dt = (time.perf_counter() - t0) * 1000
+        # Skip /logs polling from the log to avoid noise
+        if not request.url.path.startswith("/logs"):
+            _api_log.info(
+                "%s %s → %d  (%.1fms)",
+                request.method, request.url.path, response.status_code, dt,
+            )
+        return response
+
+    # ── Log viewer endpoints ─────────────────────────────────────────
+    @app.get("/logs", tags=["system"])
+    async def get_logs(
+        level:  Optional[str] = None,
+        limit:  int   = 500,
+        since:  float = 0.0,
+        search: str   = "",
+        node:   Dict  = Depends(get_authenticated_node),
+    ):
+        """
+        Return recent log entries from the in-memory ring buffer.
+
+        Query params:
+          level  — filter by level name (DEBUG / INFO / WARNING / ERROR)
+          limit  — max entries returned (default 500)
+          since  — Unix timestamp; only entries newer than this
+          search — substring filter on message or logger name
+        """
+        ring = get_ring_handler()
+        entries = ring.get_entries(level=level, limit=limit, since=since, search=search)
+        return {"entries": entries, "total": ring.entry_count}
+
+    @app.delete("/logs", tags=["system"])
+    async def clear_logs(node: Dict = Depends(get_authenticated_node)):
+        """Clear the in-memory log ring buffer."""
+        get_ring_handler().clear()
+        return {"cleared": True}
 
     @app.get("/health", response_model=HealthResponse, tags=["system"])
     async def health(node: Dict = Depends(get_authenticated_node)):
@@ -239,10 +298,22 @@ def create_app(
             max_budget=req.max_budget,
         )
         paths   = traversal.traverse(seeds)
-        
+
         # Pass seed embedding as query signal for semantic re-ranking
         q_emb = adapter.get_embedding(seeds[0]) if seeds else None
         answers = extract(paths, top_k=req.top_k, query_embedding=q_emb)
+
+        # Persist query result for AAAK warm-up on next restart
+        if _state["query_log"] is not None:
+            _state["query_log"].record(seeds, answers)
+        if _state["aaak_cache"] is not None and answers:
+            for ans in answers:
+                if ans.best_path is not None:
+                    from reasoning.aaak_steered_traversal import _path_rel_sequence
+                    rel_seq = _path_rel_sequence(ans.best_path)
+                    if rel_seq:
+                        weight = max(1, int(ans.score * 10))
+                        _state["aaak_cache"].record(rel_seq, weight=weight)
 
         # Format response
         structured = to_structured(answers, query=req.query, adapter=adapter)
@@ -1961,6 +2032,57 @@ def create_app(
             raise HTTPException(status_code=500, detail=str(exc))
         return _report_to_schema(report)
 
+    # ── /build — hot-reload graph from uploaded CSV ──────────────────
+    @app.post("/build", tags=["system"])
+    async def build_from_upload(
+        file: UploadFile = File(None),
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """
+        Upload a CSV file and hot-reload the graph.
+        The CSV must have columns: source, relation, target (header row required).
+        """
+        import tempfile, os as _os
+        from adapters.csv_adapter import load_csv_adapter
+        from core.embedding_engine import RandomEngine
+
+        if file is None:
+            raise HTTPException(status_code=422, detail="No file uploaded. Send multipart/form-data with field 'file'.")
+
+        content = await file.read()
+        if not content:
+            raise HTTPException(status_code=422, detail="Uploaded file is empty.")
+
+        suffix = ".csv" if (file.filename or "").endswith(".csv") else ".csv"
+        fd, tmp_path = tempfile.mkstemp(suffix=suffix)
+        try:
+            with _os.fdopen(fd, "wb") as f:
+                f.write(content)
+            new_adapter = load_csv_adapter(tmp_path)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"Failed to parse CSV: {exc}")
+        finally:
+            try:
+                _os.unlink(tmp_path)
+            except OSError:
+                pass
+
+        G = new_adapter.to_networkx()
+        emb_engine = RandomEngine(dim=64)
+        _load(new_adapter, emb_engine)
+
+        return {
+            "status": "ok",
+            "node_count": G.number_of_nodes(),
+            "edge_count": G.number_of_edges(),
+            "filename": file.filename,
+        }
+
+    import pathlib
+    _ui_dir = pathlib.Path(__file__).parent.parent / "ui"
+    if _ui_dir.exists():
+        app.mount("/ui", StaticFiles(directory=str(_ui_dir), html=True), name="ui")
+
     return app
 
 
@@ -2027,6 +2149,15 @@ def _load(
             })
             if use_meta_learning:
                 _state["meta_learner"] = MetaParameterLearner()
+            from core.persistence import QueryLog
+            from reasoning.aaak_steered_traversal import AAAKCache
+            qlog = QueryLog()
+            acache = AAAKCache()
+            replayed = qlog.replay_into_cache(acache)
+            if replayed:
+                print(f"  [API] AAAKCache warmed: {replayed} relation sequences replayed")
+            _state["query_log"] = qlog
+            _state["aaak_cache"] = acache
             return
         except Exception as e:
             print(f"  [API] Cache load failed: {e}. Falling back to computation.")
@@ -2093,6 +2224,17 @@ def _load(
     # 5. Milestone 4: Adaptive Parameter Learning
     if use_meta_learning:
         _state["meta_learner"] = MetaParameterLearner()
+
+    # 5b. AAAK relation-prior warm-up from durable query log
+    from core.persistence import QueryLog
+    from reasoning.aaak_steered_traversal import AAAKCache
+    qlog = QueryLog()
+    acache = AAAKCache()
+    replayed = qlog.replay_into_cache(acache)
+    if replayed:
+        _api_log.info("[API] AAAKCache warmed: %d relation sequences replayed", replayed)
+    _state["query_log"] = qlog
+    _state["aaak_cache"] = acache
 
     # 6. Save to cache
     if cache_path:

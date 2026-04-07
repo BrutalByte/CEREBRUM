@@ -45,9 +45,8 @@ def test_ui_analytics(client):
     assert "Nodes" in res[1]
 
 def test_ui_weight_profiler(client):
-    """Test real-time parameter radar."""
-    # Using the first generated one
-    res = client.predict(0.5, 0.5, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 1.0, api_name="/update_param_profile")
+    """Test real-time parameter radar (10 params: alpha, beta, gamma, delta, epsilon, zeta, eta, iota, mu, theta)."""
+    res = client.predict(0.5, 0.5, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0, api_name="/update_param_profile")
     assert res is not None
     assert res["type"] == "plotly"
 

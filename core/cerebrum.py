@@ -314,6 +314,9 @@ class CerebrumGraph:
         force_rebuild:        bool  = False,
         community_engine:     str   = "dscf",
         callback:             Optional[callable] = None,
+        use_graphsage:        bool  = False,
+        graphsage_self_weight: float = 0.5,
+        graphsage_neighbor_weight: float = 0.5,
     ) -> "CerebrumGraph":
         """
         Run the THALAMUS pipeline: embeddings → DSCF communities → CSA.
@@ -362,9 +365,22 @@ class CerebrumGraph:
         if callback: callback(0.1, "Step 1/5: Loading/Encoding Embeddings...")
         emb_cache = cache / "embeddings.pkl" if cache else None
 
-        if not force_rebuild and emb_cache and emb_cache.exists():
-            logger.info("Loading cached embeddings from %s", emb_cache)
-            with open(emb_cache, "rb") as f:
+        # Track whether embeddings came from cache so later steps know
+        # whether structural enrichment and GraphSAGE need to be applied.
+        _sage_cache = cache / "embeddings_sage.pkl" if (cache and use_graphsage) else None
+        _raw_cache  = emb_cache   # alias for clarity
+
+        _loaded_from_raw_cache  = bool(not force_rebuild and _raw_cache  and _raw_cache.exists())
+        _loaded_from_sage_cache = bool(not force_rebuild and _sage_cache and _sage_cache.exists())
+
+        if _loaded_from_sage_cache:
+            # Fast path: load fully-smoothed embeddings — skip encoding AND SAGE
+            logger.info("Loading cached GraphSAGE embeddings from %s", _sage_cache)
+            with open(_sage_cache, "rb") as f:
+                self.adapter.embeddings = pickle.load(f)
+        elif _loaded_from_raw_cache:
+            logger.info("Loading cached embeddings from %s", _raw_cache)
+            with open(_raw_cache, "rb") as f:
                 self.adapter.embeddings = pickle.load(f)
         else:
             # Build label map: node_id → human-readable label
@@ -383,8 +399,33 @@ class CerebrumGraph:
                 entity_labels
             )
 
-            if emb_cache:
-                with open(emb_cache, "wb") as f:
+            if _raw_cache:
+                with open(_raw_cache, "wb") as f:
+                    pickle.dump(self.adapter.embeddings, f)
+
+        # ----------------------------------------------------------
+        # 1.5. GraphSAGE neighborhood smoothing (optional)
+        # Guarded by a separate cache key so smoothing is applied exactly
+        # once — loading from sage_cache above already skips this block.
+        # ----------------------------------------------------------
+        if use_graphsage and self.adapter.embeddings and not _loaded_from_sage_cache:
+            if callback: callback(0.2, "Step 1.5/5: GraphSAGE Neighborhood Smoothing...")
+            from core.embedding_engine import smooth_with_graphsage
+            logger.info(
+                "Applying GraphSAGE smoothing (self=%.2f, neighbor=%.2f)",
+                graphsage_self_weight, graphsage_neighbor_weight,
+            )
+            self.adapter.embeddings = smooth_with_graphsage(
+                self.adapter.embeddings,
+                G,
+                self_weight=graphsage_self_weight,
+                neighbor_weight=graphsage_neighbor_weight,
+            )
+            if _sage_cache:
+                # Write smoothed result to its own cache file, never to the
+                # raw embeddings.pkl (which must stay un-smoothed for reuse).
+                _sage_cache.parent.mkdir(parents=True, exist_ok=True)
+                with open(_sage_cache, "wb") as f:
                     pickle.dump(self.adapter.embeddings, f)
 
         # ----------------------------------------------------------
@@ -394,9 +435,11 @@ class CerebrumGraph:
         # Compute raw graph features (PageRank, Betweenness, Recency)
         logger.info("Computing structural features (Phase 33)...")
         struct_features = compute_structural_features(G, current_time=time.time())
-        
-        # If we didn't load from cache, apply structural enrichment to embeddings
-        if force_rebuild or not (cache / "embeddings.pkl" if cache else None) or not (cache / "embeddings.pkl").exists():
+
+        # Apply structural enrichment only when embeddings were freshly encoded.
+        # When loaded from either cache the enrichment is already baked in.
+        _freshly_encoded = not _loaded_from_raw_cache and not _loaded_from_sage_cache
+        if force_rebuild or _freshly_encoded:
             # Encode features into a vector of the same dimension as existing embeddings
             # We use a residual connection: h = LayerNorm(h + structural_encoding)
             if self.adapter.embeddings:
@@ -414,8 +457,10 @@ class CerebrumGraph:
                         if norm > 0:
                             self.adapter.embeddings[node] = h / norm
 
-                if emb_cache:
-                    with open(emb_cache, "wb") as f:
+                # Write enriched embeddings back to the raw cache so future
+                # loads start from the post-structural state.
+                if _raw_cache and not _loaded_from_raw_cache:
+                    with open(_raw_cache, "wb") as f:
                         pickle.dump(self.adapter.embeddings, f)
 
         # ----------------------------------------------------------

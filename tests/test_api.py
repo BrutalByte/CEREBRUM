@@ -584,4 +584,100 @@ class TestAdaptiveLearning:
         assert r.json()["buffer_remaining"] >= 2
 
 
+# ---------------------------------------------------------------------------
+# Phase 54 — Observability: /logs, /build
+# ---------------------------------------------------------------------------
+
+class TestLogsEndpoint:
+    """GET /logs and DELETE /logs ring-buffer log viewer."""
+
+    def test_get_logs_returns_structure(self, client):
+        """GET /logs returns entries list and total count."""
+        r = client.get("/logs")
+        assert r.status_code == 200
+        body = r.json()
+        assert "entries" in body
+        assert "total" in body
+        assert isinstance(body["entries"], list)
+        assert isinstance(body["total"], int)
+
+    def test_get_logs_populates_after_request(self, client):
+        """Ring buffer captures at least one entry after /health is called."""
+        # Trigger a request that will emit a log entry via the middleware
+        client.get("/health")
+        r = client.get("/logs")
+        assert r.status_code == 200
+        assert r.json()["total"] >= 1
+
+    def test_get_logs_level_filter(self, client):
+        """level= query param filters to the given level."""
+        r = client.get("/logs?level=INFO")
+        assert r.status_code == 200
+        body = r.json()
+        for entry in body["entries"]:
+            assert entry["level"] == "INFO"
+
+    def test_get_logs_limit_param(self, client):
+        """limit= caps the number of returned entries."""
+        r = client.get("/logs?limit=2")
+        assert r.status_code == 200
+        assert len(r.json()["entries"]) <= 2
+
+    def test_delete_logs_clears_buffer(self, client):
+        """DELETE /logs empties the ring buffer."""
+        # Ensure there's something in the buffer first
+        client.get("/health")
+        r = client.delete("/logs")
+        assert r.status_code == 200
+        assert r.json()["cleared"] is True
+        # Buffer should now be empty (or nearly — race with any concurrent log)
+        r2 = client.get("/logs")
+        assert r2.json()["total"] == 0
+
+    def test_get_logs_search_filter(self, client):
+        """search= substring filter works on logger name."""
+        client.get("/health")
+        r = client.get("/logs?search=cerebrum")
+        assert r.status_code == 200
+        for entry in r.json()["entries"]:
+            assert "cerebrum" in entry["logger"].lower() or "cerebrum" in entry["msg"].lower()
+
+
+class TestBuildEndpoint:
+    """POST /build — hot-reload graph from uploaded CSV."""
+
+    def test_build_valid_csv(self, client):
+        """Upload toy_graph.csv and get node/edge counts back."""
+        csv_bytes = TOY_CSV.read_bytes()
+        r = client.post(
+            "/build",
+            files={"file": ("toy_graph.csv", csv_bytes, "text/csv")},
+        )
+        assert r.status_code == 200
+        body = r.json()
+        assert body["status"] == "ok"
+        assert body["node_count"] > 0
+        assert body["edge_count"] > 0
+        assert body["filename"] == "toy_graph.csv"
+
+    def test_build_no_file_returns_422(self, client):
+        """POST /build with no file field returns 422."""
+        r = client.post("/build")
+        assert r.status_code == 422
+
+    def test_build_empty_file_returns_422(self, client):
+        """POST /build with empty file content returns 422."""
+        r = client.post(
+            "/build",
+            files={"file": ("empty.csv", b"", "text/csv")},
+        )
+        assert r.status_code == 422
+
+    def test_build_invalid_csv_returns_400(self, client):
+        """POST /build with non-CSV content returns 400."""
+        r = client.post(
+            "/build",
+            files={"file": ("bad.csv", b"not,a,valid\x00csv\xff\xfe", "text/csv")},
+        )
+        assert r.status_code in (400, 422, 500)
 

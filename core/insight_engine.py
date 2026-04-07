@@ -167,9 +167,13 @@ class InsightEngine:
         self._buffer: Deque[_Candidate] = collections.deque(maxlen=ring_buffer_size)
         self._events: Deque[InsightEvent] = collections.deque(maxlen=500)
 
-        # Rolling baseline: (min_cid, max_cid) → running mean path score
-        self._baselines: Dict[Tuple[int, int], float] = {}
-        self._baseline_counts: Dict[Tuple[int, int], int] = {}
+        # Rolling baseline: (min_cid, max_cid) → running mean path score.
+        # Capped at _BASELINE_MAX entries via LRU eviction (OrderedDict) to
+        # prevent unbounded memory growth for graphs with many communities.
+        _BASELINE_MAX = 10_000
+        self._baselines: collections.OrderedDict = collections.OrderedDict()
+        self._baseline_counts: collections.OrderedDict = collections.OrderedDict()
+        self._baseline_max = _BASELINE_MAX
 
         self._paused    = False
         self._stopped   = False
@@ -259,52 +263,68 @@ class InsightEngine:
             nodes_a = community_nodes[cid_a]
             nodes_b = community_nodes[cid_b]
 
-            for u in nodes_a:
-                emb_u = self.adapter.get_embedding(u)
-                if emb_u is None:
+            # Collect unit-normalised embeddings for both communities in bulk.
+            # Batch cosine similarity is then a single matrix multiply instead
+            # of an O(|A|×|B|) nested Python loop.
+            def _collect(node_list):
+                ids, vecs = [], []
+                for n in node_list:
+                    e = self.adapter.get_embedding(n)
+                    if e is None:
+                        continue
+                    norm = float(np.linalg.norm(e))
+                    if norm > 0:
+                        ids.append(n)
+                        vecs.append(e.astype(np.float32) / norm)
+                return ids, vecs
+
+            ids_a, vecs_a = _collect(nodes_a)
+            ids_b, vecs_b = _collect(nodes_b)
+            if not ids_a or not ids_b:
+                continue
+
+            # mat_a: (|A|, dim),  mat_b: (|B|, dim)
+            # sim_matrix: (|A|, |B|) — all cosine sims in one BLAS call
+            mat_a = np.stack(vecs_a)                       # (|A|, dim)
+            mat_b = np.stack(vecs_b)                       # (|B|, dim)
+            sim_matrix = mat_a @ mat_b.T                   # (|A|, |B|)
+
+            # Only evaluate pairs above threshold (discount 30 % for cold path)
+            threshold_sim = self.salience_threshold / 0.7
+            above = np.argwhere(sim_matrix >= threshold_sim)
+
+            for ai, bi in above:
+                u = ids_a[ai]
+                v = ids_b[bi]
+                if G.has_edge(u, v) or G.has_edge(v, u):
                     continue
-                norm_u = float(np.linalg.norm(emb_u))
-                if norm_u == 0:
+
+                sim           = float(sim_matrix[ai, bi])
+                insight_score = sim * 0.7
+                if insight_score < self.salience_threshold:
                     continue
 
-                for v in nodes_b:
-                    if G.has_edge(u, v) or G.has_edge(v, u):
-                        continue
-                    emb_v = self.adapter.get_embedding(v)
-                    if emb_v is None:
-                        continue
-                    norm_v = float(np.linalg.norm(emb_v))
-                    if norm_v == 0:
-                        continue
+                power = self._explanatory_power(G, u, v)
+                insight_score = min(1.0, (insight_score + power) / 2.0)
 
-                    sim = float(np.dot(emb_u, emb_v) / (norm_u * norm_v))
-                    # Cold path uses similarity as a proxy for insight score
-                    # (discounted 30% vs. hot path — no actual traversal surprise)
-                    insight_score = sim * 0.7
-                    if insight_score < self.salience_threshold:
-                        continue
+                event = InsightEvent(
+                    bridging_node=u,
+                    source=u,
+                    target=v,
+                    insight_score=insight_score,
+                    explanatory_power=power,
+                    community_leap=1,
+                    path=None,
+                    edge_created=False,
+                )
 
-                    power = self._explanatory_power(G, u, v)
-                    insight_score = min(1.0, (insight_score + power) / 2.0)
+                if not self._already_materialized(G, u, v):
+                    self._materialize(event, G)
+                    event.edge_created = True
 
-                    event = InsightEvent(
-                        bridging_node=u,
-                        source=u,
-                        target=v,
-                        insight_score=insight_score,
-                        explanatory_power=power,
-                        community_leap=1,
-                        path=None,
-                        edge_created=False,
-                    )
-
-                    if not self._already_materialized(G, u, v):
-                        self._materialize(event, G)
-                        event.edge_created = True
-
-                    with self._lock:
-                        self._events.append(event)
-                    events.append(event)
+                with self._lock:
+                    self._events.append(event)
+                events.append(event)
 
         return events
 
@@ -518,10 +538,17 @@ class InsightEngine:
 
     def _update_baseline(self, key: Tuple[int, int], score: float) -> None:
         with self._lock:
-            n     = self._baseline_counts.get(key, 0)
-            old   = self._baselines.get(key, score)
+            n   = self._baseline_counts.get(key, 0)
+            old = self._baselines.get(key, score)
+            # Move key to end (most-recently-used) for LRU ordering
             self._baselines[key]       = (old * n + score) / (n + 1)
             self._baseline_counts[key] = n + 1
+            self._baselines.move_to_end(key)
+            self._baseline_counts.move_to_end(key)
+            # Evict oldest entry when over capacity
+            if len(self._baselines) > self._baseline_max:
+                self._baselines.popitem(last=False)
+                self._baseline_counts.popitem(last=False)
 
     def _explanatory_power(self, G, u: str, v: str) -> float:
         """
