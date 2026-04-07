@@ -607,7 +607,8 @@ def best_of_n_dscf(
                 ]
                 results = [f.result() for f in futures]
         except Exception as exc:
-            logger.warning(
+            import logging
+            logging.getLogger("cerebrum.community").warning(
                 "ProcessPoolExecutor failed (%s) — falling back to sequential DSCF", exc
             )
             results = [

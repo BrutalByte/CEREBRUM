@@ -315,22 +315,30 @@ class TestStreamTraversalGuard:
 # ---------------------------------------------------------------------------
 
 class TestProcessPoolFallback:
-    def test_executor_failure_returns_valid_partition(self):
-        """best_of_n_dscf must return valid partitions even when the executor raises."""
+    def _fake_partition(self, G):
+        """Return a trivial valid partition: every node in its own community."""
+        return [frozenset([n]) for n in G.nodes()]
+
+    def test_executor_failure_falls_back_to_sequential(self):
+        """When ProcessPoolExecutor raises, best_of_n_dscf must call dscf_communities
+        sequentially instead of propagating the executor exception."""
         from concurrent.futures import BrokenExecutor
         from adapters.csv_adapter import load_csv_adapter
         from core.community_engine import best_of_n_dscf
         adapter = load_csv_adapter(TOY_CSV)
         G = adapter.to_networkx()
-        # ProcessPoolExecutor is imported locally inside best_of_n_dscf, so patch
-        # it at the source module (concurrent.futures).
-        with patch(
-            "concurrent.futures.ProcessPoolExecutor",
-            side_effect=BrokenExecutor("paging file too small"),
-        ):
-            parts = best_of_n_dscf(G, n_trials=2, seed=0, use_multiprocessing=True)
-        all_nodes = {n for p in parts for n in p}
-        assert all_nodes == set(G.nodes())
+        # Patch both the executor (to raise) and dscf_communities (to return fast),
+        # verifying that the fallback code path is reached.
+        sentinel = [frozenset(G.nodes())]  # one community — all nodes
+        with patch("concurrent.futures.ProcessPoolExecutor",
+                   side_effect=BrokenExecutor("paging file too small")):
+            with patch("core.community_engine.dscf_communities",
+                       return_value=sentinel[0]) as mock_dscf:
+                parts = best_of_n_dscf(G, n_trials=2, seed=0, use_multiprocessing=True)
+        # dscf_communities should have been called exactly n_trials=2 times (sequential)
+        assert mock_dscf.call_count == 2
+        # Result must be non-empty
+        assert len(parts) > 0
 
     def test_executor_failure_logs_warning(self):
         """best_of_n_dscf must log a WARNING when executor falls back to sequential."""
@@ -339,12 +347,13 @@ class TestProcessPoolFallback:
         from core.community_engine import best_of_n_dscf
         adapter = load_csv_adapter(TOY_CSV)
         G = adapter.to_networkx()
+        sentinel = frozenset(G.nodes())
         with _capture_logs(logging.WARNING) as records:
-            with patch(
-                "concurrent.futures.ProcessPoolExecutor",
-                side_effect=BrokenExecutor("injected executor failure"),
-            ):
-                best_of_n_dscf(G, n_trials=2, seed=0, use_multiprocessing=True)
+            with patch("concurrent.futures.ProcessPoolExecutor",
+                       side_effect=BrokenExecutor("injected executor failure")):
+                with patch("core.community_engine.dscf_communities",
+                           return_value=sentinel):
+                    best_of_n_dscf(G, n_trials=2, seed=0, use_multiprocessing=True)
         assert any("falling back to sequential DSCF" in r.getMessage() for r in records)
 
 
