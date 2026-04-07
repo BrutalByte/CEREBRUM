@@ -271,6 +271,67 @@ class VerbalizationResult:
 
 
 # ---------------------------------------------------------------------------
+# AAAK (AI-to-AI Knowledge) Verbalizer
+# ---------------------------------------------------------------------------
+
+class AAAKVerbalizer:
+    """
+    Implements a shorthand dialect for 30x reasoning compression.
+    Designed for LLM-to-LLM knowledge transfer (AAAK).
+    """
+    
+    _SHORTHAND = {
+        "CAUSES": "!",
+        "CAUSED_BY": "<-!",
+        "TREATS": "+",
+        "INHIBITS": "-",
+        "STARRED_IN": "*",
+        "DIRECTED_BY": "^",
+        "RELEASE_YEAR": "@",
+        "INFLUENCED": "~",
+        "MEMBER_OF": "€",
+        "PART_OF": "⊂",
+        "REM_SYNTHESIZED": "≈",
+    }
+
+    def verbalize(self, answers: list, adapter=None) -> str:
+        """
+        Compress top answers into a dense AAAK block.
+        Example: [Newton ~> Leibniz !> Calculus (c=0.92)]
+        """
+        if not answers: return "ø"
+        
+        pkts = []
+        for ans in answers[:5]:
+            path = getattr(ans, "best_path", None)
+            if not path: continue
+            
+            nodes = path.nodes
+            trace = []
+            for i in range(0, len(nodes), 2):
+                node_id = nodes[i]
+                # Use first 4 chars of label for extreme compression
+                label = self._label(node_id, adapter)[:6].replace(" ", "")
+                trace.append(label)
+                if i + 1 < len(nodes):
+                    rel = nodes[i+1]
+                    trace.append(self._SHORTHAND.get(rel, ">"))
+            
+            pkt = f"[{''.join(trace)}(c{ans.score:.2f})]"
+            pkts.append(pkt)
+            
+        return "AAAK:" + "".join(pkts)
+
+    def _label(self, entity_id: str, adapter) -> str:
+        if adapter is None: return entity_id
+        try:
+            ent = adapter.get_entity(entity_id)
+            if ent and ent.label: return ent.label
+        except: pass
+        return entity_id
+
+
+# ---------------------------------------------------------------------------
 # PathVerbalizer
 # ---------------------------------------------------------------------------
 

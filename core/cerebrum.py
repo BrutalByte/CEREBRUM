@@ -313,6 +313,7 @@ class CerebrumGraph:
         seed:                 int   = 42,
         force_rebuild:        bool  = False,
         community_engine:     str   = "dscf",
+        callback:             Optional[callable] = None,
     ) -> "CerebrumGraph":
         """
         Run the THALAMUS pipeline: embeddings → DSCF communities → CSA.
@@ -330,6 +331,7 @@ class CerebrumGraph:
         community_engine    : 'dscf', 'leiden', 'lpa', or 'tsc' (default 'dscf').
                               'tsc' runs vectorized Triple-Signal Consensus with auto-PageRank.
                               'leiden' is significantly faster for large graphs (>1M nodes).
+        callback            : optional function(progress_float, status_str) for real-time updates.
 
         Returns self for chaining.
         """
@@ -357,6 +359,7 @@ class CerebrumGraph:
         # ----------------------------------------------------------
         # 1. Embeddings
         # ----------------------------------------------------------
+        if callback: callback(0.1, "Step 1/5: Loading/Encoding Embeddings...")
         emb_cache = cache / "embeddings.pkl" if cache else None
 
         if not force_rebuild and emb_cache and emb_cache.exists():
@@ -387,6 +390,7 @@ class CerebrumGraph:
         # ----------------------------------------------------------
         # 2. Structural & Temporal Enrichment (Phase 33)
         # ----------------------------------------------------------
+        if callback: callback(0.3, "Step 2/5: Computing Structural Features...")
         # Compute raw graph features (PageRank, Betweenness, Recency)
         logger.info("Computing structural features (Phase 33)...")
         struct_features = compute_structural_features(G, current_time=time.time())
@@ -417,6 +421,7 @@ class CerebrumGraph:
         # ----------------------------------------------------------
         # 3. Community detection
         # ----------------------------------------------------------
+        if callback: callback(0.5, "Step 3/5: DSCF Community Detection (Attention Heads)...")
         comm_cache = cache / "communities.pkl" if cache else None
         G_und      = G.to_undirected() if G.is_directed() else G
 
@@ -483,6 +488,7 @@ class CerebrumGraph:
         # ----------------------------------------------------------
         # 4. CSA engine
         # ----------------------------------------------------------
+        if callback: callback(0.8, "Step 4/5: Building CSA Attention Engine...")
         logger.info("Building CSA engine...")
         distances = build_community_distance_matrix(G_und, cm)
         adj       = adjacent_community_pairs(G_und, cm)

@@ -1,7 +1,7 @@
 # CEREBRUM REST API Reference
 
 **Base URL**: `http://localhost:8200`
-**API Version**: v1.7.1
+**API Version**: v1.9.8
 **Authentication**: JWT Bearer token (all endpoints except `/health`)
 
 ---
@@ -107,10 +107,293 @@ Simple GET-style query for integrations that cannot send POST bodies.
 
 ---
 
+### Autonomous Reasoning
+
+#### `POST /hypothesize`
+Generate hypothesis proposals using the HypothesisEngine. Multi-path abductive reasoning identifies candidate edges that are strongly implied by indirect evidence but not yet present in the graph.
+
+**Request body:**
+```json
+{
+    "entity": "BRCA1",
+    "max_hops": 3,
+    "top_k": 10,
+    "min_support_paths": 2
+}
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `entity` | string | required | Anchor entity for abductive reasoning |
+| `max_hops` | int | 3 | Depth of supporting path search |
+| `top_k` | int | 10 | Maximum number of hypotheses to generate |
+| `min_support_paths` | int | 2 | Minimum supporting paths required for a hypothesis |
+
+**Response (200 OK):**
+```json
+{
+    "hypotheses": [
+        {
+            "id": "hyp_001",
+            "source": "BRCA1",
+            "relation": "associated_with",
+            "target": "Ovarian_Cancer",
+            "confidence": 0.83,
+            "supporting_paths": 4,
+            "status": "PENDING"
+        }
+    ],
+    "generated_at": 1743000000,
+    "engine_version": "1.9.8"
+}
+```
+
+---
+
+#### `POST /hypothesize/materialize`
+Materialize approved hypotheses as real edges in the graph. Only hypotheses with `status: APPROVED` are materialized.
+
+**Request body:**
+```json
+{
+    "hypothesis_ids": ["hyp_001", "hyp_003"]
+}
+```
+
+**Response (200 OK):**
+```json
+{
+    "materialized": ["hyp_001", "hyp_003"],
+    "skipped": [],
+    "edges_added": 2
+}
+```
+
+---
+
+#### `GET /hypothesize/status`
+Return the current status of all hypothesis proposals in the engine's working set.
+
+**Response (200 OK):**
+```json
+{
+    "total": 12,
+    "pending": 8,
+    "approved": 3,
+    "rejected": 1,
+    "materialized": 2,
+    "hypotheses": [
+        {
+            "id": "hyp_001",
+            "source": "BRCA1",
+            "target": "Ovarian_Cancer",
+            "confidence": 0.83,
+            "status": "MATERIALIZED"
+        }
+    ]
+}
+```
+
+---
+
+#### `POST /research/scan`
+Trigger the ResearchAgent to scan the graph for missing links. The agent identifies structural signatures that typically indicate an unrecorded edge and produces a ranked list of candidate findings for human review.
+
+**Request body:**
+```json
+{
+    "scope": "full",
+    "max_findings": 50,
+    "min_confidence": 0.6
+}
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `scope` | string | `"full"` | Scan scope: `"full"` or entity ID for local scan |
+| `max_findings` | int | 50 | Maximum findings to surface |
+| `min_confidence` | float | 0.6 | Minimum confidence threshold for findings |
+
+**Response (202 Accepted):**
+```json
+{
+    "scan_id": "scan_1743000000",
+    "status": "running",
+    "estimated_duration_s": 12
+}
+```
+
+Poll `GET /research/scan/{scan_id}` for completion. When complete, findings are available via `GET /hypothesize/status`.
+
+---
+
+#### `POST /research/approve/{id}`
+Approve a specific research finding. Approved findings are queued for materialization.
+
+**Path parameter:** `id` — finding identifier (e.g., `hyp_005`)
+
+**Response (200 OK):**
+```json
+{
+    "id": "hyp_005",
+    "status": "APPROVED",
+    "approved_at": 1743000000
+}
+```
+
+---
+
+#### `POST /research/reject/{id}`
+Reject a specific research finding. Rejected findings are retained in the audit log but will not be materialized.
+
+**Path parameter:** `id` — finding identifier
+
+**Response (200 OK):**
+```json
+{
+    "id": "hyp_005",
+    "status": "REJECTED",
+    "rejected_at": 1743000000
+}
+```
+
+---
+
+#### `POST /validate/proposals`
+Submit hypothesis proposals to the ExternalValidator for literature cross-referencing. The validator searches PubMed, ClinicalTrials.gov, arXiv, and OpenAlex and returns corroboration evidence for each proposal.
+
+**Request body:**
+```json
+{
+    "proposal_ids": ["hyp_001", "hyp_003"],
+    "sources": ["pubmed", "clinicaltrials", "arxiv", "openalex"],
+    "max_results_per_source": 5
+}
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `proposal_ids` | list[string] | required | Hypothesis IDs to validate |
+| `sources` | list[string] | all | External databases to query |
+| `max_results_per_source` | int | 5 | Maximum literature hits per source per proposal |
+
+**Response (200 OK):**
+```json
+{
+    "validations": [
+        {
+            "proposal_id": "hyp_001",
+            "source": "pubmed",
+            "hits": 3,
+            "top_result": {
+                "title": "BRCA1 mutations and ovarian cancer risk...",
+                "pmid": "12345678",
+                "relevance_score": 0.91
+            },
+            "overall_support": "CORROBORATED"
+        }
+    ],
+    "validated_at": 1743000000
+}
+```
+
+---
+
+### Parameter Learning
+
+#### `POST /feedback`
+Submit feedback for a completed query path. Triggers an immediate online SGD update on community-specific CSA parameters via `MetaParameterLearner`. Also buffers the (positive, negative) pair for later batch retraining.
+
+**Request body:**
+```json
+{
+    "query_entity": "Marie Curie",
+    "positive_path": ["Marie Curie", "discovered", "Polonium"],
+    "negative_path": ["Marie Curie", "worked_at", "Sorbonne"],
+    "community_id": 2
+}
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `query_entity` | string | required | The query entity that produced the paths |
+| `positive_path` | list[string] | required | The correct/preferred path |
+| `negative_path` | list[string] | null | An incorrect/rejected path (optional) |
+| `community_id` | int | null | Community to update; null updates global prior |
+
+**Response (200 OK):**
+```json
+{
+    "updated": true,
+    "community_id": 2,
+    "buffer_size": 47,
+    "new_params": [0.41, 0.39, 0.11, 0.05, 0.05, 0.10, 0.10, 0.05, 0.10, 1.0]
+}
+```
+
+---
+
+#### `POST /retrain`
+Batch retrain the global CSA parameter prior from all buffered feedback pairs using `CSAParameterLearner.fit()` (gradient descent). Clears the buffer on completion.
+
+**Request body:** Empty `{}` or optional `{"learning_rate": 0.01, "epochs": 100}`
+
+**Response (200 OK):**
+```json
+{
+    "retrained": true,
+    "pairs_used": 47,
+    "epochs": 100,
+    "final_loss": 0.0034,
+    "new_global_prior": [0.42, 0.38, 0.11, 0.05, 0.05, 0.10, 0.10, 0.05, 0.10, 1.0],
+    "duration_ms": 380
+}
+```
+
+---
+
+#### `GET /params`
+Inspect the current 10-parameter global vector and any community-specific overrides.
+
+**Response (200 OK):**
+```json
+{
+    "global_prior": [0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0],
+    "param_names": ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "iota", "mu", "theta"],
+    "community_overrides": {
+        "2": [0.45, 0.35, 0.12, 0.05, 0.05, 0.10, 0.10, 0.05, 0.10, 1.0]
+    },
+    "feedback_buffer_size": 0,
+    "last_retrain_at": 1743000000
+}
+```
+
+---
+
+#### `POST /params`
+Restore a parameter checkpoint (replaces global prior and community overrides). Used with `--params-file` CLI flag for startup restoration.
+
+**Request body:**
+```json
+{
+    "global_prior": [0.42, 0.38, 0.11, 0.05, 0.05, 0.10, 0.10, 0.05, 0.10, 1.0],
+    "community_overrides": {
+        "2": [0.45, 0.35, 0.12, 0.05, 0.05, 0.10, 0.10, 0.05, 0.10, 1.0]
+    }
+}
+```
+
+**Response (200 OK):**
+```json
+{"restored": true, "communities_overridden": 1}
+```
+
+---
+
 ### Federated Reasoning
 
 #### `POST /traverse`
-Delegate multi-hop reasoning branch expansion to this node. Returns a set of `TraversalPath` objects (sub-beams) starting from the provided seed.
+Delegate multi-hop reasoning branch expansion to this node. Returns a set of `TraversalPath` objects (sub-beams) starting from the provided seed. Used by `DistributedBeamTraversal` to orchestrate cross-node federated reasoning.
 
 **Request body:**
 ```json
@@ -151,12 +434,83 @@ Delegate multi-hop reasoning branch expansion to this node. Returns a set of `Tr
 }
 ```
 
+---
+
+### Observability (Phase 54)
+
+#### `GET /logs`
+Retrieve recent log entries from the in-memory `RingBufferHandler`. Supports filtering by level, time, and content.
+
+**Query parameters:**
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `level` | string | `"DEBUG"` | Minimum log level: DEBUG, INFO, WARNING, ERROR, CRITICAL |
+| `limit` | int | 100 | Maximum number of entries to return |
+| `since` | string | null | ISO 8601 timestamp — only entries after this time |
+| `search` | string | null | Substring filter on log message text |
+
+**Response (200 OK):**
+```json
+{
+    "entries": [
+        {
+            "timestamp": "2026-04-05T12:00:01.234Z",
+            "level": "INFO",
+            "logger": "cerebrum.traversal",
+            "message": "BeamTraversal: 847 hops in 6.3ms",
+            "trace_id": "req_abc123"
+        }
+    ],
+    "total_in_buffer": 500,
+    "returned": 100
+}
+```
+
 **curl example:**
 ```bash
-curl -X POST http://localhost:8200/traverse \
+curl "http://localhost:8200/logs?level=WARNING&limit=50&search=error" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+---
+
+#### `DELETE /logs`
+Clear all entries from the log ring buffer.
+
+**Response (200 OK):**
+```json
+{"cleared": true, "entries_removed": 500}
+```
+
+---
+
+#### `POST /build`
+Hot-reload the graph from an uploaded CSV file. Rebuilds embeddings, community partitions, and structural encodings in-process without a server restart. Accepts `multipart/form-data` with a `file` field.
+
+**Request:** `multipart/form-data`
+
+| Field | Type | Description |
+|---|---|---|
+| `file` | file | CSV file with format `subject,predicate,object[,weight]` |
+
+**Response (200 OK):**
+```json
+{
+    "built": true,
+    "num_nodes": 142,
+    "num_edges": 389,
+    "num_communities": 11,
+    "modularity_q": 0.451,
+    "build_duration_ms": 1240
+}
+```
+
+**curl example:**
+```bash
+curl -X POST http://localhost:8200/build \
   -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"seed_id": "Marie Curie", "max_hop": 2}'
+  -F "file=@new_graph.csv"
 ```
 
 ---
@@ -305,6 +659,15 @@ data: {"source": "A", "target": "B", "reason": "bilateral_probe_failed"}
 
 ---
 
+#### `GET /stream/query`
+Streaming NDJSON reasoning — emits partial results as they are discovered during traversal, rather than waiting for the full beam to complete.
+
+**Query parameters:** Same as `GET /query`.
+
+**Response:** Newline-delimited JSON, one path object per line, followed by a summary object.
+
+---
+
 #### `POST /stream/push`
 Push a single event into the streaming ingest pipeline.
 
@@ -335,7 +698,7 @@ Health check endpoint. No authentication required.
 ```json
 {
     "status": "healthy",
-    "version": "1.1.0",
+    "version": "1.9.8",
     "graph_loaded": true,
     "num_nodes": 21,
     "num_edges": 30,
@@ -401,7 +764,7 @@ Clear the materialized path cache.
 | 404 | `NOT_FOUND` | Requested resource not found |
 | 429 | `RATE_LIMITED` | Request rate exceeded; retry after N seconds |
 | 500 | `TRAVERSAL_FAILED` | Internal traversal error (check logs) |
-| 503 | `GRAPH_NOT_LOADED` | No graph loaded; call /admin/load first |
+| 503 | `GRAPH_NOT_LOADED` | No graph loaded; call /build or restart with --csv |
 
 **Error response format:**
 ```json
@@ -423,6 +786,13 @@ Default rate limits (configurable via environment variables):
 | `POST /query` | 100 requests/minute |
 | `GET /query` | 100 requests/minute |
 | `GET /communities` | 30 requests/minute |
+| `POST /hypothesize` | 20 requests/minute |
+| `POST /research/scan` | 5 requests/minute |
+| `POST /validate/proposals` | 10 requests/minute |
+| `POST /feedback` | 200 requests/minute |
+| `POST /retrain` | 5 requests/minute |
+| `GET /logs` | 60 requests/minute |
+| `POST /build` | 10 requests/minute |
 | `POST /stream/push` | 1000 requests/minute |
 | `GET /stream/events` | 10 concurrent connections |
 | `GET /stream/insights` | 10 concurrent connections |
@@ -449,9 +819,29 @@ client = httpx.Client(
     headers={"Authorization": f"Bearer {os.environ['CEREBRUM_TOKEN']}"}
 )
 
+# Core reasoning
 response = client.post("/query", json={"entity": "Marie Curie", "max_hops": 3})
 result = response.json()
 print(result["answers"][0]["path"])
+
+# Generate hypotheses
+hyps = client.post("/hypothesize", json={"entity": "BRCA1", "top_k": 5}).json()
+
+# Validate against literature
+validated = client.post("/validate/proposals", json={
+    "proposal_ids": [h["id"] for h in hyps["hypotheses"]],
+    "sources": ["pubmed", "arxiv"]
+}).json()
+
+# Submit feedback and retrain
+client.post("/feedback", json={
+    "query_entity": "Marie Curie",
+    "positive_path": ["Marie Curie", "discovered", "Polonium"]
+})
+client.post("/retrain", json={})
+
+# Export learned parameters
+checkpoint = client.get("/params").json()
 ```
 
 ---

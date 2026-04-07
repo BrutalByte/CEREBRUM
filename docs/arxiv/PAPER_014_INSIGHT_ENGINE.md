@@ -2,12 +2,13 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Affiliations**: Independent Researcher · Anthropic
+**Status**: v1.9.8 (Phase 54 COMPLETE)
 **Date**: March 2026
 
 ---
 
 ### Abstract
-Self-generating reasoning systems face an epistemic hazard: the same engine that produces insights can reinforce them, creating a closed hallucination loop. We present CEREBRUM's **Verification and Metacognition** layer, comprising two novel components: (1) the **InsightValidator**, which applies bilateral reverse traversal to test whether speculative edges are supported by independent structural evidence; and (2) the **MetaInsightEngine**, which constructs a second-order reasoning graph over `InsightEvent` objects, enabling the system to reason about *patterns in its own reasoning*. We formalize the triangulation criterion for edge verification and the event-graph topology used for second-order inference. On a 21-node benchmark graph with 12 injected speculative edges, the InsightValidator achieves 100% precision and 91.7% recall, and the MetaInsightEngine surfaces 3 second-order structural patterns invisible to first-order traversal alone.
+Self-generating reasoning systems face an epistemic hazard: the same engine that produces insights can reinforce them, creating a closed hallucination loop. We present CEREBRUM's **Verification and Metacognition** layer, comprising two novel components: (1) the **InsightValidator**, which applies bilateral reverse traversal to test whether speculative edges are supported by independent structural evidence; and (2) the **MetaInsightEngine**, which constructs a second-order reasoning graph over `InsightEvent` objects, enabling the system to reason about *patterns in its own reasoning*. We formalize the triangulation criterion for edge verification and the event-graph topology used for second-order inference. On a 21-node benchmark graph with 12 injected speculative edges, the InsightValidator achieves 100% precision and 91.7% recall, and the MetaInsightEngine surfaces 3 second-order structural patterns invisible to first-order traversal alone. In v1.9.8, the **ResearchAgent** (Phase 51) extends the paradigm to autonomous missing-link discovery, and the **ExternalValidator** (Phase 52) validates ResearchAgent proposals against scientific literature before they enter the graph.
 
 ### 1. Introduction
 Most KG reasoning systems treat output as terminal: a query produces a ranked list of paths, and the system reports confidence scores derived from the traversal. No feedback loop exists between answer quality and graph structure. This architecture creates two failure modes: (1) speculative edges added by creative downstream processes (STDP, InsightEngine) can persist indefinitely, degrading traversal quality; and (2) there is no mechanism to detect when the reasoning system itself is exhibiting structural biases — over-relying on a single community, under-exploring dense clusters, or consistently failing on a specific relation type.
@@ -71,7 +72,41 @@ The MetaInsightEngine identifies three classes of reasoning pathology:
 
 When detected, these patterns are surfaced as `STRUCTURAL_BIAS` events in $G_{meta}$, triggering alerts for human review.
 
-### 4. Prior Art Differentiation
+### 4. Recent Advances (v1.2.0 → v1.9.8)
+
+#### 4.1 ResearchAgent: Autonomous Missing-Link Discovery (Phase 51)
+The **ResearchAgent** (Phase 51) extends the InsightEngine paradigm from reactive validation to proactive discovery. It operates as a background daemon that continuously analyzes the graph for structural "missing links" — pairs of nodes that are strongly connected via multi-hop bridges but lack a direct edge that structural evidence suggests should exist.
+
+The ResearchAgent algorithm:
+1. Identifies node pairs $(u, v)$ where $\text{BeamTraversal}(u, v)$ returns high-confidence paths through multiple intermediate communities.
+2. Filters candidates using the InsightValidator bilateral criterion — only pairs with corroborated indirect connectivity are proposed.
+3. Queues proposed edges for human review via a priority queue sorted by structural confidence.
+4. Integrates with ExternalValidator (Phase 52) to pre-screen proposals against scientific literature before they enter the review queue.
+
+The ResearchAgent operates with configurable rate limits to avoid overwhelming the review queue and can be paused/resumed via the REST API.
+
+#### 4.2 ExternalValidator: Literature-Grounded Proposal Screening (Phase 52)
+The **ExternalValidator** (Phase 52) is a validation module that queries external scientific literature databases to assess whether a proposed edge has empirical support beyond the internal graph structure. It currently integrates with:
+
+- **PubMed**: MeSH term co-occurrence in abstracts
+- **arXiv**: Citation graph connectivity between author entities
+- **OpenAlex**: Cross-disciplinary concept co-occurrence
+- **ClinicalTrials.gov**: Trial-phase evidence for clinical relationship edges
+
+For each ResearchAgent proposal, ExternalValidator computes an **external corroboration score**:
+$$S_{ext}(E_{uv}) = \text{Noisy-OR}(\{P_{db}(u \leftrightarrow v)\}_{db \in \mathcal{D}})$$
+
+Only proposals exceeding a configurable threshold (default: 0.3) are forwarded to the human review queue; the rest are logged but not proposed.
+
+#### 4.3 MetaInsightEngine Analysis of ResearchAgent Findings
+In v1.9.8, the MetaInsightEngine's `InsightEvent` graph is extended to include `ResearchAgent` proposal events and `ExternalValidator` corroboration events as first-class nodes. This allows MetaInsightEngine to detect second-order patterns in the ResearchAgent's behavior — for example:
+
+- ResearchAgent consistently proposes edges within a specific community that ExternalValidator consistently rejects (suggesting the community's internal embedding geometry is misleading).
+- Proposals that are eventually approved by human reviewers cluster around a specific relation type (suggesting the ResearchAgent's bridge-detection heuristic is especially effective for that relation).
+
+These second-order insights feed back into ResearchAgent configuration, creating an adaptive proposal pipeline.
+
+### 5. Prior Art Differentiation
 
 **vs. Post-hoc explainability methods (GNNExplainer \cite{ying2019gnnexplainer}, LIME \cite{ribeiro2016lime}, SHAP \cite{lundberg2017shap}):** These methods explain a single inference after the fact by perturbing inputs. The InsightValidator is not an explainer — it is a *pre-emptive structural validator* that tests whether a speculative edge should remain in the graph at all. It runs before the edge is used in any query.
 
@@ -81,7 +116,9 @@ When detected, these patterns are surfaced as `STRUCTURAL_BIAS` events in $G_{me
 
 **The MetaInsightEngine has no published analog:** Constructing a second-order graph over reasoning events and running standard CSA traversal on that graph to detect reasoning pathologies is, to our knowledge, entirely without precedent in the KG literature. The closest related work is meta-learning over task performance (MAML \cite{finn2017maml}, Reptile \cite{nichol2018reptile}), but these operate over gradient-based models, not over graph structure.
 
-### 5. Experimental Results
+**ResearchAgent vs. automated hypothesis generation systems:** Systems such as Literature-Based Discovery (LBD) \cite{swanson1986fish} propose missing connections in biomedical literature using co-occurrence statistics. ResearchAgent differs in operating over a live, structured KG using multi-hop structural reasoning rather than text co-occurrence, and integrates ExternalValidator to ground proposals in primary literature post-hoc.
+
+### 6. Experimental Results
 
 **InsightValidator on toy_graph.csv (21 nodes, 30 edges, 12 injected speculative edges):**
 
@@ -103,8 +140,8 @@ When detected, these patterns are surfaced as `STRUCTURAL_BIAS` events in $G_{me
 
 The second-order patterns were invisible to standard query-level monitoring; only MetaInsightEngine traversal surfaced the community lock-in bias.
 
-### 6. Conclusion
-The InsightValidator and MetaInsightEngine provide CEREBRUM's reasoning layer with a genuine metacognitive capability: the system can detect and correct its own structural biases without human intervention. The bilateral validation criterion and second-order event graph are novel contributions without direct precedent in the KG literature.
+### 7. Conclusion
+The InsightValidator, MetaInsightEngine, ResearchAgent, and ExternalValidator collectively constitute CEREBRUM's **autonomous reasoning lifecycle**: discover (ResearchAgent proposes), verify (InsightValidator validates topology), ground (ExternalValidator consults literature), and learn (MetaInsightEngine detects patterns in the full pipeline's behavior). In v1.9.8, this lifecycle operates end-to-end without human intervention for routine validation and proposal screening, with human review reserved for high-confidence proposals that clear all automated gates. The bilateral validation criterion and second-order event graph remain novel contributions without direct precedent in the KG literature.
 
 ---
 **References**
@@ -113,3 +150,4 @@ The InsightValidator and MetaInsightEngine provide CEREBRUM's reasoning layer wi
 3. Finn, C., et al. (2017). Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks. ICML.
 4. Horrocks, I., et al. (2004). The OWL Web Ontology Language. WWW.
 5. Sun, Z., et al. (2019). RotatE: Knowledge Graph Embedding by Relational Rotation in Complex Space. ICLR.
+6. Swanson, D. R. (1986). Fish Oil, Raynaud's Syndrome, and Undiscovered Public Knowledge. Perspectives in Biology and Medicine.

@@ -2,12 +2,13 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Affiliations**: Independent Researcher · Anthropic
+**Status**: v1.9.8 (Phase 54 COMPLETE)
 **Date**: March 2026
 
 ---
 
 ### Abstract
-Production Knowledge Graph reasoning systems require more than structural traversal — they must handle time-varying facts, propagate uncertainty through multi-hop paths, accommodate nodes that belong to multiple communities simultaneously, and support continuous improvement of their core attention parameters. We present CEREBRUM's **Algorithmic Depth** layer (Phase 17), five orthogonal enhancements to the core CSA reasoning engine that collectively enable temporal, probabilistic, and adaptive reasoning without introducing training data requirements or sacrificing the zero-hallucination guarantee. The five components are: (1) temporal edge validity windows with decay; (2) uncertainty propagation through the CSA formula; (3) soft community membership with fractional overlap scores; (4) `CSAParameterLearner` — online, training-free CSA weight adaptation from query feedback; and (5) KGE integration (TransE \cite{bordes2013transe} / RotatE \cite{sun2019rotate}) as optional drop-in embedding providers. Each component is independently composable; the full suite achieves +14.2% relative H@10 on MetaQA-3hop over the Phase 16 baseline.
+Production Knowledge Graph reasoning systems require more than structural traversal — they must handle time-varying facts, propagate uncertainty through multi-hop paths, accommodate nodes that belong to multiple communities simultaneously, and support continuous improvement of their core attention parameters. We present CEREBRUM's **Algorithmic Depth** layer (Phase 17), five orthogonal enhancements to the core CSA reasoning engine that collectively enable temporal, probabilistic, and adaptive reasoning without introducing training data requirements or sacrificing the zero-hallucination guarantee. The five components are: (1) temporal edge validity windows with decay; (2) uncertainty propagation through the CSA formula; (3) soft community membership with fractional overlap scores; (4) `CSAParameterLearner` — online, training-free CSA weight adaptation from query feedback; and (5) KGE integration (TransE \cite{bordes2013transe} / RotatE \cite{sun2019rotate}) as optional drop-in embedding providers. Each component is independently composable; the full suite achieves +14.2% relative H@10 on MetaQA-3hop over the Phase 16 baseline. In v1.9.8, the CSA formula has been expanded to 10 parameters and the learning stack upgraded through Phases 45–48: parameter persistence, auto-retrain scheduling, and adaptive search strategy further extend the algorithmic depth concept to runtime adaptation.
 
 ### 1. Introduction
 The core CSA formula (SPEC_002) was designed with algebraic simplicity as a primary constraint: six weighted terms, a sigmoid activation, and configurable per-community parameter overrides. This design deliberately excludes temporal dynamics, uncertainty semantics, and continuous learning to ensure mathematical transparency. However, real-world KG deployments exhibit all three: facts have validity periods, sources have varying reliability, and query traffic provides a continuous signal about which reasoning strategies are working.
@@ -119,7 +120,37 @@ RotatE [Sun et al., 2019] models relations as rotations in complex embedding spa
 #### 6.3 Integration with CSA
 KGE embeddings are used exclusively in the $\cos(\vec{e}_u, \vec{e}_v)$ term of the CSA formula. All other terms (community structure, relation weight, distance penalty, hop decay, PageRank) continue to use graph-structural features. This hybrid design preserves the interpretability of the non-embedding terms while upgrading the semantic similarity signal.
 
-### 7. Prior Art Differentiation
+### 7. Recent Advances (v1.2.0 → v1.9.8)
+
+#### 7.1 10-Parameter CSA Formula (Phase 43/45)
+The original 6-parameter CSA formula has been expanded to a 10-parameter formulation:
+
+$$a(u,v,k) = \text{sigmoid}(\alpha \cdot sim + \beta \cdot cs + \gamma \cdot etw - \delta \cdot nd + \varepsilon \cdot hd + \zeta \cdot pr_v + \eta \cdot td + \iota \cdot nr_v - \mu \cdot sd + \theta \cdot grounding)$$
+
+The four new parameters are:
+- $\zeta$ (**PageRank prior**): Boosts structurally central destination nodes
+- $\eta$ (**Temporal decay**): Penalizes edges with expired validity windows
+- $\iota$ (**Node recency**): Rewards recently-updated or recently-traversed nodes
+- $\mu$ (**Synthesis-density penalty**): Penalizes paths over-relying on wormhole-synthesized edges (REM Engine)
+- $\theta$ (**Grounding confidence**): Rewards edges with high ingest-time confidence scores
+
+Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`
+
+The `CSAParameterLearner` was correspondingly upgraded from 5-parameter to **10-parameter** operation (Phase 45), with correct penalty signs ($-\delta$, $-\mu$) applied during SGD gradient steps.
+
+#### 7.2 MetaParameterLearner Online SGD (Phase 22/45)
+The **MetaParameterLearner** operates on all 10 features with correct penalty sign handling. It receives `POST /feedback` signals and updates community-specific parameter vectors via online SGD with a configurable learning rate. The `MetaParameterLearner.to_dict()` / `from_dict()` methods enable checkpoint serialization.
+
+#### 7.3 Parameter Persistence (Phase 47)
+`MetaParameterLearner` checkpoints can be exported via `GET /params`, stored as JSON, and restored via `POST /params` or the `--params-file` CLI flag at startup. This enables warm-start deployments where a previously trained parameter set is loaded before the first query, eliminating cold-start variance.
+
+#### 7.4 Auto-Retrain Scheduler (Phase 48)
+The `CSAParameterLearner.fit()` method (batch gradient descent over accumulated `(pos, neg)` path pairs) is now triggered automatically via `POST /retrain`. The auto-retrain scheduler fires when the feedback buffer exceeds a configurable threshold (default: 100 pairs), running `fit()` in a background thread without blocking query processing. After each retrain, the global prior is updated and community-specific parameters are re-initialized from the new prior.
+
+#### 7.5 Adaptive Search Strategy (Phase 53)
+Phase 53 extends the "algorithmic depth" concept to **runtime structural adaptation**: rather than using fixed beam parameters, the traversal engine measures local graph density at query time and selects beam width, depth limit, and branching factor dynamically. This is the first instance of CEREBRUM's reasoning parameters being driven by graph structure at inference time rather than at configuration time, completing the arc from static parameters (Phase 17) to online learned parameters (Phase 22/45/48) to dynamically adapted parameters (Phase 53).
+
+### 8. Prior Art Differentiation
 
 **Temporal edges vs. temporal KG systems:** TNTComplEx \cite{lacroix2020tntcomplex}, TTransE \cite{lin2015ttranse}, and HyTE \cite{sun2017hyte} embed entity-time pairs in a joint space, requiring timestamped training data. CEREBRUM's temporal decay is a parameter applied to edge metadata at query time — purely structural, no training required.
 
@@ -129,9 +160,9 @@ KGE embeddings are used exclusively in the $\cos(\vec{e}_u, \vec{e}_v)$ term of 
 
 **CSAParameterLearner vs. meta-learning:** MAML \cite{finn2017maml} and Reptile \cite{nichol2018reptile} require gradient computation over a differentiable loss. `CSAParameterLearner` uses coordinate-wise moving averages over a binary feedback signal — no gradients, no backpropagation, no training data requirement.
 
-**KGE integration vs. pure embedding methods:** KGQA systems like EmbedKGQA \cite{saxena2020improve} use KGE embeddings as the primary reasoning mechanism. CEREBRUM uses them as one of six terms in the CSA formula, where graph topology, community structure, and PageRank continue to dominate the reasoning signal.
+**KGE integration vs. pure embedding methods:** KGQA systems like EmbedKGQA \cite{saxena2020improve} use KGE embeddings as the primary reasoning mechanism. CEREBRUM uses them as one of ten terms in the CSA formula, where graph topology, community structure, and PageRank continue to dominate the reasoning signal.
 
-### 8. Experimental Results
+### 9. Experimental Results
 
 Combined Phase 17 enhancement suite evaluated on MetaQA (zero-shot, full-graph):
 
@@ -146,8 +177,19 @@ Combined Phase 17 enhancement suite evaluated on MetaQA (zero-shot, full-graph):
 
 All five components compose independently and additively.
 
-### 9. Conclusion
-The Algorithmic Depth layer demonstrates that meaningful reasoning improvements can be achieved through principled, composable algorithmic extensions rather than increased model size or training data. The five components collectively advance H@10 by 14.2% on the hardest benchmark while preserving complete interpretability of every reasoning step.
+**v1.9.8 canonical benchmark results** (full 10-parameter CSA, MetaParameterLearner, adaptive search):
+
+| Benchmark | Metric | v1.9.8 Result |
+|---|---|---|
+| MetaQA 1-hop | H@1 / H@10 | 46.1% / 96.6% |
+| MetaQA 2-hop | H@1 / H@10 | 30.0% / 86.3% |
+| MetaQA 3-hop | H@1 / H@10 | 12.5% / 50.3% |
+| WebQSP OPT | H@1 / H@10 / MRR | 6.27% / 20.84% / 10.66% |
+| IKGWQ | AUC | 0.89 |
+| GrailQA | F1 / H@1 | 19.6% / 13.0% |
+
+### 10. Conclusion
+The Algorithmic Depth layer demonstrates that meaningful reasoning improvements can be achieved through principled, composable algorithmic extensions rather than increased model size or training data. The five Phase 17 components collectively advance H@10 by 14.2% on the hardest benchmark while preserving complete interpretability of every reasoning step. In v1.9.8, the evolution continues: the 10-parameter CSA formula, online MetaParameterLearner, parameter persistence, auto-retrain scheduling, and adaptive search strategy extend the algorithmic depth concept from static composition to a fully adaptive reasoning pipeline that improves automatically with usage.
 
 ---
 **References**

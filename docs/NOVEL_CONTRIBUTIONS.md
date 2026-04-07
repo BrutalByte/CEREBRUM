@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: March 2026
-**Version**: v1.1.0 (Phase 20 COMPLETE)
+**Version**: v1.9.8 (Phase 54 COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -15,7 +15,7 @@
 
 ### Claim 1: Dual/Triple Signal Community Fusion (DSCF / TSC)
 
-**Description**: A community detection algorithm that applies Local Propagation Algorithm (LPA), modularity gain (Louvain-style), and optionally Infomap flow signals **simultaneously at each node update**, fusing them via a weighted consensus mechanism at each iteration.
+**Description**: A community detection algorithm that applies Local Propagation Algorithm (LPA), modularity gain (Louvain-style), and optionally Infomap flow signals **simultaneously at each node update**, fusing them via a weighted consensus mechanism at each iteration. The Triple-Signal Community (TSC) variant is now selectable explicitly alongside DSCF, Leiden, and LPA via a unified community engine configuration interface.
 
 **Novelty Statement**: All prior community detection algorithms that combine multiple signals do so by operating on disjoint node subsets (e.g., apply LPA to low-degree nodes, Louvain to high-degree nodes [Sun et al., 2024]) or by running algorithms sequentially and merging results. DSCF is the first algorithm that applies all signals to every node at every update step. The simultaneous per-node fusion produces communities with distinct "dual-signal" structural character that is not achievable by sequential or partitioned combination.
 
@@ -32,14 +32,28 @@
 
 ---
 
-### Claim 2: Community-Structured Attention (CSA) Formula
+### Claim 2: Community-Structured Attention (CSA) Formula — 10-Parameter Extension
 
-**Description**: A graph edge attention weight formula that incorporates community membership as a soft global constraint alongside semantic similarity, relation type, path length penalty, hop decay, and PageRank centrality. The formula is training-free, computed analytically from graph topology at query time.
+**Description**: A graph edge attention weight formula that incorporates community membership as a soft global constraint alongside semantic similarity, relation type, path length penalty, hop decay, PageRank centrality, temporal decay, node recency, synthesis-density penalty, and grounding confidence. The formula is training-free, computed analytically from graph topology at query time. The current formulation extends the original 6-parameter formula to 10 learnable parameters.
 
 **The Formula**:
-$$a(u,v,k) = \sigma\left(\alpha \cdot \cos(\vec{e}_u, \vec{e}_v) + \beta \cdot S_C(u,v) + \gamma \cdot w_{rel} - \delta \cdot d_{norm}(u,v) + \varepsilon \cdot \phi(k) + \zeta \cdot PR(v)\right)$$
+$$a(u,v,k) = \sigma\left(\alpha \cdot \text{sim} + \beta \cdot cs + \gamma \cdot etw - \delta \cdot nd + \varepsilon \cdot hd + \zeta \cdot PR(v) + \eta \cdot td + \iota \cdot nr_v - \mu \cdot sd + \theta \cdot grounding\right)$$
 
-**Novelty Statement**: Graph Attention Networks (GAT, HAN, HGT) compute local attention over immediate neighborhoods using learned weight matrices. CSA is the first attention formulation that includes global community membership ($S_C(u,v)$) as a term. No published GNN or KG reasoning paper computes attention weights using community assignment as an explicit term in the attention formula.
+Where:
+- $\alpha \cdot \text{sim}$: Semantic similarity (cosine distance between entity embeddings)
+- $\beta \cdot cs$: Community score (live DSCF community co-membership)
+- $\gamma \cdot etw$: Edge-type weight (relation-specific strength)
+- $\delta \cdot nd$: Normalized distance penalty
+- $\varepsilon \cdot hd$: Hop decay (exponential confidence reduction per hop)
+- $\zeta \cdot PR(v)$: Global PageRank authority prior
+- $\eta \cdot td$: Temporal decay (time since edge creation)
+- $\iota \cdot nr_v$: Node recency (recency of traversal visits)
+- $\mu \cdot sd$: Synthesis-density penalty (fraction of synthetic edges in path)
+- $\theta \cdot grounding$: Grounding confidence (provenance and verification score)
+
+Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
+
+**Novelty Statement**: Graph Attention Networks (GAT, HAN, HGT) compute local attention over immediate neighborhoods using learned weight matrices. CSA is the first attention formulation that includes global community membership ($S_C(u,v)$) as a term. The 10-parameter extension further adds temporal, recency, synthesis-quality, and grounding dimensions — none of which appear in any published GNN attention formula.
 
 **Closest Prior Art**:
 - GAT (Veličković et al., 2018): Local neighborhood attention, learned weights, no community term
@@ -47,9 +61,9 @@ $$a(u,v,k) = \sigma\left(\alpha \cdot \cos(\vec{e}_u, \vec{e}_v) + \beta \cdot S
 - HGT (Hu et al., 2020): Heterogeneous attention, learned, no community term
 - GraphRAG (Microsoft, Edge et al., 2024): Communities used for LLM summarization, not as attention weights in traversal
 
-**Key Technical Differentiator**: The $\beta \cdot S_C(u,v)$ term, where $S_C(u,v) \in [0,1]$ measures community co-membership and is computed from live DSCF partitions, not from learned parameters.
+**Key Technical Differentiator**: The $\beta \cdot S_C(u,v)$ term (community co-membership from live DSCF partitions, not learned parameters), extended with four novel dimensions: temporal decay, node recency, synthesis-density penalty, and grounding confidence — producing the first 10-dimensional analytically-computed KG attention formula.
 
-**Relevant files**: `core/attention_engine.py`
+**Relevant files**: `core/attention_engine.py`, `core/reasoning_logit.py`
 **Documented in**: `docs/arxiv/PAPER_002_CSA.md`, `docs/specifications/SPEC_002_CSA.md`
 
 ---
@@ -163,12 +177,137 @@ $$a(u,v,k) = \sigma\left(\alpha \cdot \cos(\vec{e}_u, \vec{e}_v) + \beta \cdot S
 
 ---
 
+## Part VI: Advanced Reasoning and Discovery Claims
+
+### Claim 12: Multi-Path Abductive Reasoning via Noisy-OR Confidence Fusion (HypothesisEngine)
+
+**Description**: A reasoning module that accepts an observed graph state (a set of present or absent edges/nodes) and generates ranked explanatory hypotheses by running multiple reverse-traversal paths from the observation, then fusing path-level confidence scores using Noisy-OR probability aggregation. The resulting hypotheses are ranked by posterior plausibility and can be materialized as provisional graph edges.
+
+**Novelty Statement**: Forward multi-hop KG reasoning (given A, find B) is well-studied. Abductive KG reasoning (given B, infer most plausible cause A) is addressed in recent work (e.g., Abdul-Mageed et al., 2023) but exclusively with trained neural models. The CEREBRUM HypothesisEngine performs abductive reasoning without training: it relies solely on graph topology and CSA-weighted reverse traversal. The specific combination of (1) multi-path reverse traversal, (2) Noisy-OR path fusion, (3) training-free execution, and (4) materialization of hypotheses as provisional graph structure is, to our knowledge, entirely novel.
+
+**Closest Prior Art**:
+- Abductive NLI (Bhagavatula et al., 2020): Hypothesis generation from text, requires fine-tuned language model
+- LEGO (Shi et al., 2021): Logical abduction on KGs, requires symbolic rules and training
+- Generative KGC models: Produce new triples but do not perform abductive reasoning over observation sets
+
+**Key Technical Differentiator**: Training-free abductive reasoning via Noisy-OR fusion of reverse-traversal CSA scores, with hypothesis materialization into graph structure.
+
+**Relevant files**: `core/hypothesis_engine.py`
+**API endpoints**: `POST /hypothesize`, `POST /hypothesize/materialize`
+
+---
+
+### Claim 13: Autonomous Missing-Link Discovery with Human-in-the-Loop Approval Queue (ResearchAgent)
+
+**Description**: An autonomous background daemon that continuously monitors graph connectivity metrics (degree distribution, betweenness centrality, community bridge density) to identify candidate under-connected nodes, then proposes novel edges connecting those nodes via multi-hop bridge analysis. All proposals are queued for human review before materialization — no edge is added to the graph without explicit human approval.
+
+**Novelty Statement**: Automated KG completion (TransE, RotatE, ComplEx) predicts missing links using trained embedding models and applies them automatically. The CEREBRUM ResearchAgent differs in three respects: (1) it operates without training, using structural graph analysis only; (2) it targets systematically under-connected nodes rather than random triple prediction; (3) it enforces a mandatory human-in-the-loop approval stage before any graph modification. The combination of training-free structural gap detection and supervised materialization is original.
+
+**Closest Prior Art**:
+- TransE/RotatE (Bordes et al., 2013; Sun et al., 2019): Trained KG embedding completion, no human approval step
+- NELL (Carlson et al., 2010): Automated belief extraction and addition, no structural gap targeting
+- ATOMIC (Sap et al., 2019): Crowdsourced commonsense KG extension, human-authored rather than autonomously proposed
+
+**Key Technical Differentiator**: Unsupervised structural gap detection + training-free bridge proposal + mandatory human approval gate.
+
+**Relevant files**: `core/research_agent.py`
+
+---
+
+### Claim 14: Automated Literature Validation of Graph Hypotheses Against Live Scientific Databases (ExternalValidator)
+
+**Description**: A validation layer that accepts proposed KG edges (from ResearchAgent or HypothesisEngine) and automatically queries live scientific literature databases — PubMed, ClinicalTrials.gov, arXiv, and OpenAlex — to retrieve relevant publications. Each proposal is scored by literature support density and annotated with specific citations. The validator returns a structured evidence report per proposal.
+
+**Novelty Statement**: KG systems with external validation (e.g., Google's KG with Freebase provenance, Wikidata with reference citations) rely on pre-linked static provenance. The ExternalValidator performs dynamic, query-time validation against multiple heterogeneous live databases. No published KG system performs automated multi-database literature retrieval as a first-class validation step in the hypothesis/edge proposal pipeline.
+
+**Closest Prior Art**:
+- Wikidata provenance citations: Static, human-curated, not automated query-time retrieval
+- SciGraph (Springer Nature): Domain-specific static linking between publications and entities, no dynamic proposal validation
+- BioKG systems: Literature-linked KGs, but validation is done at ingest time, not for dynamically proposed edges
+
+**Key Technical Differentiator**: Real-time, multi-database literature scoring of dynamically proposed graph edges, returning per-proposal citation evidence reports.
+
+**Relevant files**: `core/external_validator.py`
+
+---
+
+### Claim 15: Density-Driven Dynamic Beam Parameter Selection (Adaptive Search Strategy)
+
+**Description**: A pre-traversal analysis module that measures local graph density around seed entities (node degree, edge density in the k-hop ego network, average community size) and uses this measurement to dynamically select beam_width and max_hop parameters before initiating beam search. Dense neighborhoods receive narrower, shallower beams; sparse neighborhoods receive wider, deeper beams.
+
+**Novelty Statement**: Beam search in KG reasoning systems uses fixed hyperparameters set at system startup (MINERVA uses fixed beam width; CEREBRUM prior to this phase used fixed beam_width=10, max_hop=3). No published KG traversal system dynamically adapts beam parameters to local graph topology at query time. Dynamic beam width in NLP sequence models (e.g., adaptive beam in neural machine translation) adapts to sequence length, not to graph structural properties.
+
+**Closest Prior Art**:
+- Adaptive beam search in NMT (Huang et al., 2017): Adapts to sequence length/complexity, not graph density
+- MINERVA (Das et al., 2018): Fixed beam width, fixed depth
+- All CEREBRUM prior phases: Fixed beam_width, fixed max_hop
+
+**Key Technical Differentiator**: First KG traversal system to adapt beam parameters to local structural density measured at query time.
+
+**Relevant files**: `reasoning/traversal.py` (density analysis), `core/community_engine.py` (density measurement)
+
+---
+
+### Claim 16: Ring Buffer Log Capture with REST Query Interface for Production KG Monitoring (Observability Architecture)
+
+**Description**: An in-process circular log capture system (RingBufferHandler) that intercepts all reasoning-layer log events, stores them in a fixed-size in-memory ring buffer (5,000 entries), and exposes the buffer contents via authenticated REST endpoints (`GET /logs`, `DELETE /logs`). A companion `StudioEngine` class encapsulates all testable business logic for the observability layer separately from the UI rendering framework (Gradio), enabling unit testing of observability behavior without UI dependencies.
+
+**Novelty Statement**: Production KG monitoring systems use external log aggregation (Elasticsearch, Datadog) with no in-process query interface. The CEREBRUM observability architecture differs in three ways: (1) the ring buffer is in-process, adding zero network overhead to log capture; (2) the REST interface enables programmatic log querying without external infrastructure; (3) the StudioEngine separation allows unit testing of observability logic, which is not possible when observability code is embedded in UI frameworks. The combination of in-process ring-buffer capture, REST queryability, and testability-by-design is original.
+
+**Closest Prior Art**:
+- Python `logging.handlers.MemoryHandler`: Buffered logging, no REST interface
+- Gradio-based monitoring UIs: UI-embedded observability, not separately testable
+- External APM systems (Datadog, New Relic): Require external infrastructure, not in-process
+
+**Key Technical Differentiator**: In-process ring buffer + REST query interface + framework-decoupled StudioEngine enabling full unit testability.
+
+**Relevant files**: `core/studio_engine.py`, `core/log_config.py`, `api/server.py` (`GET /logs`, `DELETE /logs`, `POST /build`)
+
+---
+
+### Claim 17: Cross-Node Beam Delegation with Procrustes Embedding Alignment (Federated Reasoning)
+
+**Description**: A federated KG reasoning architecture in which a coordinating node (DistributedBeamTraversal) partitions a multi-hop query into sub-paths, delegates sub-path traversal to remote CEREBRUM nodes via `POST /traverse`, and merges returned path fragments into a unified ranked result. Embedding alignment between nodes is performed via Procrustes SVD rotation applied to shared anchor entity embeddings, ensuring that semantic similarity scores from remote nodes are geometrically comparable to local scores.
+
+**Novelty Statement**: Federated KG systems (SPARQL federation, Wikidata federation) delegate full sub-queries to remote endpoints but do not perform embedding alignment between nodes — they rely on shared URIs, not vector similarity. Federated GNN systems (FedGNN, FedE) aggregate model gradients, not traversal path fragments. The CEREBRUM federated architecture is the first to combine: (1) sub-path delegation (not full sub-query or gradient aggregation), (2) real-time Procrustes alignment of remote embedding spaces, and (3) path-fragment merging that preserves full CSA attention scores across node boundaries.
+
+**Closest Prior Art**:
+- SPARQL Federation (W3C, 2013): Full sub-query delegation, no embedding alignment
+- FedE (Chen et al., 2021): Federated KGE training, gradient aggregation, no path delegation
+- FedGNN (Liu et al., 2022): Federated GNN training, no reasoning path delegation
+
+**Key Technical Differentiator**: Sub-path delegation + real-time Procrustes embedding alignment + CSA-score-preserving path fragment merging.
+
+**Relevant files**: `reasoning/distributed_traversal.py`, `adapters/remote_adapter.py`, `adapters/federated_adapter.py`
+**API endpoints**: `POST /traverse`
+
+---
+
+### Claim 18: Online SGD and Batch Gradient Descent Parameter Learning with Full Persistence for 10-Parameter KG Attention (CSA Parameter Learner)
+
+**Description**: A dual-mode parameter learning system for the 10-parameter CSA attention formula comprising: (1) `MetaParameterLearner` — an online SGD learner that updates per-community parameter overrides from individual feedback events (`POST /feedback`) with configurable learning rate and momentum; (2) `CSAParameterLearner` — a batch gradient descent learner that retrains the global 10-parameter prior from accumulated positive/negative path pairs (`POST /retrain`). Both learners support full state serialization (`to_dict()`/`from_dict()`) enabling checkpoint/restore via `POST /params` and `--params-file` CLI flag at startup.
+
+**Novelty Statement**: KGE training systems (TransE, RotatE, ComplEx) learn entity/relation embeddings, not attention formula parameters. No published attention-based KG reasoning system supports: (1) per-community parameter overrides (as distinct from global parameters), (2) online SGD updates from real-time feedback without full retraining, (3) batch retraining from a feedback buffer without embedding re-learning, and (4) full parameter persistence enabling cold-start from a prior session's learned weights. The combination of per-community granularity, online + batch dual modes, and cross-session persistence is entirely novel.
+
+**Closest Prior Art**:
+- KGE training (Bordes et al., 2013): Entity/relation embedding learning, not attention weight learning
+- MAML-style meta-learning: Few-shot adaptation, requires training, no per-community granularity
+- Online GNN adaptation: Requires gradient through GNN layers, not applicable to training-free systems
+
+**Key Technical Differentiator**: Training-free-compatible online+batch dual-mode learning of 10 attention formula weights with per-community granularity and full cross-session persistence.
+
+**Relevant files**: `core/parameter_learner.py`, `core/attention_engine.py`
+**API endpoints**: `POST /feedback`, `POST /retrain`, `GET /params`, `POST /params`
+
+---
+
 ## Prior Art Summary Table
 
 | CEREBRUM Component | Closest Prior Art | Key Distinction |
 |---|---|---|
 | DSCF simultaneous fusion | LPA-Louvain hybrids (Sun 2024) | Per-node vs. per-population fusion |
 | CSA formula ($S_C$ term) | GAT, HAN, HGT | Community term absent from all GNN attention |
+| 10-parameter CSA extension | All GNN attention formulas | Temporal, recency, synthesis-density, grounding terms are entirely novel |
 | Zero-shot beam traversal | MINERVA, DeepPath, BeamQA | Training required vs. fully training-free |
 | Bridge Twins (LTP/LTD) | GNN shortcuts, agentic expansion | Experience-dependent vs. static/agent-added |
 | STDP causal edges in KG | SNN-STDP | Neural learning rule vs. KG edge discovery |
@@ -177,6 +316,13 @@ $$a(u,v,k) = \sigma\left(\alpha \cdot \cos(\vec{e}_u, \vec{e}_v) + \beta \cdot S
 | Holographic Index | Federated learning, SPARQL federation | Privacy-preserving structural discovery |
 | Bayesian beam + warm-start | Bandit algorithms | KG-specific Beta seeding from CSA weights |
 | Structural hole taxonomy | Standard testing methodology | Cross-feature interaction analysis for KG |
+| HypothesisEngine (Noisy-OR abduction) | Abductive NLI, LEGO | Training-free reverse traversal + Noisy-OR fusion |
+| ResearchAgent (autonomous discovery) | TransE/RotatE, NELL | Structural gap targeting + human approval gate |
+| ExternalValidator (literature scoring) | Wikidata provenance, SciGraph | Dynamic multi-database query-time validation |
+| Adaptive Search (density-driven beam) | NMT adaptive beam | Graph topology adaptation vs. sequence length adaptation |
+| Observability (ring buffer + REST) | MemoryHandler, APM systems | In-process + REST queryable + StudioEngine testability |
+| Federated Reasoning (Procrustes alignment) | SPARQL federation, FedE | Sub-path delegation + real-time embedding alignment |
+| CSA Parameter Learner (online+batch+persist) | KGE training, MAML | Per-community + dual-mode + cross-session persistence |
 
 ---
 
