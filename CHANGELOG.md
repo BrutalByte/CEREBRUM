@@ -7,6 +7,27 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.0.2] — 2026-04-08
+
+### Changed
+- **Naming: AAAK → Engram (all occurrences)**:
+    - The relation-pattern cache was previously labeled "AAAK" throughout the codebase. This name was rejected because it simply is not AAAK — the acronym was inaccurate and did not describe the mechanism.
+    - The correct name is **Engram**: the neurological term for the physical memory trace a successful experience leaves in the brain. This accurately describes what the cache does — successful reasoning paths leave a structural imprint that biases future beam traversals toward known-productive chains.
+    - `AAAKCache` → `Engram` · `AAAKBeamTraversal` → `EngramTraversal` · `AAAKVerbalizer` → `EngramVerbalizer`
+    - `SpeedTalkAAAKCache` → `SpeedTalkEngram` · `SpeedTalkAAAKBeamTraversal` → `SpeedTalkEngramTraversal`
+    - `aaak_steered_traversal.py` → `engram_traversal.py` · `test_aaak_traversal.py` → `test_engram_traversal.py`
+    - `PAPER_018_AAAK_STEERED_TRAVERSAL.md` → `PAPER_018_ENGRAM_TRAVERSAL.md`
+    - All backward-compatibility aliases removed. Zero AAAK references remain in the codebase.
+- **Phase 58: SpeedTalk-Compressed Engram Cache**:
+    - `SpeedTalkEncoder` — maps each relation type to a single phoneme character (62-symbol alphabet: a–z, A–Z, 0–9). Frequency-ordered assignment via `build_frequency_order()`.
+    - `SpeedTalkEngram` — drop-in replacement for `Engram` using phonemic key storage; 8–20× key compression. New: `prefix_query(*rels)`, `alphabet()`, `compression_stats()`.
+    - `SpeedTalkEngramTraversal` — `BeamTraversal` variant backed by `SpeedTalkEngram`.
+    - Graph-adaptive encoding: `adapt_to_graph(freq)` / `from_graph_adapter(adapter)` retune the alphabet to the loaded KG so most-traversed relations get shortest symbols.
+    - 50 new tests in `tests/test_speedtalk_cache.py`.
+    - `docs/arxiv/PAPER_021_SPEEDTALK_COMPRESSION.md` — full technical paper.
+
+---
+
 ## [2.0.1] — 2026-04-07
 
 ### Added
