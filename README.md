@@ -26,7 +26,7 @@ See `PAPER.md` for the full white paper and architecture specification.
 
 ## Roadmap
 
-**Current Project Status: v1.8.5 — Phase 45 COMPLETE — 1251 tests passing (1 skipped)**
+**Current Project Status: v2.0.1 — Phase 57 COMPLETE — 1490+ tests passing (1 skipped)**
 
 - [x] **Phase 45: LLM-Knowledge Sync (AAAK)** — Implemented AAAK (AI-to-AI Knowledge) 30x reasoning compression dialect, real-time ingestion status trackers, and historical database management.
 
@@ -68,6 +68,18 @@ See `PAPER.md` for the full white paper and architecture specification.
 - [x] **Phase 42: Interface Robustness** (v1.7.4) — Secured REST endpoints and Gradio stabilization.
 - [x] **Phase 43: Temporal Context & REM Synthesis** (v1.7.5) — 10-parameter logit and Wormhole synthesis.
 - [x] **Phase 44: IKGWQ-MetaQA Benchmark** (v1.8.0) — Unified IKGWQ-S protocol across MetaQA.
+- [x] **Phase 45: 10-Parameter Learner Upgrade** (v1.9.0) — Full 10-param CSA formula support in `CSAParameterLearner` and `MetaParameterLearner`; backward compatible with legacy 5-element edge_features.
+- [x] **Phase 46: Live Feedback Loop** (v1.9.1) — `GET /params` endpoint; `PathResult.edge_features` (10-element per-hop feature vectors); `PathResult.community_sequence`; `ParamsResponse` schema.
+- [x] **Phase 47: Params Persistence** (v1.9.2) — `MetaParameterLearner.to_dict()`/`from_dict()`; `POST /params` checkpoint restore; `--params-file` CLI flag for startup restore.
+- [x] **Phase 48: Auto-Retrain Scheduler** (v1.9.3) — Feedback buffer; `POST /retrain` runs `CSAParameterLearner.fit()` on buffered positive/negative pairs; `RetrainRequest`/`RetrainResponse` schemas.
+- [x] **Phase 49: TSC Explicit Mode** (v1.9.4) — `tsc_communities()` public API; `tsc_quality_metrics()`; `community_engine="tsc"` in `CerebrumGraph.build()`.
+- [x] **Phase 50: HypothesisEngine** (v1.9.5) — Multi-path abductive reasoning with Noisy-OR confidence combination; equifinality + intersectionality; `/hypothesize` and `/hypothesize/materialize` endpoints.
+- [x] **Phase 51 & 52: ResearchAgent + ExternalValidator** (v1.9.6) — Autonomous background daemon mining missing-link candidates via embedding similarity and InsightEngine seeding; LLM-independent external source validation; 7 new `/research/*` endpoints.
+- [x] **Phase 53: Adaptive Search Strategy** (v1.9.7) — `ResearchAgent` selects beam search parameters (depth, width, budget) based on local 2-hop neighborhood density; dense/sparse/mid tiers.
+- [x] **Phase 54: Observability Dashboard** (v1.9.8) — In-memory `RingBufferHandler` ring log; CORS + HTTP timing middleware; `GET/DELETE /logs`; `POST /build` hot-reload; dark-mode live dashboard (`ui/dashboard.html`).
+- [x] **Phase 55: GraphSAGE + AAAK + TemporalCalibrator + QueryLog** (v2.0.0) — `smooth_with_graphsage()` one-pass neighbourhood smoother; `AAAKCache` + `AAAKBeamTraversal` relation-pattern-steered beam pruning; `TemporalCalibrator` grid-search Recall@K calibration; `QueryLog` append-only NDJSON history with `replay_into_cache()` warm-up.
+- [x] **Phase 56: Fault Tolerance Hardening** (v2.0.1) — `QueryResponse.partial`/`.error` fields; `BeamTraversal._partial_paths` hop-level checkpoint; `/query` graceful degradation on traversal failure; QueryLog/AAAKCache write-failure isolation; `GlobalRebalancer` crash-guard worker split.
+- [x] **Phase 57: AAAKCache Persistence + Stream Guard** (v2.0.1) — `/query/stream` terminal error NDJSON chunk on crash; `best_of_n_dscf` `ProcessPoolExecutor` sequential fallback; `AAAKCache.save()`/`load()` with lifespan shutdown persistence.
 
 
 ## Benchmark Results
@@ -305,9 +317,9 @@ $$\text{score}(P) = \left( \prod_{k=1}^L a(u_k, v_k, k) \right) \cdot \text{cohe
 - **Context Window Invariance**: Sublinear complexity independent of graph size.
 - **Topological Analysis**: Inductive bias derived from graph topology requires zero training.
 
-## Project Status (v1.8.0 — Phase 44 COMPLETE)
+## Project Status (v2.0.1 — Phase 57 COMPLETE)
 
-CEREBRUM is currently at **v1.8.0**. All **1251 tests** are passing (1 skipped).
+CEREBRUM is currently at **v2.0.1**. All **1490+ tests** are passing (1 skipped).
 
 Key features in v1.8.0 (Phases 31-44):
 - **Phase 44: IKGWQ-MetaQA Benchmark**: Unified the IKGWQ (Incomplete Knowledge Graph) protocol across the MetaQA dataset, verifying that REM Synthesis ("Wormhole" synthesis) improves 3-hop reasoning recall by up to 40% on highly sparse graphs (Level 4, 50% edge removal).

@@ -1,15 +1,17 @@
 # CEREBRUM: Research Roadmap
 
 *What has been built, what is next, and why it matters.*
-*Version 1.4.0 — Phase 24 COMPLETE — 1042 tests passing.*
+*Version 2.0.1 — Phase 57 COMPLETE — 1490+ tests passing.*
 
 ---
 
 ## What CEREBRUM Is Today
 
-The current release (v1.4.0) — DSCF + CSA + BeamTraversal + full THALAMUS stack + Enterprise Connectors + 8 structural hardening fixes — is a production-hardened reasoning engine. It answers multi-hop questions over knowledge graphs with full interpretability, no training data, and sub-millisecond latency. The core algorithms are stable and validated.
+The current release (v2.0.1 / Phase 57) is a production-hardened reasoning engine with full fault tolerance, autonomous research capabilities, and durable learning memory. It answers multi-hop questions over knowledge graphs with full interpretability, no training data, and sub-millisecond latency. The core algorithms are stable, validated, and battle-hardened across 57 development phases.
 
-This document describes the active research program that extends the engine into new domains and capabilities. All work described below has been implemented and validated in the production codebase.
+Key capabilities: TSC/DSCF community detection, 10-parameter CSA attention formula with online SGD and batch gradient retraining, AAAK-steered beam traversal with durable relation-pattern memory, GraphSAGE neighbourhood smoothing, TemporalCalibrator, HypothesisEngine abductive reasoning, autonomous ResearchAgent, observability dashboard, and comprehensive fault tolerance (graceful degradation on every failure mode).
+
+This document describes the development history that produced this system. All work described below has been implemented and validated in the production codebase.
 
 ---
 
@@ -164,12 +166,61 @@ Four additional cross-system interaction holes were identified in the v1.0.0 arc
 
 ## What Was Accomplished (Phases 21–24)
 
-Phases 10–20 delivered the fully hardened, self-organizing core. The final research milestones completed the CEREBRUM roadmap to v1.4.0:
+Phases 10–20 delivered the fully hardened, self-organizing core. The research milestones through Phase 24 completed the CEREBRUM roadmap to v1.4.0:
 
 **Distributed beam traversal at scale**: Federated reasoning achieved across multiple CEREBRUM instances, alongside Holographic indexing (Bloom filters + community centroids) for blind mapping.
 **GPU acceleration**: Deployed `GPUDSCFEngine` achieving batched matrix math speedups on NVIDIA CUDA architectures.
 **Adaptive parameter learning**: Deployed `MetaParameterLearner` dynamically adjusting global attention coefficients from live graph properties.
 **Formal academic publication**: Successfully converted the entire theoretical knowledge base into a compiled arXiv IEEE LaTeX manuscript structure.
+
+---
+
+## Completed Extensions (Phases 25–57)
+
+### Advanced Reasoning and Autonomous Discovery (Phases 25–54)
+
+Following v1.4.0, CEREBRUM extended from a production reasoning engine into an autonomous research system. Key milestones include:
+
+- **10-Parameter CSA Formula (Phase 43/45)**: Extended from 6 to 10 learnable CSA parameters, adding temporal decay (`eta`), node recency (`iota`), synthesis-density penalty (`mu`), and grounding confidence (`theta`). The `ReasoningLogit` vector unifies all 10 features through scoring and learning code.
+- **Wormhole Synthesis (Phase 41/43)**: `REMEngine` bridges disconnected graph components; `sd` (synthesis density) penalizes over-reliance on synthetic edges.
+- **HypothesisEngine — Multi-Path Abductive Reasoning (Phase 50)**: Accepts an observed graph state and generates ranked explanatory hypotheses via multi-path reverse traversal fused with Noisy-OR probability aggregation. Training-free.
+- **ResearchAgent + ExternalValidator (Phases 51–52)**: Autonomous background daemon that monitors graph connectivity, proposes novel edges targeting structurally under-connected nodes, and queues them for human approval. `ExternalValidator` scores proposals against PubMed, ClinicalTrials.gov, arXiv, and OpenAlex in real time.
+- **Observability Dashboard (Phase 53–54)**: `RingBufferHandler` in-process circular log capture with `GET /logs` REST interface. `StudioEngine` separates business logic from UI framework (Gradio) for full unit testability. Density-driven adaptive beam parameter selection (`AdaptiveSearchStrategy`) measures local graph density at query time to dynamically set `beam_width` and `max_hop`.
+
+---
+
+### GraphSAGE Neighbourhood Smoothing (Phase 55)
+
+**Problem**: Base entity embeddings (random or sentence-transformer) encode only surface-level semantics, ignoring the structural context of each entity's position in the graph.
+
+**Solution**: `smooth_with_graphsage()` applies a single mean-aggregation pass over each entity's neighbourhood at inference time, enriching embeddings with structural context. No training required — it runs in O(E) time and improves the CSA semantic similarity term. Activated via `CerebrumGraph.build(use_graphsage=True)`.
+
+**Biological analogy**: Hebbian co-activation — neurons that fire together wire together. An entity's representation is enriched by the representations of the entities it is directly connected to, without any supervised signal.
+
+---
+
+### AAAK-Steered Traversal with Durable Memory (Phases 45, 55, 57)
+
+**Problem**: Each query starts cold — the traversal has no memory of which reasoning chains have historically been productive.
+
+**Solution**: `AAAKCache` accumulates compressed relation-sequence patterns from successful queries. `AAAKBeamTraversal` biases beam pruning toward these patterns via a multiplicative score boost: `effective_score = score × (1 + aaak_strength × affinity)`. The cache persists to disk on shutdown and is restored on startup (two-tier: saved JSON → QueryLog replay), giving the system permanent memory of effective reasoning strategies. `QueryLog` appends every query to an NDJSON history file; `replay_into_cache()` warms `AAAKCache` on restart.
+
+**Biological analogy**: Long-term potentiation in hippocampal circuits — frequently-used reasoning pathways are strengthened and persist across sessions, analogous to memory consolidation during sleep.
+
+---
+
+### Fault Tolerance Hardening (Phases 56–57)
+
+**Problem**: Any uncaught exception in traversal, persistence, or multiprocessing results in a 500 error or silent stream termination, losing all intermediate work.
+
+**Solution**: Every failure mode is now independently isolated:
+
+- Traversal crashes return `partial=True` HTTP 200 responses with intermediate results collected in `BeamTraversal._partial_paths` per-hop checkpoints.
+- Persistence write failures (QueryLog, AAAKCache) are independently caught — neither can crash the `/query` endpoint.
+- The `/query/stream` endpoint yields a terminal error NDJSON chunk on traversal failure rather than silently terminating.
+- `GlobalRebalancer._rebalance_worker_inner` has a top-level crash guard preventing background thread death.
+- `best_of_n_dscf` falls back from `ProcessPoolExecutor` to sequential execution with a WARNING log on any executor failure.
+- `AAAKCache.save()/load()/save_if_path()` provides full persistence; lifespan `try/finally` saves the cache on server shutdown.
 
 ---
 
@@ -185,5 +236,5 @@ That is what it means to reason from a glass box.
 
 ---
 
-*Active research: Bryan Alexander Buchorn (AMP) · March 2026*
+*Bryan Alexander Buchorn (AMP) · v2.0.1 / Phase 57 · April 2026*
 *Contact: bryan.alexander@buchorn.com*

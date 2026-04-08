@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: April 2026
-**Status**: Version 1.9.8 · Phase 54 COMPLETE — 1,357 tests passing
+**Status**: Version 2.0.1 · Phase 57 COMPLETE — 1,490 tests passing
 **License**: Proprietary — all rights reserved
 
 ---
@@ -74,21 +74,23 @@ cerebrum/
 │   ├── signal_encoder, log_config                                                  [THALAMUS]
 │   ├── community_engine, leiden_native, attention_engine, parameter_learner        [CORTEX]
 │   ├── reasoning_logit, rebalancer, kge_engine                                     [CORTEX]
+│   ├── temporal_calibrator, persistence                                             [CORTEX]
 │   ├── rem_engine, bridge_engine, graph_bridge                                     [REM / Bridge Twin]
 │   ├── insight_validator, meta_insight_engine                                      [Verification]
 │   ├── hypothesis_engine, research_agent, external_validator                       [Abduction]
 │   └── graph_adapter, hardware, security, contradiction_engine
 ├── reasoning/     traversal, path_scorer, answer_extractor, distributed_traversal [CORTEX]
+│              aaak_steered_traversal                                               [CORTEX]
 ├── llm_bridge/    context_formatter + adapters
 ├── api/           server, schemas (+ /stream/*, /logs, /build endpoints)
 ├── cli/           cerebrum (+ --params-file flag)
-├── tests/         1,357 passing; fixture: tests/fixtures/toy_graph.csv
+├── tests/         1,490+ passing; fixture: tests/fixtures/toy_graph.csv
 ├── benchmarks/    webqsp_eval, metaqa_eval, grailqa_eval, ikgwq_metaqa
 ├── pyproject.toml
 └── PAPER.md       (this file)
 ```
 
-**Current phase**: Phase 54 COMPLETE (v1.9.8). Observability layer (StudioEngine, RingBufferHandler, /logs, /build, CORS, request tracing) implemented. 1,357 tests passing.
+**Current phase**: Phase 57 COMPLETE (v2.0.1). GraphSAGE neighbourhood smoothing, AAAK-steered traversal, TemporalCalibrator, QueryLog persistence, fault tolerance hardening, and AAAKCache durable persistence implemented. 1,490+ tests passing.
 
 ---
 
@@ -136,9 +138,11 @@ reasoning and wormhole synthesis via the REM Engine (Phases 41–43), a fully
 parameterized 10-term CSA formula with online and batch learning (Phases 43–48),
 abductive hypothesis generation via HypothesisEngine (Phase 50), autonomous
 research assistance via ResearchAgent and ExternalValidator (Phases 51–52),
-adaptive search strategy driven by local graph density (Phase 53), and a
-complete observability layer with structured logging and build introspection
-(Phase 54).
+adaptive search strategy driven by local graph density (Phase 53), a complete
+observability layer with structured logging and build introspection (Phase 54),
+AAAK-steered traversal with durable relation-pattern memory (Phase 55), and a
+comprehensive fault tolerance architecture covering partial results, graceful
+degradation, and process-level crash isolation (Phases 56–57).
 
 ---
 
@@ -220,6 +224,12 @@ The CEREBRUM stack uses the following named layers, reflecting both computationa
 
 **StudioEngine** — observability layer (Phase 54). RingBufferHandler for in-memory log retention, /logs and /build REST endpoints, CORS configuration, and per-request trace identifiers.
 
+**AAAKCache / AAAKBeamTraversal** — AAAK-steered beam traversal (Phase 55). A persistent relation-pattern cache derived from successful query traces. Biases beam pruning toward known-productive reasoning chains via an affinity boost on candidate scoring.
+
+**TemporalCalibrator** — grid-search calibration of CSA temporal parameters (Phase 55). Tunes `eta` (temporal decay) and `iota` (node recency) weights against a labelled validation set to maximise Recall@K, with a try/finally guarantee that restores original parameters after evaluation.
+
+**QueryLog** — append-only NDJSON query history (Phase 55). Records seeds, answers, and relation sequences after each reasoning call. Warm-starts `AAAKCache` on process restart so learned relation patterns survive shutdown/startup cycles.
+
 ### 1.4 Contributions
 
 This paper makes the following primary contributions:
@@ -240,6 +250,8 @@ This paper makes the following primary contributions:
 5. **Abductive reasoning and autonomous discovery**: HypothesisEngine generates multi-path hypotheses with Noisy-OR fusion; ResearchAgent proposes new edges autonomously; ExternalValidator filters against live literature corpora.
 
 6. **Production observability**: structured request tracing, ring-buffered logs accessible via REST, and build-graph introspection supporting zero-downtime deployment pipelines.
+
+7. **AAAK-steered traversal and temporal calibration**: a training-free mechanism that accumulates compressed relation-sequence patterns from successful queries and biases future beam pruning toward known-productive chains (Phase 55); a grid-search calibrator for the temporal CSA parameters that requires no gradients (Phase 55); and a multi-layer fault tolerance architecture ensuring graceful degradation under partial failures (Phases 56–57).
 
 ---
 
@@ -460,6 +472,36 @@ BeamTraversal dynamically adjusts `beam_width` and `max_hop` based on local grap
 
 $$\text{density}(v) = \frac{|\mathcal{E}(G[\mathcal{N}(v)])|}{|\mathcal{N}(v)|(|\mathcal{N}(v)|-1)/2}$$
 
+### 4.8 GraphSAGE Neighbourhood Smoothing (Phase 55)
+
+Entity embeddings produced by a base encoder (random, TransE, or sentence-transformer) carry only local semantic signal: they encode what an entity is, not where it sits in the graph. Two entities in the same community, co-cited by dozens of shared neighbours, may have dissimilar raw embeddings simply because their surface forms differ. This lack of structural context directly degrades the CSA semantic similarity term $\alpha \cdot \mathrm{sim}$, which depends on cosine distance between entity vectors.
+
+To address this, CEREBRUM applies a single-pass GraphSAGE-style neighbourhood aggregation after base encoding but before any traversal. For each entity $v$ with embedding $\mathbf{e}_v$ and neighbourhood $\mathcal{N}(v)$:
+
+$$\tilde{\mathbf{e}}_v = \frac{\mathbf{e}_v + \sum_{u \in \mathcal{N}(v)} \mathbf{e}_u}{1 + |\mathcal{N}(v)|}$$
+
+The result is re-normalized to unit length. This mean pooling step propagates local structural context into every entity vector without any learned parameters, weight matrices, or training data. The operation runs at graph build time via `CerebrumGraph.build(use_graphsage=True)` and applies the smoothing over the entire graph in a single pass, making the incremental cost $O(|E|)$.
+
+The effect on CSA is direct and significant. Entities that are structurally proximate — sharing community membership, co-neighbours, or analogous graph roles — have their smoothed embeddings pulled together, increasing $\mathrm{sim}(u, v)$ for semantically related pairs even when their raw lexical representations are distant. Combined with the community score term $\beta \cdot cs$, the smoothed semantic similarity creates a redundant double-signal for structurally cohesive paths, further sharpening beam focus. Importantly, this is an inference-time enrichment: no retraining of the CSA parameters, no gradient steps, and no labelled supervision are required.
+
+### 4.9 AAAK-Steered Beam Traversal (Phase 55)
+
+A fundamental limitation of stateless beam traversal is the cold-start problem: every query begins without memory of which reasoning chains have proven effective in the past. A domain-expert human reasoner, by contrast, quickly learns that certain relation-sequence patterns reliably lead to correct answers in a given knowledge domain ("gene → expressed_in → tissue → affected_by → disease" is a productive chain in biomedical KGs). Without this experiential bias, the traversal must explore the full beam combinatorially on every query.
+
+The **AAAK-Steered Traversal** system addresses this by accumulating compressed relation-sequence patterns from successful queries into a persistent cache (`AAAKCache`). After each successful reasoning call, the relation sequence of every top-ranked path is extracted and stored as a compressed prefix-indexed structure. On subsequent queries, each candidate expansion at `_prune_candidates()` time is scored by looking up the current path's relation prefix in the cache and computing an affinity score based on how often that prefix has appeared in historically successful paths. The effective candidate score is:
+
+$$s_\text{eff}(v) = s_\text{CSA}(v) \times \left(1 + \lambda_\text{aaak} \times \text{affinity}(v)\right)$$
+
+where $\lambda_\text{aaak}$ is a configurable strength parameter and $\text{affinity}(v) \in [0, 1]$ is the normalized frequency of the candidate's relation prefix in the cache. This is a multiplicative boost rather than an additive override, preserving the CSA score's absolute scale while biasing the beam toward known-productive chains.
+
+The system's durability across process restarts is provided by a two-layer mechanism. At shutdown, `AAAKCache` serializes its prefix index to a JSON file. At startup, `QueryLog.replay_into_cache(aaak_cache)` re-ingests the NDJSON query history, rebuilding the cache state from the record of past successful queries. This gives the AAAK system persistent memory without requiring a separate database process. Critically, the entire mechanism is training-free: no gradient steps, no reward model, and no labelled path-quality annotations are needed. This contrasts fundamentally with RL-based path selection methods (DeepPath, MINERVA) that require thousands of labelled training examples. AAAK learns from the system's own operational history.
+
+### 4.10 TemporalCalibrator (Phase 55)
+
+The CSA formula contains two parameters, $\eta$ (temporal decay) and $\iota$ (node recency), that govern how strongly the system favours recently-updated edges and nodes. These parameters interact with the time distribution of the graph in ways that are highly domain-dependent: a rapidly-evolving biomedical KG has very different temporal structure from a stable encyclopedic KG, and the optimal values of $\eta$ and $\iota$ cannot be inferred from graph topology alone.
+
+`TemporalCalibrator` performs a grid search over a configurable range of $(\eta, \iota)$ pairs against a labelled validation set, evaluating each configuration via Recall@K. For each grid point it: (1) applies the candidate $(\eta, \iota)$ pair to the live CSA engine, (2) runs inference over the validation set, (3) measures Recall@K, and (4) restores the original parameter values in a `try/finally` block regardless of whether step 3 succeeds or raises an exception. After exhausting the grid, the configuration maximising Recall@K is applied permanently via `TemporalCalibrator.apply()`. This calibration is entirely distinct from the online SGD path (Section 6.1) and the batch retraining path (Section 6.2): it requires no gradient computation and no positive/negative path pairs — only a small validation set with known-correct answer entities.
+
 ---
 
 ## 5. The Forward Pass: Graph Reasoning
@@ -652,9 +694,29 @@ CORS is fully configured on all endpoints, enabling browser-based observability 
 
 ---
 
-## 9. Implementation Architecture
+## 9. Fault Tolerance Architecture (Phases 56–57)
 
-### 9.1 Design Principles
+### 9.1 Partial-Result Responses and Graceful Degradation
+
+Production KG deployments must contend with graphs that are partially unavailable, queries whose beam search times out mid-flight, and transient failures in optional subsystems (REM engine, bridge synthesis, external adapters). Failing fast with a hard error in these scenarios discards all reasoning work completed before the failure point and provides no useful information to the caller.
+
+CEREBRUM addresses this through a systematic partial-result pattern. The `QueryResponse` schema includes `partial` (boolean) and `error` (string) fields alongside the normal `paths` result list. If beam traversal is interrupted, the traversal accumulates completed paths into a `_partial_paths` checkpoint. Upon catching an exception, the server returns this checkpoint with `partial=True` and an informative `error` message rather than a 500 response with an empty body. Callers receive the best available answer the system had computed at the time of failure, preserving the traversal investment. The `/query/stream` endpoint extends this pattern to the streaming case: if an error occurs mid-stream, a terminal error chunk is emitted in the NDJSON stream before the connection closes, ensuring clients can distinguish a clean stream end from an aborted one.
+
+### 9.2 Component-Level Crash Isolation
+
+Beyond query-level degradation, individual system components must not cascade failures into the broader request-serving path. Three specific isolation patterns are implemented:
+
+**GlobalRebalancer crash guard**: The `GlobalRebalancer` runs DSCF re-detection as a background task triggered by modularity Q drift. If the background re-run raises an unhandled exception (e.g., from a graph mutation race or memory pressure), this exception is caught at the task boundary and logged with full traceback via the `RingBufferHandler`. The rebalancer resets its internal state to allow the next trigger cycle to proceed normally. Query serving is never interrupted.
+
+**Persistence layer write isolation**: All `QueryLog` append operations and `AAAKCache` save operations execute inside exception-guarded blocks. A write failure (disk full, permission error, filesystem unavailability) is logged and silently skipped rather than propagated to the caller. The in-memory state remains authoritative; persistence is best-effort. This ensures that an operator mistake in configuring the persistence path cannot bring down the query server.
+
+**Community detection executor fallback**: `CommunityEngine` uses a `ProcessPoolExecutor` for parallel community detection runs (used to select the best-of-N DSCF partition). If the process pool is unavailable — due to OS-level restrictions on forking, resource limits, or Windows-specific constraints — the engine falls back automatically to sequential single-process execution. The fallback is transparent to callers: the same partition-selection logic runs, only without parallelism. This ensures CEREBRUM operates correctly in containerised environments with restricted process models.
+
+---
+
+## 10. Implementation Architecture
+
+### 10.1 Design Principles
 
 **Framework agnostic**: CEREBRUM must work with any graph database, any
 embedding method, and any LLM (or no LLM). No vendor lock-in.
@@ -672,7 +734,7 @@ without changing the core architecture.
 - Embeddings: optional `sentence-transformers` or `pykeen`
 - API: optional `fastapi`, `uvicorn`
 
-### 9.2 Key API Endpoints
+### 10.2 Key API Endpoints
 
 | Endpoint | Method | Purpose |
 |---|---|---|
@@ -689,7 +751,7 @@ without changing the core architecture.
 | `/build` | POST | Submit graph build operation |
 | `/logs` | GET/DELETE | Ring-buffered structured log access |
 
-### 9.3 Data Flow
+### 10.3 Data Flow
 
 **THALAMUS** (ingestion):
 1. **IngestionPipeline** normalizes entities, deduplicates aliases, normalizes relations, assigns confidence/provenance
@@ -712,9 +774,9 @@ without changing the core architecture.
 
 ---
 
-## 10. Evaluation
+## 11. Evaluation
 
-### 10.1 Datasets
+### 11.1 Datasets
 
 **MetaQA** (Zhang et al., 2018): Movie question-answering over a KG with 43,234 entities, 134,741 triples, and 9 relation types. Multi-hop questions at 1, 2, and 3 hops. Standard benchmark for KG reasoning; 39,093 total questions evaluated.
 
@@ -726,7 +788,7 @@ without changing the core architecture.
 
 **IKGWQ** (Incomplete Knowledge Graph With Questions — Phase 44): Internal benchmark of 400 questions with five incompleteness levels (0–50% edge removal), evaluating graceful degradation and REM synthesis recovery.
 
-### 10.2 Baselines
+### 11.2 Baselines
 
 | Algorithm | Description |
 |---|---|
@@ -736,12 +798,12 @@ without changing the core architecture.
 | MINERVA | RL-trained path-finding agent (full supervision) |
 | NSM | GNN-based (full supervision) |
 
-### 10.3 Metrics
+### 11.3 Metrics
 
 **Hits@K**: fraction of questions where the correct answer appears in the top-K results.
 **MRR**: Mean Reciprocal Rank.
 
-### 10.4 Results: MetaQA (Full Evaluation — 39,093 questions)
+### 11.4 Results: MetaQA (Full Evaluation — 39,093 questions)
 
 Configuration: all-MiniLM-L6-v2 embeddings, beam_width=10, --min-community-size 20, --use-prior.
 
@@ -761,7 +823,7 @@ Configuration: all-MiniLM-L6-v2 embeddings, beam_width=10, --min-community-size 
 
 CEREBRUM operates without any training data. Supervised systems' Hits@1 advantage reflects their ability to model question semantics during training. CEREBRUM's H@10 values confirm strong retrieval recall; the LLM bridge performs final re-ranking from the candidate set.
 
-### 10.5 Results: WebQSP
+### 11.5 Results: WebQSP
 
 | Variant | H@1 | H@10 | MRR | ms/Q |
 |---------|-----|------|-----|------|
@@ -771,7 +833,7 @@ CEREBRUM operates without any training data. Supervised systems' Hits@1 advantag
 
 OPT = PageRank prior + learned CSA params ($\alpha=0.434$, $\beta=0.673$) + BridgeTwin (8,300 bridges) + beam_width=20.
 
-### 10.6 Results: IKGWQ — Graceful Degradation
+### 11.6 Results: IKGWQ — Graceful Degradation
 
 | Level | Remove% | H@1 | H@10 | MRR |
 |-------|---------|-----|------|-----|
@@ -784,7 +846,7 @@ OPT = PageRank prior + learned CSA params ($\alpha=0.434$, $\beta=0.673$) + Brid
 
 **Graceful Degradation AUC: 0.89** (area under the H@10-vs-incompleteness curve). REM synthesis provides 40% recall improvement at the Extreme incompleteness level compared to no synthesis.
 
-### 10.7 Results: GrailQA (Validation Split, 5,170 questions)
+### 11.7 Results: GrailQA (Validation Split, 5,170 questions)
 
 | Split | F1 | H@1 |
 |-------|-----|-----|
@@ -795,7 +857,7 @@ OPT = PageRank prior + learned CSA params ($\alpha=0.434$, $\beta=0.673$) + Brid
 
 **Zero-shot F1 retention = 81.5%** compared to in-distribution performance. Trained systems typically retain 60–70% under zero-shot conditions. CEREBRUM's structure-driven reasoning generalizes to unseen entity/relation combinations because it follows graph topology rather than memorized patterns.
 
-### 10.8 What the Benchmarks Show and What They Miss
+### 11.8 What the Benchmarks Show and What They Miss
 
 The benchmarks measure **node recall**: did the correct terminal entity appear in the result set? They do not measure:
 
@@ -808,7 +870,7 @@ On all four dimensions, CEREBRUM is categorically superior to every baseline —
 
 ---
 
-## 11. Phase History
+## 12. Phase History
 
 | Phase | Version | Description |
 |---|---|---|
@@ -834,10 +896,13 @@ On all four dimensions, CEREBRUM is categorically superior to every baseline —
 | 51/52 | v1.9.6 | ResearchAgent autonomous discovery + ExternalValidator (PubMed/arXiv/OpenAlex) |
 | 53 | v1.9.7 | Adaptive search strategy — dynamic beam_width/max_hop via local graph density |
 | 54 | v1.9.8 | Observability — StudioEngine, RingBufferHandler, /logs, /build, CORS, request tracing |
+| 55 | v2.0.0 | GraphSAGE neighbourhood smoothing; AAAK-steered traversal (AAAKCache + AAAKBeamTraversal); TemporalCalibrator; QueryLog append-only history |
+| 56 | v2.0.0 | Fault tolerance — QueryResponse.partial/error fields; _partial_paths checkpoint; GlobalRebalancer crash guard |
+| 57 | v2.0.1 | AAAKCache durable JSON persistence; /query/stream terminal error chunk; ProcessPoolExecutor sequential fallback |
 
 ---
 
-## 12. Discussion
+## 13. Discussion
 
 ### 12.1 Where CEREBRUM Excels
 
@@ -863,7 +928,7 @@ On all four dimensions, CEREBRUM is categorically superior to every baseline —
 
 ---
 
-## 13. The LLM Bridge
+## 14. The LLM Bridge
 
 CEREBRUM's output is a set of verified paths:
 
@@ -887,7 +952,7 @@ This architecture inverts the standard RAG pattern: instead of asking the LLM to
 
 ---
 
-## 14. Conclusion
+## 15. Conclusion
 
 CEREBRUM demonstrates that a Knowledge Graph can reason over itself using the structural principles of Transformer attention — without training data, without a language model, and with full interpretability. The key insight is that graph communities are a natural analog of attention heads, and DSCF constructs communities with the dual local/global character that makes this analogy operational.
 

@@ -1,7 +1,7 @@
 # CEREBRUM REST API Reference
 
 **Base URL**: `http://localhost:8200`
-**API Version**: v1.9.8
+**API Version**: v2.0.1
 **Authentication**: JWT Bearer token (all endpoints except `/health`)
 
 ---
@@ -84,9 +84,18 @@ Execute a multi-hop reasoning query against the loaded graph.
     ],
     "traversal_ms": 6.3,
     "hops_explored": 847,
-    "snapshot_id": "snap_1743000000"
+    "snapshot_id": "snap_1743000000",
+    "partial": false,
+    "error": null
 }
 ```
+
+**Fault-tolerance fields (Phase 56):**
+
+| Field | Type | Description |
+|---|---|---|
+| `partial` | bool | `true` when the traversal raised an unrecoverable exception mid-execution. The response contains whatever paths were collected in `_partial_paths` before the failure. HTTP status remains 200 so clients can still consume partial results. |
+| `error` | string \| null | Exception message when `partial=true`; `null` on successful traversal. |
 
 **curl example:**
 ```bash
@@ -144,7 +153,7 @@ Generate hypothesis proposals using the HypothesisEngine. Multi-path abductive r
         }
     ],
     "generated_at": 1743000000,
-    "engine_version": "1.9.8"
+    "engine_version": "2.0.1"
 }
 ```
 
@@ -256,6 +265,91 @@ Reject a specific research finding. Rejected findings are retained in the audit 
     "rejected_at": 1743000000
 }
 ```
+
+---
+
+#### `GET /research/status`
+Return the current status of the ResearchAgent (running / idle) and summary statistics.
+
+**Response (200 OK):**
+```json
+{
+    "status": "idle",
+    "last_scan_id": "scan_1743000000",
+    "last_scan_at": 1743000000,
+    "total_findings": 12,
+    "pending_review": 5
+}
+```
+
+---
+
+#### `POST /research/start`
+Start the ResearchAgent background worker. The agent continuously monitors the graph for structural gap signatures and surfaces findings for human review.
+
+**Request body:** Empty `{}` or optional `{"interval_s": 300}` to configure the polling interval.
+
+**Response (200 OK):**
+```json
+{"started": true, "interval_s": 300}
+```
+
+---
+
+#### `POST /research/stop`
+Stop the ResearchAgent background worker.
+
+**Response (200 OK):**
+```json
+{"stopped": true}
+```
+
+---
+
+#### `GET /research/findings`
+Return the current list of findings surfaced by the ResearchAgent, with optional status filter.
+
+**Query parameters:**
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `status` | string | null | Filter by status: `PENDING`, `APPROVED`, `REJECTED`, `MATERIALIZED` |
+| `limit` | int | 50 | Maximum findings to return |
+
+**Response (200 OK):**
+```json
+{
+    "findings": [
+        {
+            "id": "hyp_007",
+            "source": "TP53",
+            "relation": "regulates",
+            "target": "MDM2",
+            "confidence": 0.79,
+            "supporting_paths": 3,
+            "status": "PENDING",
+            "discovered_at": 1743000000
+        }
+    ],
+    "total": 12
+}
+```
+
+---
+
+#### `POST /research/validate`
+Submit a batch of research findings to the ExternalValidator. Equivalent to `POST /validate/proposals` but takes finding IDs rather than hypothesis IDs.
+
+**Request body:**
+```json
+{
+    "finding_ids": ["hyp_007", "hyp_009"],
+    "sources": ["pubmed", "arxiv"],
+    "max_results_per_source": 5
+}
+```
+
+**Response (200 OK):** Same schema as `POST /validate/proposals`.
 
 ---
 
@@ -666,6 +760,12 @@ Streaming NDJSON reasoning — emits partial results as they are discovered duri
 
 **Response:** Newline-delimited JSON, one path object per line, followed by a summary object.
 
+**Fault tolerance (Phase 57):** If the traversal raises an unrecoverable exception, the stream terminates with a final JSON line before closing:
+```json
+{"status": "error", "partial": true, "error": "<exception message>"}
+```
+Any path objects already emitted before the failure remain valid and consumable.
+
 ---
 
 #### `POST /stream/push`
@@ -698,7 +798,7 @@ Health check endpoint. No authentication required.
 ```json
 {
     "status": "healthy",
-    "version": "1.9.8",
+    "version": "2.0.1",
     "graph_loaded": true,
     "num_nodes": 21,
     "num_edges": 30,

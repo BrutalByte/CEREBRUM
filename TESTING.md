@@ -1,7 +1,7 @@
 # CEREBRUM — Testing Methodology
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6
-**Last updated**: 2026-03-24
+**Last updated**: 2026-04-07
 **Status**: Living document — updated each time the test strategy evolves.
 
 ---
@@ -61,8 +61,7 @@ pip install -e ".[dev]"          # installs networkx, numpy, scipy, igraph, leid
 python -m pytest tests/ -v
 ```
 
-Expected output (without leidenalg): **994 passed, 1 skipped** (v1.1.0)
-Expected output (with leidenalg):    **995 passed, 0 skipped** (v1.1.0)
+Expected output: **1490+ passed, 1 skipped** (v2.0.1 / Phase 57)
 
 ### 4. Run a single test layer
 

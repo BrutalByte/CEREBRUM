@@ -2,7 +2,7 @@
 
 **Community-Structured Graph Attention for Knowledge Graph Reasoning**
 
-*Bryan Alexander Buchorn (AMP) · March 2026 · v1.1.0 — Phase 20 COMPLETE — 994 tests passing*
+*Bryan Alexander Buchorn (AMP) · April 2026 · v2.0.1 — Phase 57 COMPLETE — 1490+ tests passing*
 
 ---
 
@@ -103,6 +103,63 @@ uvicorn api.server:app --port 8200 --reload
 | `POST /query` | Submit a reasoning query |
 | `GET /communities` | View detected community structure |
 | `GET /stream/events` | Subscribe to live graph updates (SSE) |
+
+## v2.0 / v2.0.1 Capabilities (Phases 43–57)
+
+### 10-Parameter CSA Formula with Online + Batch Learning
+
+The CSA attention formula extended from 6 to 10 learnable parameters: temporal decay (`eta`), node recency (`iota`), synthesis-density penalty (`mu`), and grounding confidence (`theta`) were added. `MetaParameterLearner` applies online SGD from `POST /feedback`; `CSAParameterLearner` retrains the global prior from a feedback buffer via `POST /retrain`. Full checkpoint persistence via `GET/POST /params` and `--params-file` startup flag.
+
+### AAAK-Steered Traversal with Durable Memory
+
+`AAAKCache` accumulates compressed relation-sequence patterns from successful queries. `AAAKBeamTraversal` biases beam pruning via a multiplicative score boost toward historically productive reasoning chains. The cache persists to disk on shutdown and warms up on restart (two-tier: saved JSON → `QueryLog` replay). `QueryLog` records all query history as append-only NDJSON, surviving process restarts.
+
+| Feature | API | Description |
+|---|---|---|
+| **AAAK-Steered Traversal** | `AAAKBeamTraversal(aaak_cache=..., aaak_strength=0.3)` | Relation-pattern-biased beam pruning |
+| **Durable Cache** | `AAAKCache.save(path)` / `AAAKCache.load(path)` | Full persistence across restarts |
+| **Query History** | `QueryLog(path)` + `replay_into_cache(aaak_cache)` | Append-only NDJSON + warm-up on restart |
+
+### GraphSAGE Neighbourhood Smoothing
+
+`smooth_with_graphsage(embeddings, G)` applies a single mean-aggregation pass over each entity's neighbourhood at inference time, enriching entity representations with structural context for the CSA semantic similarity term. No training, O(E) time.
+
+| Feature | API | Description |
+|---|---|---|
+| **GraphSAGE Smoother** | `CerebrumGraph.build(use_graphsage=True)` | One-pass neighbourhood aggregation at inference time |
+
+### HypothesisEngine + ResearchAgent
+
+`HypothesisEngine` performs training-free abductive reasoning: given an observed graph state, it generates ranked explanatory hypotheses via multi-path reverse traversal fused with Noisy-OR probability aggregation. `ResearchAgent` autonomously monitors graph connectivity, proposes novel edges for structurally under-connected nodes, and queues them for human approval. `ExternalValidator` scores proposals against PubMed, ClinicalTrials.gov, arXiv, and OpenAlex in real time.
+
+| Endpoint | Description |
+|---|---|
+| `POST /hypothesize` | Generate ranked abductive hypotheses from an observation |
+| `POST /hypothesize/materialize` | Materialize approved hypotheses as provisional graph edges |
+
+### Observability Dashboard
+
+`RingBufferHandler` captures all reasoning-layer logs in an in-process circular buffer (5,000 entries) with zero network overhead. `StudioEngine` exposes testable observability business logic separately from the Gradio UI. REST endpoints enable programmatic log querying.
+
+| Endpoint | Description |
+|---|---|
+| `GET /logs` | Retrieve buffered reasoning log entries |
+| `DELETE /logs` | Clear the ring buffer |
+| `POST /build` | Trigger graph build with observability instrumentation |
+
+### Comprehensive Fault Tolerance
+
+Every failure mode is independently isolated. Traversal crashes return HTTP 200 with `partial=True` and intermediate results rather than HTTP 500. Persistence write failures (QueryLog, AAAKCache) cannot crash `/query`. The streaming endpoint emits a terminal error NDJSON chunk on failure. `GlobalRebalancer` has a top-level crash guard. `best_of_n_dscf` falls back to sequential execution on any `ProcessPoolExecutor` failure.
+
+| Feature | Behavior |
+|---|---|
+| Traversal failure | HTTP 200, `partial=True`, intermediate `_partial_paths` returned |
+| Persistence failure | Independently isolated; never crashes `/query` |
+| Stream failure | Terminal error NDJSON chunk emitted |
+| Rebalancer crash | Top-level guard; background thread kept alive |
+| DSCF executor failure | Sequential fallback with WARNING log |
+
+---
 
 ## Phase 20 New APIs
 

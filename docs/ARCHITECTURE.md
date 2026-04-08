@@ -190,14 +190,17 @@ subgraph OUTPUT["⑥ Output & Verbalization"]
 
     AAAK_VERB["AAAKVerbalizer\ncompressed trace\nAAK:[Newton~>Leibniz!>Calculus]"]
     PATH_VERB["PathVerbalizer\nfluent NL sentences\nwith edge citations"]
-    JSON_OUT["Structured JSON\nQueryResponse\nranked answers + paths"]
+    JSON_OUT["Structured JSON\nQueryResponse\nranked answers + paths\npartial: bool  error: str"]
+
+    D_FAULT{"traversal\nexception?"}
+    PARTIAL_OUT["partial=True\nerror=str(exc)\n_partial_paths used\nHTTP 200"]
 
     D_OUT_TYPE{"caller type"}
     REST_OUT["REST /query response\nQueryResponse schema"]
     UI_OUT["Gradio HTML\nAAK trace + path cards\nattn radar plot"]
     CLI_OUT["CLI stdout\nranked entities + scores"]
     FED_OUT["TraversalBranchResponse\nfor parent node merge"]
-    STREAM_OUT["NDJSON stream\nhop-by-hop paths"]
+    STREAM_OUT["NDJSON stream\nhop-by-hop paths\n+ terminal error chunk on fault"]
 end
 
 %% ═══════════════════════════════════════════════════════════

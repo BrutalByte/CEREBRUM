@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: March 2026
-**Status**: Version 1.8.5 · Phase 45 COMPLETE — 1251 tests passing
+**Status**: Version 2.0.1 · Phase 57 COMPLETE — 1490+ tests passing
 **License**: Proprietary — all rights reserved
 
 ---
@@ -28,9 +28,19 @@ DSCF (community detection):
   temperature: τ_{t+1} = max(τ_t × 0.92, 0.01)
 
 CSA (attention weight for edge u→v at hop k):
-  a(u,v,k) = σ( α·sim(u,v) + β·community_score(u,v) + γ·w_rel - δ·distance + ε·hop_decay(k) )
-  defaults: α=0.4, β=0.4, γ=0.1, δ=0.05, ε=0.05
-  w_rel: Metaedge Bridge Bonus (default 0.0, recommended 0.4 for inter-type reasoning)
+  a(u,v,k) = σ(
+    α·sim(u,v)          # semantic similarity (cosine)
+  + β·community_score   # structural membership
+  + γ·w_rel             # edge-type weight
+  - δ·distance          # normalised distance penalty
+  + ε·hop_decay(k)      # exponential hop decay
+  + ζ·PageRank(v)       # global authority prior
+  + η·temporal_decay    # time since edge creation
+  + ι·node_recency      # recency of traversal
+  - μ·synth_density     # synthetic edge penalty
+  + θ·grounding         # confidence / provenance
+  )
+  defaults: α=0.4, β=0.4, γ=0.1, δ=0.05, ε=0.05, ζ=0.1, η=0.1, ι=0.05, μ=0.1, θ=1.0
 ```
 
 **Transformer → KG mapping**:
@@ -43,6 +53,7 @@ CSA (attention weight for edge u→v at hop k):
 | Attention weight | CSA formula above |
 | Context window | Ego-network radius R |
 | KV cache | Materialized path store |
+| Fine-tuning | CSAParameterLearner.fit() via POST /retrain |
 
 **Repo layout** (target structure for standalone project):
 
@@ -62,7 +73,7 @@ parallax/
 └── PAPER.md       (this file)
 ```
 
-**Current phase**: Phase 20 complete (v1.1.0). CEREBRUM has been benchmarked on MetaQA, WebQSP, and Hetionet. The framework includes the complete THALAMUS ingestion pipeline, a full LLM bridge, Bayesian Beam Search with warm-start cold-start seeding, GlobalRebalancer with bridge-engine post-rebalance hook, Cross-Modal Alignment with canonical basis anchor, Namespace Isolation, Causal Flood filtering, Zombie Bridge pruning, Query Snapshot Isolation, Community-Specific CSA Parameters, and Path-Preserving Hold-out validation. 994 tests passing.
+**Current phase**: Phase 57 complete (v2.0.1). CEREBRUM now includes GraphSAGE neighbourhood smoothing (`smooth_with_graphsage`), AAAK-steered beam traversal (`AAAKCache` + `AAAKBeamTraversal`) with durable persistence across restarts, `TemporalCalibrator` for Recall@K-optimal eta/iota calibration, `QueryLog` append-only history for warm-up, `HypothesisEngine` multi-path abductive reasoning, `ResearchAgent` autonomous missing-link discovery, `ExternalValidator` LLM-independent source validation, an observability dashboard, and comprehensive fault tolerance hardening (graceful degradation, partial-result responses, crash-guard GlobalRebalancer, stream error chunks). 1490+ tests passing.
 
 ---
 

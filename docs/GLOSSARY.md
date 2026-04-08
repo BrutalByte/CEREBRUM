@@ -6,6 +6,12 @@ Definitions of all CEREBRUM-specific terms, algorithms, and architectural concep
 
 ## A
 
+**AAAKBeamTraversal**
+A `BeamTraversal` subclass that applies a multiplicative affinity boost to candidate path scores during `_prune_candidates()`: `effective_score = score × (1 + aaak_strength × affinity)`. The `affinity` is computed from the `AAAKCache` prefix index by matching the path's emerging relation sequence against stored patterns.
+
+**AAAKCache**
+Thread-safe in-memory store mapping relation-sequence tuples to success counts, used by `AAAKBeamTraversal` to bias beam pruning toward known-productive reasoning chains. Built from prior successful query paths. Persists to disk on server shutdown (`save_if_path()`) and is restored on startup (`load()`) with incremental `QueryLog` replay merged on top.
+
 **Answer Extractor**
 The final stage of the CORTEX reasoning pipeline. Takes ranked `ReasoningPath` objects from `PathScorer` and extracts the terminal entity of each path as a candidate answer. Returns answers with associated CSA scores, path confidence, and HMAC provenance signatures.
 
@@ -131,6 +137,9 @@ CEREBRUM's defining property: every answer is a verifiable path through graph ed
 **GlobalRebalancer**
 The background component that monitors modularity drift ($\Delta Q_{cum}$) across streaming ingest events. When drift exceeds a threshold, it spawns a background DSCF re-run, then performs an atomic swap of `adapter.community_map`. Notifies `BridgeTwinEngine` via `on_rebalance()` hook (Phase 19).
 
+**GraphSAGE Smoothing**
+A one-pass mean neighbourhood aggregation step applied after base entity encoding. `smooth_with_graphsage(embeddings, G)` replaces each entity's embedding with a weighted average of itself and its neighbours' embeddings, making the CSA `alpha` (semantic similarity) term more effective by encoding local structural context. Enabled via `CerebrumGraph.build(use_graphsage=True)`.
+
 ---
 
 ## H
@@ -233,11 +242,17 @@ A graph centrality measure (part of StructuralEncoder) used as the sixth term in
 CORTEX component that ranks `ReasoningPath` objects using the composite score:
 $$\text{score}(P) = \left(\prod_{k=1}^L a(u_k, v_k, k)\right) \cdot \text{coherence}_{com}(P) \cdot \cos(\vec{h}_{final}, \vec{q})$$
 
+**Partial Response**
+A `QueryResponse` with `partial=True` and a non-null `error` field. Returned when the traversal raises an unrecoverable exception mid-execution — the response contains whatever paths were collected in `_partial_paths` before the failure. HTTP status is 200, not 500, so clients can still consume partial results gracefully.
+
 **Path-Preserving Hold-out**
 `InferenceValidator(path_preserving=True)` — validation methodology that skips holding out edge $(u,v)$ if no alternative path between $u$ and $v$ exists after removal. Prevents false-zero recall on sparse graphs (Phase 20 fix, Hole 8).
 
 **PatternDiscretizer**
 A streaming discretizer that emits a graph edge when a symbolic event sequence matches a configured pattern with probability ≥ $p$.
+
+**ProcessPoolExecutor Fallback**
+A fault tolerance pattern in `best_of_n_dscf`: if `ProcessPoolExecutor` raises any exception (e.g., `BrokenExecutor` from Windows paging file exhaustion), the function logs a WARNING and falls back to sequential `dscf_communities` calls. Ensures community detection completes even when multiprocessing is unavailable.
 
 **Procrustes SVD**
 The mathematical core of `SignalEncoder`'s cross-modal alignment. Computes a rotation matrix $R = V U^T$ from the SVD of the cross-covariance matrix $\Sigma = Y^T X$, where $X$ are signal embeddings and $Y$ are entity embeddings. Minimizes $||Y - XR||_F$.
@@ -248,6 +263,9 @@ The mathematical core of `SignalEncoder`'s cross-modal alignment. Computes a rot
 
 **Query Snapshot Isolation**
 `CSAEngine.set_query_snapshot(community_map)` — captures the community map at query start and uses it exclusively throughout the query. Prevents GlobalRebalancer mid-query atomic swaps from producing inconsistent CSA weights across hops (Phase 20 fix, Hole 5).
+
+**QueryLog**
+An append-only NDJSON file (`data/cerebrum/query_log.ndjson` by default) that records seeds, answers, and relation sequences after each successful reasoning call. `replay_into_cache(aaak_cache)` reads the log at startup to re-warm `AAAKCache` so learned relation patterns survive process restarts.
 
 ---
 
@@ -308,6 +326,9 @@ The probabilistic path selection strategy in Bayesian Beam Search: for each cand
 
 **Temporal Decay**
 The time-dependent reduction in edge weight for edges with `valid_until` timestamps: $w_{temp}(t) = w_0 \cdot \exp(-\lambda \cdot \max(0, t - t_{until}))$. Decay rate $\lambda$ is configurable per relation type (Phase 17 feature).
+
+**TemporalCalibrator**
+A grid-search utility that calibrates the CSA `eta` (temporal decay) and `iota` (node recency) parameters to maximise Recall@K against a labelled validation set. `calibrate()` iterates over a grid of (eta, iota) pairs, evaluating each via `measure_recall()`; `apply()` writes the best-found parameters back to `CSAEngine`. A `try/finally` guarantee restores the original parameters if calibration raises.
 
 **ThresholdDiscretizer**
 A streaming discretizer that emits a graph edge when a continuous float signal crosses a configured threshold value.
