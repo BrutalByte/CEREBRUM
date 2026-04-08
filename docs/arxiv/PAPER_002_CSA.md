@@ -2,8 +2,8 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v1.9.8 (Phase 54 COMPLETE)  
-**Date**: March 2026
+**Status**: v2.0.1 (Phase 57 COMPLETE)  
+**Date**: April 2026
 
 ---
 
@@ -82,6 +82,22 @@ Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`. The sy
 | MetaQA 3-hop | H@1 / H@10 | 12.5% / 50.3% |
 | WebQSP OPT | H@1 / H@10 / MRR | 6.27% / 20.84% / 10.66% |
 
+## 7. Phase 55 Advances
+
+**GraphSAGE Neighbourhood Smoothing (Phase 55).** `smooth_with_graphsage(embeddings, G)` applies a one-pass mean neighbourhood aggregation after base encoding:
+
+$$\tilde{\mathbf{e}}_v = \frac{1}{1+|\mathcal{N}(v)|}\left(\mathbf{e}_v + \sum_{u \in \mathcal{N}(v)} \mathbf{e}_u\right)$$
+
+The enriched embeddings make the `alpha` (semantic similarity) term in the CSA formula significantly more discriminating — nodes in the same community share more similar neighbourhood-aggregated representations. `CerebrumGraph.build(use_graphsage=True)` enables smoothing automatically after base encoding. Complexity is $O(|E| \times d)$ where $d$ is the embedding dimension.
+
+**TemporalCalibrator (Phase 55).** Grid-searches `eta` (temporal decay) and `iota` (node recency) against a labelled validation set to maximise Recall@K. The `calibrate()` method enumerates a parameter grid, calls `measure_recall()` at each point, and applies the best-found parameters to the CSAEngine. A `try/finally` block guarantees original parameters are restored if calibration is interrupted — ensuring that a failed calibration run never leaves the CSAEngine in a partially-modified state.
+
+**AAAK-Steered Traversal (Phase 55).** `AAAKCache` tracks relation-sequence patterns from previous successful AAAK traces. `AAAKBeamTraversal._prune_candidates()` applies:
+
+$$s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{AAAK} \cdot \text{affinity}(\text{rel\_seq}))$$
+
+where `affinity` is derived from accumulated `_counts`. This biases beam search toward known-productive reasoning chains without modifying graph structure. The cache is durable — `save(path)` serializes to JSON and `load(path)` restores counts on restart, so learned relation patterns survive process restarts.
+
 ---
 **References**
 1. Veličković, P., et al. (2018). Graph Attention Networks. ICLR.
@@ -94,3 +110,4 @@ Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`. The sy
 8. Zhang, Y., et al. (2018). Variational Reasoning for Question Answering over Knowledge Graphs. ICLR.
 9. Wang, Q., et al. (2017). Knowledge Graph Embedding: A Survey of Approaches and Applications. IEEE TKDE.
 10. Buchorn, B. A., & Sonnet, C. (2026). CEREBRUM: Community-Structured Graph Attention. PARALLAX.md.
+11. Hamilton, W., Ying, Z., & Leskovec, J. (2017). Inductive Representation Learning on Large Graphs. NeurIPS.

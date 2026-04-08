@@ -1,6 +1,6 @@
 # CEREBRUM: Academic Source Repository (Batch Index)
 
-This document provides a consolidated list of the 45 foundational papers, books, and datasets cited in the CEREBRUM framework development. Each entry is hyperlinked to its official digital record or Open Access PDF.
+This document provides a consolidated list of the 46 foundational papers, books, and datasets cited in the CEREBRUM framework development. Each entry is hyperlinked to its official digital record or Open Access PDF.
 
 - **hebb1949**: Hebb, D. (1949). The organization of behavior. [View Source](https://archive.org/details/organizationofbe00hebb)
 - **vaswani2017attention**: Vaswani et al. (2017). Attention is all you need. [Download PDF](https://arxiv.org/pdf/1706.03762.pdf)
@@ -47,3 +47,4 @@ This document provides a consolidated list of the 45 foundational papers, books,
 - **lin2015ttranse**: Lin et al. (2015). Knowledge graph completion (TTransE). [Download PDF](https://thunlp.org/~lzy/publications/aaai2015_transr.pdf)
 - **sun2017hyte**: Sun et al. (2017). Temporally Aware Embedding (HyTE). [Download PDF](https://www.researchgate.net/profile/Shibiao_Sun/publication/320448102_Hyte_Joint_embedding_of_entities_relations_and_time/links/5a9e59d9a6fdcc546ad881f3/Hyte-Joint-embedding-of-entities-relations-and-time.pdf)
 - **saxena2020improve**: Saxena et al. (2020). Improving multi-hop QA (EmbedKGQA). [Download PDF](https://arxiv.org/pdf/1909.11855.pdf)
+- **hamilton2017graphsage**: Hamilton, W., Ying, Z., & Leskovec, J. (2017). Inductive Representation Learning on Large Graphs. NeurIPS. [Download PDF](https://arxiv.org/pdf/1706.02216.pdf)
