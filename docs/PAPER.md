@@ -757,20 +757,23 @@ without changing the core architecture.
 1. **IngestionPipeline** normalizes entities, deduplicates aliases, normalizes relations, assigns confidence/provenance
 2. **Adapter** loads graph → `Entity` / `Edge` objects
 3. **EmbeddingEngine** generates entity embeddings
-4. **StructuralEncoder** computes PageRank, betweenness, degree features
-5. **STDPDiscretizer** (optional) infers causal edge direction from timing
-6. **SignalEncoder** (optional) encodes non-textual signals into entity embedding space
+4. **GraphSAGE smoothing** (optional) applies one-pass neighbourhood mean aggregation over all entity embeddings
+5. **StructuralEncoder** computes PageRank, betweenness, degree features
+6. **STDPDiscretizer** (optional) infers causal edge direction from timing
+7. **SignalEncoder** (optional) encodes non-textual signals into entity embedding space
 
 **CORTEX** (reasoning):
-7. **CommunityEngine** runs DSCF/TSC/Leiden/LPA to partition nodes into communities
-8. **CSAEngine** computes 10-parameter attention weights per candidate edge
-9. **BeamTraversal** performs adaptive beam-search over the graph
-10. **PathScorer** + **AnswerExtractor** rank and return final answers
+8. **CommunityEngine** runs DSCF/TSC/Leiden/LPA to partition nodes into communities
+9. **AAAKCache warm-up** (optional) replays QueryLog into the AAAK prefix index
+10. **CSAEngine** computes 10-parameter attention weights per candidate edge
+11. **AAAKBeamTraversal** (or standard BeamTraversal) performs adaptive beam-search, biasing pruning toward known-productive relation patterns
+12. **PathScorer** + **AnswerExtractor** rank and return final answers; QueryLog appends the result
 
 **Adaptive Learning** (online):
-11. User sends POST /feedback → online SGD on community-specific params
-12. Feedback buffered → POST /retrain → batch gradient descent on global prior
-13. GET /params → export checkpoint → POST /params or `--params-file` → restore
+13. User sends POST /feedback → online SGD on community-specific params
+14. Feedback buffered → POST /retrain → batch gradient descent on global prior
+15. GET /params → export checkpoint → POST /params or `--params-file` → restore
+16. TemporalCalibrator (optional) grid-searches `eta`/`iota` against a validation set → applies best params
 
 ---
 
@@ -904,7 +907,7 @@ On all four dimensions, CEREBRUM is categorically superior to every baseline —
 
 ## 13. Discussion
 
-### 12.1 Where CEREBRUM Excels
+### 13.1 Where CEREBRUM Excels
 
 - **Structured knowledge domains** where community structure maps to genuine conceptual divisions: biomedical KGs (disease/gene/drug communities), scientific citation networks, enterprise ontologies.
 - **Multi-hop chains** where the path itself is informative, not just the terminal entity: "what mechanism connects drug X to disease Y?"
@@ -912,15 +915,16 @@ On all four dimensions, CEREBRUM is categorically superior to every baseline —
 - **Cold-start deployments**: any new domain where labeled training data does not yet exist.
 - **Incomplete graphs**: CEREBRUM's REM synthesis and graceful degradation (AUC 0.89) handle real-world KG sparsity more robustly than systems that assume graph completeness.
 - **Progressive domains**: fields where new knowledge arrives continuously; ResearchAgent + ExternalValidator enable autonomous graph enrichment.
+- **Repeated query patterns**: AAAK-steered traversal provides compounding benefit when the same relation-sequence patterns recur across queries, which is the norm in any focused domain deployment.
 
-### 12.2 Limitations and Honest Assessment
+### 13.2 Limitations and Honest Assessment
 
 - **Hits@1 without question context**: CEREBRUM does not rank terminal nodes by question semantics — that is the LLM bridge's role. Benchmarks that measure only Hits@1 without a re-ranking step understate CEREBRUM's practical utility.
 - **Random embeddings degrade performance**: The CSA semantic term ($\alpha = 0.4$) contributes noise with random embeddings. Production deployment requires sentence-transformer or domain-specific embeddings.
 - **Very high community counts**: On sparse graphs (MetaQA KG), DSCF can produce near-singleton communities that degrade the community distance matrix. Mitigation: `--min-community-size` flag merges small communities.
 - **ExternalValidator latency**: Literature API calls introduce latency in the ResearchAgent loop. This is acceptable because ResearchAgent runs as a background daemon and never blocks query serving.
 
-### 12.3 Future Directions
+### 13.3 Future Directions
 
 - **Multi-round abduction**: HypothesisEngine currently performs single-round Noisy-OR fusion. Iterative abduction (re-running beam search over hypothesis-enriched graphs) is under investigation.
 - **Federated learning of CSA parameters**: Currently parameters are learned locally per node. Federated parameter aggregation across nodes would enable collective learning without sharing raw graph data.
@@ -956,11 +960,13 @@ This architecture inverts the standard RAG pattern: instead of asking the LLM to
 
 CEREBRUM demonstrates that a Knowledge Graph can reason over itself using the structural principles of Transformer attention — without training data, without a language model, and with full interpretability. The key insight is that graph communities are a natural analog of attention heads, and DSCF constructs communities with the dual local/global character that makes this analogy operational.
 
-Through 54 phases of development the core insight has remained unchanged while the surrounding architecture has grown substantially: the 5-parameter CSA formula became a 10-parameter formula with online and batch learning; the single-node traversal became a federated multi-node system; the synchronous query server became a fully observable, traceable production platform; and the pure reasoning engine gained abductive hypothesis generation and autonomous literature-validated graph enrichment.
+Through 57 phases of development the core insight has remained unchanged while the surrounding architecture has grown substantially: the 5-parameter CSA formula became a 10-parameter formula with online and batch learning; the single-node traversal became a federated multi-node system; the synchronous query server became a fully observable, traceable production platform; the pure reasoning engine gained abductive hypothesis generation and autonomous literature-validated graph enrichment; and the traversal layer gained structural memory through AAAK-steered beam pruning.
 
-At v1.9.8, CEREBRUM is empirically validated against 39,093 MetaQA questions, 1,579 WebQSP questions, 5,170 GrailQA questions, and 400 IKGWQ questions across five incompleteness levels. With 1,357 tests passing and a production-hardened REST API, the framework is ready for deployment in domains where hallucination is unacceptable, training data is unavailable, and interpretability is required by design.
+Phases 55–57 mark the transition from a research-quality system to a production-hardened platform. GraphSAGE neighbourhood smoothing enriches every entity embedding with local structural context in a single $O(|E|)$ pass, requiring no training. The AAAK-steered traversal system accumulates relation-sequence patterns from the system's own operational history and applies them as a compounding beam bias — yielding measurably sharper traversal focus on repeated query domains without any supervised training signal. The TemporalCalibrator brings principled, gradient-free calibration of the temporal CSA parameters to maximise Recall@K on held-out validation sets. The fault tolerance architecture ensures that transient failures in any individual component — graph adapters, persistence, community detection, external validators — degrade gracefully to partial results rather than cascading to hard errors.
 
-The resulting system is not a statistical approximation of reasoning — it is reasoning. Every answer is a verified path through real edges. Every step names the community it traversed. The computational cost is sub-millisecond per query for graph traversal, independent of graph size for fixed beam width.
+At v2.0.1, CEREBRUM is empirically validated against 39,093 MetaQA questions, 1,579 WebQSP questions, 5,170 GrailQA questions, and 400 IKGWQ questions across five incompleteness levels. With 1,490+ tests passing and a production-hardened REST API, the framework is ready for deployment in domains where hallucination is unacceptable, training data is unavailable, and interpretability is required by design.
+
+The resulting system is not a statistical approximation of reasoning — it is reasoning. Every answer is a verified path through real edges. Every step names the community it traversed. The AAAK cache names the relation patterns that led there. The computational cost is sub-millisecond per query for graph traversal, independent of graph size for fixed beam width.
 
 ---
 
@@ -984,6 +990,7 @@ CEREBRUM stands on the shoulders of decades of research in graph theory, communi
 14. **Sentence-BERT**: Reimers & Gurevych (2019) — default embedding backend.
 15. **Noisy-OR**: Pearl (1988) — HypothesisEngine confidence fusion.
 16. **Avionics mid-value selection** — multi-signal consensus inspiration for DSCF/TSC.
+17. **GraphSAGE**: Hamilton, Ying & Leskovec (2017) — neighbourhood sampling and aggregation; adapted as the CEREBRUM inference-time smoothing operator.
 
 ---
 
