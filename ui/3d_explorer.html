@@ -4,163 +4,462 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CEREBRUM 3D | Knowledge Graph Explorer</title>
-    <script src="https://unpkg.com/3d-force-graph"></script>
-    <script src="https://unpkg.com/three"></script>
-    <script src="https://unpkg.com/three-spritetext"></script>
+    <!-- 3d-force-graph bundles its own Three.js — do NOT import Three separately -->
+    <script src="https://unpkg.com/3d-force-graph@1.73.3/dist/3d-force-graph.min.js"></script>
     <style>
-        body { margin: 0; background-color: #000; color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #graph-container {
+            position: absolute;
+            inset: 0;          /* fills entire viewport */
+            width: 100%;
+            height: 100%;
+        }
+
         #controls {
             position: absolute;
             top: 20px;
             left: 20px;
-            background: rgba(13, 17, 23, 0.8);
+            background: rgba(13, 17, 23, 0.85);
             border: 1px solid #30363d;
-            padding: 20px;
+            padding: 18px;
             border-radius: 12px;
             z-index: 100;
             width: 300px;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
         }
-        h1 { margin: 0 0 10px 0; font-size: 1.2rem; color: #58a6ff; letter-spacing: 2px; }
-        .hint { font-size: 0.8rem; color: #8b949e; margin-bottom: 15px; }
+
+        #controls h1 {
+            margin: 0 0 4px 0;
+            font-size: 1.2rem;
+            background: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .version-tag {
+            font-size: 0.7rem;
+            color: #58a6ff;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .hint {
+            font-size: 0.75rem;
+            color: #8b949e;
+            margin-bottom: 14px;
+            line-height: 1.4;
+        }
+
+        .control-group { margin-bottom: 12px; }
+
+        .control-group label {
+            font-size: 0.75rem;
+            color: #8b949e;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .control-group input[type="text"],
+        .control-group input[type="file"] {
+            width: 100%;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 6px 8px;
+            color: #c9d1d9;
+            font-size: 0.75rem;
+        }
+
+        .control-group input[type="text"]:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
         .btn {
             background: #238636;
             color: white;
             border: none;
-            padding: 8px 15px;
+            padding: 8px 14px;
             border-radius: 6px;
             cursor: pointer;
             width: 100%;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+            transition: background 0.15s;
         }
         .btn:hover { background: #2ea043; }
-        #info {
+        .btn.secondary {
+            background: transparent;
+            border: 1px solid #30363d;
+            color: #58a6ff;
+        }
+        .btn.secondary:hover { border-color: #58a6ff; background: rgba(88,166,255,0.08); }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #30363d;
+            margin: 12px 0;
+        }
+
+        #node-info {
+            margin-top: 10px;
+            border-top: 1px solid #30363d;
+            padding-top: 10px;
+            display: none;
+        }
+        #node-name  { color: #58a6ff; font-weight: bold; font-size: 1rem; }
+        #node-meta  { font-size: 0.75rem; margin-top: 4px; color: #8b949e; line-height: 1.5; }
+
+        #stats-bar {
             position: absolute;
             bottom: 20px;
-            right: 20px;
-            text-align: right;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            background: rgba(13, 17, 23, 0.85);
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            padding: 6px 20px;
+            font-size: 0.75rem;
             color: #8b949e;
-            font-size: 0.8rem;
+            backdrop-filter: blur(8px);
+            z-index: 100;
         }
+        #stats-bar span { color: #58a6ff; font-weight: 600; }
+
+        #api-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(13, 17, 23, 0.85);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.75rem;
+            color: #8b949e;
+            backdrop-filter: blur(8px);
+            z-index: 100;
+        }
+        #api-status .dot {
+            display: inline-block;
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: #8b949e;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+        #api-status.ok .dot   { background: #3fb950; }
+        #api-status.err .dot  { background: #f85149; }
     </style>
 </head>
 <body>
 
+    <div id="graph-container"></div>
+
     <div id="controls">
         <h1>CEREBRUM 3D</h1>
-        <p class="hint">Left-click to Rotate. Right-click to Pan. Mouse-wheel to Zoom. Hover nodes for details.</p>
-        <div style="margin-bottom:15px;">
-            <label style="font-size:0.8rem; display:block; margin-bottom:5px;">Load Local Data (CSV/JSON)</label>
-            <input type="file" id="fileInput" accept=".csv,.json" style="font-size:0.7rem;">
+        <span class="version-tag">v2.0.1 · Phase 57 · GPU-Accelerated</span>
+        <p class="hint">Drag to rotate &nbsp;·&nbsp; Right-drag to pan &nbsp;·&nbsp; Scroll to zoom &nbsp;·&nbsp; Hover nodes for info</p>
+
+        <div class="control-group">
+            <label>API Server (optional)</label>
+            <input type="text" id="api-url" placeholder="http://localhost:8200" value="http://localhost:8200">
         </div>
-        <button class="btn" onclick="loadDemo()">Load Toy Graph Demo</button>
-        <div id="node-info" style="margin-top:20px; border-top:1px solid #333; padding-top:10px; display:none;">
-            <div id="node-name" style="color:#58a6ff; font-weight:bold; font-size:1.1rem;"></div>
-            <div id="node-meta" style="font-size:0.8rem; margin-top:5px; color:#aaa;"></div>
+        <button class="btn" onclick="loadFromAPI()">Load from API</button>
+        <button class="btn secondary" onclick="loadDemo()">Load Toy Graph Demo</button>
+
+        <hr class="divider">
+
+        <div class="control-group">
+            <label>Load Local File (CSV / JSON)</label>
+            <input type="file" id="fileInput" accept=".csv,.json">
+        </div>
+
+        <hr class="divider">
+
+        <div class="control-group">
+            <label>Node Size</label>
+            <input type="range" id="nodeSize" min="2" max="20" value="6"
+                   style="width:100%;accent-color:#58a6ff;"
+                   oninput="updateNodeSize(this.value)">
+        </div>
+
+        <div id="node-info">
+            <div id="node-name"></div>
+            <div id="node-meta"></div>
         </div>
     </div>
 
-    <div id="3d-graph"></div>
+    <div id="api-status">
+        <span class="dot"></span><span id="api-status-text">Not connected</span>
+    </div>
 
-    <div id="info">
-        v1.4.0 Hardened Edition<br>
-        3D Structural Attention Explorer
+    <div id="stats-bar">
+        Nodes: <span id="stat-nodes">0</span>
+        &nbsp;Edges: <span id="stat-edges">0</span>
+        &nbsp;Communities: <span id="stat-comms">0</span>
     </div>
 
     <script>
-        const Graph = ForceGraph3D()(document.getElementById('3d-graph'))
-            .backgroundColor('#000000')
+        // ── Community colour palette ─────────────────────────────────────
+        const PALETTE = [
+            '#58a6ff','#bc8cff','#3fb950','#f78166','#d29922',
+            '#39d353','#ff8844','#e3b341','#79c0ff','#ffa657',
+        ];
+        const communityColor = cid =>
+            cid == null || cid < 0 ? '#8b949e' : PALETTE[cid % PALETTE.length];
+
+        // ── ForceGraph3D init — GPU-accelerated WebGL renderer ──────────
+        const Graph = ForceGraph3D({
+            rendererConfig: {
+                antialias: true,
+                powerPreference: 'high-performance',   // request discrete GPU
+                alpha: false,
+            }
+        })(document.getElementById('graph-container'))
+            .backgroundColor('#000011')
             .showNavInfo(false)
-            .nodeLabel('id')
-            .nodeAutoColorBy('group')
-            .linkOpacity(0.2)
+            .nodeLabel(node => node.id)
+            .nodeColor(node => communityColor(node.group))
+            .nodeVal(node => node.size || 1)
+            .linkOpacity(0.25)
+            .linkColor(link => link.color || '#444')
+            .linkWidth(link => link.width || 1)
+            .linkCurvature(link => link.wormhole ? 0.25 : 0)
             .linkDirectionalArrowLength(3.5)
             .linkDirectionalArrowRelPos(1)
+            .linkDirectionalParticles(link => link.on_path ? 8 : 0)
+            .linkDirectionalParticleSpeed(0.02)
+            .linkDirectionalParticleWidth(3)
             .onNodeHover(node => {
                 const info = document.getElementById('node-info');
                 if (node) {
                     info.style.display = 'block';
                     document.getElementById('node-name').textContent = node.id;
-                    document.getElementById('node-meta').textContent = `Community: ${node.group || 'N/A'}`;
+                    document.getElementById('node-meta').innerHTML =
+                        `Community: ${node.group ?? 'N/A'}<br>` +
+                        `Degree: ${node.degree ?? 'N/A'}`;
                 } else {
                     info.style.display = 'none';
                 }
+            })
+            .onNodeClick(node => {
+                // Fly camera to clicked node
+                const dist = 80;
+                const {x, y, z} = node;
+                Graph.cameraPosition(
+                    { x: x + dist, y: y + dist, z: z + dist },
+                    node,
+                    800
+                );
             });
 
-        // Demo Data - Match toy_graph.csv structure
+        // ── Resize handling ─────────────────────────────────────────────
+        window.addEventListener('resize', () => {
+            Graph.width(window.innerWidth).height(window.innerHeight);
+        });
+
+        // ── Stats display ────────────────────────────────────────────────
+        function updateStats(data) {
+            document.getElementById('stat-nodes').textContent = data.nodes.length;
+            document.getElementById('stat-edges').textContent = data.links.length;
+            const comms = new Set(data.nodes.map(n => n.group).filter(g => g != null && g >= 0));
+            document.getElementById('stat-comms').textContent = comms.size;
+        }
+
+        function setStatus(ok, text) {
+            const el = document.getElementById('api-status');
+            el.className = ok ? 'ok' : 'err';
+            document.getElementById('api-status-text').textContent = text;
+        }
+
+        // ── Load from running CEREBRUM API ───────────────────────────────
+        async function loadFromAPI() {
+            const base = document.getElementById('api-url').value.replace(/\/$/, '');
+            setStatus(false, 'Connecting…');
+            try {
+                const [nodesResp, commResp] = await Promise.all([
+                    fetch(`${base}/health`),
+                    fetch(`${base}/communities`),
+                ]);
+                if (!nodesResp.ok) throw new Error(`Health check failed: ${nodesResp.status}`);
+                const health = await nodesResp.json();
+                const commData = commResp.ok ? await commResp.json() : { node_to_community: {} };
+                const cmap = commData.node_to_community || {};
+
+                // Build a minimal graph from the community map
+                const nodeSet = new Set(Object.keys(cmap));
+                if (nodeSet.size === 0) throw new Error('No nodes returned from /communities');
+
+                // Count degrees from community membership
+                const nodes = Array.from(nodeSet).map(id => ({
+                    id,
+                    group: cmap[id] ?? -1,
+                    size: 1,
+                    degree: null,
+                }));
+
+                // Try to get edges via a broad query (best-effort)
+                let links = [];
+                try {
+                    const qResp = await fetch(`${base}/query`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-API-Key': 'dev-secret' },
+                        body: JSON.stringify({ query: nodes[0]?.id || '', top_k: 50 }),
+                    });
+                    if (qResp.ok) {
+                        const qData = await qResp.json();
+                        const seen = new Set();
+                        (qData.paths || []).forEach(path => {
+                            // PathResult.path is [{type, id, label, community}, ...]
+                            // Extract consecutive entity pairs as edges
+                            const entities = (path.path || []).filter(n => n.type === 'entity' && n.id);
+                            for (let i = 0; i + 1 < entities.length; i++) {
+                                const key = `${entities[i].id}|${entities[i+1].id}`;
+                                if (!seen.has(key)) {
+                                    seen.add(key);
+                                    links.push({
+                                        source: entities[i].id,
+                                        target: entities[i+1].id,
+                                        color: '#58a6ff',
+                                        width: 2,
+                                        on_path: true,
+                                    });
+                                }
+                            }
+                        });
+                    }
+                } catch (_) { /* edges are optional */ }
+
+                const data = { nodes, links };
+                Graph.graphData(data);
+                updateStats(data);
+                setStatus(true, `${health.node_count ?? nodeSet.size} nodes · v${health.version ?? '?'}`);
+            } catch (err) {
+                setStatus(false, err.message);
+                console.error('API load error:', err);
+            }
+        }
+
+        // ── Node size slider ─────────────────────────────────────────────
+        function updateNodeSize(val) {
+            const current = Graph.graphData();
+            current.nodes.forEach(n => { n.size = n._baseSize ? n._baseSize * (val / 6) : val / 6; });
+            Graph.nodeVal(node => node.size || 1);
+        }
+
+        // ── Demo data (matches toy_graph.csv) ───────────────────────────
         const demoData = {
             nodes: [
-                {id: "newton", group: 1}, {id: "einstein", group: 1}, {id: "faraday", group: 1},
-                {id: "darwin", group: 2}, {id: "curie", group: 1}, {id: "maxwell", group: 1},
-                {id: "bohr", group: 1}, {id: "caesar", group: 3}, {id: "cleopatra", group: 3},
-                {id: "augustus", group: 3}, {id: "napoleon", group: 3}, {id: "alexander", group: 3},
-                {id: "cicero", group: 3}, {id: "hannibal", group: 3}, {id: "rome", group: 4},
-                {id: "athens", group: 4}, {id: "alexandria", group: 4}, {id: "paris", group: 4},
-                {id: "london", group: 4}, {id: "carthage", group: 4}, {id: "babylon", group: 4}
+                {id:'newton',    group:0}, {id:'einstein', group:0}, {id:'faraday',  group:0},
+                {id:'darwin',    group:0}, {id:'curie',    group:0}, {id:'maxwell',  group:0},
+                {id:'bohr',      group:0}, {id:'caesar',   group:1}, {id:'cleopatra',group:1},
+                {id:'augustus',  group:1}, {id:'napoleon', group:1}, {id:'alexander',group:1},
+                {id:'cicero',    group:1}, {id:'hannibal', group:1}, {id:'rome',     group:2},
+                {id:'athens',    group:2}, {id:'alexandria',group:2},{id:'paris',    group:2},
+                {id:'london',    group:2}, {id:'carthage', group:2}, {id:'babylon',  group:2},
             ],
             links: [
-                {source: "newton", target: "einstein"}, {source: "newton", target: "faraday"},
-                {source: "einstein", target: "bohr"}, {source: "darwin", target: "curie"},
-                {source: "faraday", target: "maxwell"}, {source: "einstein", target: "curie"},
-                {source: "maxwell", target: "bohr"}, {source: "darwin", target: "faraday"},
-                {source: "caesar", target: "cleopatra"}, {source: "caesar", target: "augustus"},
-                {source: "napoleon", target: "caesar"}, {source: "alexander", target: "cleopatra"},
-                {source: "augustus", target: "cicero"}, {source: "napoleon", target: "cicero"},
-                {source: "alexander", target: "caesar"}, {source: "hannibal", target: "caesar"},
-                {source: "rome", target: "athens"}, {source: "rome", target: "alexandria"},
-                {source: "paris", target: "london"}, {source: "athens", target: "alexandria"},
-                {source: "london", target: "athens"}, {source: "paris", target: "rome"},
-                {source: "carthage", target: "rome"}, {source: "babylon", target: "alexandria"},
-                {source: "caesar", target: "rome"}, {source: "napoleon", target: "paris"},
-                {source: "cleopatra", target: "alexandria"}, {source: "newton", target: "london"},
-                {source: "einstein", target: "athens"}, {source: "hannibal", target: "carthage"}
-            ]
+                {source:'newton',    target:'einstein'  }, {source:'newton',    target:'faraday'   },
+                {source:'einstein',  target:'bohr'      }, {source:'darwin',    target:'curie'     },
+                {source:'faraday',   target:'maxwell'   }, {source:'einstein',  target:'curie'     },
+                {source:'maxwell',   target:'bohr'      }, {source:'darwin',    target:'faraday'   },
+                {source:'caesar',    target:'cleopatra' }, {source:'caesar',    target:'augustus'  },
+                {source:'napoleon',  target:'caesar'    }, {source:'alexander', target:'cleopatra' },
+                {source:'augustus',  target:'cicero'    }, {source:'napoleon',  target:'cicero'    },
+                {source:'alexander', target:'caesar'    }, {source:'hannibal',  target:'caesar'    },
+                {source:'rome',      target:'athens'    }, {source:'rome',      target:'alexandria'},
+                {source:'paris',     target:'london'    }, {source:'athens',    target:'alexandria'},
+                {source:'london',    target:'athens'    }, {source:'paris',     target:'rome'      },
+                {source:'carthage',  target:'rome'      }, {source:'babylon',   target:'alexandria'},
+                {source:'caesar',    target:'rome'      }, {source:'napoleon',  target:'paris'     },
+                {source:'cleopatra', target:'alexandria'}, {source:'newton',    target:'london'    },
+                {source:'einstein',  target:'athens'    }, {source:'hannibal',  target:'carthage'  },
+            ],
         };
 
         function loadDemo() {
             Graph.graphData(demoData);
-            // Add bloom effect after load
-            const bloomPass = new THREE.ShaderPass(THREE.BloomShader); // Note: Simple placeholder logic
+            updateStats(demoData);
+            setStatus(true, 'Demo graph loaded');
         }
 
-        // File Loading Logic
+        // ── CSV / JSON file loader ───────────────────────────────────────
         document.getElementById('fileInput').addEventListener('change', event => {
             const file = event.target.files[0];
+            if (!file) return;
             const reader = new FileReader();
             reader.onload = e => {
-                const content = e.target.result;
-                if (file.name.endsWith('.csv')) {
-                    parseCSV(content);
-                } else {
-                    Graph.graphData(JSON.parse(content));
+                try {
+                    if (file.name.endsWith('.json')) {
+                        const data = JSON.parse(e.target.result);
+                        Graph.graphData(data);
+                        updateStats(data);
+                        setStatus(true, `${file.name} loaded`);
+                    } else {
+                        parseCSV(e.target.result, file.name);
+                    }
+                } catch (err) {
+                    setStatus(false, 'Parse error: ' + err.message);
                 }
             };
             reader.readAsText(file);
         });
 
-        function parseCSV(csv) {
-            const lines = csv.split('\n');
-            const nodes = new Set();
-            const links = [];
-            const header = lines[0].split(',');
-            
-            for (let i = 1; i < lines.length; i++) {
-                if (!lines[i].trim()) continue;
-                const cols = lines[i].split(',');
-                nodes.add(cols[0].trim());
-                nodes.add(cols[1].trim());
-                links.push({source: cols[0].trim(), target: cols[1].trim(), rel: cols[2]});
-            }
+        function parseCSV(csv, filename) {
+            const lines = csv.split('\n').filter(l => l.trim());
+            if (lines.length < 2) { setStatus(false, 'CSV too short'); return; }
+            const header = lines[0].split(',').map(h => h.trim().toLowerCase());
+            const srcIdx = header.findIndex(h => ['source','src','subject','from','entity1'].includes(h));
+            const tgtIdx = header.findIndex(h => ['target','tgt','object','to','entity2'].includes(h));
+            const relIdx = header.findIndex(h => ['relation','rel','predicate','type','edge'].includes(h));
+            const si = srcIdx >= 0 ? srcIdx : 0;
+            const ti = tgtIdx >= 0 ? tgtIdx : 1;
+            const ri = relIdx >= 0 ? relIdx : 2;
 
-            const graphData = {
-                nodes: Array.from(nodes).map(id => ({id, group: Math.floor(Math.random() * 5)})),
-                links: links
-            };
-            Graph.graphData(graphData);
+            const nodeSet = new Set();
+            const links = [];
+            for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split(',');
+                const src = cols[si]?.trim();
+                const tgt = cols[ti]?.trim();
+                if (!src || !tgt) continue;
+                nodeSet.add(src);
+                nodeSet.add(tgt);
+                links.push({
+                    source: src,
+                    target: tgt,
+                    rel: cols[ri]?.trim() || '',
+                    color: '#444',
+                    width: 1,
+                });
+            }
+            const nodes = Array.from(nodeSet).map(id => ({
+                id,
+                group: Math.floor(Math.random() * PALETTE.length),
+                size: 1,
+            }));
+            const data = { nodes, links };
+            Graph.graphData(data);
+            updateStats(data);
+            setStatus(true, `${filename} — ${nodes.length} nodes, ${links.length} edges`);
         }
 
-        // Auto-load demo
-        window.onload = loadDemo;
+        // ── Boot ─────────────────────────────────────────────────────────
+        window.addEventListener('load', loadDemo);
     </script>
 </body>
 </html>

@@ -99,15 +99,20 @@ class StudioEngine:
             t0 = time.time()
             if progress: progress(0, desc="Initializing Thalamus Ingestor...")
             
+            use_graphsage = "GraphSAGE" in embedding_type
             emb_mode = "sentence" if "Sentence" in embedding_type else "random"
             graph = CerebrumGraph.from_kb(path, embeddings=emb_mode)
-            
+
             # Use a wrapper for progress if provided
             def _build_callback(p, s):
                 if progress:
                     progress(p, desc=s)
 
-            graph.build(seed=42, callback=_build_callback)
+            if use_graphsage and progress:
+                progress(0.1, desc="Building graph index...")
+            graph.build(seed=42, callback=_build_callback, use_graphsage=use_graphsage)
+            if use_graphsage and progress:
+                progress(0.85, desc="GraphSAGE neighbourhood smoothing applied.")
 
             if progress: progress(0.9, desc="Finalizing Engines...")
             self.graph_obj = graph
@@ -593,14 +598,19 @@ class StudioEngine:
         html = f"""<!DOCTYPE html>
 <html>
 <head>
-    <script src="https://unpkg.com/3d-force-graph"></script>
-    <style>body{{margin:0;background:#0d1117;overflow:hidden;}}</style>
+    <script src="https://unpkg.com/3d-force-graph@1.73.3/dist/3d-force-graph.min.js"></script>
+    <style>
+        body{{margin:0;background:#0d1117;overflow:hidden;}}
+        #3d-graph{{width:100vw;height:100vh;display:block;}}
+    </style>
 </head>
 <body>
     <div id="3d-graph"></div>
     <script>
         const data = {graph_json};
-        const Graph = ForceGraph3D()(document.getElementById('3d-graph'))
+        const Graph = ForceGraph3D({{
+            rendererConfig: {{ antialias: true, powerPreference: 'high-performance' }}
+        }})(document.getElementById('3d-graph'))
             .backgroundColor('#0d1117')
             .nodeLabel(node => `<span style="color:#00ffff">${{node.id}}</span>`)
             .nodeAutoColorBy('group')

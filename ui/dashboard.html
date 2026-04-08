@@ -934,7 +934,7 @@ class GraphExplorer2DWidget extends Widget {
   async refresh() {
     try {
       const data = await API.communities();
-      const cmap = data.communities || {};
+      const cmap = data.node_to_community || {};
       const colors = ['#58a6ff','#bc8cff','#3fb950','#f0883e','#d29922','#f85149','#79c0ff','#d2a8ff'];
       const nodeArr = Object.entries(cmap).map(([id, cid]) => ({
         id, label: id, color: { background: colors[cid % colors.length], border: '#30363d' }
@@ -974,7 +974,7 @@ class QueryRunnerWidget extends Widget {
       const paths = data.paths || [];
       if (!paths.length) { res.innerHTML = '<div class="widget-loading">No paths found.</div>'; return; }
       res.innerHTML = paths.map(p => {
-        const steps = (p.path || []).join(' → ');
+        const steps = (p.path || []).map(n => n.label || n.id || '?').join(' → ');
         return `<div class="path-card">
           <span class="path-score">${(p.score ?? 0).toFixed(3)}</span>
           &nbsp;${esc(steps)}

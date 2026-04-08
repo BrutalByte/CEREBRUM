@@ -150,7 +150,7 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
                     )
                     history_ref_btn = gr.Button("🔄", scale=0)
                 emb_in  = gr.Dropdown(
-                    ["Random (Fast)", "Sentence (SBERT)"],
+                    ["Random (Fast)", "Sentence (BGE)", "Sentence + GraphSAGE"],
                     value="Random (Fast)",
                     label="Embeddings",
                 )
