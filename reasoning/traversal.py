@@ -668,7 +668,7 @@ class BeamTraversal:
         Prune *candidates* to beam width and return the surviving beam.
 
         Override in subclasses to inject alternative scoring strategies
-        (e.g. AAAK-steered pruning).  The default implementation sorts by
+        (e.g. Engram-steered pruning).  The default implementation sorts by
         raw path score (or Thompson-sampled Beta score in probabilistic mode).
 
         The terminal hop is never pruned — all candidates are returned sorted

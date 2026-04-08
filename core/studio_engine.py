@@ -256,16 +256,16 @@ class StudioEngine:
                 mean_feats = np.mean(np.array(answers[0].best_path.edge_features), axis=0)
                 radar_fig = self._attention_radar(mean_feats.tolist())
 
-            from core.verbalizer import AAAKVerbalizer
-            aaak = AAAKVerbalizer()
-            aaak_trace = aaak.verbalize(answers, self.adapter)
+            from core.verbalizer import EngramVerbalizer
+            _engram_verb = EngramVerbalizer()
+            engram_trace = _engram_verb.verbalize(answers, self.adapter)
 
             html = (
                 f"<div style='margin-bottom:12px;'><b>Seed</b>: "
                 f"<code style='color:#00ffff;'>{seeds[0]}</code></div>"
-                f"<div class='aaak-block' style='background:#1c2128;border:1px solid #30363d;"
+                f"<div class='engram-block' style='background:#1c2128;border:1px solid #30363d;"
                 f"padding:10px;margin-bottom:15px;border-radius:6px;font-family:monospace;font-size:0.9em;color:#79c0ff;'>"
-                f"<strong>AAAK Trace:</strong> {aaak_trace}</div>"
+                f"<strong>Engram Trace:</strong> {engram_trace}</div>"
                 + self._format_path_html(answers)
             )
             structured = [

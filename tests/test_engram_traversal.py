@@ -1,10 +1,10 @@
 """
-Tests for AAAK-Steered Beam Traversal (Phase 55).
+Tests for Engram-Steered Beam Traversal (Phase 55).
 
 Covers:
-  - AAAKCache: record, affinity, top_patterns, clear, thread-safety
+  - Engram: record, affinity, top_patterns, clear, thread-safety
   - _path_rel_sequence: relation extraction from TraversalPath
-  - AAAKBeamTraversal: integration with toy graph, cache population,
+  - EngramTraversal: integration with toy graph, cache population,
     score boosting verifiable behaviour
 """
 from pathlib import Path
@@ -13,9 +13,9 @@ import threading
 import numpy as np
 import pytest
 
-from reasoning.aaak_steered_traversal import (
-    AAAKCache,
-    AAAKBeamTraversal,
+from reasoning.engram_traversal import (
+    Engram,
+    EngramTraversal,
     _path_rel_sequence,
     _compress_rel,
 )
@@ -71,29 +71,29 @@ class TestPathRelSequence:
 
 
 # ---------------------------------------------------------------------------
-# AAAKCache
+# Engram
 # ---------------------------------------------------------------------------
 
-class TestAAAKCache:
+class TestEngram:
     def test_empty_cache_affinity_zero(self):
-        cache = AAAKCache()
+        cache = Engram()
         assert cache.affinity(("!", "+")) == 0.0
 
     def test_record_and_affinity(self):
-        cache = AAAKCache()
+        cache = Engram()
         cache.record(("!", "+"))
         assert cache.affinity(("!", "+")) > 0.0
 
     def test_affinity_prefix_match(self):
         """A recorded full sequence should also boost any prefix."""
-        cache = AAAKCache()
+        cache = Engram()
         cache.record(("!", "+", "~"))
         # Single-element prefix should match
         assert cache.affinity(("!",)) > 0.0
 
     def test_affinity_deeper_prefix_scores_higher(self):
         """Longer matching prefix should yield higher affinity."""
-        cache = AAAKCache()
+        cache = Engram()
         cache.record(("!", "+", "~"))
         short_aff = cache.affinity(("!",))
         long_aff  = cache.affinity(("!", "+"))
@@ -101,12 +101,12 @@ class TestAAAKCache:
         assert long_aff >= short_aff
 
     def test_affinity_no_match_zero(self):
-        cache = AAAKCache()
+        cache = Engram()
         cache.record(("!", "+"))
         assert cache.affinity(("-",)) == 0.0
 
     def test_size_grows(self):
-        cache = AAAKCache()
+        cache = Engram()
         assert cache.size() == 0
         cache.record(("!",))
         assert cache.size() == 1
@@ -116,14 +116,14 @@ class TestAAAKCache:
         assert cache.size() == 2
 
     def test_clear_resets(self):
-        cache = AAAKCache()
+        cache = Engram()
         cache.record(("!",))
         cache.clear()
         assert cache.size() == 0
         assert cache.affinity(("!",)) == 0.0
 
     def test_top_patterns(self):
-        cache = AAAKCache()
+        cache = Engram()
         cache.record(("!",), weight=5)
         cache.record(("+",), weight=2)
         top = cache.top_patterns(n=2)
@@ -132,7 +132,7 @@ class TestAAAKCache:
 
     def test_thread_safety(self):
         """Concurrent record() calls must not raise or corrupt state."""
-        cache = AAAKCache()
+        cache = Engram()
         errors = []
 
         def worker(i):
@@ -150,20 +150,20 @@ class TestAAAKCache:
         assert cache.size() <= 5  # 5 distinct patterns
 
     def test_max_patterns_eviction(self):
-        cache = AAAKCache(max_patterns=3)
+        cache = Engram(max_patterns=3)
         for i in range(5):
             cache.record((f"R{i}",))
         # Should not exceed max_patterns
         assert cache.size() <= 3
 
     def test_empty_sequence_ignored(self):
-        cache = AAAKCache()
+        cache = Engram()
         cache.record(())
         assert cache.size() == 0
 
 
 # ---------------------------------------------------------------------------
-# AAAKBeamTraversal — integration
+# EngramTraversal — integration
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="module")
@@ -173,14 +173,14 @@ def loaded_graph():
     return g
 
 
-class TestAAAKBeamTraversal:
+class TestEngramTraversal:
     def test_traversal_returns_paths(self, loaded_graph):
-        cache = AAAKCache()
-        traversal = AAAKBeamTraversal(
+        cache = Engram()
+        traversal = EngramTraversal(
             adapter=loaded_graph.adapter,
             csa_engine=loaded_graph._csa,
             cache=cache,
-            aaak_strength=0.3,
+            engram_strength=0.3,
             beam_width=5,
             max_hop=2,
         )
@@ -191,8 +191,8 @@ class TestAAAKBeamTraversal:
 
     def test_record_answers_populates_cache(self, loaded_graph):
         from reasoning.answer_extractor import extract
-        cache = AAAKCache()
-        traversal = AAAKBeamTraversal(
+        cache = Engram()
+        traversal = EngramTraversal(
             adapter=loaded_graph.adapter,
             csa_engine=loaded_graph._csa,
             cache=cache,
@@ -211,8 +211,8 @@ class TestAAAKBeamTraversal:
         """Answers below min_score threshold should not enter cache."""
         from reasoning.answer_extractor import extract
         from unittest.mock import MagicMock
-        cache = AAAKCache()
-        traversal = AAAKBeamTraversal(
+        cache = Engram()
+        traversal = EngramTraversal(
             adapter=loaded_graph.adapter,
             csa_engine=loaded_graph._csa,
             cache=cache,
@@ -226,17 +226,17 @@ class TestAAAKBeamTraversal:
         traversal.record_answers([mock_ans], min_score=0.5)
         assert cache.size() == 0  # below threshold, not recorded
 
-    def test_aaak_boost_increases_score_of_known_pattern(self, loaded_graph):
+    def test_engram_boost_increases_score_of_known_pattern(self, loaded_graph):
         """Paths matching a cached pattern should rank above equal-score paths."""
-        cache = AAAKCache()
+        cache = Engram()
         # Pre-load a specific pattern with high weight
         cache.record(("!",), weight=100)
 
-        traversal = AAAKBeamTraversal(
+        traversal = EngramTraversal(
             adapter=loaded_graph.adapter,
             csa_engine=loaded_graph._csa,
             cache=cache,
-            aaak_strength=1.0,  # maximum boost for testability
+            engram_strength=1.0,  # maximum boost for testability
             beam_width=20,
             max_hop=2,
         )
@@ -249,27 +249,27 @@ class TestAAAKBeamTraversal:
         assert boosted > 0.5
 
     def test_zero_strength_no_boost(self, loaded_graph):
-        """With aaak_strength=0, _boosted_score must equal raw score."""
-        cache = AAAKCache()
+        """With engram_strength=0, _boosted_score must equal raw score."""
+        cache = Engram()
         cache.record(("!",), weight=100)
-        traversal = AAAKBeamTraversal(
+        traversal = EngramTraversal(
             adapter=loaded_graph.adapter,
             csa_engine=loaded_graph._csa,
             cache=cache,
-            aaak_strength=0.0,
+            engram_strength=0.0,
         )
         path = TraversalPath(nodes=["A", "CAUSES", "B"], score=0.42)
         assert abs(traversal._boosted_score(path) - 0.42) < 1e-9
 
     def test_cache_shared_across_instances(self, loaded_graph):
         """Two traversal instances sharing a cache exchange learned patterns."""
-        cache = AAAKCache()
-        t1 = AAAKBeamTraversal(
+        cache = Engram()
+        t1 = EngramTraversal(
             adapter=loaded_graph.adapter,
             csa_engine=loaded_graph._csa,
             cache=cache, beam_width=5, max_hop=1,
         )
-        t2 = AAAKBeamTraversal(
+        t2 = EngramTraversal(
             adapter=loaded_graph.adapter,
             csa_engine=loaded_graph._csa,
             cache=cache, beam_width=5, max_hop=1,

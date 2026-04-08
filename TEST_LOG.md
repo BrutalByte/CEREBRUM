@@ -3208,12 +3208,12 @@ collected 1249 items
 
 ---
 
-## Run 057 — Phase 57 Final: Fault Tolerance + AAAKCache Persistence Verified
+## Run 057 — Phase 57 Final: Fault Tolerance + Engram Persistence Verified
 
 | Field             | Value |
 |---|---|
 | **Date**          | 2026-04-07 |
-| **Phase**         | Phase 57 (AAAKCache Persistence + Stream Guard + ProcessPool Fallback) |
+| **Phase**         | Phase 57 (Engram Persistence + Stream Guard + ProcessPool Fallback) |
 | **Purpose**       | Verify Phase 56-57 fault tolerance hardening, new tests, and no regressions |
 | **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
 | **Repo commit**   | 81031f2 |
@@ -3245,7 +3245,7 @@ python -m pytest tests/ -v
 
 **Verified passing test sets:**
 - `tests/test_fault_tolerance.py::TestRebalancerWorkerCrashRecovery` — 3/3 PASSED (0.28s)
-- `tests/test_fault_tolerance.py::TestAAAKCachePersistence` — 2/2 PASSED (0.28s)
+- `tests/test_fault_tolerance.py::TestEngramPersistence` — 2/2 PASSED (0.28s)
 - `tests/test_fault_tolerance.py::TestStreamTraversalGuard` — 2/2 PASSED (0.36s)
 - `tests/test_fault_tolerance.py` (21 tests) — 19/21 PASSED before `import logging` fix; 21/21 after fix
 
@@ -3255,10 +3255,10 @@ python -m pytest tests/ -v
 - `ResearchAgent` autonomous missing-link discovery + `ExternalValidator` (Phases 51-52)
 - Adaptive search strategy by local graph density (Phase 53)
 - Observability dashboard: `RingBufferHandler`, `GET /logs`, `POST /build` (Phase 54)
-- `smooth_with_graphsage()`, `AAAKCache`, `AAAKBeamTraversal`, `TemporalCalibrator`, `QueryLog` (Phase 55)
+- `smooth_with_graphsage()`, `Engram`, `EngramTraversal`, `TemporalCalibrator`, `QueryLog` (Phase 55)
 - `QueryResponse.partial/error` fields, `_partial_paths` checkpoint, graceful degradation (Phase 56)
 - `GlobalRebalancer._rebalance_worker_inner` crash-guard split (Phase 56)
-- AAAKCache `save()/load()/save_if_path()` + lifespan persistence (Phase 57)
+- Engram `save()/load()/save_if_path()` + lifespan persistence (Phase 57)
 - `/query/stream` terminal error NDJSON chunk (Phase 57)
 - `best_of_n_dscf` `ProcessPoolExecutor` sequential fallback (Phase 57)
 

@@ -5,11 +5,11 @@ Covers hardened scenarios:
 1. QueryResponse schema backward-compatibility (new optional fields)
 2. BeamTraversal._partial_paths checkpoint survives a mid-hop exception
 3. /query endpoint returns 200 with partial=True on traversal failure
-4. QueryLog / AAAKCache write failures are isolated — they never crash /query
+4. QueryLog / Engram write failures are isolated — they never crash /query
 5. GlobalRebalancer worker crash is logged and thread restarts on next trigger
 6. /query/stream yields terminal error chunk on traversal failure (Phase 57)
 7. best_of_n_dscf falls back to sequential when ProcessPoolExecutor fails (Phase 57)
-8. AAAKCache save/load roundtrip preserves affinity counts (Phase 57)
+8. Engram save/load roundtrip preserves affinity counts (Phase 57)
 """
 import json
 import logging
@@ -200,7 +200,7 @@ class TestQueryEndpointGracefulDegradation:
 
 
 # ---------------------------------------------------------------------------
-# 4. QueryLog / AAAKCache write failure isolation
+# 4. QueryLog / Engram write failure isolation
 # ---------------------------------------------------------------------------
 
 class TestWriteFailureIsolation:
@@ -210,9 +210,9 @@ class TestWriteFailureIsolation:
         assert resp.status_code == 200
         assert resp.json()["partial"] is False
 
-    def test_aaakcache_error_does_not_crash_query(self, client):
+    def test_engram_error_does_not_crash_query(self, client):
         with patch(
-            "reasoning.aaak_steered_traversal.AAAKCache.record",
+            "reasoning.engram_traversal.Engram.record",
             side_effect=MemoryError("OOM"),
         ):
             resp = client.post("/query", json={"query": "newton", "top_k": 3})
@@ -225,14 +225,14 @@ class TestWriteFailureIsolation:
                 client.post("/query", json={"query": "newton", "top_k": 3})
         assert any("QueryLog.record failed" in r.getMessage() for r in records)
 
-    def test_aaakcache_error_is_logged(self, client):
+    def test_engram_error_is_logged(self, client):
         with _capture_logs(logging.WARNING) as records:
             with patch(
-                "reasoning.aaak_steered_traversal.AAAKCache.record",
+                "reasoning.engram_traversal.Engram.record",
                 side_effect=MemoryError("OOM"),
             ):
                 client.post("/query", json={"query": "newton", "top_k": 3})
-        assert any("AAAKCache.record failed" in r.getMessage() for r in records)
+        assert any("Engram.record failed" in r.getMessage() for r in records)
 
 
 # ---------------------------------------------------------------------------
@@ -358,34 +358,34 @@ class TestProcessPoolFallback:
 
 
 # ---------------------------------------------------------------------------
-# 8. AAAKCache persistence roundtrip (Phase 57)
+# 8. Engram persistence roundtrip (Phase 57)
 # ---------------------------------------------------------------------------
 
-class TestAAAKCachePersistence:
+class TestEngramPersistence:
     def test_save_creates_file(self, tmp_path):
         """save_if_path must write a JSON file with the stored patterns."""
-        from reasoning.aaak_steered_traversal import AAAKCache
-        cache = AAAKCache()
+        from reasoning.engram_traversal import Engram
+        cache = Engram()
         cache._counts[("CAUSES", "TREATS")] = 3
-        target = str(tmp_path / "aaak_cache.json")
+        target = str(tmp_path / "engram_cache.json")
         cache.save_if_path(target)
-        assert (tmp_path / "aaak_cache.json").exists()
+        assert (tmp_path / "engram_cache.json").exists()
         import json as _json
-        data = _json.loads((tmp_path / "aaak_cache.json").read_text())
+        data = _json.loads((tmp_path / "engram_cache.json").read_text())
         assert data["version"] == 1
         assert any(pair[1] == 3 for pair in data["counts"])
 
     def test_load_roundtrip_preserves_counts(self, tmp_path):
-        """AAAKCache.load must restore affinity counts written by save."""
-        from reasoning.aaak_steered_traversal import AAAKCache
-        original = AAAKCache()
+        """Engram.load must restore affinity counts written by save."""
+        from reasoning.engram_traversal import Engram
+        original = Engram()
         seq = ("CAUSES", "TREATS")
         original._counts[seq] = 5
         original._max_count = 5
-        path = str(tmp_path / "aaak.json")
+        path = str(tmp_path / "engram.json")
         original.save(path)
 
-        restored = AAAKCache.load(path)
+        restored = Engram.load(path)
         assert restored._counts.get(seq) == 5
         # Affinity score must be non-zero for the stored sequence
         assert restored.affinity(seq) > 0

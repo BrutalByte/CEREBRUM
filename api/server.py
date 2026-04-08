@@ -137,7 +137,7 @@ _state: Dict[str, Any] = {
     "text_ingestor":    None,   # TextIngestor (lazy-initialized on first /ingest call)
     "insight_engine":   None,   # InsightEngine (lazy-initialized on first /insight call)
     "query_log":        None,   # QueryLog — durable NDJSON query history
-    "aaak_cache":       None,   # AAAKCache — relation-pattern prior (warmed from query_log)
+    "engram":           None,   # Engram — relation-pattern prior (warmed from query_log)
 }
 
 
@@ -149,13 +149,13 @@ def _is_ready() -> bool:
 # App factory helpers
 # ---------------------------------------------------------------------------
 
-def _aaak_cache_path(cache_path: Optional[str]) -> Optional[str]:
-    """Derive the AAAKCache JSON path from the graph cache_path (or data dir)."""
+def _engram_cache_path(cache_path: Optional[str]) -> Optional[str]:
+    """Derive the Engram JSON path from the graph cache_path (or data dir)."""
     from core.persistence import SAFE_DATA_DIR
     from pathlib import Path
     if cache_path:
-        return str(Path(cache_path).parent / "aaak_cache.json")
-    return str(SAFE_DATA_DIR / "aaak_cache.json")
+        return str(Path(cache_path).parent / "engram_cache.json")
+    return str(SAFE_DATA_DIR / "engram_cache.json")
 
 
 # ---------------------------------------------------------------------------
@@ -195,9 +195,9 @@ def create_app(
         try:
             yield
         finally:
-            acache = _state.get("aaak_cache")
+            acache = _state.get("engram")
             if acache is not None:
-                acache.save_if_path(_aaak_cache_path(cache_path))
+                acache.save_if_path(_engram_cache_path(cache_path))
 
     app = FastAPI(
         title="CEREBRUM KG Reasoning API",
@@ -327,23 +327,23 @@ def create_app(
         q_emb = adapter.get_embedding(seeds[0]) if seeds else None
         answers = extract(paths, top_k=req.top_k, query_embedding=q_emb)
 
-        # Persist query result for AAAK warm-up on next restart (fire-and-forget — never crash the response)
+        # Persist query result for Engram warm-up on next restart (fire-and-forget — never crash the response)
         try:
             if _state["query_log"] is not None:
                 _state["query_log"].record(seeds, answers)
         except Exception as exc:
             _api_log.warning("QueryLog.record failed: %s", exc)
         try:
-            if _state["aaak_cache"] is not None and answers:
-                from reasoning.aaak_steered_traversal import _path_rel_sequence
+            if _state["engram"] is not None and answers:
+                from reasoning.engram_traversal import _path_rel_sequence
                 for ans in answers:
                     if ans.best_path is not None:
                         rel_seq = _path_rel_sequence(ans.best_path)
                         if rel_seq:
                             weight = max(1, int(ans.score * 10))
-                            _state["aaak_cache"].record(rel_seq, weight=weight)
+                            _state["engram"].record(rel_seq, weight=weight)
         except Exception as exc:
-            _api_log.warning("AAAKCache.record failed: %s", exc)
+            _api_log.warning("Engram.record failed: %s", exc)
 
         # Format response
         structured = to_structured(answers, query=req.query, adapter=adapter)
@@ -2186,15 +2186,15 @@ def _load(
                 _state["meta_learner"] = MetaParameterLearner()
             from pathlib import Path
             from core.persistence import QueryLog
-            from reasoning.aaak_steered_traversal import AAAKCache
+            from reasoning.engram_traversal import Engram
             qlog = QueryLog()
-            _aaak_p = _aaak_cache_path(cache_path)
-            acache = AAAKCache.load(_aaak_p) if (_aaak_p and Path(_aaak_p).exists()) else AAAKCache()
+            _engram_p = _engram_cache_path(cache_path)
+            acache = Engram.load(_engram_p) if (_engram_p and Path(_engram_p).exists()) else Engram()
             replayed = qlog.replay_into_cache(acache)
             if replayed:
-                print(f"  [API] AAAKCache warmed: {replayed} relation sequences replayed")
+                print(f"  [API] Engram warmed: {replayed} relation sequences replayed")
             _state["query_log"] = qlog
-            _state["aaak_cache"] = acache
+            _state["engram"] = acache
             return
         except Exception as e:
             print(f"  [API] Cache load failed: {e}. Falling back to computation.")
@@ -2262,18 +2262,18 @@ def _load(
     if use_meta_learning:
         _state["meta_learner"] = MetaParameterLearner()
 
-    # 5b. AAAK relation-prior warm-up from durable query log (two-tier)
+    # 5b. Engram relation-prior warm-up from durable query log (two-tier)
     from pathlib import Path
     from core.persistence import QueryLog
-    from reasoning.aaak_steered_traversal import AAAKCache
+    from reasoning.engram_traversal import Engram
     qlog = QueryLog()
-    _aaak_p = _aaak_cache_path(cache_path)
-    acache = AAAKCache.load(_aaak_p) if (_aaak_p and Path(_aaak_p).exists()) else AAAKCache()
+    _engram_p = _engram_cache_path(cache_path)
+    acache = Engram.load(_engram_p) if (_engram_p and Path(_engram_p).exists()) else Engram()
     replayed = qlog.replay_into_cache(acache)
     if replayed:
-        _api_log.info("[API] AAAKCache warmed: %d relation sequences replayed", replayed)
+        _api_log.info("[API] Engram warmed: %d relation sequences replayed", replayed)
     _state["query_log"] = qlog
-    _state["aaak_cache"] = acache
+    _state["engram"] = acache
 
     # 6. Save to cache
     if cache_path:

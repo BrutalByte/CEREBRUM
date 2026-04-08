@@ -6,11 +6,11 @@ Definitions of all CEREBRUM-specific terms, algorithms, and architectural concep
 
 ## A
 
-**AAAKBeamTraversal**
-A `BeamTraversal` subclass that applies a multiplicative affinity boost to candidate path scores during `_prune_candidates()`: `effective_score = score × (1 + aaak_strength × affinity)`. The `affinity` is computed from the `AAAKCache` prefix index by matching the path's emerging relation sequence against stored patterns.
+**EngramTraversal**
+A `BeamTraversal` subclass that applies a multiplicative affinity boost to candidate path scores during `_prune_candidates()`: `effective_score = score × (1 + engram_strength × affinity)`. The `affinity` is computed from the `Engram` prefix index by matching the path's emerging relation sequence against stored patterns.
 
-**AAAKCache**
-Thread-safe in-memory store mapping relation-sequence tuples to success counts, used by `AAAKBeamTraversal` to bias beam pruning toward known-productive reasoning chains. Built from prior successful query paths. Persists to disk on server shutdown (`save_if_path()`) and is restored on startup (`load()`) with incremental `QueryLog` replay merged on top.
+**Engram**
+Thread-safe in-memory store mapping relation-sequence tuples to success counts, used by `EngramTraversal` to bias beam pruning toward known-productive reasoning chains. Built from prior successful query paths. Persists to disk on server shutdown (`save_if_path()`) and is restored on startup (`load()`) with incremental `QueryLog` replay merged on top.
 
 **Answer Extractor**
 The final stage of the CORTEX reasoning pipeline. Takes ranked `ReasoningPath` objects from `PathScorer` and extracts the terminal entity of each path as a candidate answer. Returns answers with associated CSA scores, path confidence, and HMAC provenance signatures.
@@ -265,7 +265,7 @@ The mathematical core of `SignalEncoder`'s cross-modal alignment. Computes a rot
 `CSAEngine.set_query_snapshot(community_map)` — captures the community map at query start and uses it exclusively throughout the query. Prevents GlobalRebalancer mid-query atomic swaps from producing inconsistent CSA weights across hops (Phase 20 fix, Hole 5).
 
 **QueryLog**
-An append-only NDJSON file (`data/cerebrum/query_log.ndjson` by default) that records seeds, answers, and relation sequences after each successful reasoning call. `replay_into_cache(aaak_cache)` reads the log at startup to re-warm `AAAKCache` so learned relation patterns survive process restarts.
+An append-only NDJSON file (`data/cerebrum/query_log.ndjson` by default) that records seeds, answers, and relation sequences after each successful reasoning call. `replay_into_cache(engram)` reads the log at startup to re-warm `Engram` so learned relation patterns survive process restarts.
 
 ---
 

@@ -110,15 +110,15 @@ uvicorn api.server:app --port 8200 --reload
 
 The CSA attention formula extended from 6 to 10 learnable parameters: temporal decay (`eta`), node recency (`iota`), synthesis-density penalty (`mu`), and grounding confidence (`theta`) were added. `MetaParameterLearner` applies online SGD from `POST /feedback`; `CSAParameterLearner` retrains the global prior from a feedback buffer via `POST /retrain`. Full checkpoint persistence via `GET/POST /params` and `--params-file` startup flag.
 
-### AAAK-Steered Traversal with Durable Memory
+### Engram-Steered Traversal with Durable Memory
 
-`AAAKCache` accumulates compressed relation-sequence patterns from successful queries. `AAAKBeamTraversal` biases beam pruning via a multiplicative score boost toward historically productive reasoning chains. The cache persists to disk on shutdown and warms up on restart (two-tier: saved JSON → `QueryLog` replay). `QueryLog` records all query history as append-only NDJSON, surviving process restarts.
+`Engram` accumulates compressed relation-sequence patterns from successful queries. `EngramTraversal` biases beam pruning via a multiplicative score boost toward historically productive reasoning chains. The cache persists to disk on shutdown and warms up on restart (two-tier: saved JSON → `QueryLog` replay). `QueryLog` records all query history as append-only NDJSON, surviving process restarts.
 
 | Feature | API | Description |
 |---|---|---|
-| **AAAK-Steered Traversal** | `AAAKBeamTraversal(aaak_cache=..., aaak_strength=0.3)` | Relation-pattern-biased beam pruning |
-| **Durable Cache** | `AAAKCache.save(path)` / `AAAKCache.load(path)` | Full persistence across restarts |
-| **Query History** | `QueryLog(path)` + `replay_into_cache(aaak_cache)` | Append-only NDJSON + warm-up on restart |
+| **Engram-Steered Traversal** | `EngramTraversal(cache=..., engram_strength=0.3)` | Relation-pattern-biased beam pruning |
+| **Durable Cache** | `Engram.save(path)` / `Engram.load(path)` | Full persistence across restarts |
+| **Query History** | `QueryLog(path)` + `replay_into_cache(engram)` | Append-only NDJSON + warm-up on restart |
 
 ### GraphSAGE Neighbourhood Smoothing
 
@@ -149,7 +149,7 @@ The CSA attention formula extended from 6 to 10 learnable parameters: temporal d
 
 ### Comprehensive Fault Tolerance
 
-Every failure mode is independently isolated. Traversal crashes return HTTP 200 with `partial=True` and intermediate results rather than HTTP 500. Persistence write failures (QueryLog, AAAKCache) cannot crash `/query`. The streaming endpoint emits a terminal error NDJSON chunk on failure. `GlobalRebalancer` has a top-level crash guard. `best_of_n_dscf` falls back to sequential execution on any `ProcessPoolExecutor` failure.
+Every failure mode is independently isolated. Traversal crashes return HTTP 200 with `partial=True` and intermediate results rather than HTTP 500. Persistence write failures (QueryLog, Engram) cannot crash `/query`. The streaming endpoint emits a terminal error NDJSON chunk on failure. `GlobalRebalancer` has a top-level crash guard. `best_of_n_dscf` falls back to sequential execution on any `ProcessPoolExecutor` failure.
 
 | Feature | Behavior |
 |---|---|

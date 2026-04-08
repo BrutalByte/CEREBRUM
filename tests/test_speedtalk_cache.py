@@ -1,12 +1,12 @@
 """
-Tests for SpeedTalk-Compressed AAAK Cache (Phase 58).
+Tests for SpeedTalk-Compressed Engram Cache (Phase 58).
 
 Covers:
     - SpeedTalkEncoder: encode/decode roundtrip, overflow, frequency reorder,
       persistence (to_dict / from_dict)
-    - SpeedTalkAAAKCache: record, affinity, prefix_query, alphabet, compression_stats,
+    - SpeedTalkEngram: record, affinity, prefix_query, alphabet, compression_stats,
       save/load persistence roundtrip
-    - SpeedTalkAAAKBeamTraversal: boost mechanics, record_answers integration
+    - SpeedTalkEngramTraversal: boost mechanics, record_answers integration
 """
 from __future__ import annotations
 
@@ -19,8 +19,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from reasoning.speedtalk_cache import (
-    SpeedTalkAAAKCache,
-    SpeedTalkAAAKBeamTraversal,
+    SpeedTalkEngram,
+    SpeedTalkEngramTraversal,
     SpeedTalkEncoder,
     _raw_rel_sequence,
     _BASE_ALPHABET,
@@ -120,42 +120,42 @@ class TestSpeedTalkEncoder:
 
 
 # ---------------------------------------------------------------------------
-# SpeedTalkAAAKCache tests
+# SpeedTalkEngram tests
 # ---------------------------------------------------------------------------
 
-class TestSpeedTalkAAAKCache:
+class TestSpeedTalkEngram:
 
     def test_record_and_size(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES", "TREATS"))
         assert cache.size() == 1
 
     def test_affinity_returns_zero_for_unknown_prefix(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         assert cache.affinity(("UNKNOWN_REL",)) == 0.0
 
     def test_affinity_returns_nonzero_for_known_pattern(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES", "TREATS"), weight=5)
         aff = cache.affinity(("CAUSES", "TREATS"))
         assert aff > 0.0
 
     def test_affinity_returns_nonzero_for_prefix_of_known_pattern(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES", "TREATS", "PREVENTS"), weight=5)
         # Prefix "CAUSES" alone should still get positive affinity
         aff = cache.affinity(("CAUSES",))
         assert aff > 0.0
 
     def test_affinity_longer_match_beats_shorter(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES", "TREATS", "PREVENTS"), weight=5)
         aff_full = cache.affinity(("CAUSES", "TREATS", "PREVENTS"))
         aff_prefix = cache.affinity(("CAUSES",))
         assert aff_full >= aff_prefix
 
     def test_top_patterns_returns_most_frequent(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES", "TREATS"), weight=10)
         cache.record(("ASSOCIATED_WITH",), weight=2)
         top = cache.top_patterns(n=1)
@@ -163,7 +163,7 @@ class TestSpeedTalkAAAKCache:
         assert top[0][1] == 10
 
     def test_clear(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES",))
         cache.clear()
         assert cache.size() == 0
@@ -174,7 +174,7 @@ class TestSpeedTalkAAAKCache:
     # ------------------------------------------------------------------
 
     def test_prefix_query_returns_matching_patterns(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES", "TREATS"), weight=5)
         cache.record(("CAUSES", "INHIBITS", "PREVENTS"), weight=3)
         cache.record(("ASSOCIATED_WITH",), weight=7)
@@ -186,7 +186,7 @@ class TestSpeedTalkAAAKCache:
         assert ("ASSOCIATED_WITH",) not in decoded_seqs
 
     def test_prefix_query_returns_sorted_by_count(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES", "TREATS"), weight=3)
         cache.record(("CAUSES", "INHIBITS"), weight=10)
         results = cache.prefix_query("CAUSES")
@@ -194,7 +194,7 @@ class TestSpeedTalkAAAKCache:
         assert results[0][0] == ("CAUSES", "INHIBITS")
 
     def test_prefix_query_multi_hop_prefix(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES", "TREATS", "PREVENTS"), weight=5)
         cache.record(("CAUSES", "TREATS", "INHIBITS"), weight=2)
         cache.record(("CAUSES", "INHIBITS"), weight=8)
@@ -206,12 +206,12 @@ class TestSpeedTalkAAAKCache:
         assert ("CAUSES", "INHIBITS") not in decoded
 
     def test_prefix_query_empty_args_returns_empty(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES",))
         assert cache.prefix_query() == []
 
     def test_prefix_query_no_match_returns_empty(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES", "TREATS"))
         assert cache.prefix_query("UNKNOWN_REL") == []
 
@@ -220,7 +220,7 @@ class TestSpeedTalkAAAKCache:
     # ------------------------------------------------------------------
 
     def test_adapt_to_graph_reassigns_most_common_relation_to_first_symbol(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         # Record a pattern *before* adapting — it must survive re-encoding
         cache.record(("RARE_REL", "COMMON_REL"), weight=3)
         freq = {"COMMON_REL": 1000, "RARE_REL": 5}
@@ -230,7 +230,7 @@ class TestSpeedTalkAAAKCache:
         assert alpha["RARE_REL"] == "b"
 
     def test_adapt_to_graph_preserves_existing_patterns(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES", "TREATS"), weight=7)
         freq = {"TREATS": 200, "CAUSES": 50}
         cache.adapt_to_graph(freq)
@@ -239,7 +239,7 @@ class TestSpeedTalkAAAKCache:
         assert cache.affinity(("CAUSES", "TREATS")) > 0.0
 
     def test_adapt_to_graph_prefix_query_works_after_adapt(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES", "TREATS"), weight=5)
         cache.record(("CAUSES", "INHIBITS"), weight=2)
         freq = {"CAUSES": 300, "TREATS": 150, "INHIBITS": 80}
@@ -250,7 +250,7 @@ class TestSpeedTalkAAAKCache:
         assert ("CAUSES", "INHIBITS") in decoded
 
     def test_adapt_to_graph_empty_freq_is_noop(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES",), weight=2)
         cache.adapt_to_graph({})   # must not raise or destroy state
         assert cache.size() == 1
@@ -264,7 +264,7 @@ class TestSpeedTalkAAAKCache:
         edge3.relation_type = "TREATS"
         adapter = MagicMock()
         adapter.get_all_edges = MagicMock(return_value=[edge1, edge2, edge3])
-        counts = SpeedTalkAAAKCache.count_edge_types(adapter)
+        counts = SpeedTalkEngram.count_edge_types(adapter)
         assert counts == {"CAUSES": 2, "TREATS": 1}
 
     def test_count_edge_types_fallback_to_edges_attr(self):
@@ -272,12 +272,12 @@ class TestSpeedTalkAAAKCache:
         edge1.relation_type = "INHIBITS"
         adapter = MagicMock(spec=[])   # no get_all_edges
         adapter.edges = [edge1]
-        counts = SpeedTalkAAAKCache.count_edge_types(adapter)
+        counts = SpeedTalkEngram.count_edge_types(adapter)
         assert counts == {"INHIBITS": 1}
 
     def test_count_edge_types_no_edges_returns_empty(self):
         adapter = MagicMock(spec=[])   # no get_all_edges, no .edges
-        counts = SpeedTalkAAAKCache.count_edge_types(adapter)
+        counts = SpeedTalkEngram.count_edge_types(adapter)
         assert counts == {}
 
     def test_from_graph_adapter_creates_frequency_tuned_cache(self):
@@ -287,7 +287,7 @@ class TestSpeedTalkAAAKCache:
         edge_b.relation_type = "RARE"
         adapter = MagicMock()
         adapter.get_all_edges = MagicMock(return_value=[edge_a, edge_a, edge_a, edge_b])
-        cache = SpeedTalkAAAKCache.from_graph_adapter(adapter)
+        cache = SpeedTalkEngram.from_graph_adapter(adapter)
         assert cache.alphabet()["COMMON"] == "a"
         assert cache.alphabet()["RARE"] == "b"
         assert cache.size() == 0   # fresh cache, no patterns yet
@@ -297,20 +297,20 @@ class TestSpeedTalkAAAKCache:
     # ------------------------------------------------------------------
 
     def test_alphabet_returns_relation_to_symbol_map(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES", "TREATS"))
         alpha = cache.alphabet()
         assert "CAUSES" in alpha
         assert "TREATS" in alpha
 
     def test_compression_stats_empty_cache(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         stats = cache.compression_stats()
         assert stats["total_patterns"] == 0
         assert stats["compression_ratio"] == 1.0
 
     def test_compression_stats_populated_cache(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         for i in range(10):
             cache.record(("CAUSES", "TREATS", "PREVENTS"), weight=i + 1)
         stats = cache.compression_stats()
@@ -324,7 +324,7 @@ class TestSpeedTalkAAAKCache:
     # ------------------------------------------------------------------
 
     def test_save_creates_json_file(self, tmp_path):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES", "TREATS"), weight=5)
         p = str(tmp_path / "cache.json")
         cache.save(p)
@@ -335,40 +335,40 @@ class TestSpeedTalkAAAKCache:
         assert len(data["counts"]) == 1
 
     def test_load_restores_patterns(self, tmp_path):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES", "TREATS"), weight=5)
         cache.record(("INHIBITS",), weight=2)
         p = str(tmp_path / "cache.json")
         cache.save(p)
 
-        restored = SpeedTalkAAAKCache.load(p)
+        restored = SpeedTalkEngram.load(p)
         assert restored.size() == 2
         assert restored.affinity(("CAUSES", "TREATS")) > 0.0
 
     def test_load_restores_prefix_query(self, tmp_path):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES", "TREATS"), weight=5)
         cache.record(("CAUSES", "INHIBITS"), weight=3)
         p = str(tmp_path / "cache.json")
         cache.save(p)
 
-        restored = SpeedTalkAAAKCache.load(p)
+        restored = SpeedTalkEngram.load(p)
         results = restored.prefix_query("CAUSES")
         decoded = [r[0] for r in results]
         assert ("CAUSES", "TREATS") in decoded
         assert ("CAUSES", "INHIBITS") in decoded
 
     def test_load_nonexistent_file_returns_empty_cache(self, tmp_path):
-        cache = SpeedTalkAAAKCache.load(str(tmp_path / "nonexistent.json"))
+        cache = SpeedTalkEngram.load(str(tmp_path / "nonexistent.json"))
         assert cache.size() == 0
 
     def test_save_if_path_none_is_noop(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES",))
         cache.save_if_path(None)   # must not raise
 
     def test_eviction_respects_max_patterns(self):
-        cache = SpeedTalkAAAKCache(max_patterns=3)
+        cache = SpeedTalkEngram(max_patterns=3)
         cache.record(("A",), weight=1)
         cache.record(("B",), weight=2)
         cache.record(("C",), weight=3)
@@ -402,23 +402,23 @@ class TestRawRelSequence:
 
 
 # ---------------------------------------------------------------------------
-# SpeedTalkAAAKBeamTraversal tests
+# SpeedTalkEngramTraversal tests
 # ---------------------------------------------------------------------------
 
-class TestSpeedTalkAAAKBeamTraversal:
+class TestSpeedTalkEngramTraversal:
     """
     Unit tests for traversal-level integration.
     The traversal itself is tested via its parent BeamTraversal suite;
     here we verify the SpeedTalk-specific boost and recording logic.
     """
 
-    def _make_mock_traversal(self, cache=None, aaak_strength=0.3):
+    def _make_mock_traversal(self, cache=None, engram_strength=0.3):
         """Build a traversal with mocked adapter/csa dependencies."""
         adapter = MagicMock()
         csa = MagicMock()
-        t = SpeedTalkAAAKBeamTraversal.__new__(SpeedTalkAAAKBeamTraversal)
-        t.cache = cache or SpeedTalkAAAKCache()
-        t.aaak_strength = aaak_strength
+        t = SpeedTalkEngramTraversal.__new__(SpeedTalkEngramTraversal)
+        t.cache = cache or SpeedTalkEngram()
+        t.engram_strength = engram_strength
         t.beam_width = 10
         t.max_hop = 3
         t._beam_widths = {}
@@ -437,9 +437,9 @@ class TestSpeedTalkAAAKBeamTraversal:
         assert t._boosted_score(path) == pytest.approx(0.5)
 
     def test_boosted_score_increases_with_known_pattern(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         cache.record(("CAUSES",), weight=10)
-        t = self._make_mock_traversal(cache=cache, aaak_strength=0.3)
+        t = self._make_mock_traversal(cache=cache, engram_strength=0.3)
         path = self._make_path(0.5, "A", "CAUSES", "B")
         boosted = t._boosted_score(path)
         assert boosted > 0.5
@@ -452,7 +452,7 @@ class TestSpeedTalkAAAKBeamTraversal:
         assert t._boosted_score(path) == pytest.approx(0.8)
 
     def test_record_answers_populates_cache(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         t = self._make_mock_traversal(cache=cache)
 
         path = self._make_path(0.9, "A", "CAUSES", "B", "TREATS", "C")
@@ -465,7 +465,7 @@ class TestSpeedTalkAAAKBeamTraversal:
         assert cache.affinity(("CAUSES", "TREATS")) > 0.0
 
     def test_record_answers_skips_low_score(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         t = self._make_mock_traversal(cache=cache)
 
         path = self._make_path(0.2, "A", "CAUSES", "B")
@@ -477,7 +477,7 @@ class TestSpeedTalkAAAKBeamTraversal:
         assert cache.size() == 0
 
     def test_record_answers_skips_answers_without_path(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         t = self._make_mock_traversal(cache=cache)
 
         answer = MagicMock()
@@ -488,7 +488,7 @@ class TestSpeedTalkAAAKBeamTraversal:
         assert cache.size() == 0
 
     def test_prefix_query_available_after_record(self):
-        cache = SpeedTalkAAAKCache()
+        cache = SpeedTalkEngram()
         t = self._make_mock_traversal(cache=cache)
 
         path = self._make_path(0.85, "A", "CAUSES", "B", "TREATS", "C")

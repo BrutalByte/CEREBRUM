@@ -1,4 +1,4 @@
-# PAPER 021 — SpeedTalk-Compressed AAAK: Phonemic Encoding for Relation-Pattern Caches
+# PAPER 021 — SpeedTalk-Compressed Engram: Phonemic Encoding for Relation-Pattern Caches
 
 **Series:** CEREBRUM Technical Report Series  
 **Paper:** 021 of 100  
@@ -11,7 +11,7 @@
 ## Abstract
 
 We introduce **SpeedTalk encoding**, a Heinlein-inspired phonemic compression layer
-for CEREBRUM's AAAK relation-pattern cache.  In Robert Heinlein's *Gulf* (1949) and
+for CEREBRUM's Engram relation-pattern cache.  In Robert Heinlein's *Gulf* (1949) and
 *Friday*, SpeedTalk assigns every primitive concept a single phoneme, reducing complex
 utterances to compact sound sequences while preserving full semantic fidelity.  We
 apply this principle directly to knowledge-graph reasoning: each distinct relation type
@@ -29,9 +29,9 @@ time without full-scan indexing.
 
 ## 1. Motivation
 
-### 1.1 The AAAK Cache (Phase 55 Recap)
+### 1.1 The Engram Cache (Phase 55 Recap)
 
-CEREBRUM's AAAK (Accumulated Affinity from Antecedent Knowledge) cache records the
+CEREBRUM's Engram cache records the
 relation-type sequences of successful reasoning paths and uses them to bias beam
 pruning on subsequent queries.  A successful 3-hop path through a biomedical KG might
 contribute the entry:
@@ -63,13 +63,13 @@ the cache keys grow verbose:
 | Compression ratio | — | **11.7×** |
 
 At 10,000 cached patterns (a realistic ceiling for a long-running research system),
-the JSON file shrinks from ~3.5 MB to ~300 KB.  More critically, the AAAK prefix
+the JSON file shrinks from ~3.5 MB to ~300 KB.  More critically, the Engram prefix
 index (which mirrors the full count dictionary for all sub-prefixes) also compresses
 by the same ratio, reducing RAM usage for the in-memory index.
 
 ### 1.3 The Prefix Query Gap
 
-The plain-tuple `AAAKCache` stores sequences as dictionary keys.  Looking up whether
+The plain-tuple `Engram` stores sequences as dictionary keys.  Looking up whether
 any cached pattern *starts with* a given relation requires scanning all keys — O(N).
 SpeedTalk encoding eliminates this gap: because each character encodes exactly one
 relation, a string prefix corresponds exactly to a relation-sequence prefix, and
@@ -136,22 +136,22 @@ This property is what makes prefix queries exact and efficient.
 
 ---
 
-## 3. SpeedTalkAAAKCache
+## 3. SpeedTalkEngram
 
-`SpeedTalkAAAKCache` wraps the `SpeedTalkEncoder` into a drop-in replacement for
-`AAAKCache`.  The internal `_counts` and `_prefix` dictionaries store **encoded
+`SpeedTalkEngram` wraps the `SpeedTalkEncoder` into a drop-in replacement for
+`Engram`.  The internal `_counts` and `_prefix` dictionaries store **encoded
 strings** as keys rather than tuples, but the public API accepts and returns
 **raw relation-type strings** — encoding and decoding are transparent to callers.
 
 ### 3.1 Core Operations
 
 ```python
-cache = SpeedTalkAAAKCache()
+cache = SpeedTalkEngram()
 
 # Record a successful path (raw relation names)
 cache.record(("CAUSES", "TREATS", "PREVENTS"), weight=5)
 
-# Affinity lookup (same semantics as AAAKCache)
+# Affinity lookup (same semantics as Engram)
 score = cache.affinity(("CAUSES", "TREATS"))   # → 0.0–1.0
 
 # Inspect learned vocabulary
@@ -193,7 +193,7 @@ The prefix query is the primary new analytical surface.  Downstream use cases:
 
 ### 3.3 Persistence Format
 
-`SpeedTalkAAAKCache.save()` writes a version-2 JSON file:
+`SpeedTalkEngram.save()` writes a version-2 JSON file:
 
 ```json
 {
@@ -212,21 +212,21 @@ the stored counts (the prefix index is derived data and is not stored).
 
 ---
 
-## 4. SpeedTalkAAAKBeamTraversal
+## 4. SpeedTalkEngramTraversal
 
-`SpeedTalkAAAKBeamTraversal` extends `BeamTraversal` using `SpeedTalkAAAKCache` for
-relation-pattern guidance.  It is functionally identical to `AAAKBeamTraversal`
+`SpeedTalkEngramTraversal` extends `BeamTraversal` using `SpeedTalkEngram` for
+relation-pattern guidance.  It is functionally identical to `EngramTraversal`
 (Phase 55 / Paper 018) with two differences:
 
-1. It uses raw relation-type names as cache keys (not AAAK shorthands), because
+1. It uses raw relation-type names as cache keys (not Engram shorthands), because
    `SpeedTalkEncoder` handles its own compression independently.
-2. The cache attached to the traversal is a `SpeedTalkAAAKCache`, so `prefix_query()`
+2. The cache attached to the traversal is a `SpeedTalkEngram`, so `prefix_query()`
    is available for post-traversal analysis after every session.
 
 Boost formula is unchanged:
 
 ```
-s_eff(path) = path.score × (1 + aaak_strength × affinity(rel_prefix))
+s_eff(path) = path.score × (1 + engram_strength × affinity(rel_prefix))
 ```
 
 ---
@@ -235,8 +235,8 @@ s_eff(path) = path.score × (1 + aaak_strength × affinity(rel_prefix))
 
 | Scheme | Key size | Prefix queries | Frequency ordering | Persistence |
 |---|---|---|---|---|
-| AAAKCache (Phase 55) | O(sum of rel-name lengths) | No (O(N) scan) | No | JSON (version 1) |
-| SpeedTalkAAAKCache (Phase 58) | O(hop count) | Yes (O(P)) | Optional (Tier 2) | JSON (version 2) |
+| Engram (Phase 55) | O(sum of rel-name lengths) | No (O(N) scan) | No | JSON (version 1) |
+| SpeedTalkEngram (Phase 58) | O(hop count) | Yes (O(P)) | Optional (Tier 2) | JSON (version 2) |
 
 The encoding is analogous to well-known compression primitives:
 
@@ -310,7 +310,7 @@ The implementation is ~350 lines of pure Python with no additional dependencies,
 achieves 8–20× key compression on real KGs, and unlocks prefix-query capabilities
 that are structurally impossible with the plain-tuple representation.
 
-The phase-58 `SpeedTalkAAAKCache` and `SpeedTalkAAAKBeamTraversal` are drop-in
+The phase-58 `SpeedTalkEngram` and `SpeedTalkEngramTraversal` are drop-in
 replacements for their Phase-55 counterparts, with the encoder state persisted
 alongside the cache for cross-restart stability.
 

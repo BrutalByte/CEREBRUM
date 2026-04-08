@@ -1,9 +1,9 @@
 """
-Tests for QueryLog (core/persistence.py) and AAAKCache persistence.
+Tests for QueryLog (core/persistence.py) and Engram persistence.
 
 QueryLog is the durable, append-only query history (core/persistence.py).
 Its sole job is to record completed reasoning
-queries as NDJSON and warm up AAAKCache on restart.
+queries as NDJSON and warm up Engram on restart.
 """
 import json
 import time
@@ -13,7 +13,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from core.persistence import QueryLog
-from reasoning.aaak_steered_traversal import AAAKCache
+from reasoning.engram_traversal import Engram
 from reasoning.traversal import TraversalPath
 
 
@@ -135,14 +135,14 @@ class TestQueryLogBasic:
 
 
 # ---------------------------------------------------------------------------
-# QueryLog → AAAKCache replay
+# QueryLog → Engram replay
 # ---------------------------------------------------------------------------
 
 class TestQueryLogReplay:
     def test_replay_populates_cache(self, tmp_path):
         log = QueryLog(str(tmp_path / "q.ndjson"))
         log.record(["s"], [_make_answer("e", 0.9, ["s", "CAUSES", "e"])])
-        cache = AAAKCache()
+        cache = Engram()
         replayed = log.replay_into_cache(cache)
         assert replayed == 1
         assert cache.size() == 1
@@ -152,28 +152,28 @@ class TestQueryLogReplay:
         low  = _make_answer("low", 0.1, ["s", "R1", "low"])
         high = _make_answer("hi",  0.9, ["s", "R2", "hi"])
         log.record(["s"], [low, high])
-        cache = AAAKCache()
+        cache = Engram()
         replayed = log.replay_into_cache(cache, min_score=0.5)
         # Only "hi" passes the filter
         assert replayed == 1
 
     def test_replay_empty_log(self, tmp_path):
         log = QueryLog(str(tmp_path / "q.ndjson"))
-        cache = AAAKCache()
+        cache = Engram()
         assert log.replay_into_cache(cache) == 0
         assert cache.size() == 0
 
     def test_replay_no_path_skipped(self, tmp_path):
         log = QueryLog(str(tmp_path / "q.ndjson"))
         log.record(["s"], [_make_answer("e", 0.8, None)])
-        cache = AAAKCache()
+        cache = Engram()
         replayed = log.replay_into_cache(cache)
         assert replayed == 0
 
     def test_replay_cache_affinity_set(self, tmp_path):
         log = QueryLog(str(tmp_path / "q.ndjson"))
         log.record(["s"], [_make_answer("e", 0.9, ["s", "CAUSES", "e"])])
-        cache = AAAKCache()
+        cache = Engram()
         log.replay_into_cache(cache)
         assert cache.affinity(("CAUSES",)) > 0.0
 
@@ -181,7 +181,7 @@ class TestQueryLogReplay:
         log = QueryLog(str(tmp_path / "q.ndjson"))
         for i in range(5):
             log.record([f"s{i}"], [_make_answer(f"e{i}", 0.8, [f"s{i}", "CAUSES", f"e{i}"])])
-        cache = AAAKCache()
+        cache = Engram()
         replayed = log.replay_into_cache(cache)
         assert replayed == 5
         # All used "CAUSES" → prefix count should be high
@@ -189,20 +189,20 @@ class TestQueryLogReplay:
 
 
 # ---------------------------------------------------------------------------
-# AAAKCache persistence (save / load)
+# Engram persistence (save / load)
 # ---------------------------------------------------------------------------
 
-class TestAAAKCachePersistence:
+class TestEngramPersistence:
     def test_save_creates_file(self, tmp_path):
-        cache = AAAKCache()
+        cache = Engram()
         cache.record(("!",))
-        cache.save(str(tmp_path / "aaak.json"))
-        assert (tmp_path / "aaak.json").exists()
+        cache.save(str(tmp_path / "engram.json"))
+        assert (tmp_path / "engram.json").exists()
 
     def test_save_is_valid_json(self, tmp_path):
-        cache = AAAKCache()
+        cache = Engram()
         cache.record(("!",), weight=3)
-        p = str(tmp_path / "aaak.json")
+        p = str(tmp_path / "engram.json")
         cache.save(p)
         with open(p) as f:
             data = json.load(f)
@@ -210,57 +210,57 @@ class TestAAAKCachePersistence:
         assert data["version"] == 1
 
     def test_load_empty_file_returns_empty_cache(self, tmp_path):
-        cache = AAAKCache.load(str(tmp_path / "nonexistent.json"))
+        cache = Engram.load(str(tmp_path / "nonexistent.json"))
         assert cache.size() == 0
 
     def test_roundtrip_preserves_counts(self, tmp_path):
-        cache = AAAKCache()
+        cache = Engram()
         cache.record(("!",), weight=5)
         cache.record(("+",), weight=3)
-        p = str(tmp_path / "aaak.json")
+        p = str(tmp_path / "engram.json")
         cache.save(p)
 
-        loaded = AAAKCache.load(p)
+        loaded = Engram.load(p)
         assert loaded.size() == 2
         assert loaded.affinity(("!",)) > 0.0
         assert loaded.affinity(("+",)) > 0.0
 
     def test_roundtrip_preserves_affinity_ordering(self, tmp_path):
-        cache = AAAKCache()
+        cache = Engram()
         cache.record(("!",), weight=10)  # higher
         cache.record(("+",), weight=1)   # lower
-        p = str(tmp_path / "aaak.json")
+        p = str(tmp_path / "engram.json")
         cache.save(p)
 
-        loaded = AAAKCache.load(p)
+        loaded = Engram.load(p)
         assert loaded.affinity(("!",)) > loaded.affinity(("+",))
 
     def test_roundtrip_max_count_restored(self, tmp_path):
-        cache = AAAKCache()
+        cache = Engram()
         cache.record(("!",), weight=7)
-        p = str(tmp_path / "aaak.json")
+        p = str(tmp_path / "engram.json")
         cache.save(p)
-        loaded = AAAKCache.load(p)
+        loaded = Engram.load(p)
         assert loaded._max_count == 7
 
     def test_save_if_path_none_no_error(self):
-        cache = AAAKCache()
+        cache = Engram()
         cache.record(("!",))
         cache.save_if_path(None)   # must not raise
 
     def test_save_if_path_writes(self, tmp_path):
-        cache = AAAKCache()
+        cache = Engram()
         cache.record(("!",))
-        p = str(tmp_path / "sub" / "aaak.json")
+        p = str(tmp_path / "sub" / "engram.json")
         cache.save_if_path(p)
         assert Path(p).exists()
 
     def test_prefix_index_rebuilt_after_load(self, tmp_path):
-        cache = AAAKCache()
+        cache = Engram()
         cache.record(("!", "+", "~"), weight=4)
-        p = str(tmp_path / "aaak.json")
+        p = str(tmp_path / "engram.json")
         cache.save(p)
-        loaded = AAAKCache.load(p)
+        loaded = Engram.load(p)
         # Prefix ("!",) should have affinity derived from full sequence
         assert loaded.affinity(("!",)) > 0.0
         assert loaded.affinity(("!", "+")) > 0.0

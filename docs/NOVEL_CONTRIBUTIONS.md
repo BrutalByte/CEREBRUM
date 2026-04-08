@@ -318,20 +318,20 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ---
 
-### Claim 20: AAAK-Steered Beam Traversal — Relation-Pattern-Biased Beam Pruning
+### Claim 20: Engram-Steered Beam Traversal — Relation-Pattern-Biased Beam Pruning
 
-**Description**: `AAAKCache` stores compressed relation-sequence tuples from prior successful reasoning paths. `AAAKBeamTraversal` biases beam pruning at each hop via: `effective_score = score × (1 + aaak_strength × affinity)`, where `affinity` is computed from a prefix index over the stored patterns. The cache persists to disk across process restarts via JSON serialization.
+**Description**: `Engram` stores compressed relation-sequence tuples from prior successful reasoning paths. `EngramTraversal` biases beam pruning at each hop via: `effective_score = score × (1 + engram_strength × affinity)`, where `affinity` is computed from a prefix index over the stored patterns. The cache persists to disk across process restarts via JSON serialization.
 
-**Novelty Statement**: Reinforcement learning-based path selection (e.g., MINERVA, M-Walk) trains a policy on labelled data. CEREBRUM's AAAK steering is training-free: it accumulates successful reasoning patterns from live queries and immediately biases future traversal without any training loop, labelled data, or gradient computation.
+**Novelty Statement**: Reinforcement learning-based path selection (e.g., MINERVA, M-Walk) trains a policy on labelled data. CEREBRUM's Engram steering is training-free: it accumulates successful reasoning patterns from live queries and immediately biases future traversal without any training loop, labelled data, or gradient computation.
 
 **Closest Prior Art**:
 - MINERVA (Das et al., 2018): RL-trained policy network
 - M-Walk (Shen et al., 2018): Monte Carlo tree search with trained value network
-- AAAK dialect (Phase 45): Compression format — AAAK steering (Phase 55) is a distinct mechanism that uses the pattern space, not the compressed notation itself
+- Engram shorthand dialect (Phase 45): Compression format — Engram steering (Phase 55) is a distinct mechanism that uses the pattern space, not the compressed notation itself
 
 **Key Technical Differentiator**: Real-time, training-free accumulation of logical structure from successful queries, immediately biasing future traversal through a multiplicative score boost.
 
-**Relevant files**: `reasoning/aaak_steered_traversal.py`
+**Relevant files**: `reasoning/engram_traversal.py`
 
 ---
 
@@ -347,7 +347,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 22: Fault-Tolerant KG Reasoning Server — Partial-Result Graceful Degradation
 
-**Description**: A server-side pattern where any traversal failure returns HTTP 200 with `partial=True` + error message and whatever paths were collected before the failure (`_partial_paths` checkpoint), rather than HTTP 500. Persistence layer write failures (QueryLog, AAAKCache) are independently isolated — neither can crash the reasoning endpoint. The streaming endpoint yields a terminal error NDJSON chunk on failure rather than silently terminating.
+**Description**: A server-side pattern where any traversal failure returns HTTP 200 with `partial=True` + error message and whatever paths were collected before the failure (`_partial_paths` checkpoint), rather than HTTP 500. Persistence layer write failures (QueryLog, Engram) are independently isolated — neither can crash the reasoning endpoint. The streaming endpoint yields a terminal error NDJSON chunk on failure rather than silently terminating.
 
 **Novelty Statement**: Knowledge graph reasoning APIs universally return error codes on failure. CEREBRUM's partial-result pattern allows clients to consume useful intermediate results even when reasoning fails mid-execution, with explicit partial/error semantics distinguishing full success from graceful degradation.
 
@@ -378,7 +378,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 | Federated Reasoning (Procrustes alignment) | SPARQL federation, FedE | Sub-path delegation + real-time embedding alignment |
 | CSA Parameter Learner (online+batch+persist) | KGE training, MAML | Per-community + dual-mode + cross-session persistence |
 | GraphSAGE one-pass smoother | GraphSAGE, GCN, Node2Vec | Single inference-time pass, no training, enriches CSA semantic term |
-| AAAK-steered traversal | MINERVA, M-Walk | Training-free pattern accumulation + multiplicative beam bias |
+| Engram-steered traversal | MINERVA, M-Walk | Training-free pattern accumulation + multiplicative beam bias |
 | TemporalCalibrator (Recall@K grid search) | Trained temporal KGE | Non-differentiable training-free 2D grid search over eta/iota |
 | Fault-tolerant partial results (HTTP 200) | Standard KG APIs | Partial-result semantics + isolated persistence failures + streaming error chunk |
 

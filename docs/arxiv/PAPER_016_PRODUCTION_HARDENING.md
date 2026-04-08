@@ -8,7 +8,7 @@
 ---
 
 ### Abstract
-Complex software systems with multiple interacting subsystems exhibit failure modes that are invisible during unit testing but emerge only when subsystems operate concurrently. We document and formalize eight such **structural holes** discovered in the CEREBRUM Knowledge Graph reasoning framework across two hardening phases (Phase 19 and Phase 20). Each hole represents a scenario where two independently-correct subsystems produce incorrect or unsafe outcomes when combined. We describe the root cause of each hole, the fix, and the validation methodology. The eight holes span three layers: cross-system state invalidation (Zombie Bridge, Query Snapshot), learning bias (Bayesian Cold-Start, Community Homogeneity), geometric drift (Canonical Basis Anchor), adversarial vulnerabilities (Causal Flood), data integrity (Namespace Collision), and validation bias (Path-Preserving Hold-out). All eight fixes are backward-compatible and add no new required parameters to existing APIs. In v1.9.8 (Phase 54), a new observability layer — RingBufferHandler, CORS middleware, request-timing middleware, `/logs` endpoints, and the dark-mode monitoring dashboard — brings the production hardening stack to enterprise readiness. In v2.0.1 (Phases 56–57), five fault-tolerance patterns are added: partial-result HTTP 200 degradation, write-failure isolation, stream error signalling, ProcessPoolExecutor sequential fallback, and durable AAAKCache persistence. The test suite has grown from 994 tests at Phase 20 to **1,490+ passing tests** at v2.0.1.
+Complex software systems with multiple interacting subsystems exhibit failure modes that are invisible during unit testing but emerge only when subsystems operate concurrently. We document and formalize eight such **structural holes** discovered in the CEREBRUM Knowledge Graph reasoning framework across two hardening phases (Phase 19 and Phase 20). Each hole represents a scenario where two independently-correct subsystems produce incorrect or unsafe outcomes when combined. We describe the root cause of each hole, the fix, and the validation methodology. The eight holes span three layers: cross-system state invalidation (Zombie Bridge, Query Snapshot), learning bias (Bayesian Cold-Start, Community Homogeneity), geometric drift (Canonical Basis Anchor), adversarial vulnerabilities (Causal Flood), data integrity (Namespace Collision), and validation bias (Path-Preserving Hold-out). All eight fixes are backward-compatible and add no new required parameters to existing APIs. In v1.9.8 (Phase 54), a new observability layer — RingBufferHandler, CORS middleware, request-timing middleware, `/logs` endpoints, and the dark-mode monitoring dashboard — brings the production hardening stack to enterprise readiness. In v2.0.1 (Phases 56–57), five fault-tolerance patterns are added: partial-result HTTP 200 degradation, write-failure isolation, stream error signalling, ProcessPoolExecutor sequential fallback, and durable Engram persistence. The test suite has grown from 994 tests at Phase 20 to **1,490+ passing tests** at v2.0.1.
 
 ### 1. Introduction
 The traditional view of software quality places emphasis on unit correctness: each function, class, or module behaves correctly in isolation. This view is insufficient for systems with cross-cutting state — systems where component A modifies shared state that component B reads asynchronously, or where component C's output is used as input to component D's learning algorithm in a way that was not anticipated during design.
@@ -164,7 +164,7 @@ Two additional structural hardening improvements:
 | Phase 54 (v1.9.8) | **1,357** |
 | Phase 57 (v2.0.1) | **1,490+** |
 
-The 363-test increase since Phase 20 covers the observability layer, StudioEngine, ResearchAgent, ExternalValidator, HypothesisEngine, adaptive search, IKGWQ benchmark harness, and auto-retrain scheduler. A further 133+ tests added in Phases 55–57 cover GraphSAGE smoothing, AAAK-steered traversal, TemporalCalibrator, QueryLog, partial-result degradation, write-failure isolation, stream error signalling, executor fallback, and AAAKCache persistence.
+The 363-test increase since Phase 20 covers the observability layer, StudioEngine, ResearchAgent, ExternalValidator, HypothesisEngine, adaptive search, IKGWQ benchmark harness, and auto-retrain scheduler. A further 133+ tests added in Phases 55–57 cover GraphSAGE smoothing, Engram-steered traversal, TemporalCalibrator, QueryLog, partial-result degradation, write-failure isolation, stream error signalling, executor fallback, and Engram persistence.
 
 ### 6. Phase 56–57: Fault Tolerance Hardening
 
@@ -176,7 +176,7 @@ The v2.0.1 release (Phases 56 and 57) introduces five fault-tolerance patterns t
 - The `/query` endpoint wraps `traversal.traverse()` in `try/except`; on failure it returns HTTP 200 with `partial=True`, the `_partial_paths` results, and the exception message in `error`. Clients can distinguish partial from full results without parsing error codes.
 
 #### 6.2 Write Failure Isolation (Phase 56)
-- `QueryLog.record()` and `AAAKCache.record()` calls in the query path are wrapped in `try/except`; failures are logged at WARNING but never propagate to the HTTP response. This prevents disk-full or OOM conditions from crashing live queries.
+- `QueryLog.record()` and `Engram.record()` calls in the query path are wrapped in `try/except`; failures are logged at WARNING but never propagate to the HTTP response. This prevents disk-full or OOM conditions from crashing live queries.
 - `GlobalRebalancer._rebalance_worker_inner()` is introduced as a separate method so the outer `_rebalance_worker()` can catch all exceptions and log at ERROR without leaking stack traces to the rebalancer thread.
 
 #### 6.3 Stream Error Chunk (Phase 57)
@@ -185,14 +185,14 @@ The v2.0.1 release (Phases 56 and 57) introduces five fault-tolerance patterns t
 #### 6.4 ProcessPoolExecutor Sequential Fallback (Phase 57)
 - `best_of_n_dscf` wraps the `ProcessPoolExecutor` block in `try/except`. On `BrokenExecutor` or any executor failure (e.g., Windows paging-file exhaustion), it logs WARNING and falls back to sequential `dscf_communities()` calls. This allows server startup to succeed on memory-constrained hosts.
 
-#### 6.5 AAAKCache Persistence (Phase 57)
-- `AAAKCache.save(path)` serializes `_counts` to JSON with a `version: 1` envelope. `AAAKCache.load(path)` restores counts and recomputes `_max_count`. `save_if_path(path)` is a null-safe variant.
-- The FastAPI lifespan context manager saves the AAAKCache on shutdown (via `try/finally`) and performs two-tier warm-up on startup: load the saved JSON first, then merge incremental QueryLog entries on top.
+#### 6.5 Engram Persistence (Phase 57)
+- `Engram.save(path)` serializes `_counts` to JSON with a `version: 1` envelope. `Engram.load(path)` restores counts and recomputes `_max_count`. `save_if_path(path)` is a null-safe variant.
+- The FastAPI lifespan context manager saves the Engram on shutdown (via `try/finally`) and performs two-tier warm-up on startup: load the saved JSON first, then merge incremental QueryLog entries on top.
 
 ### 7. Conclusion
 The eight structural holes documented in this paper demonstrate that production readiness in complex reasoning systems requires systematic cross-feature interaction analysis beyond unit and integration testing. The fixes are uniformly conservative: backward-compatible defaults, opt-in new parameters, and minimal code changes. In v1.9.8, the production hardening stack extends beyond structural hole remediation to active observability: the RingBufferHandler, CORS/timing middleware, `/logs` endpoint, and monitoring dashboard give operators real-time visibility into a running CEREBRUM instance without requiring external infrastructure.
 
-In v2.0.1 (Phases 56–57), the hardening scope expands from cross-feature interaction bugs to server-level fault tolerance. The five patterns introduced — partial-result degradation, write-failure isolation, stream error signalling, ProcessPoolExecutor fallback, and durable AAAKCache persistence — collectively ensure that no single failure class can crash a running CEREBRUM server. With **1,490+ passing tests**, dual license (AGPL + commercial), and patent provisionals filed, CEREBRUM v2.0.1 represents a production-hardened framework suitable for enterprise deployment in adversarial and resource-constrained environments.
+In v2.0.1 (Phases 56–57), the hardening scope expands from cross-feature interaction bugs to server-level fault tolerance. The five patterns introduced — partial-result degradation, write-failure isolation, stream error signalling, ProcessPoolExecutor fallback, and durable Engram persistence — collectively ensure that no single failure class can crash a running CEREBRUM server. With **1,490+ passing tests**, dual license (AGPL + commercial), and patent provisionals filed, CEREBRUM v2.0.1 represents a production-hardened framework suitable for enterprise deployment in adversarial and resource-constrained environments.
 
 ---
 **References**

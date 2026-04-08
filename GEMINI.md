@@ -6,14 +6,14 @@ This file provides essential context and instructions for Gemini CLI when workin
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph (KG) reasoning. It implements a multi-hop traversal mechanism inspired by Transformer architectures, allowing KGs to perform complex reasoning without an LLM or training data.
 
-**v2.0.1 (Phase 57 COMPLETE)** — 1490+ tests passing. Includes full THALAMUS ingestion pipeline, LLM bridge, Bayesian Beam Search with warm-start, GlobalRebalancer with on_rebalance hook, Cross-Modal Alignment with canonical basis anchor, enterprise scale connectors (Neo4j, AWS Neptune, PySpark), two rounds of production hardening, 10-parameter CSA formula, AAAK-steered traversal with durable cache, TemporalCalibrator, QueryLog, HypothesisEngine, ResearchAgent, ExternalValidator, observability dashboard, and comprehensive fault tolerance hardening.
+**v2.0.1 (Phase 57 COMPLETE)** — 1490+ tests passing. Includes full THALAMUS ingestion pipeline, LLM bridge, Bayesian Beam Search with warm-start, GlobalRebalancer with on_rebalance hook, Cross-Modal Alignment with canonical basis anchor, enterprise scale connectors (Neo4j, AWS Neptune, PySpark), two rounds of production hardening, 10-parameter CSA formula, Engram-steered traversal with durable cache, TemporalCalibrator, QueryLog, HypothesisEngine, ResearchAgent, ExternalValidator, observability dashboard, and comprehensive fault tolerance hardening.
 
 ### Core Innovations
 1.  **DSCF (Dual-Signal Community Fusion):** A novel community detection algorithm that fuses local (Label Propagation) and global (Modularity) signals during each node update. These communities act as "attention heads."
 2.  **CSA (Community-Structured Attention):** An attention mechanism where weights are influenced by community membership, semantic similarity, and graph structure.
 3.  **10-Parameter CSA Formula**: The attention weight formula now has 10 learnable parameters covering semantic similarity, community score, edge-type weight, distance penalty, hop decay, PageRank prior, temporal decay, node recency, synthesis-density penalty, and grounding confidence. Online learning via `POST /feedback` (SGD) and batch retraining via `POST /retrain`.
-4.  **AAAK-Steered Traversal**: `AAAKCache` stores successful reasoning relation sequences. `AAAKBeamTraversal` biases beam pruning toward known-productive patterns. Cache persists to disk across restarts.
-5.  **Fault Tolerance**: Every failure mode is isolated — traversal crashes return `partial=True` responses, QueryLog/AAAKCache write failures never crash `/query`, GlobalRebalancer has a top-level crash guard.
+4.  **Engram-Steered Traversal**: `Engram` stores successful reasoning relation sequences. `EngramTraversal` biases beam pruning toward known-productive patterns. Cache persists to disk across restarts.
+5.  **Fault Tolerance**: Every failure mode is isolated — traversal crashes return `partial=True` responses, QueryLog/Engram write failures never crash `/query`, GlobalRebalancer has a top-level crash guard.
 
 ### Transformer ↔ KG Analogy
 | Transformer Concept | CEREBRUM Equivalent |
@@ -56,7 +56,7 @@ The project is organized into modular directories:
 | `core/research_agent.py` | ResearchAgent — autonomous missing-link discovery daemon |
 | `core/temporal_calibrator.py` | TemporalCalibrator — grid-search Recall@K calibration |
 | `core/persistence.py` | QueryLog — append-only NDJSON query history |
-| `reasoning/aaak_steered_traversal.py` | AAAKCache + AAAKBeamTraversal — pattern-steered beam pruning |
+| `reasoning/engram_traversal.py` | Engram + EngramTraversal — pattern-steered beam pruning |
 | `ui/dashboard.html` | Operational observability dashboard |
 
 ---
@@ -120,9 +120,9 @@ python -m cli.cerebrum serve --csv tests/fixtures/toy_graph.csv --port 8200 --pa
 CEREBRUM is currently in **v2.0.1**. All phases through 57 shipped and verified. 1490+ tests passing.
 
 Key implementations (recent phases):
--   **Phase 57 — AAAKCache Persistence**: Save/load AAAKCache on shutdown/startup; `/query/stream` error chunk; `ProcessPoolExecutor` sequential fallback for fault-isolated rebalancing.
+-   **Phase 57 — Engram Persistence**: Save/load Engram on shutdown/startup; `/query/stream` error chunk; `ProcessPoolExecutor` sequential fallback for fault-isolated rebalancing.
 -   **Phase 56 — Fault Tolerance**: `QueryResponse.partial/error` fields; `_partial_paths` checkpoint on mid-traversal crash; graceful degradation throughout; `GlobalRebalancer` top-level crash guard.
--   **Phase 55 — GraphSAGE + AAAK + TemporalCalibrator + QueryLog**: `smooth_with_graphsage()` one-pass neighbourhood smoother; `AAAKCache` + `AAAKBeamTraversal` pattern-steered beam pruning; `TemporalCalibrator` grid-search Recall@K calibration; `QueryLog` append-only NDJSON history.
+-   **Phase 55 — GraphSAGE + Engram + TemporalCalibrator + QueryLog**: `smooth_with_graphsage()` one-pass neighbourhood smoother; `Engram` + `EngramTraversal` pattern-steered beam pruning; `TemporalCalibrator` grid-search Recall@K calibration; `QueryLog` append-only NDJSON history.
 -   **Phase 54 — Observability Dashboard**: `RingBufferHandler`, `GET /logs`, `ui/dashboard.html` operational monitoring UI.
 -   **Phase 53 — Adaptive Search by Graph Density**: Local graph density detection auto-adjusts beam width and candidate pruning strategy.
 -   **Phase 51–52 — ResearchAgent + ExternalValidator**: Autonomous missing-link discovery daemon; LLM-independent external source validation; `/research/*` endpoints.

@@ -92,9 +92,9 @@ The enriched embeddings make the `alpha` (semantic similarity) term in the CSA f
 
 **TemporalCalibrator (Phase 55).** Grid-searches `eta` (temporal decay) and `iota` (node recency) against a labelled validation set to maximise Recall@K. The `calibrate()` method enumerates a parameter grid, calls `measure_recall()` at each point, and applies the best-found parameters to the CSAEngine. A `try/finally` block guarantees original parameters are restored if calibration is interrupted — ensuring that a failed calibration run never leaves the CSAEngine in a partially-modified state.
 
-**AAAK-Steered Traversal (Phase 55).** `AAAKCache` tracks relation-sequence patterns from previous successful AAAK traces. `AAAKBeamTraversal._prune_candidates()` applies:
+**Engram-Steered Traversal (Phase 55).** `Engram` tracks relation-sequence patterns from previous successful Engram traces. `EngramTraversal._prune_candidates()` applies:
 
-$$s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{AAAK} \cdot \text{affinity}(\text{rel\_seq}))$$
+$$s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{engram} \cdot \text{affinity}(\text{rel\_seq}))$$
 
 where `affinity` is derived from accumulated `_counts`. This biases beam search toward known-productive reasoning chains without modifying graph structure. The cache is durable — `save(path)` serializes to JSON and `load(path)` restores counts on restart, so learned relation patterns survive process restarts.
 

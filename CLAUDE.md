@@ -89,10 +89,10 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 - **Federated Reasoning**: `DistributedBeamTraversal` + `/traverse` endpoint for cross-node path delegation (Phase 32).
 - **Wormhole Synthesis (REM)**: `REMEngine` bridges disconnected graph components; `sd` (synthesis density) feature penalizes over-reliance on synthetic edges (Phase 41/43).
 - **GraphSAGE Smoothing**: `smooth_with_graphsage(embeddings, G)` — one-pass mean neighbourhood aggregation applied after base encoding. `CerebrumGraph.build(use_graphsage=True)` enriches every entity embedding with its neighbours' context, making the CSA `alpha` (semantic) term significantly more effective (Phase 55).
-- **AAAK-Steered Traversal**: `AAAKCache` + `AAAKBeamTraversal` — persistent relation-pattern cache derived from previous successful AAAK traces. Biases beam pruning toward known-productive reasoning chains via a multiplicative affinity boost on `_prune_candidates()` (Phase 55).
+- **Engram-Steered Traversal**: `Engram` + `EngramTraversal` — persistent relation-pattern cache derived from previous successful Engram traces. Biases beam pruning toward known-productive reasoning chains via a multiplicative affinity boost on `_prune_candidates()` (Phase 55).
 - **TemporalCalibrator**: Grid-search calibration of `eta` (temporal decay) and `iota` (node recency) against a labelled validation set to maximise Recall@K. `calibrate()` / `apply()` / `measure_recall()` API; restores original CSA params after each evaluation (Phase 55).
-- **QueryLog**: Append-only NDJSON query history in `core/persistence.py`. Records seeds, answers, and relation sequences after each reasoning call. `replay_into_cache(aaak_cache)` warms up `AAAKCache` on restart so learned relation patterns survive process restarts (Phase 55).
-- **SpeedTalk Encoding**: Heinlein-inspired phonemic compression for the AAAK cache (Phase 58). Each relation type in the loaded KG is assigned a single-character "phoneme" from a 62-symbol alphabet (a–z, A–Z, 0–9). Relation sequences stored as compact strings rather than verbose tuples — 8–20× key compression. The phonemic representation preserves prefix structure, enabling `prefix_query(*rels)` — find all cached patterns starting with a given relation type in O(P) without full-scan. Alphabet is automatically tuned to the loaded graph via `adapt_to_graph()` or `from_graph_adapter()` — most-traversed relation types get the shortest symbols. `SpeedTalkAAAKCache` and `SpeedTalkAAAKBeamTraversal` are drop-in replacements for their Phase-55 counterparts.
+- **QueryLog**: Append-only NDJSON query history in `core/persistence.py`. Records seeds, answers, and relation sequences after each reasoning call. `replay_into_cache(engram)` warms up `Engram` on restart so learned relation patterns survive process restarts (Phase 55).
+- **SpeedTalk Encoding**: Heinlein-inspired phonemic compression for the Engram cache (Phase 58). Each relation type in the loaded KG is assigned a single-character "phoneme" from a 62-symbol alphabet (a–z, A–Z, 0–9). Relation sequences stored as compact strings rather than verbose tuples — 8–20× key compression. The phonemic representation preserves prefix structure, enabling `prefix_query(*rels)` — find all cached patterns starting with a given relation type in O(P) without full-scan. Alphabet is automatically tuned to the loaded graph via `adapt_to_graph()` or `from_graph_adapter()` — most-traversed relation types get the shortest symbols. `SpeedTalkEngram` and `SpeedTalkEngramTraversal` are drop-in replacements for their Phase-55 counterparts.
 
 ## Install & Development Commands
 
@@ -183,10 +183,10 @@ Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`
 | `core/meta_insight_engine.py` | Metacognition | Second-order reasoning over InsightEvents |
 | `core/kge_engine.py` | Optional | TransE/RotatE graph-native embedding training |
 | `core/embedding_engine.py` | **THALAMUS** | `smooth_with_graphsage()` — GraphSAGE one-pass neighbourhood smoother |
-| `reasoning/aaak_steered_traversal.py` | **CORTEX** | `AAAKCache` + `AAAKBeamTraversal` — AAAK-pattern-steered beam pruning |
-| `reasoning/speedtalk_cache.py` | **CORTEX** | `SpeedTalkEncoder` + `SpeedTalkAAAKCache` + `SpeedTalkAAAKBeamTraversal` — Heinlein phonemic compression; prefix queries; graph-adaptive alphabet |
+| `reasoning/engram_traversal.py` | **CORTEX** | `Engram` + `EngramTraversal` — Engram-pattern-steered beam pruning |
+| `reasoning/speedtalk_cache.py` | **CORTEX** | `SpeedTalkEncoder` + `SpeedTalkEngram` + `SpeedTalkEngramTraversal` — Heinlein phonemic compression; prefix queries; graph-adaptive alphabet |
 | `core/temporal_calibrator.py` | **CORTEX** | `TemporalCalibrator` — grid-search calibration of eta/iota for Recall@K |
-| `core/persistence.py` | Persistence | `save_state()` / `load_state()` / `QueryLog` — durable query history + AAAK cache warm-up |
+| `core/persistence.py` | Persistence | `save_state()` / `load_state()` / `QueryLog` — durable query history + Engram cache warm-up |
 | `api/` | Interface | FastAPI REST server (see API Endpoints below) |
 | `api/schemas.py` | Interface | All Pydantic request/response models |
 | `cli/` | Interface | CLI entry point (`cerebrum query`, `communities`, `serve --params-file`) |

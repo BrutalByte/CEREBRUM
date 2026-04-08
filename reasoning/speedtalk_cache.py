@@ -1,7 +1,7 @@
 """
-SpeedTalk-Compressed AAAK Cache (Phase 58).
+SpeedTalk-Compressed Engram Cache (Phase 58).
 
-A Heinlein-inspired encoding layer over the AAAK relation-pattern cache.
+A Heinlein-inspired encoding layer over the Engram relation-pattern cache.
 Each relation type is assigned a single-character "phoneme" (a character from
 a 62-symbol alphabet), so relation sequences are stored as compact strings
 rather than verbose tuples.
@@ -11,7 +11,7 @@ Analogy to Heinlein's SpeedTalk ("Gulf", 1949 / "Friday"):
     - Sequences of concepts → concatenated phoneme strings
     - Most-common concepts get the shortest symbols (frequency-order assignment)
 
-New capabilities over AAAKCache
+New capabilities over Engram
 --------------------------------
     prefix_query(*rels)
         Find all cached patterns whose relation sequence *starts with* the
@@ -29,21 +29,21 @@ New capabilities over AAAKCache
 Classes
 -------
     SpeedTalkEncoder           — relation-type ↔ phoneme bijection
-    SpeedTalkAAAKCache         — compressed cache with prefix-query API
-    SpeedTalkAAAKBeamTraversal — BeamTraversal variant using the above cache
+    SpeedTalkEngram            — compressed cache with prefix-query API
+    SpeedTalkEngramTraversal   — BeamTraversal variant using the above cache
 
 Usage
 -----
-    from reasoning.speedtalk_cache import SpeedTalkAAAKBeamTraversal, SpeedTalkAAAKCache
+    from reasoning.speedtalk_cache import SpeedTalkEngramTraversal, SpeedTalkEngram
 
-    cache = SpeedTalkAAAKCache()
-    traversal = SpeedTalkAAAKBeamTraversal(adapter, csa, cache=cache, aaak_strength=0.3)
+    cache = SpeedTalkEngram()
+    traversal = SpeedTalkEngramTraversal(adapter, csa, cache=cache, engram_strength=0.3)
 
     paths = traversal.traverse(seeds)
     answers = extract(paths, ...)
     traversal.record_answers(answers, min_score=0.5)
 
-    # Prefix query — new capability not present in AAAKCache
+    # Prefix query — new capability not present in Engram
     patterns = cache.prefix_query("CAUSES")
     # → [(('CAUSES', 'TREATS'), 5), (('CAUSES', 'INHIBITS', 'PREVENTS'), 3)]
 
@@ -226,22 +226,22 @@ class SpeedTalkEncoder:
 
 
 # ---------------------------------------------------------------------------
-# SpeedTalkAAAKCache
+# SpeedTalkEngram
 # ---------------------------------------------------------------------------
 
-class SpeedTalkAAAKCache:
+class SpeedTalkEngram:
     """
-    AAAK relation-pattern cache with Heinlein SpeedTalk phonemic encoding.
+    Engram relation-pattern cache with Heinlein SpeedTalk phonemic encoding.
 
     Stores relation sequences as compact phoneme strings rather than verbose
     Python tuples.  The key insight: because each character encodes exactly
     one relation type, a string prefix corresponds exactly to a relation-
     sequence prefix — enabling O(P) prefix queries over all cached patterns.
 
-    Interface mirrors AAAKCache so it can act as a drop-in replacement.
+    Interface mirrors Engram so it can act as a drop-in replacement.
 
-    New methods vs AAAKCache
-    ------------------------
+    New methods vs Engram
+    ---------------------
     prefix_query(*rels)
         All cached patterns whose sequence starts with the given relation(s).
 
@@ -253,7 +253,7 @@ class SpeedTalkAAAKCache:
 
     Parameters
     ----------
-    max_patterns : eviction cap (same semantics as AAAKCache)
+    max_patterns : eviction cap (same semantics as Engram)
     encoder      : pre-built SpeedTalkEncoder, or None to create a new one
     """
 
@@ -270,7 +270,7 @@ class SpeedTalkAAAKCache:
         self._max_count: int = 1
 
     # ------------------------------------------------------------------
-    # Core operations (mirrors AAAKCache API)
+    # Core operations (mirrors Engram API)
     # ------------------------------------------------------------------
 
     def record(self, rel_sequence: Sequence[str], weight: int = 1) -> None:
@@ -310,7 +310,7 @@ class SpeedTalkAAAKCache:
 
         Looks up the longest matching prefix in the index; returns 0.0 if no
         match, 1.0 for the single highest-count pattern.  Identical semantics
-        to AAAKCache.affinity() but operates on phoneme-encoded keys.
+        to Engram.affinity() but operates on phoneme-encoded keys.
         """
         if not rel_prefix or self._max_count == 0:
             return 0.0
@@ -449,7 +449,7 @@ class SpeedTalkAAAKCache:
 
         Example
         -------
-        >>> counts = SpeedTalkAAAKCache.count_edge_types(adapter)
+        >>> counts = SpeedTalkEngram.count_edge_types(adapter)
         >>> cache.adapt_to_graph(counts)
         # Now cache.alphabet() reflects the graph's relation distribution.
         """
@@ -466,7 +466,7 @@ class SpeedTalkAAAKCache:
         # Rebuild encoder in frequency order for this graph
         self._encoder.build_frequency_order(edge_type_counts)
         _log.info(
-            "SpeedTalkAAAKCache: alphabet rebuilt for %d relation types "
+            "SpeedTalkEngram: alphabet rebuilt for %d relation types "
             "(top 3: %s)",
             len(edge_type_counts),
             ", ".join(
@@ -494,7 +494,7 @@ class SpeedTalkAAAKCache:
         cls,
         adapter,
         max_patterns: int = 1000,
-    ) -> "SpeedTalkAAAKCache":
+    ) -> "SpeedTalkEngram":
         """
         Create a new cache whose alphabet is pre-tuned to *adapter*'s edge types.
 
@@ -509,7 +509,7 @@ class SpeedTalkAAAKCache:
 
         Returns
         -------
-        A fresh SpeedTalkAAAKCache with an adapter-tuned encoder and no stored
+        A fresh SpeedTalkEngram with an adapter-tuned encoder and no stored
         patterns (ready to accumulate patterns from live queries).
         """
         freq = cls.count_edge_types(adapter)
@@ -518,7 +518,7 @@ class SpeedTalkAAAKCache:
             encoder.build_frequency_order(freq)
         cache = cls(max_patterns=max_patterns, encoder=encoder)
         _log.info(
-            "SpeedTalkAAAKCache.from_graph_adapter: %d relation types indexed",
+            "SpeedTalkEngram.from_graph_adapter: %d relation types indexed",
             len(freq),
         )
         return cache
@@ -558,7 +558,7 @@ class SpeedTalkAAAKCache:
             return dict(counts)
 
         _log.warning(
-            "SpeedTalkAAAKCache.count_edge_types: adapter has no get_all_edges() "
+            "SpeedTalkEngram.count_edge_types: adapter has no get_all_edges() "
             "or .edges — returning empty frequency map"
         )
         return {}
@@ -589,11 +589,11 @@ class SpeedTalkAAAKCache:
         with open(p, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
         _log.info(
-            "SpeedTalkAAAKCache saved: %d patterns → %s", len(data["counts"]), p
+            "SpeedTalkEngram saved: %d patterns → %s", len(data["counts"]), p
         )
 
     @classmethod
-    def load(cls, path: str) -> "SpeedTalkAAAKCache":
+    def load(cls, path: str) -> "SpeedTalkEngram":
         """
         Load a previously saved cache.
 
@@ -602,7 +602,7 @@ class SpeedTalkAAAKCache:
         """
         p = Path(path)
         if not p.exists():
-            _log.info("SpeedTalkAAAKCache: no file at %s — starting empty", p)
+            _log.info("SpeedTalkEngram: no file at %s — starting empty", p)
             return cls()
         with open(p, encoding="utf-8") as f:
             data = json.load(f)
@@ -614,7 +614,7 @@ class SpeedTalkAAAKCache:
             for k in range(1, len(enc) + 1):
                 cache._prefix[enc[:k]] += cnt
         _log.info(
-            "SpeedTalkAAAKCache loaded: %d patterns ← %s", len(cache._counts), p
+            "SpeedTalkEngram loaded: %d patterns ← %s", len(cache._counts), p
         )
         return cache
 
@@ -625,7 +625,7 @@ class SpeedTalkAAAKCache:
 
 
 # ---------------------------------------------------------------------------
-# Path helper — raw relation extraction (no AAAK shorthand)
+# Path helper — raw relation extraction (no Engram shorthand)
 # ---------------------------------------------------------------------------
 
 def _raw_rel_sequence(path) -> Tuple[str, ...]:
@@ -635,15 +635,15 @@ def _raw_rel_sequence(path) -> Tuple[str, ...]:
     TraversalPath.nodes is [entity, rel, entity, rel, entity, ...].
     Odd-indexed elements are relation types.
 
-    Unlike _path_rel_sequence() in aaak_steered_traversal.py, this does NOT
-    apply the AAAK shorthand map — SpeedTalkEncoder handles its own encoding.
+    Unlike _path_rel_sequence() in engram_traversal.py, this does NOT
+    apply the Engram shorthand map — SpeedTalkEncoder handles its own encoding.
     """
     nodes = path.nodes
     return tuple(nodes[i] for i in range(1, len(nodes), 2))
 
 
 # ---------------------------------------------------------------------------
-# SpeedTalkAAAKBeamTraversal
+# SpeedTalkEngramTraversal
 # ---------------------------------------------------------------------------
 
 # Deferred imports to avoid circular dependency
@@ -652,35 +652,35 @@ from core.graph_adapter import GraphAdapter  # noqa: E402
 from core.attention_engine import CSAEngine  # noqa: E402
 
 
-class SpeedTalkAAAKBeamTraversal(BeamTraversal):
+class SpeedTalkEngramTraversal(BeamTraversal):
     """
-    Beam traversal using SpeedTalkAAAKCache for relation-pattern guidance.
+    Beam traversal using SpeedTalkEngram for relation-pattern guidance.
 
-    Identical beam-search logic to AAAKBeamTraversal but:
+    Identical beam-search logic to EngramTraversal but:
     - Stores relation sequences using SpeedTalk phonemic encoding
     - Exposes prefix_query() on the cache for post-traversal analysis
-    - Uses raw relation-type names (not AAAK shorthands) as cache keys
+    - Uses raw relation-type names (not Engram shorthands) as cache keys
 
-    Boost formula (same as AAAKBeamTraversal):
-        effective_score = path.score * (1 + aaak_strength * affinity)
+    Boost formula (same as EngramTraversal):
+        effective_score = path.score * (1 + engram_strength * affinity)
 
     Parameters
     ----------
-    cache         : SpeedTalkAAAKCache instance (shared across queries)
-    aaak_strength : multiplicative boost ceiling (default 0.3 → max 30% boost)
+    cache            : SpeedTalkEngram instance (shared across queries)
+    engram_strength  : multiplicative boost ceiling (default 0.3 → max 30% boost)
     All other parameters are forwarded to BeamTraversal.
     """
 
     def __init__(
         self,
         *args,
-        cache: Optional[SpeedTalkAAAKCache] = None,
-        aaak_strength: float = 0.3,
+        cache: Optional[SpeedTalkEngram] = None,
+        engram_strength: float = 0.3,
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self.cache = cache or SpeedTalkAAAKCache()
-        self.aaak_strength = aaak_strength
+        self.cache = cache or SpeedTalkEngram()
+        self.engram_strength = engram_strength
 
     def _boosted_score(self, path: TraversalPath) -> float:
         """Compute the SpeedTalk-affinity-boosted effective score."""
@@ -688,7 +688,7 @@ class SpeedTalkAAAKBeamTraversal(BeamTraversal):
         if not rel_seq:
             return path.score
         aff = self.cache.affinity(rel_seq)
-        return path.score * (1.0 + self.aaak_strength * aff)
+        return path.score * (1.0 + self.engram_strength * aff)
 
     def _prune_candidates(
         self,
@@ -711,7 +711,7 @@ class SpeedTalkAAAKBeamTraversal(BeamTraversal):
 
     def record_answers(self, answers, min_score: float = 0.3) -> None:
         """
-        Feed successful answers back into the SpeedTalkAAAKCache.
+        Feed successful answers back into the SpeedTalkEngram.
 
         Call after each query to accumulate relation patterns.  Higher-scoring
         paths receive proportionally larger weight credits.
@@ -731,3 +731,5 @@ class SpeedTalkAAAKBeamTraversal(BeamTraversal):
             if rel_seq:
                 weight = max(1, int(ans.score * 10))
                 self.cache.record(rel_seq, weight=weight)
+
+

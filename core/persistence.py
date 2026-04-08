@@ -10,7 +10,7 @@ QueryLog
 --------
 Append-only NDJSON record of every completed reasoning query.  Each line is a
 JSON object: {timestamp, seeds, answers:[{entity, score, path}], rel_sequences}.
-The log feeds AAAKCache on startup (call QueryLog.replay_into_cache(cache)) so
+The log feeds Engram on startup (call QueryLog.replay_into_cache(cache)) so
 learned relation patterns survive process restarts.
 """
 import json
@@ -114,8 +114,8 @@ class QueryLog:
 
     Each record captures the seeds, top-K answer entity IDs, scores, path
     node sequences, and the compressed relation-type sequences used by
-    AAAKCache.  The log survives process restarts and is the authoritative
-    source for warming up AAAKCache at startup.
+    Engram.  The log survives process restarts and is the authoritative
+    source for warming up Engram at startup.
 
     Parameters
     ----------
@@ -213,14 +213,14 @@ class QueryLog:
 
     def replay_into_cache(self, cache: Any, min_score: float = 0.3) -> int:
         """
-        Warm up an AAAKCache from the persisted query log.
+        Warm up an Engram from the persisted query log.
 
         Reads all log records, extracts relation sequences from answers that
         meet *min_score*, and feeds them into *cache* via cache.record().
 
         Parameters
         ----------
-        cache     : AAAKCache instance
+        cache     : Engram instance
         min_score : only replay answers at or above this score
 
         Returns

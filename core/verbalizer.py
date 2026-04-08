@@ -271,15 +271,15 @@ class VerbalizationResult:
 
 
 # ---------------------------------------------------------------------------
-# AAAK (AI-to-AI Knowledge) Verbalizer
+# Engram Verbalizer
 # ---------------------------------------------------------------------------
 
-class AAAKVerbalizer:
+class EngramVerbalizer:
     """
     Implements a shorthand dialect for 30x reasoning compression.
-    Designed for LLM-to-LLM knowledge transfer (AAAK).
+    Designed for LLM-to-LLM knowledge transfer (Engram).
     """
-    
+
     _SHORTHAND = {
         "CAUSES": "!",
         "CAUSED_BY": "<-!",
@@ -296,16 +296,16 @@ class AAAKVerbalizer:
 
     def verbalize(self, answers: list, adapter=None) -> str:
         """
-        Compress top answers into a dense AAAK block.
+        Compress top answers into a dense Engram block.
         Example: [Newton ~> Leibniz !> Calculus (c=0.92)]
         """
         if not answers: return "ø"
-        
+
         pkts = []
         for ans in answers[:5]:
             path = getattr(ans, "best_path", None)
             if not path: continue
-            
+
             nodes = path.nodes
             trace = []
             for i in range(0, len(nodes), 2):
@@ -316,11 +316,13 @@ class AAAKVerbalizer:
                 if i + 1 < len(nodes):
                     rel = nodes[i+1]
                     trace.append(self._SHORTHAND.get(rel, ">"))
-            
+
             pkt = f"[{''.join(trace)}(c{ans.score:.2f})]"
             pkts.append(pkt)
-            
-        return "AAAK:" + "".join(pkts)
+
+        return "Engram:" + "".join(pkts)
+
+
 
     def _label(self, entity_id: str, adapter) -> str:
         if adapter is None: return entity_id

@@ -93,8 +93,8 @@ subgraph BUILD["③ CerebrumGraph.build() — THALAMUS Pipeline"]
     BT_PROB["BeamTraversal\nprobabilistic=True\nBeta distribution paths\nThompson sampling\nwarm_start_strength"]
     BT_STD["BeamTraversal\ndeterministic\nscore-sorted pruning"]
 
-    D_AAAK_CACHE{"AAAKCache\npath provided?"}
-    BT_AAAK["AAAKBeamTraversal\n_prune_candidates override\naffinity-boosted scoring\nrelation-pattern steering"]
+    D_ENGRAM_CACHE{"Engram\npath provided?"}
+    BT_ENGRAM["EngramTraversal\n_prune_candidates override\naffinity-boosted scoring\nrelation-pattern steering"]
 end
 
 %% ═══════════════════════════════════════════════════════════
@@ -156,7 +156,7 @@ subgraph CORTEX["④ CORTEX — Query Execution"]
         D_PRUNE_MODE{"traversal type"}
         PRUNE_STD["sort by path.score\nnlargest(beam_width)"]
         PRUNE_PROB["Thompson sample\nBeta(α,β)\nnlargest(beam_width)"]
-        PRUNE_AAAK["_boosted_score()\naffinity × aaak_strength\nnlargest(beam_width)"]
+        PRUNE_ENGRAM["_boosted_score()\naffinity × engram_strength\nnlargest(beam_width)"]
     end
 
     ALL_PATHS["all_paths collected\nacross all hops"]
@@ -188,7 +188,7 @@ end
 subgraph OUTPUT["⑥ Output & Verbalization"]
     direction LR
 
-    AAAK_VERB["AAAKVerbalizer\ncompressed trace\nAAK:[Newton~>Leibniz!>Calculus]"]
+    ENGRAM_VERB["EngramVerbalizer\ncompressed trace\nEngram:[Newton~>Leibniz!>Calculus]"]
     PATH_VERB["PathVerbalizer\nfluent NL sentences\nwith edge citations"]
     JSON_OUT["Structured JSON\nQueryResponse\nranked answers + paths\npartial: bool  error: str"]
 
@@ -197,7 +197,7 @@ subgraph OUTPUT["⑥ Output & Verbalization"]
 
     D_OUT_TYPE{"caller type"}
     REST_OUT["REST /query response\nQueryResponse schema"]
-    UI_OUT["Gradio HTML\nAAK trace + path cards\nattn radar plot"]
+    UI_OUT["Gradio HTML\nEngram trace + path cards\nattn radar plot"]
     CLI_OUT["CLI stdout\nranked entities + scores"]
     FED_OUT["TraversalBranchResponse\nfor parent node merge"]
     STREAM_OUT["NDJSON stream\nhop-by-hop paths\n+ terminal error chunk on fault"]
@@ -222,14 +222,14 @@ subgraph LEARNING["⑦ Adaptive Learning Loops"]
         T_CAL["TemporalCalibrator\neta × iota grid\nRecall@K objective\napply() writes to CSAEngine"]
     end
 
-    subgraph AAAK_LEARN["Pattern — per result"]
-        AAAK_REC["AAAKBeamTraversal\n.record_answers()\nrelation sequence → AAAKCache\naffinity index rebuilt"]
-        AAAK_PERSIST["AAAKCache.save(path)\nJSON serialization\nsurvives restart"]
+    subgraph ENGRAM_LEARN["Pattern — per result"]
+        ENGRAM_REC["EngramTraversal\n.record_answers()\nrelation sequence → Engram\naffinity index rebuilt"]
+        ENGRAM_PERSIST["Engram.save(path)\nJSON serialization\nsurvives restart"]
     end
 
     subgraph QLOG["Query Log — durability"]
         QLOG_W["QueryLog.record()\nappend NDJSON\nseeds + answers + rel_seqs"]
-        QLOG_REPLAY["QueryLog.replay_into_cache()\nwarm AAAKCache on startup"]
+        QLOG_REPLAY["QueryLog.replay_into_cache()\nwarm Engram on startup"]
     end
 end
 
@@ -284,8 +284,8 @@ subgraph PERSIST["⑨ Persistence Layer"]
     P_SAVE["save_state()\npickle adapter + embeddings\ncommunity_map + CSA metadata"]
     P_LOAD["load_state()\nrestore full session\n+ rebuild REM / Insight engines"]
     P_CACHE["build caches\nembeddings.pkl\nembeddings_sage.pkl\ncommunities.pkl"]
-    P_AAAK["AAAKCache JSON\nrelation pattern store"]
-    P_QLOG["QueryLog NDJSON\nquery history\nAAK warm-up source"]
+    P_ENGRAM["Engram JSON\nrelation pattern store"]
+    P_QLOG["QueryLog NDJSON\nquery history\nEngram warm-up source"]
 end
 
 %% ═══════════════════════════════════════════════════════════
@@ -352,11 +352,11 @@ COMM_SAVE --> CSA_BUILD
 
 CSA_BUILD --> D_PROB
 D_PROB -->|yes| BT_PROB
-D_PROB -->|no| D_AAAK_CACHE
-D_AAAK_CACHE -->|yes| BT_AAAK
-D_AAAK_CACHE -->|no| BT_STD
+D_PROB -->|no| D_ENGRAM_CACHE
+D_ENGRAM_CACHE -->|yes| BT_ENGRAM
+D_ENGRAM_CACHE -->|no| BT_STD
 
-BT_STD & BT_PROB & BT_AAAK --> SEED_FIND
+BT_STD & BT_PROB & BT_ENGRAM --> SEED_FIND
 
 SEED_FIND --> D_QUERY_EMB
 D_QUERY_EMB -->|yes| Q_EMB --> Q_SNAPSHOT
@@ -394,7 +394,7 @@ D_CALENG -->|no| D_PRUNE_MODE
 
 D_PRUNE_MODE -->|standard| PRUNE_STD --> ALL_PATHS
 D_PRUNE_MODE -->|probabilistic| PRUNE_PROB --> ALL_PATHS
-D_PRUNE_MODE -->|AAAK| PRUNE_AAAK --> ALL_PATHS
+D_PRUNE_MODE -->|Engram| PRUNE_ENGRAM --> ALL_PATHS
 
 ALL_PATHS --> PATH_SCORE
 PATH_SCORE --> D_PRIOR
@@ -402,7 +402,7 @@ D_PRIOR -->|yes| PRIOR --> VOTE
 D_PRIOR -->|no| VOTE
 VOTE --> DEDUP --> TOPK
 
-TOPK --> AAAK_VERB & PATH_VERB & JSON_OUT
+TOPK --> ENGRAM_VERB & PATH_VERB & JSON_OUT
 JSON_OUT --> D_OUT_TYPE
 D_OUT_TYPE -->|REST| REST_OUT
 D_OUT_TYPE -->|UI| UI_OUT
@@ -410,11 +410,11 @@ D_OUT_TYPE -->|CLI| CLI_OUT
 D_OUT_TYPE -->|federated| FED_OUT
 D_OUT_TYPE -->|stream| STREAM_OUT
 
-TOPK --> AAAK_REC --> AAAK_PERSIST
+TOPK --> ENGRAM_REC --> ENGRAM_PERSIST
 TOPK --> QLOG_W
 
-QLOG_REPLAY -.->|startup warm-up| AAAK_REC
-P_AAAK -.->|load on init| AAAK_REC
+QLOG_REPLAY -.->|startup warm-up| ENGRAM_REC
+P_ENGRAM -.->|load on init| ENGRAM_REC
 
 META_L -.->|updates| CSA_BUILD
 CSA_L  -.->|updates| CSA_BUILD
@@ -455,16 +455,16 @@ classDef api        fill:#1a1a1a,stroke:#555,color:#ccc
 classDef decision   fill:#2a2a1a,stroke:#8f8f2d,color:#f0f0b0
 
 class ADAPTERS,PIPE,STDP,SIG,COMPLETE,ENHANCE,NX_ADAPTER thalamus
-class EMB_RAND,EMB_SENT,EMB_SAVE,SAGE,STRUCT,C_DSCF,C_TSC,C_LEIDEN,C_LPA,COARSEN,COMM_SAVE,CSA_BUILD,BT_STD,BT_PROB,BT_AAAK thalamus
-class SEED_FIND,Q_EMB,Q_SNAPSHOT,MERGER,EXPAND,TEMP_FILT,CVT,SYMVAL,CSA_WEIGHT,LOGIT_SCORE,EMB_AGG,CAL,BRIDGE_REC,PRUNE_STD,PRUNE_PROB,PRUNE_AAAK,ALL_PATHS cortex
+class EMB_RAND,EMB_SENT,EMB_SAVE,SAGE,STRUCT,C_DSCF,C_TSC,C_LEIDEN,C_LPA,COARSEN,COMM_SAVE,CSA_BUILD,BT_STD,BT_PROB,BT_ENGRAM thalamus
+class SEED_FIND,Q_EMB,Q_SNAPSHOT,MERGER,EXPAND,TEMP_FILT,CVT,SYMVAL,CSA_WEIGHT,LOGIT_SCORE,EMB_AGG,CAL,BRIDGE_REC,PRUNE_STD,PRUNE_PROB,PRUNE_ENGRAM,ALL_PATHS cortex
 class F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,PATH_SCORE,PRIOR,VOTE,DEDUP,TOPK cortex
-class META_L,CSA_L,T_CAL,AAAK_REC,AAAK_PERSIST,QLOG_W,QLOG_REPLAY learning
+class META_L,CSA_L,T_CAL,ENGRAM_REC,ENGRAM_PERSIST,QLOG_W,QLOG_REPLAY learning
 class REM_PRUNE,REM_CONS,REM_SYNTH,REM_SCHED,INS_HOT,INS_WARM,INS_COLD,INS_MAT,INS_VAL,INS_META,HYPO_GEN,HYPO_MAT,EXT_VAL,REBAL_MON,REBAL_DSCF,ST_SIM,ST_TAIL,ST_HTTP,ST_PROC background
-class P_SAVE,P_LOAD,P_CACHE,P_AAAK,P_QLOG persist
-class AAAK_VERB,PATH_VERB,JSON_OUT,REST_OUT,UI_OUT,CLI_OUT,FED_OUT,STREAM_OUT output
+class P_SAVE,P_LOAD,P_CACHE,P_ENGRAM,P_QLOG persist
+class ENGRAM_VERB,PATH_VERB,JSON_OUT,REST_OUT,UI_OUT,CLI_OUT,FED_OUT,STREAM_OUT output
 class E_REST,E_CLI,E_UI,E_FED,E_STREAM entry
 class API1,API2,API3,API4,API5,API6,API7,API8,API9 api
-class D_PIPE,D_STDP,D_SIG,D_COMPLETE,D_ENHANCE,D_EMB,D_SAGE,D_COMM,D_COARSEN,D_PROB,D_AAAK_CACHE,D_QUERY_EMB,D_MERGER,D_TEMPORAL,D_CVT,D_SYMVAL,D_BRIDGE,D_CALENG,D_PRUNE_MODE,D_PRIOR,D_OUT_TYPE,CACHE_CHK,SAGE_CACHE decision
+class D_PIPE,D_STDP,D_SIG,D_COMPLETE,D_ENHANCE,D_EMB,D_SAGE,D_COMM,D_COARSEN,D_PROB,D_ENGRAM_CACHE,D_QUERY_EMB,D_MERGER,D_TEMPORAL,D_CVT,D_SYMVAL,D_BRIDGE,D_CALENG,D_PRUNE_MODE,D_PRIOR,D_OUT_TYPE,CACHE_CHK,SAGE_CACHE decision
 ```
 
 ---
@@ -475,9 +475,9 @@ class D_PIPE,D_STDP,D_SIG,D_COMPLETE,D_ENHANCE,D_EMB,D_SAGE,D_COMM,D_COARSEN,D_P
 |---|---|---|
 | Dark green | THALAMUS | Ingestion, embedding, community detection |
 | Dark blue | CORTEX | Traversal, attention scoring, answer extraction |
-| Purple | Learning | Online SGD, batch retrain, temporal calibration, AAAK pattern cache |
+| Purple | Learning | Online SGD, batch retrain, temporal calibration, Engram pattern cache |
 | Orange | Background | REM, InsightEngine, HypothesisEngine, Rebalancer, Stream |
-| Teal | Persistence | State snapshots, QueryLog, AAAK JSON, build caches |
+| Teal | Persistence | State snapshots, QueryLog, Engram JSON, build caches |
 | Olive | Output | Verbalization, response routing |
 | Red | Entry | REST, CLI, UI, Federated, Stream |
 | Grey | API | All REST endpoint groups |
@@ -494,10 +494,10 @@ class D_PIPE,D_STDP,D_SIG,D_COMPLETE,D_ENHANCE,D_EMB,D_SAGE,D_COMM,D_COARSEN,D_P
 | GraphSAGE | on / off | neighbourhood smoothing enriches semantic (α) signal |
 | Community engine | DSCF / TSC / Leiden / LPA | affects attention head structure |
 | Coarsening | min_size / target_max / none | merges small communities |
-| Traversal mode | standard / probabilistic / AAAK | changes beam pruning strategy |
+| Traversal mode | standard / probabilistic / Engram | changes beam pruning strategy |
 | Temporal filter | hard prune / soft decay | edges outside window rejected or penalised |
 | CVT passthrough | on / off | Freebase mediator collapse for WebQSP |
 | SymbolicValidator | on / off | per-step logical guardrail |
 | CalibrationEngine | on / off | self-doubt entropy check per hop |
 | RelationPathPrior | on / off | boosts known relation chain patterns |
-| AAAKCache | warm / cold | steers beam toward cached relation sequences |
+| Engram | warm / cold | steers beam toward cached relation sequences |

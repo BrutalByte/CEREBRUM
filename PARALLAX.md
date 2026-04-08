@@ -73,7 +73,7 @@ parallax/
 └── PAPER.md       (this file)
 ```
 
-**Current phase**: Phase 57 complete (v2.0.1). CEREBRUM now includes GraphSAGE neighbourhood smoothing (`smooth_with_graphsage`), AAAK-steered beam traversal (`AAAKCache` + `AAAKBeamTraversal`) with durable persistence across restarts, `TemporalCalibrator` for Recall@K-optimal eta/iota calibration, `QueryLog` append-only history for warm-up, `HypothesisEngine` multi-path abductive reasoning, `ResearchAgent` autonomous missing-link discovery, `ExternalValidator` LLM-independent source validation, an observability dashboard, and comprehensive fault tolerance hardening (graceful degradation, partial-result responses, crash-guard GlobalRebalancer, stream error chunks). 1490+ tests passing.
+**Current phase**: Phase 57 complete (v2.0.1). CEREBRUM now includes GraphSAGE neighbourhood smoothing (`smooth_with_graphsage`), Engram-steered beam traversal (`Engram` + `EngramTraversal`) with durable persistence across restarts, `TemporalCalibrator` for Recall@K-optimal eta/iota calibration, `QueryLog` append-only history for warm-up, `HypothesisEngine` multi-path abductive reasoning, `ResearchAgent` autonomous missing-link discovery, `ExternalValidator` LLM-independent source validation, an observability dashboard, and comprehensive fault tolerance hardening (graceful degradation, partial-result responses, crash-guard GlobalRebalancer, stream error chunks). 1490+ tests passing.
 
 ---
 
@@ -970,20 +970,20 @@ CEREBRUM is agnostic across five dimensions:
 4. **Domain**: the algorithm is domain-blind; community structure emerges from the graph's own topology
 5. **Query language**: entities can be identified from text, IDs, or direct lookup — the entry point is flexible
 
-### 10.4 AAAK: AI-to-AI Knowledge Sync (Phase 45)
+### 10.4 Engram: AI-to-AI Knowledge Sync (Phase 45)
 
-As Knowledge Graphs scale, passing full natural language reasoning paths to LLMs becomes token-prohibitive. In Phase 45, we introduced the **AAAK (AI-to-AI Knowledge)** dialect — a high-density symbolic shorthand designed for machine-to-machine reasoning transfer.
+As Knowledge Graphs scale, passing full natural language reasoning paths to LLMs becomes token-prohibitive. In Phase 45, we introduced the **Engram shorthand** dialect — a high-density symbolic shorthand designed for machine-to-machine reasoning transfer.
 
-AAAK achieves **30x compression** by mapping relation types to single-character tokens (e.g., `!` for CAUSES, `~` for INFLUENCED) and truncating entity labels. This allows an LLM to consume a complete multi-hop reasoning trace in under 50 tokens, compared to ~500 for natural language.
+Engram shorthand achieves **30x compression** by mapping relation types to single-character tokens (e.g., `!` for CAUSES, `~` for INFLUENCED) and truncating entity labels. This allows an LLM to consume a complete multi-hop reasoning trace in under 50 tokens, compared to ~500 for natural language.
 
-**AAAK Symbolic Mapping Examples:**
+**Engram Symbolic Mapping Examples:**
 - `!` : CAUSES
 - `+` : TREATS
 - `*` : STARRED_IN
 - `~` : INFLUENCED
 - `≈` : REM_SYNTHESIZED (Structural Similarity)
 
-Example Trace: `AAAK:[Lansop!>Steven!>Trimet!>Agranu(c0.81)]`
+Example Engram trace: `Engram:[Lansop!>Steven!>Trimet!>Agranu(c0.81)]`
 (Translation: Lansoprazole causes Stevens-Johnson syndrome which causes Trimethoprim which causes Agranulocytosis).
 
 ---

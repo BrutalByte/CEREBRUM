@@ -9,7 +9,7 @@
 
 The current release (v2.0.1 / Phase 57) is a production-hardened reasoning engine with full fault tolerance, autonomous research capabilities, and durable learning memory. It answers multi-hop questions over knowledge graphs with full interpretability, no training data, and sub-millisecond latency. The core algorithms are stable, validated, and battle-hardened across 57 development phases.
 
-Key capabilities: TSC/DSCF community detection, 10-parameter CSA attention formula with online SGD and batch gradient retraining, AAAK-steered beam traversal with durable relation-pattern memory, GraphSAGE neighbourhood smoothing, TemporalCalibrator, HypothesisEngine abductive reasoning, autonomous ResearchAgent, observability dashboard, and comprehensive fault tolerance (graceful degradation on every failure mode).
+Key capabilities: TSC/DSCF community detection, 10-parameter CSA attention formula with online SGD and batch gradient retraining, Engram-steered beam traversal with durable relation-pattern memory, GraphSAGE neighbourhood smoothing, TemporalCalibrator, HypothesisEngine abductive reasoning, autonomous ResearchAgent, observability dashboard, and comprehensive fault tolerance (graceful degradation on every failure mode).
 
 This document describes the development history that produced this system. All work described below has been implemented and validated in the production codebase.
 
@@ -199,11 +199,11 @@ Following v1.4.0, CEREBRUM extended from a production reasoning engine into an a
 
 ---
 
-### AAAK-Steered Traversal with Durable Memory (Phases 45, 55, 57)
+### Engram-Steered Traversal with Durable Memory (Phases 45, 55, 57)
 
 **Problem**: Each query starts cold — the traversal has no memory of which reasoning chains have historically been productive.
 
-**Solution**: `AAAKCache` accumulates compressed relation-sequence patterns from successful queries. `AAAKBeamTraversal` biases beam pruning toward these patterns via a multiplicative score boost: `effective_score = score × (1 + aaak_strength × affinity)`. The cache persists to disk on shutdown and is restored on startup (two-tier: saved JSON → QueryLog replay), giving the system permanent memory of effective reasoning strategies. `QueryLog` appends every query to an NDJSON history file; `replay_into_cache()` warms `AAAKCache` on restart.
+**Solution**: `Engram` accumulates compressed relation-sequence patterns from successful queries. `EngramTraversal` biases beam pruning toward these patterns via a multiplicative score boost: `effective_score = score × (1 + engram_strength × affinity)`. The cache persists to disk on shutdown and is restored on startup (two-tier: saved JSON → QueryLog replay), giving the system permanent memory of effective reasoning strategies. `QueryLog` appends every query to an NDJSON history file; `replay_into_cache()` warms `Engram` on restart.
 
 **Biological analogy**: Long-term potentiation in hippocampal circuits — frequently-used reasoning pathways are strengthened and persist across sessions, analogous to memory consolidation during sleep.
 
@@ -216,11 +216,11 @@ Following v1.4.0, CEREBRUM extended from a production reasoning engine into an a
 **Solution**: Every failure mode is now independently isolated:
 
 - Traversal crashes return `partial=True` HTTP 200 responses with intermediate results collected in `BeamTraversal._partial_paths` per-hop checkpoints.
-- Persistence write failures (QueryLog, AAAKCache) are independently caught — neither can crash the `/query` endpoint.
+- Persistence write failures (QueryLog, Engram) are independently caught — neither can crash the `/query` endpoint.
 - The `/query/stream` endpoint yields a terminal error NDJSON chunk on traversal failure rather than silently terminating.
 - `GlobalRebalancer._rebalance_worker_inner` has a top-level crash guard preventing background thread death.
 - `best_of_n_dscf` falls back from `ProcessPoolExecutor` to sequential execution with a WARNING log on any executor failure.
-- `AAAKCache.save()/load()/save_if_path()` provides full persistence; lifespan `try/finally` saves the cache on server shutdown.
+- `Engram.save()/load()/save_if_path()` provides full persistence; lifespan `try/finally` saves the cache on server shutdown.
 
 ---
 

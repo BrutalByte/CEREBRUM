@@ -8,7 +8,7 @@
 ---
 
 ### Abstract
-Production Knowledge Graph reasoning servers face five distinct failure classes: traversal failures mid-hop, persistence write failures during query logging, stream interruptions visible to connected clients, process spawning failures during community detection, and state loss across server restarts. We document five corresponding fault-tolerance patterns implemented in CEREBRUM v2.0.1 (Phases 56–57): **partial-result HTTP 200 degradation** (`QueryResponse.partial`, `_partial_paths`), **write-failure isolation** (QueryLog, AAAKCache, GlobalRebalancer worker), **streaming error signalling** (terminal NDJSON error chunk), **ProcessPoolExecutor sequential fallback** (`best_of_n_dscf`), and **durable AAAKCache persistence** (save/load/two-tier startup). Together, these patterns guarantee that no single failure class can crash a running CEREBRUM server, corrupt an in-flight query, or silently drop accumulated reasoning experience. Each pattern is backward-compatible and adds no new required parameters to existing APIs.
+Production Knowledge Graph reasoning servers face five distinct failure classes: traversal failures mid-hop, persistence write failures during query logging, stream interruptions visible to connected clients, process spawning failures during community detection, and state loss across server restarts. We document five corresponding fault-tolerance patterns implemented in CEREBRUM v2.0.1 (Phases 56–57): **partial-result HTTP 200 degradation** (`QueryResponse.partial`, `_partial_paths`), **write-failure isolation** (QueryLog, Engram, GlobalRebalancer worker), **streaming error signalling** (terminal NDJSON error chunk), **ProcessPoolExecutor sequential fallback** (`best_of_n_dscf`), and **durable Engram persistence** (save/load/two-tier startup). Together, these patterns guarantee that no single failure class can crash a running CEREBRUM server, corrupt an in-flight query, or silently drop accumulated reasoning experience. Each pattern is backward-compatible and adds no new required parameters to existing APIs.
 
 ### 1. Introduction
 Production distributed systems face a fundamental asymmetry: failures are rare but their consequences are disproportionate. A single traversal crash that returns HTTP 500 may abort a client's multi-step reasoning workflow. A disk-full condition that propagates from a log write to a query response degrades system availability unnecessarily. A stream client that receives a TCP disconnect mid-stream has no way to distinguish a deliberate completion from a server crash.
@@ -37,7 +37,7 @@ The route handler returns HTTP 200 in both cases. Clients distinguish partial fr
 
 **Failure class**: Persistence write failures during query logging.
 
-**Scenario**: `QueryLog.record()` or `AAAKCache.record()` raises `OSError` (disk full) or `MemoryError` (OOM) during a live query. Without isolation, the exception propagates from the write call to the query route handler, converting a persistence failure into a query failure.
+**Scenario**: `QueryLog.record()` or `Engram.record()` raises `OSError` (disk full) or `MemoryError` (OOM) during a live query. Without isolation, the exception propagates from the write call to the query route handler, converting a persistence failure into a query failure.
 
 **Pattern**: All write calls in the hot query path are wrapped in `try/except Exception`:
 
@@ -99,13 +99,13 @@ Sequential execution is slower but produces identical results. The WARNING log m
 
 **Invariant preserved**: Server startup succeeds on any host that can run Python, regardless of process spawning constraints.
 
-### 6. Pattern 5 — Durable AAAKCache Persistence (Phase 57)
+### 6. Pattern 5 — Durable Engram Persistence (Phase 57)
 
 **Failure class**: State loss across server restarts.
 
-**Scenario**: The `AAAKCache` accumulates relation-sequence success counts during a server run. On planned or unplanned shutdown, these counts are lost. The next server run starts with a cold cache, discarding all learned reasoning experience.
+**Scenario**: The `Engram` accumulates relation-sequence success counts during a server run. On planned or unplanned shutdown, these counts are lost. The next server run starts with a cold cache, discarding all learned reasoning experience.
 
-**Pattern**: `AAAKCache` implements `save(path)` / `load(path)` / `save_if_path(path)`:
+**Pattern**: `Engram` implements `save(path)` / `load(path)` / `save_if_path(path)`:
 
 - `save(path)`: Serializes `_counts` as `[[seq_tuple, count], ...]` inside a `{"version": 1, ...}` JSON envelope.
 - `load(path)`: Deserializes and restores `_counts`; recomputes `_max_count` from the loaded values.
@@ -117,12 +117,12 @@ The FastAPI lifespan context manager integrates persistence:
 @asynccontextmanager
 async def lifespan(app):
     # Startup: two-tier warm-up
-    aaak_cache.load(cache_path)               # Tier 1: saved JSON
-    query_log.replay_into_cache(aaak_cache)   # Tier 2: QueryLog entries
+    engram.load(cache_path)               # Tier 1: saved JSON
+    query_log.replay_into_cache(engram)   # Tier 2: QueryLog entries
     try:
         yield
     finally:
-        aaak_cache.save_if_path(cache_path)   # Shutdown: persist counts
+        engram.save_if_path(cache_path)   # Shutdown: persist counts
 ```
 
 The `try/finally` in the lifespan guarantees that `save_if_path` is called even on unhandled exceptions during the application lifetime. Save failures are isolated with `try/except` and logged at WARNING.
@@ -137,7 +137,7 @@ The `try/finally` in the lifespan guarantees that `save_if_path` is called even 
 | Write Failure Isolation | Disk-full / OOM during logging | HTTP 500, query aborted | Write failures never degrade query availability |
 | Stream Error Signalling | Traversal failure mid-stream | Silent TCP disconnect | Stream failure always explicitly signalled |
 | ProcessPoolExecutor Fallback | Process spawn failure at startup | Server fails to start | Startup succeeds on any Python-capable host |
-| AAAKCache Persistence | Server restart | All learned patterns lost | Productive traces survive planned restarts |
+| Engram Persistence | Server restart | All learned patterns lost | Productive traces survive planned restarts |
 
 The five patterns are orthogonal: each addresses a distinct failure class and can be applied independently. Together, they provide defense-in-depth against the full set of operational failure modes observed in production KG reasoning deployments.
 

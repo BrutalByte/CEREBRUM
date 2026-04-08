@@ -28,7 +28,7 @@ See `PAPER.md` for the full white paper and architecture specification.
 
 **Current Project Status: v2.0.1 — Phase 57 COMPLETE — 1490+ tests passing (1 skipped)**
 
-- [x] **Phase 45: LLM-Knowledge Sync (AAAK)** — Implemented AAAK (AI-to-AI Knowledge) 30x reasoning compression dialect, real-time ingestion status trackers, and historical database management.
+- [x] **Phase 45: LLM-Knowledge Sync (Engram shorthand)** — Implemented Engram 30x reasoning compression dialect, real-time ingestion status trackers, and historical database management.
 
 - [x] **Phase 0: Theory & Prototyping** (DSCF validated in AI Personal Assistant)
 - [x] **Phase 1: Core Engine** (GraphAdapter, TSC Engine, CSA Attention)
@@ -77,9 +77,9 @@ See `PAPER.md` for the full white paper and architecture specification.
 - [x] **Phase 51 & 52: ResearchAgent + ExternalValidator** (v1.9.6) — Autonomous background daemon mining missing-link candidates via embedding similarity and InsightEngine seeding; LLM-independent external source validation; 7 new `/research/*` endpoints.
 - [x] **Phase 53: Adaptive Search Strategy** (v1.9.7) — `ResearchAgent` selects beam search parameters (depth, width, budget) based on local 2-hop neighborhood density; dense/sparse/mid tiers.
 - [x] **Phase 54: Observability Dashboard** (v1.9.8) — In-memory `RingBufferHandler` ring log; CORS + HTTP timing middleware; `GET/DELETE /logs`; `POST /build` hot-reload; dark-mode live dashboard (`ui/dashboard.html`).
-- [x] **Phase 55: GraphSAGE + AAAK + TemporalCalibrator + QueryLog** (v2.0.0) — `smooth_with_graphsage()` one-pass neighbourhood smoother; `AAAKCache` + `AAAKBeamTraversal` relation-pattern-steered beam pruning; `TemporalCalibrator` grid-search Recall@K calibration; `QueryLog` append-only NDJSON history with `replay_into_cache()` warm-up.
-- [x] **Phase 56: Fault Tolerance Hardening** (v2.0.1) — `QueryResponse.partial`/`.error` fields; `BeamTraversal._partial_paths` hop-level checkpoint; `/query` graceful degradation on traversal failure; QueryLog/AAAKCache write-failure isolation; `GlobalRebalancer` crash-guard worker split.
-- [x] **Phase 57: AAAKCache Persistence + Stream Guard** (v2.0.1) — `/query/stream` terminal error NDJSON chunk on crash; `best_of_n_dscf` `ProcessPoolExecutor` sequential fallback; `AAAKCache.save()`/`load()` with lifespan shutdown persistence.
+- [x] **Phase 55: GraphSAGE + Engram + TemporalCalibrator + QueryLog** (v2.0.0) — `smooth_with_graphsage()` one-pass neighbourhood smoother; `Engram` + `EngramTraversal` relation-pattern-steered beam pruning; `TemporalCalibrator` grid-search Recall@K calibration; `QueryLog` append-only NDJSON history with `replay_into_cache()` warm-up.
+- [x] **Phase 56: Fault Tolerance Hardening** (v2.0.1) — `QueryResponse.partial`/`.error` fields; `BeamTraversal._partial_paths` hop-level checkpoint; `/query` graceful degradation on traversal failure; QueryLog/Engram write-failure isolation; `GlobalRebalancer` crash-guard worker split.
+- [x] **Phase 57: Engram Persistence + Stream Guard** (v2.0.1) — `/query/stream` terminal error NDJSON chunk on crash; `best_of_n_dscf` `ProcessPoolExecutor` sequential fallback; `Engram.save()`/`load()` with lifespan shutdown persistence.
 
 
 ## Benchmark Results

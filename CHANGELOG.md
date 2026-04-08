@@ -10,12 +10,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [2.0.1] — 2026-04-07
 
 ### Added
-- **Phase 57: AAAKCache Persistence Across Restarts**:
-    - `_aaak_cache_path(cache_path)` helper derives `aaak_cache.json` path alongside graph cache (or `SAFE_DATA_DIR`).
-    - Lifespan `try/finally` block saves live `AAAKCache` to disk on server shutdown.
+- **Phase 57: Engram Persistence Across Restarts**:
+    - `_engram_cache_path(cache_path)` helper derives `engram_cache.json` path alongside graph cache (or `SAFE_DATA_DIR`).
+    - Lifespan `try/finally` block saves live `Engram` to disk on server shutdown.
     - Both `_load()` paths use two-tier warm-up: load saved JSON first, then merge incremental `QueryLog` entries on top.
-    - `AAAKCache.save()` / `AAAKCache.load()` / `AAAKCache.save_if_path()` persistence API.
-    - 12 new tests in `tests/test_fault_tolerance.py` (stream error chunk, ProcessPool fallback + warning, AAAKCache save/load roundtrip).
+    - `Engram.save()` / `Engram.load()` / `Engram.save_if_path()` persistence API.
+    - 12 new tests in `tests/test_fault_tolerance.py` (stream error chunk, ProcessPool fallback + warning, Engram save/load roundtrip).
 - **Phase 57: `/query/stream` Traversal Guard**:
     - `async for` in streaming generator wrapped in `try/except`; yields terminal `{"status": "error", "partial": true, "error": "..."}` NDJSON chunk on any traversal exception.
 - **Phase 57: `ProcessPoolExecutor` Sequential Fallback**:
@@ -26,7 +26,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     - `QueryResponse` now has `partial: bool = False` and `error: Optional[str] = None` fields (backward-compatible defaults).
     - `BeamTraversal._partial_paths` list checkpoints completed hops; survives mid-hop exceptions so `/query` can return partial results.
     - `/query` endpoint catches traversal exceptions and returns HTTP 200 with `partial=True` + error message rather than 500.
-    - `QueryLog.record()` and `AAAKCache.record()` failures are isolated (`try/except`) — neither crashes `/query`. Both log at `WARNING`.
+    - `QueryLog.record()` and `Engram.record()` failures are isolated (`try/except`) — neither crashes `/query`. Both log at `WARNING`.
     - `GlobalRebalancer._rebalance_worker` split into outer crash-guard + `_rebalance_worker_inner`; any inner exception is logged at `ERROR`, thread restarts on next trigger.
     - 15 new tests in `tests/test_fault_tolerance.py`.
 
@@ -35,16 +35,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 - **Phase 55: GraphSAGE Neighbourhood Smoothing**:
     - `smooth_with_graphsage(embeddings, G)` — one-pass mean neighbourhood aggregation applied after base encoding; `CerebrumGraph.build(use_graphsage=True)`.
-- **Phase 55: AAAK-Steered Traversal**:
-    - `AAAKCache` — thread-safe relation-pattern affinity store (relation_sequence → success_count); prefix-indexed for O(1) affinity lookup.
-    - `AAAKBeamTraversal` — extends `BeamTraversal`; biases `_prune_candidates()` via `effective_score = score × (1 + aaak_strength × affinity)`.
-    - On-startup `replay_into_cache()` warms `AAAKCache` from `QueryLog` NDJSON history.
+- **Phase 55: Engram-Steered Traversal**:
+    - `Engram` — thread-safe relation-pattern affinity store (relation_sequence → success_count); prefix-indexed for O(1) affinity lookup.
+    - `EngramTraversal` — extends `BeamTraversal`; biases `_prune_candidates()` via `effective_score = score × (1 + engram_strength × affinity)`.
+    - On-startup `replay_into_cache()` warms `Engram` from `QueryLog` NDJSON history.
 - **Phase 55: TemporalCalibrator**:
     - Grid-search calibration of CSA `eta` (temporal decay) and `iota` (node recency) to maximise Recall@K against a labelled validation set.
     - `calibrate()` / `apply()` / `measure_recall()` API; `try/finally` param restore guarantee.
 - **Phase 55: QueryLog**:
     - Append-only NDJSON query history in `core/persistence.py`. Records seeds, answers, and relation sequences after each reasoning call.
-    - `replay_into_cache(aaak_cache)` re-warms `AAAKCache` on process restart.
+    - `replay_into_cache(engram)` re-warms `Engram` on process restart.
 - **Phase 54: Observability Dashboard**:
     - `RingBufferHandler` in `core/log_config.py` — thread-safe in-memory ring buffer (5000 entries) feeding `GET /logs`.
     - `setup_logging()` configures the `cerebrum.*` logger hierarchy (console + optional rotating file + ring buffer).

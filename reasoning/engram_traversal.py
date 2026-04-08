@@ -1,33 +1,33 @@
 """
-AAAK-Steered Beam Traversal (Phase 55).
+Engram-Steered Beam Traversal (Phase 55).
 
-AAAKBeamTraversal extends BeamTraversal with a persistent relation-pattern
+EngramTraversal extends BeamTraversal with a persistent relation-pattern
 cache derived from previous successful reasoning paths.  After each query the
-compressed AAAK relation sequence is stored; on subsequent queries those
+compressed Engram relation sequence is stored; on subsequent queries those
 patterns bias the beam pruning step, effectively "caching" logical structure.
 
 Design
 ------
-AAAKCache
+Engram
     Thread-safe store:  relation_sequence_tuple → success_count.
     Records the relation-type sequences of *completed* high-confidence paths.
     Provides an affinity score (0..1) for any prefix sequence.
 
-AAAKBeamTraversal(BeamTraversal)
+EngramTraversal(BeamTraversal)
     Identical to BeamTraversal except:
     - Between candidate expansion and beam pruning at each hop, each candidate
       path receives an affinity boost proportional to how well its emerging
       relation sequence matches cached patterns.
-    - Boost formula: effective_score = score * (1 + aaak_strength * affinity)
+    - Boost formula: effective_score = score * (1 + engram_strength * affinity)
     - After traversal, the caller should call .record_answers(answers) to
       update the cache with successful paths from this query.
 
 Usage
 -----
-    from reasoning.aaak_steered_traversal import AAAKBeamTraversal, AAAKCache
+    from reasoning.engram_traversal import EngramTraversal, Engram
 
-    cache = AAAKCache()
-    traversal = AAAKBeamTraversal(adapter, csa, cache=cache, aaak_strength=0.3)
+    cache = Engram()
+    traversal = EngramTraversal(adapter, csa, cache=cache, engram_strength=0.3)
 
     paths = traversal.traverse(seeds)
     answers = extract(paths, ...)
@@ -46,11 +46,11 @@ from reasoning.traversal import BeamTraversal, TraversalPath
 from core.graph_adapter import GraphAdapter
 from core.attention_engine import CSAEngine
 
-_log = logging.getLogger("cerebrum.aaak")
+_log = logging.getLogger("cerebrum.engram")
 
 
 # ---------------------------------------------------------------------------
-# AAAK relation shorthand (mirrors AAAKVerbalizer._SHORTHAND)
+# Engram relation shorthand (mirrors EngramVerbalizer._SHORTHAND)
 # ---------------------------------------------------------------------------
 
 _SHORTHAND: Dict[str, str] = {
@@ -69,7 +69,7 @@ _SHORTHAND: Dict[str, str] = {
 
 
 def _compress_rel(rel: str) -> str:
-    """Compress a relation type to its AAAK shorthand, or keep as-is."""
+    """Compress a relation type to its Engram shorthand, or keep as-is."""
     return _SHORTHAND.get(rel.upper(), rel)
 
 
@@ -85,10 +85,10 @@ def _path_rel_sequence(path: TraversalPath) -> Tuple[str, ...]:
 
 
 # ---------------------------------------------------------------------------
-# AAAKCache
+# Engram
 # ---------------------------------------------------------------------------
 
-class AAAKCache:
+class Engram:
     """
     Thread-safe cache of relation-sequence patterns from successful paths.
 
@@ -197,10 +197,10 @@ class AAAKCache:
             }
         with open(p, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
-        _log.info("AAAKCache saved: %d patterns → %s", len(data["counts"]), p)
+        _log.info("Engram saved: %d patterns → %s", len(data["counts"]), p)
 
     @classmethod
-    def load(cls, path: str) -> "AAAKCache":
+    def load(cls, path: str) -> "Engram":
         """
         Load a previously saved cache from *path*.
 
@@ -209,7 +209,7 @@ class AAAKCache:
         """
         p = Path(path)
         if not p.exists():
-            _log.info("AAAKCache: no file at %s — starting empty", p)
+            _log.info("Engram: no file at %s — starting empty", p)
             return cls()
         with open(p, encoding="utf-8") as f:
             data = json.load(f)
@@ -221,7 +221,7 @@ class AAAKCache:
             cache._max_count = max(cache._max_count, cnt)
             for k in range(1, len(seq) + 1):
                 cache._prefix[seq[:k]] += cnt
-        _log.info("AAAKCache loaded: %d patterns ← %s", len(cache._counts), p)
+        _log.info("Engram loaded: %d patterns ← %s", len(cache._counts), p)
         return cache
 
     def save_if_path(self, path: Optional[str]) -> None:
@@ -231,17 +231,17 @@ class AAAKCache:
 
 
 # ---------------------------------------------------------------------------
-# AAAKBeamTraversal
+# EngramTraversal
 # ---------------------------------------------------------------------------
 
-class AAAKBeamTraversal(BeamTraversal):
+class EngramTraversal(BeamTraversal):
     """
-    Beam traversal variant that uses an AAAKCache to bias beam pruning.
+    Beam traversal variant that uses an Engram to bias beam pruning.
 
     At each hop, before pruning candidates to beam_width, each candidate path
     receives a score boost:
 
-        effective_score = path.score * (1 + aaak_strength * affinity)
+        effective_score = path.score * (1 + engram_strength * affinity)
 
     where affinity ∈ [0, 1] is how well the candidate's relation prefix
     matches previously-cached patterns.  Paths with no matching pattern
@@ -249,29 +249,29 @@ class AAAKBeamTraversal(BeamTraversal):
 
     Parameters
     ----------
-    cache         : AAAKCache instance (shared across queries for persistence)
-    aaak_strength : multiplicative boost ceiling (default 0.3 → max 30% boost)
+    cache           : Engram instance (shared across queries for persistence)
+    engram_strength : multiplicative boost ceiling (default 0.3 → max 30% boost)
     All other parameters are forwarded to BeamTraversal.
     """
 
     def __init__(
         self,
         *args,
-        cache: Optional[AAAKCache] = None,
-        aaak_strength: float = 0.3,
+        cache: Optional[Engram] = None,
+        engram_strength: float = 0.3,
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self.cache = cache or AAAKCache()
-        self.aaak_strength = aaak_strength
+        self.cache = cache or Engram()
+        self.engram_strength = engram_strength
 
     def _boosted_score(self, path: TraversalPath) -> float:
-        """Compute the AAAK-boosted effective score for beam pruning."""
+        """Compute the Engram-boosted effective score for beam pruning."""
         rel_seq = _path_rel_sequence(path)
         if not rel_seq:
             return path.score
         aff = self.cache.affinity(rel_seq)
-        return path.score * (1.0 + self.aaak_strength * aff)
+        return path.score * (1.0 + self.engram_strength * aff)
 
     def _prune_candidates(
         self,
@@ -279,7 +279,7 @@ class AAAKBeamTraversal(BeamTraversal):
         hop: int,
     ) -> List[TraversalPath]:
         """
-        AAAK-steered pruning: rank by AAAK-boosted score instead of raw score.
+        Engram-steered pruning: rank by Engram-boosted score instead of raw score.
 
         Candidates whose relation-sequence prefix matches a cached successful
         pattern receive a multiplicative boost proportional to the cache
@@ -299,7 +299,7 @@ class AAAKBeamTraversal(BeamTraversal):
         min_score: float = 0.3,
     ) -> None:
         """
-        Feed successful answers back into the AAAKCache.
+        Feed successful answers back into the Engram.
 
         Call this after each query to accumulate relation patterns.
 
@@ -319,3 +319,5 @@ class AAAKBeamTraversal(BeamTraversal):
                 # Weight by score so high-confidence paths influence more
                 weight = max(1, int(ans.score * 10))
                 self.cache.record(rel_seq, weight=weight)
+
+
