@@ -51,7 +51,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v2.0.1 (Phase 57 COMPLETE)** — 1490+ tests passing.
+**v2.0.2 (Phase 58 COMPLETE)** — 1513+ tests passing.
 
 ### System Architecture Names
 | Name | Role |
@@ -92,6 +92,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 - **AAAK-Steered Traversal**: `AAAKCache` + `AAAKBeamTraversal` — persistent relation-pattern cache derived from previous successful AAAK traces. Biases beam pruning toward known-productive reasoning chains via a multiplicative affinity boost on `_prune_candidates()` (Phase 55).
 - **TemporalCalibrator**: Grid-search calibration of `eta` (temporal decay) and `iota` (node recency) against a labelled validation set to maximise Recall@K. `calibrate()` / `apply()` / `measure_recall()` API; restores original CSA params after each evaluation (Phase 55).
 - **QueryLog**: Append-only NDJSON query history in `core/persistence.py`. Records seeds, answers, and relation sequences after each reasoning call. `replay_into_cache(aaak_cache)` warms up `AAAKCache` on restart so learned relation patterns survive process restarts (Phase 55).
+- **SpeedTalk Encoding**: Heinlein-inspired phonemic compression for the AAAK cache (Phase 58). Each relation type in the loaded KG is assigned a single-character "phoneme" from a 62-symbol alphabet (a–z, A–Z, 0–9). Relation sequences stored as compact strings rather than verbose tuples — 8–20× key compression. The phonemic representation preserves prefix structure, enabling `prefix_query(*rels)` — find all cached patterns starting with a given relation type in O(P) without full-scan. Alphabet is automatically tuned to the loaded graph via `adapt_to_graph()` or `from_graph_adapter()` — most-traversed relation types get the shortest symbols. `SpeedTalkAAAKCache` and `SpeedTalkAAAKBeamTraversal` are drop-in replacements for their Phase-55 counterparts.
 
 ## Install & Development Commands
 
@@ -183,6 +184,7 @@ Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`
 | `core/kge_engine.py` | Optional | TransE/RotatE graph-native embedding training |
 | `core/embedding_engine.py` | **THALAMUS** | `smooth_with_graphsage()` — GraphSAGE one-pass neighbourhood smoother |
 | `reasoning/aaak_steered_traversal.py` | **CORTEX** | `AAAKCache` + `AAAKBeamTraversal` — AAAK-pattern-steered beam pruning |
+| `reasoning/speedtalk_cache.py` | **CORTEX** | `SpeedTalkEncoder` + `SpeedTalkAAAKCache` + `SpeedTalkAAAKBeamTraversal` — Heinlein phonemic compression; prefix queries; graph-adaptive alphabet |
 | `core/temporal_calibrator.py` | **CORTEX** | `TemporalCalibrator` — grid-search calibration of eta/iota for Recall@K |
 | `core/persistence.py` | Persistence | `save_state()` / `load_state()` / `QueryLog` — durable query history + AAAK cache warm-up |
 | `api/` | Interface | FastAPI REST server (see API Endpoints below) |
@@ -234,5 +236,5 @@ Implement the abstract `GraphAdapter` interface in `core/graph_adapter.py`, foll
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)
 - Synthetic graph helpers (`make_two_cliques()`, etc.) live in `tests/` for unit tests that don't need the CSV fixture
-- **1490+ tests passing as of v2.0.1 / Phase 57** (1 skipped)
+- **1513+ tests passing as of v2.0.2 / Phase 58** (1 skipped)
 - Type checker: no mypy/ruff configured as hard gate; run `python -m pytest tests/` as verification

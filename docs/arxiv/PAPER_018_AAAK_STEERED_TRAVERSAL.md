@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.0.1 (Phase 57 COMPLETE)  
+**Status**: v2.0.2 (Phase 58 COMPLETE)  
 **Date**: April 2026
 
 ---
@@ -71,6 +71,8 @@ The `QueryLog` replay on startup is similarly isolated: if the log file is corru
 
 ### 5. Conclusion
 AAAK-steered traversal demonstrates that meaningful learning from experience does not require gradient descent. By accumulating relation-sequence success counts in a persistent, durable cache and applying a multiplicative affinity boost during beam pruning, the system biases future queries toward known-productive reasoning chains without modifying graph structure, CSA parameters, or the beam search algorithm. Two-tier warm-up on startup ensures that no productive reasoning trace is lost across process restarts.
+
+*See also:* **Paper 021** — SpeedTalk-Compressed AAAK: Phonemic Encoding for Relation-Pattern Caches — extends this work with Heinlein-inspired single-character phoneme compression (8–20× key reduction), graph-adaptive alphabet tuning, and first-class prefix-query support.
 
 ---
 **References**
