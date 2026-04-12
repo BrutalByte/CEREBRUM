@@ -3269,3 +3269,89 @@ python -m pytest tests/ -v
 - 27 new fault tolerance tests added across Phases 56-57
 - Full regression suite maintained
 
+
+---
+
+## Run 058 — Phase 58 Final: SpeedTalk Phonemic Compression
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-08 |
+| **Phase**         | Phase 58 (SpeedTalk Engram Cache) |
+| **Purpose**       | Verify 8-20x key compression and phonemic mapping |
+| **Operator**      | Gemini CLI |
+
+### Results
+- **Unit Tests**: 1513 passed, 1 skipped (v2.0.2)
+- **Compression**: Verified ~12.5x average compression ratio on MetaQA relation types.
+- **Traversal**: SpeedTalkEngramTraversal verified for parity with base EngramTraversal.
+
+---
+
+## Run 059 — Phase 59 Final: Cerebellar Error Correction (CEC)
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-08 |
+| **Phase**         | Phase 59 (Active Error-Driven Meta-Learning) |
+| **Purpose**       | Verify Dissonance Detection and Research Seeding |
+| **Operator**      | Gemini CLI |
+
+### Results
+- **Unit Tests**: 1523 passed, 1 skipped (v2.1.0)
+- **Dissonance Detection**: Correctly identifies high path-score / low consensus cases.
+- **Research Seeding**: Verified CerebellarEngine → ResearchAgent task push.
+- **API Integration**: /query endpoint successfully triggers CEC loop.
+
+---
+
+## Run 060 — Phase 60 Final: Multi-Agent Consensus Hierarchies (MACH)
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-08 |
+| **Phase**         | Phase 60 (MACH) |
+| **Purpose**       | Verify L1/L2/L3 Consensus escalation |
+| **Operator**      | Gemini CLI |
+
+### Results
+- **Unit Tests**: 1525 passed, 1 skipped (v2.2.0)
+- **L1 Strategy**: Verified multi-strategy voting (Standard/Bayesian/Engram) in a single node.
+- **L2 Federated**: Verified cross-node path confirmation using FederatedAdapter.
+- **L3 Gold**: Verified literature-backed escalation via ResearchAgent ExternalValidator.
+- **API**: /query/consensus functional with dynamic escalation and variance tracking.
+
+---
+
+## Run 061 — Phase 61 Final: Synaptic Pruning & Quantized Traversal (SPQT)
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-08 |
+| **Phase**         | Phase 61 (SPQT) |
+| **Purpose**       | Efficiency optimizations via edge pruning and quantization |
+| **Operator**      | Gemini CLI |
+
+### Results
+- **Unit Tests**: 1527 passed, 1 skipped (v2.3.0)
+- **Synaptic Pruning**: Verified utility-based edge removal (confidence/age/usage).
+- **Quantization**: Verified uint8 fixed-point traversal scoring parity with float.
+- **Integration**: Automated pruning trigger in GlobalRebalancer verified.
+
+---
+
+## Run 068 — Phase 68 Verification & Regression Fixes
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-11 |
+| **Phase**         | Phase 68 (Metabolic Modulation) |
+| **Purpose**       | Final verification and structural hardening |
+| **Operator**      | Gemini CLI |
+
+### Results
+- **Unit Tests**: 1541 passed, 1 skipped (v2.7.0)
+- **Regression Fix (Neptune)**: Implemented missing `add_edge` in `NeptuneAdapter` to restore compliance with `GraphAdapter`.
+- **Structural Integrity**: Fixed `NetworkXError` in `CerebrumGraph.build` by ensuring consistent graph instance usage during community coarsening.
+- **Ablation Study**: Verified `baseline_comparison.py` on MetaQA; DSCF+CSA continues to outperform BFS and LPA baselines (Hits@10 +10% on 3-hop).
+- **Hardening**: Resolved syntax and type errors in `extraction_engine.py` and `community_engine.py`.

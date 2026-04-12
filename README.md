@@ -317,17 +317,23 @@ $$\text{score}(P) = \left( \prod_{k=1}^L a(u_k, v_k, k) \right) \cdot \text{cohe
 - **Context Window Invariance**: Sublinear complexity independent of graph size.
 - **Topological Analysis**: Inductive bias derived from graph topology requires zero training.
 
-## Project Status (v2.0.1 — Phase 57 COMPLETE)
+## Project Status (v2.7.0 — Phase 68 COMPLETE)
 
-CEREBRUM is currently at **v2.0.1**. All **1490+ tests** are passing (1 skipped).
+CEREBRUM is currently at **v2.7.0**. All **1540+ tests** are passing (1 skipped).
 
-Key features in v1.8.0 (Phases 31-44):
-- **Phase 44: IKGWQ-MetaQA Benchmark**: Unified the IKGWQ (Incomplete Knowledge Graph) protocol across the MetaQA dataset, verifying that REM Synthesis ("Wormhole" synthesis) improves 3-hop reasoning recall by up to 40% on highly sparse graphs (Level 4, 50% edge removal).
-- **Phase 43: Temporal Sliding Window**: Integrated `temporal_window_size` and verified REM Synthesis effectiveness on sparse graphs (IKGWQ-S).
-- **Phase 42: Interface Robustness**: Secured REST API endpoints, stabilized Gradio UI f-string syntax, and implemented automated headless robustness tests for the full Reasoning Studio pipeline.
-- **Phase 41: Temporal Reasoning**: Corrected recency bias and integrated 9-feature `ReasoningLogit` framework for unified scoring across temporal and structural signals.
+Key features in recent phases:
+- **Phase 68: Metabolic Modulation Suite**: Introduced a dynamic "hormonal" state machine using functional scalars: **Reinforcement** (Dopamine), **Arousal** (Norepinephrine), **Novelty** (Acetylcholine), **Cohesion** (Oxytocin), and **Persistence** (Vasopressin). Features homeostatic decay and dynamic parameter regulation.
+- **Phase 65: Autonomous Hypothesis Materialization**: ResearchAgent results can now be formally committed to the graph with Noisy-OR confidence and discovery provenance.
+- **Phase 64: Neural Memory Consolidation**: Automatic promotion of high-utility relation patterns to permanent "Canonical Engrams."
+- **Phase 63: Neural Telemetry Bridge**: Real-time event streaming for 3D visualization (e.g., Unreal Engine 5).
+- **Phase 62: Explainable Reasoning Trace (ERT)**: Introduced "glass-box" decision transparency with hop-by-hop logs of winners and pruned competitors, including 10-parameter Attention Radars.
+- **Phase 61: Synaptic Pruning & Quantized Traversal (SPQT)**: Added utility-based edge removal and `uint8` fixed-point traversal scoring for enterprise-scale efficiency.
+- **Phase 60: Multi-Agent Consensus Hierarchies (MACH)**: Three-tier reasoning verification (L1 Strategy, L2 Federated, L3 Gold Literature).
+- **Phase 59: Cerebellar Error Correction (CEC)**: Active error-driven meta-learning via dissonance detection.
+- **Phase 58: SpeedTalk Encoding**: Phonemic compression for Engram keys (8-20x space savings).
+- **Phase 57: Engram Persistence**: Durable storage for successful reasoning patterns across restarts.
+- **Phase 44: IKGWQ-MetaQA Benchmark**: Verified REM Synthesis ("Wormhole") improves 3-hop recall by up to 40% on sparse graphs.
 - **Reasoning Studio**: Gradio-based visual interface for interactive KG exploration and reasoning traces.
-- **Proactive Bridge Synthesis**: `GraphBridgeEngine` addresses fragmentation by synthesizing similarity-based links between disconnected components.
 
 ## Authors
 

@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: March 2026
-**Status**: Version 2.0.1 · Phase 57 COMPLETE — 1490+ tests passing
+**Status**: Version 2.7.0 · Phase 68 COMPLETE — 1540+ tests passing
 **License**: Proprietary — all rights reserved
 
 ---
@@ -54,16 +54,17 @@ CSA (attention weight for edge u→v at hop k):
 | Context window | Ego-network radius R |
 | KV cache | Materialized path store |
 | Fine-tuning | CSAParameterLearner.fit() via POST /retrain |
+| Metabolic State | ChemicalModulator (Reinforcement, Arousal, Novelty, Cohesion, Persistence) |
 
 **Repo layout** (target structure for standalone project):
 
 ```
 parallax/
-├── core/          graph_adapter, embedding_engine, community_engine, attention_engine, structural_encoder
-├── reasoning/     traversal, path_scorer, answer_extractor
+├── core/          graph_adapter, embedding_engine, community_engine, attention_engine, structural_encoder, chemical_modulator
+├── reasoning/     traversal, path_scorer, answer_extractor, trace, engram_consolidation
 ├── adapters/      networkx, neo4j, rdf, csv
 ├── llm_bridge/    context_formatter
-├── api/           server, schemas
+├── api/           server, schemas, telemetry_bridge
 ├── cli/           cerebrum.py
 ├── tests/         test_dscf, test_csa, test_traversal, fixtures/toy_graph.csv
 ├── benchmarks/    webqsp_eval, metaqa_eval, baseline_comparison
@@ -73,7 +74,7 @@ parallax/
 └── PAPER.md       (this file)
 ```
 
-**Current phase**: Phase 57 complete (v2.0.1). CEREBRUM now includes GraphSAGE neighbourhood smoothing (`smooth_with_graphsage`), Engram-steered beam traversal (`Engram` + `EngramTraversal`) with durable persistence across restarts, `TemporalCalibrator` for Recall@K-optimal eta/iota calibration, `QueryLog` append-only history for warm-up, `HypothesisEngine` multi-path abductive reasoning, `ResearchAgent` autonomous missing-link discovery, `ExternalValidator` LLM-independent source validation, an observability dashboard, and comprehensive fault tolerance hardening (graceful degradation, partial-result responses, crash-guard GlobalRebalancer, stream error chunks). 1490+ tests passing.
+**Current phase**: Phase 68 complete (v2.7.0). CEREBRUM now includes Metabolic Homeostasis via dynamic functional regulation (Reinforcement, Arousal, Novelty, Cohesion, Persistence), Explainable Reasoning Trace (ERT) for "glass-box" transparency, Synaptic Pruning & Quantized Traversal (SPQT) for enterprise efficiency, Multi-Agent Consensus Hierarchies (MACH) for three-tier reasoning verification, Cerebellar Error Correction (CEC) for active error-driven meta-learning, SpeedTalk phonemic compression for Engram keys, GraphSAGE neighbourhood smoothing, Engram-steered beam traversal, `TemporalCalibrator`, `QueryLog`, `HypothesisEngine`, `ResearchAgent`, an observability dashboard, and comprehensive fault tolerance hardening. 1540+ tests passing.
 
 ---
 

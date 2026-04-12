@@ -198,6 +198,22 @@ class ResearchAgent:
         with self._lock:
             self._validator = validator
 
+    def push_candidate(self, candidate: ResearchCandidate) -> bool:
+        """
+        Externally push a candidate for evaluation in the next scan cycle.
+        Returns True if the candidate was added, False if it was already evaluated.
+        """
+        pair = (candidate.source_id, candidate.target_id)
+        with self._lock:
+            if pair in self._evaluated_pairs:
+                return False
+            # We don't have a dedicated 'incoming' queue in the original code,
+            # but we can implement one or just use a small list.
+            if not hasattr(self, "_pushed_candidates"):
+                self._pushed_candidates: List[ResearchCandidate] = []
+            self._pushed_candidates.append(candidate)
+            return True
+
     # ------------------------------------------------------------------
     # Results
     # ------------------------------------------------------------------
@@ -392,6 +408,12 @@ class ResearchAgent:
         candidates: List[ResearchCandidate] = []
 
         try:
+            # --- Pushed candidates (High Priority) ---
+            with self._lock:
+                if hasattr(self, "_pushed_candidates") and self._pushed_candidates:
+                    candidates.extend(self._pushed_candidates)
+                    self._pushed_candidates = []
+
             G = self._adapter.to_networkx()
             nodes = list(G.nodes())
             cmap: Dict[str, int] = getattr(self._adapter, "community_map", {}) or {}

@@ -12,6 +12,8 @@ class MockAdapter(GraphAdapter):
         return self.community_map.get(node, -1)
     def get_embedding(self, node: str) -> Optional[np.ndarray]:
         return self.embeddings.get(node)
+    def add_edge(self, u, v, relation, confidence=1.0, provenance="", synthetic=False):
+        pass
     def get_neighbors(self, *args, **kwargs) -> list: return []
     def find_similar(self, *args, **kwargs) -> list: return []
     def find_entities(self, *args, **kwargs) -> list: return []

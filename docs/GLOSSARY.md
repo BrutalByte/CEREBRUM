@@ -6,14 +6,11 @@ Definitions of all CEREBRUM-specific terms, algorithms, and architectural concep
 
 ## A
 
-**EngramTraversal**
-A `BeamTraversal` subclass that applies a multiplicative affinity boost to candidate path scores during `_prune_candidates()`: `effective_score = score × (1 + engram_strength × affinity)`. The `affinity` is computed from the `Engram` prefix index by matching the path's emerging relation sequence against stored patterns.
-
-**Engram**
-Thread-safe in-memory store mapping relation-sequence tuples to success counts, used by `EngramTraversal` to bias beam pruning toward known-productive reasoning chains. Built from prior successful query paths. Persists to disk on server shutdown (`save_if_path()`) and is restored on startup (`load()`) with incremental `QueryLog` replay merged on top.
-
 **Answer Extractor**
 The final stage of the CORTEX reasoning pipeline. Takes ranked `ReasoningPath` objects from `PathScorer` and extracts the terminal entity of each path as a candidate answer. Returns answers with associated CSA scores, path confidence, and HMAC provenance signatures.
+
+**Arousal**
+The functional name for the "Norepinephrine" scalar in the `ChemicalModulator` (Phase 68). Linked to cognitive dissonance frequency. High Arousal dynamically scales the `beam_width` and relaxes pruning thresholds, forcing the system to perform a more thorough, high-alert search when uncertain.
 
 **AsyncBeamTraversal**
 An async/await variant of `BeamTraversal` (see below) that supports streaming partial results via async generators. Used by the SSE streaming endpoints.
@@ -65,6 +62,15 @@ The combined protection system in `STDPDiscretizer`: `min_causal_span` (minimum 
 **CEREBRUM**
 The overarching product and framework name. **C**ommunity-Structur**E**d g**R**aph att**E**ntion for knowledge g**R**aph reas**O**ning with **M**ulti-hop traversal. The complete system including THALAMUS (ingestion), CORTEX (reasoning), REM Engine (maintenance), and Bridge Twin Engine.
 
+**Cerebellar Error Correction (CEC)**
+An active error-driven meta-learning loop (Phase 59) that detects "dissonant" predictions — paths with high CSA scores but low consensus across multiple independent reasoning strategies (MACH L1). CEC triggers autonomous external validation via `ResearchAgent` to correct structural reasoning errors.
+
+**ChemicalModulator**
+The bio-mimetic regulation system (Phase 68) that manages the global reasoning state via metabolic scalars (**Reinforcement**, **Arousal**, **Novelty**, **Cohesion**, **Persistence**). Implements homeostatic decay, pulling all levels back to a resting baseline after each query completion.
+
+**Cohesion**
+The functional name for the "Oxytocin" scalar in the `ChemicalModulator` (Phase 68). Promotes community stability by scaling the community membership term ($\beta$) in the CSA formula. High Cohesion levels favor intra-community reasoning over cross-domain "leaps."
+
 **Community (Graph)**
 A group of nodes that are more densely connected to each other than to the rest of the graph. In CEREBRUM, communities are detected by DSCF and serve as the "attention heads" for CSA reasoning. Nodes within the same community receive a bonus in the CSA formula.
 
@@ -92,6 +98,9 @@ The Phase 32 component that aggregates and normalizes reasoning path scores from
 
 ## D
 
+**Dissonance (Cognitive)**
+A state detected by the `CerebellarEngine` when different reasoning strategies or agents produce conflicting results for the same seed. Quantified as the variance between CSA scores and Consensus scores. High dissonance triggers an **Arousal Surge** to increase search breadth.
+
 **Discovery Engine**
 The Phase 32 federated component that automates the dynamic discovery of remote CEREBRUM reasoning nodes. Uses the Holographic Index to identify nodes with relevant community overlaps or entity aliases.
 
@@ -114,8 +123,17 @@ A reasoning pathology detected by the MetaInsightEngine: more than 60% of succes
 **EmbeddingEngine**
 THALAMUS component that generates vector embeddings for graph entities. Two backends: `random` (default, reproducible random vectors) and `sentence-transformers` (semantic embeddings from text). KGE backends (TransE, RotatE) are available as optional drop-ins.
 
+**Engram**
+Thread-safe in-memory store mapping relation-sequence tuples to success counts, used by `EngramTraversal` to bias beam pruning toward known-productive reasoning chains. Built from prior successful query paths. Persists to disk on server shutdown (`save_if_path()`) and is restored on startup (`load()`) with incremental `QueryLog` replay merged on top.
+
+**EngramTraversal**
+A `BeamTraversal` subclass that applies a multiplicative affinity boost to candidate path scores during `_prune_candidates()`: `effective_score = score × (1 + engram_strength × affinity)`. The `affinity` is computed from the `Engram` prefix index by matching the path's emerging relation sequence against stored patterns.
+
 **Entity**
 A node in the Knowledge Graph. Represented by a unique string identifier. Carries metadata: embedding vector, structural features (PageRank, betweenness, degree), community membership.
+
+**Explainable Reasoning Trace (ERT)**
+A "glass-box" telemetry framework (Phase 62) that captures the per-hop decision state of the beam search. ERT logs all winners and top rejected competitors at every step, including their 10-parameter ReasoningLogit feature radars, providing a complete audit trail of the reasoning process.
 
 ---
 
@@ -212,6 +230,12 @@ The biological analog for Bridge Twin node creation: when two entities in differ
 
 ## M
 
+**MACH (Multi-Agent Consensus Hierarchies)**
+A three-tier reasoning verification framework (Phase 60):
+- **L1 (Strategy)**: Multi-strategy local voting (DSCF vs. BFS vs. KGE).
+- **L2 (Federated)**: Cross-node path verification in a cluster.
+- **L3 (Gold Literature)**: ResearchAgent validation against external scientific literature.
+
 **MetaInsightEngine**
 The second-order reasoning component. Constructs a graph over `InsightEvent` nodes connected by typed edges (TRIGGERED_BY, CONTRADICTS, REINFORCES, CO_OCCURRED). Runs standard CSA traversal on this event graph to detect reasoning pathologies (community lock-in, relation starvation, depth asymmetry).
 
@@ -231,12 +255,21 @@ Answering questions that require traversing multiple edges in sequence: e.g., "W
 **Namespace (Entity ID)**
 A prefix string applied to entity IDs to isolate them from other modality spaces. Format: `"namespace:entity_id"`. Example: `"signal:Temp_Sensor_1"` vs `"text:Temp_Sensor_1"`.
 
+**Neural Telemetry**
+The real-time event-streaming protocol (Phase 63) that broadcasts reasoning pulses (`SYNAPTIC_PULSE`), node creation (`NEUROGENESIS`), and pruning (`SYNAPTIC_PRUNE`) via WebSockets. Enables 3D observability in external game engine clients.
+
+**Novelty**
+The functional name for the "Acetylcholine" scalar in the `ChemicalModulator` (Phase 68). Mimics the biological role of sensory focus vs. prior knowledge. High Novelty boosts the semantic similarity term ($\alpha$) and suppresses the community structure term ($\beta$), allowing the system to focus on immediate data novelty over structural expectations.
+
 ---
 
 ## P
 
 **PageRank (PR)**
 A graph centrality measure (part of StructuralEncoder) used as the sixth term in the CSA formula ($\zeta \cdot PR(v)$). High PageRank nodes receive a traversal bonus, reflecting their structural importance.
+
+**Persistence**
+The functional name for the "Vasopressin" scalar in the `ChemicalModulator` (Phase 68). Linked to long-term memory formation. High Persistence levels increase the multiplier for Engram pattern-steering and lower the threshold for promoting patterns to "Canonical Engrams" via the `EngramConsolidator`.
 
 **PathScorer**
 CORTEX component that ranks `ReasoningPath` objects using the composite score:
@@ -261,6 +294,9 @@ The mathematical core of `SignalEncoder`'s cross-modal alignment. Computes a rot
 
 ## Q
 
+**Quantized Traversal**
+An efficiency optimization (Phase 61) that uses `uint8` fixed-point math for path scoring instead of 64-bit floats. Maps the probability range [0.0, 1.0] to the integer range [0, 255], reducing memory footprint and increasing traversal speed during large-scale beam search.
+
 **Query Snapshot Isolation**
 `CSAEngine.set_query_snapshot(community_map)` — captures the community map at query start and uses it exclusively throughout the query. Prevents GlobalRebalancer mid-query atomic swaps from producing inconsistent CSA weights across hops (Phase 20 fix, Hole 5).
 
@@ -270,6 +306,9 @@ An append-only NDJSON file (`data/cerebrum/query_log.ndjson` by default) that re
 ---
 
 ## R
+
+**Reinforcement**
+The functional name for the "Dopamine" scalar in the `ChemicalModulator` (Phase 68). Tracks "Reward Prediction Error" (RPE) derived from user feedback (`POST /feedback`). Reinforcement surges amplify the semantic ($\alpha$) and edge-type ($\gamma$) weights, reinforcing successful relation sequences in the reasoner's attention formula.
 
 **REM Cycle (Rapid Edge Maintenance)**
 Background metacognitive maintenance loop. Runs on three schedules: Hot Path (10 min, TTL edge pruning), Cold Path (1 hour, insight validation + decay), REM Path (daily/triggered, full DSCF re-optimization). Inspired by biological sleep-cycle memory consolidation.
@@ -299,6 +338,9 @@ The exponential decay multiplier applied to `INSIGHT_LINK` edges in the REM Cycl
 **Soft Community Membership**
 `CommunityEngine(soft_membership=True)` — each node carries a probability distribution over communities rather than a single hard assignment. Community consensus term uses the dot product of membership distributions: $S_C^{soft}(u,v) = \sum_k p_k^{(u)} \cdot p_k^{(v)}$ (Phase 17 feature).
 
+**SpeedTalk Encoding**
+A Heinlein-inspired phonemic compression algorithm (Phase 58) for the `Engram` cache. Maps KG relation types to single characters, achieving 8-20x compression while preserving prefix structure for O(P) pattern queries.
+
 **STDP (Spike-Timing-Dependent Plasticity)**
 The neuroscientific mechanism inspiring `STDPDiscretizer`. In biology, a synapse strengthens if the pre-synaptic neuron fires before the post-synaptic neuron (LTP), and weakens otherwise. CEREBRUM applies this principle to event streams: if entity A's events consistently precede entity B's events, a directional `CAUSES` edge is materialized.
 
@@ -313,6 +355,9 @@ THALAMUS component computing per-node structural features: PageRank, betweenness
 
 **Structural Hole**
 A cross-feature interaction bug where two independently-correct subsystems produce incorrect outcomes when combined. Eight structural holes were identified and patched in Phases 19–20. See SPEC_016 for full taxonomy.
+
+**Synaptic Pruning**
+The periodic removal of low-utility synthetic edges (Phase 61) based on confidence, age, and usage patterns. Mimics biological synaptic homeostasis to maintain graph sparsity and reasoning performance.
 
 ---
 

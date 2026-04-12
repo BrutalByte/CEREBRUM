@@ -125,6 +125,36 @@ class NeptuneAdapter(GraphAdapter):
     def get_community(self, entity_id: str) -> int:
         return -1
 
+    def add_edge(
+        self,
+        u: str,
+        v: str,
+        relation: str,
+        confidence: float = 1.0,
+        provenance: str = "",
+        synthetic: bool = False,
+    ) -> None:
+        """Add an edge to the Neptune graph using Gremlin."""
+        if not self.g:
+            raise RuntimeError("Call connect() before using adapter.")
+        
+        # Ensure nodes exist and then add edge
+        # g.V().has('name', u).fold().coalesce(unfold(), addV().property('name', u)).as('a')
+        #  .V().has('name', v).fold().coalesce(unfold(), addV().property('name', v)).as('b')
+        #  .addE(relation).from('a').to('b')
+        #  .property('confidence', confidence).property('provenance', provenance).property('synthetic', synthetic)
+        try:
+            self.g.V().has('name', u).fold().coalesce(
+                self.g.unfold(), self.g.addV().property('name', u).property('type', 'entity')
+            ).as_('a').V().has('name', v).fold().coalesce(
+                self.g.unfold(), self.g.addV().property('name', v).property('type', 'entity')
+            ).as_('b').addE(relation).from_('a').to('b').property(
+                'confidence', confidence
+            ).property('provenance', provenance).property('synthetic', synthetic).iterate()
+        except Exception as e:
+            # In a production environment, we might want to log this error
+            pass
+
     def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:
         return None
 

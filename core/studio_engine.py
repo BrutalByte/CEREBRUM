@@ -217,13 +217,13 @@ class StudioEngine:
         -------
         (html_str, structured_list, attention_radar_fig, best_path_nodes)
         """
-        empty_fig = go.Figure()
         if not self.graph_loaded or not self.graph_obj:
-            return "Load a graph first.", None, empty_fig, []
+            return "Load a graph first.", None, go.Figure(), []
         if not query or not query.strip():
-            return "Enter a query entity.", None, empty_fig, []
+            return "Enter a query entity.", None, go.Figure(), []
 
         try:
+            empty_fig = go.Figure()
             graph = self.graph_obj
             # Use BGE instruction-enhanced encoding for query
             if hasattr(graph._embedding_engine, 'encode_query'):
@@ -235,12 +235,16 @@ class StudioEngine:
             if not seeds:
                 return f"No entity matching '{query}'", None, empty_fig, []
 
+            from reasoning.trace import ReasoningTrace
+            trace = ReasoningTrace(query=query.strip(), seeds=[seeds[0]])
+
             answers = graph.query(
                 [seeds[0]],
                 top_k=int(top_k),
                 max_hop=int(max_hop),
                 beam_width=int(beam_width),
                 memory_threshold_pct=float(mem_threshold),
+                trace_info=trace,
             )
 
             best_path_nodes: List[str] = []
@@ -260,12 +264,17 @@ class StudioEngine:
             _engram_verb = EngramVerbalizer()
             engram_trace = _engram_verb.verbalize(answers, self.adapter)
 
+            # Format ERT HTML
+            ert_html = self._format_trace_html(trace)
+
             html = (
                 f"<div style='margin-bottom:12px;'><b>Seed</b>: "
                 f"<code style='color:#00ffff;'>{seeds[0]}</code></div>"
                 f"<div class='engram-block' style='background:#1c2128;border:1px solid #30363d;"
                 f"padding:10px;margin-bottom:15px;border-radius:6px;font-family:monospace;font-size:0.9em;color:#79c0ff;'>"
                 f"<strong>Engram Trace:</strong> {engram_trace}</div>"
+                f"<details style='margin-bottom:15px;'><summary style='cursor:pointer;color:#bc8cff;'><b>Explainable Reasoning Trace (ERT)</b></summary>"
+                f"<div style='margin-top:10px;'>{ert_html}</div></details>"
                 + self._format_path_html(answers)
             )
             structured = [
@@ -644,6 +653,40 @@ class StudioEngine:
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
+
+    @staticmethod
+    def _format_trace_html(trace) -> str:
+        """Format a ReasoningTrace as HTML."""
+        if not trace or not trace.hops:
+            return "No trace data available."
+        
+        html = "<div class='trace-container' style='font-size:0.85em;'>"
+        for hop in trace.hops:
+            html += f"<div style='margin-bottom:8px;border-left:3px solid #bc8cff;padding-left:10px;'>"
+            html += f"<div style='color:#bc8cff;font-weight:bold;'>Hop {hop.hop}</div>"
+            html += f"<div style='color:#888;'>Candidates: {hop.total_candidates} | Beam Width: {hop.beam_width}</div>"
+            
+            # Winners
+            if hop.winners:
+                html += "<div style='margin-top:4px;'><b>Winners:</b> "
+                for w in hop.winners[:3]: # Show top 3 winners
+                    html += f"<span style='color:#00ffff;margin-right:8px;'>{w['tail']} ({w['score']:.3f})</span>"
+                if len(hop.winners) > 3:
+                    html += f"<span style='color:#666;'>+{len(hop.winners)-3} more</span>"
+                html += "</div>"
+            
+            # Competitors (Pruned)
+            if hop.competitors:
+                html += "<div style='margin-top:2px;'><b>Pruned Competitors:</b> "
+                for c in hop.competitors[:3]:
+                    html += f"<span style='color:#ff7b72;margin-right:8px;'>{c['tail']} ({c['score']:.3f})</span>"
+                if len(hop.competitors) > 3:
+                    html += f"<span style='color:#666;'>+{len(hop.competitors)-3} more</span>"
+                html += "</div>"
+            
+            html += "</div>"
+        html += "</div>"
+        return html
 
     @staticmethod
     def _attention_radar(feature_tuple) -> go.Figure:

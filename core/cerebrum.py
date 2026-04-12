@@ -58,8 +58,14 @@ from adapters.networkx_adapter import NetworkXAdapter
 from core.attention_engine import CSAEngine
 from core.embedding_engine import EmbeddingEngine, RandomEngine
 from core.graph_adapter import GraphAdapter
+from core.chemical_modulator import ChemicalModulator # Phase 68
 from reasoning.answer_extractor import Answer, extract
 from reasoning.traversal import BeamTraversal
+from core.telemetry import NeuralEvent, NeuralEventType
+
+from typing import TYPE_CHECKING, Callable
+if TYPE_CHECKING:
+    from reasoning.trace import ReasoningTrace
 
 logger = logging.getLogger("cerebrum.graph")
 
@@ -101,9 +107,33 @@ class CerebrumGraph:
         self._probabilistic      = probabilistic
         self._warm_start_strength = warm_start_strength
 
+        # Telemetry (Phase 63+)
+        self._event_callbacks: List[Callable[[NeuralEvent], None]] = []
+
+        # Neuro-Chemical Modulation (Phase 68)
+        self.modulator = ChemicalModulator()
+
         self._csa:       Optional[CSAEngine]    = None
         self._traversal: Optional[BeamTraversal] = None
         self._built      = False
+
+    def subscribe(self, callback: Callable[[NeuralEvent], None]):
+        """Subscribe to real-time neural events."""
+        if callback not in self._event_callbacks:
+            self._event_callbacks.append(callback)
+
+    def unsubscribe(self, callback: Callable[[NeuralEvent], None]):
+        """Unsubscribe from neural events."""
+        if callback in self._event_callbacks:
+            self._event_callbacks.remove(callback)
+
+    def emit(self, event: NeuralEvent):
+        """Broadcast a neural event to all subscribers."""
+        for cb in self._event_callbacks:
+            try:
+                cb(event)
+            except Exception as e:
+                logger.warning("Telemetry callback failed: %s", e)
 
     # ------------------------------------------------------------------
     # Factory methods
@@ -468,7 +498,9 @@ class CerebrumGraph:
         # ----------------------------------------------------------
         if callback: callback(0.5, "Step 3/5: DSCF Community Detection (Attention Heads)...")
         comm_cache = cache / "communities.pkl" if cache else None
-        G_und      = G.to_undirected() if G.is_directed() else G
+        
+        # Use G_und consistently throughout this block
+        G_und = G.to_undirected() if G.is_directed() else G
 
         if not force_rebuild and comm_cache and comm_cache.exists():
             logger.info("Loading cached communities from %s", comm_cache)
@@ -477,7 +509,7 @@ class CerebrumGraph:
         else:
             logger.info(
                 "Running %s on %d nodes, %d edges...",
-                community_engine, G.number_of_nodes(), G.number_of_edges(),
+                community_engine, G_und.number_of_nodes(), G_und.number_of_edges(),
             )
             if community_engine == "dscf":
                 if n_trials > 1:
@@ -582,6 +614,7 @@ class CerebrumGraph:
         relation_prior=None,
         vote_weight:       float          = 0.30,
         memory_threshold_pct: float       = 95.0,
+        trace_info:        Optional["ReasoningTrace"] = None,
     ) -> List[Answer]:
         """
         Traverse the graph from ``seeds`` and return ranked answers.
@@ -599,6 +632,7 @@ class CerebrumGraph:
         relation_prior  : optional RelationPathPrior or GraphRelationPrior
         vote_weight     : convergence voting weight (default 0.30)
         memory_threshold_pct : safety threshold for resource usage (default 95.0)
+        trace_info      : optional ReasoningTrace to populate (Phase 62).
 
         Returns
         -------
@@ -613,7 +647,21 @@ class CerebrumGraph:
         bw = beam_width or self._beam_width
         mh = max_hop or self._max_hop
         
-        needs_custom = (mh != self._max_hop or bw != self._beam_width or memory_threshold_pct != 95.0)
+        # Phase 68: Neuro-chemical modulation of traversal configuration
+        mod_cfg = self.modulator.modulate_traversal({
+            "beam_width": bw,
+            "max_hop": mh
+        })
+        bw = mod_cfg["beam_width"]
+        mh = mod_cfg["max_hop"]
+
+        # Phase 68: Modulate CSA parameters (alpha, beta, gamma)
+        csa_overrides = {}
+        if self._csa:
+            base_p = {"alpha": self._csa.alpha, "beta": self._csa.beta, "gamma": self._csa.gamma}
+            csa_overrides = self.modulator.modulate_params(base_p)
+
+        needs_custom = (mh != self._max_hop or bw != self._beam_width or memory_threshold_pct != 95.0 or bool(csa_overrides))
 
         if needs_custom:
             from core.resource_governor import ResourceGovernor
@@ -625,15 +673,21 @@ class CerebrumGraph:
                 max_neighbors       = self._max_neighbors,
                 probabilistic       = self._probabilistic,
                 warm_start_strength = self._warm_start_strength,
-                governor            = ResourceGovernor(memory_threshold_pct=memory_threshold_pct)
+                governor            = ResourceGovernor(memory_threshold_pct=memory_threshold_pct),
+                **csa_overrides # Inject hormonal overrides
             )
         else:
             traversal = self._traversal
 
-        paths = traversal.traverse(
-            seeds,
-            query_embedding=query_embedding,
-        )
+        try:
+            paths = traversal.traverse(
+                seeds,
+                query_embedding=query_embedding,
+                trace_info=trace_info,
+            )
+        finally:
+            # Phase 68: Natural decay of hormonal state after query completion
+            self.modulator.step()
 
         return extract(
             paths,

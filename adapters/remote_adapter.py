@@ -6,6 +6,7 @@ Connects to a remote CEREBRUM API instance to perform federated graph operations
 import requests
 import numpy as np
 import networkx as nx
+import logging
 from typing import List, Optional, Dict, Any
 from core.graph_adapter import GraphAdapter, Entity, Edge
 
@@ -181,6 +182,18 @@ class RemoteCerebrumAdapter(GraphAdapter):
         except Exception:
             pass
         return []
+
+    def add_edge(
+        self,
+        u: str,
+        v: str,
+        relation: str,
+        confidence: float = 1.0,
+        provenance: str = '',
+        synthetic: bool = False,
+    ) -> None:
+        import logging
+        logging.getLogger('cerebrum.remote_adapter').warning('Materialization not supported.')
 
     def find_similar(
         self, 

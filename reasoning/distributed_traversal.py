@@ -24,6 +24,7 @@ class DistributedBeamTraversal(BeamTraversal):
         seeds: List[str],
         emb_dim: int,
         query_time: Optional[float],
+        trace_info: Optional["ReasoningTrace"] = None,
     ) -> List[TraversalPath]:
         # 1. Initialize beam
         beam: List[TraversalPath] = []
@@ -43,9 +44,15 @@ class DistributedBeamTraversal(BeamTraversal):
                     seen_entities={seed},
                     embedding=emb.copy(),
                     score=1.0,
+                    q_score=255, # Added for Phase 61
+                    quantized=self.quantized, # Added for Phase 61
                     community_sequence=[cid] if cid >= 0 else [],
                 )
             )
+
+        # Phase 62: Record hop 0 (seeds) in trace
+        if trace_info:
+            trace_info.add_hop(hop=0, winners=beam, competitors=[], total_count=len(beam), beam_width=len(beam))
 
         # 2. Initial Delegation (Optional)
         # If seeds are remote, we might want to fetch branches immediately
@@ -152,6 +159,14 @@ class DistributedBeamTraversal(BeamTraversal):
                 break
             
             beam = sorted(candidates, key=lambda p: p.score, reverse=True)[:self.beam_width]
+
+            # Phase 62: Record hop trace
+            if trace_info:
+                winners_set = set(id(p) for p in beam)
+                competitors = [p for p in candidates if id(p) not in winners_set]
+                competitors.sort(key=lambda p: p.score, reverse=True)
+                trace_info.add_hop(hop, beam, competitors, len(candidates), self.beam_width)
+
             all_paths.extend(beam)
             
         return all_paths

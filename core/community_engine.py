@@ -9,7 +9,7 @@ Also includes Leiden, LPA, and hybrid wrappers for ablation studies.
 Source: ported from Home Assistant services/knowledge_service/main.py with
 Home Assistant-specific scaffolding (FastAPI, Neo4j) removed.
 """
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any, Tuple, Set, FrozenSet
 from core.hardware import HAS_RAPIDS, to_gpu_graph, get_xp
 import networkx as nx
 import random
@@ -122,7 +122,7 @@ def vectorized_tsc(
     labels = S.argmax(axis=1)
     if hasattr(labels, "get"): labels = labels.get() # CuPy to NumPy
     
-    community_members = {}
+    community_members: Dict[int, List[Any]] = {}
     for idx, cid in enumerate(labels):
         community_members.setdefault(int(cid), []).append(nodes[idx])
         

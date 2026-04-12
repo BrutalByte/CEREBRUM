@@ -7,6 +7,56 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.6.0] — 2026-04-11
+### Added
+- **Phase 68: Metabolic Modulation Suite** — Functional regulation of reasoning.
+- New `core/chemical_modulator.py` simulates Reinforcement, Arousal, Novelty, Cohesion, and Persistence.
+- **Dynamic Homeostasis**: Implemented temporal decay and homeostatic baselines for metabolic scalars.
+- **Metabolic Feedback Loops**: Automated adjustment of `beam_width` (Arousal), `alpha/beta` ratios (Novelty), and `canonical_promotion` (Persistence).
+- **REST API Blood Panel**: New `GET /chemical` endpoint for real-time monitoring of system's metabolic state.
+- **Phase 65: Autonomous Hypothesis Materialization** — ResearchAgent results can now be formally committed to the graph.
+- **Phase 64: Neural Memory Consolidation** — Automatic promotion of successful relation patterns to "Canonical Engrams" via `EngramConsolidator`.
+
+## [2.5.0] — 2026-04-10
+### Added
+- **Phase 63: Neural Telemetry System** — Real-time event emission for 3D visualizations.
+- New `core/telemetry.py` standardizes the event schema for external observers (e.g., Unreal Engine).
+- Integrated `NeuralEvent` pulses into `BeamTraversal` for real-time visibility of reasoning steps.
+- New orchestrator `scripts/start_cerebrum.py` for simultaneous API & telemetry server launch.
+
+## [2.4.0] — 2026-04-09
+### Added
+- **Phase 62: Explainable Reasoning Trace (ERT)** — Decisions & feature radars.
+- New `ReasoningTrace` and `HopTrace` models capture winners and competitors at every step.
+- `POST /query/trace` endpoint for "glass-box" reasoning transparency.
+- 10-parameter "Attention Radar" (ReasoningLogit features) exposed for every candidate.
+- Hardened serialization: `numpy.float32` and other types converted to standard primitives.
+
+## [2.3.0] — 2026-04-08
+### Added
+- **Phase 61: Synaptic Pruning & Quantized Traversal (SPQT)** — Efficiency optimizations.
+- `SynapticPruner` implements utility-based edge removal (confidence, age, usage).
+- Integrated pruning into `GlobalRebalancer` for automated post-rebalance optimization.
+- `BeamTraversal` now supports `quantized=True` mode, using `uint8` fixed-point scores.
+- `TraversalPath` maintains both high-precision `score` and efficiency-optimized `q_score`.
+
+## [2.2.0] — 2026-04-08
+### Added
+- **Phase 60: Multi-Agent Consensus Hierarchies (MACH)** — Three-tier reasoning verification.
+- `L1 Local`: Multi-strategy voting (Standard, Bayesian, Engram) for internal path robustness.
+- `L2 Federated`: Cross-node confirmation via `FederatedAdapter` corroboration.
+- `L3 Gold`: High-trust verification against external literature via `ResearchAgent`.
+- New `/query/consensus` endpoint for hierarchical multi-level reasoning.
+- Upgraded `ConsensusScorer` with variance tracking and agent trust weighting.
+
+## [2.1.0] — 2026-04-08
+### Added
+- **Phase 59: Cerebellar Error Correction (CEC)** — Active error-driven meta-learning loop.
+- `CerebellarEngine` detects "Dissonant Predictions" (high path score, low consensus) and triggers corrective research.
+- `Answer` class now exposes `path_score` and `consensus_score` for explainability.
+- `ResearchAgent` now supports `push_candidate()` for external task seeding.
+- Integrated CEC into `/query` API flow.
+
 ## [2.0.2] — 2026-04-08
 
 ### Changed

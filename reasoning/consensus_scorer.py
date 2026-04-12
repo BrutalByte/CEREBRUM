@@ -17,12 +17,25 @@ from reasoning.traversal import TraversalPath
 
 log = logging.getLogger("cerebrum.consensus")
 
+from enum import IntEnum
+
+class ConsensusLevel(IntEnum):
+    """
+    Consensus Hierarchy Levels (Phase 60).
+    Higher levels represent more rigorous/expensive verification steps.
+    """
+    L1_LOCAL = 1      # Multi-strategy voting within a single instance
+    L2_FEDERATED = 2  # Cross-node validation in a federated cluster
+    L3_GOLD = 3       # Verification against a high-trust "Gold Standard" node
+
 @dataclass
 class PathConsensus:
     """Aggregated result for a specific reasoning path."""
     path: TraversalPath
     agents: List[str]            # Names of agents that found/confirmed this path
     consensus_score: float       # Aggregated confidence score [0, 1]
+    level: ConsensusLevel = ConsensusLevel.L1_LOCAL
+    variance: float = 0.0        # Disagreement between agents
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 class ConsensusScorer:

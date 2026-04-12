@@ -237,6 +237,29 @@ class NetworkXAdapter(GraphAdapter):
             return self.embeddings.get(entity_id)
         return None
 
+    def add_edge(
+        self,
+        u: str,
+        v: str,
+        relation: str,
+        confidence: float = 1.0,
+        provenance: str = "",
+        synthetic: bool = False,
+    ) -> None:
+        """Add an edge to the graph (for Phase 65 materialization)."""
+        if not self._G.has_node(u):
+            self._G.add_node(u, label=u)
+        if not self._G.has_node(v):
+            self._G.add_node(v, label=v)
+            
+        self._G.add_edge(
+            u, v,
+            relation=relation,
+            confidence=confidence,
+            provenance=provenance,
+            synthetic=synthetic
+        )
+
     def get_reasoning_branches(
         self,
         seed_id: str,

@@ -3,6 +3,30 @@ from typing import List, Dict, Optional, Any
 from pydantic import BaseModel, Field
 
 
+from enum import IntEnum
+
+class ConsensusLevel(IntEnum):
+    """
+    Consensus Hierarchy Levels (Phase 60).
+    Higher levels represent more rigorous/expensive verification steps.
+    """
+    L1_LOCAL = 1      # Multi-strategy voting within a single instance
+    L2_FEDERATED = 2  # Cross-node validation in a federated cluster
+    L3_GOLD = 3       # Verification against a high-trust "Gold Standard" node
+
+
+class PathConsensusSchema(BaseModel):
+    """Aggregated result for a specific reasoning path (Phase 60)."""
+    rank: int
+    answer_entity: str
+    score: float
+    best_path: PathResult
+    confirming_agents: List[str]
+    consensus_level: ConsensusLevel
+    variance: float = 0.0
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
 class QueryRequest(BaseModel):
     query: str = Field(..., description="Natural language query or entity ID")
     seeds: List[str] = Field(default=[], description="Optional explicit seed entity IDs")
@@ -12,6 +36,26 @@ class QueryRequest(BaseModel):
     max_budget: int = Field(default=1000, ge=10, le=5000, description="Max neighbor expansions allowed")
     edge_types: Optional[List[str]] = Field(default=None, description="Filter traversal to these relation types")
     edge_type_weights: Optional[Dict[str, float]] = Field(default=None, description="Bridge Bonus: {relation_type -> weight}")
+    strategies: List[str] = Field(
+        default=["standard"],
+        description="List of traversal strategies to run for L1 consensus: 'standard', 'bayesian', 'engram'.",
+    )
+
+
+class QueryConsensusRequest(QueryRequest):
+    """Request for /query/consensus (Phase 60)."""
+    min_consensus: float = Field(default=0.0, ge=0.0, le=1.0)
+    min_level: ConsensusLevel = Field(default=ConsensusLevel.L1_LOCAL)
+
+
+class QueryConsensusResponse(BaseModel):
+    """Response for /query/consensus (Phase 60)."""
+    query: str
+    seeds_used: List[str]
+    consensus_results: List[PathConsensusSchema]
+    total_paths_explored: int
+    duration_seconds: float
+    level_reached: ConsensusLevel
 
 
 class PathNode(BaseModel):
@@ -168,6 +212,24 @@ class RetrainRequest(BaseModel):
         default=True,
         description="Clear the feedback buffer after retraining (default True).",
     )
+
+
+class HopTraceSchema(BaseModel):
+    """Decision trace for a single hop (Phase 62)."""
+    hop: int
+    winners: List[Dict[str, Any]]
+    competitors: List[Dict[str, Any]]
+    total_candidates: int
+    beam_width: int
+
+
+class TraceResponse(BaseModel):
+    """Full reasoning trace for a query (Phase 62)."""
+    query: str
+    seeds: List[str]
+    hops: List[HopTraceSchema]
+    duration_seconds: float
+    metadata: Dict[str, Any] = {}
 
 
 class RetrainResponse(BaseModel):

@@ -51,16 +51,21 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v2.0.2 (Phase 58 COMPLETE)** — 1513+ tests passing.
+**v2.7.0 (Phase 68 COMPLETE)** — 1540+ tests passing.
 
 ### System Architecture Names
 | Name | Role |
 |---|---|
 | **CEREBRUM** | The overarching product/framework |
 | **THALAMUS** | Ingestion engine — adapters, embedding, structural encoding, STDP, IngestionPipeline |
-| **CORTEX** | Core reasoning engine — DSCF + CSA + BeamTraversal + AnswerExtractor |
+| **CORTEX** | Core reasoning engine — DSCF/TSC + CSA + BeamTraversal + AnswerExtractor |
 | **REM Engine** | Graph self-reorganization — prune/consolidate/synthesize |
 | **Bridge Twin Engine** | Experience-dependent structural relay nodes |
+| **ResearchAgent** | Autonomous missing-link discovery daemon (Phase 51) |
+| **ExternalValidator** | Literature-backed evidence verification (Phase 52) |
+| **HypothesisEngine** | Abductive reasoning with Noisy-OR aggregation (Phase 50) |
+| **CerebellarEngine** | Error-driven meta-learning via dissonance detection (Phase 59) |
+| **ChemicalModulator** | Metabolic hormonal regulation (Reinforcement, Arousal, etc.) (Phase 68) |
 
 ### Core Concepts
 - **DSCF/TSC**: Dual/Triple signal community fusion (part of CORTEX).
@@ -93,6 +98,14 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 - **TemporalCalibrator**: Grid-search calibration of `eta` (temporal decay) and `iota` (node recency) against a labelled validation set to maximise Recall@K. `calibrate()` / `apply()` / `measure_recall()` API; restores original CSA params after each evaluation (Phase 55).
 - **QueryLog**: Append-only NDJSON query history in `core/persistence.py`. Records seeds, answers, and relation sequences after each reasoning call. `replay_into_cache(engram)` warms up `Engram` on restart so learned relation patterns survive process restarts (Phase 55).
 - **SpeedTalk Encoding**: Heinlein-inspired phonemic compression for the Engram cache (Phase 58). Each relation type in the loaded KG is assigned a single-character "phoneme" from a 62-symbol alphabet (a–z, A–Z, 0–9). Relation sequences stored as compact strings rather than verbose tuples — 8–20× key compression. The phonemic representation preserves prefix structure, enabling `prefix_query(*rels)` — find all cached patterns starting with a given relation type in O(P) without full-scan. Alphabet is automatically tuned to the loaded graph via `adapt_to_graph()` or `from_graph_adapter()` — most-traversed relation types get the shortest symbols. `SpeedTalkEngram` and `SpeedTalkEngramTraversal` are drop-in replacements for their Phase-55 counterparts.
+- **Cerebellar Error Correction (CEC)**: Active error-driven meta-learning via dissonance detection (Phase 59). `CerebellarEngine` monitors reasoning calls for "dissonant" predictions — paths with high CSA scores but low consensus across multiple reasoning strategies. Dissonant seeds are pushed to `ResearchAgent` for autonomous external validation, closing the error loop.
+- **Multi-Agent Consensus Hierarchies (MACH)**: Three-tier reasoning verification (Phase 60). L1: Local consensus (multi-strategy voting). L2: Federated consensus (cross-node path verification). L3: Gold Standard consensus (ResearchAgent validation against literature). Higher levels represent more rigorous/expensive verification steps.
+- **Synaptic Pruning & Quantized Traversal (SPQT)**: Enterprise efficiency optimizations (Phase 61). `SynapticPruner` periodically removes low-utility synthetic edges based on confidence, age, and usage. Quantized traversal uses `uint8` fixed-point math for path scoring, reducing memory overhead and improving traversal speed on high-hop queries.
+- **Explainable Reasoning Trace (ERT)**: "Glass-box" decision transparency (Phase 62). `ReasoningTrace` captures the per-hop state of the beam search, logging all winners and the top rejected competitors. Every path in the trace includes its 10-parameter Attention Radar (ReasoningLogit features), exposing *why* specific branches were prioritized or pruned. Accessible via `POST /query/trace` and the Reasoning Studio UI.
+- **Neural Telemetry (Phase 63)**: Real-time event streaming via WebSockets. Emits `SYNAPTIC_PULSE`, `NEUROGENESIS`, and `SYNAPTIC_PRUNE` events for 3D visualization clients (e.g., Unreal Engine 5).
+- **Neural Memory Consolidation (Phase 64)**: Threshold-based promotion of relation patterns to "Canonical Engrams" via `EngramConsolidator`.
+- **Autonomous Hypothesis Materialization (Phase 65)**: Formal materialization of `ResearchAgent` findings as graph edges with Noisy-OR aggregated confidence and discovery provenance.
+- **Neuro-Symbolic Homeostasis (Phase 68)**: Dynamic functional regulation of the reasoning engine via `ChemicalModulator`. Simulates metabolic scalars: **Reinforcement** (Dopamine), **Arousal** (Norepinephrine), **Novelty** (Acetylcholine), **Cohesion** (Oxytocin), and **Persistence** (Vasopressin). Implements temporal decay and homeostatic baselines.
 
 ## Install & Development Commands
 
@@ -236,5 +249,5 @@ Implement the abstract `GraphAdapter` interface in `core/graph_adapter.py`, foll
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)
 - Synthetic graph helpers (`make_two_cliques()`, etc.) live in `tests/` for unit tests that don't need the CSV fixture
-- **1513+ tests passing as of v2.0.2 / Phase 58** (1 skipped)
+- **1540+ tests passing as of v2.6.0 / Phase 68** (1 skipped)
 - Type checker: no mypy/ruff configured as hard gate; run `python -m pytest tests/` as verification

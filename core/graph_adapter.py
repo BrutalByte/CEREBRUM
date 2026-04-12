@@ -87,8 +87,16 @@ class GraphAdapter(ABC):
         ...
 
     @abstractmethod
-    def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:
-        """Return the embedding vector for entity_id, or None."""
+    def add_edge(
+        self,
+        u: str,
+        v: str,
+        relation: str,
+        confidence: float = 1.0,
+        provenance: str = "",
+        synthetic: bool = False,
+    ) -> None:
+        """Add an edge to the graph (for Phase 65 materialization)."""
         ...
 
     @abstractmethod

@@ -211,6 +211,26 @@ class Neo4jAdapter(GraphAdapter):
         """Community IDs are not natively maintained by default in Neo4j adapter."""
         return -1
 
+    def add_edge(
+        self,
+        u: str,
+        v: str,
+        relation: str,
+        confidence: float = 1.0,
+        provenance: str = "",
+        synthetic: bool = False,
+    ) -> None:
+        """Add an edge to the Neo4j graph using MERGE."""
+        rel_type = relation.upper()
+        cypher = (
+            f"MERGE (a:{self._node_label} {{{self._name_property}: $u}}) "
+            f"MERGE (b:{self._node_label} {{{self._name_property}: $v}}) "
+            f"MERGE (a)-[r:{rel_type}]->(b) "
+            f"SET r.confidence = $conf, r.provenance = $prov, r.synthetic = $synth"
+        )
+        with self._session() as s:
+            s.run(cypher, {"u": u, "v": v, "conf": confidence, "prov": provenance, "synth": synthetic})
+
     def find_similar(self, embedding: np.ndarray, top_k: int = 10) -> List[Entity]:
         """Vector search requires Neo4j 5.x Vector indexes, currently stubbed."""
         return []

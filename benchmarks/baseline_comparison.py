@@ -31,7 +31,7 @@ import random
 import sys
 import time
 from pathlib import Path
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, Any
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -47,9 +47,10 @@ from core.structural_encoder import (
 from reasoning.traversal import BeamTraversal
 from core.resource_governor import ResourceGovernor
 
+from core.cerebrum import CerebrumGraph
+
 from benchmarks.metaqa_eval import (
-    load_kb, load_qa, load_or_compute_communities,
-    evaluate_hop,
+    load_qa,
 )
 
 _COARSEN_TARGET = 500  # max communities before CSA signal degrades
@@ -61,6 +62,7 @@ _BENCH_GOVERNOR = ResourceGovernor(memory_threshold_pct=99.0)
 
 DATA_DIR  = Path(__file__).parent / "data" / "metaqa"
 CACHE_DIR = DATA_DIR / "cache"
+KB_FILE   = DATA_DIR / "kb.txt"
 
 
 # ---------------------------------------------------------------------------
@@ -82,93 +84,63 @@ class UniformCSAEngine(CSAEngine):
         u: str,
         v: str,
         hop: int,
-        edge_type: str = "",
-        edge_type_weights: Optional[Dict[str, float]] = None,
-        normalized_distance: float = 0.0,
+        **kwargs: Any
     ) -> float:
         return 0.5   # sigmoid(0) — perfectly neutral
 
 
 # ---------------------------------------------------------------------------
-# Build traversal for each variant
+# Per-hop evaluation (local version for ablation study)
 # ---------------------------------------------------------------------------
 
-def build_dscf_traversal(
-    adapter, G, embeddings, beam_width, max_hop, dscf_seed=42, use_cache=True
-) -> Tuple[BeamTraversal, Dict[str, int]]:
-    """Variant A: full DSCF + CSA."""
-    cmap = load_or_compute_communities(G, use_cache=use_cache, dscf_seed=dscf_seed)
-    if len(set(cmap.values())) > _COARSEN_TARGET:
-        k_before = len(set(cmap.values()))
-        cmap = coarsen_communities(G, cmap, target_max=_COARSEN_TARGET)
-        print(f"  Coarsened DSCF: {k_before:,} -> {len(set(cmap.values()))} communities")
-    dist = build_community_distance_matrix(G, cmap)
-    adj  = adjacent_community_pairs(G, cmap)
-    cg   = build_community_graph(G, cmap)
-
-    adapter.community_map = cmap
-    adapter.embeddings = embeddings
-
-    csa = CSAEngine(adapter=adapter)
-    csa.set_community_graph(dist, adj, community_graph=cg)
-    return BeamTraversal(
-        adapter=adapter,
-        csa_engine=csa,
-        beam_width=beam_width,
-        max_hop=max_hop,
-        governor=_BENCH_GOVERNOR,
-    ), cmap
-
-
-def build_lpa_traversal(
-    adapter, G, embeddings, beam_width, max_hop
-) -> Tuple[BeamTraversal, Dict[str, int]]:
-    """Variant B: LPA communities + CSA."""
-    print("  Computing LPA communities...")
-    t0    = time.time()
-    parts = lpa_communities(G)
-    cmap  = {node: cid for cid, members in enumerate(parts) for node in members}
-    print(f"  LPA: {len(parts)} communities in {time.time()-t0:.1f}s")
-    if len(set(cmap.values())) > _COARSEN_TARGET:
-        k_before = len(set(cmap.values()))
-        cmap = coarsen_communities(G, cmap, target_max=_COARSEN_TARGET)
-        print(f"  Coarsened LPA:  {k_before:,} -> {len(set(cmap.values()))} communities")
-    dist = build_community_distance_matrix(G, cmap)
-    adj  = adjacent_community_pairs(G, cmap)
-    cg   = build_community_graph(G, cmap)
-
-    adapter.community_map = cmap
-    adapter.embeddings = embeddings
-
-    csa = CSAEngine(adapter=adapter)
-    csa.set_community_graph(dist, adj, community_graph=cg)
-    return BeamTraversal(
-        adapter=adapter,
-        csa_engine=csa,
-        beam_width=beam_width,
-        max_hop=max_hop,
-        governor=_BENCH_GOVERNOR,
-    ), cmap
-
-
-def build_bfs_traversal(
-    adapter, G, embeddings, beam_width, max_hop
-) -> Tuple[BeamTraversal, Dict[str, int]]:
-    """Variant C: BFS — no community structure, uniform weights."""
-    # Community map assigns all nodes to community 0 (irrelevant since weights are uniform)
-    cmap = {node: 0 for node in G.nodes()}
+def evaluate_variant(
+    hop:              int,
+    traversal:        BeamTraversal,
+    qa_pairs:         List[Tuple],
+    top_k:            int            = 10,
+) -> Dict:
+    from benchmarks.metaqa_eval import hits_at_k, reciprocal_rank
+    from reasoning.answer_extractor import extract
     
-    adapter.community_map = cmap
-    adapter.embeddings = embeddings
-    
-    csa = UniformCSAEngine(adapter=adapter)
-    return BeamTraversal(
-        adapter=adapter,
-        csa_engine=csa,
-        beam_width=beam_width,
-        max_hop=max_hop,
-        governor=_BENCH_GOVERNOR,
-    ), cmap
+    h1 = h10 = 0
+    mrr_sum  = 0.0
+    skipped  = found = 0
+
+    eval_min_hop = 2 if hop == 2 else 1
+
+    t0 = time.time()
+    for i, qa in enumerate(qa_pairs):
+        seed, correct_answers = qa
+
+        if (i + 1) % 100 == 0 or (i + 1) == len(qa_pairs):
+            print(
+                f"    {i+1:,}/{len(qa_pairs):,} questions "
+                f"({time.time()-t0:.1f}s elapsed)",
+                end="\r",
+            )
+
+        paths = traversal.traverse([seed])
+        answers_obj = extract(paths, top_k=top_k, min_hop=eval_min_hop)
+        pred = [a.entity_id for a in answers_obj]
+
+        if not pred:
+            skipped += 1
+            continue
+
+        found   += 1
+        h1      += hits_at_k(pred, correct_answers, k=1)
+        h10     += hits_at_k(pred, correct_answers, k=10)
+        mrr_sum += reciprocal_rank(pred, correct_answers)
+
+    elapsed = time.time() - t0
+    print()
+    n = len(qa_pairs)
+
+    return {
+        "hits_1":     h1  / n if n > 0 else 0,
+        "hits_10":    h10 / n if n > 0 else 0,
+        "mrr":        mrr_sum / n if n > 0 else 0,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -197,16 +169,23 @@ def main():
     print("  C  BFS       uniform      (no attention baseline)")
     print()
 
-    print("Loading knowledge graph...")
-    adapter = load_kb(undirected=True)
-    G       = adapter.to_networkx()
-    print(f"  {G.number_of_nodes():,} entities, {G.number_of_edges():,} edges")
+    if not KB_FILE.exists():
+        print(f"ERROR: kb.txt not found at {KB_FILE}")
+        sys.exit(1)
 
-    print("Building embeddings...")
-    random.seed(args.seed)
-    engine     = RandomEngine(dim=64)
-    labels     = {n: n for n in G.nodes()}
-    embeddings = engine.encode_entities(labels)
+    print("Loading knowledge graph...")
+    # Load via CerebrumGraph for consistency
+    graph = CerebrumGraph.from_kb(
+        KB_FILE,
+        sep       = "|",
+        directed  = False,
+        embeddings= "random",
+        beam_width= args.beam_width,
+        max_hop   = 3,
+    )
+    adapter = graph.adapter
+    G = adapter.to_networkx()
+    print(f"  {G.number_of_nodes():,} entities, {G.number_of_edges():,} edges")
 
     all_results = []
 
@@ -220,29 +199,101 @@ def main():
 
         # Variant A — DSCF + CSA
         print("\n  [A] DSCF + CSA...")
-        t_dscf, cmap_dscf = build_dscf_traversal(
-            adapter, G, embeddings, args.beam_width, hop,
-            dscf_seed=args.seed, use_cache=not args.no_cache
+        graph.build(
+            cache_dir           = CACHE_DIR,
+            min_community_size  = 20,
+            force_rebuild       = args.no_cache,
+            seed                = args.seed,
         )
-        m_a = evaluate_hop(hop, t_dscf, qa_pairs, top_k=args.top_k)
+        # Manually inject benchmark governor
+        trav_a = BeamTraversal(
+            adapter=graph.adapter,
+            csa_engine=graph._csa,
+            beam_width=args.beam_width,
+            max_hop=hop,
+            governor=_BENCH_GOVERNOR
+        )
+        
+        m_a = evaluate_variant(hop, trav_a, qa_pairs, top_k=args.top_k)
         print(f"      Hits@1={m_a['hits_1']:.4f}  Hits@10={m_a['hits_10']:.4f}  MRR={m_a['mrr']:.4f}")
         row.update({"dscf_h1": m_a["hits_1"], "dscf_h10": m_a["hits_10"], "dscf_mrr": m_a["mrr"]})
 
         # Variant B — LPA + CSA
         print("\n  [B] LPA + CSA...")
-        t_lpa, _ = build_lpa_traversal(adapter, G, embeddings, args.beam_width, hop)
-        m_b = evaluate_hop(hop, t_lpa, qa_pairs, top_k=args.top_k)
+        print("      Computing LPA communities...")
+        parts = lpa_communities(G)
+        cmap_lpa = {node: cid for cid, members in enumerate(parts) for node in members}
+        if len(set(cmap_lpa.values())) > _COARSEN_TARGET:
+            cmap_lpa = coarsen_communities(G, cmap_lpa, target_max=_COARSEN_TARGET)
+        
+        dist = build_community_distance_matrix(G, cmap_lpa)
+        adj  = adjacent_community_pairs(G, cmap_lpa)
+        cg   = build_community_graph(G, cmap_lpa)
+        
+        adapter_lpa = graph.adapter # sharing same adapter instance but switching maps
+        adapter_lpa.community_map = cmap_lpa
+        
+        csa_lpa = CSAEngine(adapter=adapter_lpa)
+        csa_lpa.set_community_graph(dist, adj, community_graph=cg)
+        
+        trav_b = BeamTraversal(
+            adapter=adapter_lpa,
+            csa_engine=csa_lpa,
+            beam_width=args.beam_width,
+            max_hop=hop,
+            governor=_BENCH_GOVERNOR
+        )
+        
+        m_b = evaluate_variant(hop, trav_b, qa_pairs, top_k=args.top_k)
         print(f"      Hits@1={m_b['hits_1']:.4f}  Hits@10={m_b['hits_10']:.4f}  MRR={m_b['mrr']:.4f}")
         row.update({"lpa_h1": m_b["hits_1"], "lpa_h10": m_b["hits_10"], "lpa_mrr": m_b["mrr"]})
 
         # Variant C — BFS
         print("\n  [C] BFS (uniform weights)...")
-        t_bfs, _ = build_bfs_traversal(adapter, G, embeddings, args.beam_width, hop)
-        m_c = evaluate_hop(hop, t_bfs, qa_pairs, top_k=args.top_k)
+        # Reuse adapter but use UniformCSAEngine
+        csa_bfs = UniformCSAEngine(adapter=graph.adapter)
+        trav_c = BeamTraversal(
+            adapter=graph.adapter,
+            csa_engine=csa_bfs,
+            beam_width=args.beam_width,
+            max_hop=hop,
+            governor=_BENCH_GOVERNOR
+        )
+        
+        m_c = evaluate_variant(hop, trav_c, qa_pairs, top_k=args.top_k)
         print(f"      Hits@1={m_c['hits_1']:.4f}  Hits@10={m_c['hits_10']:.4f}  MRR={m_c['mrr']:.4f}")
         row.update({"bfs_h1": m_c["hits_1"], "bfs_h10": m_c["hits_10"], "bfs_mrr": m_c["mrr"]})
 
         all_results.append(row)
+
+    # ------------------------------------------------------------------
+    # Summary table
+    # ------------------------------------------------------------------
+    print("\n=== Ablation Summary ===\n")
+    print(f"  {'':6} {'Hits@1':>24}   {'Hits@10':>24}   {'MRR':>24}")
+    print(f"  {'Hop':<6} {'DSCF':>8} {'LPA':>8} {'BFS':>8}   "
+          f"{'DSCF':>8} {'LPA':>8} {'BFS':>8}   "
+          f"{'DSCF':>8} {'LPA':>8} {'BFS':>8}")
+    print("  " + "-" * 90)
+    for row in all_results:
+        print(f"  {row['hop']}-hop  "
+              f"{row['dscf_h1']:>8.4f} {row['lpa_h1']:>8.4f} {row['bfs_h1']:>8.4f}   "
+              f"{row['dscf_h10']:>8.4f} {row['lpa_h10']:>8.4f} {row['bfs_h10']:>8.4f}   "
+              f"{row['dscf_mrr']:>8.4f} {row['lpa_mrr']:>8.4f} {row['bfs_mrr']:>8.4f}")
+
+    # ------------------------------------------------------------------
+    # Save
+    # ------------------------------------------------------------------
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    out_file = CACHE_DIR / "ablation_results.csv"
+    if all_results:
+        import csv as _csv
+        with open(out_file, "w", newline="") as f:
+            writer = _csv.DictWriter(f, fieldnames=list(all_results[0].keys()))
+            writer.writeheader()
+            writer.writerows(all_results)
+        print(f"\n  Ablation results saved to {out_file}")
+    print()
 
     # ------------------------------------------------------------------
     # Summary table

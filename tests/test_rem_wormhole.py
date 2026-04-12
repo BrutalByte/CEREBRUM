@@ -15,6 +15,7 @@ class MockAdapter(GraphAdapter):
     def get_entity(self, node_id): return None
     def get_neighbors(self, node_id): return []
     def to_networkx(self): return self._G
+    def add_edge(self, u, v, relation, confidence=1.0, provenance="", synthetic=False): pass
 
 def test_wormhole_synthesis():
     # Create two disconnected components

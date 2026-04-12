@@ -111,6 +111,16 @@ class Answer:
     0.0 when no Beta data is present (deterministic traversal).
     """
 
+    path_score: float = 0.0
+    """
+    Raw score of the single best path to this entity (before consensus voting).
+    """
+
+    consensus_score: float = 0.0
+    """
+    Normalized weighted vote sum [0, 1] across all paths reaching this entity.
+    """
+
     def __repr__(self) -> str:
         flags = f", flags={len(self.contradiction_flags)}" if self.contradiction_flags else ""
         return f"Answer(entity={self.entity_id!r}, score={self.score:.4f}{flags})"
@@ -300,15 +310,22 @@ def extract(
         if sem is not None:
             breakdown["semantic"] = round(sem, 4)
 
+        # Consensus score calculation
+        ent_id = path.tail
+        raw_path_score = best[ent_id][1]
+        norm_votes = (vote_weight_sum[ent_id] / max_vote_sum) if max_vote_sum > 0 else 0.0
+
         answers.append(
             Answer(
-                entity_id=path.tail,
+                entity_id=ent_id,
                 score=round(s, 6),
                 best_path=path,
                 score_breakdown=breakdown,
                 community_trace=path.community_sequence,
                 path_confidence=path_confidence(path),
                 score_uncertainty=path.score_variance,
+                path_score=round(raw_path_score, 6),
+                consensus_score=round(norm_votes, 6),
             )
         )
 

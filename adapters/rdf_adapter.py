@@ -10,6 +10,7 @@ from typing import List, Optional
 
 import networkx as nx
 import numpy as np
+import logging
 
 from core.graph_adapter import GraphAdapter, Entity, Edge
 
@@ -157,6 +158,22 @@ class RDFAdapter(GraphAdapter):
     def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:
         """RDF endpoints rarely store embeddings; return None."""
         return None
+
+    def add_edge(
+        self,
+        u: str,
+        v: str,
+        relation: str,
+        confidence: float = 1.0,
+        provenance: str = "",
+        synthetic: bool = False,
+    ) -> None:
+        """
+        SPARQL endpoints are typically read-only. 
+        Materialization here would require a SPARQL Update / Graph Store Protocol endpoint.
+        """
+        logger = logging.getLogger("cerebrum.rdf_adapter")
+        logger.warning("RDFAdapter: Materialization (add_edge) not supported for standard SPARQL endpoints.")
 
     def find_similar(
         self,

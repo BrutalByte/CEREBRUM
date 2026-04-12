@@ -24,8 +24,19 @@ from core.task_queue import BridgeTask, TaskQueue
 from core.reasoning_logit import ReasoningLogit # New: Unified logit framework
 from reasoning.path_scorer import community_coherence
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from reasoning.trace import ReasoningTrace
+
+# Phase 68: CSA parameter mapping for hormonal overrides
+CSA_PARAM_KEYS = ['alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'iota', 'mu', 'theta']
+
 # Default parameters for CSAEngine (alpha, beta, gamma, delta, epsilon, zeta, eta, iota, mu, theta)
 _DEFAULT_INIT_PARAMS = (0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)
+
+#: Fixed-point scale for quantized traversal (Phase 61).
+#: Scores are stored as uint8 [0, 255] representing [0.0, 1.0].
+QUANT_SCALE: int = 255
 
 # ---------------------------------------------------------------------------
 
@@ -106,6 +117,12 @@ class TraversalPath:
 
     score: float = 1.0
     """Running product-of-weights path score."""
+
+    q_score: int = 255
+    """Quantized uint8 score [0, 255] (Phase 61)."""
+
+    quantized: bool = False
+    """Whether this path uses quantized uint8 scoring."""
 
     attention_weights: List[float] = field(default_factory=list)
     """Attention weight assigned at each hop."""
@@ -213,11 +230,20 @@ class TraversalPath:
             
         new_features = self.edge_features + ([features] if features else [])
             
+        new_q_score = self.q_score
+        if self.quantized:
+            # Fixed-point update: q_next = (q_curr * int(w * 255)) >> 8
+            # (Approximates float multiplication)
+            w_int = int(round(weight * QUANT_SCALE))
+            new_q_score = (self.q_score * w_int) // QUANT_SCALE
+
         return TraversalPath(
             nodes=new_nodes,
             seen_entities=new_seen,
             embedding=h_agg,
             score=self.score * weight * coherence_score,
+            q_score=new_q_score,
+            quantized=self.quantized,
             attention_weights=self.attention_weights + [weight],
             community_sequence=new_cseq,
             edge_confidences=self.edge_confidences + [edge_confidence],
@@ -281,10 +307,25 @@ class BeamTraversal:
       - Return all paths explored (caller selects top-K answers)
     """
 
+class BeamTraversal:
+    """
+    Beam-search traversal using CSA attention weights.
+
+    Algorithm (Section 5.1 STEP 3):
+      - Initialize beam from seed entities
+      - For each hop 1..max_hop:
+          - For each path in beam, expand to all neighbors via adapter
+          - Score each candidate extension with CSA.compute_weight
+          - Aggregate embedding: ReLU(w * v_emb + h) + residual + LayerNorm
+          - Prune candidates to beam_width by path score
+      - Return all paths explored (caller selects top-K answers)
+    """
+
     def __init__(
         self,
         adapter: GraphAdapter,
         csa_engine: CSAEngine,
+        graph=None,
         beam_width: int = 10,
         max_hop: int = 3,
         max_neighbors: int = 100,
@@ -296,10 +337,13 @@ class BeamTraversal:
         warm_start_strength: float = 0.0,
         beam_widths: Optional[Dict[int, int]] = None,
         cvt_passthrough: bool = False,
-        symbolic_validator = None, # Optional[SymbolicValidator]
-        calibration_engine = None, # Optional[CalibrationEngine]
-        task_queue: Optional[TaskQueue] = None, # New: TaskQueue for async operations
+        symbolic_validator = None,
+        calibration_engine = None,
+        task_queue: Optional[TaskQueue] = None,
+        quantized: bool = False,
+        **kwargs,
     ):
+        self.graph              = graph
         self.adapter            = adapter
         self.csa                = csa_engine
         self.beam_width         = beam_width
@@ -310,24 +354,21 @@ class BeamTraversal:
         self.expansions         = 0
         self.governor           = governor or ResourceGovernor()
         self.bridge_engine: Optional[BridgeTwinEngine] = None
-        self.insight_engine = None  # Optional[InsightEngine] — set after construction
+        self.insight_engine = None
         self.probabilistic      = probabilistic
         self._rng               = np.random.default_rng(seed)
         self.warm_start_strength = warm_start_strength
-        # Per-hop beam width overrides: {hop_number: width}.
-        # Allows wider beams at deeper intermediate hops without changing the
-        # base beam_width used for the first hop.  Only applied to intermediate
-        # hops (hop < max_hop); the terminal hop is never pruned.
         self._beam_widths: Dict[int, int] = beam_widths or {}
-        # When True, traversal collapses Freebase CVT mediator nodes (opaque
-        # /m/ or /g/ MIDs) into transparent relay hops: A→CVT→B is treated as
-        # a single hop from A to B, scored on A↔B semantic similarity.
         self.cvt_passthrough: bool = cvt_passthrough
         self.symbolic_validator = symbolic_validator
         self.calibration_engine = calibration_engine
         self.uncertainty_log: List[Dict[str, Any]] = []
-        self.task_queue = task_queue # Store the TaskQueue instance
-        self._partial_paths: List[TraversalPath] = []  # checkpointed per-hop; survives exceptions
+        self.task_queue = task_queue
+        self._partial_paths: List[TraversalPath] = []
+        self.quantized = quantized
+        # Phase 68: Store hormonal overrides for CSA parameters
+        self.csa_overrides = {k: v for k, v in kwargs.items() if k in CSA_PARAM_KEYS}
+
 
     def traverse(
         self,
@@ -335,6 +376,7 @@ class BeamTraversal:
         query_time: Optional[float] = None,
         query_embedding: Optional[np.ndarray] = None,
         community_merger=None,
+        trace_info: Optional["ReasoningTrace"] = None,
     ) -> List[TraversalPath]:
         """
         Run beam traversal from the given seed entity IDs.
@@ -345,6 +387,7 @@ class BeamTraversal:
         query_time      : Unix timestamp for temporal filtering.
         query_embedding : Optional[np.ndarray] of the question text.
         community_merger: Optional[QueryGuidedCommunityMerger] instance.
+        trace_info      : Optional ReasoningTrace to populate (Phase 62).
         """
         emb_dim = self._infer_dim()
         self.expansions = 0
@@ -369,7 +412,8 @@ class BeamTraversal:
                 self.csa.set_query_snapshot(dict(_cmap))
             self.csa.set_query_time(query_time)
         try:
-            paths = self._traverse_inner(seeds, emb_dim, query_time)
+            # Phase 62: Explainable Reasoning Trace (ERT)
+            paths = self._traverse_inner(seeds, emb_dim, query_time, trace_info=trace_info)
             _dt = (_time.perf_counter() - _t0) * 1000
             _log.info(
                 "Traversal END    paths=%d  expansions=%d  elapsed=%.1fms",
@@ -386,6 +430,7 @@ class BeamTraversal:
         seeds: List[str],
         emb_dim: int,
         query_time: Optional[float],
+        trace_info: Optional["ReasoningTrace"] = None,
     ) -> "List[TraversalPath]":
         # Initialize beam from seed entities
         beam: List[TraversalPath] = []
@@ -400,15 +445,20 @@ class BeamTraversal:
                 emb = emb / norm
 
             cid = self.adapter.get_community(seed)
-            beam.append(
-                TraversalPath(
-                    nodes=[seed],
-                    seen_entities={seed},
-                    embedding=emb.copy(),
-                    score=1.0,
-                    community_sequence=[cid] if cid >= 0 else [],
-                )
+            path = TraversalPath(
+                nodes=[seed],
+                seen_entities={seed},
+                embedding=emb.copy(),
+                score=1.0,
+                q_score=QUANT_SCALE,
+                quantized=self.quantized,
+                community_sequence=[cid] if cid >= 0 else [],
             )
+            beam.append(path)
+
+        # Phase 62: Record hop 0 (seeds) in trace
+        if trace_info:
+            trace_info.add_hop(hop=0, winners=beam, competitors=[], total_count=len(beam), beam_width=len(beam))
 
         all_paths: List[TraversalPath] = list(beam)
         _log.debug("Beam initialised with %d seed path(s)", len(beam))
@@ -501,6 +551,15 @@ class BeamTraversal:
                             logit_obj = _cwf_result
                             # Calculate weight using parameters, default to neutral if learner not present
                             csa_params = self.csa.get_current_params(path.tail) if hasattr(self.csa, 'get_current_params') else _DEFAULT_INIT_PARAMS
+                            
+                            # Phase 68: Apply dynamic hormonal overrides
+                            if self.csa_overrides:
+                                p_list = list(csa_params)
+                                for i, k in enumerate(CSA_PARAM_KEYS):
+                                    if k in self.csa_overrides:
+                                        p_list[i] = self.csa_overrides[k]
+                                csa_params = tuple(p_list)
+
                             w = logit_obj.score(csa_params)
                             features_vector = logit_obj.to_vector()
                         else:
@@ -653,7 +712,17 @@ class BeamTraversal:
             # At the terminal hop, skip pruning — all reachable endpoints are kept
             # for the answer extractor to score and deduplicate. Pruning here discards
             # valid answers with zero benefit (no further expansion occurs).
+            hop_bw = self._beam_widths.get(hop, self.beam_width)
             beam = self._prune_candidates(candidates, hop)
+            
+            # Phase 62: Explainable Reasoning Trace (ERT)
+            if trace_info:
+                winners_set = set(id(p) for p in beam)
+                competitors = [p for p in candidates if id(p) not in winners_set]
+                # Sort competitors by score for the trace (winners already sorted by _prune_candidates)
+                competitors.sort(key=lambda p: p.score, reverse=True)
+                trace_info.add_hop(hop, beam, competitors, len(candidates), hop_bw)
+
             all_paths.extend(beam)
             self._partial_paths = list(all_paths)  # checkpoint: survives mid-hop exceptions
 
@@ -677,18 +746,31 @@ class BeamTraversal:
         hop_bw = self._beam_widths.get(hop, self.beam_width)
         if self.probabilistic:
             _rng = self._rng
+            
+            # Helper for sampling: if quantized, we approximate float score from q_score
+            # because Thompson sampling needs the Beta(alpha, beta) which we 
+            # still maintain in float for accuracy.
+            def _get_key(p: TraversalPath) -> float:
+                return p.sample_score(_rng)
+
             if hop < self.max_hop and len(candidates) > hop_bw:
                 return heapq.nlargest(
                     hop_bw, candidates,
-                    key=lambda p: p.sample_score(_rng),
+                    key=_get_key,
                 )
             return sorted(candidates,
-                          key=lambda p: p.sample_score(_rng),
+                          key=_get_key,
                           reverse=True)
         else:
-            if hop < self.max_hop and len(candidates) > hop_bw:
-                return heapq.nlargest(hop_bw, candidates, key=lambda p: p.score)
-            return sorted(candidates, key=lambda p: p.score, reverse=True)
+            # Deterministic: use q_score if quantized, otherwise score
+            if self.quantized:
+                if hop < self.max_hop and len(candidates) > hop_bw:
+                    return heapq.nlargest(hop_bw, candidates, key=lambda p: p.q_score)
+                return sorted(candidates, key=lambda p: p.q_score, reverse=True)
+            else:
+                if hop < self.max_hop and len(candidates) > hop_bw:
+                    return heapq.nlargest(hop_bw, candidates, key=lambda p: p.score)
+                return sorted(candidates, key=lambda p: p.score, reverse=True)
 
     def _infer_dim(self) -> int:
         """Infer embedding dimension from the adapter."""
@@ -713,12 +795,14 @@ class AsyncBeamTraversal(BeamTraversal):
         self,
         seeds: List[str],
         query_time: Optional[float] = None,
+        trace_info: Optional["ReasoningTrace"] = None,
     ):
         """
         Run beam traversal and yield paths hop-by-hop.
         Yields: List[TraversalPath] at each hop completion.
 
         query_time : Unix timestamp for temporal filtering (see traverse()).
+        trace_info : Optional ReasoningTrace to populate (Phase 62).
         """
         emb_dim = self._infer_dim()
         self.expansions = 0
@@ -730,14 +814,14 @@ class AsyncBeamTraversal(BeamTraversal):
                 self.csa.set_query_snapshot(dict(_cmap))
             self.csa.set_query_time(query_time)
         try:
-            async for hop_result in self._traverse_stream_inner(seeds, emb_dim, query_time):
+            async for hop_result in self._traverse_stream_inner(seeds, emb_dim, query_time, trace_info=trace_info):
                 yield hop_result
         finally:
             if self.csa is not None:
                 self.csa.clear_query_snapshot()
                 self.csa.set_query_time(None)
 
-    async def _traverse_stream_inner(self, seeds, emb_dim, query_time):
+    async def _traverse_stream_inner(self, seeds, emb_dim, query_time, trace_info=None):
         import asyncio
         # Initialize beam from seed entities
         beam: List[TraversalPath] = []
@@ -756,6 +840,8 @@ class AsyncBeamTraversal(BeamTraversal):
                 seen_entities={seed},
                 embedding=emb.copy(),
                 score=1.0,
+                q_score=QUANT_SCALE,
+                quantized=self.quantized,
                 community_sequence=[cid] if cid >= 0 else [],
             )
             beam.append(path)
@@ -848,6 +934,15 @@ class AsyncBeamTraversal(BeamTraversal):
                             logit_obj = _cwf_result
                             # Calculate weight using parameters, default to neutral if learner not present
                             csa_params = self.csa.get_current_params(path.tail) if hasattr(self.csa, 'get_current_params') else _DEFAULT_INIT_PARAMS
+                            
+                            # Phase 68: Apply dynamic hormonal overrides
+                            if self.csa_overrides:
+                                p_list = list(csa_params)
+                                for i, k in enumerate(CSA_PARAM_KEYS):
+                                    if k in self.csa_overrides:
+                                        p_list[i] = self.csa_overrides[k]
+                                csa_params = tuple(p_list)
+
                             w = logit_obj.score(csa_params)
                             features_vector = logit_obj.to_vector()
                         else:
@@ -914,8 +1009,20 @@ class AsyncBeamTraversal(BeamTraversal):
                             prior_scale=_prior_scale,
                             features=tuple(features_vector) if features_vector is not None else None,
                         )
-                        candidates.append(new_path)
 
+                        # Phase 63: Telemetry Pulse
+                        # We pass the graph reference during construction for async stream cases
+                        if hasattr(self, 'graph') and self.graph:
+                            self.graph.emit(NeuralEvent.pulse(
+                                source=path.tail,
+                                target=v_eff,
+                                relation=rel_eff,
+                                weight=new_path.score,
+                                hop=hop,
+                                features=list(features_vector) if features_vector is not None else None
+                            ))
+
+                        candidates.append(new_path)
             if not candidates:
                 break
 
@@ -938,22 +1045,14 @@ class AsyncBeamTraversal(BeamTraversal):
 
             # At the terminal hop, skip pruning (same as sync version)
             hop_bw = self._beam_widths.get(hop, self.beam_width)
-            if self.probabilistic:
-                _rng = self._rng
-                if hop < self.max_hop and len(candidates) > hop_bw:
-                    beam = heapq.nlargest(
-                        hop_bw, candidates,
-                        key=lambda p: p.sample_score(_rng),
-                    )
-                else:
-                    beam = sorted(candidates,
-                                  key=lambda p: p.sample_score(_rng),
-                                  reverse=True)
-            else:
-                if hop < self.max_hop and len(candidates) > hop_bw:
-                    beam = heapq.nlargest(hop_bw, candidates, key=lambda p: p.score)
-                else:
-                    beam = sorted(candidates, key=lambda p: p.score, reverse=True)
+            beam = self._prune_candidates(candidates, hop)
+            
+            # Phase 62: Explainable Reasoning Trace (ERT)
+            if trace_info:
+                winners_set = set(id(p) for p in beam)
+                competitors = [p for p in candidates if id(p) not in winners_set]
+                competitors.sort(key=lambda p: p.score, reverse=True)
+                trace_info.add_hop(hop, beam, competitors, len(candidates), hop_bw)
 
             # Yield this layer's best paths
             yield beam

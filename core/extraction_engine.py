@@ -859,7 +859,7 @@ JSON:"""
                     log.info("ExtractionEngine: loaded REBEL model '%s'.", self._config.rebel_model)
                 except Exception as exc:
                     log.warning("ExtractionEngine: could not load REBEL: %s", exc)
-                return self._rebel
+        return self._rebel
 # ---------------------------------------------------------------------------
 # Module-level helpers
 # ---------------------------------------------------------------------------

@@ -324,6 +324,25 @@ class FederatedAdapter(GraphAdapter):
             emb = emb @ R
         return emb
 
+    def add_edge(
+        self,
+        u: str,
+        v: str,
+        relation: str,
+        confidence: float = 1.0,
+        provenance: str = "",
+        synthetic: bool = False,
+    ) -> None:
+        """Add an edge to the appropriate sub-adapter."""
+        owner = self._resolve_adapter(u)
+        if owner:
+            self.adapters[owner].add_edge(u, v, relation, confidence, provenance, synthetic)
+        else:
+            # Fallback to first available adapter
+            if self.adapters:
+                first_name = list(self.adapters.keys())[0]
+                self.adapters[first_name].add_edge(u, v, relation, confidence, provenance, synthetic)
+
     def align_embeddings(
         self,
         primary_name: str,

@@ -25,6 +25,7 @@ class MockAdapter(GraphAdapter):
     def get_community(self, entity_id): return self.communities.get(entity_id, -1)
     def get_embedding(self, entity_id): return self.embeddings.get(entity_id)
     def find_similar(self, embedding, top_k=10): return []
+    def add_edge(self, u, v, relation, confidence=1.0, provenance="", synthetic=False): pass
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -161,6 +162,3 @@ def test_sigmoid_midpoint():
 def test_sigmoid_monotone():
     vals = [_sigmoid(x) for x in [-5, -1, 0, 1, 5]]
     assert vals == sorted(vals)
-
-
-

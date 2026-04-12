@@ -75,6 +75,7 @@ class GlobalRebalancer:
         n_dscf_trials: int = 3,
         dscf_seed: int = 42,
         bridge_engine=None,
+        pruning_enabled: bool = True,
     ) -> None:
         self._adapter = adapter
         self._check_every = check_every_n_events
@@ -83,7 +84,10 @@ class GlobalRebalancer:
         self._n_trials = n_dscf_trials
         self._dscf_seed = dscf_seed
         self._bridge_engine = bridge_engine
+        self._pruning_enabled = pruning_enabled
 
+        from core.synaptic_pruner import SynapticPruner
+        self._pruner = SynapticPruner(adapter)
         self._lock = threading.RLock()
         self._event_counter: int = 0
         self._last_q: float = 0.0
@@ -257,6 +261,15 @@ class GlobalRebalancer:
         with self._lock:
             self._last_q = best_q
             self._rebalance_count += 1
+
+        # Post-rebalance: Synaptic Pruning (Phase 61)
+        if self._pruning_enabled:
+            try:
+                pruned_edges = self._pruner.prune()
+                if pruned_edges > 0:
+                    logger.info("SynapticPruner: pruned %d low-utility edges", pruned_edges)
+            except Exception as exc:
+                logger.warning("SynapticPruner failed during rebalance: %s", exc)
 
         logger.info(
             "Full rebalance #%d complete: Q=%.4f, communities=%d",

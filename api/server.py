@@ -38,6 +38,8 @@ from core.security import FederatedAuth
 
 from api.schemas import (
     QueryRequest, QueryResponse, CommunitiesResponse,
+    QueryConsensusRequest, QueryConsensusResponse, ConsensusLevel,
+    TraceResponse, HopTraceSchema,
     HealthResponse, PathResult, PathNode, CommunityInfo,
     EntityResponse, EdgeResponse, SearchResponse,
     SimilarSearchRequest, SimilarSearchResponse, FeedbackRequest,
@@ -138,6 +140,10 @@ _state: Dict[str, Any] = {
     "insight_engine":   None,   # InsightEngine (lazy-initialized on first /insight call)
     "query_log":        None,   # QueryLog — durable NDJSON query history
     "engram":           None,   # Engram — relation-pattern prior (warmed from query_log)
+    "cerebellar_engine": None,  # CerebellarEngine — active error-correction (Phase 59)
+    "multi_strategy_consensus": None, # MACH L1 (Phase 60)
+    "consensus_hierarchy_engine": None, # MACH Hierarchy (Phase 60)
+    "modulator":        None,   # ChemicalModulator (Phase 68)
 }
 
 
@@ -255,6 +261,13 @@ def create_app(
         get_ring_handler().clear()
         return {"cleared": True}
 
+    @app.get("/chemical", tags=["system"])
+    async def get_chemical_state(node: Dict = Depends(get_authenticated_node)):
+        """Return the current neuro-chemical state of the system (Phase 68)."""
+        if not _state["modulator"]:
+            return {"error": "Modulator not initialized"}
+        return _state["modulator"].to_state()
+
     @app.get("/health", response_model=HealthResponse, tags=["system"])
     async def health(node: Dict = Depends(get_authenticated_node)):
         cm  = _state["community_map"] or {}
@@ -266,6 +279,95 @@ def create_app(
             embeddings_loaded=_state["embeddings"] is not None,
             node_count=len(emb),
             community_count=len(set(cm.values())) if cm else 0,
+        )
+
+    def _path_to_result(path, rank: int, answer_entity: str) -> PathResult:
+        """Helper to convert TraversalPath to PathResult."""
+        from llm_bridge.context_formatter import _format_path_nodes
+        return PathResult(
+            rank=rank,
+            answer_entity=answer_entity,
+            score=path.score,
+            score_breakdown=getattr(path, "score_breakdown", {}),
+            path=[PathNode(**n) for n in _format_path_nodes(path, _state["adapter"])],
+            edge_features=[list(f) for f in path.edge_features],
+            community_sequence=list(path.community_sequence),
+        )
+
+    @app.post("/query/consensus", response_model=QueryConsensusResponse, tags=["reasoning"])
+    async def query_consensus(req: QueryConsensusRequest, node: Dict = Depends(check_scope("query"))):
+        """
+        MACH: Multi-Agent Consensus Hierarchy query (Phase 60).
+        Coordinates multi-level consensus (L1 Strategy, L2 Federated).
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+
+        ce = _get_consensus_hierarchy_engine()
+        adapter = _state["adapter"]
+        
+        # Resolve seeds
+        if req.seeds:
+            seeds = req.seeds
+        else:
+            entities = adapter.find_entities(req.query, top_k=5)
+            seeds = [e.id for e in entities if e]
+
+        if not seeds:
+            raise HTTPException(status_code=404, detail=f"No entities found for query: {req.query!r}")
+
+        try:
+            consensus_data = await ce.query_with_consensus(
+                query=req.query,
+                seeds=seeds,
+                level=req.min_level,
+                strategies=req.strategies,
+                top_k=req.top_k,
+                max_hop=req.max_hop,
+                beam_width=req.beam_width,
+                max_budget=req.max_budget,
+                edge_type_weights=req.edge_type_weights or _state["default_edge_type_weights"]
+            )
+        except Exception as exc:
+            _api_log.error("Consensus hierarchy query failed: %s", exc)
+            raise HTTPException(status_code=500, detail=str(exc))
+        
+        consensus_list = consensus_data["results"]
+        total_explored = consensus_data["total_explored"]
+        dt = consensus_data["duration"]
+        level_reached = consensus_data["level_reached"]
+
+        # Filter by min_consensus and top_k
+        filtered = [c for c in consensus_list if c.consensus_score >= req.min_consensus]
+        top_results = filtered[:req.top_k]
+
+        from api.schemas import PathConsensusSchema, ConsensusLevel
+        
+        # Format results
+        results = []
+        for i, c in enumerate(top_results):
+            # We need to map labels for the answer entity
+            ent = adapter.get_entity(c.path.tail)
+            label = ent.label if ent else c.path.tail
+            
+            results.append(PathConsensusSchema(
+                rank=i + 1,
+                answer_entity=label,
+                score=c.consensus_score,
+                best_path=_path_to_result(c.path, rank=1, answer_entity=label),
+                confirming_agents=c.agents,
+                consensus_level=ConsensusLevel(c.level),
+                variance=c.variance,
+                metadata=c.metadata
+            ))
+
+        return QueryConsensusResponse(
+            query=req.query,
+            seeds_used=seeds,
+            consensus_results=results,
+            total_paths_explored=total_explored,
+            duration_seconds=dt,
+            level_reached=ConsensusLevel(level_reached)
         )
 
     @app.post("/query", response_model=QueryResponse, tags=["reasoning"])
@@ -327,6 +429,13 @@ def create_app(
         q_emb = adapter.get_embedding(seeds[0]) if seeds else None
         answers = extract(paths, top_k=req.top_k, query_embedding=q_emb)
 
+        # Milestone 59: Cerebellar Error Correction (CEC)
+        try:
+            ce = _get_cerebellar_engine()
+            ce.process_results(seeds[0], answers)
+        except Exception as exc:
+            _api_log.warning("CerebellarEngine failed: %s", exc)
+
         # Persist query result for Engram warm-up on next restart (fire-and-forget — never crash the response)
         try:
             if _state["query_log"] is not None:
@@ -367,6 +476,79 @@ def create_app(
             total_paths_explored=len(paths),
             partial=bool(_traversal_error),
             error=_traversal_error,
+        )
+
+    @app.post("/query/trace", response_model=TraceResponse, tags=["reasoning"])
+    async def query_trace(req: QueryRequest, node: Dict = Depends(check_scope("query"))):
+        """
+        Explainable Reasoning Trace (ERT) query (Phase 62).
+        Returns a detailed hop-by-hop breakdown of the decision process,
+        including winners and rejected competitors at each step.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Service not ready")
+
+        from core.attention_engine import CSAEngine
+        from reasoning.traversal import BeamTraversal
+        from reasoning.trace import ReasoningTrace
+
+        adapter      = _state["adapter"]
+        csa_meta     = _state["csa_metadata"]
+        default_weights = _state["default_edge_type_weights"]
+
+        # Resolve seeds
+        if req.seeds:
+            seeds = req.seeds
+        else:
+            entities = adapter.find_entities(req.query, top_k=5)
+            seeds    = [e.id for e in entities if e]
+
+        if not seeds:
+            raise HTTPException(status_code=404, detail=f"No entities found for query: {req.query!r}")
+
+        csa = CSAEngine(
+            adapter=adapter,
+            edge_type_weights=req.edge_type_weights or default_weights,
+            community_params=csa_meta.get("community_params"),
+        )
+        csa.set_community_graph(csa_meta["distances"], csa_meta["adjacent_pairs"])
+        
+        if _state["meta_learner"]:
+            csa.set_meta_learner(_state["meta_learner"])
+
+        trace = ReasoningTrace(query=req.query, seeds=seeds)
+        
+        traversal = BeamTraversal(
+            adapter=adapter,
+            csa_engine=csa,
+            beam_width=req.beam_width,
+            max_hop=req.max_hop,
+            max_budget=req.max_budget,
+        )
+        
+        t0 = time.perf_counter()
+        traversal.traverse(seeds, trace_info=trace)
+        dt = time.perf_counter() - t0
+
+        from api.schemas import HopTraceSchema
+        
+        hops_schema = [
+            HopTraceSchema(
+                hop=h.hop,
+                winners=h.winners,
+                competitors=h.competitors,
+                total_candidates=h.total_candidates,
+                beam_width=h.beam_width
+            )
+            for h in trace.hops
+        ]
+
+        return TraceResponse(
+            query=req.query,
+            seeds=seeds,
+            hops=hops_schema,
+            duration_seconds=dt,
+            metadata=trace.metadata
         )
 
     @app.post("/query/stream", tags=["reasoning"])
@@ -456,6 +638,10 @@ def create_app(
         )
         
         _state["meta_learner"].update_from_feedback(dummy_path, req.reward)
+
+        # Phase 68: Update metabolic Reinforcement based on feedback reward
+        if _state["modulator"]:
+            _state["modulator"].update_reinforcement(req.reward)
 
         # Buffer for batch retraining (POST /retrain)
         _state["feedback_buffer"].append({"path": dummy_path, "reward": req.reward})
@@ -1720,6 +1906,41 @@ def create_app(
         s = agent.status
         return ResearchStatusResponse(**s)
 
+    def _get_cerebellar_engine():
+        """Lazy-initialize CerebellarEngine (Phase 59)."""
+        from core.cerebellar_engine import CerebellarEngine
+        if _state["cerebellar_engine"] is None:
+            _state["cerebellar_engine"] = CerebellarEngine(
+                research_agent=_get_research_agent(),
+                meta_learner=_state.get("meta_learner")
+            )
+        return _state["cerebellar_engine"]
+
+    def _get_multi_strategy_consensus():
+        """Lazy-initialize MultiStrategyConsensus (Phase 60)."""
+        from reasoning.multi_strategy_consensus import MultiStrategyConsensus
+        if _state["multi_strategy_consensus"] is None:
+            if not _is_ready():
+                raise HTTPException(status_code=503, detail="Graph not loaded")
+            _state["multi_strategy_consensus"] = MultiStrategyConsensus(
+                adapter=_state["adapter"],
+                engram=_state.get("engram")
+            )
+        return _state["multi_strategy_consensus"]
+
+    def _get_consensus_hierarchy_engine():
+        """Lazy-initialize ConsensusHierarchyEngine (Phase 60)."""
+        from reasoning.consensus_hierarchy_engine import ConsensusHierarchyEngine
+        if _state["consensus_hierarchy_engine"] is None:
+            if not _is_ready():
+                raise HTTPException(status_code=503, detail="Graph not loaded")
+            _state["consensus_hierarchy_engine"] = ConsensusHierarchyEngine(
+                adapter=_state["adapter"],
+                engram=_state.get("engram"),
+                research_agent=_get_research_agent()
+            )
+        return _state["consensus_hierarchy_engine"]
+
     @app.post("/research/start", response_model=ResearchStatusResponse, tags=["research"])
     async def research_start(node: Dict = Depends(get_authenticated_node)):
         """Start the background scanning daemon (idempotent)."""
@@ -2261,6 +2482,10 @@ def _load(
     # 5. Milestone 4: Adaptive Parameter Learning
     if use_meta_learning:
         _state["meta_learner"] = MetaParameterLearner()
+
+    # Phase 68: Neuro-Chemical Modulation
+    from core.chemical_modulator import ChemicalModulator
+    _state["modulator"] = ChemicalModulator()
 
     # 5b. Engram relation-prior warm-up from durable query log (two-tier)
     from pathlib import Path
