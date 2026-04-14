@@ -7,6 +7,48 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.11.0] — 2026-04-14
+### Added
+- **Phase 73 Batch B: Feature 1 — ContradictionResolver** — deterministic evidence-weight classifier on already-computed proposal data. Computes Noisy-OR of proposed path confidences vs. max contradiction_score; classifies findings as "clean" / "revision_candidate" / "contested" / "discardable". Discardable findings are auto-rejected before reaching AutoApprover. Revision candidates (proposed evidence outweighs existing) are queued separately for human review. No extra traversal passes — pure arithmetic on HypothesisProposal fields.
+- **Phase 73 Batch B: Feature 3 — CandidateRegistry** — replaces flat `_evaluated_pairs` set with a TTL-aware registry that tracks `nomination_count` per (source, target) pair across scan cycles. Multi-nominated candidates receive a log-scale `nomination_boost` applied to `discovery_potential` scoring, surfacing pairs independently discovered by multiple mechanisms. TTL gate prevents redundant HypothesisEngine runs; `prune()` evicts stale entries; LRU cap enforces memory bound.
+- `core/contradiction_resolver.py`: `ContradictionRecord` dataclass + `ContradictionResolver` class.
+- `core/candidate_registry.py`: `RegistryEntry` dataclass + `CandidateRegistry` class.
+- `ResearchAgent` gains `set_contradiction_resolver()`, `set_registry()`, and `_revision_candidates` deque.
+- `AutoApprover.decide()` gains contradiction hard gate: discardable resolution → immediate reject.
+- `tests/test_batch_b.py`: ≥20 new tests covering both features + ResearchAgent wiring.
+
+## [2.10.0] — 2026-04-14
+### Added
+- **Phase 73 Batch A: Feature 2 — Temporal Recency Scoring** — `_compute_recency_score(hits)` exponential-decay scoring on publication year (half-life 7 years). `ValidationReport` gains `recency_score` field [0,1]: 1.0 = all hits published this year, 0.5 = average hit is 7 years old or no year data (neutral).
+- **Phase 73 Batch A: Feature 4 — DiscoveryCalibrator** — EMA-smoothed per-community scan and discovery rate tracking. Inverse-rate multiplier (`weight = global_rate / (community_rate + ε)`) steers `ResearchAgent` candidate scoring toward understudied communities. Cold-start: unscanned communities receive `max_weight` (default 5.0).
+- `core/discovery_calibrator.py`: `DiscoveryCalibrator` with `record_scan()`, `record_discovery()`, `get_weight()`, `stats()`.
+- `core/external_validator.py`: `_compute_recency_score()` function + `_RECENCY_HALF_LIFE_YEARS` constant.
+- `tests/test_batch_a.py`: 20 new tests (recency + calibrator sections).
+
+## [2.9.0] — 2026-04-14
+### Added
+- **Phase 72: TriangulationEngine** — four-perspective validation of `ResearchCandidate` objects, extending the `AutoApprover` feature vector from 12 → 16.
+  - **P1 `reverse_confidence`**: HypothesisEngine run B→A direction.
+  - **P2 `strategy_agreement`**: fraction of 3 strategy configs (conservative/standard/exploratory) returning ≥1 valid proposal.
+  - **P3 `mean_path_independence`**: mean Jaccard independence across primary proposals (free — already computed).
+  - **P4 `semantic_type_score`**: relation-type / entity-class consistency index; novel relations score 0.5 (neutral — never penalises novelty).
+  - `is_wormhole_candidate` diagnostic flag (not a classifier feature). Report stored in `finding.metadata["triangulation"]`.
+  - Type index lazily built; invalidated on graph signature change.
+- `core/triangulation_engine.py`: `TriangulationReport` dataclass + `TriangulationEngine` class.
+- `tests/test_triangulation.py`: new test suite for all four perspectives.
+
+## [2.8.5] — 2026-04-14
+### Added
+- **Phase 71: AutoApprover** — automated approve/reject/review decision engine for `ResearchFinding` objects, replacing manual `POST /research/approve|reject` at scale.
+  - Three-tier decision stack: hard gates (blocked statuses, missing validation) → online logistic SGD classifier (16 features) → optional LLM semantic fallback.
+  - **16-dimensional feature vector**: confidence, discovery_potential, gap_score, community_distance, local_density, literature_status ordinal, novelty_score, engram_affinity, path_count, contradiction_score, seeded_by flags, + 4 TriangulationReport slots (features 12–15).
+  - Online `fit(finding, approved)` from confirmed human decisions; `to_dict()` / `from_dict()` checkpoint support.
+  - `AutoApprovalPolicy` — configurable thresholds, `blocked_statuses`, `require_validation`.
+  - `ResearchAgent` gains `_auto_approver` attachment; auto-decisions fire `report_outcome()` + `approve()`/`reject()`.
+  - REST: `GET /research/auto-approver/stats`, `POST /research/auto-approver/policy`.
+- `core/auto_approver.py`: `AutoApprovalPolicy`, `AutoDecision`, `AutoApprover`.
+- `tests/test_auto_approver.py`: new test suite.
+
 ## [2.8.0] — 2026-04-11
 ### Added
 - **Phase 70: Looped Beam Traversal** — LoopLM-style iterative refinement for KG reasoning (arXiv:2510.25741).

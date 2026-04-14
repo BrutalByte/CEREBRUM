@@ -51,7 +51,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v2.8.0 (Phase 70 COMPLETE)** — 1554+ tests passing.
+**v2.11.0 (Phase 73 Batch B in progress)** — 1554+ tests passing (Phases 71–73 wired, Batch B in flight).
 
 ### System Architecture Names
 | Name | Role |
@@ -68,6 +68,9 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 | **ChemicalModulator** | Metabolic hormonal regulation (Reinforcement, Arousal, etc.) (Phase 68) |
 | **PredictiveCodingEngine** | Active inference — Engram prior + Prediction Error + soliton_index (Phase 69) |
 | **LoopedBeamTraversal** | LoopLM-style iterative refinement — apply traversal T times with seed expansion + adaptive PE exit gate (Phase 70, arXiv:2510.25741) |
+| **AutoApprover** | Automated approve/reject/review for ResearchFindings — hard gates → online logistic SGD (16 features) → optional LLM fallback (Phase 71) |
+| **TriangulationEngine** | Four-perspective candidate validation: reverse traversal, multi-strategy agreement, path independence, semantic type consistency (Phase 72) |
+| **DiscoveryCalibrator** | Per-community EMA discovery rate + inverse-rate sampling multiplier — steers ResearchAgent toward understudied communities (Phase 73) |
 
 ### Core Concepts
 - **DSCF/TSC**: Dual/Triple signal community fusion (part of CORTEX).
@@ -109,6 +112,11 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 - **Autonomous Hypothesis Materialization (Phase 65)**: Formal materialization of `ResearchAgent` findings as graph edges with Noisy-OR aggregated confidence and discovery provenance.
 - **Neuro-Symbolic Homeostasis (Phase 68)**: Dynamic functional regulation of the reasoning engine via `ChemicalModulator`. Simulates metabolic scalars: **Reinforcement** (Dopamine), **Arousal** (Norepinephrine), **Novelty** (Acetylcholine), **Cohesion** (Oxytocin), and **Persistence** (Vasopressin). Implements temporal decay and homeostatic baselines.
 - **Predictive Coding Engine (Phase 69)**: Active inference — every traversal is preceded by a *prior path* generated from the top Engram pattern. After traversal, `PredictiveCodingEngine.update()` computes a **Prediction Error (PE)** — Jaccard divergence between prior and actual relation sequences. PE drives `ChemicalModulator` signals (arousal, novelty, reinforcement). The `soliton_index` = 1 - mean(recent PEs) tracks the coherence and stability of predictions over time: a self-reinforcing prior that consistently yields low PE behaves as a soliton (self-localising wave, UCFT 2025). `ReasoningTrace` exposes `prior`, `prediction_error`, and `soliton_index` fields. `CerebrumGraph.attach_engram(engram)` activates the engine post-build.
+- **AutoApprover (Phase 71)**: Automated decision engine for `ResearchFinding` objects. Three-tier stack: hard gates (blocked literature_status, missing ValidationReport) → online logistic SGD classifier (16-feature vector: confidence, discovery_potential, gap_score, community_distance, local_density, lit_status ordinal, novelty_score, engram_affinity, path_count, contradiction_score, seeded_by flags, + 4 TriangulationReport slots) → optional LLM semantic fallback. Online `fit()` from confirmed decisions; `to_dict()` / `from_dict()` checkpoint. REST: `GET/POST /research/auto-approver`.
+- **TriangulationEngine (Phase 72)**: Four-perspective validation of `ResearchCandidate` objects; extends AutoApprover feature vector 12→16. P1 `reverse_confidence`: HypothesisEngine run B→A. P2 `strategy_agreement`: 3-config agreement fraction. P3 `mean_path_independence`: Jaccard independence across primary proposals. P4 `semantic_type_score`: relation-type/entity-class consistency; novel relations always 0.5 (neutral). `is_wormhole_candidate` diagnostic flag. Stored in `finding.metadata["triangulation"]`.
+- **DiscoveryCalibrator (Phase 73)**: EMA-tracked per-community scan and discovery rate. Inverse-rate multiplier `weight = global_rate / (community_rate + ε)` boosts underrepresented communities in `_score_discovery_potential()`. Cold-start: unscanned communities → `max_weight` (5.0). `record_scan()`, `record_discovery()`, `get_weight(cid)`, `stats()`. Temporal recency scoring added to `ValidationReport.recency_score` (exponential decay, half-life 7 years).
+- **ContradictionResolver (Phase 73 Batch B)**: Deterministic evidence-weight classifier on already-computed proposal data. Noisy-OR of proposed confidences vs. max contradiction_score → `net_evidence_score`. Resolutions: "clean" / "revision_candidate" / "contested" / "discardable". Discardable → auto-reject before AutoApprover. Revision candidates queued in `ResearchAgent._revision_candidates`.
+- **CandidateRegistry (Phase 73 Batch B)**: TTL-aware registry replacing flat `_evaluated_pairs` set. Tracks `nomination_count` per (source, target) pair; applies log-scale `nomination_boost` (up to 3×) to `discovery_potential`. TTL gate prevents redundant HypothesisEngine runs; `prune()` evicts stale entries; LRU `max_entries` cap enforces memory bound.
 - **Looped Beam Traversal (Phase 70)**: LoopLM-style iterative refinement (arXiv:2510.25741). `LoopedBeamTraversal` wraps any `BeamTraversal`-compatible engine and applies it T times. Between loops: top-K answer entities expand seeds (semantic channel), PE→ChemicalModulator adjusts beam params (metabolic channel), Engram records bias next loop's pruning (mnemonic channel). Adaptive exit gate: `|ΔPE| < γ` (primary) or answer-set Jaccard ≥ θ (fallback). All loops' paths merged — `best_by_tail` keeps highest-score per tail entity. `max_loops` param on `QueryRequest`, `CerebrumGraph.query()`, and `MultiStrategyConsensus.run_consensus_query()`. `LoopTrace` exposed via `ReasoningTrace.loop_trace` in ERT.
 
 ## Install & Development Commands
