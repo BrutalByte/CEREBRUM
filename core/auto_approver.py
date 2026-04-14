@@ -172,6 +172,24 @@ class AutoApprover:
             return decision
 
         # 2. Hard gates
+        # 2a. ContradictionResolver discardable gate (Phase 73 Batch B)
+        meta = getattr(finding, "metadata", {}) or {}
+        cr = meta.get("contradiction_resolution")
+        if cr is not None and getattr(cr, "resolution", None) == "discardable":
+            decision = AutoDecision(
+                action="reject",
+                confidence=0.0,
+                reason=(
+                    f"hard_gate: contradiction_resolver discardable "
+                    f"(net={getattr(cr, 'net_evidence_score', '?'):.3f})"
+                ),
+                features=features,
+                finding_id=finding_id,
+            )
+            self._record(decision)
+            return decision
+
+        # 2b. Literature status gate
         lit_status = getattr(finding, "literature_status", "unvalidated")
         if lit_status in self.policy.blocked_statuses:
             decision = AutoDecision(

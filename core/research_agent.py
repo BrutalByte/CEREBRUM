@@ -56,6 +56,17 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
+# Phase 73 Batch B — optional components (imported lazily to avoid hard dependency)
+try:
+    from core.contradiction_resolver import ContradictionResolver, ContradictionRecord  # noqa: F401
+except ImportError:
+    ContradictionResolver = None  # type: ignore[assignment,misc]
+
+try:
+    from core.candidate_registry import CandidateRegistry  # noqa: F401
+except ImportError:
+    CandidateRegistry = None  # type: ignore[assignment,misc]
+
 logger = logging.getLogger(__name__)
 
 
@@ -183,6 +194,9 @@ class ResearchAgent:
         self._auto_approver         = auto_approver
         self._triangulation_engine  = triangulation_engine
         self._calibrator            = calibrator
+        # Phase 73 Batch B
+        self._contradiction_resolver: Optional[Any] = None
+        self._registry: Optional[Any]               = None
         self.scan_interval      = scan_interval
         self.candidate_limit    = candidate_limit
         self.min_discovery_potential = min_discovery_potential
@@ -209,6 +223,8 @@ class ResearchAgent:
         self._findings: collections.deque = collections.deque(maxlen=findings_capacity)
         self._evaluated_pairs: Set[Tuple[str, str]] = set()
         self._pushed_candidates: List[ResearchCandidate] = []
+        # Phase 73 Batch B: revision candidates (discardable → skip; revision → queue here)
+        self._revision_candidates: collections.deque = collections.deque(maxlen=50)
 
         # Optional external validator (set by server or constructor caller)
         self._validator: Optional[Any] = None
@@ -271,6 +287,25 @@ class ResearchAgent:
         """
         with self._lock:
             self._triangulation_engine = engine
+
+    def set_contradiction_resolver(self, resolver) -> None:
+        """
+        Attach a ContradictionResolver (Phase 73 Batch B).  When set, findings
+        with non-trivial contradiction_score are classified before reaching
+        AutoApprover.  Discardable findings are auto-rejected; revision
+        candidates are queued in ``_revision_candidates``.
+        """
+        with self._lock:
+            self._contradiction_resolver = resolver
+
+    def set_registry(self, registry) -> None:
+        """
+        Attach a CandidateRegistry (Phase 73 Batch B).  When set, replaces the
+        flat ``_evaluated_pairs`` dedup with TTL-aware tracking + nomination
+        boost on ``discovery_potential`` scoring.
+        """
+        with self._lock:
+            self._registry = registry
 
     def set_calibrator(self, calibrator) -> None:
         """
@@ -509,10 +544,17 @@ class ResearchAgent:
 
         for cand in candidates:
             pair = (cand.source_id, cand.target_id)
-            with self._lock:
-                if pair in self._evaluated_pairs:
+            # Registry-aware dedup (Phase 73 Batch B): when registry is attached,
+            # it controls whether to re-evaluate based on TTL.  Fall back to the
+            # flat _evaluated_pairs set when no registry is attached.
+            if self._registry is not None:
+                if not self._registry.should_evaluate(cand):
                     continue
-                self._evaluated_pairs.add(pair)
+            else:
+                with self._lock:
+                    if pair in self._evaluated_pairs:
+                        continue
+                    self._evaluated_pairs.add(pair)
 
             try:
                 strategy = self._select_strategy(cand.local_density)
@@ -627,6 +669,49 @@ class ResearchAgent:
                         "TriangulationEngine error for %s->%s: %s",
                         cand.source_id, cand.target_id, exc,
                     )
+
+            # ContradictionResolver — Phase 73 Batch B.
+            # Classifies findings with meaningful contradiction signals before
+            # they reach the AutoApprover.  "discardable" findings are rejected
+            # here and never enter the ring buffer or the AutoApprover queue.
+            if self._contradiction_resolver is not None:
+                try:
+                    cr = self._contradiction_resolver.resolve(finding, good)
+                    finding.metadata["contradiction_resolution"] = cr
+                    if cr.resolution == "discardable":
+                        logger.info(
+                            "ContradictionResolver: discarding %s "
+                            "(nor=%.3f contra=%.3f net=%.3f)",
+                            finding.finding_id, cr.proposed_noisy_or,
+                            cr.contradiction_score, cr.net_evidence_score,
+                        )
+                        # Teach AutoApprover to recognise this pattern
+                        aa = self._auto_approver
+                        if aa is not None:
+                            aa.fit(finding, approved=False)
+                        # Skip ring-buffer, calibrator, AutoApprover
+                        continue
+                    if cr.resolution == "revision_candidate":
+                        logger.info(
+                            "ContradictionResolver: revision candidate %s "
+                            "(rev_weight=%.2f)",
+                            finding.finding_id, cr.revision_weight,
+                        )
+                        with self._lock:
+                            self._revision_candidates.append(finding)
+                        # Fall through — still enters ring buffer for human review
+                except Exception as exc:
+                    logger.error(
+                        "ContradictionResolver error for %s: %s",
+                        finding.finding_id, exc,
+                    )
+
+            # Registry: mark candidate as evaluated (Phase 73 Batch B)
+            if self._registry is not None:
+                try:
+                    self._registry.mark_evaluated(cand)
+                except Exception:
+                    pass
 
             with self._lock:
                 self._findings.append(finding)
@@ -790,6 +875,17 @@ class ResearchAgent:
         except Exception as exc:
             logger.warning("ResearchAgent._mine_candidates() error: %s", exc)
             return []
+
+        # Registry: register all candidates + apply nomination boost (Phase 73 Batch B)
+        if self._registry is not None:
+            try:
+                for c in candidates:
+                    self._registry.register(c)
+                    boost = self._registry.get_nomination_boost(c)
+                    if boost != 1.0:
+                        c.discovery_potential = min(1.0, c.discovery_potential * boost)
+            except Exception as exc:
+                logger.debug("CandidateRegistry boost error: %s", exc)
 
         # Rank by discovery_potential and cap at candidate_limit
         candidates.sort(key=lambda c: c.discovery_potential, reverse=True)
