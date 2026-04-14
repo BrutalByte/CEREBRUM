@@ -26,11 +26,23 @@ class TelemetryBridge:
         """Serializes event to JSON and sends to all UE clients."""
         if not self.clients:
             return
-        
-        message = event.json()
-        asyncio.create_task(
-            asyncio.gather(*[client.send(message) for client in self.clients])
-        )
+
+        # Pydantic v2 uses model_dump_json(); fall back to .json() for v1.
+        try:
+            message = event.model_dump_json()
+        except AttributeError:
+            message = event.json()
+
+        # Fire-and-forget: ensure_future avoids creating dangling tasks on
+        # connections that close between the snapshot and the gather.
+        live_clients = set(self.clients)
+        if live_clients:
+            asyncio.ensure_future(
+                asyncio.gather(
+                    *[client.send(message) for client in live_clients],
+                    return_exceptions=True,
+                )
+            )
 
     async def start_server(self):
         async with websockets.serve(self._handle_connection, self.host, self.port):
