@@ -260,6 +260,38 @@ class NetworkXAdapter(GraphAdapter):
             synthetic=synthetic
         )
 
+    def remove_edge(self, u: str, v: str, relation: str) -> None:
+        """
+        Remove an edge from the graph (for Phase 76 provenance rollback).
+
+        On a MultiGraph, removes the first edge keyed by *relation*.
+        On a simple Graph, removes the edge if it exists and has the
+        matching relation attribute.
+
+        Raises ValueError if no matching edge is found.
+        """
+        if not self._G.has_edge(u, v):
+            raise ValueError(f"No edge between {u!r} and {v!r}.")
+
+        if self._G.is_multigraph():
+            # MultiGraph: edges keyed by integer key; find the one matching relation
+            edge_data = self._G.get_edge_data(u, v) or {}
+            for key, attrs in edge_data.items():
+                if attrs.get("relation") == relation:
+                    self._G.remove_edge(u, v, key=key)
+                    return
+            raise ValueError(
+                f"No edge {u!r} -[{relation}]-> {v!r} found (MultiGraph)."
+            )
+        else:
+            ed = self._G.get_edge_data(u, v) or {}
+            if ed.get("relation") == relation:
+                self._G.remove_edge(u, v)
+                return
+            raise ValueError(
+                f"No edge {u!r} -[{relation}]-> {v!r} found."
+            )
+
     def get_reasoning_branches(
         self,
         seed_id: str,

@@ -917,3 +917,44 @@ class LoopStatusResponse(BaseModel):
     started_at: Optional[float]
     last_cycle_at: Optional[float]
     recent_cycles: List[CycleRecordSchema]
+
+
+# ---------------------------------------------------------------------------
+# Phase 76 — Provenance & Rollback schemas
+# ---------------------------------------------------------------------------
+
+class EdgeRecordSchema(BaseModel):
+    """A single materialized edge triple."""
+    source: str
+    target: str
+    relation: str
+
+
+class BatchRecordSchema(BaseModel):
+    """Summary of one approve() call recorded in ProvenanceLedger."""
+    batch_id: str
+    finding_id: str
+    cycle_number: Optional[int]
+    materialized_at: float
+    edge_count: int
+    rolled_back: bool
+
+
+class ProvenanceStatsResponse(BaseModel):
+    """Response for GET /research/provenance/stats."""
+    total_batches: int
+    total_edges_recorded: int
+    batches_rolled_back: int
+    cycles_seen: List[int]
+    max_batches: int
+
+
+class ProvenanceBatchesResponse(BaseModel):
+    """Response for GET /research/provenance/batches."""
+    batches: List[BatchRecordSchema]
+
+
+class ProvenanceRollbackResponse(BaseModel):
+    """Response for POST /research/provenance/rollback/* endpoints."""
+    edges_removed: int
+    message: str

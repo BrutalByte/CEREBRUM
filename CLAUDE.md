@@ -245,6 +245,10 @@ Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`
 | `/research/loop/stop` | POST | Stop the autonomous discovery loop |
 | `/research/loop/status` | GET | Loop health: running, approval rate, circuit breaker, cycle history |
 | `/research/loop/configure` | POST | Partial update: cycle_interval, cap, dry_run, circuit breaker params |
+| `/research/provenance/stats` | GET | ProvenanceLedger totals: batches, edges recorded, rollback count |
+| `/research/provenance/batches` | GET | List recent materialization batches (newest first, ?n=20) |
+| `/research/provenance/rollback/{batch_id}` | POST | Remove edges from one approve() batch |
+| `/research/provenance/rollback-cycle/{n}` | POST | Remove all edges materialized in loop cycle N |
 
 ### Data Flow
 **THALAMUS** (ingestion):

@@ -71,6 +71,8 @@ from api.schemas import (
     ValidateProposalsRequest, ValidateProposalsResponse,
     AutoApprovalPolicySchema, AutoApproverStatsResponse,
     LoopConfigSchema, CycleRecordSchema, LoopStatusResponse,
+    EdgeRecordSchema, BatchRecordSchema, ProvenanceStatsResponse,
+    ProvenanceBatchesResponse, ProvenanceRollbackResponse,
 )
 
 # ---------------------------------------------------------------------------
@@ -148,6 +150,7 @@ _state: Dict[str, Any] = {
     "modulator":        None,   # ChemicalModulator (Phase 68)
     "predictive_coder": None,   # PredictiveCodingEngine (Phase 69)
     "autonomous_loop":  None,   # AutonomousDiscoveryLoop (Phase 74)
+    "provenance_ledger": None,  # ProvenanceLedger (Phase 76)
 }
 
 
@@ -2222,6 +2225,104 @@ def create_app(
         )
         loop.configure(new_cfg)
         return _loop_status_response(loop)
+
+    # ------------------------------------------------------------------
+    # Phase 76 — Provenance & Rollback endpoints
+    # ------------------------------------------------------------------
+
+    def _get_provenance_ledger():
+        """Lazy-initialize ProvenanceLedger (Phase 76)."""
+        from core.provenance_ledger import ProvenanceLedger
+        if _state["provenance_ledger"] is None:
+            ledger = ProvenanceLedger()
+            _state["provenance_ledger"] = ledger
+            # Wire into research agent if already initialized
+            agent = _state.get("research_agent")
+            if agent is not None:
+                agent.set_provenance_ledger(ledger)
+        return _state["provenance_ledger"]
+
+    def _batch_to_schema(rec) -> BatchRecordSchema:
+        return BatchRecordSchema(
+            batch_id=rec.batch_id,
+            finding_id=rec.finding_id,
+            cycle_number=rec.cycle_number,
+            materialized_at=rec.materialized_at,
+            edge_count=len(rec.edges),
+            rolled_back=rec.rolled_back,
+        )
+
+    @app.get(
+        "/research/provenance/stats",
+        response_model=ProvenanceStatsResponse,
+        tags=["research"],
+    )
+    async def provenance_stats(node: Dict = Depends(get_authenticated_node)):
+        """Return ProvenanceLedger summary statistics."""
+        ledger = _get_provenance_ledger()
+        s = ledger.stats()
+        return ProvenanceStatsResponse(**s)
+
+    @app.get(
+        "/research/provenance/batches",
+        response_model=ProvenanceBatchesResponse,
+        tags=["research"],
+    )
+    async def provenance_batches(
+        n: int = 20,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """List the *n* most recently recorded materialization batches."""
+        ledger = _get_provenance_ledger()
+        return ProvenanceBatchesResponse(
+            batches=[_batch_to_schema(r) for r in ledger.list_batches(n=n)]
+        )
+
+    @app.post(
+        "/research/provenance/rollback/{batch_id}",
+        response_model=ProvenanceRollbackResponse,
+        tags=["research"],
+    )
+    async def provenance_rollback_batch(
+        batch_id: str,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Roll back a single materialization batch by finding_id."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        ledger = _get_provenance_ledger()
+        try:
+            removed = ledger.rollback_batch(batch_id, _state["adapter"])
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+        except NotImplementedError as exc:
+            raise HTTPException(status_code=501, detail=str(exc))
+        return ProvenanceRollbackResponse(
+            edges_removed=removed,
+            message=f"Rolled back batch {batch_id!r}: {removed} edge(s) removed.",
+        )
+
+    @app.post(
+        "/research/provenance/rollback-cycle/{cycle_number}",
+        response_model=ProvenanceRollbackResponse,
+        tags=["research"],
+    )
+    async def provenance_rollback_cycle(
+        cycle_number: int,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Roll back all edges materialized during a given loop cycle."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        ledger = _get_provenance_ledger()
+        try:
+            removed = ledger.rollback_cycle(cycle_number, _state["adapter"])
+        except NotImplementedError as exc:
+            raise HTTPException(status_code=501, detail=str(exc))
+        return ProvenanceRollbackResponse(
+            edges_removed=removed,
+            message=f"Rolled back cycle {cycle_number}: {removed} edge(s) removed.",
+        )
 
     @app.post(
         "/research/validate",

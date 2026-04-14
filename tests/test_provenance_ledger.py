@@ -340,3 +340,51 @@ class TestLoopCycleNumber:
         calls = agent.approve.call_args_list
         assert calls[0] == call("f-0", cycle_number=1)
         assert calls[1] == call("f-0", cycle_number=2)
+
+
+# ---------------------------------------------------------------------------
+# NetworkXAdapter.remove_edge integration
+# ---------------------------------------------------------------------------
+
+class TestNetworkXAdapterRemoveEdge:
+    def _make_nx_adapter(self, multigraph=False):
+        import networkx as nx
+        from adapters.networkx_adapter import NetworkXAdapter
+        G = nx.MultiGraph() if multigraph else nx.Graph()
+        G.add_edge("a", "b", relation="knows", confidence=1.0,
+                   provenance="", synthetic=False)
+        G.add_edge("c", "d", relation="likes", confidence=0.9,
+                   provenance="", synthetic=False)
+        return NetworkXAdapter(G), G
+
+    def test_remove_edge_simple_graph(self):
+        adapter, G = self._make_nx_adapter()
+        adapter.remove_edge("a", "b", "knows")
+        assert not G.has_edge("a", "b")
+
+    def test_remove_edge_multigraph(self):
+        adapter, G = self._make_nx_adapter(multigraph=True)
+        adapter.remove_edge("a", "b", "knows")
+        assert not G.has_edge("a", "b")
+
+    def test_remove_edge_raises_wrong_relation(self):
+        adapter, G = self._make_nx_adapter()
+        with pytest.raises(ValueError):
+            adapter.remove_edge("a", "b", "nonexistent")
+
+    def test_remove_edge_raises_no_edge(self):
+        adapter, G = self._make_nx_adapter()
+        with pytest.raises(ValueError):
+            adapter.remove_edge("x", "y", "r")
+
+    def test_rollback_batch_with_real_adapter(self):
+        import networkx as nx
+        from adapters.networkx_adapter import NetworkXAdapter
+        G = nx.Graph()
+        G.add_edge("a", "b", relation="knows", confidence=1.0, provenance="", synthetic=False)
+        adapter = NetworkXAdapter(G)
+        ledger = ProvenanceLedger()
+        ledger.record_batch("b-1", "f-1", [("a", "b", "knows")])
+        removed = ledger.rollback_batch("b-1", adapter)
+        assert removed == 1
+        assert not G.has_edge("a", "b")
