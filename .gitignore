@@ -31,4 +31,21 @@ benchmarks/data/
 research/
 tests/validation/
 
-# Python
+# Runtime data (caches, query logs — generated at runtime)
+data/
+
+# Studio / server logs
+*.log
+
+# Benchmark profiles (generated)
+benchmarks/autotune_profile.json
+
+# Installers / binaries
+*.msi
+
+# Unreal Engine 5 generated directories
+ue5_project/Intermediate/
+ue5_project/Saved/
+ue5_project/Binaries/
+ue5_project/.vs/
+ue5_project/**/*.VC.db
