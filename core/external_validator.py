@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import time
 import threading
 import urllib.parse
@@ -102,8 +103,50 @@ class ValidationReport:
     hits: List[LiteratureHit] = field(default_factory=list)
     adapters_queried: List[str] = field(default_factory=list)
     checked_at: float = field(default_factory=time.time)
+    recency_score: float = 0.5
+    """
+    Recency of supporting literature in [0, 1].  Computed as the mean
+    exponential decay weight of each hit's publication year, with a 7-year
+    half-life:  ``exp(-age * ln(2) / 7)``.
+
+    - 1.0 = all hits published this year
+    - 0.5 = average hit is 7 years old
+    - 0.0 = all hits are ≥30 years old
+    - 0.5 (default) = no year data available (neutral)
+
+    High recency + high hit_count → established by recent work (strong).
+    Low recency + high hit_count → established by old work (possibly superseded).
+    """
+
     error: Optional[str] = None
     """Set when one or more adapters raised an exception (partial results still returned)."""
+
+
+# ---------------------------------------------------------------------------
+# Recency scoring helper
+# ---------------------------------------------------------------------------
+
+_RECENCY_HALF_LIFE_YEARS: float = 7.0
+"""Publication age at which recency weight halves.  Configurable at module level."""
+
+
+def _compute_recency_score(hits: List[LiteratureHit]) -> float:
+    """
+    Mean exponential-decay recency weight across all hits that carry a year.
+
+    Formula:  ``exp(-age * ln(2) / half_life)``
+    - age = current_year − hit.year  (clamped to ≥ 0)
+    - half_life = _RECENCY_HALF_LIFE_YEARS (default 7)
+
+    Returns 0.5 (neutral) when no hits have year information.
+    """
+    current_year = time.gmtime().tm_year
+    scores = []
+    for hit in hits:
+        if hit.year is not None:
+            age = max(0, current_year - hit.year)
+            scores.append(math.exp(-age * math.log(2) / _RECENCY_HALF_LIFE_YEARS))
+    return round(sum(scores) / len(scores), 4) if scores else 0.5
 
 
 # ---------------------------------------------------------------------------
@@ -502,6 +545,7 @@ class ExternalValidator:
             status = "established"
 
         novelty_score = max(0.0, 1.0 - hit_count / 10.0)
+        recency_score = _compute_recency_score(all_hits)
 
         report = ValidationReport(
             hypothesis_id=proposal.hypothesis_id,
@@ -510,6 +554,7 @@ class ExternalValidator:
             derived_relation=proposal.derived_relation,
             literature_status=status,
             novelty_score=novelty_score,
+            recency_score=recency_score,
             hit_count=hit_count,
             hits=all_hits[:10],  # cap serialized hits
             adapters_queried=queried,

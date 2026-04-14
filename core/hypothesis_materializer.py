@@ -37,7 +37,21 @@ class HypothesisMaterializer:
 
         # Add edge with formal provenance
         provenance = f"hypothesized_by_ResearchAgent:confidence={confidence}"
-        
+
+        # Guard against duplicate edges on MultiGraph adapters.
+        # Use the underlying NetworkX graph if accessible; skip check otherwise.
+        if hasattr(self.adapter, "_G"):
+            G = self.adapter._G
+            if G.has_edge(source, target):
+                ed = G.get_edge_data(source, target) or {}
+                existing = (
+                    {d.get("relation") for d in ed.values()}
+                    if G.is_multigraph() else {ed.get("relation")}
+                )
+                if relation in existing:
+                    logger.debug("Edge already exists: %s -[%s]-> %s — skipping.", source, relation, target)
+                    return True
+
         try:
             self.adapter.add_edge(
                 u=source,

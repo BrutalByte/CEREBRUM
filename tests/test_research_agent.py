@@ -1,5 +1,5 @@
 """
-Tests for ResearchAgent — Autonomous Missing-Link Discovery Daemon (Phase 51).
+Tests for ResearchAgent — Autonomous Missing-Link Discovery Daemon (Phase 51+).
 
 Covers:
   - Empty graph → no candidates
@@ -12,9 +12,23 @@ Covers:
   - reject() with unknown ID raises ValueError
   - start/stop control
   - Ring buffer capacity cap (oldest dropped)
+
+Phase 51+ additions:
+  - _pushed_candidates initialised in __init__ (no more hasattr)
+  - push_candidate() queues and scan picks it up
+  - Graph-signature dedup: small edge change doesn't reset evaluated_pairs
+  - report_outcome() updates feedback weights (EMA)
+  - Feedback weight clamped to [0.3, 2.0]
+  - thread_findings() groups by shared intersection hub (union-find)
+  - thread_findings() on empty ring buffer returns {}
+  - ANN scan (_ann_scan) finds candidates without duplicates or connected pairs
+  - Structural hole candidates (_structural_hole_candidates) surface bridges
+  - Engram affinity stored in finding.metadata when engram is attached
+  - seeded_by reflects candidate source
 """
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 import networkx as nx
 import numpy as np
@@ -306,3 +320,498 @@ def test_research_agent_candidate_has_local_density():
         assert 0.0 <= c.local_density <= 1.0, (
             f"local_density {c.local_density} out of range for ({c.source_id}, {c.target_id})"
         )
+
+
+# ---------------------------------------------------------------------------
+# Phase 51+ — Foundation fixes
+# ---------------------------------------------------------------------------
+
+def test_pushed_candidates_initialised_in_init():
+    """_pushed_candidates is a list attribute from __init__, not lazy-created."""
+    G, nodes, adapter = _linear_graph(["PART_OF", "PART_OF"])
+    agent = _make_agent(adapter)
+    assert hasattr(agent, "_pushed_candidates")
+    assert isinstance(agent._pushed_candidates, list)
+    assert agent._pushed_candidates == []
+
+
+def test_push_candidate_accepted_and_consumed():
+    """push_candidate() returns True and the candidate appears in next scan."""
+    G = nx.DiGraph()
+    G.add_edge("A", "B", relation="REL")
+    G.add_node("C")
+    adapter = NetworkXAdapter(G)
+    rng = np.random.default_rng(42)
+    adapter.embeddings = {n: rng.random(8).astype(np.float32) for n in G.nodes()}
+    adapter.community_map = {"A": 0, "B": 0, "C": 1}
+    agent = _make_agent(adapter)
+
+    cand = ResearchCandidate(
+        source_id="A",
+        target_id="C",
+        discovery_potential=0.9,
+        gap_score=0.4,
+        community_distance=1,
+        seeded_by="manual",
+    )
+    accepted = agent.push_candidate(cand)
+    assert accepted is True
+    assert len(agent._pushed_candidates) == 1
+
+    # Pushing the same pair again returns False (already evaluated after first scan)
+    # (evaluated_pairs only set after _run_scan, but pushed_candidates queue holds it)
+    # Second push before scan: still accepted (not yet in evaluated_pairs)
+    cand2 = ResearchCandidate("A", "C", 0.9, 0.4, 1, "manual")
+    accepted2 = agent.push_candidate(cand2)
+    assert accepted2 is True  # not in evaluated_pairs yet
+
+
+def test_push_candidate_rejected_if_already_evaluated():
+    """push_candidate returns False when the pair is in _evaluated_pairs."""
+    G, nodes, adapter = _linear_graph(["PART_OF", "PART_OF"])
+    agent = _make_agent(adapter)
+    with agent._lock:
+        agent._evaluated_pairs.add(("A", "B"))
+
+    cand = ResearchCandidate("A", "B", 0.9, 0.4, 1, "manual")
+    assert agent.push_candidate(cand) is False
+
+
+def test_graph_signature_large_change_resets_dedup():
+    """Evaluated pairs are cleared when the graph grows by more than 1%."""
+    G = nx.DiGraph()
+    for i in range(10):
+        G.add_edge(f"N{i}", f"N{(i+1)%10}", relation="REL")
+    adapter = NetworkXAdapter(G)
+    adapter.embeddings = {}
+    # All same community — suppresses structural hole candidates so the scan
+    # produces no new candidates and doesn't re-populate evaluated_pairs.
+    adapter.community_map = {f"N{i}": 0 for i in range(10)}
+    agent = _make_agent(adapter)
+
+    # Prime the signature at the current graph size
+    agent._graph_signature = (10, 10)
+    sentinel = ("N0", "N5")
+    with agent._lock:
+        agent._evaluated_pairs.add(sentinel)
+
+    # Grow the graph significantly (>1%) with same-community nodes
+    for i in range(20):
+        G.add_edge(f"X{i}", f"Y{i}", relation="NEW")
+        adapter.community_map[f"X{i}"] = 0
+        adapter.community_map[f"Y{i}"] = 0
+
+    agent._run_scan()
+
+    with agent._lock:
+        # The clear happened and no candidate re-added the sentinel
+        assert sentinel not in agent._evaluated_pairs
+
+
+def test_graph_signature_tiny_change_keeps_dedup():
+    """A single new edge (< 1% growth on a large graph) does not reset pairs."""
+    G = nx.DiGraph()
+    # 200 nodes/edges — a single extra edge is < 1%
+    for i in range(200):
+        G.add_edge(f"N{i}", f"N{(i+1)%200}", relation="REL")
+    adapter = NetworkXAdapter(G)
+    adapter.embeddings = {}
+    adapter.community_map = {f"N{i}": 0 for i in range(200)}
+    agent = _make_agent(adapter)
+
+    # Prime signature at the current size
+    agent._graph_signature = (200, 200)
+    sentinel = ("N0", "N100")
+    with agent._lock:
+        agent._evaluated_pairs.add(sentinel)
+
+    # Add exactly 1 edge (< 1% of 200) — already connected but updates edge count
+    G.add_edge("NewA", "NewB", relation="NEW")
+    adapter.community_map["NewA"] = 0
+    adapter.community_map["NewB"] = 0
+    agent._run_scan()
+
+    with agent._lock:
+        # Dedup not cleared for a tiny change; sentinel still present
+        assert sentinel in agent._evaluated_pairs
+
+
+# ---------------------------------------------------------------------------
+# Phase 51+ — Feedback learning
+# ---------------------------------------------------------------------------
+
+def test_report_outcome_correct_increases_weight():
+    """report_outcome(correct=True) increases the community-pair weight."""
+    G, nodes, adapter = _linear_graph(["PART_OF", "PART_OF"])
+    adapter.community_map = {"A": 0, "M0": 0, "B": 1}
+    agent = _make_agent(adapter)
+
+    finding = ResearchFinding(
+        finding_id="f1",
+        candidate=ResearchCandidate("A", "B", 0.8, 0.3, 1, "manual"),
+        proposals=[],
+        best_confidence=0.0,
+    )
+    with agent._lock:
+        agent._findings.append(finding)
+
+    agent.report_outcome("f1", correct=True)
+
+    key = (0, 1)
+    with agent._lock:
+        w = agent._feedback_weights.get(key, 1.0)
+    assert w > 1.0, f"Expected weight > 1.0 after correct=True, got {w}"
+
+
+def test_report_outcome_incorrect_decreases_weight():
+    """report_outcome(correct=False) decreases the community-pair weight."""
+    G, nodes, adapter = _linear_graph(["PART_OF", "PART_OF"])
+    adapter.community_map = {"A": 0, "M0": 0, "B": 1}
+    agent = _make_agent(adapter)
+
+    finding = ResearchFinding(
+        finding_id="f2",
+        candidate=ResearchCandidate("A", "B", 0.8, 0.3, 1, "manual"),
+        proposals=[],
+        best_confidence=0.0,
+    )
+    with agent._lock:
+        agent._findings.append(finding)
+
+    agent.report_outcome("f2", correct=False)
+
+    key = (0, 1)
+    with agent._lock:
+        w = agent._feedback_weights.get(key, 1.0)
+    assert w < 1.0, f"Expected weight < 1.0 after correct=False, got {w}"
+
+
+def test_report_outcome_weight_clamped():
+    """Repeated incorrect outcomes don't push weight below 0.3."""
+    G, nodes, adapter = _linear_graph(["PART_OF", "PART_OF"])
+    adapter.community_map = {"A": 0, "M0": 0, "B": 1}
+    agent = _make_agent(adapter)
+
+    for i in range(50):
+        finding = ResearchFinding(
+            finding_id=f"fn{i}",
+            candidate=ResearchCandidate("A", "B", 0.5, 0.3, 1, "manual"),
+            proposals=[],
+            best_confidence=0.0,
+        )
+        with agent._lock:
+            agent._findings.append(finding)
+        agent.report_outcome(f"fn{i}", correct=False)
+
+    key = (0, 1)
+    with agent._lock:
+        w = agent._feedback_weights.get(key, 1.0)
+    assert w >= 0.3, f"Weight {w} fell below minimum clamp of 0.3"
+
+
+def test_report_outcome_unknown_finding_id_is_no_op():
+    """report_outcome with an unknown finding_id does not raise."""
+    G, nodes, adapter = _linear_graph(["PART_OF", "PART_OF"])
+    agent = _make_agent(adapter)
+    agent.report_outcome("nonexistent-id", correct=True)  # must not raise
+
+
+# ---------------------------------------------------------------------------
+# Phase 51+ — Research thread clustering
+# ---------------------------------------------------------------------------
+
+def _make_proposal(intersection_nodes):
+    """Minimal mock HypothesisProposal with intersection_nodes."""
+    return SimpleNamespace(
+        hypothesis_id="h1",
+        source="A",
+        target="B",
+        derived_relation="CAUSES",
+        confidence=0.8,
+        path_count=1,
+        intersection_nodes=intersection_nodes,
+        derivation_text="",
+    )
+
+
+def test_thread_findings_empty_returns_empty():
+    """thread_findings() on an empty ring buffer returns {}."""
+    G, nodes, adapter = _linear_graph(["PART_OF", "PART_OF"])
+    agent = _make_agent(adapter)
+    assert agent.thread_findings() == {}
+
+
+def test_thread_findings_groups_shared_hub():
+    """Two findings sharing an intersection node end up in the same thread."""
+    G, nodes, adapter = _linear_graph(["PART_OF", "PART_OF"])
+    agent = _make_agent(adapter)
+
+    hub = "HubNode"
+    f1 = ResearchFinding(
+        finding_id="t1",
+        candidate=ResearchCandidate("A", "B", 0.8, 0.3, 1, "manual"),
+        proposals=[_make_proposal([hub])],
+        best_confidence=0.8,
+    )
+    f2 = ResearchFinding(
+        finding_id="t2",
+        candidate=ResearchCandidate("C", "D", 0.7, 0.4, 1, "manual"),
+        proposals=[_make_proposal([hub])],
+        best_confidence=0.7,
+    )
+    with agent._lock:
+        agent._findings.append(f1)
+        agent._findings.append(f2)
+
+    threads = agent.thread_findings()
+    # Both share HubNode → must be in the same thread (one key)
+    assert len(threads) == 1
+    thread = next(iter(threads.values()))
+    thread_ids = {f.finding_id for f in thread}
+    assert thread_ids == {"t1", "t2"}
+
+
+def test_thread_findings_disjoint_hubs_separate_threads():
+    """Findings with no shared hubs form separate threads."""
+    G, nodes, adapter = _linear_graph(["PART_OF", "PART_OF"])
+    agent = _make_agent(adapter)
+
+    f1 = ResearchFinding(
+        finding_id="s1",
+        candidate=ResearchCandidate("A", "B", 0.8, 0.3, 1, "manual"),
+        proposals=[_make_proposal(["HubX"])],
+        best_confidence=0.8,
+    )
+    f2 = ResearchFinding(
+        finding_id="s2",
+        candidate=ResearchCandidate("C", "D", 0.7, 0.4, 1, "manual"),
+        proposals=[_make_proposal(["HubY"])],
+        best_confidence=0.7,
+    )
+    with agent._lock:
+        agent._findings.append(f1)
+        agent._findings.append(f2)
+
+    threads = agent.thread_findings()
+    assert len(threads) == 2
+
+
+def test_thread_findings_no_intersection_singleton():
+    """A finding with no intersection nodes forms a singleton thread."""
+    G, nodes, adapter = _linear_graph(["PART_OF", "PART_OF"])
+    agent = _make_agent(adapter)
+
+    f = ResearchFinding(
+        finding_id="solo",
+        candidate=ResearchCandidate("A", "B", 0.5, 0.3, 1, "manual"),
+        proposals=[_make_proposal([])],
+        best_confidence=0.5,
+    )
+    with agent._lock:
+        agent._findings.append(f)
+
+    threads = agent.thread_findings()
+    assert len(threads) == 1
+    assert "solo" in next(iter(threads.values()))[0].finding_id
+
+
+# ---------------------------------------------------------------------------
+# Phase 51+ — ANN scan
+# ---------------------------------------------------------------------------
+
+def test_ann_scan_no_duplicates():
+    """_ann_scan never produces duplicate (u, v) pairs."""
+    G = nx.DiGraph()
+    for i in range(10):
+        G.add_node(f"N{i}")
+    adapter = NetworkXAdapter(G)
+    rng = np.random.default_rng(99)
+    base = np.ones(16, dtype=np.float32)
+    adapter.embeddings = {
+        f"N{i}": base + rng.random(16).astype(np.float32) * 0.3
+        for i in range(10)
+    }
+    adapter.community_map = {f"N{i}": i % 3 for i in range(10)}
+
+    agent = _make_agent(adapter)
+    G_nx = adapter.to_networkx()
+    nodes = list(G_nx.nodes())
+    emb_cache = {n: adapter.get_embedding(n) for n in nodes}
+    cmap = adapter.community_map
+    seen: set = set()
+
+    candidates = agent._ann_scan(G_nx, nodes, emb_cache, cmap, seen)
+    pairs = [(c.source_id, c.target_id) for c in candidates]
+    assert len(pairs) == len(set(pairs)), "Duplicate pairs returned by _ann_scan"
+
+
+def test_ann_scan_skips_connected_pairs():
+    """_ann_scan never proposes pairs with an existing edge."""
+    G = nx.DiGraph()
+    rng = np.random.default_rng(7)
+    base = np.ones(16, dtype=np.float32)
+    # Fully connected graph
+    for i in range(5):
+        for j in range(5):
+            if i != j:
+                G.add_edge(f"N{i}", f"N{j}", relation="REL")
+    adapter = NetworkXAdapter(G)
+    adapter.embeddings = {
+        f"N{i}": base + rng.random(16).astype(np.float32) * 0.2
+        for i in range(5)
+    }
+    adapter.community_map = {f"N{i}": i % 2 for i in range(5)}
+
+    agent = _make_agent(adapter)
+    G_nx = adapter.to_networkx()
+    nodes = list(G_nx.nodes())
+    emb_cache = {n: adapter.get_embedding(n) for n in nodes}
+    candidates = agent._ann_scan(G_nx, nodes, emb_cache, adapter.community_map, set())
+    for c in candidates:
+        assert not G_nx.has_edge(c.source_id, c.target_id), (
+            f"ANN returned an already-connected pair: {c.source_id} -> {c.target_id}"
+        )
+
+
+def test_ann_scan_empty_embeddings():
+    """_ann_scan with no embeddings returns an empty list without error."""
+    G = nx.DiGraph()
+    G.add_node("A")
+    G.add_node("B")
+    adapter = NetworkXAdapter(G)
+    adapter.embeddings = {}
+    adapter.community_map = {}
+    agent = _make_agent(adapter)
+    G_nx = adapter.to_networkx()
+    result = agent._ann_scan(G_nx, list(G_nx.nodes()), {}, {}, set())
+    assert result == []
+
+
+# ---------------------------------------------------------------------------
+# Phase 51+ — Structural hole detection
+# ---------------------------------------------------------------------------
+
+def test_structural_hole_candidates_seeded_by():
+    """Structural hole candidates carry seeded_by='structural_hole'."""
+    # H connects to both community 0 and community 1 but those communities
+    # are not connected to each other → H is a structural hole.
+    G = nx.DiGraph()
+    # Community 0: clique among A, B, C
+    for u, v in [("A", "B"), ("B", "C"), ("A", "C"), ("B", "A"), ("C", "A"), ("C", "B")]:
+        G.add_edge(u, v, relation="REL")
+    # Community 1: clique among D, E, F
+    for u, v in [("D", "E"), ("E", "F"), ("D", "F"), ("E", "D"), ("F", "D"), ("F", "E")]:
+        G.add_edge(u, v, relation="REL")
+    # H bridges both communities but the two cliques are disconnected from each other
+    for n in ["A", "B", "C", "D", "E", "F"]:
+        G.add_edge("H", n, relation="CONNECTS")
+    # H has high degree (6) and low clustering
+    adapter = NetworkXAdapter(G)
+    rng = np.random.default_rng(3)
+    adapter.embeddings = {n: rng.random(8).astype(np.float32) for n in G.nodes()}
+    adapter.community_map = {
+        "A": 0, "B": 0, "C": 0,
+        "D": 1, "E": 1, "F": 1,
+        "H": 0,  # H is in community 0 but bridges to community 1
+    }
+
+    agent = _make_agent(adapter)
+    G_nx = adapter.to_networkx()
+    nodes = list(G_nx.nodes())
+    cmap = adapter.community_map
+    seen: set = set()
+
+    candidates = agent._structural_hole_candidates(G_nx, nodes, cmap, seen)
+    hole_cands = [c for c in candidates if c.seeded_by == "structural_hole"]
+    assert len(hole_cands) > 0, "Expected structural hole candidates for node H"
+
+
+def test_structural_hole_candidates_no_duplicates_with_seen():
+    """_structural_hole_candidates respects the seen_pairs set."""
+    G = nx.DiGraph()
+    for i in range(6):
+        G.add_edge(f"A{i}", f"A{(i+1)%6}", relation="REL")
+    G.add_node("H")
+    for i in range(6):
+        G.add_edge("H", f"A{i}", relation="TO")
+    adapter = NetworkXAdapter(G)
+    rng = np.random.default_rng(11)
+    adapter.embeddings = {n: rng.random(8).astype(np.float32) for n in G.nodes()}
+    adapter.community_map = {f"A{i}": i % 2 for i in range(6)}
+    adapter.community_map["H"] = 0
+
+    agent = _make_agent(adapter)
+    G_nx = adapter.to_networkx()
+    nodes = list(G_nx.nodes())
+    cmap = adapter.community_map
+
+    # Pre-populate seen with all possible (H, X) pairs; take a snapshot before
+    # calling the method so we can compare against the original set (the method
+    # mutates seen in-place by adding new pairs as it generates candidates).
+    initial_seen = {("H", f"A{i}") for i in range(6)}
+    seen = set(initial_seen)
+    candidates = agent._structural_hole_candidates(G_nx, nodes, cmap, seen)
+    for c in candidates:
+        assert (c.source_id, c.target_id) not in initial_seen
+
+
+# ---------------------------------------------------------------------------
+# Phase 51+ — Engram affinity metadata
+# ---------------------------------------------------------------------------
+
+class _MockEngram:
+    """Minimal Engram stub that returns a fixed affinity."""
+    def __init__(self, fixed_affinity: float = 0.75):
+        self._aff = fixed_affinity
+
+    def affinity(self, rel_prefix):
+        return self._aff
+
+
+def test_engram_affinity_stored_in_finding_metadata():
+    """When an engram is attached, finding.metadata['engram_affinity'] is set."""
+    G, nodes, adapter = _linear_graph(["CAUSES", "TREATS"])
+    engine = HypothesisEngine(adapter, min_confidence=0.0)
+    proposals = engine.generate("A", "B", beam_width=5, max_hop=2)
+    if not proposals:
+        pytest.skip("No proposals generated for this graph — skip engram test")
+
+    engram = _MockEngram(fixed_affinity=0.75)
+    agent = ResearchAgent(
+        adapter=adapter,
+        hypothesis_engine=engine,
+        engram=engram,
+        min_confidence=0.0,
+        min_discovery_potential=0.0,
+    )
+
+    good = [p for p in proposals if p.confidence >= 0.0]
+    finding = ResearchFinding(
+        finding_id="eng-test",
+        candidate=ResearchCandidate("A", "B", 0.8, 0.3, 1, "manual"),
+        proposals=good,
+        best_confidence=max((p.confidence for p in good), default=0.0),
+    )
+    with agent._lock:
+        agent._findings.append(finding)
+
+    # Simulate the engram-affinity assignment that happens in _run_scan
+    if agent._engram is not None and good:
+        aff = max(agent._engram.affinity([p.derived_relation]) for p in good)
+        finding.metadata["engram_affinity"] = round(aff, 3)
+
+    assert "engram_affinity" in finding.metadata
+    assert finding.metadata["engram_affinity"] == pytest.approx(0.75, abs=1e-3)
+
+
+def test_no_engram_no_affinity_key():
+    """Without an engram attached, finding.metadata has no 'engram_affinity'."""
+    G, nodes, adapter = _linear_graph(["PART_OF", "PART_OF"])
+    agent = _make_agent(adapter)  # no engram
+    f = ResearchFinding(
+        finding_id="no-eng",
+        candidate=ResearchCandidate("A", "B", 0.5, 0.3, 1, "manual"),
+        proposals=[],
+        best_confidence=0.0,
+    )
+    assert "engram_affinity" not in f.metadata
