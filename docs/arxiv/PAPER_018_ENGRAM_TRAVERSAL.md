@@ -74,8 +74,14 @@ Engram-steered traversal demonstrates that meaningful learning from experience d
 
 *See also:* **Paper 021** — SpeedTalk-Compressed Engram: Phonemic Encoding for Relation-Pattern Caches — extends this work with Heinlein-inspired single-character phoneme compression (8–20× key reduction), graph-adaptive alphabet tuning, and first-class prefix-query support.
 
+*See also:* **Paper 022** — Looped Beam Traversal (Phase 70) — uses the Engram as a mnemonic feedback channel between iterative traversal loops [zhu2025loooplm]. Engram records from loop t bias beam pruning in loop t+1 toward known-productive relation patterns. The Engram's accumulated patterns also supply the prior for `PredictiveCodingEngine`'s PE-based exit gate.
+
+The Engram pattern as a *soliton* [bengio2025soliton]: a relation-sequence pattern that repeatedly yields low PE across queries is analogous to a soliton — a localized wave that maintains its shape through propagation. The `soliton_index` (Phase 69) measures this stability per seed set.
+
 ---
 **References**
 1. Vaswani, A., et al. (2017). Attention is All You Need. NIPS.
 2. Reimers, N., & Gurevych, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. EMNLP.
 3. Das, R., et al. (2018). Go for a Walk and Arrive at the Answer: Reasoning over Paths in Knowledge Bases using Reinforcement Learning (MINERVA). ICLR.
+4. Zhu, R.-J., Wang, Z., Hua, K., et al. (2025). Scaling Latent Reasoning via Looped Language Models. arXiv:2510.25741. [zhu2025loooplm]
+5. Bengio, Y. et al. (2025). Consciousness as a Soliton, Not a Process. UCFT 2025 Preprint. [bengio2025soliton]

@@ -6,7 +6,7 @@ results to find the most robust reasoning paths.
 """
 import time
 import logging
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Tuple
 
 from reasoning.traversal import BeamTraversal
 from reasoning.engram_traversal import EngramTraversal
@@ -20,15 +20,17 @@ class MultiStrategyConsensus:
     Coordinates multiple local traversal strategies for MACH L1 consensus.
     """
     def __init__(
-        self, 
+        self,
         adapter: GraphAdapter,
         engram: Optional[Any] = None,
-        agent_name: str = "local_node"
+        agent_name: str = "local_node",
+        predictive_coder: Optional[Any] = None,
     ):
         self.adapter = adapter
         self.engram = engram
         self.agent_name = agent_name
         self.scorer = ConsensusScorer()
+        self.predictive_coder = predictive_coder
 
     async def run_consensus_query(
         self,
@@ -39,7 +41,8 @@ class MultiStrategyConsensus:
         beam_width: int = 10,
         max_budget: int = 1000,
         edge_type_weights: Optional[Dict[str, float]] = None,
-    ) -> List[PathConsensus]:
+        max_loops: int = 1,
+    ) -> Tuple[List[PathConsensus], int]:
         """
         Execute multiple strategies and aggregate results.
         """
@@ -99,11 +102,18 @@ class MultiStrategyConsensus:
             # 2. Execute
             # Resolve query_embedding from first seed if possible
             q_emb = self.adapter.get_embedding(seeds[0]) if seeds else None
-            
-            paths = traversal.traverse(
-                seeds, 
-                query_embedding=q_emb
-            )
+
+            # Phase 70: LoopLM-style iterative refinement per strategy (arXiv:2510.25741)
+            if max_loops > 1:
+                from reasoning.looped_traversal import LoopedBeamTraversal
+                looped = LoopedBeamTraversal(
+                    traversal        = traversal,
+                    predictive_coder = self.predictive_coder,
+                    max_loops        = max_loops,
+                )
+                paths, _ = looped.traverse(seeds, query_embedding=q_emb)
+            else:
+                paths = traversal.traverse(seeds, query_embedding=q_emb)
             
             # Store results under a strategy-specific agent name
             strategy_agent = f"{self.agent_name}_{strategy}"

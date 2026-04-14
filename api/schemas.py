@@ -40,6 +40,17 @@ class QueryRequest(BaseModel):
         default=["standard"],
         description="List of traversal strategies to run for L1 consensus: 'standard', 'bayesian', 'engram'.",
     )
+    max_loops: int = Field(
+        default=1,
+        ge=1,
+        le=8,
+        description=(
+            "LoopLM-style iterative refinement depth (arXiv:2510.25741). "
+            "1 = single-pass (default). >1 applies BeamTraversal T times, using "
+            "top answer entities as additional seeds for each subsequent loop. "
+            "The loop exits early when PE converges or answers stabilise."
+        ),
+    )
 
 
 class QueryConsensusRequest(QueryRequest):
@@ -92,6 +103,30 @@ class QueryResponse(BaseModel):
     total_paths_explored: int
     partial: bool = False
     error: Optional[str] = None
+    # Phase 69: Predictive coding signals
+    prediction_error: Optional[float] = Field(
+        default=None,
+        description=(
+            "Jaccard divergence [0,1] between the Engram prior and the best actual path. "
+            "0 = perfect prediction, 1 = complete miss. None on cold start (empty Engram)."
+        ),
+    )
+    soliton_index: Optional[float] = Field(
+        default=None,
+        description=(
+            "Running coherence of predictions for this seed set [0,1]. "
+            "High values indicate a stable, self-reinforcing reasoning model (soliton-like)."
+        ),
+    )
+    # Phase 70: Looped traversal diagnostics (arXiv:2510.25741)
+    loops_run: Optional[int] = Field(
+        default=None,
+        description="Number of traversal loops actually executed. None when max_loops=1.",
+    )
+    pe_per_loop: Optional[List[float]] = Field(
+        default=None,
+        description="Prediction Error after each loop. None entries where PE was unavailable.",
+    )
 
 
 class CommunityInfo(BaseModel):
@@ -766,6 +801,7 @@ class ValidationReportSchema(BaseModel):
     derived_relation: str
     literature_status: str
     novelty_score: float
+    recency_score: float = 0.5
     hit_count: int
     hits: List[LiteratureHitSchema]
     adapters_queried: List[str]
@@ -788,3 +824,28 @@ class ValidateProposalsResponse(BaseModel):
     validated: int
     reports: List[ValidationReportSchema]
     duration_seconds: float
+
+
+class AutoApprovalPolicySchema(BaseModel):
+    """PATCH-friendly schema for AutoApprovalPolicy — all fields optional."""
+
+    approve_threshold: Optional[float] = None
+    reject_threshold: Optional[float] = None
+    min_training_examples: Optional[int] = None
+    max_auto_per_scan: Optional[int] = None
+    require_validation: Optional[bool] = None
+    blocked_statuses: Optional[List[str]] = None
+    learning_rate: Optional[float] = None
+    audit_capacity: Optional[int] = None
+
+
+class AutoApproverStatsResponse(BaseModel):
+    """Response schema for GET /research/auto-approver/stats."""
+
+    n_trained: int
+    n_approve: int
+    n_reject: int
+    n_review: int
+    weights: List[float]
+    bias: float
+    policy: dict

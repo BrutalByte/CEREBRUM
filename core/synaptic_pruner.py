@@ -9,6 +9,7 @@ Identifies and removes "low-utility" edges from the graph. Utility is defined by
 """
 import time
 import logging
+import threading
 from typing import List, Dict, Any, Optional, Set
 
 logger = logging.getLogger("cerebrum.synaptic_pruner")
@@ -31,6 +32,7 @@ class SynapticPruner:
         self.prune_ratio = prune_ratio
         self.protected_types = protected_relation_types or set()
         self._total_pruned = 0
+        self._lock = threading.Lock()
 
     def prune(self, dry_run: bool = False) -> int:
         """
@@ -83,20 +85,17 @@ class SynapticPruner:
         # 4. Remove edges
         if not dry_run:
             count = 0
-            # NetworkXAdapter doesn't have a direct 'remove_edge' but we can 
+            # NetworkXAdapter doesn't have a direct 'remove_edge' but we can
             # modify its _G if it's a NetworkXAdapter.
             if hasattr(self.adapter, "_G"):
-                for u, v, r in candidates:
-                    try:
-                        # We need to find the specific edge with this relation 
-                        # if there are multiples.
-                        if self.adapter._G.has_edge(u, v):
-                            # Simplification: remove all edges between u, v 
-                            # if we don't handle multi-graphs perfectly here.
-                            self.adapter._G.remove_edge(u, v)
-                            count += 1
-                    except Exception:
-                        continue
+                with self._lock:
+                    for u, v, r in candidates:
+                        try:
+                            if self.adapter._G.has_edge(u, v):
+                                self.adapter._G.remove_edge(u, v)
+                                count += 1
+                        except Exception:
+                            continue
             self._total_pruned += count
             logger.info("SynapticPruner: pruned %d edges (Utility threshold).", count)
             return count

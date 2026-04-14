@@ -57,7 +57,10 @@ The `try/finally` restoration guarantee is particularly important in interactive
 ### 4. Conclusion
 TemporalCalibrator closes the parameter optimization gap for temporal CSA features that cannot be addressed by gradient-based learning. By combining grid search over a small parameter space with a `try/finally` restoration guarantee and a clean `calibrate()/apply()` API, it enables production operators to tune temporal sensitivity for their specific dataset without risking CSAEngine state corruption. The 25-evaluation cost for a $5 \times 5$ grid is acceptable for infrequent calibration runs (e.g., on dataset refresh or after significant graph growth).
 
+The temporal stability achieved by TemporalCalibrator — where `eta` and `iota` converge to values that maintain consistent Recall@K across graph updates — is analogous to the soliton framing introduced in Phase 69 [bengio2025soliton]: a calibration state that consistently yields low prediction error can be considered soliton-like, a localized reasoning model that maintains its shape through propagation. TemporalCalibrator finds the parameter point that maximises this stability for the temporal dimension specifically.
+
 ---
 **References**
 1. Vaswani, A., et al. (2017). Attention is All You Need. NIPS.
 2. Traag, V., et al. (2019). From Louvain to Leiden: guaranteeing well-connected communities. Scientific Reports.
+3. Bengio, Y. et al. (2025). Consciousness as a Soliton, Not a Process. UCFT 2025 Preprint. [bengio2025soliton]

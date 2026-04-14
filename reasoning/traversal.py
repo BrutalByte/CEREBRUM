@@ -307,20 +307,6 @@ class BeamTraversal:
       - Return all paths explored (caller selects top-K answers)
     """
 
-class BeamTraversal:
-    """
-    Beam-search traversal using CSA attention weights.
-
-    Algorithm (Section 5.1 STEP 3):
-      - Initialize beam from seed entities
-      - For each hop 1..max_hop:
-          - For each path in beam, expand to all neighbors via adapter
-          - Score each candidate extension with CSA.compute_weight
-          - Aggregate embedding: ReLU(w * v_emb + h) + residual + LayerNorm
-          - Prune candidates to beam_width by path score
-      - Return all paths explored (caller selects top-K answers)
-    """
-
     def __init__(
         self,
         adapter: GraphAdapter,
@@ -582,7 +568,8 @@ class BeamTraversal:
                             td  = 0.0
                             grounding = 1.0 # Default grounding for legacy paths
                             # Convert to vector representation for consistency
-                            features_vector = ReasoningLogit(sim, cs, etw, nd, hd, pr_v, td, grounding).to_vector()
+                            # Positional order: sim, cs, etw, nd, hd, pr_v, td, nr_v, sd, grounding
+                            features_vector = ReasoningLogit(sim, cs, etw, nd, hd, pr_v, td, 0.0, 0.0, grounding).to_vector()
 
 
                         # Path metadata and extension
@@ -965,7 +952,8 @@ class AsyncBeamTraversal(BeamTraversal):
                             td = 0.0
                             nr_v = 0.0
                             grounding = 1.0
-                            features_vector = ReasoningLogit(sim, cs, etw, nd, hd, pr_v, td, nr_v, grounding).to_vector()
+                            # Positional order: sim, cs, etw, nd, hd, pr_v, td, nr_v, sd, grounding
+                            features_vector = ReasoningLogit(sim, cs, etw, nd, hd, pr_v, td, nr_v, 0.0, grounding).to_vector()
 
                         v_emb  = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
                         v_cid  = self.adapter.get_community(v_eff)

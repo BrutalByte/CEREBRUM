@@ -62,13 +62,51 @@ from core.resource_governor import ResourceGovernor
 from reasoning.answer_extractor import extract
 
 from benchmarks.metaqa_eval import (
-    load_kb, load_qa, load_or_compute_communities,
-    hits_at_k, reciprocal_rank,
+    load_qa, hits_at_k, reciprocal_rank,
 )
 from benchmarks.synthetic_eval import (
     generate_clustered_graph, generate_qa_pairs,
     load_or_compute_communities as synth_communities,
+    load_or_compute_communities as _load_or_compute_communities,
 )
+
+
+# ---------------------------------------------------------------------------
+# MetaQA KB loader (replaces the removed load_kb / load_or_compute_communities
+# that were mistakenly referenced from metaqa_eval)
+# ---------------------------------------------------------------------------
+
+_METAQA_KB_FILE = Path(__file__).parent / "data" / "metaqa" / "kb.txt"
+
+
+def load_kb(undirected: bool = True) -> "NetworkXAdapter":
+    """Load MetaQA kb.txt and return a NetworkXAdapter."""
+    G: nx.Graph = nx.Graph() if undirected else nx.DiGraph()
+    with open(_METAQA_KB_FILE, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            parts = line.split("|")
+            if len(parts) != 3:
+                continue
+            subj, rel, obj = parts
+            G.add_edge(subj.strip(), obj.strip(), relation=rel.strip())
+    return NetworkXAdapter(G)
+
+
+def load_or_compute_communities(
+    G: nx.Graph,
+    use_cache: bool = True,
+    dscf_seed: int = 42,
+) -> Dict[str, int]:
+    """Load or compute DSCF communities for the MetaQA graph."""
+    return _load_or_compute_communities(
+        G,
+        label="metaqa",
+        use_cache=use_cache,
+        dscf_seed=dscf_seed,
+    )
 
 _BENCH_GOVERNOR = ResourceGovernor(memory_threshold_pct=99.0)
 
@@ -339,11 +377,11 @@ def print_results_table(results: List[Dict], title: str, hop: int) -> None:
 
     for r in results:
         delta_h1  = r["hits_1"]  - baseline_h1
-        r["mrr"]     - baseline_mrr
+        delta_mrr = r["mrr"]     - baseline_mrr
         marker = ""
         if r is results[0]:
             marker = " <-- CEREBRUM"
-        delta_str = f"  [{delta_h1:+.4f} vs BFS]" if r is not results[-1] else ""
+        delta_str = f"  [{delta_h1:+.4f} H1 / {delta_mrr:+.4f} MRR vs BFS]" if r is not results[-1] else ""
         print(f"  {r['variant']:<30}  {r['hits_1']:>8.4f}  {r['hits_10']:>8.4f}  "
               f"{r['mrr']:>8.4f}  {r['n_answered']:>9,}  {r['elapsed_s']:>8.2f}"
               f"{delta_str}{marker}")

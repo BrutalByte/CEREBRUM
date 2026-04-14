@@ -51,7 +51,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v2.7.0 (Phase 68 COMPLETE)** — 1540+ tests passing.
+**v2.8.0 (Phase 70 COMPLETE)** — 1554+ tests passing.
 
 ### System Architecture Names
 | Name | Role |
@@ -66,6 +66,8 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 | **HypothesisEngine** | Abductive reasoning with Noisy-OR aggregation (Phase 50) |
 | **CerebellarEngine** | Error-driven meta-learning via dissonance detection (Phase 59) |
 | **ChemicalModulator** | Metabolic hormonal regulation (Reinforcement, Arousal, etc.) (Phase 68) |
+| **PredictiveCodingEngine** | Active inference — Engram prior + Prediction Error + soliton_index (Phase 69) |
+| **LoopedBeamTraversal** | LoopLM-style iterative refinement — apply traversal T times with seed expansion + adaptive PE exit gate (Phase 70, arXiv:2510.25741) |
 
 ### Core Concepts
 - **DSCF/TSC**: Dual/Triple signal community fusion (part of CORTEX).
@@ -106,6 +108,8 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 - **Neural Memory Consolidation (Phase 64)**: Threshold-based promotion of relation patterns to "Canonical Engrams" via `EngramConsolidator`.
 - **Autonomous Hypothesis Materialization (Phase 65)**: Formal materialization of `ResearchAgent` findings as graph edges with Noisy-OR aggregated confidence and discovery provenance.
 - **Neuro-Symbolic Homeostasis (Phase 68)**: Dynamic functional regulation of the reasoning engine via `ChemicalModulator`. Simulates metabolic scalars: **Reinforcement** (Dopamine), **Arousal** (Norepinephrine), **Novelty** (Acetylcholine), **Cohesion** (Oxytocin), and **Persistence** (Vasopressin). Implements temporal decay and homeostatic baselines.
+- **Predictive Coding Engine (Phase 69)**: Active inference — every traversal is preceded by a *prior path* generated from the top Engram pattern. After traversal, `PredictiveCodingEngine.update()` computes a **Prediction Error (PE)** — Jaccard divergence between prior and actual relation sequences. PE drives `ChemicalModulator` signals (arousal, novelty, reinforcement). The `soliton_index` = 1 - mean(recent PEs) tracks the coherence and stability of predictions over time: a self-reinforcing prior that consistently yields low PE behaves as a soliton (self-localising wave, UCFT 2025). `ReasoningTrace` exposes `prior`, `prediction_error`, and `soliton_index` fields. `CerebrumGraph.attach_engram(engram)` activates the engine post-build.
+- **Looped Beam Traversal (Phase 70)**: LoopLM-style iterative refinement (arXiv:2510.25741). `LoopedBeamTraversal` wraps any `BeamTraversal`-compatible engine and applies it T times. Between loops: top-K answer entities expand seeds (semantic channel), PE→ChemicalModulator adjusts beam params (metabolic channel), Engram records bias next loop's pruning (mnemonic channel). Adaptive exit gate: `|ΔPE| < γ` (primary) or answer-set Jaccard ≥ θ (fallback). All loops' paths merged — `best_by_tail` keeps highest-score per tail entity. `max_loops` param on `QueryRequest`, `CerebrumGraph.query()`, and `MultiStrategyConsensus.run_consensus_query()`. `LoopTrace` exposed via `ReasoningTrace.loop_trace` in ERT.
 
 ## Install & Development Commands
 
@@ -249,5 +253,5 @@ Implement the abstract `GraphAdapter` interface in `core/graph_adapter.py`, foll
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)
 - Synthetic graph helpers (`make_two_cliques()`, etc.) live in `tests/` for unit tests that don't need the CSV fixture
-- **1540+ tests passing as of v2.6.0 / Phase 68** (1 skipped)
+- **1554+ tests passing as of v2.8.0 / Phase 70** (1 skipped)
 - Type checker: no mypy/ruff configured as hard gate; run `python -m pytest tests/` as verification

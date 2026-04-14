@@ -216,7 +216,11 @@ class SpeedTalkEncoder:
         i = 0
         while i < len(encoded):
             if encoded[i] == "\x00":
-                end = encoded.index("\x00", i + 1)
+                try:
+                    end = encoded.index("\x00", i + 1)
+                except ValueError:
+                    # Malformed/truncated overflow token — skip remaining bytes
+                    break
                 tokens.append(encoded[i : end + 1])
                 i = end + 1
             else:

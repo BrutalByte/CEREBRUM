@@ -555,13 +555,17 @@ class StudioEngine:
         with tempfile.NamedTemporaryFile(
             delete=False, suffix=".html", mode="w", encoding="utf-8"
         ) as f:
-            net.save_graph(f.name)
-            html_content = Path(f.name).read_text(encoding="utf-8")
-            b64_content = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
-            return (
-                f"<iframe src='data:text/html;base64,{b64_content}'"
-                " style='width:100%;height:600px;border:none;border-radius:8px;'></iframe>"
-            )
+            tmp_path = Path(f.name)
+        net.save_graph(str(tmp_path))
+        try:
+            html_content = tmp_path.read_text(encoding="utf-8")
+        finally:
+            tmp_path.unlink(missing_ok=True)
+        b64_content = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
+        return (
+            f"<iframe src='data:text/html;base64,{b64_content}'"
+            " style='width:100%;height:600px;border:none;border-radius:8px;'></iframe>"
+        )
 
     def generate_3d_viz(self, highlight_nodes: Optional[List[str]] = None) -> str:
         """Render a 3D force-graph as an HTML iframe string."""

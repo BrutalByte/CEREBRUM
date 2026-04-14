@@ -222,7 +222,9 @@ def smooth_with_graphsage(
             h_nbr = np.mean(neighbour_vecs, axis=0)
             h_new = self_weight * h_self + neighbor_weight * h_nbr
         else:
-            h_new = h_self.copy()
+            # Isolated node: apply self_weight for scale consistency with
+            # connected nodes (which are always scaled by self_weight).
+            h_new = self_weight * h_self
 
         if normalize:
             norm = np.linalg.norm(h_new)

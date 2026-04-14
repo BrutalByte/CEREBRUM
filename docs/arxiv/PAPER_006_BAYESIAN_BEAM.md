@@ -59,6 +59,8 @@ The OPT configuration uses adaptive density-driven beam width selection with a m
 
 **Test Coverage.** The Bayesian traversal subsystem is covered by 1,357 passing tests in v1.9.8, including probabilistic recall regression tests that verify the +45% recall improvement is maintained across graph density levels.
 
+*See also:* **Paper 022** — Looped Beam Traversal (Phase 70) extends adaptive depth with LoopLM-style iterative refinement [zhu2025loooplm]. `LoopedBeamTraversal` applies `BeamTraversal` (including Bayesian mode) T times with seed expansion between loops. The adaptive exit gate uses PE convergence as its primary signal, making iterative depth adaptation a first-class reasoning primitive. When `BeamTraversal(probabilistic=True)` is used as the inner traversal, Thompson sampling operates independently within each loop, compounding the recall gains across passes.
+
 ---
 **References**
 1. Thompson, W. R. (1933). On the likelihood that one unknown probability exceeds another in view of the evidence of two samples. Biometrika.
@@ -68,3 +70,4 @@ The OPT configuration uses adaptive density-driven beam width selection with a m
 5. Chapelle, O., & Li, L. (2011). An empirical evaluation of Thompson sampling. NIPS.
 6. Scott, S. L. (2010). A modern Bayesian look at the multi-armed bandit. Applied Stochastic Models in Business and Industry.
 7. Buchorn, B. A., & Sonnet, C. (2026). Bayesian Warm-Starting in CEREBRUM. SPEC_006.md.
+8. Zhu, R.-J., Wang, Z., Hua, K., et al. (2025). Scaling Latent Reasoning via Looped Language Models. arXiv:2510.25741. [zhu2025loooplm]

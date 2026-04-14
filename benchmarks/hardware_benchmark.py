@@ -384,11 +384,13 @@ def run_e2e_table(use_cache: bool = True) -> None:
         csa = CSAEngine(adapter=adapter)
         csa.set_community_graph(distances, adj, community_graph=cg)
 
+        from core.resource_governor import ResourceGovernor as _RG
         traversal = BeamTraversal(
             adapter=adapter,
             csa_engine=csa,
             beam_width=10,
             max_hop=3,
+            governor=_RG(memory_threshold_pct=100.0),  # benchmark: never abort on RAM pressure
         )
 
         # --- QUERY EVALUATION ---

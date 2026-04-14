@@ -69,6 +69,7 @@ from api.schemas import (
     ResearchScanResponse, ResearchApproveResponse, ResearchRejectResponse,
     LiteratureHitSchema, ValidationReportSchema,
     ValidateProposalsRequest, ValidateProposalsResponse,
+    AutoApprovalPolicySchema, AutoApproverStatsResponse,
 )
 
 # ---------------------------------------------------------------------------
@@ -144,6 +145,7 @@ _state: Dict[str, Any] = {
     "multi_strategy_consensus": None, # MACH L1 (Phase 60)
     "consensus_hierarchy_engine": None, # MACH Hierarchy (Phase 60)
     "modulator":        None,   # ChemicalModulator (Phase 68)
+    "predictive_coder": None,   # PredictiveCodingEngine (Phase 69)
 }
 
 
@@ -381,8 +383,6 @@ def create_app(
         from llm_bridge.context_formatter import to_structured
 
         adapter      = _state["adapter"]
-        _state["community_map"]
-        _state["embeddings"]
         csa_meta     = _state["csa_metadata"]
         default_edge_type_weights = _state["default_edge_type_weights"]
 
@@ -417,13 +417,48 @@ def create_app(
             max_hop=req.max_hop,
             max_budget=req.max_budget,
         )
-        _traversal_error: Optional[str] = None
+        # Phase 69: Generate predictive prior before traversal
+        _pred_prior = None
         try:
-            paths = traversal.traverse(seeds)
+            if _state["predictive_coder"] is not None:
+                _pred_prior = _state["predictive_coder"].predict(seeds)
+        except Exception as exc:
+            _api_log.warning("PredictiveCodingEngine.predict() failed: %s", exc)
+
+        _traversal_error: Optional[str] = None
+        _loop_trace = None
+        try:
+            # Phase 70: LoopLM-style iterative refinement (arXiv:2510.25741)
+            if req.max_loops > 1:
+                from reasoning.looped_traversal import LoopedBeamTraversal
+                looped = LoopedBeamTraversal(
+                    traversal        = traversal,
+                    predictive_coder = _state.get("predictive_coder"),
+                    max_loops        = req.max_loops,
+                )
+                paths, _loop_trace = looped.traverse(seeds)
+            else:
+                paths = traversal.traverse(seeds)
         except Exception as exc:
             _api_log.warning("/query traversal failed (seeds=%s): %s", seeds, exc)
             paths = traversal._partial_paths  # return whatever completed before the failure
             _traversal_error = str(exc)
+
+        # Phase 69: Compute prediction error after traversal
+        _pred_error: Optional[float] = None
+        _soliton_idx: Optional[float] = None
+        try:
+            if _state["predictive_coder"] is not None:
+                pred_result = _state["predictive_coder"].update(_pred_prior, paths)
+                _pred_error  = pred_result.prediction_error
+                _soliton_idx = pred_result.soliton_stability
+                # Drive ChemicalModulator if present
+                if _state["modulator"] is not None:
+                    _state["modulator"].update_arousal(pred_result.prediction_error)
+                    _state["modulator"].update_novelty(pred_result.prediction_error)
+                    _state["modulator"].update_reinforcement(pred_result.reinforcement_signal)
+        except Exception as exc:
+            _api_log.warning("PredictiveCodingEngine.update() failed: %s", exc)
 
         # Pass seed embedding as query signal for semantic re-ranking
         q_emb = adapter.get_embedding(seeds[0]) if seeds else None
@@ -476,6 +511,10 @@ def create_app(
             total_paths_explored=len(paths),
             partial=bool(_traversal_error),
             error=_traversal_error,
+            prediction_error=_pred_error,
+            soliton_index=_soliton_idx,
+            loops_run=_loop_trace.loops_run if _loop_trace is not None else None,
+            pe_per_loop=[pe for pe in _loop_trace.pe_per_loop if pe is not None] if _loop_trace is not None else None,
         )
 
     @app.post("/query/trace", response_model=TraceResponse, tags=["reasoning"])
@@ -517,7 +556,7 @@ def create_app(
             csa.set_meta_learner(_state["meta_learner"])
 
         trace = ReasoningTrace(query=req.query, seeds=seeds)
-        
+
         traversal = BeamTraversal(
             adapter=adapter,
             csa_engine=csa,
@@ -525,9 +564,20 @@ def create_app(
             max_hop=req.max_hop,
             max_budget=req.max_budget,
         )
-        
+
         t0 = time.perf_counter()
-        traversal.traverse(seeds, trace_info=trace)
+        # Phase 70: LoopLM-style iterative refinement (arXiv:2510.25741)
+        if req.max_loops > 1:
+            from reasoning.looped_traversal import LoopedBeamTraversal
+            looped = LoopedBeamTraversal(
+                traversal        = traversal,
+                predictive_coder = _state.get("predictive_coder"),
+                max_loops        = req.max_loops,
+            )
+            _, _lt = looped.traverse(seeds, trace_info=trace)
+            trace.loop_trace = _lt
+        else:
+            traversal.traverse(seeds, trace_info=trace)
         dt = time.perf_counter() - t0
 
         from api.schemas import HopTraceSchema
@@ -2024,6 +2074,70 @@ def create_app(
             raise HTTPException(status_code=404, detail=str(exc))
         return ResearchRejectResponse(finding_id=finding_id, removed=True)
 
+    @app.get(
+        "/research/auto-approver/stats",
+        response_model=AutoApproverStatsResponse,
+        tags=["research"],
+    )
+    async def research_auto_approver_stats(
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Return current AutoApprover weight vector, counters, and policy."""
+        agent = _get_research_agent()
+        aa = getattr(agent, "_auto_approver", None)
+        if aa is None:
+            raise HTTPException(status_code=404, detail="No AutoApprover attached to ResearchAgent")
+        s = aa.stats()
+        return AutoApproverStatsResponse(
+            n_trained=s["n_trained"],
+            n_approve=s["n_approve"],
+            n_reject=s["n_reject"],
+            n_review=s["n_review"],
+            weights=s["weights"],
+            bias=s["bias"],
+            policy=s["policy"],
+        )
+
+    @app.patch(
+        "/research/auto-approver/policy",
+        response_model=AutoApproverStatsResponse,
+        tags=["research"],
+    )
+    async def research_auto_approver_policy(
+        req: AutoApprovalPolicySchema,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Update AutoApprover policy thresholds at runtime without restart."""
+        agent = _get_research_agent()
+        aa = getattr(agent, "_auto_approver", None)
+        if aa is None:
+            raise HTTPException(status_code=404, detail="No AutoApprover attached to ResearchAgent")
+        policy = aa.policy
+        if req.approve_threshold is not None:
+            policy.approve_threshold = req.approve_threshold
+        if req.reject_threshold is not None:
+            policy.reject_threshold = req.reject_threshold
+        if req.min_training_examples is not None:
+            policy.min_training_examples = req.min_training_examples
+        if req.max_auto_per_scan is not None:
+            policy.max_auto_per_scan = req.max_auto_per_scan
+        if req.require_validation is not None:
+            policy.require_validation = req.require_validation
+        if req.blocked_statuses is not None:
+            policy.blocked_statuses = set(req.blocked_statuses)
+        if req.learning_rate is not None:
+            policy.learning_rate = req.learning_rate
+        s = aa.stats()
+        return AutoApproverStatsResponse(
+            n_trained=s["n_trained"],
+            n_approve=s["n_approve"],
+            n_reject=s["n_reject"],
+            n_review=s["n_review"],
+            weights=s["weights"],
+            bias=s["bias"],
+            policy=s["policy"],
+        )
+
     @app.post(
         "/research/validate",
         response_model=ValidateProposalsResponse,
@@ -2416,6 +2530,9 @@ def _load(
                 print(f"  [API] Engram warmed: {replayed} relation sequences replayed")
             _state["query_log"] = qlog
             _state["engram"] = acache
+            # Phase 69: Predictive coding
+            from core.predictive_coder import PredictiveCodingEngine
+            _state["predictive_coder"] = PredictiveCodingEngine(acache, _state["adapter"])
             return
         except Exception as e:
             print(f"  [API] Cache load failed: {e}. Falling back to computation.")
@@ -2499,6 +2616,10 @@ def _load(
         _api_log.info("[API] Engram warmed: %d relation sequences replayed", replayed)
     _state["query_log"] = qlog
     _state["engram"] = acache
+
+    # Phase 69: Predictive Coding Engine — wire after engram is ready
+    from core.predictive_coder import PredictiveCodingEngine
+    _state["predictive_coder"] = PredictiveCodingEngine(acache, adapter)
 
     # 6. Save to cache
     if cache_path:

@@ -7,6 +7,40 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.8.0] — 2026-04-11
+### Added
+- **Phase 70: Looped Beam Traversal** — LoopLM-style iterative refinement for KG reasoning (arXiv:2510.25741).
+- New `reasoning/looped_traversal.py`: `LoopTrace` dataclass + `LoopedBeamTraversal` class.
+- `LoopedBeamTraversal` wraps any `BeamTraversal`-compatible engine and applies it T times, progressively refining reasoning via seed expansion and adaptive exit.
+- **Three inter-loop feedback channels** vs LoopLM's single hidden-state channel: Semantic (top answer entities expand seeds), Metabolic (PE→ChemicalModulator adjusts traversal params), Mnemonic (Engram records bias next loop's beam pruning).
+- **Adaptive exit gate** with two signals: PE convergence (`|ΔPE| < γ`, primary) and answer-set stability (Jaccard fallback). Prevents both underthinking and overthinking.
+- **Path merging across all loops**: `best_by_tail` dict keeps highest-score path per tail entity across all iterations, maximising coverage.
+- `QueryRequest` gains `max_loops: int` (default 1, range 1–8). Default=1 is fully backward compatible.
+- `QueryResponse` gains `loops_run: Optional[int]` and `pe_per_loop: Optional[List[float]]`.
+- `ReasoningTrace` gains `loop_trace: Optional[LoopTrace]` (Phase 62 ERT integration).
+- `MultiStrategyConsensus.run_consensus_query()` gains `max_loops` param; each strategy loops independently before consensus aggregation.
+- `MultiStrategyConsensus.__init__()` gains `predictive_coder` param for PE-gated exit.
+- `core/cerebrum.py` `query()` gains `max_loops: int = 1`; looped traversal wired when `max_loops > 1`.
+- `/query` and `/query/trace` endpoints fully wired: `max_loops` from request, `loops_run`/`pe_per_loop` in response.
+- 14 new tests in `tests/test_looped_traversal.py`: single-loop backward compat, answer-stability exit, PE-convergence exit, PE priority over stability, fallback without PE engine, seed expansion, original seed preservation, path merging, highest-score-wins deduplication, LoopTrace fields, max_loops cap.
+- **PAPER_022_LOOPED_TRAVERSAL.md** — full technical paper for Phase 70.
+- `docs/arxiv/SOURCES.md` — added `[zhu2025loooplm]` (arXiv:2510.25741) and `[bengio2025soliton]` (UCFT 2025) entries.
+- Cross-paper citations: `[zhu2025loooplm]` added to PAPER_006, PAPER_015, PAPER_018; `[bengio2025soliton]` added to PAPER_018, PAPER_019.
+
+## [2.7.0] — 2026-04-11
+### Added
+- **Phase 69: Predictive Coding Engine** — Active inference closes the loop across all Phase 59–68 components.
+- New `core/predictive_coder.py`: `PriorPath` + `PredictionResult` + `PredictiveCodingEngine`.
+- Before each traversal, the engine queries the Engram for the top relation pattern and generates a `PriorPath` — a forward prediction of likely nodes and relation sequence.
+- After traversal, `compute_pe()` calculates **Prediction Error** as Jaccard divergence between prior and best actual relation sequence. PE=0 = perfect prediction; PE=1 = complete miss.
+- PE dispatched to `ChemicalModulator`: `update_arousal(PE)`, `update_novelty(PE)`, `update_reinforcement(1-PE)` — all metabolic scalars now respond to prediction accuracy.
+- **Soliton Index**: `soliton_index = 1 - mean(recent PEs)` per seed set. A self-reinforcing prior that consistently yields low PE is soliton-like (stable, self-localising wave — inspired by UCFT 2025 preprint *Consciousness as a Soliton, Not a Process*). High soliton_index = the system has converged on a stable internal model for that reasoning domain.
+- `CerebrumGraph.attach_engram(engram)` — post-build method to wire the Engram and activate predictive coding.
+- `ReasoningTrace` (Phase 62 ERT) gains `prior`, `prediction_error`, and `soliton_index` fields.
+- `QueryResponse` gains `prediction_error` and `soliton_index` API fields.
+- `_state["predictive_coder"]` initialized in `_load()` after Engram warm-up; PE drives modulator on every `/query` call.
+- 16 new tests in `tests/test_predictive_coder.py`: cold start, PE accuracy (perfect/mismatch/partial), soliton index convergence, modulator signal dispatch, trace field integration.
+
 ## [2.6.0] — 2026-04-11
 ### Added
 - **Phase 68: Metabolic Modulation Suite** — Functional regulation of reasoning.

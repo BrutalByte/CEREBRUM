@@ -96,7 +96,7 @@ class ConsensusScorer:
             n_agents = len(confirming_agents)
             bonus = 0.1 * (n_agents - 1) # +10% for each additional agent
             
-            final_score = (total_score / total_weight) + bonus
+            final_score = (total_score / total_weight if total_weight > 0 else 0.0) + bonus
             
             # Final clip
             final_score = min(1.0, max(0.0, final_score))
@@ -117,24 +117,26 @@ class ConsensusScorer:
         """
         Identify and flag paths that have high score variance between agents.
         (Contradiction detection at the path level).
+
+        Uses per-agent trust scores as a proxy for individual path scores —
+        agents with low trust who confirmed a path are treated as potential
+        sources of conflict. Flags paths where trust-weighted score spread
+        exceeds 0.3 as conflicted.
         """
-        import numpy as np
-        
         for cp in consensus_list:
-            # If only one agent found it, variance is 0
             if len(cp.agents) <= 1:
                 cp.metadata["variance"] = 0.0
                 cp.metadata["conflict"] = False
                 continue
-                
-            # Need to get the raw scores for this path from each agent
-            # Since PathConsensus doesn't store them, we'd need to re-scan or store them.
-            # Assuming for now we just want to flag if any agent's trust is low or 
-            # if we have a way to access the original scores.
-            
-            # Revised approach: we need the scores. 
-            # Let's assume the caller might want to handle this, but we'll provide a 
-            # basic implementation if the scores were stored in metadata.
-            pass
-            
+
+            # Proxy: treat each agent's trust score as their effective path score.
+            # Real per-path-per-agent scores are not stored in PathConsensus;
+            # trust spread is the best available signal.
+            agent_scores = [
+                self.trust_scores.get(a, 1.0) for a in cp.agents
+            ]
+            variance = float(np.var(agent_scores)) if len(agent_scores) > 1 else 0.0
+            cp.metadata["variance"] = round(variance, 4)
+            cp.metadata["conflict"] = variance > 0.09  # spread > 0.3 std-dev
+
         return consensus_list

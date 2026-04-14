@@ -191,6 +191,8 @@ All five components compose independently and additively.
 ### 10. Conclusion
 The Algorithmic Depth layer demonstrates that meaningful reasoning improvements can be achieved through principled, composable algorithmic extensions rather than increased model size or training data. The five Phase 17 components collectively advance H@10 by 14.2% on the hardest benchmark while preserving complete interpretability of every reasoning step. In v1.9.8, the evolution continues: the 10-parameter CSA formula, online MetaParameterLearner, parameter persistence, auto-retrain scheduling, and adaptive search strategy extend the algorithmic depth concept from static composition to a fully adaptive reasoning pipeline that improves automatically with usage.
 
+*See also:* **Paper 022** — Looped Beam Traversal (Phase 70) adds a further dimension of algorithmic depth: iterative refinement via LoopLM-style looping [zhu2025loooplm]. Rather than a fixed traversal depth H, the number of reasoning *passes* T becomes an adaptive parameter governed by an exit gate. This is the natural successor to the algorithmic depth concept — depth is now dynamic in two dimensions: hop depth (H) within a pass, and pass count (T) across iterations.
+
 ---
 **References**
 1. Bordes, A., et al. (2013). Translating Embeddings for Modeling Multi-Relational Data (TransE). NeurIPS.
@@ -199,3 +201,4 @@ The Algorithmic Depth layer demonstrates that meaningful reasoning improvements 
 4. Yang, J., & Leskovec, J. (2013). Overlapping Community Detection at Scale: A Nonnegative Matrix Factorization Approach (BIGCLAM). WSDM.
 5. Finn, C., et al. (2017). Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks (MAML). ICML.
 6. Lin, Y., et al. (2015). Learning Entity and Relation Embeddings for Knowledge Graph Completion. AAAI.
+7. Zhu, R.-J., Wang, Z., Hua, K., et al. (2025). Scaling Latent Reasoning via Looped Language Models. arXiv:2510.25741. [zhu2025loooplm]

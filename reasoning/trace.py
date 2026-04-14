@@ -4,9 +4,14 @@ Explainable Reasoning Trace (ERT) for CEREBRUM (Phase 62).
 Captures the decision-making process at each hop of the beam search,
 including winners, top-K rejected competitors, and their feature radars.
 """
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
+from typing import TYPE_CHECKING, List, Dict, Any, Optional
 import numpy as np
+
+if TYPE_CHECKING:
+    from reasoning.looped_traversal import LoopTrace
 
 @dataclass
 class HopTrace:
@@ -24,6 +29,12 @@ class ReasoningTrace:
     seeds: List[str]
     hops: List[HopTrace] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    # Phase 69: Predictive coding fields
+    prior: Optional[Dict[str, Any]] = field(default=None)
+    prediction_error: Optional[float] = field(default=None)
+    soliton_index: Optional[float] = field(default=None)
+    # Phase 70: Looped traversal diagnostics
+    loop_trace: Optional["LoopTrace"] = field(default=None)
 
     def add_hop(
         self, 

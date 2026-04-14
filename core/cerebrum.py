@@ -58,7 +58,8 @@ from adapters.networkx_adapter import NetworkXAdapter
 from core.attention_engine import CSAEngine
 from core.embedding_engine import EmbeddingEngine, RandomEngine
 from core.graph_adapter import GraphAdapter
-from core.chemical_modulator import ChemicalModulator # Phase 68
+from core.chemical_modulator import ChemicalModulator   # Phase 68
+from core.predictive_coder import PredictiveCodingEngine, PredictionResult  # Phase 69
 from reasoning.answer_extractor import Answer, extract
 from reasoning.traversal import BeamTraversal
 from core.telemetry import NeuralEvent, NeuralEventType
@@ -113,9 +114,22 @@ class CerebrumGraph:
         # Neuro-Chemical Modulation (Phase 68)
         self.modulator = ChemicalModulator()
 
+        # Predictive Coding (Phase 69) — set via attach_engram()
+        self.predictive_coder: Optional[PredictiveCodingEngine] = None
+
         self._csa:       Optional[CSAEngine]    = None
         self._traversal: Optional[BeamTraversal] = None
         self._built      = False
+
+    def attach_engram(self, engram) -> None:
+        """
+        Wire an Engram (or SpeedTalkEngram) to enable predictive coding (Phase 69).
+
+        Call this after ``build()`` and after the Engram has been warmed up.
+        Safe to call multiple times — replaces the previous engine.
+        """
+        self.predictive_coder = PredictiveCodingEngine(engram, self.adapter)
+        logger.info("PredictiveCodingEngine attached (%d cached patterns).", engram.size())
 
     def subscribe(self, callback: Callable[[NeuralEvent], None]):
         """Subscribe to real-time neural events."""
@@ -343,6 +357,7 @@ class CerebrumGraph:
         seed:                 int   = 42,
         force_rebuild:        bool  = False,
         community_engine:     str   = "dscf",
+        resolution:           float = 1.0,
         callback:             Optional[callable] = None,
         use_graphsage:        bool  = False,
         graphsage_self_weight: float = 0.5,
@@ -615,6 +630,7 @@ class CerebrumGraph:
         vote_weight:       float          = 0.30,
         memory_threshold_pct: float       = 95.0,
         trace_info:        Optional["ReasoningTrace"] = None,
+        max_loops:         int            = 1,
     ) -> List[Answer]:
         """
         Traverse the graph from ``seeds`` and return ranked answers.
@@ -633,6 +649,11 @@ class CerebrumGraph:
         vote_weight     : convergence voting weight (default 0.30)
         memory_threshold_pct : safety threshold for resource usage (default 95.0)
         trace_info      : optional ReasoningTrace to populate (Phase 62).
+        max_loops       : LoopLM-style iterative refinement depth (Phase 70,
+                          arXiv:2510.25741). 1 = single-pass (default). >1
+                          applies BeamTraversal T times, using top answer
+                          entities as additional seeds each loop. Early exit
+                          when PE converges or answers stabilise.
 
         Returns
         -------
@@ -679,15 +700,70 @@ class CerebrumGraph:
         else:
             traversal = self._traversal
 
+        # Phase 69: Generate predictive prior before traversal
+        pred_prior = None
+        if self.predictive_coder is not None:
+            try:
+                pred_prior = self.predictive_coder.predict(seeds)
+            except Exception as exc:
+                logger.warning("PredictiveCodingEngine.predict() failed: %s", exc)
+
         try:
-            paths = traversal.traverse(
-                seeds,
-                query_embedding=query_embedding,
-                trace_info=trace_info,
-            )
+            # Phase 70: Looped traversal (arXiv:2510.25741)
+            if max_loops > 1:
+                from reasoning.looped_traversal import LoopedBeamTraversal
+                looped = LoopedBeamTraversal(
+                    traversal        = traversal,
+                    predictive_coder = self.predictive_coder,
+                    max_loops        = max_loops,
+                )
+                paths, loop_trace = looped.traverse(
+                    seeds,
+                    query_embedding=query_embedding,
+                    trace_info=trace_info,
+                )
+                if trace_info is not None:
+                    trace_info.loop_trace = loop_trace
+            else:
+                paths = traversal.traverse(
+                    seeds,
+                    query_embedding=query_embedding,
+                    trace_info=trace_info,
+                )
+                loop_trace = None
         finally:
             # Phase 68: Natural decay of hormonal state after query completion
             self.modulator.step()
+
+        # Phase 69: Compute prediction error and dispatch to regulators
+        if self.predictive_coder is not None:
+            try:
+                pred_result = self.predictive_coder.update(pred_prior, paths)
+                pe  = pred_result.prediction_error
+                sol = pred_result.soliton_stability
+
+                # Drive ChemicalModulator from PE signal
+                self.modulator.update_arousal(pe)
+                self.modulator.update_novelty(pe)
+                self.modulator.update_reinforcement(pred_result.reinforcement_signal)
+
+                # Attach to ERT trace (Phase 62 integration)
+                if trace_info is not None:
+                    if pred_prior is not None:
+                        trace_info.prior = {
+                            "predicted_relations": pred_prior.predicted_relations,
+                            "predicted_nodes":     pred_prior.predicted_nodes,
+                            "confidence":          pred_prior.confidence,
+                        }
+                    trace_info.prediction_error = pe
+                    trace_info.soliton_index    = sol
+
+                logger.debug(
+                    "Predictive coding: PE=%.3f soliton=%.3f reinforcement=%.3f",
+                    pe, sol, pred_result.reinforcement_signal,
+                )
+            except Exception as exc:
+                logger.warning("PredictiveCodingEngine.update() failed: %s", exc)
 
         return extract(
             paths,
