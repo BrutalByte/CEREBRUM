@@ -51,7 +51,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v2.12.0 (Phase 74 COMPLETE)** — 1590+ tests passing.
+**v2.15.0 (Phase 77 COMPLETE)** — 1670+ tests passing.
 
 ### System Architecture Names
 | Name | Role |
@@ -72,6 +72,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 | **TriangulationEngine** | Four-perspective candidate validation: reverse traversal, multi-strategy agreement, path independence, semantic type consistency (Phase 72) |
 | **DiscoveryCalibrator** | Per-community EMA discovery rate + inverse-rate sampling multiplier — steers ResearchAgent toward understudied communities (Phase 73) |
 | **AutonomousDiscoveryLoop** | Closes the discover→validate→approve→materialize loop autonomously — circuit breaker, per-cycle cap, dry-run, AutoApprover checkpoint (Phase 74) |
+| **ProvenanceLedger** | Records materialized edges per batch/cycle; enables targeted rollback by batch_id or cycle_number (Phase 76) |
 
 ### Core Concepts
 - **DSCF/TSC**: Dual/Triple signal community fusion (part of CORTEX).
@@ -118,6 +119,9 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 - **DiscoveryCalibrator (Phase 73)**: EMA-tracked per-community scan and discovery rate. Inverse-rate multiplier `weight = global_rate / (community_rate + ε)` boosts underrepresented communities in `_score_discovery_potential()`. Cold-start: unscanned communities → `max_weight` (5.0). `record_scan()`, `record_discovery()`, `get_weight(cid)`, `stats()`. Temporal recency scoring added to `ValidationReport.recency_score` (exponential decay, half-life 7 years).
 - **ContradictionResolver (Phase 73 Batch B)**: Deterministic evidence-weight classifier on already-computed proposal data. Noisy-OR of proposed confidences vs. max contradiction_score → `net_evidence_score`. Resolutions: "clean" / "revision_candidate" / "contested" / "discardable". Discardable → auto-reject before AutoApprover. Revision candidates queued in `ResearchAgent._revision_candidates`.
 - **CandidateRegistry (Phase 73 Batch B)**: TTL-aware registry replacing flat `_evaluated_pairs` set. Tracks `nomination_count` per (source, target) pair; applies log-scale `nomination_boost` (up to 3×) to `discovery_potential`. TTL gate prevents redundant HypothesisEngine runs; `prune()` evicts stale entries; LRU `max_entries` cap enforces memory bound.
+- **Studio v2 Dashboard (Phase 75)**: Five new live monitoring panels in `StudioEngine` via optional attachments (`attach_research_agent`, `attach_modulator`, `attach_loop`). Panels: AutoApprover audit log, ContradictionResolver revision queue, DiscoveryCalibrator community heatmap, ChemicalModulator blood panel (scalars vs. homeostatic baseline), Autonomous Loop cycle history. All panels degrade gracefully when not attached.
+- **Graph Provenance & Rollback (Phase 76)**: `ProvenanceLedger` records every edge materialized by `ResearchAgent.approve()` with batch_id, finding_id, and cycle_number. `rollback_batch(batch_id, adapter)` removes exactly one approval's edges. `rollback_cycle(cycle_number, adapter)` removes all edges from a given autonomous loop cycle. LRU eviction, thread-safe, requires adapter to expose `remove_edge()`.
+- **Feature Impact Benchmark (Phase 77)**: `benchmarks/feature_impact_benchmark.py` measures Hits@1, Hits@5, MRR across four configurations (baseline / +engram / +looped / +full). Runs against toy_graph.csv for CI with no external dataset dependency. Reports delta vs. baseline MRR.
 - **Autonomous Discovery Loop (Phase 74)**: `AutonomousDiscoveryLoop` runs `ResearchAgent.scan_once()` on a configurable timer and processes each finding through the attached `AutoApprover`. **Circuit breaker**: sliding window over the last N decisions; if the approval rate drops below `min_approval_rate`, materialization pauses (`circuit_breaker_tripped=True`). **Per-cycle cap**: `max_materializations_per_cycle` prevents runaway materialization. **dry_run=True**: cycles execute but `approve()`/`reject()` are never called — safe for production trials. **Checkpoint**: `AutoApprover.to_dict()` persisted to disk after every cycle with decisions. REST: `POST /research/loop/start|stop|configure`, `GET /research/loop/status`. `LoopConfig` + `CycleRecord` dataclasses.
 - **Looped Beam Traversal (Phase 70)**: LoopLM-style iterative refinement (arXiv:2510.25741). `LoopedBeamTraversal` wraps any `BeamTraversal`-compatible engine and applies it T times. Between loops: top-K answer entities expand seeds (semantic channel), PE→ChemicalModulator adjusts beam params (metabolic channel), Engram records bias next loop's pruning (mnemonic channel). Adaptive exit gate: `|ΔPE| < γ` (primary) or answer-set Jaccard ≥ θ (fallback). All loops' paths merged — `best_by_tail` keeps highest-score per tail entity. `max_loops` param on `QueryRequest`, `CerebrumGraph.query()`, and `MultiStrategyConsensus.run_consensus_query()`. `LoopTrace` exposed via `ReasoningTrace.loop_trace` in ERT.
 
@@ -215,6 +219,7 @@ Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`
 | `core/temporal_calibrator.py` | **CORTEX** | `TemporalCalibrator` — grid-search calibration of eta/iota for Recall@K |
 | `core/persistence.py` | Persistence | `save_state()` / `load_state()` / `QueryLog` — durable query history + Engram cache warm-up |
 | `core/autonomous_loop.py` | ResearchAgent | `LoopConfig` + `CycleRecord` + `AutonomousDiscoveryLoop` — timed scan loop with circuit breaker, per-cycle cap, dry-run, AutoApprover checkpoint |
+| `core/provenance_ledger.py` | ResearchAgent | `EdgeRecord` + `BatchRecord` + `ProvenanceLedger` — per-batch/cycle edge provenance + rollback |
 | `api/` | Interface | FastAPI REST server (see API Endpoints below) |
 | `api/schemas.py` | Interface | All Pydantic request/response models |
 | `cli/` | Interface | CLI entry point (`cerebrum query`, `communities`, `serve --params-file`) |
@@ -268,5 +273,5 @@ Implement the abstract `GraphAdapter` interface in `core/graph_adapter.py`, foll
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)
 - Synthetic graph helpers (`make_two_cliques()`, etc.) live in `tests/` for unit tests that don't need the CSV fixture
-- **1590+ tests passing as of v2.12.0 / Phase 74** (1 skipped)
+- **1670+ tests passing as of v2.15.0 / Phase 77** (1 skipped)
 - Type checker: no mypy/ruff configured as hard gate; run `python -m pytest tests/` as verification

@@ -75,6 +75,10 @@ class StudioEngine:
         self.stream_adapter: Optional[StreamAdapter] = None
         self.stream_running: bool = False
         self.stream_event_log: List[Dict[str, Any]] = []
+        # Phase 75 — optional v2 dashboard attachments
+        self._research_agent = None
+        self._modulator = None
+        self._loop = None
 
     # ------------------------------------------------------------------
     # Graph loading
@@ -691,6 +695,344 @@ class StudioEngine:
             html += "</div>"
         html += "</div>"
         return html
+
+    # ------------------------------------------------------------------
+    # Phase 75 — v2 Dashboard: optional engine attachments
+    # ------------------------------------------------------------------
+
+    def attach_research_agent(self, agent) -> None:
+        """Attach a live ResearchAgent for AutoApprover audit and revision queue panels."""
+        self._research_agent = agent
+
+    def attach_modulator(self, modulator) -> None:
+        """Attach a live ChemicalModulator for the blood panel."""
+        self._modulator = modulator
+
+    def attach_loop(self, loop) -> None:
+        """Attach a live AutonomousDiscoveryLoop for the loop status panel."""
+        self._loop = loop
+
+    # ------------------------------------------------------------------
+    # Phase 75 — AutoApprover audit log
+    # ------------------------------------------------------------------
+
+    def get_auto_approver_audit(self, n: int = 20) -> str:
+        """
+        Return the last *n* AutoApprover decisions as an HTML table.
+        Gracefully returns a notice if no AutoApprover is attached.
+        """
+        agent = self._research_agent
+        aa = getattr(agent, "_auto_approver", None) if agent is not None else None
+        if aa is None:
+            return "<p style='color:#888;'>No AutoApprover attached to ResearchAgent.</p>"
+
+        records = list(aa.audit_log)[-n:]
+        if not records:
+            return "<p style='color:#888;'>AutoApprover audit log is empty.</p>"
+
+        ACTION_COLOR = {"approve": "#3fb950", "reject": "#f85149", "review": "#d29922"}
+        rows = ""
+        for d in reversed(records):
+            action = getattr(d, "action", "?")
+            color = ACTION_COLOR.get(action, "#ccc")
+            conf = getattr(d, "confidence", 0.0)
+            reason = getattr(d, "reason", "")
+            fid = getattr(d, "finding_id", "")
+            rows += (
+                f"<tr>"
+                f"<td style='color:{color};font-weight:bold;'>{action.upper()}</td>"
+                f"<td style='color:#79c0ff;font-family:monospace;font-size:0.85em;'>{fid[:24]}</td>"
+                f"<td style='color:#e6edf3;'>{conf:.3f}</td>"
+                f"<td style='color:#8b949e;font-size:0.85em;'>{reason[:60]}</td>"
+                f"</tr>"
+            )
+
+        stats = aa.stats()
+        summary = (
+            f"<div style='margin-bottom:8px;color:#8b949e;font-size:0.85em;'>"
+            f"Trained: <b style='color:#e6edf3;'>{stats['n_trained']}</b> &nbsp;|&nbsp; "
+            f"Approve: <b style='color:#3fb950;'>{stats['n_approve']}</b> &nbsp;|&nbsp; "
+            f"Reject: <b style='color:#f85149;'>{stats['n_reject']}</b> &nbsp;|&nbsp; "
+            f"Review: <b style='color:#d29922;'>{stats['n_review']}</b>"
+            f"</div>"
+        )
+        table = (
+            "<table style='width:100%;border-collapse:collapse;font-size:0.9em;'>"
+            "<thead><tr style='color:#8b949e;border-bottom:1px solid #30363d;'>"
+            "<th style='text-align:left;padding:4px 8px;'>Action</th>"
+            "<th style='text-align:left;padding:4px 8px;'>Finding ID</th>"
+            "<th style='text-align:left;padding:4px 8px;'>Confidence</th>"
+            "<th style='text-align:left;padding:4px 8px;'>Reason</th>"
+            "</tr></thead>"
+            f"<tbody>{rows}</tbody></table>"
+        )
+        return summary + table
+
+    # ------------------------------------------------------------------
+    # Phase 75 — ContradictionResolver revision queue
+    # ------------------------------------------------------------------
+
+    def get_revision_queue(self) -> str:
+        """
+        Return the ContradictionResolver revision queue as an HTML list.
+        These are findings where proposed evidence outweighed the contradiction
+        score — the existing graph edges may be stale.
+        """
+        agent = self._research_agent
+        if agent is None:
+            return "<p style='color:#888;'>No ResearchAgent attached.</p>"
+
+        queue = list(getattr(agent, "_revision_candidates", []))
+        if not queue:
+            return "<p style='color:#3fb950;'>Revision queue is empty — no contested findings.</p>"
+
+        items = ""
+        for rec in reversed(queue):
+            fid = getattr(rec, "finding_id", str(rec))
+            net = getattr(rec, "net_evidence_score", None)
+            rw = getattr(rec, "revision_weight", None)
+            net_str = f"{net:.3f}" if net is not None else "?"
+            rw_str = f"{rw:.2f}×" if rw is not None else "?"
+            items += (
+                f"<div style='border:1px solid #30363d;border-radius:4px;padding:6px 10px;"
+                f"margin-bottom:6px;background:#161b22;'>"
+                f"<span style='color:#79c0ff;font-family:monospace;font-size:0.85em;'>{fid[:32]}</span>"
+                f"<span style='float:right;color:#d29922;font-size:0.85em;'>"
+                f"net={net_str} &nbsp; weight={rw_str}</span>"
+                f"</div>"
+            )
+        header = (
+            f"<div style='color:#d29922;margin-bottom:8px;font-size:0.9em;'>"
+            f"<b>{len(queue)}</b> finding(s) queued for revision review</div>"
+        )
+        return header + items
+
+    # ------------------------------------------------------------------
+    # Phase 75 — DiscoveryCalibrator community heatmap
+    # ------------------------------------------------------------------
+
+    def get_discovery_heatmap(self) -> go.Figure:
+        """
+        Return a Plotly heatmap of per-community discovery weights from
+        the DiscoveryCalibrator.  Returns an empty figure if not attached.
+        """
+        agent = self._research_agent
+        calibrator = getattr(agent, "_calibrator", None) if agent is not None else None
+        if calibrator is None:
+            fig = go.Figure()
+            fig.update_layout(
+                title="DiscoveryCalibrator not attached",
+                paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+                font=dict(color="#8b949e"),
+            )
+            return fig
+
+        stats = calibrator.stats()
+        communities = stats.get("communities", {})
+        if not communities:
+            fig = go.Figure()
+            fig.update_layout(
+                title="No community data yet",
+                paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+                font=dict(color="#8b949e"),
+            )
+            return fig
+
+        cids = sorted(communities.keys())
+        weights = [communities[c]["weight"] for c in cids]
+        rates = [communities[c]["rate"] for c in cids]
+
+        fig = make_subplots(rows=1, cols=2, subplot_titles=["Sampling Weight", "Discovery Rate"])
+        fig.add_trace(
+            go.Bar(
+                x=[str(c) for c in cids],
+                y=weights,
+                name="Weight",
+                marker_color=[
+                    f"rgb({int(255*(1-w/max(weights+[1])))},100,{int(255*w/max(weights+[1]))})"
+                    for w in weights
+                ],
+            ),
+            row=1, col=1,
+        )
+        fig.add_trace(
+            go.Bar(
+                x=[str(c) for c in cids],
+                y=rates,
+                name="Rate",
+                marker_color="#58a6ff",
+            ),
+            row=1, col=2,
+        )
+        fig.update_layout(
+            title=f"DiscoveryCalibrator — {len(cids)} communities tracked",
+            paper_bgcolor="#0d1117",
+            plot_bgcolor="#161b22",
+            font=dict(color="#e6edf3"),
+            showlegend=False,
+            height=300,
+        )
+        return fig
+
+    # ------------------------------------------------------------------
+    # Phase 75 — ChemicalModulator blood panel
+    # ------------------------------------------------------------------
+
+    def get_chemical_panel(self) -> go.Figure:
+        """
+        Return a Plotly radar/bar chart of the 5 ChemicalModulator scalars.
+        Returns an empty figure if modulator is not attached.
+        """
+        modulator = self._modulator
+        if modulator is None:
+            fig = go.Figure()
+            fig.update_layout(
+                title="ChemicalModulator not attached",
+                paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+                font=dict(color="#8b949e"),
+            )
+            return fig
+
+        state = getattr(modulator, "state", {})
+        LABELS = {
+            "reinforcement": "Reinforcement\n(Dopamine)",
+            "arousal":       "Arousal\n(Norepinephrine)",
+            "novelty":       "Novelty\n(Acetylcholine)",
+            "cohesion":      "Cohesion\n(Oxytocin)",
+            "persistence":   "Persistence\n(Vasopressin)",
+        }
+        BASELINE = getattr(modulator, "baseline", {
+            "reinforcement": 1.0, "arousal": 1.0,
+            "novelty": 0.5, "cohesion": 1.0, "persistence": 0.5,
+        })
+        keys = list(LABELS.keys())
+        values = [state.get(k, 0.0) for k in keys]
+        baselines = [BASELINE.get(k, 1.0) for k in keys]
+
+        colors = []
+        for v, b in zip(values, baselines):
+            if v > b * 1.15:
+                colors.append("#f85149")   # elevated — red
+            elif v < b * 0.85:
+                colors.append("#58a6ff")   # suppressed — blue
+            else:
+                colors.append("#3fb950")   # near-baseline — green
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=[LABELS[k] for k in keys],
+            y=values,
+            marker_color=colors,
+            name="Current",
+            text=[f"{v:.3f}" for v in values],
+            textposition="outside",
+        ))
+        fig.add_trace(go.Scatter(
+            x=[LABELS[k] for k in keys],
+            y=baselines,
+            mode="lines+markers",
+            name="Baseline",
+            line=dict(color="#8b949e", dash="dash"),
+            marker=dict(symbol="line-ew", size=8, color="#8b949e"),
+        ))
+        fig.update_layout(
+            title="ChemicalModulator — Metabolic State",
+            paper_bgcolor="#0d1117",
+            plot_bgcolor="#161b22",
+            font=dict(color="#e6edf3"),
+            yaxis=dict(range=[0, max(values + baselines) * 1.25]),
+            legend=dict(bgcolor="#161b22"),
+            height=320,
+        )
+        return fig
+
+    # ------------------------------------------------------------------
+    # Phase 75 — Autonomous Loop status panel
+    # ------------------------------------------------------------------
+
+    def get_loop_panel(self) -> tuple:
+        """
+        Return (status_html: str, cycle_fig: go.Figure) for the loop dashboard.
+        """
+        loop = self._loop
+        if loop is None:
+            empty = go.Figure()
+            empty.update_layout(
+                title="AutonomousDiscoveryLoop not attached",
+                paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+                font=dict(color="#8b949e"),
+            )
+            return "<p style='color:#888;'>Loop not attached.</p>", empty
+
+        s = loop.status()
+        running_color = "#3fb950" if s["running"] else "#f85149"
+        cb_color = "#f85149" if s["circuit_breaker_tripped"] else "#3fb950"
+        rate = s["current_approval_rate"]
+        rate_str = f"{rate:.1%}" if rate is not None else "n/a"
+
+        status_html = (
+            f"<div style='display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;"
+            f"font-family:monospace;font-size:0.9em;margin-bottom:12px;'>"
+            f"<div style='background:#161b22;border:1px solid #30363d;border-radius:6px;padding:8px;'>"
+            f"<div style='color:#8b949e;font-size:0.8em;'>STATUS</div>"
+            f"<div style='color:{running_color};font-weight:bold;'>"
+            f"{'RUNNING' if s['running'] else 'STOPPED'}</div></div>"
+            f"<div style='background:#161b22;border:1px solid #30363d;border-radius:6px;padding:8px;'>"
+            f"<div style='color:#8b949e;font-size:0.8em;'>CIRCUIT BREAKER</div>"
+            f"<div style='color:{cb_color};font-weight:bold;'>"
+            f"{'TRIPPED' if s['circuit_breaker_tripped'] else 'OPEN'}</div></div>"
+            f"<div style='background:#161b22;border:1px solid #30363d;border-radius:6px;padding:8px;'>"
+            f"<div style='color:#8b949e;font-size:0.8em;'>APPROVAL RATE</div>"
+            f"<div style='color:#79c0ff;font-weight:bold;'>{rate_str}</div></div>"
+            f"</div>"
+            f"<div style='color:#8b949e;font-size:0.85em;'>"
+            f"Cycles: <b style='color:#e6edf3;'>{s['total_cycles']}</b> &nbsp;|&nbsp; "
+            f"Approved: <b style='color:#3fb950;'>{s['total_approved']}</b> &nbsp;|&nbsp; "
+            f"Rejected: <b style='color:#f85149;'>{s['total_rejected']}</b> &nbsp;|&nbsp; "
+            f"Review: <b style='color:#d29922;'>{s['total_review']}</b> &nbsp;|&nbsp; "
+            f"Edges: <b style='color:#58a6ff;'>{s['total_edges_added']}</b>"
+            f"</div>"
+        )
+
+        # Cycle history chart
+        cycles = s.get("recent_cycles", [])
+        if not cycles:
+            fig = go.Figure()
+            fig.update_layout(
+                title="No cycles run yet",
+                paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+                font=dict(color="#8b949e"),
+            )
+            return status_html, fig
+
+        nums = [c["cycle_number"] for c in cycles]
+        approved = [c["auto_approved"] for c in cycles]
+        rejected = [c["auto_rejected"] for c in cycles]
+        review = [c["sent_to_review"] for c in cycles]
+        edges = [c["edges_added"] for c in cycles]
+
+        fig = make_subplots(rows=2, cols=1,
+                            subplot_titles=["Decisions per Cycle", "Edges Added per Cycle"],
+                            shared_xaxes=True, vertical_spacing=0.12)
+        fig.add_trace(go.Bar(x=nums, y=approved, name="Approved",
+                             marker_color="#3fb950"), row=1, col=1)
+        fig.add_trace(go.Bar(x=nums, y=rejected, name="Rejected",
+                             marker_color="#f85149"), row=1, col=1)
+        fig.add_trace(go.Bar(x=nums, y=review, name="Review",
+                             marker_color="#d29922"), row=1, col=1)
+        fig.add_trace(go.Scatter(x=nums, y=edges, mode="lines+markers",
+                                 name="Edges Added", line=dict(color="#58a6ff")),
+                      row=2, col=1)
+        fig.update_layout(
+            title="Autonomous Loop — Cycle History",
+            barmode="stack",
+            paper_bgcolor="#0d1117",
+            plot_bgcolor="#161b22",
+            font=dict(color="#e6edf3"),
+            legend=dict(bgcolor="#161b22"),
+            height=420,
+        )
+        return status_html, fig
 
     @staticmethod
     def _attention_radar(feature_tuple) -> go.Figure:

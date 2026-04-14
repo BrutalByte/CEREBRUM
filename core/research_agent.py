@@ -225,6 +225,8 @@ class ResearchAgent:
         self._pushed_candidates: List[ResearchCandidate] = []
         # Phase 73 Batch B: revision candidates (discardable → skip; revision → queue here)
         self._revision_candidates: collections.deque = collections.deque(maxlen=50)
+        # Phase 76: provenance ledger (optional — attached via set_provenance_ledger)
+        self._provenance_ledger: Optional[Any] = None
 
         # Optional external validator (set by server or constructor caller)
         self._validator: Optional[Any] = None
@@ -316,6 +318,15 @@ class ResearchAgent:
         with self._lock:
             self._calibrator = calibrator
 
+    def set_provenance_ledger(self, ledger) -> None:
+        """
+        Attach a ProvenanceLedger (Phase 76).  When set, every approve() call
+        records the materialized edges so they can be rolled back by batch or
+        cycle number.
+        """
+        with self._lock:
+            self._provenance_ledger = ledger
+
     def push_candidate(self, candidate: ResearchCandidate) -> bool:
         """
         Externally push a candidate for evaluation in the next scan cycle.
@@ -355,9 +366,18 @@ class ResearchAgent:
     # Human-in-the-loop
     # ------------------------------------------------------------------
 
-    def approve(self, finding_id: str) -> int:
+    def approve(self, finding_id: str, cycle_number: Optional[int] = None) -> int:
         """
         Materialise all proposals in a finding to the graph.
+
+        Parameters
+        ----------
+        finding_id:
+            ID of the finding to approve.
+        cycle_number:
+            Optional AutonomousDiscoveryLoop cycle index.  Passed through to
+            the ProvenanceLedger (Phase 76) so edges can later be rolled back
+            by cycle.
 
         Returns
         -------
@@ -371,6 +391,22 @@ class ResearchAgent:
         """
         finding = self._get_finding(finding_id)
         edges_added = self._hypothesis_engine.materialize(finding.proposals)
+
+        # Phase 76: record to provenance ledger if attached
+        ledger = self._provenance_ledger
+        if ledger is not None and edges_added > 0:
+            edge_triples = [
+                (p.source_id, p.target_id, p.relation)
+                for p in finding.proposals
+                if hasattr(p, "source_id") and hasattr(p, "relation")
+            ]
+            if edge_triples:
+                ledger.record_batch(
+                    batch_id=finding_id,
+                    finding_id=finding_id,
+                    edges=edge_triples[:edges_added],
+                    cycle_number=cycle_number,
+                )
         return edges_added
 
     def reject(self, finding_id: str) -> bool:

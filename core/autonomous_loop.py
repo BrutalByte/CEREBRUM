@@ -237,7 +237,8 @@ class AutonomousDiscoveryLoop:
 
                 if not cfg.dry_run:
                     try:
-                        n = self._agent.approve(finding.finding_id)
+                        n = self._agent.approve(finding.finding_id,
+                                                cycle_number=cycle_num)
                         edges_added += n
                         aa.fit(finding, approved=True)
                     except ValueError:

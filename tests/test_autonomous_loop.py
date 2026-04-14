@@ -147,7 +147,7 @@ class TestRunCycleApprove:
         assert record.auto_approved == 1
         assert record.edges_added == 3
         assert record.auto_rejected == 0
-        agent.approve.assert_called_once_with("f-0")
+        agent.approve.assert_called_once_with("f-0", cycle_number=1)
 
     def test_fit_called_with_approved_true(self):
         findings = [_FakeFinding(finding_id="f-0")]

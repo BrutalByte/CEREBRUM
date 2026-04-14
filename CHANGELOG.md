@@ -7,6 +7,33 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.15.0] — 2026-04-14
+### Added
+- **Phase 77: Feature Impact Benchmark** — `benchmarks/feature_impact_benchmark.py` measures Hits@1, Hits@5, MRR across four feature configurations (baseline / +engram / +looped / +full) on any CSV graph. Uses toy_graph.csv for CI-safe runs; accepts `--graph`, `--sample`, `--embeddings`, `--json` flags. Reports per-config delta vs. baseline MRR.
+
+## [2.14.0] — 2026-04-14
+### Added
+- **Phase 76: Graph Provenance & Rollback** — every edge materialized by `ResearchAgent.approve()` is now recorded in an optional `ProvenanceLedger` with batch_id, finding_id, cycle_number, and edge triples.
+  - `rollback_batch(batch_id, adapter)` — removes exactly the edges from one approval.
+  - `rollback_cycle(cycle_number, adapter)` — removes all edges from a given loop cycle.
+  - LRU `max_batches` cap; thread-safe; graceful `NotImplementedError` when adapter lacks `remove_edge`.
+  - `ResearchAgent` gains `set_provenance_ledger()` + `cycle_number` param on `approve()`.
+  - `AutonomousDiscoveryLoop.run_cycle()` forwards `cycle_number` to every `approve()` call.
+- `core/provenance_ledger.py`: `EdgeRecord`, `BatchRecord`, `ProvenanceLedger`.
+- `tests/test_provenance_ledger.py`: 25 tests covering recording, rollback, LRU eviction, cycle rollback, adapter guard.
+
+## [2.13.0] — 2026-04-14
+### Added
+- **Phase 75: Studio v2 Dashboard** — five new live monitoring panels added to `StudioEngine` via optional engine attachments.
+  - **AutoApprover audit log** (`get_auto_approver_audit`): HTML table of last N decisions with action color-coding and stats summary.
+  - **ContradictionResolver revision queue** (`get_revision_queue`): HTML list of findings where proposed evidence outweighed contradiction score, with net/weight annotations.
+  - **DiscoveryCalibrator heatmap** (`get_discovery_heatmap`): Plotly dual-bar chart — sampling weight and discovery rate per community.
+  - **ChemicalModulator blood panel** (`get_chemical_panel`): Plotly bar+scatter chart of 5 metabolic scalars vs. homeostatic baseline; color-coded by deviation.
+  - **Autonomous Loop panel** (`get_loop_panel`): 3-card status header (running, circuit breaker, approval rate) + stacked bar/line cycle history chart.
+  - All panels degrade gracefully when engines are not attached.
+  - Attachment setters: `attach_research_agent()`, `attach_modulator()`, `attach_loop()`.
+- `tests/test_studio_v2.py`: 25 tests covering all panels.
+
 ## [2.12.0] — 2026-04-14
 ### Added
 - **Phase 74: Autonomous Discovery Loop** — closes the full discover → validate → approve → materialize loop without human intervention.
