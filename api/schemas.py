@@ -849,3 +849,71 @@ class AutoApproverStatsResponse(BaseModel):
     weights: List[float]
     bias: float
     policy: dict
+
+
+# ---------------------------------------------------------------------------
+# Phase 74 — Autonomous Discovery Loop schemas
+# ---------------------------------------------------------------------------
+
+class LoopConfigSchema(BaseModel):
+    """Mutable configuration for AutonomousDiscoveryLoop (all fields optional for PATCH)."""
+
+    cycle_interval: Optional[float] = Field(
+        default=None, ge=10.0, description="Seconds between scan cycles (min 10)."
+    )
+    max_materializations_per_cycle: Optional[int] = Field(
+        default=None, ge=1, le=100,
+        description="Hard cap on approve() calls per cycle.",
+    )
+    min_approval_rate: Optional[float] = Field(
+        default=None, ge=0.0, le=1.0,
+        description="Circuit-breaker threshold; loop pauses if rolling approval rate drops below this.",
+    )
+    circuit_breaker_window: Optional[int] = Field(
+        default=None, ge=3, le=200,
+        description="Number of recent decisions tracked for approval rate calculation.",
+    )
+    dry_run: Optional[bool] = Field(
+        default=None,
+        description="If true, run cycles but never call approve() or reject().",
+    )
+    approver_checkpoint_path: Optional[str] = Field(
+        default=None,
+        description="File path for AutoApprover checkpoint JSON; None disables checkpointing.",
+    )
+
+
+class CycleRecordSchema(BaseModel):
+    """Summary of a single completed autonomous discovery cycle."""
+
+    cycle_number: int
+    started_at: float
+    duration_seconds: float
+    findings_seen: int
+    auto_approved: int
+    auto_rejected: int
+    sent_to_review: int
+    edges_added: int
+    circuit_breaker_tripped: bool
+    dry_run: bool
+
+
+class LoopStatusResponse(BaseModel):
+    """Response for GET /research/loop/status."""
+
+    running: bool
+    cycle_interval: float
+    max_materializations_per_cycle: int
+    min_approval_rate: float
+    circuit_breaker_window: int
+    dry_run: bool
+    circuit_breaker_tripped: bool
+    current_approval_rate: Optional[float]
+    total_cycles: int
+    total_approved: int
+    total_rejected: int
+    total_review: int
+    total_edges_added: int
+    started_at: Optional[float]
+    last_cycle_at: Optional[float]
+    recent_cycles: List[CycleRecordSchema]

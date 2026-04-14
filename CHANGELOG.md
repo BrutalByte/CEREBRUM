@@ -7,6 +7,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.12.0] — 2026-04-14
+### Added
+- **Phase 74: Autonomous Discovery Loop** — closes the full discover → validate → approve → materialize loop without human intervention.
+  - `AutonomousDiscoveryLoop` runs `ResearchAgent.scan_once()` on a configurable timer and processes each finding through the attached `AutoApprover`.
+  - **Circuit breaker**: sliding window over the last N decisions; if approval rate drops below `min_approval_rate`, materialization pauses and `circuit_breaker_tripped=True` is reported. Auto-resets as the window fills with healthy decisions.
+  - **Per-cycle cap**: `max_materializations_per_cycle` hard limit prevents runaway materialization.
+  - **Dry-run mode**: full cycle execution without any `approve()` / `reject()` calls — safe for production trials.
+  - **AutoApprover checkpoint**: persists `aa.to_dict()` to disk after any cycle with decisions; enables warm restart.
+  - **`LoopConfig` dataclass**: `cycle_interval`, `max_materializations_per_cycle`, `min_approval_rate`, `circuit_breaker_window`, `dry_run`, `approver_checkpoint_path`.
+  - **`CycleRecord` dataclass**: per-cycle summary — findings_seen, auto_approved, auto_rejected, sent_to_review, edges_added, circuit_breaker_tripped.
+  - REST: `POST /research/loop/start`, `POST /research/loop/stop`, `GET /research/loop/status`, `POST /research/loop/configure`.
+- `core/autonomous_loop.py`: `LoopConfig`, `CycleRecord`, `AutonomousDiscoveryLoop`.
+- `api/schemas.py`: `LoopConfigSchema`, `CycleRecordSchema`, `LoopStatusResponse`.
+- `tests/test_autonomous_loop.py`: 33 tests covering all paths (no-AA fallback, approve/reject/review, cap, dry-run, circuit breaker, configure, checkpoint, lifecycle).
+
 ## [2.11.0] — 2026-04-14
 ### Added
 - **Phase 73 Batch B: Feature 1 — ContradictionResolver** — deterministic evidence-weight classifier on already-computed proposal data. Computes Noisy-OR of proposed path confidences vs. max contradiction_score; classifies findings as "clean" / "revision_candidate" / "contested" / "discardable". Discardable findings are auto-rejected before reaching AutoApprover. Revision candidates (proposed evidence outweighs existing) are queued separately for human review. No extra traversal passes — pure arithmetic on HypothesisProposal fields.

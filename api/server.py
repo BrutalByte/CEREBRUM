@@ -70,6 +70,7 @@ from api.schemas import (
     LiteratureHitSchema, ValidationReportSchema,
     ValidateProposalsRequest, ValidateProposalsResponse,
     AutoApprovalPolicySchema, AutoApproverStatsResponse,
+    LoopConfigSchema, CycleRecordSchema, LoopStatusResponse,
 )
 
 # ---------------------------------------------------------------------------
@@ -146,6 +147,7 @@ _state: Dict[str, Any] = {
     "consensus_hierarchy_engine": None, # MACH Hierarchy (Phase 60)
     "modulator":        None,   # ChemicalModulator (Phase 68)
     "predictive_coder": None,   # PredictiveCodingEngine (Phase 69)
+    "autonomous_loop":  None,   # AutonomousDiscoveryLoop (Phase 74)
 }
 
 
@@ -2137,6 +2139,89 @@ def create_app(
             bias=s["bias"],
             policy=s["policy"],
         )
+
+    # ------------------------------------------------------------------
+    # Phase 74 — Autonomous Discovery Loop endpoints
+    # ------------------------------------------------------------------
+
+    def _get_autonomous_loop():
+        """Lazy-initialize AutonomousDiscoveryLoop (Phase 74)."""
+        from core.autonomous_loop import AutonomousDiscoveryLoop, LoopConfig
+        if _state["autonomous_loop"] is None:
+            _state["autonomous_loop"] = AutonomousDiscoveryLoop(
+                agent=_get_research_agent(),
+                config=LoopConfig(),
+            )
+        return _state["autonomous_loop"]
+
+    def _loop_status_response(loop) -> LoopStatusResponse:
+        s = loop.status()
+        return LoopStatusResponse(
+            running=s["running"],
+            cycle_interval=s["cycle_interval"],
+            max_materializations_per_cycle=s["max_materializations_per_cycle"],
+            min_approval_rate=s["min_approval_rate"],
+            circuit_breaker_window=s["circuit_breaker_window"],
+            dry_run=s["dry_run"],
+            circuit_breaker_tripped=s["circuit_breaker_tripped"],
+            current_approval_rate=s["current_approval_rate"],
+            total_cycles=s["total_cycles"],
+            total_approved=s["total_approved"],
+            total_rejected=s["total_rejected"],
+            total_review=s["total_review"],
+            total_edges_added=s["total_edges_added"],
+            started_at=s["started_at"],
+            last_cycle_at=s["last_cycle_at"],
+            recent_cycles=[CycleRecordSchema(**r) for r in s["recent_cycles"]],
+        )
+
+    @app.post("/research/loop/start", response_model=LoopStatusResponse, tags=["research"])
+    async def research_loop_start(node: Dict = Depends(get_authenticated_node)):
+        """Start the autonomous discovery loop (idempotent)."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        loop = _get_autonomous_loop()
+        loop.start()
+        return _loop_status_response(loop)
+
+    @app.post("/research/loop/stop", response_model=LoopStatusResponse, tags=["research"])
+    async def research_loop_stop(node: Dict = Depends(get_authenticated_node)):
+        """Stop the autonomous discovery loop."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        loop = _get_autonomous_loop()
+        loop.stop()
+        return _loop_status_response(loop)
+
+    @app.get("/research/loop/status", response_model=LoopStatusResponse, tags=["research"])
+    async def research_loop_status(node: Dict = Depends(get_authenticated_node)):
+        """Return current autonomous loop health and cumulative statistics."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        loop = _get_autonomous_loop()
+        return _loop_status_response(loop)
+
+    @app.post("/research/loop/configure", response_model=LoopStatusResponse, tags=["research"])
+    async def research_loop_configure(
+        req: LoopConfigSchema,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Update loop configuration at runtime (partial update — omit fields to keep current values)."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        from core.autonomous_loop import LoopConfig
+        loop = _get_autonomous_loop()
+        current = loop.status()
+        new_cfg = LoopConfig(
+            cycle_interval=req.cycle_interval if req.cycle_interval is not None else current["cycle_interval"],
+            max_materializations_per_cycle=req.max_materializations_per_cycle if req.max_materializations_per_cycle is not None else current["max_materializations_per_cycle"],
+            min_approval_rate=req.min_approval_rate if req.min_approval_rate is not None else current["min_approval_rate"],
+            circuit_breaker_window=req.circuit_breaker_window if req.circuit_breaker_window is not None else current["circuit_breaker_window"],
+            dry_run=req.dry_run if req.dry_run is not None else current["dry_run"],
+            approver_checkpoint_path=req.approver_checkpoint_path if req.approver_checkpoint_path is not None else current.get("approver_checkpoint_path"),
+        )
+        loop.configure(new_cfg)
+        return _loop_status_response(loop)
 
     @app.post(
         "/research/validate",
