@@ -2218,7 +2218,7 @@ def create_app(
             min_approval_rate=req.min_approval_rate if req.min_approval_rate is not None else current["min_approval_rate"],
             circuit_breaker_window=req.circuit_breaker_window if req.circuit_breaker_window is not None else current["circuit_breaker_window"],
             dry_run=req.dry_run if req.dry_run is not None else current["dry_run"],
-            approver_checkpoint_path=req.approver_checkpoint_path if req.approver_checkpoint_path is not None else current.get("approver_checkpoint_path"),
+            approver_checkpoint_path=req.approver_checkpoint_path if req.approver_checkpoint_path is not None else loop._config.approver_checkpoint_path,
         )
         loop.configure(new_cfg)
         return _loop_status_response(loop)

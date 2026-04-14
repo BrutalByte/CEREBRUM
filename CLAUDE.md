@@ -214,6 +214,7 @@ Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`
 | `reasoning/speedtalk_cache.py` | **CORTEX** | `SpeedTalkEncoder` + `SpeedTalkEngram` + `SpeedTalkEngramTraversal` — Heinlein phonemic compression; prefix queries; graph-adaptive alphabet |
 | `core/temporal_calibrator.py` | **CORTEX** | `TemporalCalibrator` — grid-search calibration of eta/iota for Recall@K |
 | `core/persistence.py` | Persistence | `save_state()` / `load_state()` / `QueryLog` — durable query history + Engram cache warm-up |
+| `core/autonomous_loop.py` | ResearchAgent | `LoopConfig` + `CycleRecord` + `AutonomousDiscoveryLoop` — timed scan loop with circuit breaker, per-cycle cap, dry-run, AutoApprover checkpoint |
 | `api/` | Interface | FastAPI REST server (see API Endpoints below) |
 | `api/schemas.py` | Interface | All Pydantic request/response models |
 | `cli/` | Interface | CLI entry point (`cerebrum query`, `communities`, `serve --params-file`) |
@@ -235,6 +236,10 @@ Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`
 | `/bridges` | GET | Bridge twin records |
 | `/stream/query` | GET | Streaming NDJSON reasoning |
 | `/traverse` | POST | Federated — delegated branch reasoning for DistributedBeamTraversal |
+| `/research/loop/start` | POST | Start the autonomous discovery loop (idempotent) |
+| `/research/loop/stop` | POST | Stop the autonomous discovery loop |
+| `/research/loop/status` | GET | Loop health: running, approval rate, circuit breaker, cycle history |
+| `/research/loop/configure` | POST | Partial update: cycle_interval, cap, dry_run, circuit breaker params |
 
 ### Data Flow
 **THALAMUS** (ingestion):
