@@ -1,6 +1,6 @@
 # CEREBRUM: Academic Source Repository (Batch Index)
 
-This document provides a consolidated list of the 47 foundational papers, books, and datasets cited in the CEREBRUM framework development. Each entry is hyperlinked to its official digital record or Open Access PDF.
+This document provides a consolidated list of foundational papers, books, and datasets cited in the CEREBRUM framework development, plus the full index of CEREBRUM Technical Reports (PAPER_001–034). Each external entry is hyperlinked to its official digital record or Open Access PDF.
 
 - **hebb1949**: Hebb, D. (1949). The organization of behavior. [View Source](https://archive.org/details/organizationofbe00hebb)
 - **vaswani2017attention**: Vaswani et al. (2017). Attention is all you need. [Download PDF](https://arxiv.org/pdf/1706.03762.pdf)
@@ -51,3 +51,50 @@ This document provides a consolidated list of the 47 foundational papers, books,
 - **heinlein1949gulf**: Heinlein, R.A. (1949). Gulf. *Astounding Science Fiction*, Vol. 44, No. 4. The fictional origin of SpeedTalk — a constructed language assigning single phonemes to primitive concepts, inspiring the phonemic compression design in Paper 021. [View Source](https://archive.org/details/Astounding_v44n04_1949-12)
 - **zhu2025loooplm**: Zhu, R.-J., Wang, Z., Hua, K., et al. (2025). Scaling Latent Reasoning via Looped Language Models (Ouro). arXiv:2510.25741. ByteDance Seed / UC Santa Cruz et al. Demonstrates that applying the same transformer stack T times yields dramatically better reasoning on hard inputs without increasing parameter count; introduces the adaptive exit gate λ_t (ideal continuation probability) that prevents both underthinking and overthinking. Directly inspired CEREBRUM Phase 70 LoopedBeamTraversal. [Download PDF](https://arxiv.org/pdf/2510.25741)
 - **bengio2025soliton**: Bengio, Y. et al. (2025). Consciousness as a Soliton, Not a Process: Identity, Memory, and the Hard Problem in Coherence Field Theory. r/CoherencePhysics Preprint, UCFT 2025. Proposes that identity and consciousness are best modeled as stable, self-reinforcing waves (solitons) rather than sequential processes. Framing adopted in CEREBRUM Phase 69 for the `soliton_index` — a localized prior that consistently yields low prediction error is soliton-like, maintaining its shape through propagation. [View Source](https://www.reddit.com/r/CoherencePhysics/comments/1sh749z/consciousness_as_a_soliton_not_a_process_identity/)
+- **friston2005theory**: Friston, K. (2005). A theory of cortical responses. *Philosophical Transactions of the Royal Society B*, 360(1456), 815–836. Predictive coding / free energy principle — foundational for Phase 69 PredictiveCodingEngine. [View Source](https://doi.org/10.1098/rstb.2005.1622)
+- **rao1999predictive**: Rao, R.P.N. & Ballard, D.H. (1999). Predictive coding in the visual cortex: a functional interpretation of some extra-classical receptive-field effects. *Nature Neuroscience*, 2(1), 79–87. [Download PDF](https://www.nature.com/articles/nn0199_79.pdf)
+- **bottou2010large**: Bottou, L. (2010). Large-scale machine learning with stochastic gradient descent. *COMPSTAT*, 177–186. Online SGD basis for AutoApprover (Phase 71). [Download PDF](https://link.springer.com/content/pdf/10.1007/978-3-7908-2604-3_16.pdf)
+- **denzin1978research**: Denzin, N.K. (1978). *The research act: A theoretical introduction to sociological methods.* McGraw-Hill. Triangulation methodology — foundational framing for Phase 72 TriangulationEngine.
+- **pearl2000causality**: Pearl, J. (2000). *Causality: Models, reasoning, and inference.* Cambridge University Press. Noisy-OR model — basis for ContradictionResolver (Phase 73). [View Source](https://doi.org/10.1017/CBO9780511803161)
+
+---
+
+## CEREBRUM Technical Reports (PAPER_001–034)
+
+| Paper | Phase | Topic | File |
+|---|---|---|---|
+| PAPER_001 | 5 | DSCF/TSC Community Fusion | `PAPER_001_DSCF_TSC.md` |
+| PAPER_002 | 5 | Community-Structured Attention (CSA) | `PAPER_002_CSA.md` |
+| PAPER_003 | 12 | Bridge Twin Nodes | `PAPER_003_BRIDGE_TWINS.md` |
+| PAPER_004 | 13 | STDP Causal Edge Inference | `PAPER_004_STDP_CAUSAL.md` |
+| PAPER_005 | 9 | Holographic Federated Index | `PAPER_005_HOLOGRAPHIC_INDEXING.md` |
+| PAPER_006 | 19 | Bayesian Beam Search | `PAPER_006_BAYESIAN_BEAM.md` |
+| PAPER_007 | 15 | REM Cycle Maintenance | `PAPER_007_REM_CYCLE.md` |
+| PAPER_008 | 18 | Cross-Modal Signal Alignment | `PAPER_008_SIGNAL_ENCODER.md` |
+| PAPER_009 | 18 | THALAMUS Ingestion Pipeline | `PAPER_009_THALAMUS.md` |
+| PAPER_010 | 20 | Inference Validation | `PAPER_010_INFERENCE_VALIDATION.md` |
+| PAPER_011 | 20 | Contradiction Materialization | `PAPER_011_CONTRADICTION.md` |
+| PAPER_012 | 20 | Glass-Box Reasoning Studio | `PAPER_012_REASONING_STUDIO.md` |
+| PAPER_013 | 18 | Streaming Engine | `PAPER_013_STREAMING_ENGINE.md` |
+| PAPER_014 | 20 | Metacognitive Verification | `PAPER_014_INSIGHT_ENGINE.md` |
+| PAPER_015 | 22 | Algorithmic Depth | `PAPER_015_ALGORITHMIC_DEPTH.md` |
+| PAPER_016 | 21 | Production Hardening (Holes 1-12) | `PAPER_016_PRODUCTION_HARDENING.md` |
+| PAPER_017 | 65 | Hypothesis Materialization | `PAPER_017_HYPOTHESIS_MATERIALIZATION.md` |
+| PAPER_018 | 55 | Engram-Steered Traversal | `PAPER_018_ENGRAM_TRAVERSAL.md` |
+| PAPER_019 | 57 | Temporal Calibration | `PAPER_019_TEMPORAL_CALIBRATOR.md` |
+| PAPER_020 | 60 | MACH Consensus Hierarchies | `PAPER_020_MACH.md` |
+| PAPER_021 | 58 | SpeedTalk Phonemic Compression | `PAPER_021_SPEEDTALK_COMPRESSION.md` |
+| PAPER_022 | 70 | Looped Beam Traversal | `PAPER_022_LOOPED_TRAVERSAL.md` |
+| PAPER_023 | 69 | PredictiveCodingEngine | `PAPER_023_PREDICTIVE_CODING.md` |
+| PAPER_024 | 71 | AutoApprover | `PAPER_024_AUTOAPPROVER.md` |
+| PAPER_025 | 72 | TriangulationEngine | `PAPER_025_TRIANGULATION.md` |
+| PAPER_026 | 73 | DiscoveryCalibrator + ContradictionResolver + CandidateRegistry | `PAPER_026_DISCOVERY_CALIBRATION.md` |
+| PAPER_027 | 74 | AutonomousDiscoveryLoop | `PAPER_027_AUTONOMOUS_LOOP.md` |
+| PAPER_028 | 75+78 | Studio v2 Dashboard + Provenance Panel | `PAPER_028_STUDIO_V2.md` |
+| PAPER_029 | 76 | ProvenanceLedger | `PAPER_029_PROVENANCE_LEDGER.md` |
+| PAPER_030 | 77 | Feature Impact Benchmark | `PAPER_030_FEATURE_IMPACT.md` |
+| PAPER_031 | 79 | Loop-Provenance Recovery | `PAPER_031_LOOP_PROVENANCE_RECOVERY.md` |
+| PAPER_032 | 80 | GraphAdapter remove_edge Protocol | `PAPER_032_GRAPH_ADAPTER_PROTOCOL.md` |
+| PAPER_033 | 81 | GraphSnapshot Persistence | `PAPER_033_GRAPH_SNAPSHOT.md` |
+| PAPER_034 | 82 | Adaptive Loop Tuning | `PAPER_034_ADAPTIVE_LOOP_TUNING.md` |
+| PAPER_100 | — | Conclusion: The CEREBRUM Paradigm | `PAPER_100_CONCLUSION.md` |
