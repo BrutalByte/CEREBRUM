@@ -1,6 +1,6 @@
 # CEREBRUM Deployment Guide
 
-**Version**: v1.7.1
+**Version**: v2.20.1
 **Audience**: DevOps, Platform Engineers, System Administrators
 
 ---
@@ -31,6 +31,9 @@ curl http://localhost:8200/health
 | `CEREBRUM_BEAM_WIDTH` | No | `10` | Default beam width |
 | `CEREBRUM_WORKERS` | No | `4` | Uvicorn worker count |
 | `CEREBRUM_LOG_LEVEL` | No | `INFO` | Logging level |
+| `CEREBRUM_LOOP_CHECKPOINT` | No | — | Path for AutoApprover checkpoint file (Autonomous Discovery Loop) |
+| `CEREBRUM_LOOP_INTERVAL` | No | `300` | Default cycle interval in seconds for AutonomousDiscoveryLoop |
+| `CEREBRUM_PROVENANCE_MAX_BATCHES` | No | `500` | LRU cap for ProvenanceLedger batch records |
 
 ---
 
@@ -49,14 +52,14 @@ CMD ["uvicorn", "api.server:app", "--host", "0.0.0.0", "--port", "8200", "--work
 ```
 
 ```bash
-docker build -t cerebrum:1.1.0 .
+docker build -t cerebrum:2.20.1 .
 docker run -d \
   -p 8200:8200 \
   -e CEREBRUM_JWT_SECRET="$(openssl rand -hex 32)" \
   -e CEREBRUM_GRAPH_CSV=/data/my_graph.csv \
   -v /path/to/data:/data \
   --name cerebrum \
-  cerebrum:1.1.0
+  cerebrum:2.20.1
 ```
 
 ### Docker Compose (with Reasoning Studio)
@@ -68,7 +71,7 @@ version: "3.9"
 services:
   api:
     build: .
-    image: cerebrum:1.1.0
+    image: cerebrum:2.20.1
     ports:
       - "8200:8200"
     environment:
@@ -282,6 +285,59 @@ NUMA node behind a load balancer.
 - [ ] Docker restart policy: `unless-stopped`
 - [ ] Log rotation configured for uvicorn access logs
 - [ ] Data volume backed up (SQLite DB + graph CSV)
+- [ ] `CEREBRUM_LOOP_CHECKPOINT` points to persistent storage if using AutonomousDiscoveryLoop
+- [ ] GraphSnapshot cron job configured for periodic topology backups
+- [ ] ProvenanceLedger max_batches tuned to retention policy (`CEREBRUM_PROVENANCE_MAX_BATCHES`)
+
+---
+
+## Autonomous Discovery Loop
+
+When running `POST /research/loop/start`, the loop runs in the background on the API server process. Key deployment considerations:
+
+**Checkpoint persistence**: Set `CEREBRUM_LOOP_CHECKPOINT` to a writable path on persistent storage. The AutoApprover state is written after every cycle with decisions, enabling warm restart after a pod restart.
+
+**Circuit breaker**: The default `min_approval_rate=0.5` and `circuit_breaker_window=20` mean materialization pauses if fewer than half of recent findings are auto-approved. Tune `min_approval_rate` lower for exploratory runs, higher for conservative production.
+
+**Auto-rollback**: Enable `auto_rollback_on_trip=True` in `POST /research/loop/configure` if you want bad cycles automatically undone when the circuit breaker fires. Requires your adapter to implement `remove_edge()` (all built-in adapters do).
+
+**Adaptive tuning**: `adaptive_tuning=True` lets the loop self-pace based on `DiscoveryCalibrator` community weights. In production this reduces the risk of materialization bursts on saturated graph regions.
+
+```bash
+# Start the loop with recommended production settings
+curl -X POST http://localhost:8200/research/loop/configure \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cycle_interval": 600,
+    "max_materializations_per_cycle": 5,
+    "min_approval_rate": 0.6,
+    "auto_rollback_on_trip": true,
+    "adaptive_tuning": true
+  }'
+
+curl -X POST http://localhost:8200/research/loop/start \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+## GraphSnapshot Checkpointing
+
+Use `GraphSnapshot` to create periodic topology checkpoints for disaster recovery:
+
+```python
+from core.persistence import GraphSnapshot
+
+# Save snapshot to persistent storage
+GraphSnapshot.save(adapter, "/data/snapshots/graph_2026-04-14.json")
+
+# On restart: restore only new edges (skip_existing=True is safe to run repeatedly)
+result = GraphSnapshot.restore("/data/snapshots/graph_2026-04-14.json", adapter)
+print(f"Restored {result['added']} edges, skipped {result['skipped']}")
+
+# Audit what changed between two snapshots
+diff = GraphSnapshot.diff("/data/snapshots/graph_before.json", "/data/snapshots/graph_after.json")
+print(f"Edges added: {diff['edge_delta']:+d}")
+```
 
 ---
 
@@ -313,7 +369,7 @@ replicaCount: 2
 
 image:
   repository: cerebrum
-  tag: "1.1.0"
+  tag: "2.20.1"
   pullPolicy: IfNotPresent
 
 env:

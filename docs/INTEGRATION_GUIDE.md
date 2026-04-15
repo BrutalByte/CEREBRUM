@@ -1,6 +1,6 @@
 # CEREBRUM Integration Guide
 
-**Version**: v1.7.1
+**Version**: v2.20.1
 **Audience**: Python developers integrating CEREBRUM into an application
 
 This guide covers the Python API directly. For the REST API, see `docs/API_REFERENCE.md`. For deployment, see `docs/DEPLOYMENT.md`.
@@ -320,4 +320,104 @@ for a in answers:
 ```
 
 ---
+
+## 10. High-Level `CerebrumGraph` API
+
+For most applications the low-level pipeline (sections 1–5) can be replaced with the high-level `CerebrumGraph` wrapper:
+
+```python
+from core.cerebrum import CerebrumGraph
+
+graph = CerebrumGraph()
+graph.build(csv_path="my_graph.csv", embedding_mode="sentence", use_graphsage=True)
+
+# Simple query
+answers = graph.query("Marie Curie", max_hops=3, beam_width=10, top_k=5)
+
+# Looped beam traversal (Phase 70) — iterative refinement
+answers = graph.query("Marie Curie", max_hops=3, beam_width=10, top_k=5, max_loops=3)
+```
+
+---
+
+## 11. Autonomous Discovery Loop Integration
+
+```python
+from core.autonomous_loop import AutonomousDiscoveryLoop, LoopConfig
+from core.auto_approver import AutoApprover
+from core.provenance_ledger import ProvenanceLedger
+
+# Set up components
+approver = AutoApprover()
+ledger = ProvenanceLedger(max_batches=200)
+research_agent.set_provenance_ledger(ledger)
+
+config = LoopConfig(
+    cycle_interval=300.0,             # seconds between cycles
+    max_materializations_per_cycle=10,
+    min_approval_rate=0.5,
+    circuit_breaker_window=20,
+    auto_rollback_on_trip=True,       # Phase 79: undo bad cycles automatically
+    adaptive_tuning=True,             # Phase 82: self-pacing from calibrator
+    approver_checkpoint_path="/data/approver.json",
+)
+
+loop = AutonomousDiscoveryLoop(agent=research_agent, config=config, auto_approver=approver)
+
+# Start in background (non-blocking)
+loop.start()
+
+# Check status
+status = loop.status()
+print(f"Running: {status['running']}, approval rate: {status['current_approval_rate']:.0%}")
+
+# Graceful stop
+loop.stop()
+```
+
+**Via REST API:**
+```python
+import requests
+
+headers = {"Authorization": f"Bearer {token}"}
+
+# Configure and start
+requests.post("http://localhost:8200/research/loop/configure", json={
+    "cycle_interval": 300,
+    "auto_rollback_on_trip": True,
+    "adaptive_tuning": True,
+}, headers=headers)
+requests.post("http://localhost:8200/research/loop/start", headers=headers)
+
+# Monitor
+status = requests.get("http://localhost:8200/research/loop/status", headers=headers).json()
+```
+
+---
+
+## 12. ProvenanceLedger & Rollback
+
+```python
+from core.provenance_ledger import ProvenanceLedger
+
+ledger = ProvenanceLedger(max_batches=500)
+research_agent.set_provenance_ledger(ledger)
+
+# After some approve() calls — inspect provenance
+stats = ledger.stats()
+print(f"Batches: {stats['total_batches']}, Edges: {stats['total_edges']}")
+
+# Roll back a specific approval batch
+rolled = ledger.rollback_batch("batch_20260414_001", adapter)
+print(f"Removed {rolled} edges")
+
+# Roll back everything from loop cycle 12
+rolled = ledger.rollback_cycle(12, adapter)
+print(f"Removed {rolled} edges from cycle 12")
+```
+
+**Note:** `rollback_batch()` and `rollback_cycle()` call `adapter.remove_edge()`. All built-in adapters implement this. Custom adapters must override `GraphAdapter.remove_edge()`.
+
+---
+
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
