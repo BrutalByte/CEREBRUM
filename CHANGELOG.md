@@ -7,6 +7,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.16.0] — 2026-04-14
+### Added
+- **Phase 78: Provenance Studio Panel** — `StudioEngine` gains a sixth live monitoring panel for `ProvenanceLedger` data.
+  - **`attach_provenance_ledger(ledger)`**: optional attachment setter; panel degrades gracefully when not attached.
+  - **`get_provenance_panel(n=20)`**: returns `(stats_html, batch_fig, timeline_fig)`.
+    - `stats_html`: 4-card summary row — total batches, edges recorded, rolled-back count, cycles seen.
+    - `batch_fig`: horizontal bar chart of the *n* most recent materialization batches; bars coloured green (active) or red (rolled back).
+    - `timeline_fig`: dual-series chart — per-cycle edge count (bars) + cumulative edges (dashed line, secondary y-axis). Degrades gracefully when no cycle-tagged batches exist.
+- `tests/test_studio_v2.py`: 8 new tests covering no-ledger graceful degradation, stats HTML correctness, bar chart population, rollback reflection, cycle timeline, and no-cycle fallback.
+
 ## [2.15.0] — 2026-04-14
 ### Added
 - **Phase 77: Feature Impact Benchmark** — `benchmarks/feature_impact_benchmark.py` measures Hits@1, Hits@5, MRR across four feature configurations (baseline / +engram / +looped / +full) on any CSV graph. Uses toy_graph.csv for CI-safe runs; accepts `--graph`, `--sample`, `--embeddings`, `--json` flags. Reports per-config delta vs. baseline MRR.

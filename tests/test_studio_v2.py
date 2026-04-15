@@ -1,13 +1,14 @@
 """
-Tests for StudioEngine v2 dashboard methods (Phase 75).
+Tests for StudioEngine v2 dashboard methods (Phase 75 + 78).
 
 Coverage:
-  - attach_research_agent / attach_modulator / attach_loop
+  - attach_research_agent / attach_modulator / attach_loop / attach_provenance_ledger
   - get_auto_approver_audit: no agent, empty log, populated log
   - get_revision_queue: no agent, empty queue, populated queue
   - get_discovery_heatmap: no calibrator, no data, populated
   - get_chemical_panel: no modulator, populated
   - get_loop_panel: no loop, no cycles, populated cycles
+  - get_provenance_panel: no ledger, empty ledger, populated, cycle timeline, rollback
 """
 from __future__ import annotations
 
@@ -351,3 +352,102 @@ class TestLoopPanel:
         html, _ = engine.get_loop_panel()
         assert "3" in html  # approved count
         assert "6" in html  # edges count
+
+
+# ---------------------------------------------------------------------------
+# Phase 78 — ProvenanceLedger panel
+# ---------------------------------------------------------------------------
+
+def _make_ledger(batches=None):
+    """Build a real ProvenanceLedger pre-populated with *batches*.
+
+    Each batch entry is (batch_id, finding_id, edges, cycle_number)
+    where edges is a list of (u, v, relation) triples.
+    """
+    from core.provenance_ledger import ProvenanceLedger
+    ledger = ProvenanceLedger()
+    for bid, fid, edges, cycle in (batches or []):
+        ledger.record_batch(bid, fid, edges, cycle_number=cycle)
+    return ledger
+
+
+class TestProvenancePanel:
+    def test_no_ledger_returns_placeholder(self):
+        import plotly.graph_objects as go
+        engine = StudioEngine()
+        html, batch_fig, timeline_fig = engine.get_provenance_panel()
+        assert "not attached" in html.lower()
+        assert isinstance(batch_fig, go.Figure)
+        assert isinstance(timeline_fig, go.Figure)
+
+    def test_attach_provenance_ledger(self):
+        ledger = _make_ledger()
+        engine = StudioEngine()
+        engine.attach_provenance_ledger(ledger)
+        assert engine._provenance_ledger is ledger
+
+    def test_empty_ledger_stats_html(self):
+        ledger = _make_ledger()
+        engine = StudioEngine()
+        engine.attach_provenance_ledger(ledger)
+        html, _, _ = engine.get_provenance_panel()
+        assert "0" in html  # all totals zero
+        assert "not attached" not in html.lower()
+
+    def test_populated_stats_html(self):
+        ledger = _make_ledger([
+            ("b-1", "f-1", [("a", "b", "knows"), ("c", "d", "likes")], 1),
+            ("b-2", "f-2", [("e", "f", "rel")], 2),
+        ])
+        engine = StudioEngine()
+        engine.attach_provenance_ledger(ledger)
+        html, _, _ = engine.get_provenance_panel()
+        assert "2" in html   # total_batches
+        assert "3" in html   # total_edges_recorded
+
+    def test_batch_figure_has_bars(self):
+        import plotly.graph_objects as go
+        ledger = _make_ledger([
+            ("b-1", "f-1", [("a", "b", "r")], 1),
+            ("b-2", "f-2", [("c", "d", "s"), ("e", "f", "t")], 1),
+        ])
+        engine = StudioEngine()
+        engine.attach_provenance_ledger(ledger)
+        _, batch_fig, _ = engine.get_provenance_panel()
+        assert isinstance(batch_fig, go.Figure)
+        assert len(batch_fig.data) >= 1
+
+    def test_rolled_back_shows_in_stats(self):
+        from core.provenance_ledger import ProvenanceLedger
+        ledger = ProvenanceLedger()
+        ledger.record_batch("b-1", "f-1", [("a", "b", "r")])
+        # Mark rolled back without a real adapter
+        ledger._batches["b-1"].rolled_back = True
+        engine = StudioEngine()
+        engine.attach_provenance_ledger(ledger)
+        html, _, _ = engine.get_provenance_panel()
+        assert "1" in html  # batches_rolled_back = 1
+
+    def test_timeline_figure_by_cycle(self):
+        import plotly.graph_objects as go
+        ledger = _make_ledger([
+            ("b-1", "f-1", [("a", "b", "r")], 1),
+            ("b-2", "f-2", [("c", "d", "s")], 1),
+            ("b-3", "f-3", [("e", "f", "t")], 2),
+        ])
+        engine = StudioEngine()
+        engine.attach_provenance_ledger(ledger)
+        _, _, timeline_fig = engine.get_provenance_panel()
+        assert isinstance(timeline_fig, go.Figure)
+        assert len(timeline_fig.data) >= 1  # at least the bar series
+
+    def test_timeline_no_cycles_returns_figure(self):
+        import plotly.graph_objects as go
+        # cycle_number=None for all batches
+        ledger = _make_ledger([
+            ("b-1", "f-1", [("a", "b", "r")], None),
+        ])
+        engine = StudioEngine()
+        engine.attach_provenance_ledger(ledger)
+        _, _, timeline_fig = engine.get_provenance_panel()
+        assert isinstance(timeline_fig, go.Figure)

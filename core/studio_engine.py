@@ -79,6 +79,7 @@ class StudioEngine:
         self._research_agent = None
         self._modulator = None
         self._loop = None
+        self._provenance_ledger = None  # Phase 78
 
     # ------------------------------------------------------------------
     # Graph loading
@@ -712,6 +713,10 @@ class StudioEngine:
         """Attach a live AutonomousDiscoveryLoop for the loop status panel."""
         self._loop = loop
 
+    def attach_provenance_ledger(self, ledger) -> None:
+        """Attach a live ProvenanceLedger for the provenance panel (Phase 78)."""
+        self._provenance_ledger = ledger
+
     # ------------------------------------------------------------------
     # Phase 75 — AutoApprover audit log
     # ------------------------------------------------------------------
@@ -1030,6 +1035,144 @@ class StudioEngine:
             height=420,
         )
         return status_html, fig
+
+    # ------------------------------------------------------------------
+    # Phase 78 — ProvenanceLedger panel
+    # ------------------------------------------------------------------
+
+    def get_provenance_panel(self, n: int = 20) -> tuple:
+        """
+        Return (stats_html: str, batch_fig: go.Figure, timeline_fig: go.Figure).
+
+        - stats_html   : 4-card summary row (totals + rollback count).
+        - batch_fig    : horizontal bar chart of recent batches, coloured by
+                         rollback status.
+        - timeline_fig : line chart of edges added per cycle_number (groups
+                         batches that share the same cycle).
+
+        All three degrade gracefully when no ledger is attached.
+        """
+        _EMPTY = "<p style='color:#888;'>ProvenanceLedger not attached.</p>"
+        _DARK = dict(paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+                     font=dict(color="#8b949e"))
+
+        ledger = self._provenance_ledger
+        if ledger is None:
+            empty = go.Figure()
+            empty.update_layout(title="ProvenanceLedger not attached", **_DARK)
+            return _EMPTY, empty, empty
+
+        s = ledger.stats()
+        total_b = s["total_batches"]
+        total_e = s["total_edges_recorded"]
+        rolled  = s["batches_rolled_back"]
+        n_cycles = len(s.get("cycles_seen", []))
+
+        stats_html = (
+            f"<div style='display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;"
+            f"font-family:monospace;font-size:0.9em;margin-bottom:12px;'>"
+            f"<div style='background:#161b22;border:1px solid #30363d;"
+            f"border-radius:6px;padding:8px;'>"
+            f"<div style='color:#8b949e;font-size:0.8em;'>BATCHES</div>"
+            f"<div style='color:#e6edf3;font-weight:bold;'>{total_b}</div></div>"
+            f"<div style='background:#161b22;border:1px solid #30363d;"
+            f"border-radius:6px;padding:8px;'>"
+            f"<div style='color:#8b949e;font-size:0.8em;'>EDGES RECORDED</div>"
+            f"<div style='color:#58a6ff;font-weight:bold;'>{total_e}</div></div>"
+            f"<div style='background:#161b22;border:1px solid #30363d;"
+            f"border-radius:6px;padding:8px;'>"
+            f"<div style='color:#8b949e;font-size:0.8em;'>ROLLED BACK</div>"
+            f"<div style='color:{'#f85149' if rolled else '#3fb950'};"
+            f"font-weight:bold;'>{rolled}</div></div>"
+            f"<div style='background:#161b22;border:1px solid #30363d;"
+            f"border-radius:6px;padding:8px;'>"
+            f"<div style='color:#8b949e;font-size:0.8em;'>CYCLES SEEN</div>"
+            f"<div style='color:#d29922;font-weight:bold;'>{n_cycles}</div></div>"
+            f"</div>"
+        )
+
+        batches = ledger.list_batches(n=n)
+        if not batches:
+            empty = go.Figure()
+            empty.update_layout(title="No materialization batches yet",
+                                paper_bgcolor="#0d1117", plot_bgcolor="#161b22",
+                                font=dict(color="#8b949e"))
+            return stats_html, empty, empty
+
+        # --- batch bar chart (newest-first order, bottom-to-top on horizontal bar) ---
+        b_ids     = [b.batch_id[:20] for b in reversed(batches)]
+        b_counts  = [len(b.edges) for b in reversed(batches)]
+        b_colors  = ["#f85149" if b.rolled_back else "#3fb950"
+                     for b in reversed(batches)]
+
+        batch_fig = go.Figure(go.Bar(
+            x=b_counts,
+            y=b_ids,
+            orientation="h",
+            marker_color=b_colors,
+            text=b_counts,
+            textposition="outside",
+        ))
+        batch_fig.update_layout(
+            title=f"Recent Materializations (last {len(batches)})",
+            xaxis_title="Edges",
+            paper_bgcolor="#0d1117",
+            plot_bgcolor="#161b22",
+            font=dict(color="#e6edf3"),
+            height=max(260, len(batches) * 24 + 80),
+            margin=dict(l=160, r=40, t=40, b=40),
+        )
+
+        # --- timeline: edges per cycle ---
+        cycle_edges: Dict[int, int] = {}
+        no_cycle_total = 0
+        for b in batches:
+            if b.cycle_number is not None:
+                cycle_edges[b.cycle_number] = cycle_edges.get(b.cycle_number, 0) + len(b.edges)
+            else:
+                no_cycle_total += len(b.edges)
+
+        if not cycle_edges:
+            timeline_fig = go.Figure()
+            timeline_fig.update_layout(
+                title="No cycle-tagged batches yet",
+                paper_bgcolor="#0d1117", plot_bgcolor="#161b22",
+                font=dict(color="#8b949e"),
+            )
+        else:
+            sorted_cycles = sorted(cycle_edges.keys())
+            cycle_vals    = [cycle_edges[c] for c in sorted_cycles]
+            cumulative    = []
+            running = 0
+            for v in cycle_vals:
+                running += v
+                cumulative.append(running)
+
+            timeline_fig = go.Figure()
+            timeline_fig.add_trace(go.Bar(
+                x=sorted_cycles, y=cycle_vals,
+                name="Edges (cycle)", marker_color="#58a6ff",
+            ))
+            timeline_fig.add_trace(go.Scatter(
+                x=sorted_cycles, y=cumulative,
+                mode="lines+markers", name="Cumulative",
+                line=dict(color="#d29922", dash="dot"),
+                yaxis="y2",
+            ))
+            timeline_fig.update_layout(
+                title="Edges Materialized per Cycle",
+                xaxis_title="Cycle",
+                yaxis=dict(title="Edges (cycle)"),
+                yaxis2=dict(title="Cumulative", overlaying="y", side="right"),
+                paper_bgcolor="#0d1117",
+                plot_bgcolor="#161b22",
+                font=dict(color="#e6edf3"),
+                legend=dict(bgcolor="#161b22"),
+                height=320,
+                barmode="group",
+            )
+
+        return stats_html, batch_fig, timeline_fig
 
     @staticmethod
     def _attention_radar(feature_tuple) -> go.Figure:
