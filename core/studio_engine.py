@@ -901,13 +901,10 @@ class StudioEngine:
             "cohesion":      "Cohesion\n(Oxytocin)",
             "persistence":   "Persistence\n(Vasopressin)",
         }
-        BASELINE = getattr(modulator, "baseline", {
-            "reinforcement": 1.0, "arousal": 1.0,
-            "novelty": 0.5, "cohesion": 1.0, "persistence": 0.5,
-        })
+        baseline_val = getattr(modulator, "baseline", 1.0)
         keys = list(LABELS.keys())
         values = [state.get(k, 0.0) for k in keys]
-        baselines = [BASELINE.get(k, 1.0) for k in keys]
+        baselines = [baseline_val for _ in keys]
 
         colors = []
         for v, b in zip(values, baselines):

@@ -85,10 +85,7 @@ def _make_modulator(state=None):
         "cohesion": 0.9,
         "persistence": 0.5,
     }
-    m.baseline = {
-        "reinforcement": 1.0, "arousal": 1.0,
-        "novelty": 0.5, "cohesion": 1.0, "persistence": 0.5,
-    }
+    m.baseline = 1.0
     return m
 
 

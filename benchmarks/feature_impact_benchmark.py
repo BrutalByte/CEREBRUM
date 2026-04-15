@@ -111,7 +111,6 @@ def compute_metrics(
     top_k: int = 10,
     max_hop: int = 2,
     beam_width: int = 10,
-    use_looped: bool = False,
     max_loops: int = 1,
 ) -> Dict[str, float]:
     """

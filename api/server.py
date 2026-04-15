@@ -1900,6 +1900,10 @@ def create_app(
                 hypothesis_engine=_get_hypothesis_engine(),
                 insight_engine=_state.get("insight_engine"),
             )
+            # Wire provenance ledger if already initialized
+            ledger = _state.get("provenance_ledger")
+            if ledger is not None:
+                _state["research_agent"].set_provenance_ledger(ledger)
         return _state["research_agent"]
 
     def _get_external_validator():
