@@ -131,6 +131,7 @@ _state: Dict[str, Any] = {
     "csa_metadata":     None,   # {"distances": dict, "adjacent_pairs": set}
     "default_edge_type_weights": None,
     "hologram":         None,   # List[CommunitySignature]
+    "telemetry_bridge": None,   # TelemetryBridge — WebSocket stream to UE5 clients
     "meta_learner":     None,   # MetaParameterLearner (Milestone 4)
     "feedback_buffer":  [],     # list of {"path": TraversalPath, "reward": float}
     "rem_engine":       None,   # REMEngine (lazy-initialized on first /rem call)
@@ -184,16 +185,34 @@ def create_app(
     default_edge_type_weights: Optional[Dict[str, float]] = None,
     cache_path: Optional[str] = None,
     use_meta_learning: bool = True,
+    ws_port: Optional[int] = None,
 ) -> FastAPI:
     """
     Create a configured FastAPI app.
 
     Pass adapter + embedding_engine to load at creation time, or
     call /reload (not yet implemented) to hot-reload after startup.
+
+    ws_port: if provided, start a TelemetryBridge WebSocket server on that port
+             so UE5 (or any) clients can receive real-time neural events.
+             Default port 8765 is conventional; set to None to disable.
     """
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        import asyncio
+
+        # ── Neural telemetry WebSocket bridge ───────────────────────────────
+        if ws_port is not None:
+            try:
+                from api.telemetry_bridge import TelemetryBridge
+                bridge = TelemetryBridge(port=ws_port)
+                _state["telemetry_bridge"] = bridge
+                asyncio.ensure_future(bridge.start_server())
+                print(f"  [API] Telemetry bridge started on ws://localhost:{ws_port}")
+            except Exception as _e:
+                print(f"  [API] Warning: telemetry bridge failed to start: {_e}")
+
         if adapter is not None and embedding_engine is not None:
             _load(
                 adapter,
@@ -508,6 +527,38 @@ def create_app(
                 edge_features=[list(f) for f in best_path.edge_features],
                 community_sequence=list(best_path.community_sequence),
             ))
+
+        # ── Telemetry: emit SYNAPTIC_PULSE for each hop in top paths ───────
+        bridge = _state.get("telemetry_bridge")
+        if bridge is not None and answers:
+            try:
+                from core.telemetry import NeuralEvent
+                cm = _state.get("community_map") or {}
+                for answer in answers[:3]:   # top 3 paths maximum
+                    bp = answer.best_path
+                    if bp is None or not bp.nodes:
+                        continue
+                    path_nodes = bp.nodes  # [entity, relation, entity, relation, ...]
+                    # Each hop: path_nodes[i]=src, path_nodes[i+1]=rel, path_nodes[i+2]=tgt
+                    hop_idx = 0
+                    i = 0
+                    aw = bp.attention_weights or []
+                    while i + 2 < len(path_nodes):
+                        src = path_nodes[i]
+                        rel = path_nodes[i + 1]
+                        tgt = path_nodes[i + 2]
+                        w   = float(aw[hop_idx]) if hop_idx < len(aw) else bp.score
+                        src_cid = cm.get(src, 0)
+                        tgt_cid = cm.get(tgt, 0)
+                        bridge.broadcast(NeuralEvent.pulse(
+                            source=src, target=tgt, relation=rel,
+                            weight=w, hop=hop_idx,
+                            is_wormhole=(src_cid != tgt_cid),
+                        ))
+                        i += 2
+                        hop_idx += 1
+            except Exception as _tel_e:
+                _api_log.debug("Telemetry emit failed: %s", _tel_e)
 
         return QueryResponse(
             query=req.query,

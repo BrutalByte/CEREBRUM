@@ -478,6 +478,7 @@ def cmd_serve(args):
         hierarchical_dscf_enabled=args.hierarchical,
         target_communities=args.target_communities,
         default_edge_type_weights=bridge_weights,
+        ws_port=getattr(args, "ws_port", None),
     )
 
     # Restore learned parameters from file if provided
@@ -496,6 +497,9 @@ def cmd_serve(args):
             print(f"  [CLI] Warning: could not load params from {params_file}: {exc}", file=sys.stderr)
 
     print(f"Serving CEREBRUM API on http://localhost:{args.port}")
+    ws_port = getattr(args, "ws_port", None)
+    if ws_port:
+        print(f"Neural telemetry WebSocket on ws://localhost:{ws_port}")
     uvicorn.run(app, host="0.0.0.0", port=args.port)
 
 
@@ -573,6 +577,19 @@ def main():
     s = sub.add_parser("serve", help="Start the REST API server")
     s.add_argument("--csv", required=True, help="Path to edge-list CSV")
     s.add_argument("--port", type=int, default=8200)
+    s.add_argument(
+        "--ws-port",
+        dest="ws_port",
+        type=int,
+        default=None,
+        metavar="PORT",
+        help=(
+            "Start the neural telemetry WebSocket bridge on this port "
+            "(e.g. 8765). UE5 CerebrumBrain connects here for real-time "
+            "SYNAPTIC_PULSE, NEUROGENESIS, and SYNAPTIC_PRUNE events. "
+            "Omit to disable the bridge."
+        ),
+    )
     s.add_argument("--hierarchical", action="store_true", help="Use hierarchical DSCF for API server")
     s.add_argument("--target-communities", type=int, default=500, dest="target_communities", help="Target communities for hierarchical DSCF")
     s.add_argument("--bridge-bonus", help="JSON or 'key:val,key:val' for default API edge weights")
