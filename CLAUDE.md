@@ -51,7 +51,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v2.20.1 (Phase 82 COMPLETE)** — 1720+ tests passing.
+**v2.21.0 (Phase 83 COMPLETE)** — 1841+ tests passing.
 
 ### System Architecture Names
 | Name | Role |
@@ -73,6 +73,11 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 | **DiscoveryCalibrator** | Per-community EMA discovery rate + inverse-rate sampling multiplier — steers ResearchAgent toward understudied communities (Phase 73) |
 | **AutonomousDiscoveryLoop** | Closes the discover→validate→approve→materialize loop autonomously — circuit breaker, per-cycle cap, dry-run, AutoApprover checkpoint (Phase 74) |
 | **ProvenanceLedger** | Records materialized edges per batch/cycle; enables targeted rollback by batch_id or cycle_number (Phase 76) |
+| **UCerebrumLink** | UE5 `UActorComponent` WebSocket bridge — typed dynamic multicast delegates for all 5 neural event types (Phase 83) |
+| **ANeuronNodeActor** | UE5 Actor — glowing sphere per KG entity; community color (golden ratio HSV); pulse/glow/dissonance animations (Phase 83) |
+| **ASynapseActor** | UE5 Actor — oriented cylinder per KG relation; weight-driven opacity; pulse travel animation; fade-out on prune (Phase 83) |
+| **ACerebrumBrain** | UE5 orchestrator — Fibonacci sphere layout; REST graph pre-load; layout-file loader; spawns and manages NeuronNode + Synapse actors (Phase 83) |
+| **TelemetryBridge** | Python WebSocket server (`api/telemetry_bridge.py`) — multiplexes CEREBRUM neural events to connected visualization clients (Phase 63, completed Phase 83) |
 
 ### Core Concepts
 - **DSCF/TSC**: Dual/Triple signal community fusion (part of CORTEX).
@@ -127,6 +132,8 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 - **GraphAdapter remove_edge Protocol (Phase 80)**: `GraphAdapter` base class now defines `remove_edge(u, v, relation)` as a non-abstract method raising `NotImplementedError`. All adapters inherit it; `ProvenanceLedger` drops the `hasattr()` guard and relies on the protocol.
 - **Graph Snapshot Persistence (Phase 81)**: `GraphSnapshot` in `core/persistence.py` serializes graph topology to portable JSON (`save()`/`restore()`/`diff()`). Not pickle — survives adapter class changes. `restore(skip_existing=True)` re-adds only new edges; `diff()` shows what changed between two snapshots.
 - **Adaptive Loop Tuning (Phase 82)**: `LoopConfig.adaptive_tuning=True` makes `AutonomousDiscoveryLoop` dynamically scale `max_materializations_per_cycle` and inter-cycle sleep from `DiscoveryCalibrator`'s mean community weight. Underexplored graph → higher cap + shorter interval; saturated → lower cap + longer interval. All bounds configurable. `CycleRecord.effective_cap` shows what was actually used.
+- **UE5 3D Neural Visualization (Phase 83)**: Production Unreal Engine 5 C++ plugin in `ue5_project/Source/CerebrumVisualizer/`. Four actors: `UCerebrumLink` (WebSocket delegate bridge), `ANeuronNodeActor` (glowing sphere, community color, pulse/glow/dissonance), `ASynapseActor` (oriented cylinder, weight-driven opacity, fade-out on prune), `ACerebrumBrain` (orchestrator, Fibonacci sphere layout, REST pre-load, layout-file loader). `setup_graph_layout.py` queries live API and writes `Content/graph_layout.json` with pre-computed node positions and community colors. `create_app(ws_port=N)` starts `TelemetryBridge` alongside the REST server. `SYNAPTIC_PULSE` emitted per hop from `/query`; `SYNAPTOGENESIS` from `/research/approve`; `SYNAPTIC_PRUNE` from `/rem/run`. CLI: `--ws-port PORT`.
+- **`GET /graph/edges` (Phase 83)**: Bulk edge enumeration endpoint — returns up to `?limit=5000` edges as `GraphEdgesResponse`. `GraphAdapter.get_all_edges(limit)` base implementation + `NetworkXAdapter` override. Used by `setup_graph_layout.py` and `ACerebrumBrain` for initial synapse population.
 - **Autonomous Discovery Loop (Phase 74)**: `AutonomousDiscoveryLoop` runs `ResearchAgent.scan_once()` on a configurable timer and processes each finding through the attached `AutoApprover`. **Circuit breaker**: sliding window over the last N decisions; if the approval rate drops below `min_approval_rate`, materialization pauses (`circuit_breaker_tripped=True`). **Per-cycle cap**: `max_materializations_per_cycle` prevents runaway materialization. **dry_run=True**: cycles execute but `approve()`/`reject()` are never called — safe for production trials. **Checkpoint**: `AutoApprover.to_dict()` persisted to disk after every cycle with decisions. REST: `POST /research/loop/start|stop|configure`, `GET /research/loop/status`. `LoopConfig` + `CycleRecord` dataclasses.
 - **Looped Beam Traversal (Phase 70)**: LoopLM-style iterative refinement (arXiv:2510.25741). `LoopedBeamTraversal` wraps any `BeamTraversal`-compatible engine and applies it T times. Between loops: top-K answer entities expand seeds (semantic channel), PE→ChemicalModulator adjusts beam params (metabolic channel), Engram records bias next loop's pruning (mnemonic channel). Adaptive exit gate: `|ΔPE| < γ` (primary) or answer-set Jaccard ≥ θ (fallback). All loops' paths merged — `best_by_tail` keeps highest-score per tail entity. `max_loops` param on `QueryRequest`, `CerebrumGraph.query()`, and `MultiStrategyConsensus.run_consensus_query()`. `LoopTrace` exposed via `ReasoningTrace.loop_trace` in ERT.
 
@@ -162,6 +169,10 @@ python -m cli.cerebrum query --csv tests/fixtures/toy_graph.csv "newton"
 python -m cli.cerebrum communities --csv tests/fixtures/toy_graph.csv
 python -m cli.cerebrum serve --csv tests/fixtures/toy_graph.csv --port 8200
 python -m cli.cerebrum serve --csv tests/fixtures/toy_graph.csv --port 8200 --params-file checkpoint.json
+python -m cli.cerebrum serve --csv tests/fixtures/toy_graph.csv --port 8200 --ws-port 8765
+
+# UE5 layout pre-computation (run while server is live)
+python ue5_project/setup_graph_layout.py --api http://localhost:8200 --edge-limit 500
 ```
 
 ## Architecture
@@ -231,6 +242,9 @@ Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`
 | `llm_bridge/` | Optional | `generate()` + adapters for Anthropic, OpenAI, Ollama, HuggingFace |
 | `benchmarks/` | Evaluation | WebQSP, MetaQA, GrailQA, Hetionet, IKGWQ eval harnesses |
 | `tests/` | — | pytest suite; fixture: `tests/fixtures/toy_graph.csv` (21 nodes, 30 edges) |
+| `ue5_project/Source/CerebrumVisualizer/` | **Visualization** | UE5 C++ plugin — UCerebrumLink, ANeuronNodeActor, ASynapseActor, ACerebrumBrain |
+| `ue5_project/setup_graph_layout.py` | **Visualization** | stdlib-only CLI; queries live API; outputs `Content/graph_layout.json` |
+| `api/telemetry_bridge.py` | **Visualization** | WebSocket server multiplexing neural events to UE5 / any visualization client |
 
 ### Key API Endpoints
 
@@ -243,6 +257,7 @@ Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`
 | `/params` | GET | Inspect current 10-param global vector + community overrides |
 | `/params` | POST | Restore a checkpoint (global_prior + community_overrides) |
 | `/communities` | GET | Community partition map |
+| `/graph/edges` | GET | Bulk edge list (`?limit=500`, max 5000) — for visualization pre-load |
 | `/bridges` | GET | Bridge twin records |
 | `/stream/query` | GET | Streaming NDJSON reasoning |
 | `/traverse` | POST | Federated — delegated branch reasoning for DistributedBeamTraversal |
@@ -282,5 +297,5 @@ Implement the abstract `GraphAdapter` interface in `core/graph_adapter.py`, foll
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)
 - Synthetic graph helpers (`make_two_cliques()`, etc.) live in `tests/` for unit tests that don't need the CSV fixture
-- **1720+ tests passing as of v2.20.0 / Phase 82** (1 skipped)
+- **1841+ tests passing as of v2.21.0 / Phase 83** (1 skipped)
 - Type checker: no mypy/ruff configured as hard gate; run `python -m pytest tests/` as verification
