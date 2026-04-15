@@ -169,6 +169,31 @@ class GraphAdapter(ABC):
     def get_edge_types(self) -> List[str]:
         raise NotImplementedError
 
+    def get_all_edges(self, limit: int = 500) -> List[Edge]:
+        """
+        Return up to *limit* edges from the graph.
+        Default implementation falls back to iterating all entities and their
+        neighbours; adapters backed by a graph store should override for
+        better performance.
+        """
+        seen: set = set()
+        edges: List[Edge] = []
+        try:
+            entities = self.get_all_entities()
+        except NotImplementedError:
+            return edges
+        for entity in entities:
+            if len(edges) >= limit:
+                break
+            for edge in self.get_neighbors(entity.id, max_neighbors=limit):
+                key = (edge.source_id, edge.relation_type, edge.target_id)
+                if key not in seen:
+                    seen.add(key)
+                    edges.append(edge)
+                    if len(edges) >= limit:
+                        break
+        return edges
+
     def node_count(self) -> int:
         """Convenience: number of nodes (used for adaptive resolution)."""
         try:

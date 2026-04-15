@@ -116,6 +116,8 @@ def main():
     parser.add_argument("--out",
                         default=str(Path(__file__).parent / "Content" / "graph_layout.json"),
                         help="Output path for layout JSON")
+    parser.add_argument("--edge-limit", type=int, default=500,
+                        help="Max edges to fetch from /graph/edges (default: 500)")
     args = parser.parse_args()
 
     token = args.token or None
@@ -181,14 +183,36 @@ def main():
             "node_count":   len(communities[cid]),
         })
 
+    # ── Fetch edges from /graph/edges ───────────────────────────────────────
+    edges_out = []
+    if args.edge_limit > 0:
+        print(f"  Fetching /graph/edges?limit={args.edge_limit} …")
+        edge_resp = get_json(f"{api}/graph/edges?limit={args.edge_limit}", token)
+        raw_edges = edge_resp.get("edges", [])
+        for e in raw_edges:
+            src = e.get("source_id", "")
+            tgt = e.get("target_id", "")
+            rel = e.get("relation_type", "")
+            w   = e.get("weight", 1.0)
+            if src and tgt and rel:
+                edges_out.append({
+                    "source_id":    src,
+                    "target_id":    tgt,
+                    "relation_type": rel,
+                    "weight":       round(float(w), 4),
+                })
+        print(f"  Got {len(edges_out)} edges.")
+
     # ── Output JSON ─────────────────────────────────────────────────────────
     layout = {
-        "cerebrum_layout_version": "1.0",
+        "cerebrum_layout_version": "1.1",
         "api_url":       api,
         "node_count":    len(nodes_out),
         "community_count": total_communities,
+        "edge_count":    len(edges_out),
         "communities":   communities_out,
         "nodes":         nodes_out,
+        "edges":         edges_out,
         "layout_params": {
             "community_orbit_radius": COMMUNITY_ORBIT_RADIUS,
             "node_cluster_radius":    NODE_CLUSTER_RADIUS,
@@ -197,7 +221,8 @@ def main():
 
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(layout, indent=2), encoding="utf-8")
-    print(f"\nWrote {len(nodes_out)} nodes ({total_communities} communities) → {out}")
+    print(f"\nWrote {len(nodes_out)} nodes, {len(edges_out)} edges "
+          f"({total_communities} communities) → {out}")
     print("Load this in UE5 via ACerebrumBrain or import as a DataAsset.")
 
 

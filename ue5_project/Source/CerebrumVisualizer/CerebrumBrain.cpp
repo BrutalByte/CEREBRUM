@@ -453,7 +453,41 @@ bool ACerebrumBrain::ParseLayoutPayload(const FString& JsonBody)
            TEXT("CerebrumBrain: Layout file loaded — %d nodes, %d communities."),
            SpawnedCount, CommunityPositions.Num());
 
-    OnGraphLoaded(SpawnedCount, SynapseRegistry.Num());
+    // ── 3. Spawn synapses from edges[] array (layout version 1.1+) ──────────
+    int32 SynapseCount = 0;
+    const TArray<TSharedPtr<FJsonValue>>* EdgesArray = nullptr;
+    if (Root->TryGetArrayField(TEXT("edges"), EdgesArray) && EdgesArray)
+    {
+        for (const TSharedPtr<FJsonValue>& Val : *EdgesArray)
+        {
+            const TSharedPtr<FJsonObject>& EdgeObj = Val->AsObject();
+            if (!EdgeObj.IsValid()) continue;
+
+            FString SrcId, TgtId, Relation;
+            EdgeObj->TryGetStringField(TEXT("source_id"),    SrcId);
+            EdgeObj->TryGetStringField(TEXT("target_id"),    TgtId);
+            EdgeObj->TryGetStringField(TEXT("relation_type"), Relation);
+            double W = 1.0;
+            EdgeObj->TryGetNumberField(TEXT("weight"), W);
+
+            if (SrcId.IsEmpty() || TgtId.IsEmpty()) continue;
+
+            // Ensure both endpoint nodes exist before trying to spawn the synapse
+            if (!NodeRegistry.Contains(SrcId) || !NodeRegistry.Contains(TgtId))
+                continue;
+
+            if (SpawnSynapse(SrcId, TgtId, Relation, static_cast<float>(W)))
+            {
+                ++SynapseCount;
+            }
+        }
+
+        UE_LOG(LogTemp, Log,
+               TEXT("CerebrumBrain: Spawned %d synapses from layout edges."),
+               SynapseCount);
+    }
+
+    OnGraphLoaded(SpawnedCount, SynapseCount);
     return SpawnedCount > 0;
 }
 

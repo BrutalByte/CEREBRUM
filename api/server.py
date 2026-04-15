@@ -41,7 +41,7 @@ from api.schemas import (
     QueryConsensusRequest, QueryConsensusResponse, ConsensusLevel,
     TraceResponse, HopTraceSchema,
     HealthResponse, PathResult, PathNode, CommunityInfo,
-    EntityResponse, EdgeResponse, SearchResponse,
+    EntityResponse, EdgeResponse, GraphEdgesResponse, SearchResponse,
     SimilarSearchRequest, SimilarSearchResponse, FeedbackRequest,
     CommunityResponse, EmbeddingResponse,
     MaskedEntityResponse, MaskedSearchResponse,
@@ -890,6 +890,38 @@ def create_app(
             community_count=len(community_members),
             node_count=len(cm),
             communities=community_infos,
+        )
+
+    @app.get("/graph/edges", response_model=GraphEdgesResponse, tags=["graph"])
+    async def get_graph_edges(
+        limit: int = 500,
+        node: Dict = Depends(get_authenticated_node)
+    ):
+        """
+        Return a sample of edges from the loaded graph.
+
+        Intended for initialising 3D visualisation clients (e.g. UE5 CerebrumBrain)
+        that need an edge list on startup. Use `limit` to cap the payload size.
+        For production graphs with millions of edges, keep `limit` ≤ 2000.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Service not ready")
+
+        adapter = _state["adapter"]
+        edges = adapter.get_all_edges(limit=min(limit, 5000))
+        return GraphEdgesResponse(
+            edges=[
+                EdgeResponse(
+                    source_id=e.source_id,
+                    target_id=e.target_id,
+                    relation_type=e.relation_type,
+                    weight=e.weight,
+                    properties=e.properties,
+                )
+                for e in edges
+            ],
+            total_returned=len(edges),
+            limit=limit,
         )
 
     # ---------------------------------------------------------------------------

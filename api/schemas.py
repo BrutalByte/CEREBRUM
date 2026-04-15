@@ -166,6 +166,12 @@ class EdgeResponse(BaseModel):
     properties: Dict[str, Any] = {}
 
 
+class GraphEdgesResponse(BaseModel):
+    edges: List[EdgeResponse]
+    total_returned: int
+    limit: int
+
+
 class SearchResponse(BaseModel):
     results: List[EntityResponse]
     query: str

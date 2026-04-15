@@ -372,6 +372,24 @@ class NetworkXAdapter(GraphAdapter):
             types.add(data.get("relation", "RELATED_TO"))
         return sorted(types)
 
+    def get_all_edges(self, limit: int = 500) -> List[Edge]:
+        edges = []
+        for src, tgt, data in self._G.edges(data=True):
+            if len(edges) >= limit:
+                break
+            edges.append(Edge(
+                source_id=src,
+                target_id=tgt,
+                relation_type=data.get("relation", "RELATED_TO"),
+                weight=float(data.get("weight", 1.0)),
+                properties=dict(data),
+                confidence=float(data.get("confidence", 1.0)),
+                provenance=str(data.get("provenance", "")),
+                valid_from=data.get("valid_from"),
+                valid_to=data.get("valid_to"),
+            ))
+        return edges
+
     def node_count(self) -> int:
         return self._G.number_of_nodes()
 
