@@ -1,7 +1,7 @@
 # SPEC_016: Production Hardening
 ## Twelve Structural Holes: Root Causes, Fixes, and Validation
 
-**Status**: v1.2.0 (Hardened Enterprise)
+**Status**: v2.1.0 (Phase 82 COMPLETE)
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Field**: Production Systems / Correctness / Adversarial Hardening
 **Modules**: `core/bridge_engine.py`, `core/rebalancer.py`, `core/discretizer.py`, `core/thalamus.py`, `core/signal_encoder.py`, `core/attention_engine.py`, `reasoning/traversal.py`, `core/insight_validator.py`, `core/insight_engine.py`, `adapters/stream_adapter.py`, `adapters/remote_adapter.py`
@@ -129,6 +129,143 @@ class BridgeTwinEngine:
 - All twelve fixes use opt-in new parameters with backward-compatible defaults.
 - **Verification**: All patches are covered by dedicated unit tests in `tests/test_*.py`.
 - **Hardening Result**: CEREBRUM v1.2.0 is the first version suitable for mission-critical, multi-tenant federated deployment.
+
+---
+
+## Phase 74–82 Production Hardening Additions
+
+### 6. Autonomous Discovery Loop — Circuit Breaker (Phase 74)
+
+**Component**: `AutonomousDiscoveryLoop`
+
+The loop runs `ResearchAgent.scan_once()` autonomously. Without a safety gate, a period of low-quality discoveries could continuously write noise edges to the graph.
+
+**Hardening**: Sliding-window circuit breaker over the last N decisions. If the approval rate drops below `min_approval_rate`, `circuit_breaker_tripped=True` and materialization pauses. `resume()` requires manual intervention or automatic reset when new high-quality findings arrive.
+
+```python
+LoopConfig(
+    min_approval_rate=0.5,         # 50% approval floor
+    circuit_breaker_window=20,     # window size
+)
+```
+
+**Verification**: `tests/test_auto_approver.py` — circuit breaker trip + resume scenarios.
+
+---
+
+### 7. ProvenanceLedger — Materialisation Audit Chain (Phase 76)
+
+**Component**: `ProvenanceLedger` + `ResearchAgent.approve()`
+
+Prior to Phase 76, approved findings wrote edges with no record of which approval batch produced which edges. Rollback required manual graph diffing.
+
+**Hardening**: Every `approve()` call generates a `batch_id` (timestamp + finding hash). `ProvenanceLedger` records every `(u, v, relation)` triple under that batch. Thread-safe. LRU eviction at `max_batches`.
+
+```python
+ledger = ProvenanceLedger(max_batches=500)
+research_agent.set_provenance_ledger(ledger)
+
+# Targeted rollback
+ledger.rollback_batch("batch_20260414_001", adapter)   # one approval
+ledger.rollback_cycle(12, adapter)                     # all of cycle 12
+```
+
+**Verification**: `tests/test_provenance_ledger.py` — batch tracking, cycle rollback, LRU eviction.
+
+---
+
+### 8. Loop-Provenance Recovery — Auto-Rollback on Trip (Phase 79)
+
+**Component**: `AutonomousDiscoveryLoop` × `ProvenanceLedger`
+
+When the circuit breaker trips (approval rate collapse), edges materialized in the failed cycle remain in the graph. Manual cleanup is error-prone.
+
+**Hardening**: `LoopConfig.auto_rollback_on_trip=True` wires the circuit breaker trip event to `ProvenanceLedger.rollback_cycle()` automatically. `CycleRecord.edges_rolled_back` records the undo count.
+
+```python
+LoopConfig(auto_rollback_on_trip=True)
+```
+
+**Prerequisite**: `ProvenanceLedger` must be attached via `research_agent.set_provenance_ledger(ledger)`.
+
+**Verification**: `tests/test_looped_traversal.py` — auto-rollback on trip integration test.
+
+---
+
+### 9. GraphAdapter remove_edge Protocol (Phase 80)
+
+**Component**: `GraphAdapter` base class
+
+Prior to Phase 80, `ProvenanceLedger` checked `hasattr(adapter, "remove_edge")` and silently skipped rollback when the method was absent. This masked missing implementations.
+
+**Hardening**: `GraphAdapter` base class now defines `remove_edge(u, v, relation)` as a non-abstract method that raises `NotImplementedError`. The `hasattr()` guard is removed from `ProvenanceLedger`. All six built-in adapters (NetworkX, Neo4j, RDF, CSV, Stream, Remote) implement `remove_edge`.
+
+**Custom adapter action required**:
+```python
+class MyAdapter(GraphAdapter):
+    def remove_edge(self, u: str, v: str, relation: str) -> None:
+        raise NotImplementedError("MyAdapter does not support edge removal.")
+```
+
+**Verification**: `tests/test_provenance_ledger.py` — `NotImplementedError` propagates correctly.
+
+---
+
+### 10. GraphSnapshot — Portable Topology Persistence (Phase 81)
+
+**Component**: `GraphSnapshot` in `core/persistence.py`
+
+State was previously saved via pickle, which is fragile across Python and adapter class versions. Pod restarts in Kubernetes lost all in-memory graph state.
+
+**Hardening**: `GraphSnapshot.save(adapter, path)` serializes the full edge list to portable JSON. `restore(path, adapter, skip_existing=True)` re-adds only new edges — safe to replay repeatedly. `diff(path_a, path_b)` shows the edge delta between two snapshots for audit.
+
+```python
+# Periodic checkpoint (e.g., in a cron job)
+GraphSnapshot.save(adapter, "/data/snapshots/graph_2026-04-14.json")
+
+# On pod restart
+GraphSnapshot.restore("/data/snapshots/graph_2026-04-14.json", adapter)
+```
+
+**Verification**: `tests/test_persistence.py` — round-trip save/restore, skip_existing, diff.
+
+---
+
+### 11. Adaptive Loop Tuning (Phase 82)
+
+**Component**: `AutonomousDiscoveryLoop` × `DiscoveryCalibrator`
+
+Fixed `max_materializations_per_cycle` and `cycle_interval` cannot respond to changing graph conditions: saturated communities keep getting hammered while underexplored regions receive insufficient attention.
+
+**Hardening**: `LoopConfig.adaptive_tuning=True` makes the loop query `DiscoveryCalibrator.stats()` at cycle start and scale cap and interval from the mean community weight. Bounds prevent runaway scaling.
+
+```python
+LoopConfig(
+    adaptive_tuning=True,
+    adaptive_min_cap=1, adaptive_max_cap=20,
+    adaptive_min_interval=60.0, adaptive_max_interval=7200.0,
+)
+```
+
+`CycleRecord.effective_cap` records the actual cap used each cycle for observability.
+
+**Verification**: `tests/test_auto_approver.py` — adaptive cap/interval scaling with mock calibrator.
+
+---
+
+### 12. Summary: Hardening Timeline
+
+| Phase | Component | Hardening addition |
+|---|---|---|
+| 19 | BridgeTwinEngine, STDPDiscretizer, IngestionPipeline, BeamTraversal | Holes 1–4 (Zombie Bridge, Causal Flood, Namespace Collision, Bayesian Cold-Start) |
+| 20 | CSAEngine, SignalEncoder, InferenceValidator, BeamTraversal | Holes 5–8 (Mid-Flight Swap, Homogeneity Trap, Basis Drift, Path Preserving Hold-out) |
+| 21 | STDPDiscretizer, StreamAdapter, RemoteCerebrumAdapter, InsightEngine | Holes 9–12 (Entropy Sink, Thalamic Bottleneck, Federated Signature, Recursive Insight Loop) |
+| 74 | AutonomousDiscoveryLoop | Circuit breaker — pauses on low approval rate |
+| 76 | ProvenanceLedger + ResearchAgent | Materialisation audit chain + targeted rollback |
+| 79 | AutonomousDiscoveryLoop × ProvenanceLedger | Auto-rollback on circuit breaker trip |
+| 80 | GraphAdapter | `remove_edge()` protocol — replaces silent `hasattr()` guard |
+| 81 | GraphSnapshot | Portable JSON topology checkpoint |
+| 82 | AutonomousDiscoveryLoop × DiscoveryCalibrator | Adaptive cap + interval from community weights |
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

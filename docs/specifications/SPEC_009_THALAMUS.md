@@ -1,7 +1,7 @@
 # SPEC_009: THALAMUS
 ## Intelligent Ingestion Preprocessing and Normalization
 
-**Status**: v1.1.0 (Phase 20 COMPLETE)  
+**Status**: v2.1.0 (Phase 82 COMPLETE)  
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Data Engineering / Ontology Mapping / Parallel Systems  
 **Module**: `core/thalamus.py`
@@ -41,6 +41,8 @@ This refactoring removes THALAMUS as a serial bottleneck, allowing ingestion rat
 *   **Pipeline Composition**: Supports custom `normalization_fn` and `provenance_fn` hooks.
 *   **Memory Efficiency**: Deduplication maps use an LRU (Least Recently Used) cache to prevent memory bloat on infinite data streams.
 *   **Integration**: THALAMUS is the primary gateway for the `StreamAdapter` and `CSVAdapter`, ensuring all data entering the CEREBRUM core is pre-aligned.
+
+> **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

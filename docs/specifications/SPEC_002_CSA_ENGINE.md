@@ -1,7 +1,7 @@
 # SPEC_002: Community-Structured Attention (CSA)
 ## Glass-Box Reasoning without Matrix Multiplications
 
-**Status**: v1.1.0 (Phase 20 COMPLETE)  
+**Status**: v2.1.0 (Phase 82 COMPLETE)  
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Natural Language Processing / Knowledge Representation / Transformer Architectures  
 **Module**: `core/attention_engine.py`
@@ -76,6 +76,8 @@ To ensure mathematical consistency during high-velocity streaming, CSA employs *
 *   **Complexity**: $O(B \cdot D)$ per hop ($B$=beam width, $D$=degree).
 *   **Explainability**: Every result returned via the API includes a `score_breakdown` mapping the exact contribution of all five terms.
 *   **Precision**: Uses `float16` for embeddings and `float32` for attention weights to optimize memory throughput.
+
+> **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

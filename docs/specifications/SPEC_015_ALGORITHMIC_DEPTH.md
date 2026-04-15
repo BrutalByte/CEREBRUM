@@ -1,7 +1,7 @@
 # SPEC_015: Algorithmic Depth
 ## Temporal Reasoning, Uncertainty Propagation, Soft Community Membership, CSAParameterLearner, and KGE Integration
 
-**Status**: v1.1.0 (Phase 20 COMPLETE)
+**Status**: v2.1.0 (Phase 82 COMPLETE)
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Field**: Temporal Reasoning / Probabilistic KG / Adaptive Attention
 **Modules**: `core/attention_engine.py`, `core/community_engine.py`, `core/kge_engine.py`, `reasoning/traversal.py`
@@ -177,6 +177,8 @@ All other CSA terms (community, relation weight, distance, hop decay, PageRank) 
 - **Composability**: All five can be enabled simultaneously; they operate on different stages of the reasoning pipeline and do not interact.
 - **KGE training is synchronous**: `train()` blocks. For large graphs, train offline and save/load the embedding vectors. Async training is scheduled for a future release.
 - **CSAParameterLearner requires opt-in feedback**: The system does not infer feedback from query success automatically. Applications must call `record_feedback()` explicitly from their validation loop.
+
+> **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

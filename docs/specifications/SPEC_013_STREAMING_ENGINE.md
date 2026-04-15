@@ -1,7 +1,7 @@
 # SPEC_013: The Streaming Engine
 ## Real-Time Continuous Ingest, Incremental DSCF, and SSE Push
 
-**Status**: v1.2.0 (Hardened Enterprise)
+**Status**: v2.1.0 (Phase 82 COMPLETE)
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Field**: Streaming Systems / Real-Time Reasoning / Event Processing
 **Modules**: `adapters/stream_adapter.py`, `core/discretizer.py`, `core/rebalancer.py`, `api/server.py`
@@ -171,6 +171,8 @@ SSE connections are managed by an async multiplexer; each subscriber receives ev
 - **Discretizer isolation**: Discretizer exceptions are caught and logged; they never propagate to the commit path or abort a batch.
 - **Integration with Query Snapshot Isolation (SPEC_016)**: The GlobalRebalancer's atomic swap triggers a broadcast to all active query contexts, which then upgrade to the new snapshot on their next hop. In-flight queries complete against the old snapshot.
 - **Persistence**: The `Persistence` module (SPEC_005) checkpoints the sliding-window buffer periodically for crash recovery.
+
+> **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

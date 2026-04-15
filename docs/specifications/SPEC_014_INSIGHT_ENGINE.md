@@ -1,7 +1,7 @@
 # SPEC_014: Verification and Metacognition
 ## InsightValidator, InsightEngine, and MetaInsightEngine
 
-**Status**: v1.2.0 (Hardened Enterprise)
+**Status**: v2.1.0 (Phase 82 COMPLETE)
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Field**: Metacognition / Self-Verification / Second-Order Reasoning
 **Modules**: `core/insight_validator.py`, `core/meta_insight_engine.py`
@@ -136,6 +136,8 @@ meta.query_second_order(start_event_id: str, max_hops: int = 2) -> List[InsightP
 - **No self-reference loops**: The MetaInsightEngine's own traversals do not generate `InsightEvent` records (prevents infinite meta-recursion).
 - **Persistence**: `InsightEvent` nodes are stored in the `METADATA` table; the second-order graph is reconstructed on restart from this table.
 - **Verification**: 1,012+ tests passing as of v1.2.0 Hardened Enterprise.
+
+> **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

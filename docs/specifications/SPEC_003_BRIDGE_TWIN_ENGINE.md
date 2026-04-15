@@ -1,7 +1,7 @@
 # SPEC_003: The Bridge Twin Engine
 ## Experience-Dependent Structural Plasticity in Knowledge Graphs
 
-**Status**: v1.1.0 (Phase 20 COMPLETE)  
+**Status**: v2.1.0 (Phase 82 COMPLETE)  
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Neuromorphic Computing / Autonomous Systems / Graph Topology  
 **Module**: `core/bridge_engine.py`
@@ -71,6 +71,8 @@ When the `GlobalRebalancer` (SPEC_001) shuffles community IDs, existing bridge r
 *   **Storage**: Bridge records are stored in a sidecar `bridge_store.json` to ensure persistence across restarts.
 *   **Performance**: Querying a twin is $O(1)$ during the neighbor expansion phase of the beam search.
 *   **Integration**: Bridge Twins are automatically recognized by the `CSAEngine` as high-priority "Internal" edges, significantly increasing the beam's focus on successful historical paths.
+
+> **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

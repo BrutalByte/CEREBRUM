@@ -1,7 +1,7 @@
 # SPEC_008: Signal Encoder
 ## Cross-Modal Alignment via Orthogonal Procrustes
 
-**Status**: v1.1.0 (Phase 20 COMPLETE)  
+**Status**: v2.1.0 (Phase 82 COMPLETE)  
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Signal Processing / Latent Space Alignment / Multi-Modal AI  
 **Module**: `core/signal_encoder.py`
@@ -62,6 +62,8 @@ To prevent this, CEREBRUM enforces a **Canonical Basis Anchor**:
 *   **Namespace Isolation**: Encoded signals are automatically prefixed with `signal:` to prevent ID collisions with text entities (Hole Fix 1.1.0).
 *   **Performance**: Signal projection is a single matrix-vector multiplication $O(D^2)$, enabling sub-millisecond encoding of live streams.
 *   **Learnability**: The `learn_alignment()` method can be triggered by the **REM Cycle** if the alignment error $\| RX - Y \|$ exceeds a drift threshold.
+
+> **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

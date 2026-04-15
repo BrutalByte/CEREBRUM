@@ -1,7 +1,7 @@
 # SPEC_004: Autonomous Causal Discovery via STDP
 ## Temporal Graph Plasticity in Knowledge Streams
 
-**Status**: v1.1.0 (Phase 20 COMPLETE)  
+**Status**: v2.1.0 (Phase 82 COMPLETE)  
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Causal Inference / Stream Processing / Neuro-Symbolic AI  
 **Module**: `core/discretizer.py`
@@ -73,6 +73,8 @@ The inter-spike intervals between $u$ and $v$ are binned and tested against a un
 *   **Directionality**: Emitted edges are strictly directional: `source` $\xrightarrow{CAUSES}$ `target`.
 *   **Memory Eviction**: Causal pairs whose weights decay below $0.05$ are automatically evicted from the weight map to prevent memory bloat.
 *   **Real-time Integration**: Discretized edges are pushed into the `StreamAdapter` buffer with a TTL (Time-to-Live), allowing the Reasoning Engine to follow "Active Causal Chains."
+
+> **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

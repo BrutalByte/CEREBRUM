@@ -1,7 +1,7 @@
 # SPEC_001: The DSCF/TSC Engine
 ## Multi-Signal Consensus in Graph Partitioning
 
-**Status**: v1.1.0 (Phase 20 COMPLETE)  
+**Status**: v2.1.0 (Phase 82 COMPLETE)  
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Graph Theory / Data Mining / Community Detection  
 **Module**: `core/community_engine.py`
@@ -138,6 +138,8 @@ For t in 0 to T_max:
 1.  **Per-Node Signal Fusion**: Unlike algorithms that alternate phases (e.g., LPA then Modularity), DSCF fuses signals *per atomic update*.
 2.  **Flow Anchoring**: The integration of PageRank ($\mathcal{F}$) into the clustering decision explicitly prevents the "floating hub" problem in scale-free graphs.
 3.  **Variable Resolution**: The temperature $\tau$ acts as a continuous slider between "Resolution Limit" (Modularity) and "Over-segmentation" (LPA).
+
+> **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

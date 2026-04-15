@@ -1,7 +1,7 @@
 # SPEC_006: Bayesian Beam Search
 ## Probabilistic Graph Traversal under Topological Uncertainty
 
-**Status**: v1.1.0 (Phase 20 COMPLETE)  
+**Status**: v2.1.0 (Phase 82 COMPLETE)  
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Decision Theory / Probabilistic Robotics / Graph Reasoning  
 **Module**: `reasoning/traversal.py`
@@ -61,6 +61,8 @@ If an answer has a high score but high uncertainty, the system flags it for **Me
 *   **Reproducibility**: Supports a fixed `RandomState` seed for deterministic debugging of probabilistic runs.
 *   **Performance**: Sampling is performed using vectorized NumPy operations, maintaining $O(B \cdot D)$ complexity.
 *   **Streaming Compatibility**: Beta distributions are persisted in the `TraversalPath` objects, allowing reasoning to pause and resume as new data arrives in the stream.
+
+> **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

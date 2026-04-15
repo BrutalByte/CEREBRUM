@@ -1,7 +1,7 @@
 # SPEC_007: The REM Cycle
 ## Metacognitive Maintenance and Insight Synthesis
 
-**Status**: v1.1.0 (Phase 20 COMPLETE)  
+**Status**: v2.1.0 (Phase 82 COMPLETE)  
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Metacognition / System 2 Reasoning / Autonomous Maintenance  
 **Module**: `core/rem_engine.py`
@@ -52,6 +52,8 @@ When triggers are met, REM spawns a background thread to:
     *   **Hot Path (10 min)**: Pruning of ephemeral TTL edges.
     *   **Cold Path (1 hour)**: Bilateral verification and Insight decay.
     *   **REM Path (Daily/Triggered)**: Full modularity re-optimization.
+
+> **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
