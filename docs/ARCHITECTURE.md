@@ -1,5 +1,7 @@
 # CEREBRUM System Architecture
 
+**Version**: v2.21.0 (Phase 83 COMPLETE)
+
 Complete data-flow from ingestion to result, including all options, pathways, and decision nodes.
 
 ```mermaid
@@ -298,7 +300,7 @@ subgraph API_SURF["⑩ API Surface"]
     direction LR
     API1["GET  /health\nPOST /query\nGET  /query/stream"]
     API2["POST /feedback\nPOST /retrain\nGET  /params\nPOST /params"]
-    API3["GET  /communities\nGET  /bridges\nGET  /logs\nDEL  /logs"]
+    API3["GET  /communities\nGET  /graph/edges\nGET  /bridges\nGET  /logs\nDEL  /logs"]
     API4["POST /traverse\nfederated branch"]
     API5["POST /hypothesize\nPOST /hypothesize/materialize\nPOST /hypothesize/rollback"]
     API6["POST /research/start\nPOST /research/scan\nPOST /research/validate\nGET  /research/proposals\nGET/POST /research/auto-approver"]
@@ -487,6 +489,7 @@ class D_PIPE,D_STDP,D_SIG,D_COMPLETE,D_ENHANCE,D_EMB,D_SAGE,D_COMM,D_COARSEN,D_P
 | Red | Entry | REST, CLI, UI, Federated, Stream |
 | Grey | API | All REST endpoint groups |
 | Yellow | Decision | Every branching/option node |
+| Cyan | Visualization | TelemetryBridge, UE5 client, WebSocket stream |
 
 ## Key Decision Points
 
@@ -511,3 +514,5 @@ class D_PIPE,D_STDP,D_SIG,D_COMPLETE,D_ENHANCE,D_EMB,D_SAGE,D_COMM,D_COARSEN,D_P
 | ProvenanceLedger | attached / not | per-batch edge recording; enables targeted rollback |
 | GraphSnapshot | save / restore / diff | portable JSON topology persistence across restarts |
 | Adaptive Loop Tuning | on / off | DiscoveryCalibrator-driven dynamic cap and interval scaling per cycle |
+| TelemetryBridge | ws_port set / not set | when set, starts WebSocket server; /query emits SYNAPTIC_PULSE, /research/approve emits SYNAPTOGENESIS, /rem/run emits SYNAPTIC_PRUNE |
+| UE5 Visualization | bPreferLayoutFile true / false | true: loads pre-computed graph_layout.json (exact Fibonacci positions); false: derives positions at runtime via REST |

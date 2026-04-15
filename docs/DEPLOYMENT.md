@@ -1,6 +1,6 @@
 # CEREBRUM Deployment Guide
 
-**Version**: v2.20.1
+**Version**: v2.21.0
 **Audience**: DevOps, Platform Engineers, System Administrators
 
 ---
@@ -34,6 +34,7 @@ curl http://localhost:8200/health
 | `CEREBRUM_LOOP_CHECKPOINT` | No | — | Path for AutoApprover checkpoint file (Autonomous Discovery Loop) |
 | `CEREBRUM_LOOP_INTERVAL` | No | `300` | Default cycle interval in seconds for AutonomousDiscoveryLoop |
 | `CEREBRUM_PROVENANCE_MAX_BATCHES` | No | `500` | LRU cap for ProvenanceLedger batch records |
+| `CEREBRUM_WS_PORT` | No | — | Port for Neural Telemetry WebSocket bridge (e.g. `8765`); omit to disable |
 
 ---
 
@@ -52,14 +53,14 @@ CMD ["uvicorn", "api.server:app", "--host", "0.0.0.0", "--port", "8200", "--work
 ```
 
 ```bash
-docker build -t cerebrum:2.20.1 .
+docker build -t cerebrum:2.21.0 .
 docker run -d \
   -p 8200:8200 \
   -e CEREBRUM_JWT_SECRET="$(openssl rand -hex 32)" \
   -e CEREBRUM_GRAPH_CSV=/data/my_graph.csv \
   -v /path/to/data:/data \
   --name cerebrum \
-  cerebrum:2.20.1
+  cerebrum:2.21.0
 ```
 
 ### Docker Compose (with Reasoning Studio)
@@ -71,7 +72,7 @@ version: "3.9"
 services:
   api:
     build: .
-    image: cerebrum:2.20.1
+    image: cerebrum:2.21.0
     ports:
       - "8200:8200"
     environment:
@@ -415,6 +416,54 @@ livenessProbe:
   initialDelaySeconds: 10
   periodSeconds: 30
 ```
+
+---
+
+## UE5 Neural Visualization Deployment (Phase 83)
+
+### Enable the TelemetryBridge
+
+Pass `--ws-port` to the CLI server to start the WebSocket bridge alongside REST:
+
+```bash
+python -m cli.cerebrum serve \
+  --csv /data/my_graph.csv \
+  --port 8200 \
+  --ws-port 8765
+```
+
+Or via environment variable in Docker Compose:
+
+```yaml
+services:
+  api:
+    image: cerebrum:2.21.0
+    ports:
+      - "8200:8200"
+      - "8765:8765"           # expose WebSocket for UE5 clients
+    environment:
+      CEREBRUM_WS_PORT: "8765"
+```
+
+### Pre-compute the layout file
+
+Run once after the server is live (or add as a post-deploy step):
+
+```bash
+python ue5_project/setup_graph_layout.py \
+  --api http://localhost:8200 \
+  --token "$CEREBRUM_JWT" \
+  --edge-limit 500 \
+  --out /path/to/UE5/Content/graph_layout.json
+```
+
+### Production checklist
+
+- [ ] `CEREBRUM_WS_PORT` set to `8765` (or any open port)
+- [ ] Port 8765 open in firewall / security group for UE5 client subnet
+- [ ] `graph_layout.json` deployed to UE5 Content directory before packaging
+- [ ] `ACerebrumBrain.RESTApiBaseURL` points to reachable REST host
+- [ ] `ACerebrumBrain.WebSocketURL` points to reachable WebSocket host
 
 ---
 

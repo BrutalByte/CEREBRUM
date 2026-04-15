@@ -1,6 +1,6 @@
 # CEREBRUM Integration Guide
 
-**Version**: v2.20.1
+**Version**: v2.21.0
 **Audience**: Python developers integrating CEREBRUM into an application
 
 This guide covers the Python API directly. For the REST API, see `docs/API_REFERENCE.md`. For deployment, see `docs/DEPLOYMENT.md`.
@@ -417,6 +417,79 @@ print(f"Removed {rolled} edges from cycle 12")
 ```
 
 **Note:** `rollback_batch()` and `rollback_cycle()` call `adapter.remove_edge()`. All built-in adapters implement this. Custom adapters must override `GraphAdapter.remove_edge()`.
+
+---
+
+## 13. UE5 3D Visualization Integration (Phase 83)
+
+CEREBRUM ships a production Unreal Engine 5 C++ plugin that renders the knowledge graph as a living 3D environment, driven by the Neural Telemetry Bridge.
+
+### Step 1 — Start the server with WebSocket telemetry
+
+```bash
+python -m cli.cerebrum serve \
+  --csv my_graph.csv \
+  --port 8200 \
+  --ws-port 8765
+```
+
+Or from Python:
+
+```python
+from api.server import create_app
+from adapters.csv_adapter import load_csv_adapter
+from core.embedding_engine import RandomEngine
+
+app = create_app(
+    adapter=load_csv_adapter("my_graph.csv"),
+    embedding_engine=RandomEngine(dim=64),
+    ws_port=8765,          # starts TelemetryBridge alongside REST
+)
+```
+
+### Step 2 — Pre-compute the graph layout JSON
+
+Run this once (or whenever the graph changes significantly):
+
+```bash
+python ue5_project/setup_graph_layout.py \
+  --api http://localhost:8200 \
+  --edge-limit 500 \
+  --out ue5_project/Content/graph_layout.json
+```
+
+This queries `/communities` and `/graph/edges`, computes stable Fibonacci sphere positions and golden ratio community colours, and writes `graph_layout.json` v1.1 for deterministic UE5 startup positioning.
+
+### Step 3 — UE5 level setup
+
+1. Place one `CerebrumBrain` actor in your level.
+2. Set `WebSocketURL = "ws://localhost:8765"`.
+3. Set `RESTApiBaseURL = "http://localhost:8200"`.
+4. Set `GraphLayoutFilePath = "graph_layout.json"` (relative to Content/).
+5. Leave `bPreferLayoutFile = true` (default) — loads exact positions from JSON; falls back to live REST on missing file.
+
+### Step 4 — Live event subscriptions
+
+`UCerebrumLink` fires typed Blueprint delegates for all five event types:
+
+| Delegate | Trigger | Default handler |
+|---|---|---|
+| `OnSynapticPulse` | `/query` hop | `ASynapseActor.AnimatePulse()` |
+| `OnNeurogenesis` | ResearchAgent discovers new node | `SpawnOrGetNode()` |
+| `OnSynapticPrune` | `/rem/run` removes edge | `ASynapseActor.FadeOut()` |
+| `OnCorticalGlow` | Community activation | `ANeuronNodeActor.SetGlowIntensity()` |
+| `OnDissonance` | CerebellarEngine alert | `ANeuronNodeActor.ShowDissonance()` |
+
+### Step 5 — Bulk edge preload via REST
+
+The `GET /graph/edges?limit=N` endpoint returns up to 5 000 edges for visualization pre-population:
+
+```python
+import httpx
+resp = httpx.get("http://localhost:8200/graph/edges", params={"limit": 1000})
+edges = resp.json()["edges"]
+# each edge: {source_id, target_id, relation_type, weight, properties}
+```
 
 ---
 
