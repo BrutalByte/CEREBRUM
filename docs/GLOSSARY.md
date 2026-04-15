@@ -6,6 +6,15 @@ Definitions of all CEREBRUM-specific terms, algorithms, and architectural concep
 
 ## A
 
+**ACerebrumBrain**
+The UE5 orchestrator `AActor` (Phase 83). Manages `ANeuronNodeActor` and `ASynapseActor` lifecycle: async HTTP `GET /communities` + `GET /graph/edges` pre-load via `FHttpModule`; Fibonacci sphere spatial layout; `LoadGraphFromLayoutFile()` reads pre-computed `graph_layout.json` for exact positions; `DisconnectAndClear()` tears down all actors. Exposes Blueprint events: `OnGraphLoaded`, `OnNewNodeSpawned`, `OnNewSynapseSpawned`, `OnDissonanceAlert`.
+
+**ANeuronNodeActor**
+A UE5 `AActor` sphere mesh representing one KG entity (Phase 83). Community color is derived from the golden ratio HSV color wheel (hue = `(CID × 0.618...) % 1.0`). A `UPointLightComponent` provides ambient glow controlled by `SetGlowIntensity()`. `PulseFlash()` animates the emissive material parameter on `SYNAPTIC_PULSE`. `ShowDissonance()` tints the node orange-red for a configurable duration. `FadeOut()` scales opacity to zero then destroys the actor.
+
+**ASynapseActor**
+A UE5 `AActor` cylinder mesh representing one KG relation edge (Phase 83). Re-oriented every tick from source to target node via `FQuat::FindBetweenNormals(UpVector, Delta)`. Relation type is encoded as a hue using a djb2 hash. Weight drives both opacity and emissive glow. `AnimatePulse()` flashes the cylinder and calls `PulseFlash()` on both endpoint nodes. `FadeOut()` linearly fades opacity to zero then self-destroys.
+
 **Adaptive Loop Tuning**
 A Phase 82 feature of `AutonomousDiscoveryLoop`. When `LoopConfig.adaptive_tuning=True`, the loop reads `DiscoveryCalibrator`'s mean community weight at the start of each cycle and scales `max_materializations_per_cycle` (cap) and `_next_interval` (sleep time) proportionally. Underexplored graph regions receive higher caps and shorter intervals; saturated regions get lower caps and longer waits. All bounds are configurable via `adaptive_min_cap`, `adaptive_max_cap`, `adaptive_min_interval`, `adaptive_max_interval`. `CycleRecord.effective_cap` records the actual cap used.
 
@@ -157,6 +166,9 @@ A "glass-box" telemetry framework (Phase 62) that captures the per-hop decision 
 
 ## F
 
+**Fibonacci Sphere Layout**
+The spatial placement algorithm used by `ACerebrumBrain` (Phase 83) and `setup_graph_layout.py` for distributing community centres in 3D space. Given community index `i` and total `n` communities: `θ = π(3−√5) × i` (golden angle), `y = 1 − (i/(n−1)) × 2`, `r = √(1−y²)`. Centre = `(r·cos(θ)·R, r·sin(θ)·R, y·R)`. Produces uniform, stable, non-overlapping placement on a sphere of radius `R`. Used for communities; nodes are placed in a smaller deterministic-seeded cluster around their community centre.
+
 **FederatedAdapter**
 An adapter that aggregates multiple remote `GraphAdapter` instances into a single logical graph. Handles cross-graph identity alignment, community map merging, and distributed traversal coordination.
 
@@ -166,6 +178,9 @@ The process by which a local CEREBRUM node discovers potentially-relevant remote
 ---
 
 ## G
+
+**GET /graph/edges**
+A CEREBRUM REST endpoint (Phase 83) that returns up to `?limit=5000` edges from the loaded graph as a `GraphEdgesResponse` (`edges[]`, `total_returned`, `limit`). Intended for visualization pre-load; implemented via `GraphAdapter.get_all_edges(limit)` with an efficient `NetworkXAdapter` override using `G.edges(data=True)`. Used by both `setup_graph_layout.py` and `ACerebrumBrain` to populate `ASynapseActor` instances on startup.
 
 **Glass-Box Reasoning**
 CEREBRUM's defining property: every answer is a verifiable path through graph edges with a complete mathematical trace. Contrasted with "Black-Box" probabilistic models (LLMs) where the reasoning process is opaque.
@@ -395,12 +410,21 @@ THALAMUS component computing per-node structural features: PageRank, betweenness
 **Structural Hole**
 A cross-feature interaction bug where two independently-correct subsystems produce incorrect outcomes when combined. Eight structural holes were identified and patched in Phases 19–20. See SPEC_016 for full taxonomy.
 
+**SYNAPTOGENESIS**
+A neural telemetry event type (Phase 83) emitted by the CEREBRUM REST server when a new edge is materialized into the graph. Broadcast by `/research/approve/{id}` for each proposal approved by the ResearchAgent. Payload: `source_node`, `target_node`, `relation`, `weight`. Routed by `UCerebrumLink` through the existing `OnSynapticPulse` delegate (distinguished by `HopCount == -1`), triggering `ASynapseActor` creation in UE5. Contrasts with `SYNAPTIC_PRUNE` (edge removal) and `SYNAPTIC_PULSE` (traversal hop).
+
+**setup_graph_layout.py**
+A stdlib-only Python CLI script (`ue5_project/setup_graph_layout.py`, Phase 83) that queries a live CEREBRUM REST API and writes a `graph_layout.json` v1.1 file containing pre-computed 3D node positions, community colours, and edge list. Queries `/health`, `/communities`, and `/graph/edges`. Positions use the Fibonacci sphere algorithm; colours use the golden ratio HSV wheel. Run once before packaging or deploying an UE5 build. Accepts `--api`, `--token`, `--out`, `--edge-limit` flags.
+
 **Synaptic Pruning**
 The periodic removal of low-utility synthetic edges (Phase 61) based on confidence, age, and usage patterns. Mimics biological synaptic homeostasis to maintain graph sparsity and reasoning performance.
 
 ---
 
 ## T
+
+**TelemetryBridge**
+The Python WebSocket server (`api/telemetry_bridge.py`, Phase 63 / completed Phase 83) that multiplexes CEREBRUM neural events to all connected visualization clients. Started as an asyncio background task via `create_app(ws_port=N)`. Exposes `broadcast(event: NeuralEvent)` which serializes via `model_dump_json()` and fan-outs to all live WebSocket connections. Accepts multiple simultaneous clients (e.g., UE5 editor instance + a monitoring dashboard). `start_server()` is an infinite async coroutine; `ensure_future()` prevents it from blocking the FastAPI event loop.
 
 **THALAMUS**
 The ingestion layer subsystem. Encompasses: CSV/NetworkX/Neo4j/RDF adapters, EmbeddingEngine, StructuralEncoder, STDPDiscretizer, IngestionPipeline, SignalEncoder, and StreamAdapter.
@@ -432,6 +456,9 @@ Extension of DSCF that adds a third signal (Infomap/flow-based community assignm
 ---
 
 ## U
+
+**UCerebrumLink**
+The UE5 `UActorComponent` WebSocket bridge (Phase 83). Connects to the CEREBRUM `TelemetryBridge` at a configurable `ws://host:port` URL and fires typed Blueprint dynamic delegates: `OnSynapticPulse`, `OnNeurogenesis`, `OnSynapticPrune`, `OnCorticalGlow`, `OnDissonance`, and the catch-all `OnNeuralEvent`. Routes JSON envelope `{event_type, payload}` to the correct delegate.
 
 **Uncertainty Propagation**
 `BeamTraversal(propagate_uncertainty=True)` — computes per-path confidence as a variance-penalized product of edge confidences: $\text{conf}(P) = \prod_i c_i^\alpha \cdot (1 - \beta \cdot \text{Var}(\{c_i\}))$ (Phase 17 feature).
