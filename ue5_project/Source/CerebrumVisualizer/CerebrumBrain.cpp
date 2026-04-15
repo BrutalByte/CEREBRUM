@@ -10,6 +10,8 @@
 #include "Interfaces/IHttpResponse.h"
 #include "Engine/World.h"
 #include "Math/UnrealMathUtility.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 
 // ---------------------------------------------------------------------------
 // Constructor
@@ -43,7 +45,14 @@ void ACerebrumBrain::BeginPlay()
 
     if (bLoadGraphOnStart)
     {
-        LoadGraphFromREST();
+        if (bPreferLayoutFile)
+        {
+            LoadGraphFromLayoutFile(); // falls back to REST internally if file absent
+        }
+        else
+        {
+            LoadGraphFromREST();
+        }
     }
 
     ConnectToBrain();
@@ -84,6 +93,8 @@ void ACerebrumBrain::DisconnectAndClear()
     }
     SynapseRegistry.Empty();
     CommunityPositions.Empty();
+    CommunityColors.Empty();
+    NodeLayoutPositions.Empty();
 }
 
 void ACerebrumBrain::ReloadGraph()
@@ -207,6 +218,14 @@ FVector ACerebrumBrain::GetOrCreateCommunityCenter(int32 CommunityId)
 
 FVector ACerebrumBrain::ComputeNodePosition(int32 CommunityId, const FString& NodeId)
 {
+    // Prefer the pre-computed position from graph_layout.json if available.
+    // This gives exact Fibonacci sphere placement consistent with the Python
+    // setup script, rather than re-deriving a hash-seeded random offset.
+    if (const FVector* Precomputed = NodeLayoutPositions.Find(NodeId))
+    {
+        return *Precomputed;
+    }
+
     FVector CommunityCenter = GetOrCreateCommunityCenter(CommunityId);
 
     // Deterministic random offset within the cluster sphere (seeded by NodeId)
@@ -298,6 +317,144 @@ void ACerebrumBrain::ParseGraphPayload(const FString& JsonBody)
            TEXT("CerebrumBrain: Loaded %d nodes from /communities."), NodeCount);
 
     OnGraphLoaded(NodeCount, SynapseRegistry.Num());
+}
+
+// ---------------------------------------------------------------------------
+// Layout-file graph load
+// ---------------------------------------------------------------------------
+
+void ACerebrumBrain::LoadGraphFromLayoutFile()
+{
+    // Resolve path relative to the project Content directory
+    const FString FullPath = FPaths::Combine(
+        FPaths::ProjectContentDir(), GraphLayoutFilePath);
+
+    FString JsonBody;
+    if (!FFileHelper::LoadFileToString(JsonBody, *FullPath))
+    {
+        UE_LOG(LogTemp, Warning,
+               TEXT("CerebrumBrain: Layout file not found at '%s'. "
+                    "Falling back to REST /communities."), *FullPath);
+        LoadGraphFromREST();
+        return;
+    }
+
+    UE_LOG(LogTemp, Log,
+           TEXT("CerebrumBrain: Loading graph layout from '%s'."), *FullPath);
+
+    if (!ParseLayoutPayload(JsonBody))
+    {
+        UE_LOG(LogTemp, Warning,
+               TEXT("CerebrumBrain: Failed to parse layout file '%s'. "
+                    "Falling back to REST /communities."), *FullPath);
+        LoadGraphFromREST();
+    }
+}
+
+bool ACerebrumBrain::ParseLayoutPayload(const FString& JsonBody)
+{
+    TSharedPtr<FJsonObject> Root;
+    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonBody);
+    if (!FJsonSerializer::Deserialize(Reader, Root) || !Root.IsValid())
+    {
+        UE_LOG(LogTemp, Warning,
+               TEXT("CerebrumBrain: Could not deserialise layout JSON."));
+        return false;
+    }
+
+    // ── 1. Parse community metadata: populate CommunityPositions + CommunityColors ──
+    const TArray<TSharedPtr<FJsonValue>>* CommArray = nullptr;
+    if (Root->TryGetArrayField(TEXT("communities"), CommArray) && CommArray)
+    {
+        for (const TSharedPtr<FJsonValue>& Val : *CommArray)
+        {
+            const TSharedPtr<FJsonObject>& Comm = Val->AsObject();
+            if (!Comm.IsValid()) continue;
+
+            int32 CID = 0;
+            double Tmp = 0.0;
+            if (Comm->TryGetNumberField(TEXT("community_id"), Tmp))
+                CID = static_cast<int32>(Tmp);
+
+            // Community center
+            const TSharedPtr<FJsonObject>* CenterObj = nullptr;
+            if (Comm->TryGetObjectField(TEXT("center"), CenterObj) && CenterObj)
+            {
+                double X = 0, Y = 0, Z = 0;
+                (*CenterObj)->TryGetNumberField(TEXT("x"), X);
+                (*CenterObj)->TryGetNumberField(TEXT("y"), Y);
+                (*CenterObj)->TryGetNumberField(TEXT("z"), Z);
+                CommunityPositions.Add(CID, FVector(
+                    static_cast<float>(X),
+                    static_cast<float>(Y),
+                    static_cast<float>(Z)));
+            }
+
+            // Community color
+            const TSharedPtr<FJsonObject>* ColorObj = nullptr;
+            if (Comm->TryGetObjectField(TEXT("color"), ColorObj) && ColorObj)
+            {
+                double R = 0, G = 0, B = 0;
+                (*ColorObj)->TryGetNumberField(TEXT("r"), R);
+                (*ColorObj)->TryGetNumberField(TEXT("g"), G);
+                (*ColorObj)->TryGetNumberField(TEXT("b"), B);
+                CommunityColors.Add(CID, FLinearColor(
+                    static_cast<float>(R),
+                    static_cast<float>(G),
+                    static_cast<float>(B)));
+            }
+        }
+    }
+
+    // ── 2. Parse node entries: cache positions, then spawn ──────────────────
+    const TArray<TSharedPtr<FJsonValue>>* NodesArray = nullptr;
+    if (!Root->TryGetArrayField(TEXT("nodes"), NodesArray) || !NodesArray)
+    {
+        UE_LOG(LogTemp, Warning,
+               TEXT("CerebrumBrain: Layout JSON has no 'nodes' array."));
+        return false;
+    }
+
+    int32 SpawnedCount = 0;
+    for (const TSharedPtr<FJsonValue>& Val : *NodesArray)
+    {
+        const TSharedPtr<FJsonObject>& Node = Val->AsObject();
+        if (!Node.IsValid()) continue;
+
+        FString NodeId, Label;
+        Node->TryGetStringField(TEXT("node_id"), NodeId);
+        Node->TryGetStringField(TEXT("label"),   Label);
+        if (Label.IsEmpty()) Label = NodeId;
+
+        double CIDDouble = 0.0;
+        int32  CID = 0;
+        if (Node->TryGetNumberField(TEXT("community_id"), CIDDouble))
+            CID = static_cast<int32>(CIDDouble);
+
+        // Cache exact pre-computed position
+        const TSharedPtr<FJsonObject>* PosObj = nullptr;
+        if (Node->TryGetObjectField(TEXT("position"), PosObj) && PosObj)
+        {
+            double X = 0, Y = 0, Z = 0;
+            (*PosObj)->TryGetNumberField(TEXT("x"), X);
+            (*PosObj)->TryGetNumberField(TEXT("y"), Y);
+            (*PosObj)->TryGetNumberField(TEXT("z"), Z);
+            NodeLayoutPositions.Add(NodeId, FVector(
+                static_cast<float>(X),
+                static_cast<float>(Y),
+                static_cast<float>(Z)));
+        }
+
+        SpawnOrGetNode(NodeId, Label, CID);
+        ++SpawnedCount;
+    }
+
+    UE_LOG(LogTemp, Log,
+           TEXT("CerebrumBrain: Layout file loaded — %d nodes, %d communities."),
+           SpawnedCount, CommunityPositions.Num());
+
+    OnGraphLoaded(SpawnedCount, SynapseRegistry.Num());
+    return SpawnedCount > 0;
 }
 
 // ---------------------------------------------------------------------------

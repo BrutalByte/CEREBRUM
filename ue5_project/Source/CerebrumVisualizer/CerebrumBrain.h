@@ -91,9 +91,25 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cerebrum|Connection")
     FString AuthToken;
 
-    /** If true, load initial graph from REST API on BeginPlay. */
+    /** If true, load initial graph on BeginPlay. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cerebrum|Startup")
     bool bLoadGraphOnStart = true;
+
+    /**
+     * Path (relative to the project Content directory) for the pre-computed
+     * graph_layout.json produced by setup_graph_layout.py.
+     * When bPreferLayoutFile is true and this file exists, node positions and
+     * community colours are loaded from it instead of being derived at runtime.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cerebrum|Startup")
+    FString GraphLayoutFilePath = TEXT("graph_layout.json");
+
+    /**
+     * If true, attempt to load the pre-computed layout file before falling back
+     * to a live REST /communities call.  Set to false to always query the API.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cerebrum|Startup")
+    bool bPreferLayoutFile = true;
 
     /** Radius (UU) of the sphere on which community centres are placed. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cerebrum|Layout")
@@ -126,6 +142,16 @@ public:
     /** Force a REST graph reload (useful after hot-reloading the server). */
     UFUNCTION(BlueprintCallable, Category = "Cerebrum|Startup")
     void ReloadGraph();
+
+    /**
+     * Load initial graph topology from the pre-computed layout JSON file.
+     * Uses exact Fibonacci-sphere positions and golden-ratio colours from the
+     * file rather than deriving them on-the-fly.
+     * Automatically falls back to LoadGraphFromREST() if the file is absent
+     * or cannot be parsed.
+     */
+    UFUNCTION(BlueprintCallable, Category = "Cerebrum|Startup")
+    void LoadGraphFromLayoutFile();
 
     /** Returns the node actor for a given entity ID, or null if not spawned. */
     UFUNCTION(BlueprintPure, Category = "Cerebrum|Query")
@@ -189,6 +215,13 @@ private:
     /** CommunityId → colour */
     TMap<int32, FLinearColor> CommunityColors;
 
+    /**
+     * NodeId → exact world position loaded from graph_layout.json.
+     * Populated by ParseLayoutPayload(); consulted first by ComputeNodePosition()
+     * so that the Python pre-computed Fibonacci sphere layout is used verbatim.
+     */
+    TMap<FString, FVector> NodeLayoutPositions;
+
     // ------------------------------------------------------------------
     // Internal helpers — implemented in CerebrumBrain.cpp
     // ------------------------------------------------------------------
@@ -209,6 +242,9 @@ private:
     // REST graph load
     void LoadGraphFromREST();
     void ParseGraphPayload(const FString& JsonBody);
+
+    // Layout-file graph load
+    bool ParseLayoutPayload(const FString& JsonBody);
 
     // CerebrumLink event handlers
     UFUNCTION()
