@@ -153,10 +153,6 @@ class ProvenanceLedger:
         NotImplementedError
             If the adapter does not expose ``remove_edge``.
         """
-        if not hasattr(adapter, "remove_edge"):
-            raise NotImplementedError(
-                f"Adapter {type(adapter).__name__} does not implement remove_edge()."
-            )
         with self._lock:
             record = self._batches.get(batch_id)
             if record is None:
@@ -171,6 +167,8 @@ class ProvenanceLedger:
             try:
                 adapter.remove_edge(edge.source, edge.target, edge.relation)
                 removed += 1
+            except NotImplementedError:
+                raise  # adapter does not support remove_edge — propagate immediately
             except Exception:
                 logger.warning(
                     "ProvenanceLedger: could not remove edge %s -[%s]-> %s.",
@@ -190,10 +188,6 @@ class ProvenanceLedger:
 
         Returns the total number of edges removed across all batches in that cycle.
         """
-        if not hasattr(adapter, "remove_edge"):
-            raise NotImplementedError(
-                f"Adapter {type(adapter).__name__} does not implement remove_edge()."
-            )
         with self._lock:
             batch_ids = [
                 bid for bid, rec in self._batches.items()

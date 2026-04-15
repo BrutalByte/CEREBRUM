@@ -111,6 +111,32 @@ class GraphAdapter(ABC):
         """
         ...
 
+    def remove_edge(self, u: str, v: str, relation: str) -> None:
+        """
+        Remove an edge from the graph (for Phase 76+ provenance rollback).
+
+        This method is optional: adapters that support graph mutation should
+        override it.  The default implementation raises ``NotImplementedError``
+        so that ``ProvenanceLedger.rollback_*()`` can surface a clear error
+        rather than silently doing nothing.
+
+        Parameters
+        ----------
+        u, v     : node identifiers of the edge endpoints.
+        relation : the ``relation`` attribute that must match the stored edge.
+
+        Raises
+        ------
+        NotImplementedError
+            If the adapter has not implemented mutation support.
+        ValueError
+            If no matching edge is found (implementation-dependent).
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not implement remove_edge(). "
+            "Override this method to enable provenance rollback."
+        )
+
     def get_reasoning_branches(
         self,
         seed_id: str,

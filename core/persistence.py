@@ -262,3 +262,211 @@ class QueryLog:
         if len(lines) > self.max_entries * 2:
             kept = lines[-self.max_entries:]
             self._path.write_text("\n".join(kept) + "\n", encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# GraphSnapshot — portable JSON topology snapshot (Phase 81)
+# ---------------------------------------------------------------------------
+
+class GraphSnapshot:
+    """
+    Lightweight, format-stable snapshot of graph topology (nodes + edges).
+
+    Complements ``save_state()`` / ``load_state()`` (which pickle the full
+    CEREBRUM state) with a human-readable, adapter-version-independent format
+    that captures *only* topology — no embeddings or community structure.
+
+    Key use cases
+    -------------
+    - Make ResearchAgent-materialized edges durable across restarts.
+    - Migrate graphs between adapter backends (export → re-import).
+    - Pair with ProvenanceLedger: snapshot after each approved batch to create
+      a point-in-time restore capability.
+
+    Snapshot format (JSON)
+    ----------------------
+    ::
+
+        {
+          "version": "1.0",
+          "saved_at": <unix timestamp>,
+          "node_count": <int>,
+          "edge_count": <int>,
+          "nodes": [{"id": "...", "label": "...", "type": "...", "properties": {...}}],
+          "edges": [{"source": "...", "target": "...", "relation": "...",
+                     "confidence": 1.0, "provenance": "...", "synthetic": false,
+                     "weight": 1.0}]
+        }
+
+    Usage
+    -----
+    ::
+
+        snap = GraphSnapshot()
+        stats = snap.save(adapter, "data/graph_snapshot.json")
+        # ... restart / new adapter ...
+        result = snap.restore("data/graph_snapshot.json", new_adapter)
+        print(result)  # {"added": 120, "skipped": 0, "errors": 0}
+    """
+
+    VERSION = "1.0"
+
+    # Core edge attribute keys to capture; others are ignored
+    _EDGE_KEYS = ("relation", "confidence", "provenance", "synthetic", "weight",
+                  "valid_from", "valid_to")
+
+    def save(self, adapter, path: str) -> Dict[str, Any]:
+        """
+        Serialize all nodes and edges in *adapter* to a JSON file at *path*.
+
+        Parameters
+        ----------
+        adapter : any GraphAdapter (must implement ``to_networkx()``).
+        path    : destination file path (created with parent dirs as needed).
+
+        Returns
+        -------
+        dict with keys ``node_count``, ``edge_count``, ``path``.
+        """
+        G = adapter.to_networkx()
+
+        nodes = []
+        for nid, attrs in G.nodes(data=True):
+            nodes.append({
+                "id": nid,
+                "label": attrs.get("label", nid),
+                "type": attrs.get("type", "entity"),
+                "properties": {k: v for k, v in attrs.items()
+                               if k not in ("label", "type")},
+            })
+
+        edges = []
+        if G.is_multigraph():
+            edge_iter = (
+                (u, v, data)
+                for u, v, data in G.edges(data=True)
+            )
+        else:
+            edge_iter = G.edges(data=True)
+
+        for u, v, data in edge_iter:
+            entry: Dict[str, Any] = {"source": u, "target": v}
+            for k in self._EDGE_KEYS:
+                val = data.get(k)
+                if val is not None:
+                    # numpy scalars → Python scalars for JSON serialization
+                    if hasattr(val, "item"):
+                        val = val.item()
+                    entry[k] = val
+            edges.append(entry)
+
+        snapshot = {
+            "version": self.VERSION,
+            "saved_at": time.time(),
+            "node_count": len(nodes),
+            "edge_count": len(edges),
+            "nodes": nodes,
+            "edges": edges,
+        }
+
+        dest = Path(path)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False),
+                        encoding="utf-8")
+
+        return {
+            "node_count": len(nodes),
+            "edge_count": len(edges),
+            "path": str(dest),
+        }
+
+    def restore(
+        self,
+        path: str,
+        adapter,
+        skip_existing: bool = True,
+    ) -> Dict[str, int]:
+        """
+        Re-add edges from a saved snapshot into *adapter*.
+
+        Parameters
+        ----------
+        path          : path to the JSON snapshot file.
+        adapter       : target GraphAdapter — must implement ``add_edge()``.
+        skip_existing : if True (default), check whether the edge already
+                        exists (via ``adapter.to_networkx().has_edge()``)
+                        before calling ``add_edge()``.
+
+        Returns
+        -------
+        dict with keys ``added``, ``skipped``, ``errors``.
+        """
+        raw = self.load_raw(path)
+        G_existing = adapter.to_networkx() if skip_existing else None
+
+        added = skipped = errors = 0
+
+        for edge in raw.get("edges", []):
+            u = edge.get("source", "")
+            v = edge.get("target", "")
+            relation = edge.get("relation", "RELATED_TO")
+
+            if not u or not v:
+                errors += 1
+                continue
+
+            if skip_existing and G_existing is not None and G_existing.has_edge(u, v):
+                skipped += 1
+                continue
+
+            try:
+                adapter.add_edge(
+                    u, v,
+                    relation=relation,
+                    confidence=float(edge.get("confidence", 1.0)),
+                    provenance=str(edge.get("provenance", "snapshot")),
+                    synthetic=bool(edge.get("synthetic", False)),
+                )
+                added += 1
+            except Exception:
+                errors += 1
+
+        return {"added": added, "skipped": skipped, "errors": errors}
+
+    @staticmethod
+    def load_raw(path: str) -> Dict[str, Any]:
+        """Return the raw JSON dict from a snapshot file (no adapter required)."""
+        data = Path(path).read_text(encoding="utf-8")
+        return json.loads(data)
+
+    def diff(self, path_a: str, path_b: str) -> Dict[str, Any]:
+        """
+        Compare two snapshots and return added / removed edge sets.
+
+        Returns
+        -------
+        dict with keys:
+          - ``edges_added``   : edges in B but not A (list of dicts)
+          - ``edges_removed`` : edges in A but not B (list of dicts)
+          - ``node_delta``    : node_count(B) - node_count(A)
+          - ``edge_delta``    : edge_count(B) - edge_count(A)
+        """
+        snap_a = self.load_raw(path_a)
+        snap_b = self.load_raw(path_b)
+
+        def _key(e: Dict) -> Tuple[str, str, str]:
+            return (e.get("source", ""), e.get("target", ""),
+                    e.get("relation", ""))
+
+        set_a = {_key(e) for e in snap_a.get("edges", [])}
+        set_b = {_key(e) for e in snap_b.get("edges", [])}
+
+        idx_b = {_key(e): e for e in snap_b.get("edges", [])}
+        idx_a = {_key(e): e for e in snap_a.get("edges", [])}
+
+        return {
+            "edges_added":   [idx_b[k] for k in set_b - set_a],
+            "edges_removed":  [idx_a[k] for k in set_a - set_b],
+            "node_delta": snap_b.get("node_count", 0) - snap_a.get("node_count", 0),
+            "edge_delta": snap_b.get("edge_count", 0) - snap_a.get("edge_count", 0),
+        }

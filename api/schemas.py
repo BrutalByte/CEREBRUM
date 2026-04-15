@@ -881,6 +881,30 @@ class LoopConfigSchema(BaseModel):
         default=None,
         description="File path for AutoApprover checkpoint JSON; None disables checkpointing.",
     )
+    auto_rollback_on_trip: Optional[bool] = Field(
+        default=None,
+        description="If true, auto-rollback materialized edges when circuit breaker trips.",
+    )
+    adaptive_tuning: Optional[bool] = Field(
+        default=None,
+        description="If true, cap and interval auto-adjust from DiscoveryCalibrator signal.",
+    )
+    adaptive_min_cap: Optional[int] = Field(
+        default=None, ge=1,
+        description="Lower bound on materialization cap when adaptive_tuning is active.",
+    )
+    adaptive_max_cap: Optional[int] = Field(
+        default=None, ge=1,
+        description="Upper bound on materialization cap when adaptive_tuning is active.",
+    )
+    adaptive_min_interval: Optional[float] = Field(
+        default=None, ge=10.0,
+        description="Minimum inter-cycle sleep when adaptive_tuning is active.",
+    )
+    adaptive_max_interval: Optional[float] = Field(
+        default=None, ge=10.0,
+        description="Maximum inter-cycle sleep when adaptive_tuning is active.",
+    )
 
 
 class CycleRecordSchema(BaseModel):
@@ -895,6 +919,8 @@ class CycleRecordSchema(BaseModel):
     sent_to_review: int
     edges_added: int
     circuit_breaker_tripped: bool
+    edges_rolled_back: int = 0
+    effective_cap: int = 0
     dry_run: bool
 
 
@@ -907,6 +933,9 @@ class LoopStatusResponse(BaseModel):
     min_approval_rate: float
     circuit_breaker_window: int
     dry_run: bool
+    auto_rollback_on_trip: bool = False
+    adaptive_tuning: bool = False
+    adaptive_effective_interval: Optional[float] = None
     circuit_breaker_tripped: bool
     current_approval_rate: Optional[float]
     total_cycles: int

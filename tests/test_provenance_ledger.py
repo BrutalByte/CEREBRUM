@@ -122,7 +122,8 @@ class TestRollbackBatch:
     def test_raises_when_adapter_lacks_remove_edge(self):
         ledger = ProvenanceLedger()
         ledger.record_batch("b-1", "f-1", [("a", "b", "r")])
-        adapter = MagicMock(spec=[])  # no remove_edge
+        adapter = MagicMock()
+        adapter.remove_edge.side_effect = NotImplementedError("not supported")
         with pytest.raises(NotImplementedError):
             ledger.rollback_batch("b-1", adapter)
 
@@ -170,8 +171,10 @@ class TestRollbackCycle:
     def test_raises_when_adapter_lacks_remove_edge(self):
         ledger = ProvenanceLedger()
         ledger.record_batch("b-1", "f-1", [("a", "b", "r")], cycle_number=1)
+        adapter = MagicMock()
+        adapter.remove_edge.side_effect = NotImplementedError("not supported")
         with pytest.raises(NotImplementedError):
-            ledger.rollback_cycle(1, MagicMock(spec=[]))
+            ledger.rollback_cycle(1, adapter)
 
 
 # ---------------------------------------------------------------------------

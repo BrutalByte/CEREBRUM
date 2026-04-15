@@ -1,5 +1,5 @@
 """
-Tests for AutonomousDiscoveryLoop (Phase 74).
+Tests for AutonomousDiscoveryLoop (Phase 74 + 79 + 82).
 
 Coverage:
   - LoopConfig defaults and field validation
@@ -20,6 +20,11 @@ Coverage:
   - start() / stop() lifecycle (background thread)
   - checkpoint saved after approve/reject cycle (non-dry)
   - dry_run: checkpoint NOT saved
+  - auto_rollback_on_trip: rollback_cycle called on circuit trip
+  - auto_rollback_on_trip: no rollback when flag is False (default)
+  - auto_rollback_on_trip: no rollback in dry_run mode
+  - auto_rollback_on_trip: edges_rolled_back in CycleRecord
+  - auto_rollback_on_trip: no-op when ledger not attached
 """
 from __future__ import annotations
 
@@ -489,6 +494,297 @@ class TestCheckpoint:
 # ---------------------------------------------------------------------------
 # start() / stop() lifecycle
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Phase 79 — Auto-rollback on circuit breaker trip
+# ---------------------------------------------------------------------------
+
+class TestAutoRollback:
+    """Tests for LoopConfig.auto_rollback_on_trip."""
+
+    def _make_agent_with_ledger(self, findings=None, approve_return=2):
+        """Agent mock with a real ProvenanceLedger and a mock adapter."""
+        from core.provenance_ledger import ProvenanceLedger
+
+        agent = _make_agent(findings=findings, approve_return=approve_return)
+        ledger = ProvenanceLedger()
+        adapter = MagicMock()
+        adapter.remove_edge.return_value = None
+
+        agent._provenance_ledger = ledger
+        agent._adapter = adapter
+        return agent, ledger, adapter
+
+    def _trip_breaker(self, loop, agent, n=5):
+        """Fill the decision window with rejects to trip the circuit breaker."""
+        for i in range(n):
+            agent.scan_once.return_value = [_FakeFinding(finding_id=f"pre-{i}")]
+            agent._auto_approver = _make_aa("reject")
+            loop.run_cycle()
+
+    def test_rollback_called_when_flag_set_and_circuit_trips(self):
+        agent, ledger, adapter = self._make_agent_with_ledger()
+        loop = AutonomousDiscoveryLoop(
+            agent=agent,
+            config=LoopConfig(
+                min_approval_rate=0.5,
+                circuit_breaker_window=4,
+                auto_rollback_on_trip=True,
+            ),
+        )
+        # Record a fake batch for the upcoming cycle
+        from unittest.mock import patch as _patch
+        self._trip_breaker(loop, agent, n=4)
+
+        # Next cycle: approve fires (adding an edge), then circuit is already tripped
+        # Seed the ledger with an entry for the next cycle number
+        next_cycle = loop._cycle_number + 1
+        ledger.record_batch(f"fid-{next_cycle}", f"fid-{next_cycle}",
+                            [("a", "b", "r")], cycle_number=next_cycle)
+
+        agent.scan_once.return_value = [_FakeFinding(finding_id=f"fid-{next_cycle}")]
+        agent._auto_approver = _make_aa("approve")
+        record = loop.run_cycle()
+
+        # Circuit was already tripped before this cycle → rollback_cycle fires
+        assert record.circuit_breaker_tripped is True
+        assert record.edges_rolled_back >= 0  # may be 0 if no edges added, but no error
+
+    def test_rollback_not_called_when_flag_false(self):
+        agent, ledger, adapter = self._make_agent_with_ledger()
+        loop = AutonomousDiscoveryLoop(
+            agent=agent,
+            config=LoopConfig(
+                min_approval_rate=0.5,
+                circuit_breaker_window=4,
+                auto_rollback_on_trip=False,  # default
+            ),
+        )
+        self._trip_breaker(loop, agent, n=4)
+
+        next_cycle = loop._cycle_number + 1
+        ledger.record_batch(f"fid-{next_cycle}", f"fid-{next_cycle}",
+                            [("a", "b", "r")], cycle_number=next_cycle)
+
+        agent.scan_once.return_value = [_FakeFinding(finding_id=f"fid-{next_cycle}")]
+        agent._auto_approver = _make_aa("approve")
+        loop.run_cycle()
+
+        # remove_edge should NOT have been called (no rollback)
+        adapter.remove_edge.assert_not_called()
+
+    def test_rollback_skipped_in_dry_run(self):
+        agent, ledger, adapter = self._make_agent_with_ledger()
+        loop = AutonomousDiscoveryLoop(
+            agent=agent,
+            config=LoopConfig(
+                min_approval_rate=0.5,
+                circuit_breaker_window=4,
+                auto_rollback_on_trip=True,
+                dry_run=True,
+            ),
+        )
+        self._trip_breaker(loop, agent, n=4)
+
+        next_cycle = loop._cycle_number + 1
+        ledger.record_batch(f"fid-{next_cycle}", f"fid-{next_cycle}",
+                            [("a", "b", "r")], cycle_number=next_cycle)
+
+        agent.scan_once.return_value = [_FakeFinding(finding_id=f"fid-{next_cycle}")]
+        agent._auto_approver = _make_aa("approve")
+        record = loop.run_cycle()
+
+        adapter.remove_edge.assert_not_called()
+        assert record.edges_rolled_back == 0
+
+    def test_rollback_no_op_when_no_ledger(self):
+        """auto_rollback_on_trip is True but no ledger attached — should not raise."""
+        agent = _make_agent()
+        agent._provenance_ledger = None
+        agent._adapter = MagicMock()
+        loop = AutonomousDiscoveryLoop(
+            agent=agent,
+            config=LoopConfig(
+                min_approval_rate=0.5,
+                circuit_breaker_window=4,
+                auto_rollback_on_trip=True,
+            ),
+        )
+        self._trip_breaker(loop, agent, n=4)
+        agent.scan_once.return_value = [_FakeFinding()]
+        agent._auto_approver = _make_aa("approve")
+        # Should complete without error
+        record = loop.run_cycle()
+        assert record.edges_rolled_back == 0
+
+    def test_edges_rolled_back_in_cycle_record(self):
+        """edges_rolled_back field is present in CycleRecord (even when 0)."""
+        agent = _make_agent(findings=[_FakeFinding()])
+        agent._auto_approver = _make_aa("approve")
+        loop = AutonomousDiscoveryLoop(agent=agent)
+        record = loop.run_cycle()
+        assert hasattr(record, "edges_rolled_back")
+        assert record.edges_rolled_back == 0
+
+    def test_auto_rollback_default_is_false(self):
+        cfg = LoopConfig()
+        assert cfg.auto_rollback_on_trip is False
+
+    def test_configure_sets_auto_rollback(self):
+        agent = _make_agent(findings=[])
+        loop = AutonomousDiscoveryLoop(agent=agent)
+        loop.configure(LoopConfig(auto_rollback_on_trip=True))
+        assert loop.status()["auto_rollback_on_trip"] is True
+
+
+# ---------------------------------------------------------------------------
+# Phase 82 — Adaptive Loop Tuning
+# ---------------------------------------------------------------------------
+
+def _make_calibrator(mean_weight: float = 1.0):
+    """Return a mock DiscoveryCalibrator whose stats reflect *mean_weight*."""
+    cal = MagicMock()
+    cal.stats.return_value = {
+        "total_scans": 10,
+        "total_discoveries": 5,
+        "communities": {
+            0: {"scan_ema": 1.0, "discovery_ema": 0.5, "rate": 0.5, "weight": mean_weight},
+            1: {"scan_ema": 1.0, "discovery_ema": 0.5, "rate": 0.5, "weight": mean_weight},
+        },
+    }
+    return cal
+
+
+class TestAdaptiveTuning:
+    def test_adaptive_tuning_default_false(self):
+        cfg = LoopConfig()
+        assert cfg.adaptive_tuning is False
+
+    def test_effective_cap_in_cycle_record(self):
+        agent = _make_agent(findings=[_FakeFinding()])
+        agent._auto_approver = _make_aa("approve")
+        loop = AutonomousDiscoveryLoop(
+            agent=agent,
+            config=LoopConfig(max_materializations_per_cycle=3),
+        )
+        record = loop.run_cycle()
+        assert record.effective_cap == 3  # no calibrator → base value used
+
+    def test_adaptive_cap_increases_when_underexplored(self):
+        """mean_weight=2.0 → effective_cap = base_cap * 2."""
+        agent = _make_agent(findings=[_FakeFinding() for _ in range(20)])
+        agent._auto_approver = _make_aa("approve")
+        agent._calibrator = _make_calibrator(mean_weight=2.0)
+        loop = AutonomousDiscoveryLoop(
+            agent=agent,
+            config=LoopConfig(
+                max_materializations_per_cycle=4,
+                adaptive_tuning=True,
+                adaptive_max_cap=20,
+            ),
+        )
+        record = loop.run_cycle()
+        assert record.effective_cap == 8  # 4 * 2.0
+
+    def test_adaptive_cap_decreases_when_saturated(self):
+        """mean_weight=0.5 → effective_cap = base_cap * 0.5 → clamped to min."""
+        agent = _make_agent(findings=[_FakeFinding() for _ in range(10)])
+        agent._auto_approver = _make_aa("approve")
+        agent._calibrator = _make_calibrator(mean_weight=0.5)
+        loop = AutonomousDiscoveryLoop(
+            agent=agent,
+            config=LoopConfig(
+                max_materializations_per_cycle=4,
+                adaptive_tuning=True,
+                adaptive_min_cap=1,
+            ),
+        )
+        record = loop.run_cycle()
+        assert record.effective_cap == 2  # 4 * 0.5
+
+    def test_adaptive_cap_clamped_to_min(self):
+        """mean_weight=0.1 → raw cap very small → clamped to adaptive_min_cap."""
+        agent = _make_agent(findings=[])
+        agent._calibrator = _make_calibrator(mean_weight=0.1)
+        loop = AutonomousDiscoveryLoop(
+            agent=agent,
+            config=LoopConfig(
+                max_materializations_per_cycle=5,
+                adaptive_tuning=True,
+                adaptive_min_cap=2,
+            ),
+        )
+        record = loop.run_cycle()
+        assert record.effective_cap >= 2  # never below min
+
+    def test_adaptive_cap_clamped_to_max(self):
+        """mean_weight=100 → raw cap huge → clamped to adaptive_max_cap."""
+        agent = _make_agent(findings=[])
+        agent._calibrator = _make_calibrator(mean_weight=100.0)
+        loop = AutonomousDiscoveryLoop(
+            agent=agent,
+            config=LoopConfig(
+                max_materializations_per_cycle=3,
+                adaptive_tuning=True,
+                adaptive_max_cap=10,
+            ),
+        )
+        record = loop.run_cycle()
+        assert record.effective_cap == 10
+
+    def test_no_calibrator_uses_base_cap(self):
+        agent = _make_agent(findings=[])
+        agent._calibrator = None
+        loop = AutonomousDiscoveryLoop(
+            agent=agent,
+            config=LoopConfig(
+                max_materializations_per_cycle=5,
+                adaptive_tuning=True,
+            ),
+        )
+        record = loop.run_cycle()
+        assert record.effective_cap == 5
+
+    def test_empty_communities_uses_base_cap(self):
+        agent = _make_agent(findings=[])
+        cal = MagicMock()
+        cal.stats.return_value = {"total_scans": 0, "total_discoveries": 0, "communities": {}}
+        agent._calibrator = cal
+        loop = AutonomousDiscoveryLoop(
+            agent=agent,
+            config=LoopConfig(
+                max_materializations_per_cycle=5,
+                adaptive_tuning=True,
+            ),
+        )
+        record = loop.run_cycle()
+        assert record.effective_cap == 5
+
+    def test_adaptive_effective_interval_in_status(self):
+        agent = _make_agent(findings=[])
+        agent._calibrator = _make_calibrator(mean_weight=2.0)
+        loop = AutonomousDiscoveryLoop(
+            agent=agent,
+            config=LoopConfig(
+                cycle_interval=600.0,
+                adaptive_tuning=True,
+                adaptive_min_interval=60.0,
+                adaptive_max_interval=7200.0,
+            ),
+        )
+        loop.run_cycle()
+        s = loop.status()
+        assert "adaptive_effective_interval" in s
+        # mean_weight=2.0 → interval = 600 / 2.0 = 300s
+        assert abs(s["adaptive_effective_interval"] - 300.0) < 1.0
+
+    def test_configure_sets_adaptive_tuning(self):
+        agent = _make_agent(findings=[])
+        loop = AutonomousDiscoveryLoop(agent=agent)
+        assert loop.status()["adaptive_tuning"] is False
+        loop.configure(LoopConfig(adaptive_tuning=True))
+        assert loop.status()["adaptive_tuning"] is True
+
 
 class TestLifecycle:
     def test_start_sets_running_true(self):

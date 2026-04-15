@@ -51,7 +51,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v2.16.0 (Phase 78 COMPLETE)** — 1678+ tests passing.
+**v2.20.0 (Phase 82 COMPLETE)** — 1720+ tests passing.
 
 ### System Architecture Names
 | Name | Role |
@@ -123,6 +123,10 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 - **Graph Provenance & Rollback (Phase 76)**: `ProvenanceLedger` records every edge materialized by `ResearchAgent.approve()` with batch_id, finding_id, and cycle_number. `rollback_batch(batch_id, adapter)` removes exactly one approval's edges. `rollback_cycle(cycle_number, adapter)` removes all edges from a given autonomous loop cycle. LRU eviction, thread-safe, requires adapter to expose `remove_edge()`.
 - **Feature Impact Benchmark (Phase 77)**: `benchmarks/feature_impact_benchmark.py` measures Hits@1, Hits@5, MRR across four configurations (baseline / +engram / +looped / +full). Runs against toy_graph.csv for CI with no external dataset dependency. Reports delta vs. baseline MRR.
 - **Provenance Studio Panel (Phase 78)**: `StudioEngine.get_provenance_panel(n)` returns `(stats_html, batch_fig, timeline_fig)` — 4-card summary row, horizontal batch bar chart (green=active/red=rolled-back), dual-series cycle timeline (per-cycle bars + cumulative dashed line). Wired via `attach_provenance_ledger(ledger)`.
+- **Loop-Provenance Recovery (Phase 79)**: `LoopConfig.auto_rollback_on_trip=True` causes `AutonomousDiscoveryLoop` to call `ProvenanceLedger.rollback_cycle()` automatically when the circuit breaker fires, undoing bad materializations before resuming. `CycleRecord.edges_rolled_back` tracks what was undone.
+- **GraphAdapter remove_edge Protocol (Phase 80)**: `GraphAdapter` base class now defines `remove_edge(u, v, relation)` as a non-abstract method raising `NotImplementedError`. All adapters inherit it; `ProvenanceLedger` drops the `hasattr()` guard and relies on the protocol.
+- **Graph Snapshot Persistence (Phase 81)**: `GraphSnapshot` in `core/persistence.py` serializes graph topology to portable JSON (`save()`/`restore()`/`diff()`). Not pickle — survives adapter class changes. `restore(skip_existing=True)` re-adds only new edges; `diff()` shows what changed between two snapshots.
+- **Adaptive Loop Tuning (Phase 82)**: `LoopConfig.adaptive_tuning=True` makes `AutonomousDiscoveryLoop` dynamically scale `max_materializations_per_cycle` and inter-cycle sleep from `DiscoveryCalibrator`'s mean community weight. Underexplored graph → higher cap + shorter interval; saturated → lower cap + longer interval. All bounds configurable. `CycleRecord.effective_cap` shows what was actually used.
 - **Autonomous Discovery Loop (Phase 74)**: `AutonomousDiscoveryLoop` runs `ResearchAgent.scan_once()` on a configurable timer and processes each finding through the attached `AutoApprover`. **Circuit breaker**: sliding window over the last N decisions; if the approval rate drops below `min_approval_rate`, materialization pauses (`circuit_breaker_tripped=True`). **Per-cycle cap**: `max_materializations_per_cycle` prevents runaway materialization. **dry_run=True**: cycles execute but `approve()`/`reject()` are never called — safe for production trials. **Checkpoint**: `AutoApprover.to_dict()` persisted to disk after every cycle with decisions. REST: `POST /research/loop/start|stop|configure`, `GET /research/loop/status`. `LoopConfig` + `CycleRecord` dataclasses.
 - **Looped Beam Traversal (Phase 70)**: LoopLM-style iterative refinement (arXiv:2510.25741). `LoopedBeamTraversal` wraps any `BeamTraversal`-compatible engine and applies it T times. Between loops: top-K answer entities expand seeds (semantic channel), PE→ChemicalModulator adjusts beam params (metabolic channel), Engram records bias next loop's pruning (mnemonic channel). Adaptive exit gate: `|ΔPE| < γ` (primary) or answer-set Jaccard ≥ θ (fallback). All loops' paths merged — `best_by_tail` keeps highest-score per tail entity. `max_loops` param on `QueryRequest`, `CerebrumGraph.query()`, and `MultiStrategyConsensus.run_consensus_query()`. `LoopTrace` exposed via `ReasoningTrace.loop_trace` in ERT.
 
@@ -278,5 +282,5 @@ Implement the abstract `GraphAdapter` interface in `core/graph_adapter.py`, foll
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)
 - Synthetic graph helpers (`make_two_cliques()`, etc.) live in `tests/` for unit tests that don't need the CSV fixture
-- **1678+ tests passing as of v2.16.0 / Phase 78** (1 skipped)
+- **1720+ tests passing as of v2.20.0 / Phase 82** (1 skipped)
 - Type checker: no mypy/ruff configured as hard gate; run `python -m pytest tests/` as verification

@@ -69,6 +69,34 @@ class LoopConfig:
     """If set, AutoApprover.to_dict() is persisted here after each cycle
     that changes the decision distribution. Pass None to disable."""
 
+    auto_rollback_on_trip: bool = False
+    """If True, and the circuit breaker trips during a cycle, automatically
+    call ProvenanceLedger.rollback_cycle() to undo any edges materialized
+    during that cycle.  Requires the ResearchAgent to have a ProvenanceLedger
+    attached (via set_provenance_ledger()) and an adapter with remove_edge().
+    No-op in dry_run mode."""
+
+    adaptive_tuning: bool = False
+    """If True, the loop reads from the attached DiscoveryCalibrator after
+    each cycle and adjusts both ``max_materializations_per_cycle`` (higher
+    when the graph is underexplored) and the inter-cycle sleep interval
+    (shorter when many communities are uncharted).  Original config values
+    act as the neutral point; min/max bounds prevent extremes."""
+
+    adaptive_min_cap: int = 1
+    """Lower bound on the effective materialization cap when adaptive_tuning
+    is active.  Must be >= 1."""
+
+    adaptive_max_cap: int = 20
+    """Upper bound on the effective materialization cap when adaptive_tuning
+    is active."""
+
+    adaptive_min_interval: float = 60.0
+    """Minimum inter-cycle sleep when adaptive_tuning shrinks the interval."""
+
+    adaptive_max_interval: float = 7200.0
+    """Maximum inter-cycle sleep when adaptive_tuning extends the interval."""
+
 
 # ---------------------------------------------------------------------------
 # Cycle record
@@ -98,6 +126,13 @@ class CycleRecord:
 
     circuit_breaker_tripped: bool = False
     """True if the circuit breaker paused materialization this cycle."""
+
+    edges_rolled_back: int = 0
+    """Edges removed by auto-rollback when the circuit breaker tripped."""
+
+    effective_cap: int = 0
+    """The max_materializations_per_cycle value actually used this cycle
+    (may differ from config when adaptive_tuning is active)."""
 
     dry_run: bool = False
 
@@ -143,6 +178,7 @@ class AutonomousDiscoveryLoop:
         self._circuit_tripped = False
 
         self._recent_cycles: Deque[CycleRecord] = deque(maxlen=50)
+        self._next_interval: float = self._config.cycle_interval  # Phase 82 adaptive
         self._lock = threading.Lock()
 
     # ------------------------------------------------------------------
@@ -195,6 +231,11 @@ class AutonomousDiscoveryLoop:
         cfg = self._config
         aa = getattr(self._agent, "_auto_approver", None)
 
+        # Phase 82: compute adaptive cap (and stash effective interval for _loop_body)
+        effective_cap, effective_interval = self._compute_adaptive_params()
+        with self._lock:
+            self._next_interval = effective_interval
+
         findings = self._agent.scan_once()
 
         auto_approved = 0
@@ -207,7 +248,7 @@ class AutonomousDiscoveryLoop:
         self._update_circuit_breaker()
 
         for finding in findings:
-            if auto_approved >= cfg.max_materializations_per_cycle:
+            if auto_approved >= effective_cap:
                 # Cap reached — remaining findings go to review queue
                 sent_to_review += 1
                 continue
@@ -262,6 +303,27 @@ class AutonomousDiscoveryLoop:
 
         duration = time.time() - t0
 
+        # Phase 79: auto-rollback if circuit breaker tripped this cycle
+        edges_rolled_back = 0
+        if circuit_tripped and cfg.auto_rollback_on_trip and not cfg.dry_run and edges_added > 0:
+            ledger = getattr(self._agent, "_provenance_ledger", None)
+            adapter = getattr(self._agent, "_adapter", None)
+            if ledger is not None and adapter is not None:
+                try:
+                    rolled = ledger.rollback_cycle(cycle_num, adapter)
+                    edges_rolled_back = rolled
+                    edges_added = max(0, edges_added - rolled)
+                    logger.warning(
+                        "AutonomousDiscoveryLoop cycle %d: circuit breaker tripped — "
+                        "auto-rolled back %d edges.",
+                        cycle_num, rolled,
+                    )
+                except Exception:
+                    logger.exception(
+                        "AutonomousDiscoveryLoop cycle %d: auto-rollback failed.",
+                        cycle_num,
+                    )
+
         record = CycleRecord(
             cycle_number=cycle_num,
             started_at=t0,
@@ -272,6 +334,8 @@ class AutonomousDiscoveryLoop:
             sent_to_review=sent_to_review,
             edges_added=edges_added,
             circuit_breaker_tripped=circuit_tripped,
+            edges_rolled_back=edges_rolled_back,
+            effective_cap=effective_cap,
             dry_run=cfg.dry_run,
         )
 
@@ -325,6 +389,9 @@ class AutonomousDiscoveryLoop:
                 "min_approval_rate": self._config.min_approval_rate,
                 "circuit_breaker_window": self._config.circuit_breaker_window,
                 "dry_run": self._config.dry_run,
+                "auto_rollback_on_trip": self._config.auto_rollback_on_trip,
+                "adaptive_tuning": self._config.adaptive_tuning,
+                "adaptive_effective_interval": self._next_interval if self._config.adaptive_tuning else self._config.cycle_interval,
                 "circuit_breaker_tripped": self._circuit_tripped,
                 "current_approval_rate": approval_rate,
                 "total_cycles": self._total_cycles,
@@ -349,8 +416,78 @@ class AutonomousDiscoveryLoop:
             except Exception:
                 logger.exception("AutonomousDiscoveryLoop: unhandled error in cycle.")
 
-            # Wait for the next cycle or until stop is signalled
-            self._stop_event.wait(timeout=self._config.cycle_interval)
+            # Phase 82: use adaptive interval if tuning is enabled, else config value
+            with self._lock:
+                interval = self._next_interval if self._config.adaptive_tuning else self._config.cycle_interval
+            self._stop_event.wait(timeout=interval)
+
+    def _compute_adaptive_params(self) -> tuple:
+        """
+        Read from the DiscoveryCalibrator (if attached) and return
+        ``(effective_cap, effective_interval)`` adjusted for current graph coverage.
+
+        Signal: mean community weight from ``calibrator.stats()``.
+          - weight > 1.0 → underexplored  → increase cap, shorten interval
+          - weight < 1.0 → saturated       → decrease cap, lengthen interval
+          - weight ≈ 1.0 → neutral         → no change
+
+        Scale is linear; capped to ``[adaptive_min_cap, adaptive_max_cap]``
+        and ``[adaptive_min_interval, adaptive_max_interval]``.
+
+        Returns the base config values unchanged when:
+          - ``adaptive_tuning`` is False
+          - no calibrator is attached
+          - calibrator has no community data yet
+        """
+        cfg = self._config
+        base_cap = cfg.max_materializations_per_cycle
+        base_interval = cfg.cycle_interval
+
+        if not cfg.adaptive_tuning:
+            return base_cap, base_interval
+
+        calibrator = getattr(self._agent, "_calibrator", None)
+        if calibrator is None:
+            return base_cap, base_interval
+
+        try:
+            stats = calibrator.stats()
+        except Exception:
+            return base_cap, base_interval
+
+        communities = stats.get("communities", {})
+        if not communities:
+            return base_cap, base_interval
+
+        weights = [v["weight"] for v in communities.values() if "weight" in v]
+        if not weights:
+            return base_cap, base_interval
+
+        mean_weight = sum(weights) / len(weights)
+        # mean_weight is normalised around 1.0 (neutral)
+
+        effective_cap = int(round(base_cap * mean_weight))
+        effective_cap = max(cfg.adaptive_min_cap,
+                            min(cfg.adaptive_max_cap, effective_cap))
+
+        # Interval: shorter when graph is underexplored (mean_weight > 1),
+        # longer when saturated (mean_weight < 1).  Invert the scale.
+        if mean_weight > 0:
+            effective_interval = base_interval / mean_weight
+        else:
+            effective_interval = base_interval
+        effective_interval = max(cfg.adaptive_min_interval,
+                                 min(cfg.adaptive_max_interval, effective_interval))
+
+        if effective_cap != base_cap or abs(effective_interval - base_interval) > 1.0:
+            logger.debug(
+                "AutonomousDiscoveryLoop adaptive: mean_weight=%.3f "
+                "cap %d→%d  interval %.0f→%.0f",
+                mean_weight, base_cap, effective_cap,
+                base_interval, effective_interval,
+            )
+
+        return effective_cap, effective_interval
 
     def _update_circuit_breaker(self) -> None:
         """Recalculate circuit_tripped from current decision window. Not locked."""

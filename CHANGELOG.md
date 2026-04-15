@@ -7,6 +7,31 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.20.0] — 2026-04-14
+### Added
+- **Phase 82: Adaptive Loop Tuning** — `LoopConfig` gains `adaptive_tuning` flag + bounds (`adaptive_min/max_cap`, `adaptive_min/max_interval`). When enabled, `AutonomousDiscoveryLoop` reads `DiscoveryCalibrator.stats()` at the start of each cycle and scales `max_materializations_per_cycle` linearly with the mean community weight (underexplored → higher cap; saturated → lower cap), and adjusts the inter-cycle sleep inversely. `CycleRecord` gains `effective_cap` for per-cycle observability. `LoopConfigSchema` and `LoopStatusResponse` expose all new fields. `POST /research/loop/configure` accepts all adaptive params.
+
+## [2.19.0] — 2026-04-14
+### Added
+- **Phase 81: Graph Snapshot Persistence** — `GraphSnapshot` class in `core/persistence.py` provides portable, human-readable JSON serialization of graph topology (nodes + edges).
+  - `save(adapter, path)` → JSON with version, timestamp, nodes (id/label/type/properties), edges (source/target/relation/confidence/provenance/synthetic/weight).
+  - `restore(path, adapter, skip_existing=True)` → re-adds edges via `adapter.add_edge()`; returns `{added, skipped, errors}`.
+  - `load_raw(path)` → raw JSON dict (no adapter required).
+  - `diff(path_a, path_b)` → identifies edges added/removed between two snapshots; returns `{edges_added, edges_removed, node_delta, edge_delta}`.
+  - Does not use pickle — survives adapter class changes. Complements `ProvenanceLedger` to make materialized edges durable across restarts.
+- `tests/test_graph_snapshot.py`: 17 tests covering save, restore, load_raw, diff, round-trip, multigraph, edge attribute preservation.
+
+## [2.18.0] — 2026-04-14
+### Added
+- **Phase 80: `remove_edge()` in GraphAdapter protocol** — `GraphAdapter` gains a non-abstract `remove_edge(u, v, relation)` method that raises `NotImplementedError` by default. All subclasses automatically inherit it; `NetworkXAdapter` continues to provide the concrete implementation. `ProvenanceLedger.rollback_batch()` drops the fragile `hasattr()` guard and instead re-raises `NotImplementedError` from the per-edge handler, keeping the contract clean while preserving the original behavior.
+
+## [2.17.0] — 2026-04-14
+### Added
+- **Phase 79: Loop-Provenance Recovery** — `AutonomousDiscoveryLoop` closes the fault-tolerance loop: when the circuit breaker trips and `LoopConfig.auto_rollback_on_trip=True`, the loop automatically calls `ProvenanceLedger.rollback_cycle(cycle_num, adapter)` to undo all edges materialized during the bad cycle before resuming. No-op in `dry_run` mode or when no ledger/adapter is attached.
+  - `LoopConfig.auto_rollback_on_trip: bool = False` — opt-in flag.
+  - `CycleRecord.edges_rolled_back: int` — count of edges removed by auto-rollback this cycle.
+  - `LoopConfigSchema` and `CycleRecordSchema` updated; `POST /research/loop/configure` accepts `auto_rollback_on_trip`.
+
 ## [2.16.0] — 2026-04-14
 ### Added
 - **Phase 78: Provenance Studio Panel** — `StudioEngine` gains a sixth live monitoring panel for `ProvenanceLedger` data.

@@ -2226,6 +2226,12 @@ def create_app(
             circuit_breaker_window=req.circuit_breaker_window if req.circuit_breaker_window is not None else current["circuit_breaker_window"],
             dry_run=req.dry_run if req.dry_run is not None else current["dry_run"],
             approver_checkpoint_path=req.approver_checkpoint_path if req.approver_checkpoint_path is not None else loop._config.approver_checkpoint_path,
+            auto_rollback_on_trip=req.auto_rollback_on_trip if req.auto_rollback_on_trip is not None else loop._config.auto_rollback_on_trip,
+            adaptive_tuning=req.adaptive_tuning if req.adaptive_tuning is not None else loop._config.adaptive_tuning,
+            adaptive_min_cap=req.adaptive_min_cap if req.adaptive_min_cap is not None else loop._config.adaptive_min_cap,
+            adaptive_max_cap=req.adaptive_max_cap if req.adaptive_max_cap is not None else loop._config.adaptive_max_cap,
+            adaptive_min_interval=req.adaptive_min_interval if req.adaptive_min_interval is not None else loop._config.adaptive_min_interval,
+            adaptive_max_interval=req.adaptive_max_interval if req.adaptive_max_interval is not None else loop._config.adaptive_max_interval,
         )
         loop.configure(new_cfg)
         return _loop_status_response(loop)
