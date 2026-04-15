@@ -286,6 +286,8 @@ subgraph PERSIST["⑨ Persistence Layer"]
     P_CACHE["build caches\nembeddings.pkl\nembeddings_sage.pkl\ncommunities.pkl"]
     P_ENGRAM["Engram JSON\nrelation pattern store"]
     P_QLOG["QueryLog NDJSON\nquery history\nEngram warm-up source"]
+    P_PROV["ProvenanceLedger\nper-batch/cycle edge records\nrollback_batch() / rollback_cycle()"]
+    P_SNAP["GraphSnapshot JSON\nportable topology\nsave() / restore() / diff()"]
 end
 
 %% ═══════════════════════════════════════════════════════════
@@ -299,7 +301,9 @@ subgraph API_SURF["⑩ API Surface"]
     API3["GET  /communities\nGET  /bridges\nGET  /logs\nDEL  /logs"]
     API4["POST /traverse\nfederated branch"]
     API5["POST /hypothesize\nPOST /hypothesize/materialize\nPOST /hypothesize/rollback"]
-    API6["POST /research/start\nPOST /research/scan\nPOST /research/validate\nGET  /research/proposals"]
+    API6["POST /research/start\nPOST /research/scan\nPOST /research/validate\nGET  /research/proposals\nGET/POST /research/auto-approver"]
+    API10["POST /research/loop/start\nPOST /research/loop/stop\nGET  /research/loop/status\nPOST /research/loop/configure"]
+    API11["GET  /research/provenance/stats\nGET  /research/provenance/batches\nPOST /research/provenance/rollback/{id}\nPOST /research/provenance/rollback-cycle/{n}"]
     API7["POST /insight/validate/all\nPOST /insight/validate/id"]
     API8["POST /stream/ingest\nGET  /stream/status\nGET  /stream/events"]
     API9["POST /build\nCSV hot-reload"]
@@ -438,7 +442,7 @@ P_SAVE -.->|snapshot| NX_ADAPTER
 P_LOAD -.->|restore| NX_ADAPTER
 P_CACHE -.->|accelerate| CACHE_CHK & SAGE_CACHE
 
-API1 & API2 & API3 & API4 & API5 & API6 & API7 & API8 & API9 -.->|routes to| CORTEX
+API1 & API2 & API3 & API4 & API5 & API6 & API7 & API8 & API9 & API10 & API11 -.->|routes to| CORTEX
 
 %% ═══════════════════════════════════════════════════════════
 %% STYLE
@@ -463,7 +467,8 @@ class REM_PRUNE,REM_CONS,REM_SYNTH,REM_SCHED,INS_HOT,INS_WARM,INS_COLD,INS_MAT,I
 class P_SAVE,P_LOAD,P_CACHE,P_ENGRAM,P_QLOG persist
 class ENGRAM_VERB,PATH_VERB,JSON_OUT,REST_OUT,UI_OUT,CLI_OUT,FED_OUT,STREAM_OUT output
 class E_REST,E_CLI,E_UI,E_FED,E_STREAM entry
-class API1,API2,API3,API4,API5,API6,API7,API8,API9 api
+class API1,API2,API3,API4,API5,API6,API7,API8,API9,API10,API11 api
+class P_PROV,P_SNAP persist
 class D_PIPE,D_STDP,D_SIG,D_COMPLETE,D_ENHANCE,D_EMB,D_SAGE,D_COMM,D_COARSEN,D_PROB,D_ENGRAM_CACHE,D_QUERY_EMB,D_MERGER,D_TEMPORAL,D_CVT,D_SYMVAL,D_BRIDGE,D_CALENG,D_PRUNE_MODE,D_PRIOR,D_OUT_TYPE,CACHE_CHK,SAGE_CACHE decision
 ```
 
@@ -501,3 +506,8 @@ class D_PIPE,D_STDP,D_SIG,D_COMPLETE,D_ENHANCE,D_EMB,D_SAGE,D_COMM,D_COARSEN,D_P
 | CalibrationEngine | on / off | self-doubt entropy check per hop |
 | RelationPathPrior | on / off | boosts known relation chain patterns |
 | Engram | warm / cold | steers beam toward cached relation sequences |
+| LoopedBeamTraversal | max_loops=1..N | applies traversal T times with inter-loop semantic/metabolic/mnemonic feedback |
+| AutoApprover | attached / not | tiered auto-decision on ResearchFindings; online SGD from confirmations |
+| ProvenanceLedger | attached / not | per-batch edge recording; enables targeted rollback |
+| GraphSnapshot | save / restore / diff | portable JSON topology persistence across restarts |
+| Adaptive Loop Tuning | on / off | DiscoveryCalibrator-driven dynamic cap and interval scaling per cycle |
