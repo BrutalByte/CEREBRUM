@@ -1665,6 +1665,23 @@ def create_app(
         """
         rem = _get_rem_engine()
         report = rem.run(dry_run=req.dry_run)
+
+        # Emit SYNAPTIC_PRUNE events for each removed edge
+        bridge = _state.get("telemetry_bridge")
+        if bridge is not None and not req.dry_run:
+            try:
+                from core.telemetry import NeuralEvent, NeuralEventType
+                for edge_tuple in (report.pruned_edge_list or []):
+                    if len(edge_tuple) >= 3:
+                        src, rel, tgt = str(edge_tuple[0]), str(edge_tuple[1]), str(edge_tuple[2])
+                        edge_id = f"{src}::{rel}::{tgt}"
+                        bridge.broadcast(NeuralEvent(
+                            event_type=NeuralEventType.SYNAPTIC_PRUNE,
+                            payload={"edge_id": edge_id, "reason": "rem_prune"},
+                        ))
+            except Exception as _e:
+                _api_log.debug("Telemetry SYNAPTIC_PRUNE emit failed: %s", _e)
+
         return REMReportSchema(
             pruned_edges=report.pruned_edges,
             synthesized_edges=report.synthesized_edges,
@@ -2145,6 +2162,27 @@ def create_app(
             edges_added = agent.approve(finding_id)
         except ValueError as exc:
             raise HTTPException(status_code=404, detail=str(exc))
+
+        # Emit SYNAPTOGENESIS events for each newly materialized edge
+        bridge = _state.get("telemetry_bridge")
+        if bridge is not None and edges_added > 0:
+            try:
+                from core.telemetry import NeuralEvent, NeuralEventType
+                finding = agent.get_finding(finding_id)
+                if finding is not None:
+                    for prop in (finding.proposals or []):
+                        bridge.broadcast(NeuralEvent(
+                            event_type=NeuralEventType.SYNAPTOGENESIS,
+                            payload={
+                                "source_node": prop.source,
+                                "target_node": prop.target,
+                                "relation":    prop.relation,
+                                "weight":      float(prop.confidence),
+                            },
+                        ))
+            except Exception as _e:
+                _api_log.debug("Telemetry SYNAPTOGENESIS emit failed: %s", _e)
+
         return ResearchApproveResponse(finding_id=finding_id, edges_added=edges_added)
 
     @app.post(
