@@ -13,7 +13,8 @@ public class CerebrumVisualizer : ModuleRules
             "InputCore",
             "WebsocketBlueprint",
             "Json",
-            "JsonUtilities"
+            "JsonUtilities",
+            "HTTP"          // REST graph pre-load in CerebrumBrain
         });
 	}
 }
