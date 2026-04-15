@@ -161,4 +161,4 @@ Most AIs need weeks of "training" on supercomputers. They cost millions of dolla
 | Observability Dashboard | Real-time window into every reasoning step | Full transparency into production decisions |
 
 ---
-*For the technical details, read the official [CEREBRUM ArXiv Manuscript](file:///e:/Development/Parallax/docs/latex/cerebrum_master.pdf).*
+*For the technical details, read the official [CEREBRUM ArXiv Manuscript](file:///e:/Development/Cerebrum/docs/latex/cerebrum_master.pdf).*

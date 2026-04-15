@@ -1,7 +1,7 @@
 # CEREBRUM REST API Reference
 
 **Base URL**: `http://localhost:8200`
-**API Version**: v2.0.1
+**API Version**: v2.20.1
 **Authentication**: JWT Bearer token (all endpoints except `/health`)
 
 ---
@@ -389,6 +389,151 @@ Submit hypothesis proposals to the ExternalValidator for literature cross-refere
     ],
     "validated_at": 1743000000
 }
+```
+
+---
+
+### Autonomous Discovery Loop
+
+#### `POST /research/loop/start`
+Start the autonomous discovery loop (idempotent — safe to call if already running).
+
+**Response (200 OK):** `LoopStatusResponse` — see `GET /research/loop/status`.
+
+---
+
+#### `POST /research/loop/stop`
+Stop the autonomous discovery loop gracefully. In-progress cycle completes before stopping.
+
+**Response (200 OK):** `LoopStatusResponse`
+
+---
+
+#### `GET /research/loop/status`
+Return a full health snapshot of the autonomous discovery loop.
+
+**Response (200 OK):**
+```json
+{
+    "running": true,
+    "cycle_interval": 300.0,
+    "max_materializations_per_cycle": 10,
+    "min_approval_rate": 0.5,
+    "circuit_breaker_window": 20,
+    "dry_run": false,
+    "auto_rollback_on_trip": false,
+    "adaptive_tuning": false,
+    "adaptive_effective_interval": null,
+    "circuit_breaker_tripped": false,
+    "current_approval_rate": 0.75,
+    "total_cycles": 14,
+    "total_approved": 42,
+    "total_rejected": 18,
+    "total_review": 5,
+    "total_edges_added": 42,
+    "started_at": 1743000000,
+    "last_cycle_at": 1743005200,
+    "recent_cycles": [
+        {
+            "cycle_number": 14,
+            "started_at": 1743005200,
+            "duration_seconds": 4.2,
+            "findings_seen": 5,
+            "auto_approved": 3,
+            "auto_rejected": 2,
+            "sent_to_review": 0,
+            "edges_added": 3,
+            "circuit_breaker_tripped": false,
+            "edges_rolled_back": 0,
+            "effective_cap": 10,
+            "dry_run": false
+        }
+    ]
+}
+```
+
+---
+
+#### `POST /research/loop/configure`
+Partially update the loop configuration. All fields are optional; unspecified fields retain their current value.
+
+**Request body:**
+```json
+{
+    "cycle_interval": 600.0,
+    "max_materializations_per_cycle": 5,
+    "min_approval_rate": 0.6,
+    "circuit_breaker_window": 10,
+    "dry_run": false,
+    "auto_rollback_on_trip": true,
+    "adaptive_tuning": true,
+    "adaptive_min_cap": 1,
+    "adaptive_max_cap": 20,
+    "adaptive_min_interval": 60.0,
+    "adaptive_max_interval": 3600.0
+}
+```
+
+**Response (200 OK):** `LoopStatusResponse`
+
+---
+
+### Graph Provenance & Rollback
+
+#### `GET /research/provenance/stats`
+Return aggregate provenance statistics.
+
+**Response (200 OK):**
+```json
+{
+    "total_batches": 42,
+    "total_edges": 138,
+    "rollback_count": 2,
+    "cycles_seen": 14
+}
+```
+
+---
+
+#### `GET /research/provenance/batches`
+List recent materialization batches, newest first.
+
+**Query params:** `?n=20` (default 20)
+
+**Response (200 OK):**
+```json
+{
+    "batches": [
+        {
+            "batch_id": "batch_20260414_001",
+            "finding_id": "hyp_007",
+            "cycle_number": 14,
+            "edge_count": 3,
+            "rolled_back": false,
+            "recorded_at": 1743005204
+        }
+    ]
+}
+```
+
+---
+
+#### `POST /research/provenance/rollback/{batch_id}`
+Remove all edges recorded under a single `batch_id`. Adapter must implement `remove_edge()`.
+
+**Response (200 OK):**
+```json
+{"rolled_back": 3, "batch_id": "batch_20260414_001"}
+```
+
+---
+
+#### `POST /research/provenance/rollback-cycle/{n}`
+Remove all edges materialized during loop cycle `n`.
+
+**Response (200 OK):**
+```json
+{"rolled_back": 7, "cycle_number": 12}
 ```
 
 ---

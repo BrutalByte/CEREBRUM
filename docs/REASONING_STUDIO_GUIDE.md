@@ -1,6 +1,6 @@
 # CEREBRUM Reasoning Studio — User Guide
 
-**Version**: v2.4.0
+**Version**: v2.20.1
 **Interface**: Gradio web UI + pyvis graph visualization
 **Business Logic Module**: `core/studio_engine.py` (`StudioEngine`)
 **UI Entry Point**: `ui/studio.py`
@@ -120,6 +120,45 @@ A ranked list of the best reasoning paths found by CEREBRUM.
 
 ### 4. Community Panel (bottom)
 Displays community metrics, sizes, and membership lists.
+
+---
+
+## Studio v2 — Live Monitoring Dashboard (Phases 75 + 78)
+
+Six additional panels are available when optional engines are attached to `StudioEngine`. All panels degrade gracefully when an engine is not attached.
+
+### Attachment API
+
+```python
+engine = StudioEngine()
+engine.load_graph("my_graph.csv")
+
+# Attach optional engines
+engine.attach_research_agent(research_agent)   # panels 1 + 2
+engine.attach_modulator(chemical_modulator)    # panel 4
+engine.attach_loop(autonomous_loop)            # panel 5
+engine.attach_provenance_ledger(ledger)        # panel 6
+```
+
+### Panel 1 — AutoApprover Audit Log (`get_auto_approver_audit`)
+HTML table of the last N AutoApprover decisions with color-coded action column (APPROVE / REJECT / REVIEW) and a summary row showing approval rate and total decisions.
+
+### Panel 2 — ContradictionResolver Revision Queue (`get_revision_queue`)
+HTML list of findings where proposed evidence outweighs existing contradiction — candidates flagged as `revision_candidate`. Shows net evidence score and contradiction weight.
+
+### Panel 3 — DiscoveryCalibrator Heatmap (`get_discovery_heatmap`)
+Plotly dual-bar chart: sampling weight (inverse-rate multiplier) and raw discovery rate per community. Communities with no prior scans show at `max_weight` (5.0).
+
+### Panel 4 — ChemicalModulator Blood Panel (`get_chemical_panel`)
+Plotly bar + scatter chart of all 5 metabolic scalars (Reinforcement, Arousal, Novelty, Cohesion, Persistence) plotted against their homeostatic baseline. Bars are color-coded green/amber/red by deviation magnitude.
+
+### Panel 5 — Autonomous Loop Panel (`get_loop_panel`)
+Three-card status header (running state, circuit breaker status, current approval rate) plus a stacked bar/line cycle history chart showing per-cycle approved/rejected/review counts and cumulative edges added.
+
+### Panel 6 — Provenance Panel (`get_provenance_panel`)
+Four-card summary row (total batches, edges recorded, rollback count, cycles seen) plus two charts:
+- **Batch bar chart**: horizontal bars for the N most recent materialization batches; green = active, red = rolled back
+- **Cycle timeline**: per-cycle edge count (bars) + cumulative edges (dashed line, secondary y-axis)
 
 ---
 

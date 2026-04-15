@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026
-**Version**: v2.7.0 (Phase 68 COMPLETE)
+**Version**: v2.20.1 (Phase 82 COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -445,6 +445,106 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ---
 
+### Claim 32: Predictive Coding Engine with Soliton Index (Phase 69)
+
+**Description**: `PredictiveCodingEngine` generates a *prior path* from the top Engram pattern before each traversal. After traversal, a **Prediction Error (PE)** is computed as the Jaccard divergence between prior and actual relation sequences. PE drives ChemicalModulator signals. The `soliton_index = 1 − mean(recent PEs)` measures prior stability — a self-reinforcing prior that consistently yields low PE behaves as a soliton (self-localising wave).
+
+**Novelty Statement**: Predictive coding has been applied to neural perception (Rao & Ballard 1999). This is the first application to symbolic KG reasoning: a training-free prior derived from empirical traversal history, with a wave-coherence metric (`soliton_index`) for prior stability monitoring.
+
+**Relevant files**: `core/predictive_coder.py`
+
+---
+
+### Claim 33: Looped Beam Traversal with Adaptive Exit Gate (Phase 70)
+
+**Description**: `LoopedBeamTraversal` wraps any beam engine and applies it T times. Between loops: top-K answer entities expand seeds (semantic channel), PE→ChemicalModulator adjusts beam params (metabolic channel), Engram records bias pruning (mnemonic channel). Adaptive exit gate: `|ΔPE| < γ` (primary) or answer-set Jaccard ≥ θ (fallback).
+
+**Novelty Statement**: LoopLM-style iteration (arXiv:2510.25741) applies looping to neural language models. This is the first application to symbolic KG beam search, with three distinct inter-loop feedback channels (semantic, metabolic, mnemonic) and a prediction-error-driven exit condition rather than a fixed iteration count.
+
+**Relevant files**: `reasoning/looped_traversal.py`
+
+---
+
+### Claim 34: Tiered AutoApprover with Online SGD (Phase 71)
+
+**Description**: `AutoApprover` implements a three-tier decision stack for `ResearchFinding` objects: (1) hard gates on literature status and missing validation; (2) online logistic SGD classifier over a 16-feature vector; (3) optional LLM semantic fallback. The classifier is updated online from confirmed human decisions via `fit()`.
+
+**Novelty Statement**: KG completion pipelines either accept all machine-generated candidates or require full human review. This is the first tiered auto-approval stack for KG discovery findings that learns continuously from human confirmations without full retraining.
+
+**Relevant files**: `core/auto_approver.py`
+
+---
+
+### Claim 35: Four-Perspective TriangulationEngine for Candidate Validation (Phase 72)
+
+**Description**: `TriangulationEngine` validates `ResearchCandidate` objects from four independent perspectives: P1 reverse confidence (HypothesisEngine run B→A), P2 strategy agreement (3-config voting fraction), P3 mean path independence (Jaccard independence across proposals), P4 semantic type consistency (relation-type/entity-class match). Results extend the AutoApprover feature vector from 12 to 16 dimensions.
+
+**Novelty Statement**: KG link prediction evaluates forward-direction confidence only. No prior system applies simultaneous reverse traversal, multi-strategy voting, path independence, and semantic type consistency as a four-perspective validation unit on the same candidate.
+
+**Relevant files**: `core/triangulation_engine.py`
+
+---
+
+### Claim 36: EMA-Based DiscoveryCalibrator with Inverse-Rate Sampling (Phase 73)
+
+**Description**: `DiscoveryCalibrator` tracks per-community scan and discovery rates via Exponential Moving Average. An inverse-rate multiplier `weight = global_rate / (community_rate + ε)` boosts understudied communities in discovery scoring. Cold-start: unscanned communities receive `max_weight` (5.0). Temporal recency scoring added to `ValidationReport` using exponential decay with 7-year half-life.
+
+**Novelty Statement**: KG research agents sample uniformly or by degree. Adaptive per-community EMA-driven inverse-rate rebalancing for autonomous KG discovery, with cold-start maximum weighting and temporal evidence recency, is a novel contribution.
+
+**Relevant files**: `core/discovery_calibrator.py`
+
+---
+
+### Claim 37: Autonomous Discovery Loop with Circuit Breaker (Phase 74)
+
+**Description**: `AutonomousDiscoveryLoop` closes the discover→validate→approve→materialize loop without human intervention. Features: sliding-window circuit breaker (pauses materialization if approval rate falls below threshold), per-cycle materialization cap, dry-run mode, and AutoApprover checkpoint persistence after every cycle with decisions.
+
+**Novelty Statement**: Autonomous KG population systems (NELL, ATOMIC) run batch updates without feedback-loop safety mechanisms. This is the first KG discovery loop with a sliding-window circuit breaker that dynamically pauses based on approval quality, with dry-run mode and per-cycle caps.
+
+**Relevant files**: `core/autonomous_loop.py`
+
+---
+
+### Claim 38: Graph Provenance Ledger with Targeted Rollback (Phase 76)
+
+**Description**: `ProvenanceLedger` records every edge materialized by `ResearchAgent.approve()` with batch_id, finding_id, and cycle_number. `rollback_batch(batch_id, adapter)` removes exactly one approval's edges. `rollback_cycle(cycle_number, adapter)` removes all edges from a given loop cycle. LRU eviction, thread-safe.
+
+**Novelty Statement**: KG update systems offer at most version snapshots for rollback. Fine-grained per-batch and per-cycle targeted edge removal — scoped to individual autonomous-approval transactions — with LRU-bounded ledger and thread-safe semantics is novel.
+
+**Relevant files**: `core/provenance_ledger.py`
+
+---
+
+### Claim 39: Loop-Provenance Recovery (Phase 79)
+
+**Description**: `AutonomousDiscoveryLoop` optionally auto-invokes `ProvenanceLedger.rollback_cycle()` when the circuit breaker fires, atomically undoing all edges materialized in the bad cycle before resuming. `CycleRecord.edges_rolled_back` tracks what was undone.
+
+**Novelty Statement**: No prior autonomous KG population system combines circuit-breaker failure detection with automatic transactional rollback of materialized edges, making the loop self-healing on quality degradation.
+
+**Relevant files**: `core/autonomous_loop.py`, `core/provenance_ledger.py`
+
+---
+
+### Claim 40: Portable Graph Snapshot with Non-Destructive Restore and Diff (Phase 81)
+
+**Description**: `GraphSnapshot` serializes graph topology to a portable, human-readable JSON format (not pickle). `restore(skip_existing=True)` re-adds only new edges, preserving all edge attributes. `diff(path_a, path_b)` identifies exact edge additions and removals between two snapshots without loading a live graph.
+
+**Novelty Statement**: KG persistence typically uses binary serialization or full database dumps. A topology-portable, pickle-free, skip-existing restore with structural diff — without requiring the original adapter class — is novel.
+
+**Relevant files**: `core/persistence.py`
+
+---
+
+### Claim 41: Adaptive Loop Tuning via Calibrator-Driven Cap and Interval Scaling (Phase 82)
+
+**Description**: `AutonomousDiscoveryLoop` with `adaptive_tuning=True` reads `DiscoveryCalibrator.stats()` at cycle start and scales both `max_materializations_per_cycle` and inter-cycle sleep by mean community weight. Underexplored graphs → higher cap + shorter interval; saturated graphs → lower cap + longer interval. All bounds configurable.
+
+**Novelty Statement**: Autonomous KG discovery loops use fixed caps and intervals. This is the first system to dynamically scale both materialization rate and cycle frequency from a per-community EMA exploration metric, creating a closed-loop adaptive pacing mechanism.
+
+**Relevant files**: `core/autonomous_loop.py`, `core/discovery_calibrator.py`
+
+---
+
 ## Prior Art Summary Table
 
 | CEREBRUM Component | Closest Prior Art | Key Distinction |
@@ -478,6 +578,16 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 | **Explainable Reasoning Trace (ERT)** | Path-only explanation | Complete PROCESS audit including pruned competitors |
 | **Neural Telemetry Bridge** | Static graph viz (Gephi) | Live per-hop pulse streaming to high-fidelity 3D engines |
 | **Metabolic Modulation (Homeostasis)** | Scalar NN scaling | Symbolic KG state machine + homeostatic decay + parameter-ratio control |
+| **Predictive Coding + Soliton Index** | Neural predictive coding (Rao 1999) | Training-free KG prior from Engram history + wave-coherence metric |
+| **Looped Beam Traversal** | LoopLM (arXiv:2510.25741) | Three inter-loop channels (semantic/metabolic/mnemonic) + PE exit gate |
+| **AutoApprover (tiered + online SGD)** | Binary accept/reject pipelines | Three-tier stack; learns online from human confirmations |
+| **TriangulationEngine (4-perspective)** | Single-direction link prediction | Simultaneous reverse, multi-strategy, path-independence, type-consistency |
+| **DiscoveryCalibrator (EMA + inverse-rate)** | Uniform or degree-weighted sampling | Per-community EMA + inverse-rate rebalancing + cold-start max weight |
+| **Autonomous Discovery Loop + circuit breaker** | NELL, ATOMIC batch updates | Sliding-window circuit breaker + per-cycle cap + dry-run + checkpoint |
+| **ProvenanceLedger (per-batch rollback)** | Snapshot-level rollback | Fine-grained per-batch and per-cycle targeted edge removal |
+| **Loop-Provenance Recovery** | No equivalent | Circuit-breaker triggered automatic transactional rollback |
+| **GraphSnapshot (portable + diff)** | Pickle / database dumps | JSON-portable, skip-existing restore, structural diff without live graph |
+| **Adaptive Loop Tuning** | Fixed caps / intervals | Calibrator-driven dynamic cap + interval scaling per cycle |
 
 ---
 
