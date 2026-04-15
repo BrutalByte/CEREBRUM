@@ -2,7 +2,7 @@
 ## Self-Verification and Metacognitive Bias Detection via the Insight Engine
 
 **Date**: March 2026
-**Status**: v1.1.0 — Phase 20 COMPLETE
+**Status**: v2.1.0 (Phase 82 COMPLETE)
 **Target Audience**: Risk Officers, Research Directors, Compliance Leads, AI Safety Teams
 
 ---
@@ -42,6 +42,8 @@ A drug discovery platform uses CEREBRUM to identify novel therapeutic targets. O
 
 ### Conclusion
 The Verification and Metacognition layer gives CEREBRUM a self-correcting intelligence that no other KG reasoning system possesses. By treating speculation with structural skepticism and monitoring its own reasoning patterns for systemic biases, CEREBRUM provides the epistemic rigor required for deployment in high-stakes research, clinical, and regulatory environments.
+
+> **Note**: This whitepaper covers the foundational Phase 20 specification. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

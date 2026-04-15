@@ -2,7 +2,7 @@
 ## Temporal Reasoning, Probabilistic Confidence, and Adaptive Learning in CEREBRUM
 
 **Date**: March 2026
-**Status**: v1.1.0 — Phase 20 COMPLETE
+**Status**: v2.1.0 (Phase 82 COMPLETE)
 **Target Audience**: Data Science Leaders, Analytics Architects, Enterprise AI Strategists
 
 ---
@@ -42,6 +42,8 @@ A bank uses CEREBRUM to assess the creditworthiness of corporate loan applicants
 
 ### Conclusion
 The Algorithmic Depth layer transforms CEREBRUM from a static reasoning engine into an adaptive, time-aware, probabilistically-calibrated intelligence system. These five enhancements compose seamlessly and independently, allowing operators to enable exactly the capabilities their deployment requires without complexity overhead.
+
+> **Note**: This whitepaper covers the foundational Phase 20 specification. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

@@ -2,7 +2,7 @@
 ## The Inference Validator and Path-Preserving Evaluation
 
 **Date**: March 2026  
-**Status**: v1.2.0 Hardened Enterprise  
+**Status**: v2.1.0 (Phase 82 COMPLETE)  
 **Target Audience**: QA Engineers, Data Scientists, Compliance Officers, AI Product Leads
 
 ---
@@ -32,6 +32,8 @@ Inference Validator uses a "Hold-out and Rediscover" methodology designed specif
 
 ### Conclusion
 Inference Validator turns graph reasoning from a "guessing game" into a verifiable science. It provides the automated quality assurance required for mission-critical AI systems to operate with confidence in unsupervised environments.
+
+> **Note**: This whitepaper covers the foundational Phase 20 specification. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

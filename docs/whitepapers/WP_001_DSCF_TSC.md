@@ -2,7 +2,7 @@
 ## The DSCF/TSC Partitioning Engine
 
 **Date**: March 2026  
-**Status**: v1.2.0 Hardened Enterprise  
+**Status**: v2.1.0 (Phase 82 COMPLETE)  
 **Target Audience**: CTOs, Data Architects, AI Researchers
 
 ---
@@ -30,6 +30,8 @@ The DSCF (Dual-Signal Community Fusion) and TSC (Triple-Signal Consensus) engine
 
 ### Conclusion
 The DSCF/TSC Engine moves graph partitioning from a research experiment to an enterprise-grade infrastructure component. It is the structural heart of the CEREBRUM framework, enabling stable, scalable, and explainable graph intelligence.
+
+> **Note**: This whitepaper covers the foundational Phase 20 specification. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

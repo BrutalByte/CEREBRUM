@@ -2,7 +2,7 @@
 ## The CSA (Community-Structured Attention) Engine
 
 **Date**: March 2026  
-**Status**: v1.2.0 Hardened Enterprise  
+**Status**: v2.1.0 (Phase 82 COMPLETE)  
 **Target Audience**: AI Product Managers, Compliance Officers, ML Engineers
 
 ---
@@ -31,6 +31,8 @@ CSA adapts the power of Transformer attention to Knowledge Graphs, but with a cr
 
 ### Conclusion
 The CSA Engine moves AI from "Predictive" to "Reasonable." It provides the mathematical rigor and transparency required for enterprise-scale Knowledge Graph intelligence.
+
+> **Note**: This whitepaper covers the foundational Phase 20 specification. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

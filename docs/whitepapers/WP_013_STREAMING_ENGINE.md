@@ -2,7 +2,7 @@
 ## Real-Time Knowledge Graph Reasoning via the Streaming Engine
 
 **Date**: March 2026
-**Status**: v1.1.0 — Phase 20 COMPLETE
+**Status**: v2.1.0 (Phase 82 COMPLETE)
 **Target Audience**: Engineering Leaders, Data Platform Architects, Operations Directors, CTOs
 
 ---
@@ -44,6 +44,8 @@ A manufacturing plant monitors 800 sensors across a production line. CEREBRUM's 
 
 ### Conclusion
 The Streaming Engine transforms CEREBRUM from a query-response tool into a continuous intelligence infrastructure. It provides the real-time awareness required in today's high-velocity data environments while maintaining the glass-box transparency and zero-hallucination guarantee that distinguish CEREBRUM from probabilistic AI alternatives.
+
+> **Note**: This whitepaper covers the foundational Phase 20 specification. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

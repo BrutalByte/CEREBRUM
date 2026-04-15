@@ -2,7 +2,7 @@
 ## Autonomous Discovery via the STDP Causal Engine
 
 **Date**: March 2026  
-**Status**: v1.2.0 Hardened Enterprise  
+**Status**: v2.1.0 (Phase 82 COMPLETE)  
 **Target Audience**: Data Scientists, IoT Architects, Cybersecurity Analysts, Fintech Leads
 
 ---
@@ -31,6 +31,8 @@ The STDP Engine adapts **Spike-Timing-Dependent Plasticity**—the same rule the
 
 ### Conclusion
 The STDP Causal Engine transforms raw event streams into a structured, causal Knowledge Graph. It provides the "Reasoning Layer" for the modern enterprise, turning historical data into a predictive, self-learning causal network.
+
+> **Note**: This whitepaper covers the foundational Phase 20 specification. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

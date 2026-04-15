@@ -2,7 +2,7 @@
 ## Self-Maintenance and Verification via the REM Cycle
 
 **Date**: March 2026  
-**Status**: v1.2.0 Hardened Enterprise  
+**Status**: v2.1.0 (Phase 82 COMPLETE)  
 **Target Audience**: CIOs, AI Operations Leads, Data Stewards, Risk Officers
 
 ---
@@ -32,6 +32,8 @@ CEREBRUM mimics the biological REM cycle to perform maintenance without interrup
 
 ### Conclusion
 The REM Cycle moves AI from "Transient Tools" to "Stable Infrastructure." It provides the metacognitive layer required for an enterprise Knowledge Graph to evolve, learn, and maintain its integrity over years of operation.
+
+> **Note**: This whitepaper covers the foundational Phase 20 specification. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
