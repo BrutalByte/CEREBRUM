@@ -613,3 +613,206 @@ def gpu_best_of_n(
             best_partitions = partitions
 
     return best_partitions
+
+
+# ---------------------------------------------------------------------------
+# Hybrid CPU+GPU best-of-N
+# ---------------------------------------------------------------------------
+
+def _cpu_only_best_of_n(
+    G: nx.Graph,
+    n_trials: int,
+    max_workers: Optional[int],
+) -> List[frozenset]:
+    """
+    Run n_trials of CPU DSCF in parallel via ProcessPoolExecutor.
+    Pure fallback — no torch, no CUDA.
+    """
+    from core.community_engine import dscf_communities
+    import multiprocessing
+    from concurrent.futures import ProcessPoolExecutor
+
+    workers = min(n_trials, max_workers or multiprocessing.cpu_count())
+    results: List[List[frozenset]] = []
+
+    if n_trials > 1:
+        try:
+            with ProcessPoolExecutor(max_workers=workers) as ex:
+                futures = [ex.submit(dscf_communities, G) for _ in range(n_trials)]
+                for f in futures:
+                    try:
+                        results.append(f.result())
+                    except Exception as exc:
+                        log.warning("CPU trial failed in _cpu_only_best_of_n: %s", exc)
+        except Exception as exc:
+            log.warning("ProcessPoolExecutor unavailable: %s — sequential fallback", exc)
+
+    if not results:
+        results = [dscf_communities(G) for _ in range(n_trials)]
+
+    return max(results, key=lambda p: GPUDSCFEngine._modularity_q(G, p))
+
+
+def hybrid_best_of_n(
+    G: nx.Graph,
+    n_trials: int = 5,
+    centrality_weights: Optional[Dict[str, float]] = None,
+    config: Optional[GPUDSCFConfig] = None,
+    seed: Optional[int] = None,
+    gpu_headroom_pct: float = 0.8,
+    max_cpu_workers: Optional[int] = None,
+) -> List[frozenset]:
+    """
+    Run n_trials of DSCF and return the highest-modularity partition, splitting
+    work between GPU and CPU based on available VRAM.
+
+    Three operating modes selected automatically:
+
+    1. **GPU-dominant** (free VRAM ≥ est / headroom_pct):
+       All trials on GPU — identical to ``gpu_best_of_n()``.
+
+    2. **Hybrid** (est ≤ free VRAM < est / headroom_pct):
+       GPU runs a proportional share sequentially; CPU workers run the rest in
+       parallel via ``ProcessPoolExecutor``.  CPU processes start *before* GPU
+       trials begin so both pools overlap.
+
+    3. **CPU-only** (free VRAM < est or no CUDA):
+       All trials on CPU in parallel — identical to the multiprocessing path
+       inside ``best_of_n_dscf()``.
+
+    Parameters
+    ----------
+    G                : NetworkX graph.
+    n_trials         : Total number of independent DSCF runs (best Q returned).
+    centrality_weights: Optional {node: float} for the TSC third signal.
+    config           : ``GPUDSCFConfig`` override (device, alpha, beta, …).
+    seed             : Random seed for reproducibility.
+    gpu_headroom_pct : GPU engages when est_vram < free_vram × headroom_pct.
+                       Default 0.8 — GPU used when VRAM is less than 80% full.
+                       Set > 1.0 to force CPU-only; set to 0.0 for max GPU use.
+    max_cpu_workers  : Cap on ``ProcessPoolExecutor`` workers (default: cpu_count).
+
+    Returns
+    -------
+    List[frozenset] — same format as ``dscf_communities()``.
+
+    Examples
+    --------
+    >>> from core.dscf_gpu import hybrid_best_of_n
+    >>> parts = hybrid_best_of_n(G, n_trials=5)                    # auto
+    >>> parts = hybrid_best_of_n(G, n_trials=5, gpu_headroom_pct=1.1)  # force CPU
+    """
+    if seed is not None:
+        random.seed(seed)
+        if _TORCH_AVAILABLE:
+            torch.manual_seed(seed)
+
+    # ---- No CUDA available — pure CPU path --------------------------------
+    if not _TORCH_AVAILABLE or not _has_cuda():
+        log.debug("hybrid_best_of_n: no CUDA — delegating to CPU-only path")
+        return _cpu_only_best_of_n(G, n_trials, max_cpu_workers)
+
+    # ---- VRAM budget estimation (mirrors _detect_torch pre-flight) --------
+    N = G.number_of_nodes()
+    if N == 0:
+        return []
+
+    bytes_per = 4  # float32
+    num_comm_est = max(1, int(N ** 0.5))
+    est_mb = int(N * num_comm_est * bytes_per * 2.5 / (1024 ** 2)) + 256
+
+    from core.hardware import get_gpu_vram_mb, get_best_cuda_device
+    device_idx = get_best_cuda_device()
+    free_mb, total_mb = get_gpu_vram_mb(device_idx)
+
+    # ---- Decide split -------------------------------------------------------
+    if free_mb == 0:
+        # VRAM query failed (Jetson, etc.) — assume GPU is fine
+        gpu_n, cpu_n = n_trials, 0
+    elif free_mb >= est_mb / max(gpu_headroom_pct, 1e-9):
+        # GPU has comfortable headroom
+        gpu_n, cpu_n = n_trials, 0
+    elif free_mb >= est_mb:
+        # GPU is tight but can handle one trial at a time;
+        # allocate proportionally, always at least 1 GPU trial
+        gpu_fraction = free_mb / (free_mb + est_mb)
+        gpu_n = max(1, round(n_trials * gpu_fraction))
+        cpu_n = n_trials - gpu_n
+    else:
+        # GPU OOM — all CPU
+        gpu_n, cpu_n = 0, n_trials
+
+    log.info(
+        "hybrid_best_of_n: N=%d  est_vram=%dMB  free_vram=%dMB  "
+        "→ %d GPU trial(s) + %d CPU trial(s)",
+        N, est_mb, free_mb, gpu_n, cpu_n,
+    )
+
+    # ---- Launch CPU trials in background before GPU starts -----------------
+    import multiprocessing
+    from concurrent.futures import ProcessPoolExecutor
+    from core.community_engine import dscf_communities
+
+    cpu_futures = []
+    cpu_executor = None
+
+    if cpu_n > 0:
+        workers = min(cpu_n, max_cpu_workers or multiprocessing.cpu_count())
+        try:
+            cpu_executor = ProcessPoolExecutor(max_workers=workers)
+            cpu_futures = [cpu_executor.submit(dscf_communities, G) for _ in range(cpu_n)]
+        except Exception as exc:
+            log.warning("hybrid_best_of_n: ProcessPoolExecutor failed (%s) — CPU trials will run sequentially after GPU", exc)
+            cpu_executor = None
+
+    # ---- Run GPU trials sequentially in main thread ------------------------
+    all_results: List[List[frozenset]] = []
+    demoted_to_cpu = 0
+
+    if gpu_n > 0:
+        cfg = config or GPUDSCFConfig(device=f"cuda:{device_idx}")
+        engine = GPUDSCFEngine(cfg)
+        for trial_idx in range(gpu_n):
+            try:
+                parts = engine.detect(G, centrality_weights)
+                all_results.append(parts)
+            except Exception as exc:
+                log.warning(
+                    "hybrid_best_of_n: GPU trial %d failed (%s) — demoting to CPU",
+                    trial_idx, exc,
+                )
+                demoted_to_cpu += 1
+
+    # ---- Collect CPU results ------------------------------------------------
+    if cpu_executor is not None:
+        for f in cpu_futures:
+            try:
+                all_results.append(f.result(timeout=600))
+            except Exception as exc:
+                log.warning("hybrid_best_of_n: CPU trial failed (%s)", exc)
+        cpu_executor.shutdown(wait=False)
+    elif cpu_n > 0 or demoted_to_cpu > 0:
+        # Sequential fallback for CPU trials (executor unavailable or demoted GPU trials)
+        seq_n = cpu_n + demoted_to_cpu
+        for _ in range(seq_n):
+            try:
+                all_results.append(dscf_communities(G))
+            except Exception as exc:
+                log.warning("hybrid_best_of_n: sequential CPU trial failed (%s)", exc)
+
+    # ---- Emergency fallback -------------------------------------------------
+    if not all_results:
+        log.warning("hybrid_best_of_n: all trials failed — emergency single CPU run")
+        all_results = [dscf_communities(G)]
+
+    return max(all_results, key=lambda p: GPUDSCFEngine._modularity_q(G, p))
+
+
+def _has_cuda() -> bool:
+    """Return True if a CUDA/ROCm device is available via torch."""
+    if not _TORCH_AVAILABLE:
+        return False
+    try:
+        return bool(torch.cuda.is_available())
+    except Exception:
+        return False

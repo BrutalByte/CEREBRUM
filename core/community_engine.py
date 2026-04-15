@@ -576,24 +576,74 @@ def best_of_n_dscf(
     max_iter: int = 100,
     seed: int = None,
     use_multiprocessing: bool = True,
+    use_gpu: str = "auto",
 ) -> List[frozenset]:
     """
     Run DSCF n_trials times and return the partition with highest modularity.
 
     Recommended for production use to mitigate DSCF's non-determinism.
-    Uses multiprocessing by default for faster execution.
+
+    Parameters
+    ----------
+    use_gpu : str
+        Controls GPU/CPU dispatch:
+
+        ``"auto"`` (default)
+            Use ``hybrid_best_of_n`` when CUDA is available; fall back to the
+            CPU multiprocessing path otherwise.  The hybrid function
+            automatically decides how many trials go to GPU vs. CPU based on
+            available VRAM, so this is always safe to leave as default.
+
+        ``"hybrid"``
+            Force the hybrid path even if CUDA is not detected (useful for
+            explicit testing; degrades gracefully to CPU-only).
+
+        ``"gpu"``
+            Force all trials onto GPU via ``gpu_best_of_n``.  Raises on OOM
+            rather than falling back.
+
+        ``"cpu"``
+            Bypass GPU entirely; use the ProcessPoolExecutor CPU path.
+            Equivalent to the pre-GPU behaviour.
     """
     if seed is not None:
         random.seed(seed)
 
+    # ---- GPU / hybrid dispatch ---------------------------------------------
+    if use_gpu in ("auto", "hybrid"):
+        _use_hybrid = (use_gpu == "hybrid")
+        if not _use_hybrid:
+            # "auto": only activate hybrid path when CUDA is present
+            try:
+                from core.hardware import HAS_CUDA as _hc
+                _use_hybrid = _hc
+            except Exception:
+                _use_hybrid = False
+
+        if _use_hybrid:
+            from core.dscf_gpu import hybrid_best_of_n, GPUDSCFConfig
+            cfg = GPUDSCFConfig(resolution=resolution, max_iter=max_iter)
+            return hybrid_best_of_n(
+                G,
+                n_trials=n_trials,
+                config=cfg,
+                seed=seed,
+            )
+
+    elif use_gpu == "gpu":
+        from core.dscf_gpu import gpu_best_of_n, GPUDSCFConfig
+        cfg = GPUDSCFConfig(resolution=resolution, max_iter=max_iter)
+        return gpu_best_of_n(G, n_trials=n_trials, config=cfg, seed=seed)
+
+    # ---- CPU-only path (use_gpu="cpu" or auto with no CUDA) ----------------
     if use_multiprocessing and n_trials > 1:
         from concurrent.futures import ProcessPoolExecutor
         import multiprocessing
-        
+
         # Determine number of workers (at most n_trials or CPU count)
         cpus = multiprocessing.cpu_count()
         workers = min(n_trials, cpus)
-        
+
         try:
             with ProcessPoolExecutor(max_workers=workers) as executor:
                 futures = [
