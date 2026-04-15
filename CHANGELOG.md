@@ -7,6 +7,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.20.1] — 2026-04-14
+### Fixed
+- **Gap Review 4 (Phases 79–82)** — two silent bugs:
+  - `api/server.py` `_loop_status_response()` omitted `auto_rollback_on_trip`, `adaptive_tuning`, and `adaptive_effective_interval` from the `LoopStatusResponse` constructor; all four loop status endpoints returned stale defaults (`False`/`None`) for these fields despite the values being present in `status()`.
+  - `core/autonomous_loop.py` `configure()` did not reset `_next_interval` when a new `LoopConfig` was applied; stale adaptive sleep durations from a previous cycle leaked into subsequent cycles even after adaptive tuning was disabled.
+- **Gap Review 3 (Phases 75–77)** — three bugs fixed in prior pass:
+  - `core/studio_engine.py` `get_chemical_panel()` crashed with `AttributeError: 'float' object has no attribute 'get'` because `ChemicalModulator.baseline` is a scalar, not a dict.
+  - `benchmarks/feature_impact_benchmark.py` `compute_metrics()` declared a dead `use_looped: bool = False` parameter that was never read; removed.
+  - `api/server.py` `_get_research_agent()` did not wire a `ProvenanceLedger` that was already initialised in `_state`; any client that initialised a provenance endpoint before a research endpoint received an unwired agent.
+### Changed
+- `pyproject.toml`: version aligned to `2.20.1`; classifier promoted to `Production/Stable`.
+- `Dockerfile`: removed legacy "Parallax" name from header comment.
+
 ## [2.20.0] — 2026-04-14
 ### Added
 - **Phase 82: Adaptive Loop Tuning** — `LoopConfig` gains `adaptive_tuning` flag + bounds (`adaptive_min/max_cap`, `adaptive_min/max_interval`). When enabled, `AutonomousDiscoveryLoop` reads `DiscoveryCalibrator.stats()` at the start of each cycle and scales `max_materializations_per_cycle` linearly with the mean community weight (underexplored → higher cap; saturated → lower cap), and adjusts the inter-cycle sleep inversely. `CycleRecord` gains `effective_cap` for per-cycle observability. `LoopConfigSchema` and `LoopStatusResponse` expose all new fields. `POST /research/loop/configure` accepts all adaptive params.

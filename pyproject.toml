@@ -4,14 +4,14 @@ build-backend = "setuptools.backends.legacy:build"
 
 [project]
 name = "cerebrum-kg"
-version = "1.7.5"
+version = "2.20.1"
 description = "CEREBRUM — Community-Structured Graph Attention for Knowledge Graph Reasoning"
 authors = [
     {name = "Bryan Alexander Buchorn", email = "bryan.alexander@buchorn.com"},
 ]
 license = {text = "PolyForm Noncommercial License 1.0.0"}
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: Other/Proprietary License",

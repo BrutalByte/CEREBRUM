@@ -369,6 +369,7 @@ class AutonomousDiscoveryLoop:
         """Replace the current configuration. Thread-safe."""
         with self._lock:
             self._config = config
+            self._next_interval = config.cycle_interval
             # Resize decision window to new circuit_breaker_window
             new_window: Deque[bool] = deque(
                 list(self._decision_window)[-config.circuit_breaker_window:],

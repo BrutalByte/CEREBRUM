@@ -2179,6 +2179,9 @@ def create_app(
             total_edges_added=s["total_edges_added"],
             started_at=s["started_at"],
             last_cycle_at=s["last_cycle_at"],
+            auto_rollback_on_trip=s["auto_rollback_on_trip"],
+            adaptive_tuning=s["adaptive_tuning"],
+            adaptive_effective_interval=s["adaptive_effective_interval"],
             recent_cycles=[CycleRecordSchema(**r) for r in s["recent_cycles"]],
         )
 

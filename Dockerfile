@@ -1,5 +1,5 @@
-# Parallax KG Reasoning API - Dockerfile
-# Phase 5: Production Deployment
+# CEREBRUM KG Reasoning API - Dockerfile
+# v2.20.1 Release
 
 FROM python:3.11-slim
 

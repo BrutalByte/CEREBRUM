@@ -51,7 +51,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v2.20.0 (Phase 82 COMPLETE)** — 1720+ tests passing.
+**v2.20.1 (Phase 82 COMPLETE)** — 1720+ tests passing.
 
 ### System Architecture Names
 | Name | Role |
