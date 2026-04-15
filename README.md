@@ -26,7 +26,7 @@ See `PAPER.md` for the full white paper and architecture specification.
 
 ## Roadmap
 
-**Current Project Status: v2.20.1 — Phase 82 COMPLETE — 1720+ tests passing (1 skipped)**
+**Current Project Status: v2.21.0 — Phase 83 COMPLETE — 1841+ tests passing (1 skipped)**
 
 - [x] **Phase 45: LLM-Knowledge Sync (Engram shorthand)** — Implemented Engram 30x reasoning compression dialect, real-time ingestion status trackers, and historical database management.
 
@@ -103,6 +103,7 @@ See `PAPER.md` for the full white paper and architecture specification.
 - [x] **Phase 80: GraphAdapter `remove_edge()` Protocol** (v2.18.0) — Non-abstract default method on `GraphAdapter` raises `NotImplementedError`. Eliminates fragile `hasattr()` guards in `ProvenanceLedger`.
 - [x] **Phase 81: Graph Snapshot Persistence** (v2.19.0) — `GraphSnapshot` in `core/persistence.py`: portable JSON topology save/restore/diff. Not pickle — survives adapter class changes. `restore(skip_existing=True)`.
 - [x] **Phase 82: Adaptive Loop Tuning** (v2.20.0) — `LoopConfig.adaptive_tuning=True` dynamically scales `max_materializations_per_cycle` and inter-cycle sleep from `DiscoveryCalibrator` mean community weight. `CycleRecord.effective_cap` for per-cycle observability.
+- [x] **Phase 83: UE5 3D Neural Visualization** (v2.21.0) — Production Unreal Engine 5 C++ plugin. `ANeuronNodeActor` (sphere per entity, golden ratio community colors, pulse/glow/dissonance animations), `ASynapseActor` (oriented cylinder per relation, weight-driven opacity, pulse travel), `ACerebrumBrain` (orchestrator: Fibonacci sphere layout, REST pre-load, layout-file loader, edge spawner), `UCerebrumLink` (WebSocket delegate bridge for all 5 event types). `GET /graph/edges?limit=N` REST endpoint. `setup_graph_layout.py` computes stable JSON layout from live API. `TelemetryBridge` wired into `create_app(ws_port=N)`. `SYNAPTOGENESIS` emitted on `/research/approve`; `SYNAPTIC_PRUNE` emitted on `/rem/run`. CLI `--ws-port` starts both REST and WebSocket in one process.
 
 ## Benchmark Results
 
@@ -141,11 +142,11 @@ WebQSP over Freebase is specifically hard for zero-training structural systems d
 
 ## What Comes Next
 
-With Phase 82 COMPLETE, CEREBRUM v2.20.1 is a fully autonomous, self-monitoring, provenance-tracked KG reasoning framework at production stability. The next development horizon focuses on:
+With Phase 83 COMPLETE, CEREBRUM v2.21.0 is a fully autonomous, self-monitoring, provenance-tracked KG reasoning framework with a production 3D visualization layer. The next development horizon focuses on:
 
-- **UE5 Living Knowledge Graph GUI**: 3D real-time visualization of the knowledge graph and reasoning traces inside Unreal Engine 5, driven by the Neural Telemetry Bridge (Phase 63). Nodes, edges, communities, and beam traversal paths rendered as living neural geometry.
-- **Benchmark Publication**: Running the Feature Impact Benchmark (Phase 77) against a standard public KG (MetaQA/WebQSP) to produce publishable comparison numbers.
-- **arXiv Paper Series**: Submitting PAPER_023–034 covering Phases 69–82 novel contributions for academic priority claims.
+- **Benchmark Publication**: Running the Feature Impact Benchmark (Phase 77) against standard public KGs (MetaQA/WebQSP) to produce publishable comparison numbers.
+- **arXiv Paper Series**: Submitting PAPER_023–035 covering Phases 69–83 novel contributions for academic priority claims.
+- **UE5 Blueprint Library**: Pre-built Blueprint actors, Niagara VFX assets, and a packaged UE5 plugin for one-click CEREBRUM visualization setup.
 
 ## Quick Start
 
@@ -339,11 +340,12 @@ $$\text{score}(P) = \left( \prod_{k=1}^L a(u_k, v_k, k) \right) \cdot \text{cohe
 - **Context Window Invariance**: Sublinear complexity independent of graph size.
 - **Topological Analysis**: Inductive bias derived from graph topology requires zero training.
 
-## Project Status (v2.20.1 — Phase 82 COMPLETE)
+## Project Status (v2.21.0 — Phase 83 COMPLETE)
 
-CEREBRUM is currently at **v2.20.1** — `Production/Stable`. All **1720+ tests** are passing (1 skipped).
+CEREBRUM is currently at **v2.21.0** — `Production/Stable`. All **1841+ tests** are passing (1 skipped).
 
 Key features in recent phases:
+- **Phase 83: UE5 3D Neural Visualization**: Production Unreal Engine 5 plugin — `ANeuronNodeActor` (glowing sphere per entity), `ASynapseActor` (oriented cylinder per relation), `ACerebrumBrain` (orchestrator with Fibonacci sphere layout), `UCerebrumLink` (WebSocket delegate bridge). `GET /graph/edges` REST endpoint. `setup_graph_layout.py` pre-computes stable JSON layout. `TelemetryBridge` fully wired into `create_app(ws_port=N)`. All three event types emitted: `SYNAPTIC_PULSE` (traversal), `SYNAPTOGENESIS` (materialization), `SYNAPTIC_PRUNE` (REM). CLI: `--ws-port`.
 - **Phase 82: Adaptive Loop Tuning**: `DiscoveryCalibrator`-driven dynamic scaling of materialization cap and inter-cycle sleep. Underexplored graphs get higher caps and shorter intervals; saturated graphs self-throttle.
 - **Phase 81: Graph Snapshot Persistence**: Portable JSON topology snapshots with non-destructive restore and structural diff. Complements `ProvenanceLedger` for full recovery across restarts.
 - **Phase 80: `remove_edge()` Protocol**: `GraphAdapter` base class defines a clean non-abstract `remove_edge()` contract. All adapters inherit it; `ProvenanceLedger` relies on the protocol without fragile `hasattr()` guards.
@@ -351,11 +353,10 @@ Key features in recent phases:
 - **Phase 78: Provenance Studio Panel**: Sixth live monitoring panel — batch bar chart (active/rolled-back), cycle timeline with cumulative overlay, 4-card stats summary.
 - **Phase 76: Graph Provenance & Rollback**: `ProvenanceLedger` records every materialized edge per batch/cycle with targeted `rollback_batch()` / `rollback_cycle()` removal.
 - **Phase 74: Autonomous Discovery Loop**: Full discover→validate→approve→materialize loop with circuit breaker, per-cycle cap, dry-run mode, and AutoApprover checkpoint.
-- **Phase 72-73: TriangulationEngine + DiscoveryCalibrator**: Four-perspective candidate validation; per-community EMA-driven adaptive sampling; ContradictionResolver + CandidateRegistry.
+- **Phase 72–73: TriangulationEngine + DiscoveryCalibrator**: Four-perspective candidate validation; per-community EMA-driven adaptive sampling; ContradictionResolver + CandidateRegistry.
 - **Phase 70: Looped Beam Traversal**: LoopLM-style iterative refinement with three inter-loop feedback channels and prediction-error adaptive exit gate.
 - **Phase 68: Metabolic Modulation**: `ChemicalModulator` 5-scalar homeostatic state machine dynamically regulates beam parameters.
-- **Phase 62: Explainable Reasoning Trace (ERT)**: Complete hop-by-hop decision audit with 10-parameter Attention Radars for every winner and pruned competitor.
-- **Phase 63: Neural Telemetry Bridge**: Real-time WebSocket event streaming to Unreal Engine 5 for 3D knowledge graph visualization.
+- **Phase 63: Neural Telemetry Bridge**: Real-time WebSocket event streaming to Unreal Engine 5 for 3D knowledge graph visualization (completed in Phase 83).
 - **Reasoning Studio v2**: Six live monitoring panels — AutoApprover, ContradictionResolver, DiscoveryCalibrator, ChemicalModulator, Loop history, Provenance.
 
 ## Authors

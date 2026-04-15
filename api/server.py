@@ -234,7 +234,7 @@ def create_app(
     app = FastAPI(
         title="CEREBRUM KG Reasoning API",
         description="Community-Structured Graph Attention for Knowledge Graph Reasoning",
-        version="1.2.0",
+        version="1.3.0",
         lifespan=lifespan,
     )
 
@@ -1120,7 +1120,7 @@ def create_app(
     async def handshake():
         if not _is_ready():
             return HandshakeResponse(
-                version="1.2.0",
+                version="1.3.0",
                 capabilities=[],
                 entity_types=[],
                 relation_types=[],
@@ -1142,7 +1142,7 @@ def create_app(
             relation_types.add(data.get("relation", "link"))
 
         return HandshakeResponse(
-            version="1.2.0",
+            version="1.3.0",
             capabilities=["query", "search", "masked_search", "hologram", "traversal", "reasoning_callback", "feedback", "search_similar"],
             entity_types=list(entity_types),
             relation_types=list(relation_types),

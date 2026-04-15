@@ -7,6 +7,25 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.21.0] — 2026-04-15
+### Added
+- **Phase 83: UE5 3D Neural Visualization** — Production Unreal Engine 5 C++ plugin for live knowledge graph exploration.
+  - `ANeuronNodeActor`: sphere mesh per KG entity; community color via golden ratio HSV wheel; glow light driven by `SetGlowIntensity()`; pulse flash on `SYNAPTIC_PULSE`; dissonance tint on `DISSONANCE`; fade-out on `SYNAPTIC_PRUNE`. Blueprint hooks: `OnPulseFlash`, `OnNeurogenesisBorn`, `OnPruneStart`.
+  - `ASynapseActor`: cylinder oriented per-tick between node pairs via `FQuat::FindBetweenNormals`; relation-based hue (djb2 hash); weight-driven opacity; `AnimatePulse()` propagates flash to endpoint nodes; `FadeOut()` → self-destroy.
+  - `ACerebrumBrain`: orchestrator; async `GET /communities` + `GET /graph/edges` via `FHttpModule`; Fibonacci sphere layout (community centres on outer sphere, nodes in deterministic seeded clusters); `LoadGraphFromLayoutFile()` reads pre-computed `graph_layout.json` (exact positions + colors), REST fallback; `ParseLayoutPayload()` populates all caches + spawns actors; `DisconnectAndClear()` tears down all actors.
+  - `UCerebrumLink`: WebSocket `UActorComponent` bridge; typed delegates: `FOnSynapticPulse`, `FOnNeurogenesis`, `FOnSynapticPrune`, `FOnCorticalGlow`, `FOnDissonance` + generic `FOnNeuralEventReceived`.
+  - `setup_graph_layout.py`: stdlib-only CLI; queries `/communities` + `/graph/edges`; computes Fibonacci sphere layout; outputs `graph_layout.json` v1.1 with `nodes[]`, `edges[]`, `communities[]`.
+- **`GET /graph/edges?limit=N`**: returns up to 5000 edges; `GraphEdgesResponse` schema.
+- **`GraphAdapter.get_all_edges(limit)`** / **`NetworkXAdapter.get_all_edges(limit)`**: efficient bulk edge iteration.
+- **`create_app(ws_port=N)`**: starts `TelemetryBridge` as asyncio background task during lifespan.
+- **CLI `--ws-port PORT`**: starts REST + WebSocket in one process.
+- **`SYNAPTIC_PULSE` emission** from `/query`: top-3 paths, per-hop, `is_wormhole` on cross-community edges.
+- **`SYNAPTOGENESIS` emission** from `/research/approve`: one event per materialized proposal edge.
+- **`SYNAPTIC_PRUNE` emission** from `/rem/run`: one event per pruned edge on real (non-dry-run) cycles.
+### Changed
+- `pyproject.toml`: version `2.20.1` → `2.21.0`.
+- `api/server.py`: FastAPI app `version` `"1.2.0"` → `"1.3.0"`.
+
 ## [2.20.1] — 2026-04-14
 ### Fixed
 - **Gap Review 4 (Phases 79–82)** — two silent bugs:
