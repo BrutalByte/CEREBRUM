@@ -6,6 +6,9 @@ Definitions of all CEREBRUM-specific terms, algorithms, and architectural concep
 
 ## A
 
+**Adaptive Loop Tuning**
+A Phase 82 feature of `AutonomousDiscoveryLoop`. When `LoopConfig.adaptive_tuning=True`, the loop reads `DiscoveryCalibrator`'s mean community weight at the start of each cycle and scales `max_materializations_per_cycle` (cap) and `_next_interval` (sleep time) proportionally. Underexplored graph regions receive higher caps and shorter intervals; saturated regions get lower caps and longer waits. All bounds are configurable via `adaptive_min_cap`, `adaptive_max_cap`, `adaptive_min_interval`, `adaptive_max_interval`. `CycleRecord.effective_cap` records the actual cap used.
+
 **Answer Extractor**
 The final stage of the CORTEX reasoning pipeline. Takes ranked `ReasoningPath` objects from `PathScorer` and extracts the terminal entity of each path as a candidate answer. Returns answers with associated CSA scores, path confidence, and HMAC provenance signatures.
 
@@ -17,6 +20,12 @@ An async/await variant of `BeamTraversal` (see below) that supports streaming pa
 
 **Attention Head (Transformer analogy)**
 In CEREBRUM, each DSCF community corresponds to one "attention head" in the Transformer analogy. Just as a Transformer's attention heads capture different semantic relationships, DSCF communities capture different structural clusters in the graph. See also: DSCF, CSA.
+
+**AutoApprover**
+The automated decision engine for `ResearchFinding` objects (Phase 71). Operates in three tiers: (1) **Hard gates** — immediately reject findings with blocked `literature_status` or missing `ValidationReport`; (2) **Online SGD classifier** — 16-feature logistic regression (`confidence`, `discovery_potential`, `gap_score`, `community_distance`, `local_density`, `lit_status` ordinal, `novelty_score`, `engram_affinity`, `path_count`, `contradiction_score`, `seeded_by` flags, + 4 `TriangulationReport` slots); (3) **Optional LLM semantic fallback** for borderline cases. Online `fit()` from confirmed decisions. Checkpoint via `to_dict()` / `from_dict()`. REST: `GET/POST /research/auto-approver`.
+
+**AutonomousDiscoveryLoop**
+The Phase 74 orchestration component that closes the discover→validate→approve→materialize loop autonomously. Runs `ResearchAgent.scan_once()` on a configurable timer, processes each finding through `AutoApprover`, and applies a **circuit breaker** (pauses if approval rate < `min_approval_rate` over a sliding window). **Per-cycle cap** limits materializations per run. **dry_run=True** simulates cycles without writing edges. Checkpoints `AutoApprover` state after every cycle. See also: `LoopConfig`, `CycleRecord`, Adaptive Loop Tuning.
 
 ---
 
@@ -50,6 +59,9 @@ The data structure tracking a bridge twin node: stores `twin_id`, `original_id`,
 
 ## C
 
+**CandidateRegistry**
+A TTL-aware registry (Phase 73 Batch B) replacing the flat `_evaluated_pairs` set in `ResearchAgent`. Tracks `nomination_count` per (source, target) pair; applies a log-scale `nomination_boost` (up to 3×) to `discovery_potential` for repeatedly-nominated candidates. A TTL gate prevents redundant `HypothesisEngine` runs within the expiry window. `prune()` evicts stale entries; LRU `max_entries` cap enforces a memory bound.
+
 **Canonical Basis Anchor**
 `SignalEncoder(canonical_embeddings={...})` — a fixed reference embedding space used as the target for all Procrustes SVD alignment operations across a federation. Prevents geometric drift accumulation when signal encoders are aligned to different adapters across federated hops (Phase 20 fix, Hole 7).
 
@@ -70,6 +82,9 @@ The bio-mimetic regulation system (Phase 68) that manages the global reasoning s
 
 **Cohesion**
 The functional name for the "Oxytocin" scalar in the `ChemicalModulator` (Phase 68). Promotes community stability by scaling the community membership term ($\beta$) in the CSA formula. High Cohesion levels favor intra-community reasoning over cross-domain "leaps."
+
+**ContradictionResolver**
+A deterministic evidence-weight classifier (Phase 73 Batch B) that runs on already-computed proposal data. Computes `net_evidence_score = Noisy-OR(proposed confidences) - max(contradiction_score)`. Classifies findings as: **"clean"** (approved), **"revision_candidate"** (queued for human review), **"contested"** (AutoApprover decides), or **"discardable"** (auto-rejected before AutoApprover). Revision candidates are queued in `ResearchAgent._revision_candidates`.
 
 **Community (Graph)**
 A group of nodes that are more densely connected to each other than to the rest of the graph. In CEREBRUM, communities are detected by DSCF and serve as the "attention heads" for CSA reasoning. Nodes within the same community receive a bonus in the CSA formula.
@@ -109,6 +124,9 @@ A Phase 32 extension of `BeamTraversal` that supports delegated reasoning. Inste
 
 **DSCF (Dual-Signal Community Fusion)**
 The community detection algorithm at the heart of CEREBRUM. Combines local topology signal (LPA — Label Propagation Algorithm) and global modularity signal (Louvain-style modularity gain) simultaneously at each node update, rather than choosing between them. Also called TSC (Triple-Signal Consensus) when the Infomap/flow signal is included as a third signal. Produces communities with dual-signal structural character essential for high-quality CSA reasoning.
+
+**DiscoveryCalibrator**
+The Phase 73 component that tracks per-community discovery rates via Exponential Moving Average (EMA). Computes an inverse-rate multiplier `weight = global_rate / (community_rate + ε)` for each community, boosting `_score_discovery_potential()` for understudied regions. Cold-start: unscanned communities receive `max_weight` (5.0). API: `record_scan(cid)`, `record_discovery(cid)`, `get_weight(cid)`, `stats()`. Also drives Adaptive Loop Tuning (Phase 82) when `LoopConfig.adaptive_tuning=True`.
 
 **DeltaDiscretizer**
 A streaming discretizer that emits a graph edge when the rate-of-change (|Δx/Δt|) of a continuous signal exceeds a threshold.
@@ -154,6 +172,9 @@ CEREBRUM's defining property: every answer is a verifiable path through graph ed
 
 **GlobalRebalancer**
 The background component that monitors modularity drift ($\Delta Q_{cum}$) across streaming ingest events. When drift exceeds a threshold, it spawns a background DSCF re-run, then performs an atomic swap of `adapter.community_map`. Notifies `BridgeTwinEngine` via `on_rebalance()` hook (Phase 19).
+
+**GraphSnapshot**
+A portable JSON graph topology checkpoint (Phase 81) in `core/persistence.py`. `GraphSnapshot.save(adapter, path)` serializes all edges to a JSON file (not pickle — survives adapter class changes). `restore(path, adapter, skip_existing=True)` re-adds only new edges, safe to run repeatedly for incremental restoration after pod restart. `diff(path_a, path_b)` shows edge deltas between two snapshots for audit. See also: ProvenanceLedger.
 
 **GraphSAGE Smoothing**
 A one-pass mean neighbourhood aggregation step applied after base entity encoding. `smooth_with_graphsage(embeddings, G)` replaces each entity's embedding with a weighted average of itself and its neighbours' embeddings, making the CSA `alpha` (semantic similarity) term more effective by encoding local structural context. Enabled via `CerebrumGraph.build(use_graphsage=True)`.
@@ -211,6 +232,12 @@ A directed graph where nodes represent entities and edges represent typed relati
 
 ## L
 
+**LoopedBeamTraversal**
+A Phase 70 `BeamTraversal`-compatible wrapper implementing LoopLM-style iterative refinement (arXiv:2510.25741). Applies beam traversal T times (`max_loops`). Between loops: top-K answer entities expand seeds (semantic channel), PE→ChemicalModulator adjusts beam parameters (metabolic channel), and Engram records bias the next loop's pruning (mnemonic channel). **Adaptive exit gate**: stops early when `|ΔPE| < γ` or answer-set Jaccard ≥ θ. All loops' paths merged — `best_by_tail` keeps the highest-score path per tail entity. `LoopTrace` is exposed via `ReasoningTrace.loop_trace` in the ERT.
+
+**Loop-Provenance Recovery**
+The Phase 79 integration between `AutonomousDiscoveryLoop` and `ProvenanceLedger`. When `LoopConfig.auto_rollback_on_trip=True` and the circuit breaker fires, the loop automatically calls `ProvenanceLedger.rollback_cycle(cycle_number, adapter)` to undo all materializations from the failed cycle before pausing. `CycleRecord.edges_rolled_back` records how many edges were removed.
+
 **Lazy STDP Weight Decay**
 An optimization in `STDPDiscretizer` that applies weight decay lazily (only when a pair is accessed) rather than on every clock tick, reducing time complexity from $O(N)$ to $O(1)$ per event. See also: STDP.
 
@@ -264,6 +291,15 @@ The functional name for the "Acetylcholine" scalar in the `ChemicalModulator` (P
 ---
 
 ## P
+
+**Prediction Error (PE)**
+The Jaccard divergence between the *prior path* (predicted relation sequence from the top Engram pattern) and the *actual path* (relation sequence produced by traversal). Computed by `PredictiveCodingEngine.update()` after each traversal. PE drives `ChemicalModulator` signals: high PE → Arousal and Novelty surge; low PE → Reinforcement. Exposed in `ReasoningTrace.prediction_error`. See also: soliton_index, PredictiveCodingEngine.
+
+**PredictiveCodingEngine**
+The Phase 69 active-inference component. Before each traversal, generates a *prior path* from the top Engram pattern. After traversal, computes **Prediction Error (PE)** (Jaccard divergence between prior and actual relation sequences) and propagates it to `ChemicalModulator` (Arousal, Novelty, Reinforcement). Tracks a rolling window of recent PEs to compute `soliton_index`. Activated by `CerebrumGraph.attach_engram(engram)`. Fields exposed in `ReasoningTrace`: `prior`, `prediction_error`, `soliton_index`.
+
+**ProvenanceLedger**
+The Phase 76 audit chain for `ResearchAgent.approve()`. Records every materialized edge in `EdgeRecord` objects grouped into `BatchRecord` objects (one batch per `approve()` call), keyed by `batch_id`. `rollback_batch(batch_id, adapter)` removes exactly one batch's edges. `rollback_cycle(cycle_number, adapter)` removes all batches from a given loop cycle. Thread-safe. LRU eviction at `max_batches` cap. Requires `adapter.remove_edge()` (Phase 80 protocol). See also: GraphSnapshot, Loop-Provenance Recovery.
 
 **PageRank (PR)**
 A graph centrality measure (part of StructuralEncoder) used as the sixth term in the CSA formula ($\zeta \cdot PR(v)$). High PageRank nodes receive a traversal bonus, reflecting their structural importance.
@@ -329,6 +365,9 @@ A KGE method modeling relations as rotations in complex embedding space. Support
 
 ## S
 
+**soliton_index**
+A coherence metric computed by `PredictiveCodingEngine`: `soliton_index = 1 - mean(recent PEs)`. A value near 1.0 indicates that the Engram prior consistently predicts actual traversal paths — a self-reinforcing, self-localising pattern analogous to a soliton wave (UCFT 2025). Exposed in `ReasoningTrace.soliton_index`. Low soliton_index (high mean PE) suggests the graph is highly novel or the Engram has not yet converged.
+
 **SignalEncoder**
 THALAMUS component for cross-modal alignment. `StatisticalSignalEncoder` (time-series statistics → embeddings) and `SpectralSignalEncoder` (waveform FFT features → embeddings). Projects sensor signals into entity embedding space via Procrustes SVD. Uses `namespace="signal"` by default.
 
@@ -377,6 +416,9 @@ A grid-search utility that calibrates the CSA `eta` (temporal decay) and `iota` 
 
 **ThresholdDiscretizer**
 A streaming discretizer that emits a graph edge when a continuous float signal crosses a configured threshold value.
+
+**TriangulationEngine**
+The Phase 72 four-perspective candidate validation component. Validates `ResearchCandidate` objects across four independent perspectives: **P1 `reverse_confidence`** — `HypothesisEngine` run in the reverse direction (B→A); **P2 `strategy_agreement`** — agreement fraction across 3 different reasoning configurations; **P3 `mean_path_independence`** — Jaccard independence score across primary proposal paths; **P4 `semantic_type_score`** — relation-type and entity-class consistency (novel relations = 0.5 neutral). Results extend the AutoApprover feature vector from 12 to 16 features. `is_wormhole_candidate` diagnostic flag set for cross-community bridge candidates. Stored in `finding.metadata["triangulation"]`.
 
 **TransE**
 A KGE method modeling relations as translation vectors: a triple $(h, r, t)$ is valid iff $\vec{h} + \vec{r} \approx \vec{t}$. Available as optional `EmbeddingEngine` backend in CEREBRUM.

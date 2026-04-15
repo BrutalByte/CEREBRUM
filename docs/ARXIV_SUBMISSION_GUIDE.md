@@ -1,6 +1,6 @@
 # arXiv Submission Guide
 
-**CEREBRUM — 16 Papers Ready for Submission**
+**CEREBRUM — 22 Papers Ready for Submission + 12 in Preparation**
 
 This guide covers the submission process, per-paper metadata, and checklist for submitting all sixteen CEREBRUM papers to arXiv.
 
@@ -41,6 +41,12 @@ Submit foundational papers first so cross-references resolve correctly.
 | 14 | Metacognitive Verification | `PAPER_014_INSIGHT_ENGINE.md` | `cs.AI` + `cs.IR` |
 | 15 | Algorithmic Depth | `PAPER_015_ALGORITHMIC_DEPTH.md` | `cs.LG` + `cs.IR` |
 | 16 | Production Hardening | `PAPER_016_PRODUCTION_HARDENING.md` | `cs.SE` + `cs.IR` |
+| 17 | Hypothesis Materialization | `PAPER_017_HYPOTHESIS_MATERIALIZATION.md` | `cs.AI` + `cs.IR` |
+| 18 | Engram-Steered Traversal | `PAPER_018_ENGRAM_TRAVERSAL.md` | `cs.IR` + `cs.AI` |
+| 19 | Temporal Calibration | `PAPER_019_TEMPORAL_CALIBRATOR.md` | `cs.LG` + `cs.IR` |
+| 20 | MACH Consensus Hierarchies | `PAPER_020_MACH.md` | `cs.AI` + `cs.DC` |
+| 21 | SpeedTalk Phonemic Compression | `PAPER_021_SPEEDTALK_COMPRESSION.md` | `cs.IR` + `cs.LG` |
+| 22 | Looped Beam Traversal | `PAPER_022_LOOPED_TRAVERSAL.md` | `cs.IR` + `cs.LG` |
 
 ---
 
@@ -52,7 +58,7 @@ Each submission requires the following metadata fields on arXiv:
 Title:        [From paper header]
 Authors:      Bryan Alexander Buchorn; Claude Sonnet 4.6 (Research Collaborator, Anthropic)
 Abstract:     [From paper Abstract section — max 1,920 characters]
-Comments:     16 pages. Part of the CEREBRUM framework series.
+Comments:     16 pages. Part of the CEREBRUM framework series (v2.20.1).
               Code: https://github.com/[repo]
 MSC-class:    68T30 (Knowledge representation)
 ACM-class:    I.2.4; H.3.3
@@ -135,13 +141,34 @@ Papers cite each other. Use consistent arXiv IDs once papers 1–4 are submitted
 
 ---
 
-## Comprehensive Paper (Parallax_White_Paper_arXiv.md)
+## Papers in Preparation (Phases 69–82)
 
-The comprehensive umbrella paper (`docs/Parallax_White_Paper_arXiv.md`) covers all subsystems in one document and should be submitted to `cs.IR` as the primary reference after all sixteen individual papers are live. Title it:
+The following papers are in preparation and will be added to the submission queue once drafted:
+
+| Paper | Phase | Topic |
+|---|---|---|
+| `PAPER_023_PREDICTIVE_CODING.md` | 69 | PredictiveCodingEngine, Prediction Error, soliton_index |
+| `PAPER_024_AUTOAPPROVER.md` | 71 | AutoApprover — tiered auto-approval, online SGD, 16-feature vector |
+| `PAPER_025_TRIANGULATION.md` | 72 | TriangulationEngine — four-perspective candidate validation |
+| `PAPER_026_DISCOVERY_CALIBRATION.md` | 73 | DiscoveryCalibrator, ContradictionResolver, CandidateRegistry |
+| `PAPER_027_AUTONOMOUS_LOOP.md` | 74 | AutonomousDiscoveryLoop, circuit breaker, dry-run |
+| `PAPER_028_STUDIO_V2.md` | 75+78 | Studio v2 Dashboard + Provenance Panel |
+| `PAPER_029_PROVENANCE_LEDGER.md` | 76 | ProvenanceLedger, rollback semantics, audit chain |
+| `PAPER_030_FEATURE_IMPACT.md` | 77 | Feature Impact Benchmark methodology |
+| `PAPER_031_LOOP_PROVENANCE_RECOVERY.md` | 79 | Loop-Provenance Recovery, auto-rollback on circuit trip |
+| `PAPER_032_GRAPH_ADAPTER_PROTOCOL.md` | 80 | remove_edge protocol, GraphAdapter base class definition |
+| `PAPER_033_GRAPH_SNAPSHOT.md` | 81 | GraphSnapshot portable JSON persistence, diff semantics |
+| `PAPER_034_ADAPTIVE_LOOP_TUNING.md` | 82 | Calibrator-driven dynamic cap + interval scaling |
+
+---
+
+## Comprehensive Paper (CEREBRUM_White_Paper_arXiv.md)
+
+The comprehensive umbrella paper (`docs/CEREBRUM_White_Paper_arXiv.md`) covers all subsystems in one document and should be submitted to `cs.IR` as the primary reference after all individual papers are live. Title it:
 
 > **CEREBRUM: Community-Structured Graph Attention for Zero-Shot Multi-Hop Knowledge Graph Reasoning**
 
-This paper should cite all sixteen subsystem papers by their arXiv IDs.
+This paper should cite all subsystem papers (PAPER_001 through PAPER_034) by their arXiv IDs. Submit after PAPER_034 is live.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

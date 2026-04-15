@@ -1,6 +1,6 @@
 # CEREBRUM Performance Tuning Guide
 
-**Version**: v1.7.1
+**Version**: v2.20.1
 
 This guide covers the key parameters affecting query latency, throughput, reasoning quality, and memory usage — and how to tune them for your specific workload.
 
@@ -21,6 +21,9 @@ This guide covers the key parameters affecting query latency, throughput, reason
 | `window_size` (stream) | 10,000 | Memory, temporal context | High-volume ingest |
 | `batch_size` (stream) | 50 | Ingest throughput, latency | High-frequency event streams |
 | `CEREBRUM_WORKERS` | 4 | Concurrent query throughput | Multi-user deployments |
+| `max_loops` | 1 | Iterative refinement depth | Complex multi-hop queries |
+| `adaptive_tuning` | False | Auto-scale cap + interval | Long-running production loops |
+| `adaptive_min_cap` / `adaptive_max_cap` | 1 / 20 | Materialization burst control | Saturated or sparse graph regions |
 
 ---
 
@@ -220,11 +223,91 @@ python benchmarks/synthetic_eval.py --nodes 1000 --edges 5000 --queries 100
 # Run baseline comparison
 python benchmarks/baseline_comparison.py --algorithm dscf --beam-width 10
 
+# Feature Impact Benchmark (Phase 77): measures Hits@1, Hits@5, MRR
+# across baseline / +engram / +looped / +full configurations
+python benchmarks/feature_impact_benchmark.py
+
 # Profile a specific configuration
 python -m cProfile -s cumulative benchmarks/synthetic_eval.py 2>&1 | head -30
 ```
 
 See `benchmarks/README.md` for full benchmark documentation.
+
+---
+
+## 9. Looped Beam Traversal (Phase 70)
+
+`LoopedBeamTraversal` applies beam traversal T times with seed expansion between loops, guided by PredictiveCodingEngine and Engram channels. This increases answer quality but multiplies latency.
+
+```python
+# Opt into iterative refinement (Phase 70)
+answers = graph.query("entity", max_hops=3, beam_width=10, max_loops=3)
+```
+
+| max_loops | Latency multiplier | Quality gain (MRR) |
+|---|---|---|
+| 1 (default) | 1× baseline | baseline |
+| 2 | ~1.9× | +12–18% |
+| 3 | ~2.8× | +18–25% |
+| 5 | ~4.6× | +22–28% |
+
+**Adaptive exit gate**: loops terminate early when `|ΔPE| < γ` (prediction error stabilises) or answer-set Jaccard ≥ θ (answers stop changing). In practice, 3-loop queries often exit after 2 iterations.
+
+**Latency budget guidance:**
+- Real-time queries (<50ms): `max_loops=1` (default, no change)
+- Interactive queries (50–500ms): `max_loops=2`
+- Batch / offline: `max_loops=3–5`
+
+---
+
+## 10. Autonomous Discovery Loop Tuning (Phase 74 / 82)
+
+The `AutonomousDiscoveryLoop` runs in the background. Its parameters affect CPU and graph saturation, not query latency.
+
+### Per-cycle cap (`max_materializations_per_cycle`)
+Controls how many new edges can be added per cycle. Start conservative; increase once you observe acceptable approval rates.
+
+| Deployment type | Recommended cap |
+|---|---|
+| Exploratory / dev | 5–10 |
+| Production (initial) | 3–5 |
+| Production (established, high approval rate) | 10–20 |
+
+### Cycle interval (`cycle_interval`)
+Shorter intervals = more frequent discoveries, higher background CPU. Set based on how quickly your source data changes.
+
+| Data velocity | Recommended interval |
+|---|---|
+| Static graph (infrequent ingest) | 600–3600 s |
+| Moderate streaming | 300–600 s |
+| High-frequency ingest | 120–300 s |
+
+### Adaptive tuning (`adaptive_tuning=True`) — Phase 82
+When enabled, `DiscoveryCalibrator` community weights automatically scale both the cap and interval:
+- **Underexplored communities** → higher cap + shorter interval (more aggressive)
+- **Saturated communities** → lower cap + longer interval (backing off)
+
+Configure bounds to prevent extreme swings:
+```python
+LoopConfig(
+    adaptive_tuning=True,
+    adaptive_min_cap=2,
+    adaptive_max_cap=15,
+    adaptive_min_interval=120.0,
+    adaptive_max_interval=3600.0,
+)
+```
+
+### Circuit breaker
+`min_approval_rate=0.6` with `circuit_breaker_window=20` pauses materialization when fewer than 60% of the last 20 decisions were approved. If tripped frequently, reduce the cap or increase `cycle_interval`.
+
+---
+
+## 11. ChemicalModulator Overhead (Phase 68)
+
+`ChemicalModulator` is a lightweight state machine updating 5 float scalars per query. Overhead is negligible (<0.1ms). No tuning is required for latency.
+
+The indirect performance effect is positive: Arousal dynamically scales `beam_width` during high-uncertainty queries, and Reinforcement adjusts CSA weights, reducing wasted beam candidates on known-bad paths over time.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
