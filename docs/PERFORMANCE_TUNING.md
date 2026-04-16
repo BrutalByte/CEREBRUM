@@ -1,6 +1,6 @@
 # CEREBRUM Performance Tuning Guide
 
-**Version**: v2.20.1
+**Version**: v2.21.0
 
 This guide covers the key parameters affecting query latency, throughput, reasoning quality, and memory usage — and how to tune them for your specific workload.
 
@@ -282,7 +282,7 @@ Shorter intervals = more frequent discoveries, higher background CPU. Set based 
 | Moderate streaming | 300–600 s |
 | High-frequency ingest | 120–300 s |
 
-### Adaptive tuning (`adaptive_tuning=True`) — Phase 82
+### Adaptive tuning (`adaptive_tuning=True`) — Phase 83
 When enabled, `DiscoveryCalibrator` community weights automatically scale both the cap and interval:
 - **Underexplored communities** → higher cap + shorter interval (more aggressive)
 - **Saturated communities** → lower cap + longer interval (backing off)

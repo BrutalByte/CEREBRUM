@@ -1,7 +1,7 @@
 # CEREBRUM REST API Reference
 
 **Base URL**: `http://localhost:8200`
-**API Version**: v2.20.1
+**API Version**: v2.21.0
 **Authentication**: JWT Bearer token (all endpoints except `/health`)
 
 ---

@@ -1,6 +1,6 @@
 # CEREBRUM Reasoning Studio — User Guide
 
-**Version**: v2.20.1
+**Version**: v2.21.0
 **Interface**: Gradio web UI + pyvis graph visualization
 **Business Logic Module**: `core/studio_engine.py` (`StudioEngine`)
 **UI Entry Point**: `ui/studio.py`

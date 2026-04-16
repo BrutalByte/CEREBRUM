@@ -358,7 +358,7 @@ config = LoopConfig(
     min_approval_rate=0.5,
     circuit_breaker_window=20,
     auto_rollback_on_trip=True,       # Phase 79: undo bad cycles automatically
-    adaptive_tuning=True,             # Phase 82: self-pacing from calibrator
+    adaptive_tuning=True,             # Phase 83: self-pacing from calibrator
     approver_checkpoint_path="/data/approver.json",
 )
 
