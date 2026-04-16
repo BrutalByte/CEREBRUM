@@ -155,6 +155,34 @@ class NeptuneAdapter(GraphAdapter):
             # In a production environment, we might want to log this error
             pass
 
+    def remove_edge(self, u: str, v: str, relation: str) -> None:
+        """
+        Drop a single edge from Neptune via Gremlin (Phase 76 provenance rollback).
+
+        Finds the first edge with label *relation* from vertex *u* to vertex *v*
+        and drops it.  Raises ValueError if no matching edge exists.
+        """
+        if not self.g:
+            raise RuntimeError("Call connect() before using adapter.")
+        try:
+            edges = (
+                self.g.E()
+                .hasLabel(relation)
+                .where(self.g.outV().has("name", u))
+                .where(self.g.inV().has("name", v))
+                .limit(1)
+                .toList()
+            )
+            if not edges:
+                raise ValueError(
+                    f"No edge {u!r} -[{relation}]-> {v!r} found in Neptune."
+                )
+            self.g.E(edges[0]).drop().iterate()
+        except ValueError:
+            raise
+        except Exception as exc:
+            raise RuntimeError(f"Neptune remove_edge failed: {exc}") from exc
+
     def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:
         return None
 

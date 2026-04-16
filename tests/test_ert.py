@@ -26,7 +26,7 @@ def client():
         yield c
 
 def test_query_trace_returns_hops(client):
-    response = client.post("/query/trace", json={
+    response = client.post("/v1/query/trace", json={
         "query": "newton",
         "max_hop": 2,
         "beam_width": 5
@@ -48,7 +48,7 @@ def test_query_trace_returns_hops(client):
 
 def test_query_trace_captures_competitors(client):
     # Set beam_width=1 to force competitors
-    response = client.post("/query/trace", json={
+    response = client.post("/v1/query/trace", json={
         "query": "newton",
         "max_hop": 2,
         "beam_width": 1
@@ -81,7 +81,7 @@ def competitive_client():
         yield c
 
 def test_query_trace_has_competitors(competitive_client):
-    response = competitive_client.post("/query/trace", json={
+    response = competitive_client.post("/v1/query/trace", json={
         "query": "A",
         "max_hop": 2,
         "beam_width": 1

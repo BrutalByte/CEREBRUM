@@ -432,6 +432,41 @@ class OpenAlexAdapter(ExternalValidatorAdapter):
 
 
 # ---------------------------------------------------------------------------
+# LARQL (Neural Weight Consensus)
+# ---------------------------------------------------------------------------
+
+class LarqlAdapter(ExternalValidatorAdapter):
+    """
+    Queries LLM weights via LARQL to validate relationships.
+    Treats the model's internal representations as "Neural Literature".
+    """
+
+    def __init__(self, endpoint: Optional[str] = None, vindex_path: Optional[str] = None, timeout: float = 5.0) -> None:
+        from core.larql_client import LarqlClient
+        self._client = LarqlClient(endpoint=endpoint, vindex_path=vindex_path)
+        self._timeout = timeout
+
+    def name(self) -> str:
+        return "larql"
+
+    def search(self, source: str, relation: str, target: str) -> List[LiteratureHit]:
+        """Query neural weights for the existence of this triple."""
+        try:
+            link = self._client.query_relation(source, relation, target)
+            if link and link.confidence > 0.1:
+                return [LiteratureHit(
+                    adapter="larql",
+                    external_id=f"neural_{hash(source+relation+target)}",
+                    title=f"Neural Consensus: {source} ΓåÆ {relation} ΓåÆ {target}",
+                    relevance_score=link.confidence
+                )]
+            return []
+        except Exception as exc:
+            logger.debug("LarqlAdapter error: %s", exc)
+            return []
+
+
+# ---------------------------------------------------------------------------
 # ExternalValidator
 # ---------------------------------------------------------------------------
 
@@ -443,7 +478,7 @@ class ExternalValidator:
     ----------
     adapters
         List of ExternalValidatorAdapter instances to query.  If None, all
-        four built-in adapters are used (PubMed, ClinicalTrials, arXiv, OpenAlex).
+        five built-in adapters are used (PubMed, ClinicalTrials, arXiv, OpenAlex, LARQL).
     timeout
         Per-adapter query timeout in seconds.
     cache_ttl
@@ -461,6 +496,7 @@ class ExternalValidator:
             ClinicalTrialsAdapter(timeout=timeout),
             ArXivAdapter(timeout=timeout),
             OpenAlexAdapter(timeout=timeout),
+            LarqlAdapter(timeout=timeout),
         ]
         self._timeout  = timeout
         self._cache_ttl = cache_ttl

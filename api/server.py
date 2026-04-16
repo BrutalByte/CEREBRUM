@@ -28,7 +28,7 @@ _api_log = logging.getLogger("cerebrum.api")
 
 import numpy as np
 import json
-from fastapi import FastAPI, HTTPException, Depends, Security, UploadFile, File
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Security, UploadFile, File
 from fastapi.security import APIKeyHeader, HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -83,6 +83,20 @@ API_KEY_NAME = "X-API-Key"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 bearer_scheme = HTTPBearer(auto_error=False)
 
+def _valid_api_keys() -> set:
+    """
+    Return the set of accepted API keys.
+
+    Reads CEREBRUM_API_KEYS (comma-separated list of keys).
+    Falls back to the legacy PARALLAX_API_KEY env var for backward compatibility.
+    If neither is set the server runs in open dev mode (no key required).
+    """
+    raw = os.getenv("CEREBRUM_API_KEYS") or os.getenv("PARALLAX_API_KEY", "")
+    if not raw:
+        return set()
+    return {k.strip() for k in raw.split(",") if k.strip()}
+
+
 async def get_authenticated_node(
     api_key: Optional[str] = Security(api_key_header),
     token: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme)
@@ -90,11 +104,16 @@ async def get_authenticated_node(
     """
     Unified security: accepts either static X-API-Key or JWT Bearer token.
     Returns a 'node' context (identity and scopes).
+
+    Key configuration: set CEREBRUM_API_KEYS to a comma-separated list of
+    accepted keys (e.g. "key1,key2").  If the env var is unset the server
+    operates in open dev mode and all requests are accepted without a key.
     """
-    # 1. Try API Key (Backwards compatibility / Local dev)
+    valid_keys = _valid_api_keys()
+
+    # 1. Try API Key
     if api_key:
-        expected_key = os.getenv("PARALLAX_API_KEY", "dev-secret")
-        if api_key == expected_key:
+        if not valid_keys or api_key in valid_keys:
             return {"node_id": "local-admin", "scopes": ["query", "search", "graph"]}
         raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Invalid API Key")
 
@@ -106,7 +125,9 @@ async def get_authenticated_node(
         except Exception:
             raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid or expired JWT")
 
-    # 3. No credentials provided
+    # 3. No credentials provided — allow if no keys are configured (dev mode)
+    if not valid_keys:
+        return {"node_id": "anonymous", "scopes": ["query", "search", "graph"]}
     raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Authentication required")
 
 def check_scope(required_scope: str):
@@ -238,6 +259,11 @@ def create_app(
         lifespan=lifespan,
     )
 
+    # All public endpoints are registered on this router and mounted at /v1.
+    # The bare app retains only middleware, the UI static mount, and the
+    # unversioned /health endpoint (kept for Docker healthcheck compatibility).
+    router = APIRouter()
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -260,7 +286,7 @@ def create_app(
         return response
 
     # ── Log viewer endpoints ─────────────────────────────────────────
-    @app.get("/logs", tags=["system"])
+    @router.get("/logs", tags=["system"])
     async def get_logs(
         level:  Optional[str] = None,
         limit:  int   = 500,
@@ -281,21 +307,21 @@ def create_app(
         entries = ring.get_entries(level=level, limit=limit, since=since, search=search)
         return {"entries": entries, "total": ring.entry_count}
 
-    @app.delete("/logs", tags=["system"])
+    @router.delete("/logs", tags=["system"])
     async def clear_logs(node: Dict = Depends(get_authenticated_node)):
         """Clear the in-memory log ring buffer."""
         get_ring_handler().clear()
         return {"cleared": True}
 
-    @app.get("/chemical", tags=["system"])
+    @router.get("/chemical", tags=["system"])
     async def get_chemical_state(node: Dict = Depends(get_authenticated_node)):
         """Return the current neuro-chemical state of the system (Phase 68)."""
         if not _state["modulator"]:
             return {"error": "Modulator not initialized"}
         return _state["modulator"].to_state()
 
-    @app.get("/health", response_model=HealthResponse, tags=["system"])
-    async def health(node: Dict = Depends(get_authenticated_node)):
+    @router.get("/health", response_model=HealthResponse, tags=["system"])
+    async def health():
         cm  = _state["community_map"] or {}
         emb = _state["embeddings"] or {}
         return HealthResponse(
@@ -320,7 +346,7 @@ def create_app(
             community_sequence=list(path.community_sequence),
         )
 
-    @app.post("/query/consensus", response_model=QueryConsensusResponse, tags=["reasoning"])
+    @router.post("/query/consensus", response_model=QueryConsensusResponse, tags=["reasoning"])
     async def query_consensus(req: QueryConsensusRequest, node: Dict = Depends(check_scope("query"))):
         """
         MACH: Multi-Agent Consensus Hierarchy query (Phase 60).
@@ -396,7 +422,7 @@ def create_app(
             level_reached=ConsensusLevel(level_reached)
         )
 
-    @app.post("/query", response_model=QueryResponse, tags=["reasoning"])
+    @router.post("/query", response_model=QueryResponse, tags=["reasoning"])
     async def query(req: QueryRequest, node: Dict = Depends(check_scope("query"))):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready — call load() first")
@@ -573,7 +599,7 @@ def create_app(
             pe_per_loop=[pe for pe in _loop_trace.pe_per_loop if pe is not None] if _loop_trace is not None else None,
         )
 
-    @app.post("/query/trace", response_model=TraceResponse, tags=["reasoning"])
+    @router.post("/query/trace", response_model=TraceResponse, tags=["reasoning"])
     async def query_trace(req: QueryRequest, node: Dict = Depends(check_scope("query"))):
         """
         Explainable Reasoning Trace (ERT) query (Phase 62).
@@ -657,7 +683,7 @@ def create_app(
             metadata=trace.metadata
         )
 
-    @app.post("/query/stream", tags=["reasoning"])
+    @router.post("/query/stream", tags=["reasoning"])
     async def query_stream(req: QueryRequest, node: Dict = Depends(check_scope("query"))):
         """
         Streaming version of /query. Yields paths hop-by-hop as JSON lines.
@@ -725,7 +751,7 @@ def create_app(
 
         return StreamingResponse(generate(), media_type="application/x-ndjson")
 
-    @app.post("/feedback", tags=["reasoning"])
+    @router.post("/feedback", tags=["reasoning"])
     async def feedback(req: FeedbackRequest, node: Dict = Depends(check_scope("query"))):
         """
         Record user feedback for a specific reasoning path.
@@ -758,7 +784,7 @@ def create_app(
             "buffer_size": len(_state["feedback_buffer"]),
         }
 
-    @app.get("/params", response_model=ParamsResponse, tags=["reasoning"])
+    @router.get("/params", response_model=ParamsResponse, tags=["reasoning"])
     async def get_params(node: Dict = Depends(check_scope("query"))):
         """
         Return the current learned CSA parameter state.
@@ -787,7 +813,7 @@ def create_app(
             community_overrides=overrides,
         )
 
-    @app.post("/params", response_model=ParamsResponse, tags=["reasoning"])
+    @router.post("/params", response_model=ParamsResponse, tags=["reasoning"])
     async def set_params(req: ParamsImportRequest, node: Dict = Depends(check_scope("query"))):
         """
         Restore a previously exported parameter state.
@@ -840,7 +866,7 @@ def create_app(
             community_overrides=overrides,
         )
 
-    @app.post("/retrain", response_model=RetrainResponse, tags=["reasoning"])
+    @router.post("/retrain", response_model=RetrainResponse, tags=["reasoning"])
     async def retrain(
         req: RetrainRequest = RetrainRequest(),
         node: Dict = Depends(check_scope("query")),
@@ -917,7 +943,7 @@ def create_app(
             buffer_remaining=len(_state["feedback_buffer"]),
         )
 
-    @app.get("/communities", response_model=CommunitiesResponse, tags=["graph"])
+    @router.get("/communities", response_model=CommunitiesResponse, tags=["graph"])
     async def communities(node: Dict = Depends(get_authenticated_node)):
         if _state["community_map"] is None:
             raise HTTPException(status_code=503, detail="Communities not loaded")
@@ -943,7 +969,7 @@ def create_app(
             communities=community_infos,
         )
 
-    @app.get("/graph/edges", response_model=GraphEdgesResponse, tags=["graph"])
+    @router.get("/graph/edges", response_model=GraphEdgesResponse, tags=["graph"])
     async def get_graph_edges(
         limit: int = 500,
         node: Dict = Depends(get_authenticated_node)
@@ -979,7 +1005,7 @@ def create_app(
     # Low-level Graph Access (for Federated/Remote Adapters)
     # ---------------------------------------------------------------------------
 
-    @app.get("/entities/{entity_id}", response_model=EntityResponse, tags=["graph"])
+    @router.get("/entities/{entity_id}", response_model=EntityResponse, tags=["graph"])
     async def get_entity(entity_id: str, node: Dict = Depends(get_authenticated_node)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
@@ -996,7 +1022,7 @@ def create_app(
             properties=ent.properties
         )
 
-    @app.get("/entities/{entity_id}/neighbors", response_model=List[EdgeResponse], tags=["graph"])
+    @router.get("/entities/{entity_id}/neighbors", response_model=List[EdgeResponse], tags=["graph"])
     async def get_neighbors(entity_id: str, edge_types: Optional[str] = None, max_neighbors: int = 50, node: Dict = Depends(get_authenticated_node)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
@@ -1015,7 +1041,7 @@ def create_app(
             ) for e in edges
         ]
 
-    @app.get("/entities/{entity_id}/community", response_model=CommunityResponse, tags=["graph"])
+    @router.get("/entities/{entity_id}/community", response_model=CommunityResponse, tags=["graph"])
     async def get_entity_community(entity_id: str, node: Dict = Depends(get_authenticated_node)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
@@ -1024,7 +1050,7 @@ def create_app(
         cid = adapter.get_community(entity_id)
         return CommunityResponse(entity_id=entity_id, community_id=cid)
 
-    @app.get("/entities/{entity_id}/embedding", response_model=EmbeddingResponse, tags=["graph"])
+    @router.get("/entities/{entity_id}/embedding", response_model=EmbeddingResponse, tags=["graph"])
     async def get_entity_embedding(entity_id: str, node: Dict = Depends(get_authenticated_node)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
@@ -1036,7 +1062,7 @@ def create_app(
         
         return EmbeddingResponse(entity_id=entity_id, embedding=emb.tolist())
 
-    @app.get("/search", response_model=SearchResponse, tags=["graph"])
+    @router.get("/search", response_model=SearchResponse, tags=["graph"])
     async def search(q: str, top_k: int = 10, node: Dict = Depends(check_scope("search"))):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
@@ -1059,7 +1085,7 @@ def create_app(
             ]
         )
 
-    @app.get("/search/masked", response_model=MaskedSearchResponse, tags=["graph"])
+    @router.get("/search/masked", response_model=MaskedSearchResponse, tags=["graph"])
     async def search_masked(q: str, top_k: int = 10, node: Dict = Depends(check_scope("search"))):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
@@ -1076,7 +1102,7 @@ def create_app(
             results=[MaskedEntityResponse(**r) for r in results]
         )
 
-    @app.post("/search/similar", response_model=SimilarSearchResponse, tags=["graph"])
+    @router.post("/search/similar", response_model=SimilarSearchResponse, tags=["graph"])
     async def search_similar(req: SimilarSearchRequest, node: Dict = Depends(check_scope("search"))):
         """
         Perform semantic vector search across the graph.
@@ -1102,7 +1128,7 @@ def create_app(
             ]
         )
 
-    @app.get("/hologram", response_model=HologramResponse, tags=["federated"])
+    @router.get("/hologram", response_model=HologramResponse, tags=["federated"])
     async def get_hologram(node: Dict = Depends(get_authenticated_node)):
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
@@ -1116,7 +1142,7 @@ def create_app(
             signatures=[CommunitySignatureSchema(**s.to_dict()) for s in sigs]
         )
 
-    @app.get("/handshake", response_model=HandshakeResponse, tags=["federated"])
+    @router.get("/handshake", response_model=HandshakeResponse, tags=["federated"])
     async def handshake():
         if not _is_ready():
             return HandshakeResponse(
@@ -1150,7 +1176,7 @@ def create_app(
             community_count=len(set(cm.values()))
         )
 
-    @app.post("/traverse", response_model=TraversalBranchResponse, tags=["federated"])
+    @router.post("/traverse", response_model=TraversalBranchResponse, tags=["federated"])
     async def traverse_callback(req: TraversalBranchRequest, node: Dict = Depends(check_scope("query"))):
         """
         Delegate multi-hop reasoning branches to this node.
@@ -1198,7 +1224,7 @@ def create_app(
         
         return TraversalBranchResponse(seed_id=req.seed_id, branches=branches)
 
-    @app.post("/reason", response_model=ReasoningCallbackResponse, tags=["federated"])
+    @router.post("/reason", response_model=ReasoningCallbackResponse, tags=["federated"])
     async def reason_callback(req: ReasoningCallbackRequest, node: Dict = Depends(check_scope("query"))):
         """
         Verify if a path exists between source and target in this graph.
@@ -1258,7 +1284,7 @@ def create_app(
     # Phase 11 — Streaming Endpoints
     # ---------------------------------------------------------------------------
 
-    @app.post("/stream/ingest", response_model=StreamIngestResponse, tags=["streaming"])
+    @router.post("/stream/ingest", response_model=StreamIngestResponse, tags=["streaming"])
     async def stream_ingest(req: StreamIngestRequest, node: Dict = Depends(check_scope("query"))):
         """
         Push a batch of StreamEvents into the live graph.
@@ -1302,7 +1328,7 @@ def create_app(
             communities=stats["communities"],
         )
 
-    @app.get("/stream/status", response_model=StreamStatusResponse, tags=["streaming"])
+    @router.get("/stream/status", response_model=StreamStatusResponse, tags=["streaming"])
     async def stream_status(node: Dict = Depends(get_authenticated_node)):
         """
         Return live statistics for the streaming graph.
@@ -1336,7 +1362,7 @@ def create_app(
             total_community_updates=0,
         )
 
-    @app.get("/stream/events", tags=["streaming"])
+    @router.get("/stream/events", tags=["streaming"])
     async def stream_events(node: Dict = Depends(get_authenticated_node)):
         """
         Server-Sent Events (SSE) stream of live graph mutations.
@@ -1389,7 +1415,7 @@ def create_app(
 
         return StreamingResponse(generate(), media_type="text/event-stream")
 
-    @app.get("/bridges", response_model=BridgesResponse, tags=["reasoning"])
+    @router.get("/bridges", response_model=BridgesResponse, tags=["reasoning"])
     async def list_bridges(node: Dict = Depends(get_authenticated_node)):
         """
         List all active bridge twin nodes.
@@ -1455,7 +1481,7 @@ def create_app(
             corroboration_count=getattr(ev, "corroboration_count", 0),
         )
 
-    @app.get("/insight/status", response_model=InsightStatusResponse, tags=["insight"])
+    @router.get("/insight/status", response_model=InsightStatusResponse, tags=["insight"])
     async def insight_status(node: Dict = Depends(get_authenticated_node)):
         """
         Return InsightEngine status: ring buffer occupancy, total events fired,
@@ -1470,7 +1496,7 @@ def create_app(
             recent_events=[_insight_event_schema(ev) for ev in ie.recent_events(10)],
         )
 
-    @app.get("/insight/events", response_model=InsightStatusResponse, tags=["insight"])
+    @router.get("/insight/events", response_model=InsightStatusResponse, tags=["insight"])
     async def insight_events(n: int = 20, node: Dict = Depends(get_authenticated_node)):
         """Return the last n InsightEvents (default 20)."""
         ie = _get_insight_engine()
@@ -1482,7 +1508,7 @@ def create_app(
             recent_events=[_insight_event_schema(ev) for ev in ie.recent_events(n)],
         )
 
-    @app.post("/insight/scan", response_model=InsightScanResponse, tags=["insight"])
+    @router.post("/insight/scan", response_model=InsightScanResponse, tags=["insight"])
     async def insight_scan(node: Dict = Depends(check_scope("query"))):
         """
         Trigger an on-demand cold-path community boundary scan.
@@ -1522,7 +1548,7 @@ def create_app(
             _state["meta_insight_engine"] = MetaInsightEngine()
         return _state["meta_insight_engine"]
 
-    @app.post("/insight/validate/all", response_model=InsightValidateAllResponse, tags=["insight"])
+    @router.post("/insight/validate/all", response_model=InsightValidateAllResponse, tags=["insight"])
     async def insight_validate_all(node: Dict = Depends(check_scope("query"))):
         """
         Validate all pending InsightEvents via bilateral reverse traversal and
@@ -1547,7 +1573,7 @@ def create_app(
             ],
         )
 
-    @app.post("/insight/validate/{event_id}", response_model=InsightValidateResponse, tags=["insight"])
+    @router.post("/insight/validate/{event_id}", response_model=InsightValidateResponse, tags=["insight"])
     async def insight_validate_one(event_id: str, node: Dict = Depends(check_scope("query"))):
         """
         Validate a single InsightEvent by its ID. Returns 404 if not found.
@@ -1582,7 +1608,7 @@ def create_app(
             chain_ids=ev.chain_ids,
         )
 
-    @app.get("/meta-insight/status", response_model=MetaInsightStatusResponse, tags=["meta-insight"])
+    @router.get("/meta-insight/status", response_model=MetaInsightStatusResponse, tags=["meta-insight"])
     async def meta_insight_status(node: Dict = Depends(get_authenticated_node)):
         """
         Return MetaInsightEngine status: total meta-events, InsightGraph size,
@@ -1597,7 +1623,7 @@ def create_app(
             recent_meta_events=[_meta_insight_event_schema(ev) for ev in meta.recent_meta_events(10)],
         )
 
-    @app.get("/meta-insight/events", response_model=MetaInsightStatusResponse, tags=["meta-insight"])
+    @router.get("/meta-insight/events", response_model=MetaInsightStatusResponse, tags=["meta-insight"])
     async def meta_insight_events(n: int = 20, node: Dict = Depends(get_authenticated_node)):
         """Return the last n MetaInsightEvents (default 20)."""
         meta = _get_meta_insight_engine()
@@ -1609,7 +1635,7 @@ def create_app(
             recent_meta_events=[_meta_insight_event_schema(ev) for ev in meta.recent_meta_events(n)],
         )
 
-    @app.get("/meta-insight/graph", response_model=InsightGraphResponse, tags=["meta-insight"])
+    @router.get("/meta-insight/graph", response_model=InsightGraphResponse, tags=["meta-insight"])
     async def meta_insight_graph(node: Dict = Depends(get_authenticated_node)):
         """
         Export the full InsightGraph as nodes and edges.
@@ -1656,7 +1682,7 @@ def create_app(
             _state["rem_engine"] = REMEngine(_state["adapter"])
         return _state["rem_engine"]
 
-    @app.post("/rem/run", response_model=REMReportSchema, tags=["rem"])
+    @router.post("/rem/run", response_model=REMReportSchema, tags=["rem"])
     async def rem_run(req: REMRunRequest, node: Dict = Depends(check_scope("query"))):
         """
         Execute one REM cycle (prune → consolidate → synthesize).
@@ -1693,7 +1719,7 @@ def create_app(
             timestamp=report.timestamp,
         )
 
-    @app.post("/rem/rollback", response_model=REMRollbackResponse, tags=["rem"])
+    @router.post("/rem/rollback", response_model=REMRollbackResponse, tags=["rem"])
     async def rem_rollback(node: Dict = Depends(check_scope("query"))):
         """
         Undo the most recent non-dry-run REM cycle.
@@ -1711,7 +1737,7 @@ def create_app(
             message=f"Rolled back last REM cycle: {ops} edge operation(s) reversed.",
         )
 
-    @app.get("/rem/status", response_model=REMStatusResponse, tags=["rem"])
+    @router.get("/rem/status", response_model=REMStatusResponse, tags=["rem"])
     async def rem_status(node: Dict = Depends(get_authenticated_node)):
         """Return the last REMReport and whether a rollback is currently available."""
         rem = _get_rem_engine()
@@ -1764,7 +1790,7 @@ def create_app(
             ],
         )
 
-    @app.post("/infer/run", response_model=InferenceReportSchema, tags=["inference"])
+    @router.post("/infer/run", response_model=InferenceReportSchema, tags=["inference"])
     async def run_inference(
         dry_run: bool = False,
         node: Dict = Depends(get_authenticated_node),
@@ -1787,7 +1813,7 @@ def create_app(
             raise HTTPException(status_code=500, detail=str(exc))
         return _infer_report_to_schema(report)
 
-    @app.post("/infer/rollback", response_model=InferenceRollbackResponse, tags=["inference"])
+    @router.post("/infer/rollback", response_model=InferenceRollbackResponse, tags=["inference"])
     async def infer_rollback(node: Dict = Depends(get_authenticated_node)):
         """
         Undo the most recent non-dry inference run.
@@ -1807,7 +1833,7 @@ def create_app(
             message=f"Rolled back {removed} inferred edges.",
         )
 
-    @app.get("/infer/status", response_model=InferenceStatusResponse, tags=["inference"])
+    @router.get("/infer/status", response_model=InferenceStatusResponse, tags=["inference"])
     async def infer_status(node: Dict = Depends(get_authenticated_node)):
         """Return the last InferenceReport and whether rollback is available."""
         if not _is_ready():
@@ -1862,7 +1888,7 @@ def create_app(
             ],
         )
 
-    @app.post("/hypothesize", response_model=HypothesizeResponse, tags=["hypothesis"])
+    @router.post("/hypothesize", response_model=HypothesizeResponse, tags=["hypothesis"])
     async def hypothesize(
         req: HypothesizeRequest,
         node: Dict = Depends(get_authenticated_node),
@@ -1913,7 +1939,7 @@ def create_app(
             duration_seconds=__import__("time").time() - t0,
         )
 
-    @app.post(
+    @router.post(
         "/hypothesize/materialize",
         response_model=HypothesisMaterializeResponse,
         tags=["hypothesis"],
@@ -1948,7 +1974,7 @@ def create_app(
 
         return HypothesisMaterializeResponse(materialized=len(to_mat), edges_added=added)
 
-    @app.post(
+    @router.post(
         "/hypothesize/rollback",
         response_model=HypothesisMaterializeResponse,
         tags=["hypothesis"],
@@ -1967,7 +1993,7 @@ def create_app(
             raise HTTPException(status_code=409, detail=str(exc))
         return HypothesisMaterializeResponse(materialized=0, edges_added=-removed)
 
-    @app.get(
+    @router.get(
         "/hypothesize/status",
         response_model=HypothesisStatusResponse,
         tags=["hypothesis"],
@@ -1995,10 +2021,16 @@ def create_app(
         if _state["research_agent"] is None:
             if not _is_ready():
                 raise HTTPException(status_code=503, detail="Graph not loaded")
+            
+            larql_endpoint = os.getenv("CEREBRUM_LARQL_ENDPOINT")
+            larql_vindex   = os.getenv("CEREBRUM_LARQL_VINDEX")
+            
             _state["research_agent"] = ResearchAgent(
                 adapter=_state["adapter"],
                 hypothesis_engine=_get_hypothesis_engine(),
                 insight_engine=_state.get("insight_engine"),
+                larql_endpoint=larql_endpoint,
+                larql_vindex=larql_vindex,
             )
             # Wire provenance ledger if already initialized
             ledger = _state.get("provenance_ledger")
@@ -2007,9 +2039,25 @@ def create_app(
         return _state["research_agent"]
 
     def _get_external_validator():
-        from core.external_validator import ExternalValidator
+        from core.external_validator import ExternalValidator, LarqlAdapter
         if _state["external_validator"] is None:
-            _state["external_validator"] = ExternalValidator()
+            larql_endpoint = os.getenv("CEREBRUM_LARQL_ENDPOINT")
+            larql_vindex   = os.getenv("CEREBRUM_LARQL_VINDEX")
+            
+            adapters = None # Use default list which now includes LarqlAdapter
+            if larql_endpoint or larql_vindex:
+                from core.external_validator import (
+                    PubMedAdapter, ClinicalTrialsAdapter, ArXivAdapter, OpenAlexAdapter
+                )
+                adapters = [
+                    PubMedAdapter(),
+                    ClinicalTrialsAdapter(),
+                    ArXivAdapter(),
+                    OpenAlexAdapter(),
+                    LarqlAdapter(endpoint=larql_endpoint, vindex_path=larql_vindex)
+                ]
+            
+            _state["external_validator"] = ExternalValidator(adapters=adapters)
         return _state["external_validator"]
 
     def _finding_to_schema(f) -> ResearchFindingSchema:
@@ -2056,7 +2104,7 @@ def create_app(
             error=r.error,
         )
 
-    @app.get("/research/status", response_model=ResearchStatusResponse, tags=["research"])
+    @router.get("/research/status", response_model=ResearchStatusResponse, tags=["research"])
     async def research_status(node: Dict = Depends(get_authenticated_node)):
         """Return ResearchAgent running state and scan statistics."""
         if not _is_ready():
@@ -2100,7 +2148,7 @@ def create_app(
             )
         return _state["consensus_hierarchy_engine"]
 
-    @app.post("/research/start", response_model=ResearchStatusResponse, tags=["research"])
+    @router.post("/research/start", response_model=ResearchStatusResponse, tags=["research"])
     async def research_start(node: Dict = Depends(get_authenticated_node)):
         """Start the background scanning daemon (idempotent)."""
         if not _is_ready():
@@ -2109,7 +2157,7 @@ def create_app(
         agent.start()
         return ResearchStatusResponse(**agent.status)
 
-    @app.post("/research/stop", response_model=ResearchStatusResponse, tags=["research"])
+    @router.post("/research/stop", response_model=ResearchStatusResponse, tags=["research"])
     async def research_stop(node: Dict = Depends(get_authenticated_node)):
         """Stop the background scanning daemon."""
         if not _is_ready():
@@ -2118,7 +2166,7 @@ def create_app(
         agent.stop()
         return ResearchStatusResponse(**agent.status)
 
-    @app.post("/research/scan", response_model=ResearchScanResponse, tags=["research"])
+    @router.post("/research/scan", response_model=ResearchScanResponse, tags=["research"])
     async def research_scan(node: Dict = Depends(get_authenticated_node)):
         """Trigger an immediate one-shot scan and return any new findings."""
         if not _is_ready():
@@ -2132,7 +2180,7 @@ def create_app(
             duration_seconds=__import__("time").time() - t0,
         )
 
-    @app.get("/research/proposals", response_model=ResearchScanResponse, tags=["research"])
+    @router.get("/research/proposals", response_model=ResearchScanResponse, tags=["research"])
     async def research_proposals(node: Dict = Depends(get_authenticated_node)):
         """List all pending findings in the ring buffer."""
         if not _is_ready():
@@ -2145,7 +2193,7 @@ def create_app(
             duration_seconds=0.0,
         )
 
-    @app.post(
+    @router.post(
         "/research/approve/{finding_id}",
         response_model=ResearchApproveResponse,
         tags=["research"],
@@ -2185,7 +2233,7 @@ def create_app(
 
         return ResearchApproveResponse(finding_id=finding_id, edges_added=edges_added)
 
-    @app.post(
+    @router.post(
         "/research/reject/{finding_id}",
         response_model=ResearchRejectResponse,
         tags=["research"],
@@ -2204,7 +2252,7 @@ def create_app(
             raise HTTPException(status_code=404, detail=str(exc))
         return ResearchRejectResponse(finding_id=finding_id, removed=True)
 
-    @app.get(
+    @router.get(
         "/research/auto-approver/stats",
         response_model=AutoApproverStatsResponse,
         tags=["research"],
@@ -2228,7 +2276,7 @@ def create_app(
             policy=s["policy"],
         )
 
-    @app.patch(
+    @router.patch(
         "/research/auto-approver/policy",
         response_model=AutoApproverStatsResponse,
         tags=["research"],
@@ -2306,7 +2354,7 @@ def create_app(
             recent_cycles=[CycleRecordSchema(**r) for r in s["recent_cycles"]],
         )
 
-    @app.post("/research/loop/start", response_model=LoopStatusResponse, tags=["research"])
+    @router.post("/research/loop/start", response_model=LoopStatusResponse, tags=["research"])
     async def research_loop_start(node: Dict = Depends(get_authenticated_node)):
         """Start the autonomous discovery loop (idempotent)."""
         if not _is_ready():
@@ -2315,7 +2363,7 @@ def create_app(
         loop.start()
         return _loop_status_response(loop)
 
-    @app.post("/research/loop/stop", response_model=LoopStatusResponse, tags=["research"])
+    @router.post("/research/loop/stop", response_model=LoopStatusResponse, tags=["research"])
     async def research_loop_stop(node: Dict = Depends(get_authenticated_node)):
         """Stop the autonomous discovery loop."""
         if not _is_ready():
@@ -2324,7 +2372,7 @@ def create_app(
         loop.stop()
         return _loop_status_response(loop)
 
-    @app.get("/research/loop/status", response_model=LoopStatusResponse, tags=["research"])
+    @router.get("/research/loop/status", response_model=LoopStatusResponse, tags=["research"])
     async def research_loop_status(node: Dict = Depends(get_authenticated_node)):
         """Return current autonomous loop health and cumulative statistics."""
         if not _is_ready():
@@ -2332,7 +2380,7 @@ def create_app(
         loop = _get_autonomous_loop()
         return _loop_status_response(loop)
 
-    @app.post("/research/loop/configure", response_model=LoopStatusResponse, tags=["research"])
+    @router.post("/research/loop/configure", response_model=LoopStatusResponse, tags=["research"])
     async def research_loop_configure(
         req: LoopConfigSchema,
         node: Dict = Depends(get_authenticated_node),
@@ -2386,7 +2434,7 @@ def create_app(
             rolled_back=rec.rolled_back,
         )
 
-    @app.get(
+    @router.get(
         "/research/provenance/stats",
         response_model=ProvenanceStatsResponse,
         tags=["research"],
@@ -2397,7 +2445,7 @@ def create_app(
         s = ledger.stats()
         return ProvenanceStatsResponse(**s)
 
-    @app.get(
+    @router.get(
         "/research/provenance/batches",
         response_model=ProvenanceBatchesResponse,
         tags=["research"],
@@ -2412,7 +2460,7 @@ def create_app(
             batches=[_batch_to_schema(r) for r in ledger.list_batches(n=n)]
         )
 
-    @app.post(
+    @router.post(
         "/research/provenance/rollback/{batch_id}",
         response_model=ProvenanceRollbackResponse,
         tags=["research"],
@@ -2436,7 +2484,7 @@ def create_app(
             message=f"Rolled back batch {batch_id!r}: {removed} edge(s) removed.",
         )
 
-    @app.post(
+    @router.post(
         "/research/provenance/rollback-cycle/{cycle_number}",
         response_model=ProvenanceRollbackResponse,
         tags=["research"],
@@ -2458,7 +2506,7 @@ def create_app(
             message=f"Rolled back cycle {cycle_number}: {removed} edge(s) removed.",
         )
 
-    @app.post(
+    @router.post(
         "/research/validate",
         response_model=ValidateProposalsResponse,
         tags=["research"],
@@ -2501,7 +2549,7 @@ def create_app(
             duration_seconds=__import__("time").time() - t0,
         )
 
-    @app.get(
+    @router.get(
         "/research/validate/{hypothesis_id}",
         response_model=ValidationReportSchema,
         tags=["research"],
@@ -2598,7 +2646,7 @@ def create_app(
             hop_hint=turn.hop_hint,
         )
 
-    @app.post("/chat", response_model=ChatResponse, tags=["conversation"])
+    @router.post("/chat", response_model=ChatResponse, tags=["conversation"])
     async def chat(
         request: ChatRequest,
         node: Dict = Depends(get_authenticated_node),
@@ -2647,7 +2695,7 @@ def create_app(
             turn_count=session.turn_count,
         )
 
-    @app.post("/chat/reset", response_model=ChatResetResponse, tags=["conversation"])
+    @router.post("/chat/reset", response_model=ChatResetResponse, tags=["conversation"])
     async def chat_reset(
         session_id: str,
         node: Dict = Depends(get_authenticated_node),
@@ -2697,7 +2745,7 @@ def create_app(
             timestamp=report.timestamp,
         )
 
-    @app.post("/ingest/text", response_model=IngestReportSchema, tags=["ingest"])
+    @router.post("/ingest/text", response_model=IngestReportSchema, tags=["ingest"])
     async def ingest_text(
         request: IngestTextRequest,
         node: Dict = Depends(get_authenticated_node),
@@ -2723,7 +2771,7 @@ def create_app(
         return _report_to_schema(report)
 
     # ── /build — hot-reload graph from uploaded CSV ──────────────────
-    @app.post("/build", tags=["system"])
+    @router.post("/build", tags=["system"])
     async def build_from_upload(
         file: UploadFile = File(None),
         node: Dict = Depends(get_authenticated_node),
@@ -2767,6 +2815,31 @@ def create_app(
             "edge_count": G.number_of_edges(),
             "filename": file.filename,
         }
+
+    # ── /v1 router ──────────────────────────────────────────────────────────
+    app.include_router(router, prefix="/v1")
+
+    # ── Unversioned /health — kept for Docker healthcheck and load-balancer
+    #    probes that don't know about /v1.  No auth required. ────────────────
+    from fastapi.responses import RedirectResponse
+
+    @app.get("/health", include_in_schema=False)
+    async def health_compat():
+        cm  = _state["community_map"] or {}
+        emb = _state["embeddings"] or {}
+        from api.schemas import HealthResponse
+        return HealthResponse(
+            status="ok" if _is_ready() else "loading",
+            adapter_loaded=_state["adapter"] is not None,
+            communities_loaded=_state["community_map"] is not None,
+            embeddings_loaded=_state["embeddings"] is not None,
+            node_count=len(emb),
+            community_count=len(set(cm.values())) if cm else 0,
+        )
+
+    @app.get("/", include_in_schema=False)
+    async def root_redirect():
+        return RedirectResponse(url="/v1/docs")
 
     import pathlib
     _ui_dir = pathlib.Path(__file__).parent.parent / "ui"

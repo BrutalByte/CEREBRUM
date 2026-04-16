@@ -428,6 +428,8 @@ class AutoApprover:
         )
 
         try:
+            if self._llm_fn is None:
+                return "review", "llm_fallback: no llm_fn provided"
             response = self._llm_fn(prompt)
             answer = str(response).strip().upper()
             if answer == "YES":

@@ -192,8 +192,20 @@ class RemoteCerebrumAdapter(GraphAdapter):
         provenance: str = '',
         synthetic: bool = False,
     ) -> None:
-        import logging
         logging.getLogger('cerebrum.remote_adapter').warning('Materialization not supported.')
+
+    def remove_edge(self, u: str, v: str, relation: str) -> None:
+        """
+        Remote mutation is not supported without a dedicated endpoint on the
+        remote CEREBRUM node.  Logs a warning so provenance rollback degrades
+        gracefully in federated setups.
+        """
+        logging.getLogger('cerebrum.remote_adapter').warning(
+            "RemoteCerebrumAdapter: remove_edge(%r, %r, %r) ignored — "
+            "remote mutation not supported. "
+            "Implement a /graph/remove-edge endpoint on the remote node to enable rollback.",
+            u, v, relation,
+        )
 
     def find_similar(
         self, 
@@ -311,6 +323,7 @@ class RemoteCerebrumAdapter(GraphAdapter):
         context_embedding: Optional[np.ndarray] = None,
         max_hop: int = 2,
         beam_width: int = 5,
+        max_budget: int = 500,
     ) -> List[Dict]:
         """Request remote reasoning branches via /traverse endpoint."""
         try:
@@ -318,7 +331,8 @@ class RemoteCerebrumAdapter(GraphAdapter):
                 "seed_id": seed_id,
                 "context_embedding": context_embedding.tolist() if context_embedding is not None else None,
                 "max_hop": max_hop,
-                "beam_width": beam_width
+                "beam_width": beam_width,
+                "max_budget": max_budget
             }
             resp = requests.post(
                 f"{self.base_url}/traverse", 

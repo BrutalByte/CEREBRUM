@@ -286,24 +286,7 @@ class FederatedAdapter(GraphAdapter):
                 return -1
         
         adapter = self.adapters[owner_name]
-        # We assume local adapters might have a .community_map attribute 
-        # or the FederatedAdapter is initialized with them.
-        # For now, let's look for a community_map in the adapter if it's a local one.
-        if hasattr(adapter, "community_map"):
-            local_cid = adapter.community_map.get(entity_id, -1)
-            if local_cid == -1:
-                return -1
-            # Federated CID = hash(adapter_name) + local_cid to avoid collisions
-            return hash(owner_name) % 1000000 + local_cid
-        
-        # Check if it's a Remote adapter (uses get_community method)
-        try:
-            local_cid = adapter.get_community(entity_id)
-            if local_cid == -1:
-                return -1
-            return hash(owner_name) % 1000000 + local_cid
-        except Exception:
-            return -1
+        return adapter.get_community(entity_id)
 
     def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:
         """Get embedding from the owner adapter, applying alignment rotation if registered."""
@@ -312,9 +295,7 @@ class FederatedAdapter(GraphAdapter):
             return None
 
         adapter = self.adapters[owner_name]
-        emb = None
-        if hasattr(adapter, "embeddings"):
-            emb = adapter.embeddings.get(entity_id)
+        emb = adapter.get_embedding(entity_id)
 
         if emb is None:
             return None
@@ -342,6 +323,24 @@ class FederatedAdapter(GraphAdapter):
             if self.adapters:
                 first_name = list(self.adapters.keys())[0]
                 self.adapters[first_name].add_edge(u, v, relation, confidence, provenance, synthetic)
+
+    def remove_edge(self, u: str, v: str, relation: str) -> None:
+        """
+        Delegate remove_edge to the sub-adapter that owns node *u*.
+
+        Falls back to the first adapter when ownership can't be resolved,
+        mirroring the add_edge fallback behaviour.
+        Raises ValueError (or NotImplementedError) from the delegated adapter
+        if the edge doesn't exist or the adapter doesn't support mutation.
+        """
+        owner = self._resolve_adapter(u)
+        if owner:
+            self.adapters[owner].remove_edge(u, v, relation)
+        elif self.adapters:
+            first_name = list(self.adapters.keys())[0]
+            self.adapters[first_name].remove_edge(u, v, relation)
+        else:
+            raise RuntimeError("FederatedAdapter has no sub-adapters.")
 
     def align_embeddings(
         self,

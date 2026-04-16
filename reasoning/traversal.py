@@ -6,7 +6,7 @@ candidate next-hop using CSA attention weights and pruning to beam_width at
 each step. Returns all explored paths for downstream ranking.
 """
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Set, Tuple
+from typing import List, Dict, Optional, Set, Tuple, Any, TYPE_CHECKING
 import heapq
 import logging
 import math
@@ -16,8 +16,9 @@ import numpy as np
 
 _log = logging.getLogger("cerebrum.traversal")
 
-from core.graph_adapter import GraphAdapter
+from core.graph_adapter import GraphAdapter, Edge
 from core.attention_engine import CSAEngine
+from core.telemetry import NeuralEvent
 from core.bridge_engine import BridgeTwinEngine, BRIDGE_RELATION
 from core.resource_governor import ResourceGovernor
 from core.task_queue import BridgeTask, TaskQueue

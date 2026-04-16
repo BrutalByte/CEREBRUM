@@ -131,7 +131,7 @@ class SentenceEngine(EmbeddingEngine):
             self._model = SentenceTransformer(model_name, device=device)
             # BGE instructions (v1.5)
             self._instruction = "Represent this sentence for searching relevant passages: "
-            self._dim   = self._model.get_sentence_embedding_dimension()
+            self._dim   = int(self._model.get_sentence_embedding_dimension() or 0)
         except ImportError as e:
             raise ImportError(
                 "sentence-transformers is required for SentenceEngine. "
@@ -210,7 +210,7 @@ def smooth_with_graphsage(
         # predecessors and successors for directed graphs)
         neighbour_vecs = []
         if hasattr(G, "predecessors"):
-            nbrs = set(G.predecessors(node)) | set(G.successors(node))
+            nbrs = set(G.predecessors(node)) | set(G.successors(node)) # type: ignore
         else:
             nbrs = set(G.neighbors(node))
         for nbr in nbrs:

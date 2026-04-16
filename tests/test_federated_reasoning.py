@@ -31,7 +31,7 @@ def test_traverse_endpoint():
             "beam_width": 5
         }
         # Using local-admin API key for auth bypass in test
-        response = client.post("/traverse", json=payload, headers={"X-API-Key": "dev-secret"})
+        response = client.post("/v1/traverse", json=payload, headers={"X-API-Key": "dev-secret"})
         
         assert response.status_code == 200
         data = response.json()

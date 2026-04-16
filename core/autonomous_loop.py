@@ -504,9 +504,12 @@ class AutonomousDiscoveryLoop:
         """Write AutoApprover checkpoint to disk. Errors are logged, not raised."""
         import json
         path = self._config.approver_checkpoint_path
+        if path is None:
+            return
         try:
             with open(path, "w", encoding="utf-8") as fh:
                 json.dump(aa.to_dict(), fh, indent=2)
-            logger.debug("AutonomousDiscoveryLoop: AutoApprover checkpoint saved → %s", path)
+            logger.debug("AutonomousDiscoveryLoop: AutoApprover checkpoint saved ΓåÆ %s", path)
         except Exception:
             logger.exception("AutonomousDiscoveryLoop: failed to save checkpoint to %s.", path)
+

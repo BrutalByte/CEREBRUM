@@ -87,6 +87,11 @@ class GraphAdapter(ABC):
         ...
 
     @abstractmethod
+    def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:
+        """Return the embedding vector for entity_id, or None."""
+        ...
+
+    @abstractmethod
     def add_edge(
         self,
         u: str,
@@ -143,13 +148,14 @@ class GraphAdapter(ABC):
         context_embedding: Optional[np.ndarray] = None,
         max_hop: int = 2,
         beam_width: int = 5,
+        max_budget: int = 500,
     ) -> List[Dict]:
         """
         Optional: Return a list of reasoning paths (beams) starting from seed_id.
         Used by FederatedAdapter to delegate multi-hop exploration to remote agents.
 
         Returns:
-            List[Dict] — Serialized TraversalPath objects.
+            List[Dict] ΓÇö Serialized TraversalPath objects.
         """
         return []
 

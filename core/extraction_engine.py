@@ -80,14 +80,14 @@ try:
     import spacy as _spacy
     _SPACY_AVAILABLE = True
 except ImportError:
-    _spacy = None  # type: ignore
+    _spacy = None
     _SPACY_AVAILABLE = False
 
 try:
     from transformers import pipeline as _hf_pipeline, Text2TextGenerationPipeline
     _TRANSFORMERS_AVAILABLE = True
 except ImportError:
-    _hf_pipeline = None
+    _hf_pipeline = None # type: ignore
     Text2TextGenerationPipeline = Any # type: ignore
     _TRANSFORMERS_AVAILABLE = False
 

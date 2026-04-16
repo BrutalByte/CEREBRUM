@@ -228,7 +228,7 @@ def dscf_communities(
                     neighbor_cent_sums[cid] = neighbor_cent_sums.get(cid, 0.0) + cw
             
             # 2. LPA signal (majority vote)
-            lpa_cid  = max(neighbor_com_counts, key=neighbor_com_counts.get)
+            lpa_cid  = max(neighbor_com_counts, key=lambda c: neighbor_com_counts[c])
             lpa_conf = neighbor_com_counts[lpa_cid] / len(neighbors)
 
             # 3. Modularity signal (best dQ) — O(number of neighbor communities)
@@ -246,7 +246,7 @@ def dscf_communities(
 
             # 4. TSC: Centrality signal
             if centrality_weights:
-                cent_cid  = max(neighbor_cent_sums, key=neighbor_cent_sums.get)
+                cent_cid  = max(neighbor_cent_sums, key=lambda c: neighbor_cent_sums[c])
                 cent_conf = neighbor_cent_sums[cent_cid] / sum(neighbor_cent_sums.values())
             else:
                 cent_cid, cent_conf = lpa_cid, lpa_conf

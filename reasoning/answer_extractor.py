@@ -278,16 +278,16 @@ def extract(
         return (1.0 - vote_weight) * path_score + vote_weight * norm_votes
 
     # Sort and return top-K
-    ranked = sorted(
+    top_candidates = sorted(
         best.items(),
         key=lambda kv: combined(kv[0], kv[1][1]),
         reverse=True,
     )[:top_k]
     # Unpack to (path, combined_score) for answer construction below
-    ranked = [(v[0], combined(k, v[1])) for k, v in ranked]
+    ranked_answers = [(v[0], combined(k, v[1])) for k, v in top_candidates]
 
     answers = []
-    for path, s in ranked:
+    for path, s in ranked_answers:
         # Build score breakdown
         import math
         attn_score = math.prod(max(w, 1e-9) for w in path.attention_weights) if path.attention_weights else 0.0

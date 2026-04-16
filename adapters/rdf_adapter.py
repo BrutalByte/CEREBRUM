@@ -175,6 +175,19 @@ class RDFAdapter(GraphAdapter):
         logger = logging.getLogger("cerebrum.rdf_adapter")
         logger.warning("RDFAdapter: Materialization (add_edge) not supported for standard SPARQL endpoints.")
 
+    def remove_edge(self, u: str, v: str, relation: str) -> None:
+        """
+        SPARQL endpoints are typically read-only; removal is not supported.
+        Logs a warning instead of raising so provenance rollback degrades
+        gracefully when backed by a read-only triple store.
+        """
+        logging.getLogger("cerebrum.rdf_adapter").warning(
+            "RDFAdapter: remove_edge(%r, %r, %r) ignored — "
+            "SPARQL endpoints are read-only. "
+            "Use a SPARQL Update endpoint and override this method to enable rollback.",
+            u, v, relation,
+        )
+
     def find_similar(
         self,
         embedding: np.ndarray,

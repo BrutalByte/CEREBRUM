@@ -496,10 +496,11 @@ def cmd_serve(args):
         except Exception as exc:
             print(f"  [CLI] Warning: could not load params from {params_file}: {exc}", file=sys.stderr)
 
-    print(f"Serving CEREBRUM API on http://localhost:{args.port}")
+    print(f"Serving CEREBRUM API on http://localhost:{args.port}/v1/")
+    print(f"  Swagger UI: http://localhost:{args.port}/v1/docs")
     ws_port = getattr(args, "ws_port", None)
     if ws_port:
-        print(f"Neural telemetry WebSocket on ws://localhost:{ws_port}")
+        print(f"  Neural telemetry WebSocket: ws://localhost:{ws_port}")
     uvicorn.run(app, host="0.0.0.0", port=args.port)
 
 

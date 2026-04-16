@@ -194,7 +194,7 @@ class ContradictionEngine:
 
         for u in G.nodes():
             out_neighbors = (
-                list(G.successors(u)) if G.is_directed() else list(G.neighbors(u))
+                list(G.successors(u)) if G.is_directed() else list(G.neighbors(u)) # type: ignore
             )
 
             for v in out_neighbors:

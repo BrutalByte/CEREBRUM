@@ -38,29 +38,29 @@ def _get_auth_headers(scopes: List[str]):
 
 class TestJWTSecurity:
     def test_no_token(self, hardened_client):
-        r = hardened_client.post("/query", json={"query": "safe_node"})
+        r = hardened_client.post("/v1/query", json={"query": "safe_node"})
         assert r.status_code == 401
     
     def test_invalid_token(self, hardened_client):
         headers = {"Authorization": "Bearer invalid-token"}
-        r = hardened_client.post("/query", json={"query": "safe_node"}, headers=headers)
+        r = hardened_client.post("/v1/query", json={"query": "safe_node"}, headers=headers)
         assert r.status_code == 401
         
     def test_wrong_scope(self, hardened_client):
         headers = _get_auth_headers(scopes=["search"])
-        r = hardened_client.post("/query", json={"query": "safe_node"}, headers=headers)
+        r = hardened_client.post("/v1/query", json={"query": "safe_node"}, headers=headers)
         assert r.status_code == 403
         
     def test_valid_token_and_scope(self, hardened_client):
         headers = _get_auth_headers(scopes=["query"])
-        r = hardened_client.post("/query", json={"query": "safe_node"}, headers=headers)
+        r = hardened_client.post("/v1/query", json={"query": "safe_node"}, headers=headers)
         assert r.status_code == 200
 
     def test_handshake_is_unprotected(self, hardened_client):
         # Handshake should be open to allow discovery
-        r = hardened_client.get("/handshake")
+        r = hardened_client.get("/v1/handshake")
         assert r.status_code == 200
 
     def test_health_is_protected(self, hardened_client):
-        r = hardened_client.get("/health")
+        r = hardened_client.get("/v1/health")
         assert r.status_code == 401

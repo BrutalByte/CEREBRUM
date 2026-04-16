@@ -51,6 +51,7 @@ import logging
 import threading
 import time
 import uuid
+import random
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -186,6 +187,8 @@ class ResearchAgent:
         max_budget: int = 300,
         ann_batch_size: int = 512,
         ann_top_k: int = 30,
+        larql_endpoint: Optional[str] = None,
+        larql_vindex: Optional[str] = None,
     ) -> None:
         self._adapter               = adapter
         self._hypothesis_engine     = hypothesis_engine
@@ -206,6 +209,10 @@ class ResearchAgent:
         self.max_budget         = max_budget
         self.ann_batch_size     = ann_batch_size
         self.ann_top_k          = ann_top_k
+
+        # LARQL Neural Discovery
+        from core.larql_client import LarqlClient
+        self._larql = LarqlClient(endpoint=larql_endpoint, vindex_path=larql_vindex)
 
         self._lock              = threading.RLock()
         self._timer: Optional[threading.Timer] = None
@@ -908,6 +915,12 @@ class ResearchAgent:
                 except Exception as exc:
                     logger.debug("InsightEngine seeding error: %s", exc)
 
+            # --- 5. LARQL Neural Discovery scan ---
+            larql_cands = self._larql_scan(G, nodes, emb_cache, cmap, seen_pairs)
+            candidates.extend(larql_cands)
+            for c in larql_cands:
+                seen_pairs.add((c.source_id, c.target_id))
+
         except Exception as exc:
             logger.warning("ResearchAgent._mine_candidates() error: %s", exc)
             return []
@@ -961,10 +974,19 @@ class ResearchAgent:
             return []
 
         # Stack into (N, d) float32; re-normalise to guard against non-unit vecs
-        E = np.stack([emb_cache[n].astype(np.float32) for n in valid_nodes])
-        norms = np.linalg.norm(E, axis=1, keepdims=True)
-        norms = np.where(norms > 1e-8, norms, 1.0)
-        E = E / norms
+        vectors = []
+        for n in valid_nodes:
+            v = emb_cache[n]
+            if v is not None:
+                vectors.append(v.astype(np.float32))
+        
+        if not vectors:
+            return []
+            
+        E = np.stack(vectors).astype(np.float32)
+        norms = np.linalg.norm(E, axis=1, keepdims=True).astype(np.float32)
+        norms = np.where(norms > 1e-8, norms, 1.0).astype(np.float32)
+        E = (E / norms).astype(np.float32)
 
         candidates: List[ResearchCandidate] = []
         budget = self.candidate_limit * 3  # oversample before final sort+trim
@@ -1059,7 +1081,11 @@ class ResearchAgent:
 
         try:
             import networkx as nx
-            clust = nx.clustering(G)
+            raw_clust = nx.clustering(G)
+            if isinstance(raw_clust, dict):
+                clust: Dict[str, float] = {str(k): float(v) for k, v in raw_clust.items()}
+            else:
+                return []
         except Exception:
             return []
 
@@ -1127,6 +1153,72 @@ class ResearchAgent:
                 ))
                 seen_pairs.add((h, v))
 
+        return candidates
+
+    def _larql_scan(
+        self,
+        G,
+        nodes: List[str],
+        emb_cache: Dict[str, Optional[np.ndarray]],
+        cmap: Dict[str, int],
+        seen_pairs: Set[Tuple[str, str]],
+        limit: int = 50,
+    ) -> List[ResearchCandidate]:
+        """
+        Discovers "Neural Neighbors" using LARQL feature projection from LLM weights.
+        """
+        if not self._larql:
+            return []
+            
+        candidates: List[ResearchCandidate] = []
+        # Sample a subset of nodes to query per scan to stay within budget
+        sample_size = min(len(nodes), 20)
+        query_nodes = random.sample(nodes, sample_size) if nodes else []
+
+        for u in query_nodes:
+            if len(candidates) >= limit:
+                break
+                
+            links = self._larql.find_neural_neighbors(u, top_k=5)
+            for link in links:
+                v = link.target
+                if v not in nodes: # We only consider known entities for now
+                    continue
+                if (u, v) in seen_pairs or (v, u) in seen_pairs:
+                    continue
+                if G.has_edge(u, v) or G.has_edge(v, u):
+                    continue
+                with self._lock:
+                    if (u, v) in self._evaluated_pairs or (v, u) in self._evaluated_pairs:
+                        continue
+
+                # Neural links are high-value gap candidates
+                cid_u = cmap.get(u, 0)
+                cid_v = cmap.get(v, 0)
+                community_dist = 0 if cid_u == cid_v else 1
+                
+                # Use link confidence as a proxy for gap score (1-similarity)
+                # If neural confidence is high, it's a strong "missing link".
+                potential, density = self._score_discovery_potential(
+                    gap_score=1.0 - link.confidence,
+                    community_dist=community_dist,
+                    G=G,
+                    u=u,
+                    v=v,
+                    cmap=cmap,
+                )
+                
+                candidates.append(ResearchCandidate(
+                    source_id=u,
+                    target_id=v,
+                    discovery_potential=potential,
+                    gap_score=1.0 - link.confidence,
+                    community_distance=community_dist,
+                    seeded_by="larql_neural_scan",
+                    local_density=density,
+                ))
+                seen_pairs.add((u, v))
+                
         return candidates
 
     # ------------------------------------------------------------------
@@ -1217,6 +1309,34 @@ class ResearchAgent:
         if self._calibrator is not None:
             # Weight by source community — steers exploration toward dark regions
             cal_w = self._calibrator.get_weight(cid_u)
-            potential = min(1.0, max(0.0, potential * cal_w))
-
         return potential, conn_density
+
+    def approve_larql_candidates(self, min_confidence: float = 0.8) -> int:
+        """
+        Scan candidates for "larql_neural_scan", validate them via ExternalValidator,
+        and materialize those that are novel with high confidence.
+        """
+        candidates = [f for f in self.findings if f.candidate.seeded_by == "larql_neural_scan"]
+        approved_count = 0
+        
+        for f in candidates:
+            if f.candidate.discovery_potential < min_confidence:
+                continue
+                
+            # Validate via ExternalValidator (Phase 52)
+            if self._validator:
+                from core.hypothesis_engine import HypothesisProposal
+                proposal = HypothesisProposal(
+                    hypothesis_id=str(uuid.uuid4()),
+                    source=f.candidate.source_id,
+                    target=f.candidate.target_id,
+                    derived_relation="RELATED_TO", # Placeholder relation
+                )
+                report = self._validator.validate(proposal)
+                if report.literature_status != "novel":
+                    continue
+            
+            # Materialize
+            approved_count += self.approve(f.finding_id)
+            
+        return approved_count

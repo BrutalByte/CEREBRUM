@@ -17,7 +17,7 @@ Implements the attention weight formula from Section 4.1, updated for Phase 43:
   )
 """
 import math
-from typing import Dict, Optional, Set, Tuple
+from typing import Dict, Optional, Set, Tuple, Any
 
 import numpy as np
 from core.graph_adapter import GraphAdapter
@@ -239,5 +239,17 @@ def _sigmoid(x: float) -> float:
 
 class UniformCSAEngine(CSAEngine):
     def compute_weight(self, *args, **kwargs): return 0.5
-    def compute_weight_with_features(self, u, v, hop, **kwargs):
+    def compute_weight_with_features(
+        self,
+        u: Any,
+        v: Any,
+        hop: int,
+        edge_type: str = "RELATED_TO",
+        edge_type_weights: Optional[Dict[str, float]] = None,
+        normalized_distance: float = 0.0,
+        valid_from: Optional[float] = None,
+        valid_to: Optional[float] = None,
+        eu: Optional[np.ndarray] = None,
+        ev: Optional[np.ndarray] = None,
+    ) -> ReasoningLogit:
         return ReasoningLogit(cs=0.5, hd=1.0/(1.0+hop))

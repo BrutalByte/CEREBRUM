@@ -1,0 +1,36 @@
+services:
+  cerebrum:
+    build: .
+    ports:
+      - "8200:8200"
+    volumes:
+      # Persistent graph state, Engram cache, query log
+      - cerebrum_data:/data
+      # Optional: mount a local CSV to load at startup
+      # - ./my_graph.csv:/data/graph.csv
+    environment:
+      # Required in production: comma-separated API keys
+      # Generate one with: python -c "import secrets; print(secrets.token_hex(32))"
+      CEREBRUM_API_KEYS: "${CEREBRUM_API_KEYS:-}"
+
+      # Optional: load a graph CSV on startup (path inside the container)
+      # CEREBRUM_CSV_PATH: /data/graph.csv
+
+      # Optional: cache computed communities to speed up restarts
+      # CEREBRUM_CACHE_PATH: /data/cerebrum_state.pkl
+
+      # Optional: enable UE5 / visualization WebSocket feed
+      # CEREBRUM_WS_PORT: "8765"
+
+      CEREBRUM_DATA_DIR: /data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8200/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  cerebrum_data:

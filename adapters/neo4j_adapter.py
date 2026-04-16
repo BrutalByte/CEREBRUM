@@ -231,6 +231,31 @@ class Neo4jAdapter(GraphAdapter):
         with self._session() as s:
             s.run(cypher, {"u": u, "v": v, "conf": confidence, "prov": provenance, "synth": synthetic})
 
+    def remove_edge(self, u: str, v: str, relation: str) -> None:
+        """
+        Delete a single relationship from Neo4j (for Phase 76 provenance rollback).
+
+        Matches the first relationship of type *relation* (case-insensitive,
+        stored uppercase) from node *u* to node *v* and deletes it.
+        Raises ValueError if no matching relationship exists.
+        """
+        rel_type = relation.upper()
+        cypher = (
+            f"MATCH (a:{self._node_label} {{{self._name_property}: $u}})"
+            f"-[r:{rel_type}]->"
+            f"(b:{self._node_label} {{{self._name_property}: $v}}) "
+            "DELETE r "
+            "RETURN count(r) AS deleted"
+        )
+        with self._session() as s:
+            result = s.run(cypher, {"u": u, "v": v})
+            record = result.single()
+            deleted = record["deleted"] if record else 0
+        if not deleted:
+            raise ValueError(
+                f"No edge {u!r} -[{relation}]-> {v!r} found in Neo4j."
+            )
+
     def find_similar(self, embedding: np.ndarray, top_k: int = 10) -> List[Entity]:
         """Vector search requires Neo4j 5.x Vector indexes, currently stubbed."""
         return []

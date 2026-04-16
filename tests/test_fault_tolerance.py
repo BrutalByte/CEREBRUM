@@ -185,14 +185,14 @@ class TestQueryEndpointGracefulDegradation:
         """If traversal raises, /query returns 200 with partial=True (not 500)."""
         with patch("reasoning.traversal.BeamTraversal.traverse",
                    side_effect=RuntimeError("injected traversal crash")):
-            resp = client.post("/query", json={"query": "newton", "top_k": 3})
+            resp = client.post("/v1/query", json={"query": "newton", "top_k": 3})
         assert resp.status_code == 200
         body = resp.json()
         assert body["partial"] is True
         assert "injected traversal crash" in body["error"]
 
     def test_normal_query_has_partial_false(self, client):
-        resp = client.post("/query", json={"query": "newton", "top_k": 3})
+        resp = client.post("/v1/query", json={"query": "newton", "top_k": 3})
         assert resp.status_code == 200
         body = resp.json()
         assert body["partial"] is False
@@ -206,7 +206,7 @@ class TestQueryEndpointGracefulDegradation:
 class TestWriteFailureIsolation:
     def test_querylog_oserror_does_not_crash_query(self, client):
         with patch("core.persistence.QueryLog.record", side_effect=OSError("disk full")):
-            resp = client.post("/query", json={"query": "newton", "top_k": 3})
+            resp = client.post("/v1/query", json={"query": "newton", "top_k": 3})
         assert resp.status_code == 200
         assert resp.json()["partial"] is False
 
@@ -215,14 +215,14 @@ class TestWriteFailureIsolation:
             "reasoning.engram_traversal.Engram.record",
             side_effect=MemoryError("OOM"),
         ):
-            resp = client.post("/query", json={"query": "newton", "top_k": 3})
+            resp = client.post("/v1/query", json={"query": "newton", "top_k": 3})
         assert resp.status_code == 200
         assert resp.json()["partial"] is False
 
     def test_querylog_error_is_logged(self, client):
         with _capture_logs(logging.WARNING) as records:
             with patch("core.persistence.QueryLog.record", side_effect=OSError("no space")):
-                client.post("/query", json={"query": "newton", "top_k": 3})
+                client.post("/v1/query", json={"query": "newton", "top_k": 3})
         assert any("QueryLog.record failed" in r.getMessage() for r in records)
 
     def test_engram_error_is_logged(self, client):
@@ -231,7 +231,7 @@ class TestWriteFailureIsolation:
                 "reasoning.engram_traversal.Engram.record",
                 side_effect=MemoryError("OOM"),
             ):
-                client.post("/query", json={"query": "newton", "top_k": 3})
+                client.post("/v1/query", json={"query": "newton", "top_k": 3})
         assert any("Engram.record failed" in r.getMessage() for r in records)
 
 
@@ -294,7 +294,7 @@ class TestStreamTraversalGuard:
             "reasoning.traversal.AsyncBeamTraversal.traverse_stream",
             side_effect=RuntimeError("injected stream crash"),
         ):
-            resp = client.post("/query/stream", json={"query": "newton", "top_k": 3})
+            resp = client.post("/v1/query/stream", json={"query": "newton", "top_k": 3})
         assert resp.status_code == 200
         lines = [ln for ln in resp.text.strip().splitlines() if ln.strip()]
         last = json.loads(lines[-1])
@@ -304,7 +304,7 @@ class TestStreamTraversalGuard:
 
     def test_normal_stream_has_no_error_chunk(self, client):
         """/query/stream must not contain an error chunk on a successful query."""
-        resp = client.post("/query/stream", json={"query": "newton", "top_k": 3})
+        resp = client.post("/v1/query/stream", json={"query": "newton", "top_k": 3})
         assert resp.status_code == 200
         chunks = [json.loads(ln) for ln in resp.text.strip().splitlines() if ln.strip()]
         assert all(c.get("status") != "error" for c in chunks)
