@@ -7,8 +7,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [2.21.0] — 2026-04-15
+## [2.21.0] — 2026-04-17
 ### Added
+- **Phase 94: Self-Modifying GUI (GUIAdaptationEngine)** — dual-channel HUD adaptation system.
+  - `core/gui_adaptation_engine.py`: `GUIAdaptationEngine` watches metabolic + loop signals via `SignalSnapshot` records; evaluates 6 built-in adaptation rules (HIGH_AROUSAL, UNSTABLE_PRIOR, CIRCUIT_BREAKER, INFERENCE_MILESTONE, LOW_REINFORCEMENT, RECOVERY); idempotent rule tracking via `_applied_adaptations` set.
+  - `api/ue_toolkit_client.py`: `UEToolkitClient` HTTP client for `ue-llm-toolkit` at `localhost:3000`; `is_available()`, `call()`, `create_widget()`, `add_widget_element()`, `set_widget_property()`, `compile_blueprint()`, `run_python()`; degrades gracefully when toolkit is unavailable.
+  - `ue5_project/create_initial_gui.py`: one-time scaffold script creating `WBP_CerebrumHUD` with MetabolicPanel, QueryConsole, LoopStatusPanel, ActiveInferencePanel, GraphStatsPanel via toolkit API.
+  - `core/telemetry.py`: `GUI_ADAPTATION` event type + `NeuralEvent.gui_adapt(action, target, data)` factory.
+  - `core/autonomous_loop.py`: `LoopConfig` gains `gui_adaptation` + `gui_toolkit_url` flags; loop body calls `_gui_engine.record()` + `_gui_engine.step()` per cycle.
+  - `core/cerebrum.py`: `attach_gui_engine()`, `start_autonomous_loop(gui_adaptation=False)`, `set_research_agent()` methods; `METABOLIC_FLUX` emitted after `modulator.step()` in `query()`.
+- **Phase 93: Active Inference / Daydreaming (ActiveInferenceEngine)** — idle-period self-querying to consolidate weak priors.
+  - `core/active_inference.py`: `ActiveInferenceEngine` seeds queries from high-PE nodes in `AutonomousDiscoveryLoop` idle periods; computes `free_energy` per idle cycle; exposes `stats()`.
+  - `core/autonomous_loop.py`: `LoopConfig.active_inference` flag; `AutonomousDiscoveryLoop` calls `_inference_engine.run_idle_cycle()` between discovery cycles.
 - **Phase 83: UE5 3D Neural Visualization** — Production Unreal Engine 5 C++ plugin for live knowledge graph exploration.
   - `ANeuronNodeActor`: sphere mesh per KG entity; community color via golden ratio HSV wheel; glow light driven by `SetGlowIntensity()`; pulse flash on `SYNAPTIC_PULSE`; dissonance tint on `DISSONANCE`; fade-out on `SYNAPTIC_PRUNE`. Blueprint hooks: `OnPulseFlash`, `OnNeurogenesisBorn`, `OnPruneStart`.
   - `ASynapseActor`: cylinder oriented per-tick between node pairs via `FQuat::FindBetweenNormals`; relation-based hue (djb2 hash); weight-driven opacity; `AnimatePulse()` propagates flash to endpoint nodes; `FadeOut()` → self-destroy.

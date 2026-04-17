@@ -4,7 +4,7 @@ This guide covers what operators and developers need to **do** (not just what ch
 
 ---
 
-## v2.7.0 → v2.21.0 (Phases 69–82: Autonomous Loop, Provenance, Adaptive Tuning)
+## v2.7.0 → v2.21.0 (Phases 69–94: Autonomous Loop, Provenance, Adaptive Tuning, Active Inference, GUI Adaptation)
 
 ### Required actions: `remove_edge()` on custom GraphAdapter subclasses
 

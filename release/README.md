@@ -2,7 +2,7 @@
 
 **Community-Structured Graph Attention for Knowledge Graph Reasoning**
 
-*Bryan Alexander Buchorn (AMP) · April 2026 · v2.0.1 — Phase 57 COMPLETE — 1490+ tests passing*
+*Bryan Alexander Buchorn (AMP) · April 2026 · v2.21.0 — Phase 94 COMPLETE — 1841+ tests passing*
 
 ---
 
@@ -104,7 +104,7 @@ uvicorn api.server:app --port 8200 --reload
 | `GET /communities` | View detected community structure |
 | `GET /stream/events` | Subscribe to live graph updates (SSE) |
 
-## v2.0 / v2.0.1 Capabilities (Phases 43–57)
+## v2.0–v2.21 Capabilities (Phases 43–94)
 
 ### 10-Parameter CSA Formula with Online + Batch Learning
 

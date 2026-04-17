@@ -1,13 +1,13 @@
 # CEREBRUM: Research Roadmap
 
 *What has been built, what is next, and why it matters.*
-*Version 2.0.1 — Phase 57 COMPLETE — 1490+ tests passing.*
+*Version 2.21.0 — Phase 94 COMPLETE — 1841+ tests passing.*
 
 ---
 
 ## What CEREBRUM Is Today
 
-The current release (v2.0.1 / Phase 57) is a production-hardened reasoning engine with full fault tolerance, autonomous research capabilities, and durable learning memory. It answers multi-hop questions over knowledge graphs with full interpretability, no training data, and sub-millisecond latency. The core algorithms are stable, validated, and battle-hardened across 57 development phases.
+The current release (v2.21.0 / Phase 94) is a production-hardened reasoning engine with full fault tolerance, autonomous research capabilities, durable learning memory, real-time UE5 neural visualization, active inference daydreaming, and self-modifying GUI adaptation. It answers multi-hop questions over knowledge graphs with full interpretability, no training data, and sub-millisecond latency. The core algorithms are stable, validated, and battle-hardened across 94 development phases.
 
 Key capabilities: TSC/DSCF community detection, 10-parameter CSA attention formula with online SGD and batch gradient retraining, Engram-steered beam traversal with durable relation-pattern memory, GraphSAGE neighbourhood smoothing, TemporalCalibrator, HypothesisEngine abductive reasoning, autonomous ResearchAgent, observability dashboard, and comprehensive fault tolerance (graceful degradation on every failure mode).
 
@@ -236,5 +236,5 @@ That is what it means to reason from a glass box.
 
 ---
 
-*Bryan Alexander Buchorn (AMP) · v2.0.1 / Phase 57 · April 2026*
+*Bryan Alexander Buchorn (AMP) · v2.21.0 / Phase 94 · April 2026*
 *Contact: bryan.alexander@buchorn.com*

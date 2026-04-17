@@ -100,4 +100,6 @@ This document provides a consolidated list of foundational papers, books, and da
 | PAPER_033 | 81 | GraphSnapshot Persistence | `PAPER_033_GRAPH_SNAPSHOT.md` |
 | PAPER_034 | 82 | Adaptive Loop Tuning | `PAPER_034_ADAPTIVE_LOOP_TUNING.md` |
 | PAPER_035 | 83 | UE5 Neural Visualization Bridge | `PAPER_035_UE5_NEURAL_VISUALIZATION.md` |
+| PAPER_036 | 93 | Active Inference / Daydreaming — ActiveInferenceEngine | `PAPER_036_ACTIVE_INFERENCE.md` |
+| PAPER_037 | 94 | Self-Modifying GUI — GUIAdaptationEngine + UEToolkitClient | `PAPER_037_GUI_ADAPTATION.md` |
 | PAPER_100 | — | Conclusion: The CEREBRUM Paradigm | `PAPER_100_CONCLUSION.md` |

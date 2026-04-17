@@ -1,7 +1,7 @@
 # CEREBRUM: Algorithm Specification
 
 *Precise mathematical definitions for DSCF, CSA, BeamTraversal, and all Phase 19–20 extensions.*
-*Version 1.4.0 — Phase 24 COMPLETE — 1042 tests passing.*
+*Version 2.21.0 — Phase 94 COMPLETE — 1841+ tests passing.*
 
 ---
 
