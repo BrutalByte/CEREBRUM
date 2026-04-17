@@ -120,24 +120,27 @@ python -m cli.cerebrum serve --csv tests/fixtures/toy_graph.csv --port 8200 --pa
 -   **Reproducibility:** Follow the guidelines in `TESTING.md` for deterministic runs (especially for DSCF).
 -   **Documentation:** Absolute precedence is given to `PARALLAX.md` (whitepaper) and `README.md`. `CLAUDE.md` provides environment-specific guidance.
 
-## Current Project Status (Phase 68 COMPLETE)
+## Current Project Status (Phase 83 COMPLETE)
 
-CEREBRUM is currently in **v2.7.0**. All phases through 68 shipped and verified. 1540+ tests passing.
+CEREBRUM is currently in **v2.21.0**. All phases through 83 shipped and verified. 1540+ tests passing.
 
 Key implementations (recent phases):
--   **Phase 68 — Metabolic Modulation**: Bio-mimetic functional regulation (ChemicalModulator) with homeostatic decay; dynamic `alpha/beta` ratio control.
+-   **Phase 83 — UE5 3D Neural Visualization**: Production Unreal Engine 5 C++ plugin for live knowledge graph exploration via WebSockets.
+-   **Phase 82 — Adaptive Loop Tuning**: Calibration-driven scaling of materialization caps and inter-cycle sleep.
+-   **Phase 81 — Graph Snapshot Persistence**: Portable JSON serialization of graph topology with structural diffing.
+-   **Phase 79 — Loop-Provenance Recovery**: Automatic transactional rollback of bad discovery cycles when circuit breakers trip.
+-   **Phase 74 — Autonomous Discovery Loop**: Closes the loop from discovery to materialization with safety circuit breakers.
+-   **Phase 71 — AutoApprover**: Three-tier approval stack (gates → online SGD → LLM) for discovery findings.
+-   **Phase 70 — Looped Beam Traversal**: Iterative refinement of reasoning paths with adaptive exit gates.
+-   **Phase 69 — Predictive Coding**: Active inference loop using Engram priors to drive metabolic states.
+-   **Phase 68 — Metabolic Modulation**: Bio-mimetic functional regulation (ChemicalModulator) with homeostatic decay.
 -   **Phase 65 — Hypothesis Materialization**: Formal materialization of ResearchAgent findings into graph edges with Noisy-OR confidence.
 -   **Phase 64 — Neural Memory Consolidation**: `EngramConsolidator` promotes high-frequency patterns to "Canonical Engrams."
--   **Phase 63 — Neural Telemetry**: Real-time event streaming via WebSockets for 3D visualization (e.g., Unreal Engine 5).
 -   **Phase 62 — Explainable Reasoning Trace (ERT)**: Decision transparency via hop-by-hop logging of search candidates and their feature radars.
 -   **Phase 61 — Synaptic Pruning & Quantized Traversal (SPQT)**: Utility-based edge removal (SynapticPruner) and `uint8` fixed-point traversal scoring for efficiency.
 -   **Phase 60 — Multi-Agent Consensus Hierarchies (MACH)**: Three-tier reasoning verification (L1 Strategy, L2 Federated, L3 Gold Literature).
 -   **Phase 59 — Cerebellar Error Correction (CEC)**: Active error-driven meta-learning via dissonance detection.
 -   **Phase 58 — SpeedTalk Encoding**: Phonemic compression for Engram keys (8-20x space savings).
--   **Phase 57 — Engram Persistence**: Save/load Engram on shutdown/startup; durable query log warm-up.
--   **Phase 56 — Fault Tolerance**: `QueryResponse.partial/error` fields; graceful degradation; QueryLog/Engram isolation.
--   **Phase 55 — GraphSAGE + Engram + TemporalCalibrator + QueryLog**: One-pass neighbourhood smoother; pattern-steered beam pruning; Recall@K calibration.
--   **Phase 54 — Observability Dashboard**: `RingBufferHandler`, `GET /logs`, `ui/dashboard.html` operational monitoring UI.
 -   **Phase 51–52 — ResearchAgent + ExternalValidator**: Autonomous missing-link discovery daemon; LLM-independent external source validation.
 -   **Phase 50 — HypothesisEngine**: Multi-path abductive reasoning with Noisy-OR confidence aggregation.
 -   **Phase 49 — TSC Explicit Mode**: `tsc_communities()` and `tsc_quality_metrics()` for explicit Triple-Signal Community control.

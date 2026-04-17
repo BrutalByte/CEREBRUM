@@ -12,7 +12,7 @@ full interpretability of every inference step.
   membership as a soft global constraint on graph traversal
 - **Graph-Grounded**: every answer is a path through verified graph edges
 
-See `PAPER.md` for the full white paper and architecture specification.
+See `PAPER.md` for the full white paper and architecture specification, and `docs/HOW_IT_WORKS.md` for a plain-language architecture essay.
 
 ## Value Proposition
 

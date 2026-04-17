@@ -128,23 +128,63 @@ Suddenly, a heartbeat isn't just a wave — it's a node connected to "tachycardi
 
 ---
 
-### **11. Watching CEREBRUM Think in Real Time**
-One of the most common frustrations with AI systems is that they are black boxes — you ask a question, you get an answer, and you have no idea what happened in between.
+### **11. Self-Healing AI: The Autonomous Loop**
+Knowledge graphs are alive — they grow as new information comes in. But what happens if the AI starts making things up?
 
-CEREBRUM now has a full **observability layer**. Every decision, every beam step, every attention score is streamed into a circular log that captures the last 5,000 events in memory at all times. You can query this log through the API — or, if you open the dashboard interface, you can watch the reasoning process unfold in real time as a live feed.
-
-This is not a debug tool — it is a first-class feature. In production, understanding *why* CEREBRUM reached a conclusion is just as important as the conclusion itself. The observability layer makes that possible without slowing the system down.
+CEREBRUM now has an **Autonomous Discovery Loop** with a built-in **Circuit Breaker**. It continuously looks for new facts, checks them against the literature, and approves them. If it notices that it's making too many mistakes (the approval rate drops), the circuit breaker "trips" and the system pauses automatically to prevent the graph from being contaminated with false info. It can even **roll back** its own mistakes, removing the bad facts it just added before resuming.
 
 ---
 
-### **12. Why This Matters: Reasoning Without a Teacher**
+### **12. Moods for AI: Metabolic Homeostasis**
+Usually, an AI treats every search the same way. But CEREBRUM now has "metabolic states" (like moods) that change how it thinks:
+- **Dopamine (Reinforcement)**: When it finds a great answer, it gets a "reward" and becomes more confident in that reasoning pattern.
+- **Adrenaline (Arousal)**: When a search is difficult or confusing, it "wakes up," widening its flashlight to see more options.
+- **Acetylcholine (Novelty)**: When it sees something it's never seen before, it prioritizes exploration over following old rules.
+
+These five "chemicals" (Reinforcement, Arousal, Novelty, Cohesion, and Persistence) decay naturally over time, just like in a human brain, keeping the system balanced and preventing it from getting stuck in a rut.
+
+---
+
+### **13. Predicting the Future: Predictive Coding**
+Before CEREBRUM even starts a search, it tries to **predict** what the answer will be based on its past experiences (called **Engrams**). 
+
+After the search is finished, it compares the real answer to its prediction. This creates a **Prediction Error (PE)**. If the error is small, it knows its internal model of the world is stable. if the error is large, it triggers "Arousal" (Adrenaline) to pay closer attention next time. 
+
+We even measure something called the **Soliton Index** — a score that tells us how stable CEREBRUM's internal "worldview" is. A high score means the system is "certain" about its understanding of that topic.
+
+---
+
+### **14. Thinking in 3D: Unreal Engine 5 Visualization**
+We don't just want to see text; we want to see the brain *working*. CEREBRUM now has a direct bridge to **Unreal Engine 5** — the same technology used to build top-tier video games like *Fortnite*.
+
+As CEREBRUM thinks, it sends "Neural Events" across a high-speed bridge. In a 3D headset or on a screen, you can see:
+- **Glowing Spheres**: Every fact is a star.
+- **Synaptic Pulses**: When CEREBRUM follows a path, you see a flash of light travel between stars.
+- **Dissonance Tints**: If two facts contradict each other, they turn a warning color.
+- **Pruning**: You can watch the system "forget" useless information as edges fade away and disappear.
+
+This isn't just a pretty picture; it's a "digital twin" of the AI's reasoning process that lets humans spot patterns they might never see in a spreadsheet.
+
+---
+
+### **15. Watching CEREBRUM Think: The Observability Dashboard**
+One of the most common frustrations with AI systems is that they are black boxes — you ask a question, you get an answer, and you have no idea what happened in between.
+
+CEREBRUM now has a full **observability layer**. Every decision, every beam step, every attention score is streamed into a live dashboard. You can see the system's "blood panel" (the five metabolic chemicals), the history of its discovery cycles, and even a "heat map" showing which neighborhoods of the graph it is exploring most.
+
+This makes "Why did the AI say that?" a question you can answer in seconds.
+
+---
+
+### **16. Why This Matters: Reasoning Without a Teacher**
 Most AIs need weeks of "training" on supercomputers. They cost millions of dollars to build.
 
 **CEREBRUM is training-free.** You give it a map (the graph), and it handles the rest.
 - **Explainable**: You can see every step of the logic.
 - **Fast**: It can think across thousands of nodes in milliseconds.
 - **Scalable**: It can grow forever just by adding more facts to the map.
-- **Adaptive**: It asks why, discovers what's missing, checks the literature, and watches itself think.
+- **Self-Healing**: It watches its own performance and pauses if it gets confused.
+- **Visual**: You can walk through its "brain" in 3D while it thinks.
 
 **CEREBRUM isn't just another chatbot. It's a formal reasoning engine — a digital brain designed to find the absolute truth in a world of complex data.**
 
@@ -156,9 +196,10 @@ Most AIs need weeks of "training" on supercomputers. They cost millions of dolla
 |---|---|---|
 | HypothesisEngine | Asks "why did this happen?" by reasoning backwards through the graph | Abductive reasoning was previously only possible with LLMs or manual analysis |
 | ResearchAgent | Autonomously looks for missing connections in the graph | Turns gap detection from a human chore into a continuous automated process |
-| ExternalValidator | Checks proposed discoveries against PubMed, arXiv, ClinicalTrials, and OpenAlex | Scientific literature validation with zero human search effort |
-| Adaptive Search | Automatically adjusts search depth based on how connected the local data is | Better results in both dense and sparse graph regions without manual tuning |
-| Observability Dashboard | Real-time window into every reasoning step | Full transparency into production decisions |
+| Metabolic Modulation | Uses "chemical" signals (like Adrenaline) to adjust search parameters | Biologically-inspired self-regulation without manual tuning |
+| Autonomous Loop | Closes the loop from discovery to materialization with safety circuit breakers | Enables truly autonomous, self-correcting Knowledge Graphs |
+| UE5 Visualization | Real-time 3D "digital twin" of the reasoning process | Unprecedented visibility into complex AI decision-making |
+| Predictive Coding | Compares real results to internal predictions to measure "worldview" stability | Self-monitoring of internal consistency and model accuracy |
 
 ---
 *For the technical details, read the official [CEREBRUM ArXiv Manuscript](file:///e:/Development/Cerebrum/docs/latex/cerebrum_master.pdf).*

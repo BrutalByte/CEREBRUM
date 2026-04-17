@@ -680,61 +680,86 @@ See Appendix D for the extracted code.
 - Baseline comparisons: BFS, GAT, GraphRAG, vanilla RAG
 - Innovation: Metaedge Bridge Bonus (EF-005) to solve "Type Alignment Trap"
 
-**Phase 5 — Release (COMPLETE)**
-- Final documentation and code cleanup
-- Project-wide validation and stable tag (v0.1.0)
-- Triple-Signal Consensus (TSC) engine rollout
+**Phase 55 — GraphSAGE + Engram + TemporalCalibrator + QueryLog** (v2.0.0)
+- `smooth_with_graphsage()` one-pass neighbourhood smoother; `Engram` + `EngramTraversal` relation-pattern-steered beam pruning; `TemporalCalibrator` grid-search Recall@K calibration; `QueryLog` append-only NDJSON history with `replay_into_cache()` warm-up.
 
-**Phase 6 — Federated Graph Attention (COMPLETE)**
-- `adapters/federated_adapter.py` — multi-source aggregation
-- `adapters/remote_adapter.py` — HTTP proxy for remote graphs
-- Entity Alignment Index for cross-graph resolution
+**Phase 56 — Fault Tolerance Hardening** (v2.0.1)
+- `QueryResponse.partial`/`.error` fields; `BeamTraversal._partial_paths` hop-level checkpoint; `/query` graceful degradation on traversal failure; QueryLog/Engram write-failure isolation; `GlobalRebalancer` crash-guard worker split.
 
-**Phase 7 — Dynamic Updates (COMPLETE)**
-- Cross-graph "wormhole" attention weights
-- Wildcard community scoring in CSA
+**Phase 57 — Engram Persistence + Stream Guard** (v2.0.1)
+- `/query/stream` terminal error NDJSON chunk on crash; `best_of_n_dscf` `ProcessPoolExecutor` sequential fallback; `Engram.save()`/`load()` with lifespan shutdown persistence.
 
-**Phase 8 — Holographic Index (COMPLETE)**
-- Bloom Filter based entity probing
-- Community Centroid based semantic discovery
-- Compressed graph signatures for "blind" discovery
+**Phase 58 — SpeedTalk Encoding** (v2.0.2)
+- Heinlein-inspired phonemic compression for the Engram cache. 8–20× key compression, prefix-searchable, graph-adaptive alphabet. `SpeedTalkEngram` + `SpeedTalkEngramTraversal` are drop-in replacements.
 
-**Phase 9 — Stable Release v0.2.0 (COMPLETE)**
-- Handshake protocol for capability negotiation
-- Reasoning Callbacks for cross-graph path verification
-- Security hardening and full QA audit
+**Phase 59 — Cerebellar Error Correction (CEC)** (v2.0.3)
+- Inference-time dissonance detection. `CerebellarEngine` monitors for high-score / low-consensus paths and pushes them to `ResearchAgent` for autonomous external validation.
 
-**Phase 10 — Production Hardening v0.3.0 (COMPLETE)**
-- JWT-based secure federated authentication
-- Resource Governance (budget/time enforcement)
-- Asynchronous Streaming Reasoning (/query/stream)
-- CSAEngine refactor for high-concurrency environments
+**Phase 60 — Multi-Agent Consensus Hierarchies (MACH)** (v2.0.4)
+- Three-tier reasoning verification: L1 local strategy voting, L2 federated cross-node path verification, L3 Gold Standard literature validation.
 
-**Phase 11 — Real-Time Streaming v0.3.1 (COMPLETE)**
-- StreamAdapter, SlidingWindowBuffer (reference-counted TTL eviction)
-- 5 discretizers: Threshold, Binning, ObjectDetection, TemporalSequence, CoActivation
-- IncrementalCommunityUpdater (ego-network DSCF re-runs)
-- SSE endpoints: /stream/ingest, /stream/status, /stream/events
+**Phase 61 — Synaptic Pruning & Quantized Traversal (SPQT)** (v2.0.5)
+- `SynapticPruner` removes low-utility synthetic edges; `uint8` fixed-point path scoring reduces memory overhead on high-hop queries.
 
-**Phase 12 — Bridge Twin Nodes v0.3.1 (COMPLETE)**
-- Experience-dependent structural relay formation (thalamic relay nuclei analog)
-- BridgeTwinEngine: twin materialisation when crossing count ≥ n_min and fit ≥ θ_bridge
-- CSA short-circuit for BRIDGE_TWIN edges: σ(0.925) ≈ 0.716
-- LTD-analog pruning after idle days; GET /bridges API endpoint
+**Phase 62 — Explainable Reasoning Trace (ERT)** (v2.1.0)
+- `ReasoningTrace` captures per-hop beam state: winners, top rejected competitors, and full 10-parameter Attention Radar for every path. Accessible via `POST /query/trace`.
 
-**Phase 13 — STDP Causal Inference v0.3.2 (COMPLETE)**
-- STDPDiscretizer: directional CAUSES edges from spike timing (Bi & Poo 1998 analog)
-- LTP: A→B potentiated when A fires before B; LTD: anti-causal direction depressed
-- Exponential time decay, per-spike weight decay (forgetting), configurable thresholds
-- Enables autonomous causal chain discovery from streaming data
+**Phase 63 — Neural Telemetry Bridge** (v2.2.0)
+- Real-time WebSocket event streaming: `SYNAPTIC_PULSE`, `NEUROGENESIS`, `SYNAPTIC_PRUNE` for 3D visualization clients (Unreal Engine 5). `api/telemetry_bridge.py`.
 
-**Phase 18 — v0.4 Horizon v0.4.0 (COMPLETE)**
-- **IngestionPipeline** (core/thalamus.py): entity normalization/dedup, relation normalization, confidence/provenance — GIGO prevention at THALAMUS layer
-- **LLM Bridge** (llm_bridge/): `generate()` + `GenerationResult`; `AnthropicAdapter`, `OpenAIAdapter`, `OllamaAdapter`, `HuggingFaceAdapter`
-- **Bayesian Beam Search**: Beta-distribution path model + Thompson sampling in `BeamTraversal(probabilistic=True)`; `Answer.score_uncertainty`
-- **GlobalRebalancer** (core/rebalancer.py): modularity Q drift detection + background DSCF re-run; plugs into StreamAdapter
-- **Cross-Modal Alignment** (core/signal_encoder.py): `StatisticalSignalEncoder`, `SpectralSignalEncoder` + Procrustes SVD alignment to entity embedding space
-- 895 tests passing (51 new tests across 3 new test files)
+**Phase 64 — Neural Memory Consolidation** (v2.3.0)
+- Threshold-based promotion of high-utility relation patterns to permanent "Canonical Engrams" via `EngramConsolidator`.
+
+**Phase 65 — Autonomous Hypothesis Materialization** (v2.4.0)
+- Formal materialization of `ResearchAgent` findings as graph edges with Noisy-OR aggregated confidence and discovery provenance.
+
+**Phase 68 — Neuro-Symbolic Homeostasis / Metabolic Modulation** (v2.7.0)
+- `ChemicalModulator` simulates 5 metabolic scalars: Reinforcement (Dopamine), Arousal (Norepinephrine), Novelty (Acetylcholine), Cohesion (Oxytocin), Persistence (Vasopressin). Homeostatic decay + dynamic parameter regulation.
+
+**Phase 69 — Predictive Coding Engine** (v2.8.0)
+- Active inference: prior path from top Engram pattern → Prediction Error (Jaccard divergence) → drives ChemicalModulator. `soliton_index` = 1 − mean(PE) tracks prior coherence stability.
+
+**Phase 70 — Looped Beam Traversal** (v2.9.0)
+- LoopLM-style iterative refinement (arXiv:2510.25741). Applies traversal T times; three inter-loop channels: semantic seed expansion, metabolic beam adjustment, mnemonic Engram bias. `max_loops` param on all query APIs.
+
+**Phase 71 — AutoApprover** (v2.10.0)
+- Tiered auto-decision for `ResearchFinding`: hard gates → online logistic SGD (16-feature vector) → optional LLM fallback. Online `fit()` from confirmed decisions. `GET/POST /research/auto-approver`.
+
+**Phase 72 — TriangulationEngine** (v2.11.0)
+- Four-perspective candidate validation: reverse confidence, strategy agreement, path independence, semantic type consistency. Extends AutoApprover feature vector 12→16.
+
+**Phase 73 — DiscoveryCalibrator + ContradictionResolver + CandidateRegistry** (v2.12.0)
+- Per-community EMA discovery rates with inverse-rate sampling multiplier. Deterministic contradiction classifier. TTL-aware candidate registry with nomination boost.
+
+**Phase 74 — Autonomous Discovery Loop** (v2.13.0)
+- Closes discover→validate→approve→materialize loop. Sliding-window circuit breaker, per-cycle cap, dry-run mode, and AutoApprover checkpoint. `POST /research/loop/start|stop|configure`.
+
+**Phase 75 — Studio v2 Dashboard** (v2.14.0)
+- Five live monitoring panels: AutoApprover audit log, ContradictionResolver revision queue, DiscoveryCalibrator heatmap, ChemicalModulator blood panel, Autonomous Loop cycle history.
+
+**Phase 76 — Graph Provenance & Rollback** (v2.15.0)
+- `ProvenanceLedger` records every materialized edge per batch and cycle. `rollback_batch()` / `rollback_cycle()` targeted removal. `GET/POST /research/provenance/*`.
+
+**Phase 77 — Feature Impact Benchmark** (v2.16.0 partial)
+- `benchmarks/feature_impact_benchmark.py` measures Hits@1, Hits@5, MRR across baseline / +engram / +looped / +full configurations.
+
+**Phase 78 — Provenance Studio Panel** (v2.16.0)
+- Sixth live monitoring panel: 4-card summary + batch bar chart + cycle timeline with cumulative overlay.
+
+**Phase 79 — Loop-Provenance Recovery** (v2.17.0)
+- `LoopConfig.auto_rollback_on_trip=True` automatically calls `ProvenanceLedger.rollback_cycle()` when the circuit breaker fires. `CycleRecord.edges_rolled_back` tracks undone edges.
+
+**Phase 80 — GraphAdapter `remove_edge()` Protocol** (v2.18.0)
+- Non-abstract default method on `GraphAdapter` raises `NotImplementedError`. Eliminates fragile `hasattr()` guards in `ProvenanceLedger`.
+
+**Phase 81 — Graph Snapshot Persistence** (v2.19.0)
+- `GraphSnapshot` in `core/persistence.py`: portable JSON topology save/restore/diff. Not pickle — survives adapter class changes. `restore(skip_existing=True)`.
+
+**Phase 82 — Adaptive Loop Tuning** (v2.20.0)
+- `LoopConfig.adaptive_tuning=True` dynamically scales `max_materializations_per_cycle` and inter-cycle sleep from `DiscoveryCalibrator` mean community weight. `CycleRecord.effective_cap` for per-cycle observability.
+
+**Phase 83 — UE5 3D Neural Visualization** (v2.21.0)
+- Production Unreal Engine 5 C++ plugin. `ANeuronNodeActor` (sphere per entity, golden ratio community colors, pulse/glow/dissonance animations), `ASynapseActor` (oriented cylinder per relation, weight-driven opacity, pulse travel), `ACerebrumBrain` (orchestrator with Fibonacci sphere layout, REST pre-load, layout-file loader, edge spawner), `UCerebrumLink` (WebSocket delegate bridge). `GET /graph/edges` REST endpoint. `setup_graph_layout.py` pre-computes stable JSON layout. `TelemetryBridge` wired into `create_app(ws_port=N)`. `SYNAPTOGENESIS` emitted on `/research/approve`; `SYNAPTIC_PRUNE` emitted on `/rem/run`. CLI: `--ws-port`.
 
 ### 6.6 Computational Complexity
 
