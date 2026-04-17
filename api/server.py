@@ -78,6 +78,7 @@ from api.schemas import (
     EdgeRecordSchema, BatchRecordSchema, ProvenanceStatsResponse,
     ProvenanceBatchesResponse, ProvenanceRollbackResponse,
     CouplingMessageSchema, CouplingStatusResponse, MetabolicStatusResponse,
+    GoalCreate, GoalResponse, GoalListResponse, GoalHistoryResponse,
 )
 
 # ---------------------------------------------------------------------------
@@ -2434,6 +2435,14 @@ def create_app(
             adaptive_tuning=s["adaptive_tuning"],
             adaptive_effective_interval=s["adaptive_effective_interval"],
             recent_cycles=[CycleRecordSchema(**r) for r in s["recent_cycles"]],
+            active_inference_enabled=s.get("active_inference_enabled", False),
+            gui_adaptation_enabled=s.get("gui_adaptation_enabled", False),
+            total_inference_pulses=s.get("total_inference_pulses", 0),
+            last_inference_at=s.get("last_inference_at"),
+            working_memory_enabled=s.get("working_memory_enabled", False),
+            working_memory_size=s.get("working_memory_size", 0),
+            active_goals=s.get("active_goals", 0),
+            inference_suppressed=s.get("inference_suppressed", False),
         )
 
     @router.post("/research/loop/start", response_model=LoopStatusResponse, tags=["research"])
@@ -2473,22 +2482,126 @@ def create_app(
         from core.autonomous_loop import LoopConfig
         loop = _get_autonomous_loop()
         current = loop.status()
+        c = loop._config
         new_cfg = LoopConfig(
             cycle_interval=req.cycle_interval if req.cycle_interval is not None else current["cycle_interval"],
             max_materializations_per_cycle=req.max_materializations_per_cycle if req.max_materializations_per_cycle is not None else current["max_materializations_per_cycle"],
             min_approval_rate=req.min_approval_rate if req.min_approval_rate is not None else current["min_approval_rate"],
             circuit_breaker_window=req.circuit_breaker_window if req.circuit_breaker_window is not None else current["circuit_breaker_window"],
             dry_run=req.dry_run if req.dry_run is not None else current["dry_run"],
-            approver_checkpoint_path=req.approver_checkpoint_path if req.approver_checkpoint_path is not None else loop._config.approver_checkpoint_path,
-            auto_rollback_on_trip=req.auto_rollback_on_trip if req.auto_rollback_on_trip is not None else loop._config.auto_rollback_on_trip,
-            adaptive_tuning=req.adaptive_tuning if req.adaptive_tuning is not None else loop._config.adaptive_tuning,
-            adaptive_min_cap=req.adaptive_min_cap if req.adaptive_min_cap is not None else loop._config.adaptive_min_cap,
-            adaptive_max_cap=req.adaptive_max_cap if req.adaptive_max_cap is not None else loop._config.adaptive_max_cap,
-            adaptive_min_interval=req.adaptive_min_interval if req.adaptive_min_interval is not None else loop._config.adaptive_min_interval,
-            adaptive_max_interval=req.adaptive_max_interval if req.adaptive_max_interval is not None else loop._config.adaptive_max_interval,
+            approver_checkpoint_path=req.approver_checkpoint_path if req.approver_checkpoint_path is not None else c.approver_checkpoint_path,
+            auto_rollback_on_trip=req.auto_rollback_on_trip if req.auto_rollback_on_trip is not None else c.auto_rollback_on_trip,
+            adaptive_tuning=req.adaptive_tuning if req.adaptive_tuning is not None else c.adaptive_tuning,
+            adaptive_min_cap=req.adaptive_min_cap if req.adaptive_min_cap is not None else c.adaptive_min_cap,
+            adaptive_max_cap=req.adaptive_max_cap if req.adaptive_max_cap is not None else c.adaptive_max_cap,
+            adaptive_min_interval=req.adaptive_min_interval if req.adaptive_min_interval is not None else c.adaptive_min_interval,
+            adaptive_max_interval=req.adaptive_max_interval if req.adaptive_max_interval is not None else c.adaptive_max_interval,
+            active_inference=req.active_inference if req.active_inference is not None else c.active_inference,
+            active_inference_interval=req.active_inference_interval if req.active_inference_interval is not None else c.active_inference_interval,
+            active_inference_floor=req.active_inference_floor if req.active_inference_floor is not None else c.active_inference_floor,
+            gui_adaptation=req.gui_adaptation if req.gui_adaptation is not None else c.gui_adaptation,
+            gui_toolkit_url=req.gui_toolkit_url if req.gui_toolkit_url is not None else c.gui_toolkit_url,
+            working_memory=req.working_memory if req.working_memory is not None else c.working_memory,
+            working_memory_maxlen=req.working_memory_maxlen if req.working_memory_maxlen is not None else c.working_memory_maxlen,
         )
         loop.configure(new_cfg)
         return _loop_status_response(loop)
+
+    # ------------------------------------------------------------------
+    # Phase 95 — Goal System endpoints
+    # ------------------------------------------------------------------
+
+    def _get_goal_stack_or_503():
+        loop = _state.get("autonomous_loop")
+        if loop is None:
+            raise HTTPException(status_code=503, detail="Autonomous loop not initialized.")
+        stack = loop.get_goal_stack()
+        if stack is None:
+            raise HTTPException(status_code=503, detail="Working memory not enabled. Set working_memory=true via /research/loop/configure.")
+        return loop, stack
+
+    def _goal_to_response(goal, evaluator=None) -> GoalResponse:
+        current_value = None
+        if evaluator is not None:
+            try:
+                current_value = evaluator.measure(goal)
+            except Exception:
+                pass
+        return GoalResponse(
+            id=goal.id,
+            description=goal.description,
+            metric_type=goal.metric_type.value if hasattr(goal.metric_type, "value") else str(goal.metric_type),
+            target_value=goal.target_value,
+            target_entity=goal.target_entity,
+            priority=goal.priority,
+            status=goal.status.value if hasattr(goal.status, "value") else str(goal.status),
+            standing=goal.standing,
+            created_at=goal.created_at,
+            achieved_at=goal.achieved_at,
+            current_value=current_value,
+            progress_history=goal.progress_history,
+        )
+
+    @router.post("/goals", response_model=GoalResponse, status_code=201, tags=["goals"])
+    async def create_goal(req: GoalCreate, node: Dict = Depends(get_authenticated_node)):
+        """Create a new user goal and push it onto the goal stack."""
+        loop, stack = _get_goal_stack_or_503()
+        from core.goal_system import make_goal
+        try:
+            goal = make_goal(
+                description=req.description,
+                metric_type=req.metric_type,
+                target_value=req.target_value,
+                target_entity=req.target_entity,
+                priority=req.priority,
+            )
+        except (ValueError, KeyError) as e:
+            raise HTTPException(status_code=422, detail=str(e))
+        loop.push_goal(goal)
+        evaluator = getattr(loop, "_goal_evaluator", None)
+        return _goal_to_response(goal, evaluator)
+
+    @router.get("/goals", response_model=GoalListResponse, tags=["goals"])
+    async def list_goals(node: Dict = Depends(get_authenticated_node)):
+        """List all goals (standing homeostasis rules + user goals) with live metric values."""
+        loop, stack = _get_goal_stack_or_503()
+        evaluator = getattr(loop, "_goal_evaluator", None)
+        all_goals = stack.all_goals()
+        standing = [g for g in all_goals if g.standing]
+        user = [g for g in all_goals if not g.standing]
+        return GoalListResponse(
+            goals=[_goal_to_response(g, evaluator) for g in all_goals],
+            total=len(all_goals),
+            standing_count=len(standing),
+            user_count=len(user),
+        )
+
+    @router.delete("/goals/{goal_id}", response_model=GoalResponse, tags=["goals"])
+    async def abandon_goal(goal_id: str, node: Dict = Depends(get_authenticated_node)):
+        """Abandon a user goal by ID. Returns 403 for standing homeostasis rules."""
+        loop, stack = _get_goal_stack_or_503()
+        goal = stack.get(goal_id)
+        if goal is None:
+            raise HTTPException(status_code=404, detail=f"Goal '{goal_id}' not found.")
+        try:
+            stack.abandon(goal_id)
+        except ValueError as e:
+            raise HTTPException(status_code=403, detail=str(e))
+        evaluator = getattr(loop, "_goal_evaluator", None)
+        return _goal_to_response(goal, evaluator)
+
+    @router.get("/goals/{goal_id}/history", response_model=GoalHistoryResponse, tags=["goals"])
+    async def goal_history(goal_id: str, node: Dict = Depends(get_authenticated_node)):
+        """Return metric progress history for a specific goal."""
+        _, stack = _get_goal_stack_or_503()
+        goal = stack.get(goal_id)
+        if goal is None:
+            raise HTTPException(status_code=404, detail=f"Goal '{goal_id}' not found.")
+        return GoalHistoryResponse(
+            goal_id=goal.id,
+            description=goal.description,
+            history=goal.progress_history,
+        )
 
     # ------------------------------------------------------------------
     # Phase 76 — Provenance & Rollback endpoints

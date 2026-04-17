@@ -29,6 +29,7 @@ class NeuralEventType(str, Enum):
     ENGRAM_STEER   = "ENGRAM_STEER"     # Phase 87 pattern steering
     ACTIVE_INFERENCE_PULSE = "ACTIVE_INFERENCE_PULSE" # Phase 93 daydreaming
     GUI_ADAPTATION         = "GUI_ADAPTATION"          # Phase 94 self-modifying GUI
+    GOAL_UPDATE            = "GOAL_UPDATE"             # Phase 95 goal status changed
 
 class NeuralEventHeader(BaseModel):
     """Metadata for every neural event."""
@@ -112,5 +113,26 @@ class NeuralEvent(BaseModel):
                 "target": target,
                 "data": data,
             }
+        )
+
+    @classmethod
+    def goal_update(
+        cls,
+        goal_id: str,
+        status: str,
+        metric_type: str,
+        metric_value: float,
+        target_value: float,
+    ) -> "NeuralEvent":
+        """Helper to create a goal status change event (Phase 95)."""
+        return cls(
+            event_type=NeuralEventType.GOAL_UPDATE,
+            payload={
+                "goal_id": goal_id,
+                "status": status,
+                "metric_type": metric_type,
+                "metric_value": metric_value,
+                "target_value": target_value,
+            },
         )
 

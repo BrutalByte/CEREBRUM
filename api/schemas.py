@@ -911,6 +911,16 @@ class LoopConfigSchema(BaseModel):
         default=None, ge=10.0,
         description="Maximum inter-cycle sleep when adaptive_tuning is active.",
     )
+    # Phase 93: Active Inference
+    active_inference: Optional[bool] = Field(default=None, description="Enable daydreaming idle inference.")
+    active_inference_interval: Optional[float] = Field(default=None, ge=5.0, description="Seconds between inference pulses.")
+    active_inference_floor: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Minimum reinforcement to trigger inference.")
+    # Phase 94: GUI Adaptation
+    gui_adaptation: Optional[bool] = Field(default=None, description="Enable self-modifying GUI adaptation engine.")
+    gui_toolkit_url: Optional[str] = Field(default=None, description="URL of the UE Toolkit REST service.")
+    # Phase 95: Working Memory + Goal System
+    working_memory: Optional[bool] = Field(default=None, description="Enable working memory and goal-directed inference.")
+    working_memory_maxlen: Optional[int] = Field(default=None, ge=10, le=1000, description="Maximum entries in the working memory buffer.")
 
 
 class CycleRecordSchema(BaseModel):
@@ -952,6 +962,59 @@ class LoopStatusResponse(BaseModel):
     started_at: Optional[float]
     last_cycle_at: Optional[float]
     recent_cycles: List[CycleRecordSchema]
+    # Phase 93/94/95 additions
+    active_inference_enabled: bool = False
+    gui_adaptation_enabled: bool = False
+    total_inference_pulses: int = 0
+    last_inference_at: Optional[float] = None
+    working_memory_enabled: bool = False
+    working_memory_size: int = 0
+    active_goals: int = 0
+    inference_suppressed: bool = False
+
+
+# ---------------------------------------------------------------------------
+# Goal System schemas (Phase 95)
+# ---------------------------------------------------------------------------
+
+class GoalCreate(BaseModel):
+    """Request body for POST /goals."""
+    description: str
+    metric_type: str = Field(..., description="GoalMetricType value: reinforcement, soliton_index, approval_rate, entity_discovered, arousal_below")
+    target_value: float
+    target_entity: Optional[str] = Field(default=None, description="Required for entity_discovered metric type.")
+    priority: int = Field(default=5, ge=1, le=10)
+
+
+class GoalResponse(BaseModel):
+    """Single goal representation."""
+    id: str
+    description: str
+    metric_type: str
+    target_value: float
+    target_entity: Optional[str]
+    priority: int
+    status: str
+    standing: bool
+    created_at: float
+    achieved_at: Optional[float]
+    current_value: Optional[float] = None
+    progress_history: List[Any] = Field(default_factory=list)
+
+
+class GoalListResponse(BaseModel):
+    """Response for GET /goals."""
+    goals: List[GoalResponse]
+    total: int
+    standing_count: int
+    user_count: int
+
+
+class GoalHistoryResponse(BaseModel):
+    """Response for GET /goals/{id}/history."""
+    goal_id: str
+    description: str
+    history: List[Any]
 
 
 # ---------------------------------------------------------------------------

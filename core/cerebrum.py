@@ -125,6 +125,10 @@ class CerebrumGraph:
         self.research_agent: Optional[Any] = None
         self.autonomous_loop: Optional[Any] = None
 
+        # Working Memory + Goal Stack (Phase 95)
+        self._working_memory: Optional[Any] = None
+        self._goal_stack: Optional[Any] = None
+
     def set_research_agent(self, agent: Any) -> None:
         self.research_agent = agent
         if hasattr(agent, "_adapter"):
@@ -665,6 +669,7 @@ class CerebrumGraph:
         memory_threshold_pct: float       = 95.0,
         trace_info:        Optional["ReasoningTrace"] = None,
         max_loops:         int            = 1,
+        context_seeds:     Optional[List[str]] = None,
     ) -> List[Answer]:
         """
         Traverse the graph from ``seeds`` and return ranked answers.
@@ -697,6 +702,11 @@ class CerebrumGraph:
             raise RuntimeError(
                 "Graph has not been built. Call graph.build() first."
             )
+
+        # Phase 95: merge goal-directed context seeds into query seeds
+        original_seeds = list(seeds)
+        if context_seeds:
+            seeds = list(dict.fromkeys(list(seeds) + list(context_seeds)))[:max(len(seeds), 5)]
 
         # Handle per-query overrides by creating a temporary traversal if needed
         bw = beam_width or self._beam_width
@@ -806,7 +816,7 @@ class CerebrumGraph:
         except Exception as exc:
             logger.warning("METABOLIC_FLUX emit failed: %s", exc)
 
-        return extract(
+        answers = extract(
             paths,
             top_k        = top_k,
             min_hop      = min_hop,
@@ -814,6 +824,37 @@ class CerebrumGraph:
             relation_prior  = relation_prior,
             vote_weight     = vote_weight,
         )
+
+        # Phase 95: record query result into working memory buffer
+        if self._working_memory is not None:
+            try:
+                from core.working_memory import MemoryEntry
+                import time as _time
+                _pe  = trace_info.prediction_error if trace_info is not None else None
+                _sol = trace_info.soliton_index    if trace_info is not None else None
+                self._working_memory.record(MemoryEntry(
+                    timestamp        = _time.time(),
+                    seeds            = original_seeds,
+                    answers          = [a.entity_id for a in answers[:5]],
+                    top_score        = answers[0].score if answers else 0.0,
+                    soliton_index    = _sol,
+                    prediction_error = _pe,
+                    source           = "query",
+                ))
+            except Exception as exc:
+                logger.warning("WorkingMemory record failed: %s", exc)
+
+        return answers
+
+    # ------------------------------------------------------------------
+    # Phase 95: Working Memory + Goal Stack attachment
+    # ------------------------------------------------------------------
+
+    def attach_working_memory(self, wm: Any) -> None:
+        self._working_memory = wm
+
+    def attach_goal_stack(self, stack: Any) -> None:
+        self._goal_stack = stack
 
     # ------------------------------------------------------------------
     # Convenience properties

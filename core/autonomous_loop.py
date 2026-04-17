@@ -71,6 +71,10 @@ class LoopConfig:
     gui_widget_path: str = "/Game/UI/WBP_CerebrumHUD"
     gui_toolkit_url: str = "http://localhost:3000"
 
+    # Phase 95: Working Memory + Goal System
+    working_memory: bool = False
+    working_memory_maxlen: int = 50
+
 
 # ---------------------------------------------------------------------------
 # Cycle record
@@ -137,6 +141,26 @@ class AutonomousDiscoveryLoop:
         )
         self._total_inference_pulses = 0
         self._last_inference_at: Optional[float] = None
+
+        # Phase 95: Working Memory + Goal System
+        self._wm = None
+        self._goal_stack = None
+        self._goal_evaluator = None
+        self._suppress_inference: bool = False
+        if self._config.working_memory:
+            try:
+                from core.working_memory import WorkingMemoryBuffer
+                from core.goal_system import GoalStack, GoalEvaluator
+                self._wm = WorkingMemoryBuffer(maxlen=self._config.working_memory_maxlen)
+                self._goal_stack = GoalStack()
+                self._goal_evaluator = GoalEvaluator(graph, self, self._wm)
+                if hasattr(graph, "attach_working_memory"):
+                    graph.attach_working_memory(self._wm)
+                if hasattr(graph, "attach_goal_stack"):
+                    graph.attach_goal_stack(self._goal_stack)
+                logger.info("AutonomousDiscoveryLoop: WorkingMemory + GoalStack enabled.")
+            except Exception:
+                logger.exception("AutonomousDiscoveryLoop: failed to init working memory/goal system.")
 
         # Phase 94: GUI Adaptation
         self._gui_engine = None
@@ -301,6 +325,16 @@ class AutonomousDiscoveryLoop:
                 self._decision_window, maxlen=config.circuit_breaker_window
             )
 
+    def push_goal(self, goal: Any) -> None:
+        """Push a user-defined goal onto the goal stack (requires working_memory=True)."""
+        if self._goal_stack is None:
+            raise RuntimeError("working_memory must be True in LoopConfig to use goals.")
+        self._goal_stack.push(goal)
+
+    def get_goal_stack(self) -> Optional[Any]:
+        """Return the GoalStack, or None if working_memory is not enabled."""
+        return self._goal_stack
+
     def status(self) -> Dict[str, Any]:
         """Return a snapshot of loop health and cumulative statistics."""
         with self._lock:
@@ -331,6 +365,10 @@ class AutonomousDiscoveryLoop:
                 "last_cycle_at": self._last_cycle_at,
                 "adaptive_effective_interval": self._next_interval if cfg.adaptive_tuning else cfg.cycle_interval,
                 "recent_cycles": [vars(r) for r in self._recent_cycles],
+                "working_memory_enabled": cfg.working_memory,
+                "working_memory_size": len(self._wm._buffer) if self._wm is not None else 0,
+                "active_goals": len(self._goal_stack.all_active()) if self._goal_stack is not None else 0,
+                "inference_suppressed": self._suppress_inference,
             }
             return s
 
@@ -345,19 +383,40 @@ class AutonomousDiscoveryLoop:
             except Exception:
                 logger.exception("AutonomousDiscoveryLoop: cycle failed.")
 
-            # 2. Active Inference (Daydreaming)
+            # 2. Phase 95: Record cycle to WM + evaluate goals
+            if self._wm is not None:
+                try:
+                    from core.working_memory import MemoryEntry
+                    self._wm.record(MemoryEntry(
+                        timestamp=now,
+                        seeds=[],
+                        answers=[],
+                        top_score=0.0,
+                        soliton_index=None,
+                        prediction_error=None,
+                        source="discovery_cycle",
+                    ))
+                    self._suppress_inference = self._goal_evaluator.evaluate(self._goal_stack)
+                except Exception:
+                    logger.exception("AutonomousDiscoveryLoop: goal evaluation failed.")
+
+            # 3. Active Inference (Daydreaming)
             if self._config.active_inference and (now - last_inference_at) >= self._config.active_inference_interval:
                 try:
-                    res = self._inference_engine.step()
-                    if res:
-                        with self._lock:
-                            self._total_inference_pulses += 1
-                            self._last_inference_at = time.time()
-                        last_inference_at = now
+                    context_seeds = None
+                    if self._goal_stack is not None and not self._suppress_inference:
+                        context_seeds = self._goal_evaluator.get_context_seeds(self._goal_stack, self._wm)
+                    if not self._suppress_inference:
+                        res = self._inference_engine.step(context_seeds=context_seeds)
+                        if res:
+                            with self._lock:
+                                self._total_inference_pulses += 1
+                                self._last_inference_at = time.time()
+                            last_inference_at = now
                 except Exception:
                     logger.exception("AutonomousDiscoveryLoop: active inference failed.")
 
-            # 3. GUI Adaptation (Phase 94)
+            # 4. GUI Adaptation (Phase 94)
             if self._gui_engine is not None:
                 try:
                     from core.gui_adaptation_engine import SignalSnapshot
