@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: April 2026
-**Status**: Version 2.20.1 · Phase 92 COMPLETE — 1,720+ tests passing
+**Status**: Version 2.21.0 · Phase 94 COMPLETE — 1,835+ tests passing
 **License**: Proprietary — all rights reserved
 
 ---
@@ -902,6 +902,14 @@ On all four dimensions, CEREBRUM is categorically superior to every baseline —
 | 55 | v2.0.0 | GraphSAGE neighbourhood smoothing; Engram-steered traversal (Engram + EngramTraversal); TemporalCalibrator; QueryLog append-only history |
 | 56 | v2.0.0 | Fault tolerance — QueryResponse.partial/error fields; _partial_paths checkpoint; GlobalRebalancer crash guard |
 | 57 | v2.0.1 | Engram durable JSON persistence; /query/stream terminal error chunk; ProcessPoolExecutor sequential fallback |
+| 58–62 | v2.1.x | SpeedTalk phonemic compression; CerebellarEngine; MACH consensus hierarchies; SPQT quantized traversal; Explainable Reasoning Trace (ERT) |
+| 63–67 | v2.2.x | Neural telemetry WebSocket bridge; EngramConsolidator; autonomous hypothesis materialization; Studio v2 dashboard |
+| 68–70 | v2.3.x | ChemicalModulator (metabolic regulation); PredictiveCodingEngine + soliton index; LoopedBeamTraversal (LoopLM-style) |
+| 71–74 | v2.4.x | AutoApprover (tiered SGD); TriangulationEngine; DiscoveryCalibrator; AutonomousDiscoveryLoop + circuit breaker |
+| 75–79 | v2.5.x | Studio v2 provenance panel; ProvenanceLedger; Loop-Provenance Recovery; GraphAdapter remove_edge protocol |
+| 80–83 | v2.21.0 | GraphSnapshot portable persistence; Adaptive Loop Tuning; UE5 3D visualization (UCerebrumLink, ANeuronNodeActor, ASynapseActor, ACerebrumBrain) |
+| 93 | v2.21.0 | Active Inference / Daydreaming — ActiveInferenceEngine seeds idle-period queries from high-PE nodes to consolidate weak priors |
+| 94 | v2.21.0 | Self-Modifying GUI — GUIAdaptationEngine + UEToolkitClient; dual-channel structural (HTTP→Blueprint) and runtime (WebSocket→HUD) adaptation; WBP_CerebrumHUD scaffold |
 
 ---
 
@@ -1026,3 +1034,4 @@ CEREBRUM stands on the shoulders of decades of research in graph theory, communi
 - Xiong et al. (2017). DeepPath: a reinforcement learning method for knowledge graph reasoning. *EMNLP*.
 - Yih et al. (2016). The value of semantic parse labeling for knowledge base question answering. *ACL* (WebQSP).
 - Zhang et al. (2018). Variational reasoning for question answering with knowledge graphs (MetaQA). *AAAI*.
+

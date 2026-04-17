@@ -545,6 +545,26 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ---
 
+### Claim 42: Active Inference / Daydreaming Mode for Knowledge Graph Consolidation (Phase 93)
+
+**Description**: `ActiveInferenceEngine` runs autonomously during idle periods between discovery cycles, seeding queries from nodes with the highest recent prediction error (high-PE nodes represent weak or unstable priors) or falling back to random node selection when no PE history is available. Each idle query drives `ChemicalModulator` and `PredictiveCodingEngine` updates, progressively consolidating the graph's predictive model without external stimulus.
+
+**Novelty Statement**: Active inference in neuroscience (Friston 2010) describes how biological agents minimize free energy by taking actions that confirm their generative models. This is the first application of the active inference principle to a symbolic knowledge graph reasoner: the system autonomously probes its own weak priors during idle periods, strengthening its internal predictive model through self-initiated traversal rather than waiting for external queries.
+
+**Relevant files**: `core/active_inference.py`, `core/autonomous_loop.py`
+
+---
+
+### Claim 43: Signal-Driven Self-Modifying GUI via Dual-Channel Structural and Runtime Adaptation (Phase 94)
+
+**Description**: `GUIAdaptationEngine` observes a rolling window of `SignalSnapshot` records (arousal, soliton_index, approval_rate, circuit_breaker_tripped, inference_pulses) and applies idempotent rule-based adaptations via two independent channels: (1) **structural channel** — HTTP calls to the ue-llm-toolkit API (`localhost:3000`) programmatically add new UMG widget panels to a live UE5 Blueprint asset that persists across sessions; (2) **runtime channel** — `GUI_ADAPTATION` WebSocket events broadcast to connected UE5 clients to show, hide, or collapse existing panels at 60fps. Rules include: HIGH_AROUSAL → add DissonanceMeter panel; CIRCUIT_BREAKER → show warning banner; INFERENCE_MILESTONE → add InferenceHistoryBox; LOW_REINFORCEMENT → collapse active inference panel. All rules are idempotent via `_applied: Set[str]`.
+
+**Novelty Statement**: Existing AI systems have static GUIs designed before deployment. This is the first system in which a knowledge graph reasoner autonomously modifies the structural definition of its own user interface — adding new panels to a live game engine Blueprint asset — based on its own internal metabolic and epistemic state, with changes persisting across editor sessions.
+
+**Relevant files**: `core/gui_adaptation_engine.py`, `api/ue_toolkit_client.py`, `ue5_project/create_initial_gui.py`
+
+---
+
 ## Prior Art Summary Table
 
 | CEREBRUM Component | Closest Prior Art | Key Distinction |
@@ -588,6 +608,8 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 | **Loop-Provenance Recovery** | No equivalent | Circuit-breaker triggered automatic transactional rollback |
 | **GraphSnapshot (portable + diff)** | Pickle / database dumps | JSON-portable, skip-existing restore, structural diff without live graph |
 | **Adaptive Loop Tuning** | Fixed caps / intervals | Calibrator-driven dynamic cap + interval scaling per cycle |
+| **Active Inference / Daydreaming** | Offline KGE retraining, scheduled batch jobs | First application of free-energy minimization principle to symbolic KG: idle-period self-querying from high-PE nodes |
+| **Self-Modifying GUI (dual-channel)** | Static dashboards, manual UI updates | First AI system to structurally modify its own game-engine Blueprint UI based on internal metabolic + epistemic state |
 
 ---
 
@@ -602,3 +624,4 @@ CEREBRUM is dual-licensed:
 For commercial licensing: **bryan.alexander@buchorn.com**
 
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
+

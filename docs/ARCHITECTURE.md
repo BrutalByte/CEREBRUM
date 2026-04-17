@@ -1,6 +1,6 @@
 # CEREBRUM System Architecture
 
-**Version**: v2.21.0 (Phase 92 COMPLETE)
+**Version**: v2.21.0 (Phase 94 COMPLETE)
 
 Complete data-flow from ingestion to result, including all options, pathways, and decision nodes.
 
@@ -515,4 +515,7 @@ class D_PIPE,D_STDP,D_SIG,D_COMPLETE,D_ENHANCE,D_EMB,D_SAGE,D_COMM,D_COARSEN,D_P
 | GraphSnapshot | save / restore / diff | portable JSON topology persistence across restarts |
 | Adaptive Loop Tuning | on / off | DiscoveryCalibrator-driven dynamic cap and interval scaling per cycle |
 | TelemetryBridge | ws_port set / not set | when set, starts WebSocket server; /query emits SYNAPTIC_PULSE, /research/approve emits SYNAPTOGENESIS, /rem/run emits SYNAPTIC_PRUNE |
-| UE5 Visualization | bPreferLayoutFile true / false | true: loads pre-computed graph_layout.json (exact Fibonacci positions); false: derives positions at runtime via REST |\n| UE5 Rendering | HISM (Phase 90) | Uses UHierarchicalInstancedStaticMeshComponent for nodes to support 500k+ entities at 144Hz. Pulses visualized via Vertex Shader Glow. |
+| UE5 Visualization | bPreferLayoutFile true / false | true: loads pre-computed graph_layout.json (exact Fibonacci positions); false: derives positions at runtime via REST |
+| Active Inference | active_inference on / off | when on, AutonomousDiscoveryLoop seeds idle-period queries from high-PE nodes or random selection to surface weak priors |
+| GUI Adaptation | gui_adaptation on / off | when on, GUIAdaptationEngine watches metabolic + loop signals and modifies UE5 HUD structurally (via ue-llm-toolkit) and at runtime (via GUI_ADAPTATION WebSocket events) |
+
