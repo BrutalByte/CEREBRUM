@@ -12,7 +12,7 @@ Architecture
       ├── ShardManager    maps entity_id → worker_url (shard assignment)
       ├── QueryRouter     decomposes multi-hop queries into per-shard sub-queries
       ├── PathStitcher    assembles cross-shard reasoning paths
-      └── GossipSync      propagates community-map deltas to all workers
+      └── CouplingSync      propagates community-map deltas to all workers
 
 Each worker is a standard CEREBRUM REST API instance accessed via
 ``RemoteCerebrumAdapter``.  The coordinator itself holds only the shard
@@ -249,10 +249,10 @@ class ShardManager:
 
 
 # ---------------------------------------------------------------------------
-# GossipSync — community-map propagation
+# CouplingSync — community-map propagation
 # ---------------------------------------------------------------------------
 
-class GossipSync:
+class CouplingSync:
     """
     Propagates community-map updates across all workers via a simple
     broadcast protocol.
@@ -266,7 +266,7 @@ class GossipSync:
         self._version: int = 0
         self._lock = threading.Lock()
 
-    def broadcast_community_update(
+    def couple_community_delta(
         self,
         community_map_delta: Dict[str, int],
         source_url: Optional[str] = None,
@@ -290,10 +290,10 @@ class GossipSync:
                 adapter._post_community_delta(community_map_delta, version)
                 results[worker.url] = True
             except Exception as exc:
-                log.warning("GossipSync: failed to update %s: %s", worker.url, exc)
+                log.warning("CouplingSync: failed to update %s: %s", worker.url, exc)
                 results[worker.url] = False
 
-        log.debug("GossipSync v%d: broadcast to %d workers.", version, len(self._workers))
+        log.debug("CouplingSync v%d: broadcast to %d workers.", version, len(self._workers))
         return results
 
     def _get_adapter(self, worker: WorkerNode):
@@ -502,7 +502,7 @@ class DistributedCEREBRUM:
             for w in workers
         ]
         self._shard_manager = ShardManager(self._worker_nodes, strategy=shard_strategy)
-        self._gossip        = GossipSync(self._worker_nodes)
+        self._coupling        = CouplingSync(self._worker_nodes)
         self._router        = QueryRouter(self._shard_manager, timeout=query_timeout)
         self._stitcher      = PathStitcher()
         self._query_timeout = query_timeout
@@ -594,7 +594,7 @@ class DistributedCEREBRUM:
     # Community map synchronisation
     # ------------------------------------------------------------------
 
-    def sync_community_map(
+    def couple_community_map(
         self,
         delta: Dict[str, int],
         source_url: Optional[str] = None,
@@ -604,7 +604,7 @@ class DistributedCEREBRUM:
 
         Returns {worker_url: success}.
         """
-        return self._gossip.broadcast_community_update(delta, source_url)
+        return self._coupling.couple_community_delta(delta, source_url)
 
     # ------------------------------------------------------------------
     # Cluster health
@@ -628,7 +628,7 @@ class DistributedCEREBRUM:
         worker = WorkerNode(url=url, token=token)
         self._worker_nodes.append(worker)
         self._shard_manager._workers.append(worker)
-        self._gossip._workers.append(worker)
+        self._coupling._workers.append(worker)
         log.info("DistributedCEREBRUM: added worker %s", url)
 
     def remove_worker(self, url: str, rebalance: bool = True) -> None:

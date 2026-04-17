@@ -36,6 +36,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.status import HTTP_403_FORBIDDEN, HTTP_401_UNAUTHORIZED
 from core.security import FederatedAuth
 
+from core.coupling_engine import NeuralCouplingEngine, CouplingMessage
+from api.peer_discovery import PeerDiscovery
 from api.schemas import (
     QueryRequest, QueryResponse, CommunitiesResponse,
     QueryConsensusRequest, QueryConsensusResponse, ConsensusLevel,
@@ -73,6 +75,7 @@ from api.schemas import (
     LoopConfigSchema, CycleRecordSchema, LoopStatusResponse,
     EdgeRecordSchema, BatchRecordSchema, ProvenanceStatsResponse,
     ProvenanceBatchesResponse, ProvenanceRollbackResponse,
+    CouplingMessageSchema, CouplingStatusResponse, MetabolicStatusResponse,
 )
 
 # ---------------------------------------------------------------------------
@@ -173,6 +176,7 @@ _state: Dict[str, Any] = {
     "predictive_coder": None,   # PredictiveCodingEngine (Phase 69)
     "autonomous_loop":  None,   # AutonomousDiscoveryLoop (Phase 74)
     "provenance_ledger": None,  # ProvenanceLedger (Phase 76)
+    "ue_toolkit_translator": None, # UE LLM Toolkit Adapter (Phase 92)
 }
 
 
@@ -196,6 +200,76 @@ def _engram_cache_path(cache_path: Optional[str]) -> Optional[str]:
 # ---------------------------------------------------------------------------
 # App factory
 # ---------------------------------------------------------------------------
+
+
+async def _run_query_internal(
+    query: str,
+    seeds: Optional[List[str]] = None,
+    max_hop: int = 3,
+    beam_width: int = 10,
+    max_budget: int = 1000,
+    edge_type_weights: Optional[Dict[str, float]] = None,
+    max_loops: int = 1
+) -> Dict[str, Any]:
+    """Core reasoning logic shared between REST and WebSocket (Phase 90)."""
+    from core.attention_engine import CSAEngine
+    from reasoning.traversal import BeamTraversal
+    from reasoning.answer_extractor import extract
+    from llm_bridge.context_formatter import to_structured
+    import numpy as np
+
+    adapter = _state["adapter"]
+    csa_meta = _state["csa_metadata"]
+    default_weights = _state["default_edge_type_weights"]
+
+    if not seeds:
+        entities = adapter.find_entities(query, top_k=5)
+        seeds = [e.id for e in entities if e]
+    
+    if not seeds:
+        return {"error": f"No entities found for query: {query}"}
+
+    weights = edge_type_weights or default_weights
+    csa = CSAEngine(
+        adapter=adapter,
+        edge_type_weights=weights,
+        community_params=csa_meta.get("community_params"),
+    )
+    csa.set_community_graph(csa_meta["distances"], csa_meta["adjacent_pairs"])
+    if _state["meta_learner"]:
+        csa.set_meta_learner(_state["meta_learner"])
+
+    traversal = BeamTraversal(
+        adapter=adapter,
+        csa_engine=csa,
+        beam_width=beam_width,
+        max_hop=max_hop,
+        max_budget=max_budget,
+    )
+
+    # Phase 69: Predictive prior
+    try:
+        if _state["predictive_coder"]:
+            _state["predictive_coder"].predict(seeds)
+    except: pass
+
+    try:
+        if max_loops > 1:
+            from reasoning.looped_traversal import LoopedBeamTraversal
+            looped = LoopedBeamTraversal(
+                traversal=traversal,
+                predictive_coder=_state.get("predictive_coder"),
+                max_loops=max_loops,
+            )
+            paths, _ = looped.traverse(seeds)
+        else:
+            paths = traversal.traverse(seeds)
+    except Exception as e:
+        paths = traversal._partial_paths
+        return {"error": str(e), "paths": paths, "partial": True}
+
+    return {"paths": paths, "seeds": seeds}
+
 
 def create_app(
     adapter=None,
@@ -224,7 +298,66 @@ def create_app(
         import asyncio
 
         # ── Neural telemetry WebSocket bridge ───────────────────────────────
+
+        # --- Neural Command Handler (Phase 90) ---
+        async def neural_command_handler(cmd: NeuralCommand):
+            _api_log.info(f"Received NeuralCommand: {cmd.command_type}")
+            
+            if cmd.command_type == NeuralCommandType.TRIGGER_QUERY:
+                query_text = cmd.payload.get("query", "")
+                seeds = cmd.payload.get("seeds")
+                max_hop = cmd.payload.get("max_hop", 3)
+                
+                result = await _run_query_internal(
+                    query=query_text,
+                    seeds=seeds,
+                    max_hop=max_hop,
+                    beam_width=cmd.payload.get("beam_width", 10)
+                )
+                
+                if bridge and "paths" in result:
+                    # Broadcast each hop as a pulse event
+                    for path in result["paths"]:
+                        # Broadly similar to what happens in ERT but real-time
+                        for i in range(len(path.nodes) - 1):
+                            u = path.nodes[i]
+                            v = path.nodes[i+1]
+                            rel = path.relations[i] if i < len(path.relations) else "LINKED"
+                            bridge.broadcast(NeuralEvent.pulse(
+                                source=u, target=v, relation=rel, 
+                                weight=path.attention_weights[i] if i < len(path.attention_weights) else 1.0,
+                                hop=i+1
+                            ))
+            
+            elif cmd.command_type == NeuralCommandType.METABOLIC_SYNC:
+                modulator = _state["modulator"]
+                learner = _state["meta_learner"]
+                if modulator and learner:
+                    from core.modulator_to_learner_bridge import step_metabolic_system
+                    step_metabolic_system(modulator, learner)
+                    if bridge:
+                        bridge.broadcast(NeuralEvent.flux(modulator.to_state(), getattr(learner, "learning_rate_scale", 1.0)))
+
         if ws_port is not None:
+            try:
+                from api.telemetry_bridge import TelemetryBridge
+                bridge = TelemetryBridge(port=ws_port)
+                bridge.command_handler = neural_command_handler # Wire it up
+                _state["telemetry_bridge"] = bridge
+                
+                # Phase 92: UE LLM Toolkit Integration
+                toolkit_url = os.getenv("CEREBRUM_UE_TOOLKIT_URL")
+                if toolkit_url:
+                    from api.ue_toolkit_adapter import UEToolkitClient, NeuralToToolkitTranslator
+                    client = UEToolkitClient(base_url=toolkit_url)
+                    translator = NeuralToToolkitTranslator(client)
+                                        _state["ue_toolkit_translator"] = translator
+                    translator.initialize_scene() # Phase 92 Initial Interface Setup
+                    bridge.add_subscriber(translator.handle_event)
+                    bridge.add_subscriber(translator.handle_event)
+                    print(f"  [API] UE LLM Toolkit Adapter active -> {toolkit_url}")
+
+
             try:
                 from api.telemetry_bridge import TelemetryBridge
                 bridge = TelemetryBridge(port=ws_port)
@@ -425,75 +558,26 @@ def create_app(
     @router.post("/query", response_model=QueryResponse, tags=["reasoning"])
     async def query(req: QueryRequest, node: Dict = Depends(check_scope("query"))):
         if not _is_ready():
-            raise HTTPException(status_code=503, detail="Service not ready — call load() first")
+            raise HTTPException(status_code=503, detail="Service not ready")
 
-        from core.attention_engine import CSAEngine
-        from reasoning.traversal import BeamTraversal
-        from reasoning.answer_extractor import extract
-        from llm_bridge.context_formatter import to_structured
-
-        adapter      = _state["adapter"]
-        csa_meta     = _state["csa_metadata"]
-        default_edge_type_weights = _state["default_edge_type_weights"]
-
-        # Resolve seeds
-        if req.seeds:
-            seeds = req.seeds
-        else:
-            entities = adapter.find_entities(req.query, top_k=5)
-            seeds    = [e.id for e in entities if e]
-
-        if not seeds:
-            raise HTTPException(status_code=404, detail=f"No entities found for query: {req.query!r}")
-
-        # Build CSA engine using precomputed metadata
-        edge_type_weights_to_use = req.edge_type_weights or default_edge_type_weights
-
-        csa = CSAEngine(
-            adapter=adapter,
-            edge_type_weights=edge_type_weights_to_use,
-            community_params=csa_meta.get("community_params"),
-        )
-        csa.set_community_graph(csa_meta["distances"], csa_meta["adjacent_pairs"])
-        
-        # Milestone 4: Attach meta-learner for adaptive tuning
-        if _state["meta_learner"]:
-            csa.set_meta_learner(_state["meta_learner"])
-
-        traversal = BeamTraversal(
-            adapter=adapter,
-            csa_engine=csa,
-            beam_width=req.beam_width,
+        result = await _run_query_internal(
+            query=req.query,
+            seeds=req.seeds,
             max_hop=req.max_hop,
+            beam_width=req.beam_width,
             max_budget=req.max_budget,
+            edge_type_weights=req.edge_type_weights,
+            max_loops=req.max_loops
         )
-        # Phase 69: Generate predictive prior before traversal
-        _pred_prior = None
-        try:
-            if _state["predictive_coder"] is not None:
-                _pred_prior = _state["predictive_coder"].predict(seeds)
-        except Exception as exc:
-            _api_log.warning("PredictiveCodingEngine.predict() failed: %s", exc)
 
-        _traversal_error: Optional[str] = None
+        if "error" in result and not result.get("partial"):
+            status = 404 if "No entities" in result["error"] else 500
+            raise HTTPException(status_code=status, detail=result["error"])
+
+        paths = result.get("paths", [])
+        seeds = result.get("seeds", [])
+        _traversal_error = result.get("error") if result.get("partial") else None
         _loop_trace = None
-        try:
-            # Phase 70: LoopLM-style iterative refinement (arXiv:2510.25741)
-            if req.max_loops > 1:
-                from reasoning.looped_traversal import LoopedBeamTraversal
-                looped = LoopedBeamTraversal(
-                    traversal        = traversal,
-                    predictive_coder = _state.get("predictive_coder"),
-                    max_loops        = req.max_loops,
-                )
-                paths, _loop_trace = looped.traverse(seeds)
-            else:
-                paths = traversal.traverse(seeds)
-        except Exception as exc:
-            _api_log.warning("/query traversal failed (seeds=%s): %s", seeds, exc)
-            paths = traversal._partial_paths  # return whatever completed before the failure
-            _traversal_error = str(exc)
-
         # Phase 69: Compute prediction error after traversal
         _pred_error: Optional[float] = None
         _soliton_idx: Optional[float] = None
@@ -558,7 +642,7 @@ def create_app(
         bridge = _state.get("telemetry_bridge")
         if bridge is not None and answers:
             try:
-                from core.telemetry import NeuralEvent
+                from core.telemetry import NeuralEvent, NeuralCommand, NeuralCommandType
                 cm = _state.get("community_map") or {}
                 for answer in answers[:3]:   # top 3 paths maximum
                     bp = answer.best_path
@@ -1696,7 +1780,7 @@ def create_app(
         bridge = _state.get("telemetry_bridge")
         if bridge is not None and not req.dry_run:
             try:
-                from core.telemetry import NeuralEvent, NeuralEventType
+                from core.telemetry import NeuralEvent, NeuralCommand, NeuralCommandType, NeuralEventType
                 for edge_tuple in (report.pruned_edge_list or []):
                     if len(edge_tuple) >= 3:
                         src, rel, tgt = str(edge_tuple[0]), str(edge_tuple[1]), str(edge_tuple[2])
@@ -2215,7 +2299,7 @@ def create_app(
         bridge = _state.get("telemetry_bridge")
         if bridge is not None and edges_added > 0:
             try:
-                from core.telemetry import NeuralEvent, NeuralEventType
+                from core.telemetry import NeuralEvent, NeuralCommand, NeuralCommandType, NeuralEventType
                 finding = agent.get_finding(finding_id)
                 if finding is not None:
                     for prop in (finding.proposals or []):
@@ -2463,6 +2547,7 @@ def create_app(
     @router.post(
         "/research/provenance/rollback/{batch_id}",
         response_model=ProvenanceRollbackResponse,
+    CouplingMessageSchema, CouplingStatusResponse, MetabolicStatusResponse,
         tags=["research"],
     )
     async def provenance_rollback_batch(
@@ -2487,6 +2572,7 @@ def create_app(
     @router.post(
         "/research/provenance/rollback-cycle/{cycle_number}",
         response_model=ProvenanceRollbackResponse,
+    CouplingMessageSchema, CouplingStatusResponse, MetabolicStatusResponse,
         tags=["research"],
     )
     async def provenance_rollback_cycle(
@@ -3016,6 +3102,22 @@ def _load(
 
     # 6. Save to cache
     if cache_path:
+        
+    # Phase 87: Swarm & Neural Coupling
+    from core.coupling_engine import NeuralCouplingEngine
+    from api.peer_discovery import PeerDiscovery
+    local_url = os.getenv("CEREBRUM_LOCAL_URL", "http://localhost:8200")
+    _state["coupling_engine"] = NeuralCouplingEngine(local_url, _state["adapter"].hologram_index)
+    _state["peer_discovery"] = PeerDiscovery(
+        _state["coupling_engine"], 
+        _state["adapter"], 
+        _state["community_map"], 
+        _state["embeddings"]
+    )
+    # Start discovery automatically if CEREBRUM_SWARM_MODE=1
+    if os.getenv("CEREBRUM_SWARM_MODE") == "1":
+        _state["peer_discovery"].start()
+
         save_state(
             cache_path,
             adapter=_state["adapter"],

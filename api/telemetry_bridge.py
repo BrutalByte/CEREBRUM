@@ -1,40 +1,67 @@
 import asyncio
 import json
+import logging
 import websockets
-from core.cerebrum import CerebrumGraph
-from core.telemetry import NeuralEvent
+from typing import List, Optional, Callable, Awaitable, Any
+from core.telemetry import NeuralEvent, NeuralCommand
+
+log = logging.getLogger("cerebrum.telemetry")
 
 class TelemetryBridge:
     """
     WebSocket bridge that forwards CEREBRUM neural events 
-    to a connected Unreal Engine visualization client.
+    to a connected Unreal Engine visualization client, 
+    and handles incoming NeuralCommands (Phase 90).
     """
     def __init__(self, host="localhost", port=8765):
         self.host = host
         self.port = port
         self.clients = set()
+        self.subscribers: List[Callable[[NeuralEvent], Any]] = []
+        self.command_handler: Optional[Callable[[NeuralCommand], Awaitable[None]]] = None
+
+
+    def add_subscriber(self, callback: Callable[[NeuralEvent], Any]):
+        """Register an in-process callback to receive all neural events."""
+        self.subscribers.append(callback)
 
     async def _handle_connection(self, websocket):
         self.clients.add(websocket)
+        log.info(f"Telemetry client connected: {websocket.remote_address}")
         try:
             async for message in websocket:
-                pass # Client-to-server messages not implemented yet
+                if self.command_handler:
+                    try:
+                        data = json.loads(message)
+                        cmd = NeuralCommand(**data)
+                        # We schedule the handler as a task to avoid blocking the socket loop
+                        asyncio.create_task(self.command_handler(cmd))
+                    except Exception as e:
+                        log.error(f"Error parsing incoming NeuralCommand: {e}")
+        except websockets.exceptions.ConnectionClosed:
+            pass
         finally:
             self.clients.remove(websocket)
+            log.info(f"Telemetry client disconnected: {websocket.remote_address}")
 
     def broadcast(self, event: NeuralEvent):
-        """Serializes event to JSON and sends to all UE clients."""
+        """Notifies all subscribers and WebSocket clients of a neural event."""
+        # 1. Notify in-process subscribers (Phase 92)
+        for callback in self.subscribers:
+            try:
+                callback(event)
+            except Exception as e:
+                log.error(f"Error in telemetry subscriber: {e}")
+
+        # 2. Notify WebSocket clients
         if not self.clients:
             return
 
-        # Pydantic v2 uses model_dump_json(); fall back to .json() for v1.
         try:
             message = event.model_dump_json()
         except AttributeError:
             message = event.json()
 
-        # Fire-and-forget: ensure_future avoids creating dangling tasks on
-        # connections that close between the snapshot and the gather.
         live_clients = set(self.clients)
         if live_clients:
             asyncio.ensure_future(
@@ -45,10 +72,6 @@ class TelemetryBridge:
             )
 
     async def start_server(self):
+        log.info(f"Starting Telemetry Server on {self.host}:{self.port}")
         async with websockets.serve(self._handle_connection, self.host, self.port):
             await asyncio.Future()  # run forever
-
-# Usage example:
-# bridge = TelemetryBridge()
-# graph.subscribe(bridge.broadcast)
-# asyncio.create_task(bridge.start_server())

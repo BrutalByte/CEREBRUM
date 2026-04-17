@@ -9,6 +9,14 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 import time
 
+
+class NeuralCommandType(str, Enum):
+    """Commands sent from the client to the CEREBRUM server (Phase 90)."""
+    TRIGGER_QUERY = "TRIGGER_QUERY"   # Start a traversal from a seed
+    PROBE_NODE    = "PROBE_NODE"      # Get details on a node (inspect)
+    METABOLIC_SYNC = "METABOLIC_SYNC" # Trigger homeostatic step
+    FOCUS_SHIFT    = "FOCUS_SHIFT"    # Change the current attention focus
+
 class NeuralEventType(str, Enum):
     """Types of events emitted by the CEREBRUM Brain Server."""
     SYNAPTIC_PULSE = "SYNAPTIC_PULSE"   # A beam expansion step (traversal)
@@ -17,6 +25,8 @@ class NeuralEventType(str, Enum):
     SYNAPTIC_PRUNE = "SYNAPTIC_PRUNE"   # Edge removed (SynapticPruner)
     CORTICAL_GLOW  = "CORTICAL_GLOW"    # Community activation
     DISSONANCE     = "DISSONANCE"       # CEC dissonance event
+    METABOLIC_FLUX = "METABOLIC_FLUX"   # Phase 88 metabolism update
+    ENGRAM_STEER   = "ENGRAM_STEER"     # Phase 87 pattern steering
 
 class NeuralEventHeader(BaseModel):
     """Metadata for every neural event."""
@@ -64,5 +74,16 @@ class NeuralEvent(BaseModel):
                 "node_id": node_id,
                 "label": label,
                 "type": node_type
+            }
+        )
+
+    @classmethod
+    def flux(cls, state: Dict[str, float], learning_rate_scale: float) -> "NeuralEvent":
+        """Helper to create a metabolic flux event (Phase 88)."""
+        return cls(
+            event_type=NeuralEventType.METABOLIC_FLUX,
+            payload={
+                "state": state,
+                "learning_rate_scale": learning_rate_scale
             }
         )

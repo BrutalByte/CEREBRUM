@@ -993,3 +993,20 @@ class ProvenanceRollbackResponse(BaseModel):
     """Response for POST /research/provenance/rollback/* endpoints."""
     edges_removed: int
     message: str
+
+# ---------------------------------------------------------------------------
+# Phase 87 - Swarm and Neural Coupling schemas
+# ---------------------------------------------------------------------------
+
+class CouplingMessageSchema(BaseModel):
+    source_url: str
+    timestamp: float
+    signatures: List[CommunitySignatureSchema]
+    version: int = 1
+
+class CouplingStatusResponse(BaseModel):
+    local_url: str
+    peer_count: int
+    peers: List[str]
+    last_coupling_received: Optional[float] = None
+    total_signatures_indexed: int

@@ -1305,6 +1305,85 @@ class REMControlWidget extends Widget {
 const PARAM_NAMES = ['alpha','beta','gamma','delta','epsilon','zeta','eta','iota','mu','theta'];
 const PARAM_LABELS = ['Sim','Community','EdgeType','Distance','HopDecay','PageRank','Temporal','Recency','Synthesis','Grounding'];
 
+
+/* ————————————————————————————————————————————————————————————————————    
+   MetabolicTunerWidget
+   ———————————————————————————————————————————————————————————————————— */ 
+class MetabolicTunerWidget extends Widget {
+  constructor(id, el) {
+    super(id, el);
+    this._chart = null;
+    const sync = this.el.querySelector('[id$="-metabolic-sync"]');
+    if (sync) sync.addEventListener('click', () => this._sync());
+    this.refresh();
+    this.startPolling(5000); // Fast polling for metabolic updates
+  }
+  async refresh() {
+    try {
+      const data = await API.metabolicStatus();
+      this._render(data);
+    } catch(e) { 
+      const stats = this.el.querySelector('[id$="-metabolic-stats"]');
+      if (stats) stats.innerHTML = `<span style="color:var(--danger)">✗ ${esc(e.message)}</span>`;
+    }
+  }
+  async _sync() {
+    try {
+      const data = await API.metabolicSync();
+      this._render(data);
+    } catch(e) { alert(e.message); }
+  }
+  _render(data) {
+    const stats = this.el.querySelector('[id$="-metabolic-stats"]');
+    if (stats) {
+      stats.innerHTML = `
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+          <div>LR Scale: <b>${data.learning_rate_scale.toFixed(3)}</b></div>
+          <div>Decay: <b>${data.decay_rate.toFixed(3)}</b></div>
+        </div>
+        <div style="margin-top: 6px; border-top: 1px solid var(--border); padding-top: 4px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px;">
+          ${Object.entries(data.state).map(([k, v]) => `<div>${k}: ${v.toFixed(3)}</div>`).join('')}
+        </div>`;
+    }
+    this._updateChart(data.state);
+  }
+  _updateChart(state) {
+    const canvas = this.el.querySelector('[id$="-metabolic-chart"]');
+    if (!canvas) return;
+    const labels = Object.keys(state);
+    const values = Object.values(state);
+    if (this._chart) { 
+      this._chart.data.labels = labels;
+      this._chart.data.datasets[0].data = values; 
+      this._chart.update(); 
+      return; 
+    }
+    this._chart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{ 
+          label: 'Metabolic Scalar',
+          data: values, 
+          backgroundColor: ['#58a6ff','#bc8cff','#3fb950','#d29922','#f85149'],
+          borderWidth: 0,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: { 
+          y: { min: 0, max: 3, grid: { color: '#30363d' }, ticks: { color: '#8b949e', font: { size: 10 } } },
+          x: { grid: { display: false }, ticks: { color: '#8b949e', font: { size: 10 } } }
+        },
+        plugins: { legend: { display: false } },
+      }
+    });
+  }
+  onResize() { if (this._chart) this._chart.resize(); }
+  destroy() { super.destroy(); if (this._chart) { this._chart.destroy(); this._chart = null; } }
+}
+
 class ParameterTunerWidget extends Widget {
   constructor(id, el) {
     super(id, el);
@@ -1385,12 +1464,12 @@ const WIDGET_CLASSES = {
   literature: LiteratureWidget,
   insight:    InsightFeedWidget,
   rem:        REMControlWidget,
-  params:     ParameterTunerWidget,
+  params:     ParameterTunerWidget, metabolic: MetabolicTunerWidget,
 };
 const WIDGET_TITLES = {
   status: 'Status Bar', loader: 'Data Loader', graph2d: 'Graph Explorer',
   query: 'Query Runner', hypothesis: 'Hypothesis Lab', research: 'Research Agent',
-  literature: 'Literature', insight: 'Insight Feed', rem: 'REM Control', params: 'Parameters',
+  literature: 'Literature', insight: 'Insight Feed', rem: 'REM Control', params: 'Parameters', metabolic: 'Metabolic Flux',
 };
 
 // Active widget instances: widgetId → Widget instance

@@ -130,6 +130,7 @@ class MetaParameterLearner:
         self.global_prior = np.array(global_prior, dtype=np.float32)
         self._n = len(self.global_prior)
         self.learning_rate = learning_rate
+        self.learning_rate_scale = 1.0  # Phase 88 metabolic scaling
         self.momentum = momentum
 
         # {community_id -> parameter_vector}
@@ -188,8 +189,9 @@ class MetaParameterLearner:
             sig = _sigmoid(raw)
             grad = (1.0 - sig) * signed_feat
 
-            # Update step
-            delta = self.learning_rate * reward * grad
+            # Update step (with metabolic scaling)
+            eff_lr = self.learning_rate * self.learning_rate_scale
+            delta = eff_lr * reward * grad
 
             # Apply momentum
             v = self._velocity.get(cid, np.zeros(self._n, dtype=np.float32))
