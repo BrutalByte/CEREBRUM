@@ -37,11 +37,24 @@ void ACerebrumBrain::BeginPlay()
     Super::BeginPlay();
 
     // Wire all typed delegates to our handlers
-    CerebrumLink->OnSynapticPulse.AddDynamic(this, &ACerebrumBrain::HandleSynapticPulse);
-    CerebrumLink->OnNeurogenesis.AddDynamic  (this, &ACerebrumBrain::HandleNeurogenesis);
-    CerebrumLink->OnSynapticPrune.AddDynamic (this, &ACerebrumBrain::HandleSynapticPrune);
-    CerebrumLink->OnCorticalGlow.AddDynamic  (this, &ACerebrumBrain::HandleCorticalGlow);
-    CerebrumLink->OnDissonance.AddDynamic    (this, &ACerebrumBrain::HandleDissonance);
+    CerebrumLink->OnSynapticPulse.AddDynamic (this, &ACerebrumBrain::HandleSynapticPulse);
+    CerebrumLink->OnNeurogenesis.AddDynamic   (this, &ACerebrumBrain::HandleNeurogenesis);
+    CerebrumLink->OnSynapticPrune.AddDynamic  (this, &ACerebrumBrain::HandleSynapticPrune);
+    CerebrumLink->OnCorticalGlow.AddDynamic   (this, &ACerebrumBrain::HandleCorticalGlow);
+    CerebrumLink->OnDissonance.AddDynamic     (this, &ACerebrumBrain::HandleDissonance);
+    CerebrumLink->OnMetabolicFlux.AddDynamic  (this, &ACerebrumBrain::HandleMetabolicFlux);
+    CerebrumLink->OnGUIAdaptation.AddDynamic  (this, &ACerebrumBrain::HandleGUIAdaptation);
+
+    // Create and display HUD overlay
+    if (HUDWidgetClass)
+    {
+        HUDWidget = CreateWidget<UUserWidget>(GetWorld(), HUDWidgetClass);
+        if (HUDWidget)
+        {
+            HUDWidget->AddToViewport();
+            UE_LOG(LogTemp, Log, TEXT("CerebrumBrain: HUD widget added to viewport."));
+        }
+    }
 
     if (bLoadGraphOnStart)
     {
@@ -560,4 +573,19 @@ void ACerebrumBrain::HandleDissonance(FString SeedEntity, float PathScore,
         Node->ShowDissonance();
     }
     OnDissonanceAlert(SeedEntity, PathScore, ConsensusScore);
+}
+
+void ACerebrumBrain::HandleMetabolicFlux(float Reinforcement, float Arousal,
+                                          float Novelty, float Cohesion,
+                                          float Persistence, float LearningRateScale)
+{
+    // Forward to Blueprint implementable event — the child Blueprint wires this
+    // to the WBP_CerebrumHUD progress bars.
+    OnMetabolicUpdate(Reinforcement, Arousal, Novelty, Cohesion, Persistence, LearningRateScale);
+}
+
+void ACerebrumBrain::HandleGUIAdaptation(FString Action, FString Target, FString DataJson)
+{
+    // Forward to Blueprint — child BP calls widget functions (SetVisibility, etc.)
+    OnGUIAdaptationEvent(Action, Target, DataJson);
 }

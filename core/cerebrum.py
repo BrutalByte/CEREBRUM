@@ -121,6 +121,40 @@ class CerebrumGraph:
         self._traversal: Optional[BeamTraversal] = None
         self._built      = False
 
+        # ResearchAgent + AutonomousDiscoveryLoop (Phase 74+)
+        self.research_agent: Optional[Any] = None
+        self.autonomous_loop: Optional[Any] = None
+
+    def set_research_agent(self, agent: Any) -> None:
+        self.research_agent = agent
+        if hasattr(agent, "_adapter"):
+            agent._adapter.graph = self
+
+    def start_autonomous_loop(
+        self,
+        cycle_interval: float = 300.0,
+        active_inference: bool = True,
+        gui_adaptation: bool = False,
+        gui_toolkit_url: str = "http://localhost:3000",
+    ) -> Any:
+        from core.autonomous_loop import AutonomousDiscoveryLoop, LoopConfig
+        if not self.research_agent:
+            raise ValueError("ResearchAgent must be set before starting loop.")
+        config = LoopConfig(
+            cycle_interval=cycle_interval,
+            active_inference=active_inference,
+            gui_adaptation=gui_adaptation,
+            gui_toolkit_url=gui_toolkit_url,
+        )
+        self.autonomous_loop = AutonomousDiscoveryLoop(self.research_agent, config)
+        self.autonomous_loop.start()
+        return self.autonomous_loop
+
+    def attach_gui_engine(self, engine: Any) -> None:
+        """Attach a GUIAdaptationEngine directly (alternative to loop integration)."""
+        self._gui_engine = engine
+        logger.info("GUIAdaptationEngine attached.")
+
     def attach_engram(self, engram) -> None:
         """
         Wire an Engram (or SpeedTalkEngram) to enable predictive coding (Phase 69).
@@ -764,6 +798,13 @@ class CerebrumGraph:
                 )
             except Exception as exc:
                 logger.warning("PredictiveCodingEngine.update() failed: %s", exc)
+
+        # Phase 94: Emit METABOLIC_FLUX so UE5 HUD bars stay live
+        try:
+            lr_scale = getattr(self.modulator, "learning_rate_scale", 1.0)
+            self.emit(NeuralEvent.flux(state=self.modulator.state, learning_rate_scale=lr_scale))
+        except Exception as exc:
+            logger.warning("METABOLIC_FLUX emit failed: %s", exc)
 
         return extract(
             paths,

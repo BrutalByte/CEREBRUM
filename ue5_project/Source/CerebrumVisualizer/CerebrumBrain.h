@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Blueprint/UserWidget.h"
 #include "CerebrumLink.h"
 #include "CerebrumBrain.generated.h"
 
@@ -127,6 +128,10 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = "Cerebrum|Spawning")
     TSubclassOf<ASynapseActor> SynapseActorClass;
 
+    /** HUD widget class to create and add to viewport on BeginPlay. Set to WBP_CerebrumHUD. */
+    UPROPERTY(EditDefaultsOnly, Category = "Cerebrum|HUD")
+    TSubclassOf<UUserWidget> HUDWidgetClass;
+
     // ------------------------------------------------------------------
     // Public API (callable from Blueprint)
     // ------------------------------------------------------------------
@@ -185,6 +190,24 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "Cerebrum|Events")
     void OnDissonanceAlert(const FString& SeedEntity, float PathScore, float ConsensusScore);
 
+    /**
+     * Called every time CEREBRUM emits a metabolic state update.
+     * Override in a child Blueprint to forward values to WBP_CerebrumHUD progress bars.
+     */
+    UFUNCTION(BlueprintImplementableEvent, Category = "Cerebrum|Events")
+    void OnMetabolicUpdate(float Reinforcement, float Arousal, float Novelty,
+                           float Cohesion, float Persistence, float LearningRateScale);
+
+    /**
+     * Called when the GUIAdaptationEngine requests a runtime panel change.
+     * Action: "show" | "hide" | "collapse" | "update"
+     * Target: widget element name (e.g. "circuit_warning")
+     * DataJson: JSON string with any extra data for the adaptation.
+     */
+    UFUNCTION(BlueprintImplementableEvent, Category = "Cerebrum|Events")
+    void OnGUIAdaptationEvent(const FString& Action, const FString& Target,
+                              const FString& DataJson);
+
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -196,6 +219,10 @@ private:
 
     UPROPERTY(VisibleAnywhere)
     UCerebrumLink* CerebrumLink;
+
+    /** Live HUD widget instance (created from HUDWidgetClass in BeginPlay). */
+    UPROPERTY()
+    UUserWidget* HUDWidget = nullptr;
 
     // ------------------------------------------------------------------
     // Live registries
@@ -263,4 +290,11 @@ private:
 
     UFUNCTION()
     void HandleDissonance(FString SeedEntity, float PathScore, float ConsensusScore);
+
+    UFUNCTION()
+    void HandleMetabolicFlux(float Reinforcement, float Arousal, float Novelty,
+                             float Cohesion, float Persistence, float LearningRateScale);
+
+    UFUNCTION()
+    void HandleGUIAdaptation(FString Action, FString Target, FString DataJson);
 };

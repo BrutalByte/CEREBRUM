@@ -27,6 +27,8 @@ class NeuralEventType(str, Enum):
     DISSONANCE     = "DISSONANCE"       # CEC dissonance event
     METABOLIC_FLUX = "METABOLIC_FLUX"   # Phase 88 metabolism update
     ENGRAM_STEER   = "ENGRAM_STEER"     # Phase 87 pattern steering
+    ACTIVE_INFERENCE_PULSE = "ACTIVE_INFERENCE_PULSE" # Phase 93 daydreaming
+    GUI_ADAPTATION         = "GUI_ADAPTATION"          # Phase 94 self-modifying GUI
 
 class NeuralEventHeader(BaseModel):
     """Metadata for every neural event."""
@@ -87,3 +89,28 @@ class NeuralEvent(BaseModel):
                 "learning_rate_scale": learning_rate_scale
             }
         )
+
+    @classmethod
+    def inference_pulse(cls, seeds: List[str], reason: str, state: Dict[str, float]) -> "NeuralEvent":
+        "Helper to create an active inference daydreaming event."
+        return cls(
+            event_type=NeuralEventType.ACTIVE_INFERENCE_PULSE,
+            payload={
+                "seeds": seeds,
+                "reason": reason,
+                "metabolic_state": state
+            }
+        )
+
+    @classmethod
+    def gui_adapt(cls, action: str, target: str, data: Dict[str, Any]) -> "NeuralEvent":
+        """Helper to create a GUI adaptation runtime event (Phase 94)."""
+        return cls(
+            event_type=NeuralEventType.GUI_ADAPTATION,
+            payload={
+                "action": action,
+                "target": target,
+                "data": data,
+            }
+        )
+

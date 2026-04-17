@@ -22,6 +22,10 @@
 		{
 			"Name": "Niagara",
 			"Enabled": true
+		},
+		{
+			"Name": "UELLMToolkit",
+			"Enabled": true
 		}
 	]
 }

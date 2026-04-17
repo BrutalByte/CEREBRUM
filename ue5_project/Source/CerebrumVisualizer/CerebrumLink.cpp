@@ -218,6 +218,42 @@ void UCerebrumLink::DispatchTypedEvent(const FString& EventType,
             static_cast<float>(ConsensusScore)
         );
     }
+    else if (EventType == TEXT("METABOLIC_FLUX"))
+    {
+        float Reinforcement = 1.0f, Arousal = 1.0f, Novelty = 1.0f,
+              Cohesion = 1.0f, Persistence = 1.0f, LRScale = 1.0f;
+
+        const TSharedPtr<FJsonObject>* StateObj = nullptr;
+        if (Payload->TryGetObjectField(TEXT("state"), StateObj) && StateObj)
+        {
+            double V = 1.0;
+            if ((*StateObj)->TryGetNumberField(TEXT("reinforcement"), V)) Reinforcement = (float)V;
+            if ((*StateObj)->TryGetNumberField(TEXT("arousal"),       V)) Arousal       = (float)V;
+            if ((*StateObj)->TryGetNumberField(TEXT("novelty"),       V)) Novelty       = (float)V;
+            if ((*StateObj)->TryGetNumberField(TEXT("cohesion"),      V)) Cohesion      = (float)V;
+            if ((*StateObj)->TryGetNumberField(TEXT("persistence"),   V)) Persistence   = (float)V;
+        }
+        double LR = 1.0;
+        if (Payload->TryGetNumberField(TEXT("learning_rate_scale"), LR)) LRScale = (float)LR;
+
+        OnMetabolicFlux.Broadcast(Reinforcement, Arousal, Novelty, Cohesion, Persistence, LRScale);
+    }
+    else if (EventType == TEXT("GUI_ADAPTATION"))
+    {
+        FString Action, Target, DataJson;
+        Payload->TryGetStringField(TEXT("action"), Action);
+        Payload->TryGetStringField(TEXT("target"), Target);
+
+        // Re-serialise the data sub-object for Blueprint consumers
+        const TSharedPtr<FJsonObject>* DataObj = nullptr;
+        if (Payload->TryGetObjectField(TEXT("data"), DataObj) && DataObj)
+        {
+            TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&DataJson);
+            FJsonSerializer::Serialize(*DataObj, Writer);
+        }
+
+        OnGUIAdaptation.Broadcast(Action, Target, DataJson);
+    }
     else
     {
         // Unknown event type — already dispatched via generic OnNeuralEvent above.

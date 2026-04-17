@@ -55,6 +55,25 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(
     float,   ConsensusScore
 );
 
+/** METABOLIC_FLUX — ChemicalModulator state update (Phase 88). */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(
+    FOnMetabolicFlux,
+    float, Reinforcement,
+    float, Arousal,
+    float, Novelty,
+    float, Cohesion,
+    float, Persistence,
+    float, LearningRateScale
+);
+
+/** GUI_ADAPTATION — self-modifying GUI show/hide/collapse event (Phase 94). */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(
+    FOnGUIAdaptation,
+    FString, Action,
+    FString, Target,
+    FString, DataJson
+);
+
 // ---------------------------------------------------------------------------
 // UCerebrumLink — ActorComponent
 // ---------------------------------------------------------------------------
@@ -133,6 +152,14 @@ public:
     /** Fires when the CerebellarEngine detects a dissonant prediction. */
     UPROPERTY(BlueprintAssignable, Category = "Cerebrum|Events")
     FOnDissonance OnDissonance;
+
+    /** Fires when CEREBRUM emits a metabolic state update. */
+    UPROPERTY(BlueprintAssignable, Category = "Cerebrum|Events")
+    FOnMetabolicFlux OnMetabolicFlux;
+
+    /** Fires when the GUIAdaptationEngine requests a runtime panel change. */
+    UPROPERTY(BlueprintAssignable, Category = "Cerebrum|Events")
+    FOnGUIAdaptation OnGUIAdaptation;
 
 private:
     /** Underlying WebSocket managed object (null when disconnected). */

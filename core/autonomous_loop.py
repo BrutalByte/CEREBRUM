@@ -5,29 +5,6 @@ Closes the full discover → validate → approve → materialize loop by runnin
 ResearchAgent.scan_once() on a configurable timer, processing each finding
 through the attached AutoApprover, and tracking cycle health via a circuit
 breaker that pauses autonomous materialization when approval rates collapse.
-
-Design decisions
-----------------
-- Uses threading.Event + threading.Thread rather than asyncio so it can run
-  alongside FastAPI without requiring a running event loop at startup.
-- Circuit breaker is a sliding window over the last N decisions; if the
-  approval fraction drops below min_approval_rate the loop pauses and alerts
-  callers via status(). It auto-resets when the window clears.
-- dry_run=True runs every cycle but skips approve() / reject() calls so the
-  loop can be safely trialled against a live graph without materialising edges.
-- approver_checkpoint_path: if set, AutoApprover weights are persisted after
-  every cycle that changed the decision distribution.
-
-Usage
------
-    from core.autonomous_loop import AutonomousDiscoveryLoop, LoopConfig
-    from core.research_agent import ResearchAgent
-
-    loop = AutonomousDiscoveryLoop(agent=agent, config=LoopConfig(cycle_interval=300))
-    loop.start()
-    ...
-    loop.stop()
-    print(loop.status())
 """
 from __future__ import annotations
 
@@ -37,6 +14,8 @@ import time
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Any, Deque, Dict, List, Optional
+
+from core.active_inference import ActiveInferenceEngine
 
 logger = logging.getLogger(__name__)
 
@@ -72,30 +51,25 @@ class LoopConfig:
     auto_rollback_on_trip: bool = False
     """If True, and the circuit breaker trips during a cycle, automatically
     call ProvenanceLedger.rollback_cycle() to undo any edges materialized
-    during that cycle.  Requires the ResearchAgent to have a ProvenanceLedger
-    attached (via set_provenance_ledger()) and an adapter with remove_edge().
-    No-op in dry_run mode."""
+    during that cycle."""
 
     adaptive_tuning: bool = False
-    """If True, the loop reads from the attached DiscoveryCalibrator after
-    each cycle and adjusts both ``max_materializations_per_cycle`` (higher
-    when the graph is underexplored) and the inter-cycle sleep interval
-    (shorter when many communities are uncharted).  Original config values
-    act as the neutral point; min/max bounds prevent extremes."""
+    """If True, the loop adjusts timing and cap based on DiscoveryCalibrator."""
 
     adaptive_min_cap: int = 1
-    """Lower bound on the effective materialization cap when adaptive_tuning
-    is active.  Must be >= 1."""
-
     adaptive_max_cap: int = 20
-    """Upper bound on the effective materialization cap when adaptive_tuning
-    is active."""
-
     adaptive_min_interval: float = 60.0
-    """Minimum inter-cycle sleep when adaptive_tuning shrinks the interval."""
-
     adaptive_max_interval: float = 7200.0
-    """Maximum inter-cycle sleep when adaptive_tuning extends the interval."""
+
+    # Phase 93: Active Inference (Daydreaming)
+    active_inference: bool = False
+    active_inference_interval: float = 60.0
+    active_inference_floor: float = 0.2
+
+    # Phase 94: Self-Modifying GUI
+    gui_adaptation: bool = False
+    gui_widget_path: str = "/Game/UI/WBP_CerebrumHUD"
+    gui_toolkit_url: str = "http://localhost:3000"
 
 
 # ---------------------------------------------------------------------------
@@ -110,30 +84,13 @@ class CycleRecord:
     started_at: float
     duration_seconds: float
     findings_seen: int
-    """Total findings returned by scan_once() this cycle."""
-
     auto_approved: int
-    """Findings the AutoApprover (or loop) approved + materialized."""
-
     auto_rejected: int
-    """Findings the AutoApprover rejected (not materialized)."""
-
     sent_to_review: int
-    """Findings below confidence threshold, queued for human review."""
-
     edges_added: int
-    """Total graph edges materialized this cycle."""
-
     circuit_breaker_tripped: bool = False
-    """True if the circuit breaker paused materialization this cycle."""
-
     edges_rolled_back: int = 0
-    """Edges removed by auto-rollback when the circuit breaker tripped."""
-
     effective_cap: int = 0
-    """The max_materializations_per_cycle value actually used this cycle
-    (may differ from config when adaptive_tuning is active)."""
-
     dry_run: bool = False
 
 
@@ -145,15 +102,6 @@ class AutonomousDiscoveryLoop:
     """
     Autonomous discovery loop that periodically calls ResearchAgent.scan_once()
     and processes each finding through the attached AutoApprover.
-
-    Parameters
-    ----------
-    agent:
-        A configured ResearchAgent instance.  Must have an AutoApprover
-        attached (``agent._auto_approver``) — if not, findings are queued for
-        human review rather than auto-decided.
-    config:
-        LoopConfig controlling timing, circuit breaker, and materialization cap.
     """
 
     def __init__(self, agent, config: Optional[LoopConfig] = None) -> None:
@@ -173,23 +121,44 @@ class AutonomousDiscoveryLoop:
         self._started_at: Optional[float] = None
         self._last_cycle_at: Optional[float] = None
 
-        # Sliding window for circuit breaker: True=approved, False=rejected/review
+        # Sliding window for circuit breaker
         self._decision_window: Deque[bool] = deque(maxlen=self._config.circuit_breaker_window)
         self._circuit_tripped = False
 
         self._recent_cycles: Deque[CycleRecord] = deque(maxlen=50)
-        self._next_interval: float = self._config.cycle_interval  # Phase 82 adaptive
+        self._next_interval: float = self._config.cycle_interval
         self._lock = threading.Lock()
 
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
+        # Phase 93
+        graph = getattr(agent._adapter, "graph", agent._adapter)
+        self._inference_engine = ActiveInferenceEngine(
+            graph=graph,
+            metabolic_floor=self._config.active_inference_floor
+        )
+        self._total_inference_pulses = 0
+        self._last_inference_at: Optional[float] = None
+
+        # Phase 94: GUI Adaptation
+        self._gui_engine = None
+        if self._config.gui_adaptation:
+            try:
+                from api.ue_toolkit_client import UEToolkitClient
+                from core.gui_adaptation_engine import GUIAdaptationEngine
+                toolkit = UEToolkitClient(self._config.gui_toolkit_url)
+                emit_fn = getattr(graph, "emit", None)
+                self._gui_engine = GUIAdaptationEngine(
+                    toolkit=toolkit,
+                    emit_fn=emit_fn,
+                    widget_path=self._config.gui_widget_path,
+                )
+                logger.info("AutonomousDiscoveryLoop: GUIAdaptationEngine enabled.")
+            except Exception:
+                logger.exception("AutonomousDiscoveryLoop: failed to init GUIAdaptationEngine.")
 
     def start(self) -> None:
         """Start the background loop thread (idempotent)."""
         with self._lock:
             if self._running:
-                logger.debug("AutonomousDiscoveryLoop: already running.")
                 return
             self._running = True
             self._started_at = time.time()
@@ -200,8 +169,8 @@ class AutonomousDiscoveryLoop:
                 daemon=True,
             )
             self._thread.start()
-        logger.info("AutonomousDiscoveryLoop: started (interval=%.0fs, dry_run=%s).",
-                    self._config.cycle_interval, self._config.dry_run)
+        logger.info("AutonomousDiscoveryLoop: started (interval=%.0fs, active_inference=%s).",
+                    self._config.cycle_interval, self._config.active_inference)
 
     def stop(self) -> None:
         """Signal the loop to stop and wait for the current cycle to finish."""
@@ -212,17 +181,11 @@ class AutonomousDiscoveryLoop:
             self._stop_event.set()
 
         if self._thread and self._thread.is_alive():
-            self._thread.join(timeout=max(self._config.cycle_interval + 5, 30))
+            self._thread.join(timeout=30)
         logger.info("AutonomousDiscoveryLoop: stopped.")
 
     def run_cycle(self) -> CycleRecord:
-        """
-        Execute a single discovery cycle synchronously.
-
-        Calls scan_once(), processes findings through AutoApprover (if attached),
-        enforces circuit breaker + per-cycle materialization cap.
-        Returns a CycleRecord summarizing the cycle outcome.
-        """
+        """Execute a single discovery cycle synchronously."""
         with self._lock:
             self._cycle_number += 1
             cycle_num = self._cycle_number
@@ -231,7 +194,6 @@ class AutonomousDiscoveryLoop:
         cfg = self._config
         aa = getattr(self._agent, "_auto_approver", None)
 
-        # Phase 82: compute adaptive cap (and stash effective interval for _loop_body)
         effective_cap, effective_interval = self._compute_adaptive_params()
         with self._lock:
             self._next_interval = effective_interval
@@ -244,22 +206,17 @@ class AutonomousDiscoveryLoop:
         edges_added = 0
         circuit_tripped = False
 
-        # Re-check circuit breaker state before deciding anything this cycle
         self._update_circuit_breaker()
 
         for finding in findings:
             if auto_approved >= effective_cap:
-                # Cap reached — remaining findings go to review queue
                 sent_to_review += 1
                 continue
-
             if aa is None:
-                # No AutoApprover — findings accumulate in agent's ring buffer
                 sent_to_review += 1
                 continue
 
-            # --- AutoApprover decision ---
-            from core.auto_approver import AutoDecision  # local import to avoid circular
+            from core.auto_approver import AutoDecision
             decision: AutoDecision = aa.decide(finding)
 
             if decision.action == "approve":
@@ -269,21 +226,14 @@ class AutonomousDiscoveryLoop:
                 if self._circuit_tripped:
                     circuit_tripped = True
                     sent_to_review += 1
-                    logger.warning(
-                        "AutonomousDiscoveryLoop cycle %d: circuit breaker tripped, "
-                        "skipping materialization of %s.",
-                        cycle_num, finding.finding_id,
-                    )
                     continue
 
                 if not cfg.dry_run:
                     try:
-                        n = self._agent.approve(finding.finding_id,
-                                                cycle_number=cycle_num)
+                        n = self._agent.approve(finding.finding_id, cycle_number=cycle_num)
                         edges_added += n
                         aa.fit(finding, approved=True)
                     except ValueError:
-                        # Finding may have been consumed by a concurrent caller
                         pass
                 auto_approved += 1
 
@@ -297,13 +247,10 @@ class AutonomousDiscoveryLoop:
                     except ValueError:
                         pass
                 auto_rejected += 1
-
-            else:  # "review"
+            else:
                 sent_to_review += 1
 
         duration = time.time() - t0
-
-        # Phase 79: auto-rollback if circuit breaker tripped this cycle
         edges_rolled_back = 0
         if circuit_tripped and cfg.auto_rollback_on_trip and not cfg.dry_run and edges_added > 0:
             ledger = getattr(self._agent, "_provenance_ledger", None)
@@ -313,16 +260,8 @@ class AutonomousDiscoveryLoop:
                     rolled = ledger.rollback_cycle(cycle_num, adapter)
                     edges_rolled_back = rolled
                     edges_added = max(0, edges_added - rolled)
-                    logger.warning(
-                        "AutonomousDiscoveryLoop cycle %d: circuit breaker tripped — "
-                        "auto-rolled back %d edges.",
-                        cycle_num, rolled,
-                    )
                 except Exception:
-                    logger.exception(
-                        "AutonomousDiscoveryLoop cycle %d: auto-rollback failed.",
-                        cycle_num,
-                    )
+                    logger.exception("AutonomousDiscoveryLoop cycle %d: auto-rollback failed.", cycle_num)
 
         record = CycleRecord(
             cycle_number=cycle_num,
@@ -348,51 +287,39 @@ class AutonomousDiscoveryLoop:
             self._last_cycle_at = t0
             self._recent_cycles.append(record)
 
-        # Persist AutoApprover checkpoint if configured and decisions were made
-        if (not cfg.dry_run
-                and cfg.approver_checkpoint_path
-                and aa is not None
-                and (auto_approved + auto_rejected) > 0):
+        if (not cfg.dry_run and cfg.approver_checkpoint_path and aa is not None and (auto_approved + auto_rejected) > 0):
             self._save_checkpoint(aa)
-
-        logger.info(
-            "AutonomousDiscoveryLoop cycle %d: seen=%d approved=%d rejected=%d "
-            "review=%d edges=%d duration=%.2fs circuit=%s",
-            cycle_num, len(findings), auto_approved, auto_rejected,
-            sent_to_review, edges_added, duration,
-            "TRIPPED" if circuit_tripped else "ok",
-        )
 
         return record
 
     def configure(self, config: LoopConfig) -> None:
-        """Replace the current configuration. Thread-safe."""
+        """Hot-update loop configuration without restarting the thread."""
         with self._lock:
             self._config = config
             self._next_interval = config.cycle_interval
-            # Resize decision window to new circuit_breaker_window
-            new_window: Deque[bool] = deque(
-                list(self._decision_window)[-config.circuit_breaker_window:],
-                maxlen=config.circuit_breaker_window,
+            self._decision_window = deque(
+                self._decision_window, maxlen=config.circuit_breaker_window
             )
-            self._decision_window = new_window
-        logger.info("AutonomousDiscoveryLoop: configuration updated.")
 
     def status(self) -> Dict[str, Any]:
         """Return a snapshot of loop health and cumulative statistics."""
         with self._lock:
             window = list(self._decision_window)
             approval_rate = (sum(window) / len(window)) if window else None
-            return {
+            cfg = self._config
+            s: Dict[str, Any] = {
                 "running": self._running,
-                "cycle_interval": self._config.cycle_interval,
-                "max_materializations_per_cycle": self._config.max_materializations_per_cycle,
-                "min_approval_rate": self._config.min_approval_rate,
-                "circuit_breaker_window": self._config.circuit_breaker_window,
-                "dry_run": self._config.dry_run,
-                "auto_rollback_on_trip": self._config.auto_rollback_on_trip,
-                "adaptive_tuning": self._config.adaptive_tuning,
-                "adaptive_effective_interval": self._next_interval if self._config.adaptive_tuning else self._config.cycle_interval,
+                "cycle_interval": cfg.cycle_interval,
+                "max_materializations_per_cycle": cfg.max_materializations_per_cycle,
+                "min_approval_rate": cfg.min_approval_rate,
+                "circuit_breaker_window": cfg.circuit_breaker_window,
+                "dry_run": cfg.dry_run,
+                "auto_rollback_on_trip": cfg.auto_rollback_on_trip,
+                "adaptive_tuning": cfg.adaptive_tuning,
+                "active_inference_enabled": cfg.active_inference,
+                "gui_adaptation_enabled": cfg.gui_adaptation,
+                "total_inference_pulses": self._total_inference_pulses,
+                "last_inference_at": self._last_inference_at,
                 "circuit_breaker_tripped": self._circuit_tripped,
                 "current_approval_rate": approval_rate,
                 "total_cycles": self._total_cycles,
@@ -402,114 +329,104 @@ class AutonomousDiscoveryLoop:
                 "total_edges_added": self._total_edges,
                 "started_at": self._started_at,
                 "last_cycle_at": self._last_cycle_at,
+                "adaptive_effective_interval": self._next_interval if cfg.adaptive_tuning else cfg.cycle_interval,
                 "recent_cycles": [vars(r) for r in self._recent_cycles],
             }
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
+            return s
 
     def _loop_body(self) -> None:
-        """Background thread: run cycles on the configured interval."""
+        """Background thread: run cycles and active inference."""
+        last_inference_at = 0.0
         while not self._stop_event.is_set():
+            now = time.time()
+            # 1. Discovery Cycle
             try:
                 self.run_cycle()
             except Exception:
-                logger.exception("AutonomousDiscoveryLoop: unhandled error in cycle.")
+                logger.exception("AutonomousDiscoveryLoop: cycle failed.")
 
-            # Phase 82: use adaptive interval if tuning is enabled, else config value
+            # 2. Active Inference (Daydreaming)
+            if self._config.active_inference and (now - last_inference_at) >= self._config.active_inference_interval:
+                try:
+                    res = self._inference_engine.step()
+                    if res:
+                        with self._lock:
+                            self._total_inference_pulses += 1
+                            self._last_inference_at = time.time()
+                        last_inference_at = now
+                except Exception:
+                    logger.exception("AutonomousDiscoveryLoop: active inference failed.")
+
+            # 3. GUI Adaptation (Phase 94)
+            if self._gui_engine is not None:
+                try:
+                    from core.gui_adaptation_engine import SignalSnapshot
+                    graph = getattr(self._agent._adapter, "graph", self._agent._adapter)
+                    mod = getattr(graph, "modulator", None)
+                    pc  = getattr(graph, "predictive_coder", None)
+                    loop_status = self.status()
+                    snapshot = SignalSnapshot(
+                        timestamp=time.time(),
+                        arousal=getattr(mod, "state", {}).get("arousal", 1.0) if mod else 1.0,
+                        reinforcement=getattr(mod, "state", {}).get("reinforcement", 1.0) if mod else 1.0,
+                        soliton_index=None,
+                        approval_rate=loop_status.get("current_approval_rate"),
+                        circuit_breaker_tripped=loop_status.get("circuit_breaker_tripped", False),
+                        total_inference_pulses=loop_status.get("total_inference_pulses", 0),
+                    )
+                    # Enrich soliton_index from predictive coder if available
+                    if pc:
+                        try:
+                            stats = pc.soliton_stats()
+                            if stats:
+                                snapshot.soliton_index = sum(stats.values()) / len(stats)
+                        except Exception:
+                            pass
+                    self._gui_engine.record(snapshot)
+                    fired = self._gui_engine.step()
+                    if fired:
+                        logger.info("GUIAdaptationEngine fired rules: %s", fired)
+                except Exception:
+                    logger.exception("AutonomousDiscoveryLoop: GUI adaptation failed.")
+
             with self._lock:
                 interval = self._next_interval if self._config.adaptive_tuning else self._config.cycle_interval
-            self._stop_event.wait(timeout=interval)
+            self._stop_event.wait(timeout=min(interval, self._config.active_inference_interval))
 
     def _compute_adaptive_params(self) -> tuple:
-        """
-        Read from the DiscoveryCalibrator (if attached) and return
-        ``(effective_cap, effective_interval)`` adjusted for current graph coverage.
-
-        Signal: mean community weight from ``calibrator.stats()``.
-          - weight > 1.0 → underexplored  → increase cap, shorten interval
-          - weight < 1.0 → saturated       → decrease cap, lengthen interval
-          - weight ≈ 1.0 → neutral         → no change
-
-        Scale is linear; capped to ``[adaptive_min_cap, adaptive_max_cap]``
-        and ``[adaptive_min_interval, adaptive_max_interval]``.
-
-        Returns the base config values unchanged when:
-          - ``adaptive_tuning`` is False
-          - no calibrator is attached
-          - calibrator has no community data yet
-        """
         cfg = self._config
         base_cap = cfg.max_materializations_per_cycle
         base_interval = cfg.cycle_interval
-
-        if not cfg.adaptive_tuning:
-            return base_cap, base_interval
-
+        if not cfg.adaptive_tuning: return base_cap, base_interval
         calibrator = getattr(self._agent, "_calibrator", None)
-        if calibrator is None:
-            return base_cap, base_interval
-
+        if calibrator is None: return base_cap, base_interval
         try:
             stats = calibrator.stats()
+            communities = stats.get("communities", {})
+            weights = [v["weight"] for v in communities.values() if "weight" in v]
+            if not weights: return base_cap, base_interval
+            mean_weight = sum(weights) / len(weights)
+            effective_cap = max(cfg.adaptive_min_cap, min(cfg.adaptive_max_cap, int(round(base_cap * mean_weight))))
+            effective_interval = max(cfg.adaptive_min_interval, min(cfg.adaptive_max_interval, base_interval / (mean_weight or 1.0)))
+            return effective_cap, effective_interval
         except Exception:
             return base_cap, base_interval
 
-        communities = stats.get("communities", {})
-        if not communities:
-            return base_cap, base_interval
-
-        weights = [v["weight"] for v in communities.values() if "weight" in v]
-        if not weights:
-            return base_cap, base_interval
-
-        mean_weight = sum(weights) / len(weights)
-        # mean_weight is normalised around 1.0 (neutral)
-
-        effective_cap = int(round(base_cap * mean_weight))
-        effective_cap = max(cfg.adaptive_min_cap,
-                            min(cfg.adaptive_max_cap, effective_cap))
-
-        # Interval: shorter when graph is underexplored (mean_weight > 1),
-        # longer when saturated (mean_weight < 1).  Invert the scale.
-        if mean_weight > 0:
-            effective_interval = base_interval / mean_weight
-        else:
-            effective_interval = base_interval
-        effective_interval = max(cfg.adaptive_min_interval,
-                                 min(cfg.adaptive_max_interval, effective_interval))
-
-        if effective_cap != base_cap or abs(effective_interval - base_interval) > 1.0:
-            logger.debug(
-                "AutonomousDiscoveryLoop adaptive: mean_weight=%.3f "
-                "cap %d→%d  interval %.0f→%.0f",
-                mean_weight, base_cap, effective_cap,
-                base_interval, effective_interval,
-            )
-
-        return effective_cap, effective_interval
-
     def _update_circuit_breaker(self) -> None:
-        """Recalculate circuit_tripped from current decision window. Not locked."""
         window = self._decision_window
         if len(window) < 3:
-            # Not enough data to trip; remain open
             self._circuit_tripped = False
             return
         rate = sum(window) / len(window)
         self._circuit_tripped = rate < self._config.min_approval_rate
 
     def _save_checkpoint(self, aa) -> None:
-        """Write AutoApprover checkpoint to disk. Errors are logged, not raised."""
         import json
         path = self._config.approver_checkpoint_path
-        if path is None:
-            return
+        if not path: return
         try:
             with open(path, "w", encoding="utf-8") as fh:
                 json.dump(aa.to_dict(), fh, indent=2)
-            logger.debug("AutonomousDiscoveryLoop: AutoApprover checkpoint saved ΓåÆ %s", path)
         except Exception:
-            logger.exception("AutonomousDiscoveryLoop: failed to save checkpoint to %s.", path)
+            logger.exception("AutonomousDiscoveryLoop: failed to save checkpoint.")
 
