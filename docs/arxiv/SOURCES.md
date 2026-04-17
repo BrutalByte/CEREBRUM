@@ -56,8 +56,8 @@ This document provides a consolidated list of foundational papers, books, and da
 - **bottou2010large**: Bottou, L. (2010). Large-scale machine learning with stochastic gradient descent. *COMPSTAT*, 177–186. Online SGD basis for AutoApprover (Phase 71). [Download PDF](https://link.springer.com/content/pdf/10.1007/978-3-7908-2604-3_16.pdf)
 - **denzin1978research**: Denzin, N.K. (1978). *The research act: A theoretical introduction to sociological methods.* McGraw-Hill. Triangulation methodology — foundational framing for Phase 72 TriangulationEngine.
 - **pearl2000causality**: Pearl, J. (2000). *Causality: Models, reasoning, and inference.* Cambridge University Press. Noisy-OR model — basis for ContradictionResolver (Phase 73). [View Source](https://doi.org/10.1017/CBO9780511803161)
-- **bastian2009gephi**: Bastian, M., Heymann, S., Jacomy, M. (2009). Gephi: An Open Source Software for Exploring and Manipulating Networks. *ICWSM*. Spatial graph layout inspiration for the Fibonacci sphere design in Phase 83. [View Source](https://gephi.org/)
-- **fibonacci_sphere**: Álvarez, R. (2010). How to evenly distribute points on a sphere more effectively than the canonical Fibonacci Lattice. Algorithm used for community center placement in `setup_graph_layout.py` (Phase 83). [View Source](https://arxiv.org/abs/0912.4540)
+- **bastian2009gephi**: Bastian, M., Heymann, S., Jacomy, M. (2009). Gephi: An Open Source Software for Exploring and Manipulating Networks. *ICWSM*. Spatial graph layout inspiration for the Fibonacci sphere design in Phase 92. [View Source](https://gephi.org/)
+- **fibonacci_sphere**: Álvarez, R. (2010). How to evenly distribute points on a sphere more effectively than the canonical Fibonacci Lattice. Algorithm used for community center placement in `setup_graph_layout.py` (Phase 92). [View Source](https://arxiv.org/abs/0912.4540)
 
 ---
 

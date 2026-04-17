@@ -131,7 +131,7 @@ The four new parameters are:
 - $\zeta$ (**PageRank prior**): Boosts structurally central destination nodes
 - $\eta$ (**Temporal decay**): Penalizes edges with expired validity windows
 - $\iota$ (**Node recency**): Rewards recently-updated or recently-traversed nodes
-- $\mu$ (**Synthesis-density penalty**): Penalizes paths over-relying on wormhole-synthesized edges (REM Engine)
+- $\mu$ (**Synthesis-density penalty**): Penalizes paths over-relying on Synaptic Bridge-synthesized edges (REM Engine)
 - $\theta$ (**Grounding confidence**): Rewards edges with high ingest-time confidence scores
 
 Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`

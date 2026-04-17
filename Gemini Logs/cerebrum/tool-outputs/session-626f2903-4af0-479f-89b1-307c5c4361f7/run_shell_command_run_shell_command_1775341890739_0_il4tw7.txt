@@ -1,0 +1,3 @@
+{
+  "output": "Output: diff --git a/ui_server.log b/ui_server.log\nindex 7b4cdd7..7a1a650 100644\nBinary files a/ui_server.log and b/ui_server.log differ\nProcess Group PGID: 77712"
+}

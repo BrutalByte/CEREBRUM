@@ -1,0 +1,3 @@
+{
+  "output": "Output: usage: setup_cwq_data.py [-h] [--force] [--hf-cache DIR]\n\nDownload and preprocess CWQ data for CEREBRUM\n\noptions:\n  -h, --help            show this help message and exit\n  --force               Re-download even if already set up\n  --hf-cache DIR        HuggingFace cache directory\nProcess Group PGID: 87988"
+}

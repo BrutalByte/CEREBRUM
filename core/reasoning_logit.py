@@ -22,7 +22,7 @@ class ReasoningLogit:
     pr_v: float = 0.0         # PageRank Prior
     td: float = 0.0           # Temporal Decay (Edge)
     nr_v: float = 0.0         # Node Recency Prior
-    sd: float = 0.0           # Synthesis Density (REM/Wormhole)
+    sd: float = 0.0           # Synthesis Density (REM/SynapticBridge)
     grounding: float = 1.0    # Grounding/Confidence Score
 
     def to_vector(self) -> np.ndarray:

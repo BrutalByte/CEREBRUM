@@ -1,0 +1,3 @@
+{
+  "output": "Output: pytest : The term 'pytest' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, \nverify that the path is correct and try again.\nAt line:1 char:1\n+ pytest tests/ -v --maxfail=5\n+ ~~~~~~\n    + CategoryInfo          : ObjectNotFound: (pytest:String) [], CommandNotFoundException\n    + FullyQualifiedErrorId : CommandNotFoundException\n \nExit Code: 1\nProcess Group PGID: 85484"
+}

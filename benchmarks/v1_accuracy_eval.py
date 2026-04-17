@@ -362,7 +362,7 @@ def section_namespace(args) -> None:
     isolation_rate = (1 - collisions_ns / max(collisions_no_ns, 1)) * 100
     print(f"\n  Collision elimination rate: {isolation_rate:.1f}%")
     if collisions_ns == 0:
-        print("  RESULT: Namespace isolation fully prevents semantic wormholes.")
+        print("  RESULT: Namespace isolation fully prevents semantic SynapticBridges.")
     else:
         print(f"  RESULT: {collisions_ns} residual collisions — investigate.")
 

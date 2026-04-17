@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic  
 **Series**: CEREBRUM Technical Report 035  
 **Phase**: 83  
-**Status**: v2.21.0 (Phase 83 COMPLETE)  
+**Status**: v2.21.0 (Phase 92 COMPLETE)  
 **arXiv Category**: `cs.HC` + `cs.IR`  
 **Date**: April 2026
 
@@ -38,7 +38,7 @@ This paper makes three contributions:
 
 **Explainability interfaces** (GNNExplainer [ying2019gnnexplainer], LIME [ribeiro2016lime], SHAP [lundberg2017shap]) operate post-hoc on static model outputs. The neural visualization bridge is *prospective* — it shows what the engine is doing as it reasons, not an explanation constructed afterwards.
 
-The closest prior work is the Neural Telemetry subsystem introduced in Phase 63, which defined the five event types and the `TelemetryBridge` server. Phase 83 completes that design by delivering the UE5 consumer side.
+The closest prior work is the Neural Telemetry subsystem introduced in Phase 63, which defined the five event types and the `TelemetryBridge` server. Phase 92 completes that design by delivering the UE5 consumer side.
 
 ---
 
@@ -57,7 +57,7 @@ Five event types cover the complete lifecycle of CEREBRUM's internal activity:
 | `CORTICAL_GLOW` | Community activation | A community became active during traversal |
 | `DISSONANCE` | CerebellarEngine | A high-confidence path had low consensus |
 
-Each event carries: `event_type`, `source_id`, `target_id`, `relation_type`, `weight`, `community_id`, `is_wormhole`, `hop_index`, `timestamp_ms`.
+Each event carries: `event_type`, `source_id`, `target_id`, `relation_type`, `weight`, `community_id`, `is_Synaptic Bridge`, `hop_index`, `timestamp_ms`.
 
 #### 3.2 TelemetryBridge
 
@@ -74,7 +74,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(
     FSynapticPulseSignature,
     FString, SourceId, FString, TargetId,
     FString, RelationType, float, Weight,
-    int32, CommunityId, bool, bIsWormhole);
+    int32, CommunityId, bool, bIsSynaptic Bridge);
 
 UPROPERTY(BlueprintAssignable)
 FSynapticPulseSignature OnSynapticPulse;
@@ -94,7 +94,7 @@ Each knowledge graph node is an instance of `ANeuronNodeActor`. A `UStaticMeshCo
 
 #### 3.5 ASynapseActor (C++)
 
-Edges are represented by `ASynapseActor` instances, each pointing between two `ANeuronNodeActor` world positions. A `USplineMeshComponent` traces the path as a curved tube. A secondary `UParticleSystemComponent` (Niagara) drives the animated `SYNAPTIC_PULSE` travelling-particle effect. Edge weight maps to tube radius; `is_wormhole=true` activates an additive glow material overlay.
+Edges are represented by `ASynapseActor` instances, each pointing between two `ANeuronNodeActor` world positions. A `USplineMeshComponent` traces the path as a curved tube. A secondary `UParticleSystemComponent` (Niagara) drives the animated `SYNAPTIC_PULSE` travelling-particle effect. Edge weight maps to tube radius; `is_Synaptic Bridge=true` activates an additive glow material overlay.
 
 `FadeOut()` triggers an `EmissiveIntensity` tween to 0.0 over 2 s followed by actor destruction, matching the `SYNAPTIC_PRUNE` lifecycle.
 
@@ -247,7 +247,7 @@ Fibonacci sphere layout produces a silhouette entropy (standard deviation of pro
 
 #### 8.1 Reasoning as Space
 
-The core design principle is that graph topology is inherently spatial and should be rendered as such. A beam traversal that crosses community boundaries (`is_wormhole=true`) should look different from one that stays within a community — and with the visualization bridge it does: wormhole synapses glow with an additive overlay. A community being heavily queried should brighten. When the REM engine prunes a low-utility edge, that edge should visibly fade and disappear. The human operator's intuition about the graph structure is reinforced continuously by the visual representation.
+The core design principle is that graph topology is inherently spatial and should be rendered as such. A beam traversal that crosses community boundaries (`is_Synaptic Bridge=true`) should look different from one that stays within a community — and with the visualization bridge it does: Synaptic Bridge synapses glow with an additive overlay. A community being heavily queried should brighten. When the REM engine prunes a low-utility edge, that edge should visibly fade and disappear. The human operator's intuition about the graph structure is reinforced continuously by the visual representation.
 
 #### 8.2 Fallback Hierarchy
 

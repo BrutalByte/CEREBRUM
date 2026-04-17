@@ -696,10 +696,10 @@ class ResearchAgent:
                 try:
                     tri_report = self._triangulation_engine.evaluate(cand, good)
                     finding.metadata["triangulation"] = tri_report
-                    if tri_report.is_wormhole_candidate:
+                    if tri_report.is_SynapticBridge_candidate:
                         best_rel = good[0].derived_relation if good else "?"
                         logger.info(
-                            "TriangulationEngine: wormhole candidate %s -[%s]-> %s "
+                            "TriangulationEngine: SynapticBridge candidate %s -[%s]-> %s "
                             "(rev=%.2f agree=%.2f indep=%.2f sem=%.2f)",
                             cand.source_id, best_rel, cand.target_id,
                             tri_report.reverse_confidence,

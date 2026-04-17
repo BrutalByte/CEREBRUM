@@ -1,0 +1,3 @@
+{
+  "output": "Output: pandoc : The term 'pandoc' is not recognized as the name of a cmdlet, function, script file, or operable \nprogram. Check the spelling of the name, or if a path was included, verify that the path is correct and try \nagain.\nAt line:1 char:1\n+ pandoc --version\n+ ~~~~~~\n    + CategoryInfo          : ObjectNotFound: (pandoc:String) [], CommandNotFoundException\n    + FullyQualifiedErrorId : CommandNotFoundException\n \nExit Code: 1\nProcess Group PGID: 52164"
+}

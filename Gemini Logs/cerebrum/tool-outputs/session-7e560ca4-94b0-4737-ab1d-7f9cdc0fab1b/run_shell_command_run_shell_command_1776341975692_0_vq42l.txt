@@ -1,0 +1,3 @@
+{
+  "output": "Output: tail : The term 'tail' is not recognized as the name of a cmdlet, function, script file, or operable program. \nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.\nAt line:1 char:1\n+ tail -n 100 TEST_LOG.md; cat mypy_errors_final.txt\n+ ~~~~\n    + CategoryInfo          : ObjectNotFound: (tail:String) [], CommandNotFoundException\n    + FullyQualifiedErrorId : CommandNotFoundException\n\ncore\\extraction_engine.py:846: error: Invalid syntax  [syntax]\nFound 1 error in 1 file (errors prevented further checking)\nProcess Group PGID: 44592"
+}

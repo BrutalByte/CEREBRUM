@@ -1010,3 +1010,9 @@ class CouplingStatusResponse(BaseModel):
     peers: List[str]
     last_coupling_received: Optional[float] = None
     total_signatures_indexed: int
+
+
+class MetabolicStatusResponse(BaseModel):
+    learning_rate_scale: float
+    decay_rate: float
+    state: Dict[str, float]

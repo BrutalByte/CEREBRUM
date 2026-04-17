@@ -1,0 +1,3 @@
+{
+  "output": "Found 1 match for pattern \"def run_rem_cycle\" in path \".\":\n---\nFile: ui\\studio.py\nL430-     except Exception as e:\nL431-         logger.error(\"Reasoning error: %s\", str(e), exc_info=True)\nL432-         return f\"<h3 style='color:#ff4444;'>[ERROR] {type(e).__name__}: {e}</h3>\", None, go.Figure()\nL433- \nL434- \nL435: def run_rem_cycle(dry_run=True):\nL436-     \"\"\"Execute a REM maintenance cycle.\"\"\"\nL437-     if not STATE[\"rem\"]:\nL438-         return \"ERROR: REM Engine not initialized.\"\nL439- \nL440-     try:\n---"
+}

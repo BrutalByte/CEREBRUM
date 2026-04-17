@@ -1,0 +1,3 @@
+{
+  "output": "Output: core\\extraction_engine.py:846: error: Invalid syntax  [syntax]\nFound 1 error in 1 file (errors prevented further checking)\nProcess Group PGID: 84648"
+}

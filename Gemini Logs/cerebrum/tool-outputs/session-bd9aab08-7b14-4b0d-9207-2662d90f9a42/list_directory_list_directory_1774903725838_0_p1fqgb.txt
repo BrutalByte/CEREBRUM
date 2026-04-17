@@ -1,0 +1,3 @@
+{
+  "output": "Directory listing for E:\\Development\\Cerebrum\\tests\\fixtures:\nhetionet_medical_100k.csv (3831715 bytes)\nmetaqa_movies.csv (5359368 bytes)\nstress_test_5k.csv (686518 bytes)\ntoy_graph.csv (775 bytes)"
+}

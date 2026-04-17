@@ -28,7 +28,7 @@ The Signal Encoder uses a proprietary implementation of **Orthogonal Procrustes 
 *   **Sub-Millisecond Multi-Modal AI**: Connect physical events to business logic with less than 1ms of overhead.
 *   **Nuanced Discovery**: Detect subtle patterns in physical data that are impossible to describe in text but are mathematically obvious in the latent space.
 *   **Geometric Stability**: Our **Canonical Anchor** protocol ensures that signals remain accurate even in complex federated networks involving multiple partners.
-*   **Identity Integrity (v1.2.0)**: Strict namespace separation prevents "Semantic Wormholes" between industrial telemetry and administrative project documents.
+*   **Identity Integrity (v1.2.0)**: Strict namespace separation prevents "Semantic Synaptic Bridges" between industrial telemetry and administrative project documents.
 
 ### Conclusion
 The Signal Encoder turns your Knowledge Graph into a "Physical Intelligence System." It provides the essential representational bridge required for the next generation of autonomous industrial and scientific AI.

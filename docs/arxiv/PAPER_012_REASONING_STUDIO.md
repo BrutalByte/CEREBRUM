@@ -37,7 +37,7 @@ Benefits of this separation:
 - **Separation of concerns**: `ui/studio.py` is reduced to a thin Gradio binding layer; all algorithmic logic lives in `core/`.
 
 #### 4.2 10-Parameter CSA Weight Profiler (Bug Fix)
-The Studio's CSA weight profiler previously exposed only 9 of the 10 CSA parameters, omitting $\mu$ (synthesis-density penalty). This meant that Studio users tuning parameters interactively could not adjust the penalty applied to paths over-relying on wormhole-synthesized edges. In v1.9.8, the profiler exposes all 10 parameters:
+The Studio's CSA weight profiler previously exposed only 9 of the 10 CSA parameters, omitting $\mu$ (synthesis-density penalty). This meant that Studio users tuning parameters interactively could not adjust the penalty applied to paths over-relying on Synaptic Bridge-synthesized edges. In v1.9.8, the profiler exposes all 10 parameters:
 
 | Parameter | Symbol | Description |
 |---|---|---|

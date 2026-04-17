@@ -45,7 +45,7 @@ CEREBRUM uses "Community Groups" to help point the light. If you ask a question 
 ### 5. Growing and Learning: The Self-Cleaning Library
 Most libraries get messy over time. Books get lost, or the map becomes outdated. CEREBRUM has three features to keep itself smart:
 
-1.  **The Bridge (Wormholes)**: If the librarian frequently walks from the "Medicine" section to the "Chemistry" section, CEREBRUM builds a "Secret Door" (a Bridge Twin) between them. This makes the next trip near-instant.
+1.  **The Bridge (Synaptic Bridges)**: If the librarian frequently walks from the "Medicine" section to the "Chemistry" section, CEREBRUM builds a "Secret Door" (a Bridge Twin) between them. This makes the next trip near-instant.
 2.  **The REM Cycle (Sleep)**: Every night, the system "sleeps." It goes through the library, throws out old or incorrect information (Pruning), and strengthens the sections that people use the most.
 3.  **The Eureka Moment (Insights)**: Sometimes, the system notices that two books in different sections *should* be connected even if there isn't a string yet. It creates a "Speculative String." If that string turns out to be useful, it stays forever.
 

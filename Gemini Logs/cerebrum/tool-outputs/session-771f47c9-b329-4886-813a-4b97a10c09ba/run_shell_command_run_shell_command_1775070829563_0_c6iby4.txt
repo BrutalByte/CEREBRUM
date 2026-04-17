@@ -1,0 +1,3 @@
+{
+  "output": "Output: Loading subset of CWQ scaffold...\nLoaded 10024 nodes and 9313 edges.\nInitial connected components: 2414\nApplying GraphBridgeEngine...\nGraphBridgeEngine: hit max_bridges cap 100\nAdded 100 bridge edges.\nFinal connected components: 2317\nBridge: m.029klnm <--> m.02bgh9m (sim=0.8591)\nBridge: m.09wj_fm <--> m.09wjfm1 (sim=0.8678)\nBridge: m.09wj_fm <--> m.09w_1mj (sim=0.8585)\nBridge: m.09wj_fm <--> m.09w_mj1 (sim=0.8580)\nBridge: m.094nnw6 <--> m.094ksww (sim=0.9173)\nProcess Group PGID: 80036"
+}

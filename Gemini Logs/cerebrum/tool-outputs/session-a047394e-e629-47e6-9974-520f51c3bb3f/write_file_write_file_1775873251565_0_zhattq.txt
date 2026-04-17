@@ -1,0 +1,3 @@
+{
+  "output": "Successfully created and wrote to new file: E:\\Development\\Cerebrum\\ue5_project\\Source\\CerebrumVisualizer\\CerebrumLink.cpp. Here is the updated code:\n#include \"CerebrumLink.h\"\r\n\r\nUCerebrumLink::UCerebrumLink() \r\n{ \r\n    PrimaryComponentTick.bCanEverTick = false; \r\n}\r\n\r\nvoid UCerebrumLink::ConnectToBrain(FString URL) \r\n{\r\n    UE_LOG(LogTemp, Log, TEXT(\"CerebrumLink: Attempting connection to %s\"), *URL);\r\n    // Placeholder for actual WebSocket implementation using your plugin\r\n}\r\n\r\nvoid UCerebrumLink::SendToBrain(FString Message)\r\n{\r\n    UE_LOG(LogTemp, Log, TEXT(\"CerebrumLink: Sending: %s\"), *Message);\r\n}\r\n"
+}

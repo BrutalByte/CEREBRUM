@@ -14,7 +14,7 @@ Knowledge Graphs (KGs) are traditionally static at the topological level—once 
 The **Bridge Twin Engine** implements experience-dependent plasticity by materializing "Twin Nodes" to act as structural relays. By short-circuiting frequent cross-community traversals, the engine allows the graph to physically evolve its own topology to match its usage history, analogous to biological Long-Term Potentiation (LTP).
 
 ### 2. Biological Analogy: The Thalamic Relay
-In the human brain, the Thalamus acts as a relay station, routing signals between specialized cortical regions. The Bridge Twin Engine mimics this by creating relay nodes that belong to a destination community but maintain a direct "Wormhole" connection to their source in another community.
+In the human brain, the Thalamus acts as a relay station, routing signals between specialized cortical regions. The Bridge Twin Engine mimics this by creating relay nodes that belong to a destination community but maintain a direct "Synaptic Bridge" connection to their source in another community.
 
 *   **LTP (Long-Term Potentiation)**: Strengthening a path based on frequency.
 *   **LTD (Long-Term Depression)**: Weakening and pruning idle paths.

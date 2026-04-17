@@ -1,0 +1,3 @@
+{
+  "output": "Found 5 matches for pattern \"def load_kb\" in path \".\":\n---\nFile: benchmarks\\full_system_eval.py\nL121: def load_kb_raw() -> Tuple[NetworkXAdapter, nx.Graph]:\nL142: def load_kb_thalamus() -> Tuple[NetworkXAdapter, nx.Graph, callable]:\n---\nFile: benchmarks\\webqsp_full_eval.py\nL136: def load_kb_raw() -> Tuple[NetworkXAdapter, nx.Graph]:\nL148: def load_kb_thalamus() -> Tuple[NetworkXAdapter, nx.Graph]:\n---\nFile: benchmarks\\grailqa_full_eval.py\nL133: def load_kb_thalamus(\n---"
+}

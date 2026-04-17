@@ -1,0 +1,3 @@
+{
+  "output": "Output: SUCCESS: The process with PID 13916 has been terminated.\nSUCCESS: The process with PID 29148 has been terminated.\nProcess Group PGID: 57952"
+}

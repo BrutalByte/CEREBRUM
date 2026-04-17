@@ -1,6 +1,6 @@
 # CEREBRUM System Architecture
 
-**Version**: v2.21.0 (Phase 83 COMPLETE)
+**Version**: v2.21.0 (Phase 92 COMPLETE)
 
 Complete data-flow from ingestion to result, including all options, pathways, and decision nodes.
 
@@ -245,7 +245,7 @@ subgraph BACKGROUND["⑧ Background Systems"]
     subgraph REM["REM Engine — self-reorganization"]
         REM_PRUNE["_prune()\nconfidence < threshold\ndead edges removed"]
         REM_CONS["_consolidate()\nredundant paths merged\nDSCF recompute"]
-        REM_SYNTH["_synthesize()\nwormhole bridge synthesis\nsd penalty applied"]
+        REM_SYNTH["_synthesize()\nSynaptic Bridge bridge synthesis\nsd penalty applied"]
         REM_SCHED["schedule(interval_s)\ndaemon timer"]
     end
 

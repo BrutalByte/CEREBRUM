@@ -1,0 +1,3 @@
+{
+  "output": "Successfully modified file: E:\\Development\\Cerebrum\\pyproject.toml (1 replacements). Here is the updated code:\n...\nrequires = [\"setuptools>=68\", \"wheel\"]\nbuild-backend = \"setuptools.backends.legacy:build\"\n\n[project]\nname = \"cerebrum-kg\"\nversion = \"1.7.5\"\ndescription = \"CEREBRUM — Community-Structured Graph Attention for Knowledge Graph Reasoning\"\nauthors = [\n    {name = \"Bryan Alexander Buchorn\", email = \"bryan.alexander@buchorn.com\"},\n]\nlicense = {text = \"PolyForm Noncommercial License 1.0.0\"}\n..."
+}

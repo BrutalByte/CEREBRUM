@@ -36,8 +36,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.status import HTTP_403_FORBIDDEN, HTTP_401_UNAUTHORIZED
 from core.security import FederatedAuth
 
-from core.coupling_engine import NeuralCouplingEngine, CouplingMessage
+from core.neural_coupling_engine import NeuralCouplingEngine, CouplingMessage
 from api.peer_discovery import PeerDiscovery
+from reasoning.answer_extractor import extract
+from llm_bridge.context_formatter import to_structured
 from api.schemas import (
     QueryRequest, QueryResponse, CommunitiesResponse,
     QueryConsensusRequest, QueryConsensusResponse, ConsensusLevel,
@@ -351,14 +353,10 @@ def create_app(
                     from api.ue_toolkit_adapter import UEToolkitClient, NeuralToToolkitTranslator
                     client = UEToolkitClient(base_url=toolkit_url)
                     translator = NeuralToToolkitTranslator(client)
-                                        _state["ue_toolkit_translator"] = translator
+                    _state['ue_toolkit_translator'] = translator
                     translator.initialize_scene() # Phase 92 Initial Interface Setup
                     bridge.add_subscriber(translator.handle_event)
-                    bridge.add_subscriber(translator.handle_event)
                     print(f"  [API] UE LLM Toolkit Adapter active -> {toolkit_url}")
-
-
-            try:
                 from api.telemetry_bridge import TelemetryBridge
                 bridge = TelemetryBridge(port=ws_port)
                 _state["telemetry_bridge"] = bridge
@@ -663,7 +661,7 @@ def create_app(
                         bridge.broadcast(NeuralEvent.pulse(
                             source=src, target=tgt, relation=rel,
                             weight=w, hop=hop_idx,
-                            is_wormhole=(src_cid != tgt_cid),
+                            is_SynapticBridge=(src_cid != tgt_cid),
                         ))
                         i += 2
                         hop_idx += 1
@@ -2547,7 +2545,6 @@ def create_app(
     @router.post(
         "/research/provenance/rollback/{batch_id}",
         response_model=ProvenanceRollbackResponse,
-    CouplingMessageSchema, CouplingStatusResponse, MetabolicStatusResponse,
         tags=["research"],
     )
     async def provenance_rollback_batch(
@@ -2572,7 +2569,6 @@ def create_app(
     @router.post(
         "/research/provenance/rollback-cycle/{cycle_number}",
         response_model=ProvenanceRollbackResponse,
-    CouplingMessageSchema, CouplingStatusResponse, MetabolicStatusResponse,
         tags=["research"],
     )
     async def provenance_rollback_cycle(
@@ -3102,12 +3098,12 @@ def _load(
 
     # 6. Save to cache
     if cache_path:
-        
+        save_state(cache_path, adapter=_state['adapter'])
     # Phase 87: Swarm & Neural Coupling
-    from core.coupling_engine import NeuralCouplingEngine
+    from core.neural_coupling_engine import NeuralCouplingEngine
     from api.peer_discovery import PeerDiscovery
     local_url = os.getenv("CEREBRUM_LOCAL_URL", "http://localhost:8200")
-    _state["coupling_engine"] = NeuralCouplingEngine(local_url, _state["adapter"].hologram_index)
+    _state['coupling_engine'] = NeuralCouplingEngine(local_url, _state['hologram'])
     _state["peer_discovery"] = PeerDiscovery(
         _state["coupling_engine"], 
         _state["adapter"], 

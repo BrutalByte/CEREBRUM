@@ -462,7 +462,7 @@ def _make_tri_report(
     strategy_agreement=1.0,
     mean_path_independence=0.9,
     semantic_type_score=1.0,
-    is_wormhole_candidate=True,
+    is_SynapticBridge_candidate=True,
 ):
     from core.triangulation_engine import TriangulationReport
     return TriangulationReport(
@@ -470,7 +470,7 @@ def _make_tri_report(
         strategy_agreement=strategy_agreement,
         mean_path_independence=mean_path_independence,
         semantic_type_score=semantic_type_score,
-        is_wormhole_candidate=is_wormhole_candidate,
+        is_SynapticBridge_candidate=is_SynapticBridge_candidate,
     )
 
 

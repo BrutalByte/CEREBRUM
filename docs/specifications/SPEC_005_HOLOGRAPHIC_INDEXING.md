@@ -39,12 +39,12 @@ For each community $C_j \in \mathcal{G}_i$, the node computes:
 2.  **Radius**: $\rho_j = \max_{e \in C_j} \|\vec{e} - \vec{c}_j\|$
 3.  **Density**: Average internal modularity of $C_j$.
 
-#### 3.2 Discovery (Wormhole Detection)
-If a local reasoning beam is looking for concepts similar to vector $\vec{x}$, it computes the "Wormhole Score" for each remote community $C_j$:
+#### 3.2 Discovery (Synaptic Bridge Detection)
+If a local reasoning beam is looking for concepts similar to vector $\vec{x}$, it computes the "Synaptic Bridge Score" for each remote community $C_j$:
 $$
 \text{score}(C_j) = \cos(\vec{x}, \vec{c}_j)
 $$
-If $\text{score}(C_j) \geq \sigma$ (default $0.75$), the peer is flagged as a relevant "Wormhole" destination for that specific reasoning path.
+If $\text{score}(C_j) \geq \sigma$ (default $0.75$), the peer is flagged as a relevant "Synaptic Bridge" destination for that specific reasoning path.
 
 ### 4. Security & Path Provenance (v1.1.0)
 
@@ -55,7 +55,7 @@ Every response from a remote adapter must include an `X-Signature` header:
 $$
 \text{Sig} = \text{HMAC}(\mathcal{K}_{shared}, \text{ResponseBody})
 $$
-The local node discards any reasoning hop that fails signature verification, ensuring that the "Wormhole" only connects trusted infrastructures.
+The local node discards any reasoning hop that fails signature verification, ensuring that the "Synaptic Bridge" only connects trusted infrastructures.
 
 #### 4.2 Federated Lease (Pinning)
 In high-velocity streaming environments, remote nodes may be evicted before a multi-hop query completes.
@@ -66,7 +66,7 @@ In high-velocity streaming environments, remote nodes may be evicted before a mu
 
 To prevent "Semantic Drift" across federated hops, all holographic signatures are anchored to a fixed root embedding space $\mathcal{E}_{root}$.
 *   When a peer joins the federation, it performs a one-time **Orthogonal Procrustes Alignment** (SPEC_008) to map its local space to the root space.
-*   This ensures that a "Wormhole Score" of 0.8 means the same thing in Graph A as it does in Graph B.
+*   This ensures that a "Synaptic Bridge Score" of 0.8 means the same thing in Graph A as it does in Graph B.
 
 > **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 

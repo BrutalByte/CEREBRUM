@@ -358,7 +358,7 @@ config = LoopConfig(
     min_approval_rate=0.5,
     circuit_breaker_window=20,
     auto_rollback_on_trip=True,       # Phase 79: undo bad cycles automatically
-    adaptive_tuning=True,             # Phase 83: self-pacing from calibrator
+    adaptive_tuning=True,             # Phase 92: self-pacing from calibrator
     approver_checkpoint_path="/data/approver.json",
 )
 
@@ -420,7 +420,7 @@ print(f"Removed {rolled} edges from cycle 12")
 
 ---
 
-## 13. UE5 3D Visualization Integration (Phase 83)
+## 13. UE5 3D Visualization Integration (Phase 92)
 
 CEREBRUM ships a production Unreal Engine 5 C++ plugin that renders the knowledge graph as a living 3D environment, driven by the Neural Telemetry Bridge.
 

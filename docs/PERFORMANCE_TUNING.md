@@ -282,7 +282,7 @@ Shorter intervals = more frequent discoveries, higher background CPU. Set based 
 | Moderate streaming | 300–600 s |
 | High-frequency ingest | 120–300 s |
 
-### Adaptive tuning (`adaptive_tuning=True`) — Phase 83
+### Adaptive tuning (`adaptive_tuning=True`) — Phase 92
 When enabled, `DiscoveryCalibrator` community weights automatically scale both the cap and interval:
 - **Underexplored communities** → higher cap + shorter interval (more aggressive)
 - **Saturated communities** → lower cap + longer interval (backing off)

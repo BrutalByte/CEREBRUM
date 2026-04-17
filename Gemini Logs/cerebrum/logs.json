@@ -1,0 +1,1906 @@
+[
+  {
+    "sessionId": "86be0842-710d-49df-95d6-5504fe0ea6a8",
+    "messageId": 0,
+    "type": "user",
+    "message": "/extensions update exa-mcp-server huggingface-skills",
+    "timestamp": "2026-03-29T02:37:49.179Z"
+  },
+  {
+    "sessionId": "86be0842-710d-49df-95d6-5504fe0ea6a8",
+    "messageId": 1,
+    "type": "user",
+    "message": "extensions update exa-mcp-server github",
+    "timestamp": "2026-03-29T02:38:32.097Z"
+  },
+  {
+    "sessionId": "86be0842-710d-49df-95d6-5504fe0ea6a8",
+    "messageId": 2,
+    "type": "user",
+    "message": "/extensions update exa-mcp-server github",
+    "timestamp": "2026-03-29T02:38:45.368Z"
+  },
+  {
+    "sessionId": "86be0842-710d-49df-95d6-5504fe0ea6a8",
+    "messageId": 3,
+    "type": "user",
+    "message": "/extensions",
+    "timestamp": "2026-03-29T02:39:00.591Z"
+  },
+  {
+    "sessionId": "86be0842-710d-49df-95d6-5504fe0ea6a8",
+    "messageId": 4,
+    "type": "user",
+    "message": "/extensions update github",
+    "timestamp": "2026-03-29T02:39:22.023Z"
+  },
+  {
+    "sessionId": "86be0842-710d-49df-95d6-5504fe0ea6a8",
+    "messageId": 5,
+    "type": "user",
+    "message": "/extensions reload github",
+    "timestamp": "2026-03-29T02:39:42.783Z"
+  },
+  {
+    "sessionId": "86be0842-710d-49df-95d6-5504fe0ea6a8",
+    "messageId": 6,
+    "type": "user",
+    "message": "/extensions update github",
+    "timestamp": "2026-03-29T02:39:50.815Z"
+  },
+  {
+    "sessionId": "bd9aab08-7b14-4b0d-9207-2662d90f9a42",
+    "messageId": 0,
+    "type": "user",
+    "message": "get refamiliarized with the program by reading the git log, documents and any other information you need.",
+    "timestamp": "2026-03-30T20:17:42.421Z"
+  },
+  {
+    "sessionId": "bd9aab08-7b14-4b0d-9207-2662d90f9a42",
+    "messageId": 1,
+    "type": "user",
+    "message": "/directory add C:\\Users\\bryan\\.claude\\projects\\E--Development-Cerebrum\\f9231f5e-a66a-41ad-9c82-a7e776e2d0c2\\subagents",
+    "timestamp": "2026-03-30T20:26:08.183Z"
+  },
+  {
+    "sessionId": "bd9aab08-7b14-4b0d-9207-2662d90f9a42",
+    "messageId": 2,
+    "type": "user",
+    "message": "Now read through Claude's logs in the new directory I just added :C:\\Users\\bryan\\.claude\\projects\\E--Development-Cerebrum",
+    "timestamp": "2026-03-30T20:26:44.335Z"
+  },
+  {
+    "sessionId": "bd9aab08-7b14-4b0d-9207-2662d90f9a42",
+    "messageId": 3,
+    "type": "user",
+    "message": "One of the last things we were working on was that ability to reconstruct missing edges in an incomplete graph without halucinating or \"cheating\" by using LLM memory, which we don't have.",
+    "timestamp": "2026-03-30T20:47:21.385Z"
+  },
+  {
+    "sessionId": "bd9aab08-7b14-4b0d-9207-2662d90f9a42",
+    "messageId": 4,
+    "type": "user",
+    "message": "continue development.  This was in effect to help with the latest knowledge graph tests.  find the information in the history.",
+    "timestamp": "2026-03-30T20:52:25.294Z"
+  },
+  {
+    "sessionId": "bd9aab08-7b14-4b0d-9207-2662d90f9a42",
+    "messageId": 5,
+    "type": "user",
+    "message": "Run the latest benchmarks to prove the utility of what was just created.",
+    "timestamp": "2026-03-30T21:14:19.838Z"
+  },
+  {
+    "sessionId": "bd9aab08-7b14-4b0d-9207-2662d90f9a42",
+    "messageId": 6,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-03-31T00:19:39.330Z"
+  },
+  {
+    "sessionId": "bd9aab08-7b14-4b0d-9207-2662d90f9a42",
+    "messageId": 7,
+    "type": "user",
+    "message": "update all logs.  Once complete, commit and push.",
+    "timestamp": "2026-03-31T04:04:21.892Z"
+  },
+  {
+    "sessionId": "c46d2cde-fa46-465d-89f8-7bdb84c83934",
+    "messageId": 0,
+    "type": "user",
+    "message": "/dir add",
+    "timestamp": "2026-04-01T17:20:24.994Z"
+  },
+  {
+    "sessionId": "c46d2cde-fa46-465d-89f8-7bdb84c83934",
+    "messageId": 1,
+    "type": "user",
+    "message": "/dir add C:\\Users\\bryan\\.claude\\projects\\E--Development-Cerebrum",
+    "timestamp": "2026-04-01T17:23:43.143Z"
+  },
+  {
+    "sessionId": "c46d2cde-fa46-465d-89f8-7bdb84c83934",
+    "messageId": 2,
+    "type": "user",
+    "message": "Read through the last section of the logs in C:\\Users\\bryan\\.claude\\projects\\E--Development-Cerebrum and continue development.",
+    "timestamp": "2026-04-01T17:24:10.795Z"
+  },
+  {
+    "sessionId": "c46d2cde-fa46-465d-89f8-7bdb84c83934",
+    "messageId": 3,
+    "type": "user",
+    "message": "Is there a way to create a \"living\" sub-routine that looks at a graph and adjusts parameters to properly fit that graph for maximum effects?",
+    "timestamp": "2026-04-01T18:10:34.329Z"
+  },
+  {
+    "sessionId": "c46d2cde-fa46-465d-89f8-7bdb84c83934",
+    "messageId": 4,
+    "type": "user",
+    "message": "Yes!  That would be amazing!  Do you think that will improve our benchmark numbers?",
+    "timestamp": "2026-04-01T18:53:49.300Z"
+  },
+  {
+    "sessionId": "771f47c9-b329-4886-813a-4b97a10c09ba",
+    "messageId": 0,
+    "type": "user",
+    "message": "continue where you left off.",
+    "timestamp": "2026-04-01T18:55:03.134Z"
+  },
+  {
+    "sessionId": "771f47c9-b329-4886-813a-4b97a10c09ba",
+    "messageId": 1,
+    "type": "user",
+    "message": "Update all docs",
+    "timestamp": "2026-04-01T22:04:27.910Z"
+  },
+  {
+    "sessionId": "771f47c9-b329-4886-813a-4b97a10c09ba",
+    "messageId": 2,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-01T22:08:29.477Z"
+  },
+  {
+    "sessionId": "ff6f69ac-045f-46f3-b225-f8ccaefaa75c",
+    "messageId": 0,
+    "type": "user",
+    "message": "continue development",
+    "timestamp": "2026-04-01T22:10:18.440Z"
+  },
+  {
+    "sessionId": "ff6f69ac-045f-46f3-b225-f8ccaefaa75c",
+    "messageId": 1,
+    "type": "user",
+    "message": "update the docs, then commit and push to github",
+    "timestamp": "2026-04-01T22:59:16.606Z"
+  },
+  {
+    "sessionId": "ff6f69ac-045f-46f3-b225-f8ccaefaa75c",
+    "messageId": 2,
+    "type": "user",
+    "message": "now update all of the other documents in the /docs folder",
+    "timestamp": "2026-04-01T23:02:00.656Z"
+  },
+  {
+    "sessionId": "ff6f69ac-045f-46f3-b225-f8ccaefaa75c",
+    "messageId": 3,
+    "type": "user",
+    "message": "excellent.  proceed.",
+    "timestamp": "2026-04-01T23:10:51.588Z"
+  },
+  {
+    "sessionId": "bd947c4f-caea-4b78-9e09-4d8f7d71301d",
+    "messageId": 0,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-02T04:23:06.569Z"
+  },
+  {
+    "sessionId": "bd947c4f-caea-4b78-9e09-4d8f7d71301d",
+    "messageId": 1,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-02T05:10:14.318Z"
+  },
+  {
+    "sessionId": "bd947c4f-caea-4b78-9e09-4d8f7d71301d",
+    "messageId": 2,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-02T05:24:33.907Z"
+  },
+  {
+    "sessionId": "d67f0423-b893-4df4-9de7-10868351143b",
+    "messageId": 0,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-02T05:25:15.573Z"
+  },
+  {
+    "sessionId": "d67f0423-b893-4df4-9de7-10868351143b",
+    "messageId": 1,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-02T05:32:12.646Z"
+  },
+  {
+    "sessionId": "bf52b4f1-f087-4d39-8015-69cd0c9153d1",
+    "messageId": 0,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-02T05:32:33.062Z"
+  },
+  {
+    "sessionId": "bf52b4f1-f087-4d39-8015-69cd0c9153d1",
+    "messageId": 1,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-02T06:07:03.261Z"
+  },
+  {
+    "sessionId": "bf52b4f1-f087-4d39-8015-69cd0c9153d1",
+    "messageId": 2,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-02T06:07:15.317Z"
+  },
+  {
+    "sessionId": "bf52b4f1-f087-4d39-8015-69cd0c9153d1",
+    "messageId": 3,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-02T12:06:24.567Z"
+  },
+  {
+    "sessionId": "a98d7822-7ccc-4a89-9e55-825f61cdf366",
+    "messageId": 0,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-02T12:06:53.847Z"
+  },
+  {
+    "sessionId": "a98d7822-7ccc-4a89-9e55-825f61cdf366",
+    "messageId": 1,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-02T12:07:11.070Z"
+  },
+  {
+    "sessionId": "a98d7822-7ccc-4a89-9e55-825f61cdf366",
+    "messageId": 2,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-02T12:07:21.358Z"
+  },
+  {
+    "sessionId": "a98d7822-7ccc-4a89-9e55-825f61cdf366",
+    "messageId": 3,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-02T12:07:30.934Z"
+  },
+  {
+    "sessionId": "a98d7822-7ccc-4a89-9e55-825f61cdf366",
+    "messageId": 4,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-02T12:07:35.734Z"
+  },
+  {
+    "sessionId": "a98d7822-7ccc-4a89-9e55-825f61cdf366",
+    "messageId": 5,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-02T12:07:55.749Z"
+  },
+  {
+    "sessionId": "a98d7822-7ccc-4a89-9e55-825f61cdf366",
+    "messageId": 6,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-02T12:08:03.621Z"
+  },
+  {
+    "sessionId": "a98d7822-7ccc-4a89-9e55-825f61cdf366",
+    "messageId": 7,
+    "type": "user",
+    "message": "continue development",
+    "timestamp": "2026-04-02T12:08:55.885Z"
+  },
+  {
+    "sessionId": "a98d7822-7ccc-4a89-9e55-825f61cdf366",
+    "messageId": 8,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-02T12:17:31.295Z"
+  },
+  {
+    "sessionId": "44e15076-763f-47a0-916b-804a85449b3b",
+    "messageId": 0,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-02T12:17:59.351Z"
+  },
+  {
+    "sessionId": "44e15076-763f-47a0-916b-804a85449b3b",
+    "messageId": 1,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-02T12:19:44.669Z"
+  },
+  {
+    "sessionId": "44e15076-763f-47a0-916b-804a85449b3b",
+    "messageId": 2,
+    "type": "user",
+    "message": "Excellent.  Can you give me a rundown of what this system is capable of?",
+    "timestamp": "2026-04-02T14:17:01.913Z"
+  },
+  {
+    "sessionId": "44e15076-763f-47a0-916b-804a85449b3b",
+    "messageId": 3,
+    "type": "user",
+    "message": "How has the algorhitm evolved over time?",
+    "timestamp": "2026-04-02T14:18:42.651Z"
+  },
+  {
+    "sessionId": "44e15076-763f-47a0-916b-804a85449b3b",
+    "messageId": 4,
+    "type": "user",
+    "message": "How can we make this a 100% accurate program?",
+    "timestamp": "2026-04-02T14:33:49.769Z"
+  },
+  {
+    "sessionId": "44e15076-763f-47a0-916b-804a85449b3b",
+    "messageId": 5,
+    "type": "user",
+    "message": "Yes.  Please proceed with \"100% Accurate Achitecture.\"",
+    "timestamp": "2026-04-02T15:14:47.331Z"
+  },
+  {
+    "sessionId": "44e15076-763f-47a0-916b-804a85449b3b",
+    "messageId": 6,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-02T15:46:05.874Z"
+  },
+  {
+    "sessionId": "44e15076-763f-47a0-916b-804a85449b3b",
+    "messageId": 7,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-02T16:09:33.065Z"
+  },
+  {
+    "sessionId": "44e15076-763f-47a0-916b-804a85449b3b",
+    "messageId": 8,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-02T16:09:43.731Z"
+  },
+  {
+    "sessionId": "44e15076-763f-47a0-916b-804a85449b3b",
+    "messageId": 9,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-02T16:09:48.297Z"
+  },
+  {
+    "sessionId": "eec3ba03-5d66-44ae-9f49-b93d7d6399fa",
+    "messageId": 0,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-02T16:10:28.797Z"
+  },
+  {
+    "sessionId": "eec3ba03-5d66-44ae-9f49-b93d7d6399fa",
+    "messageId": 1,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-02T16:10:49.601Z"
+  },
+  {
+    "sessionId": "a5f7c438-4856-4e24-82d0-33f3dc877989",
+    "messageId": 0,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-02T16:11:30.412Z"
+  },
+  {
+    "sessionId": "a5f7c438-4856-4e24-82d0-33f3dc877989",
+    "messageId": 1,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-02T16:11:38.412Z"
+  },
+  {
+    "sessionId": "a5f7c438-4856-4e24-82d0-33f3dc877989",
+    "messageId": 2,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-02T17:26:16.497Z"
+  },
+  {
+    "sessionId": "a5f7c438-4856-4e24-82d0-33f3dc877989",
+    "messageId": 3,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-02T17:31:17.713Z"
+  },
+  {
+    "sessionId": "a5f7c438-4856-4e24-82d0-33f3dc877989",
+    "messageId": 4,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-02T17:31:27.362Z"
+  },
+  {
+    "sessionId": "a5f7c438-4856-4e24-82d0-33f3dc877989",
+    "messageId": 5,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-02T17:33:47.335Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 0,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-02T17:34:13.293Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 1,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-02T17:36:11.128Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 2,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-02T17:36:57.208Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 3,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-02T18:04:08.782Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 4,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-02T18:12:25.826Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 5,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-02T18:12:35.322Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 6,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-02T18:12:47.213Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 7,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-02T18:12:53.093Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 8,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-02T18:13:16.087Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 9,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-02T18:13:30.297Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 10,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-02T18:13:44.850Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 11,
+    "type": "user",
+    "message": "What is next in the roadmap?",
+    "timestamp": "2026-04-02T18:19:04.210Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 12,
+    "type": "user",
+    "message": "yes",
+    "timestamp": "2026-04-02T18:19:32.547Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 13,
+    "type": "user",
+    "message": "continue with phase 37",
+    "timestamp": "2026-04-02T19:26:46.144Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 14,
+    "type": "user",
+    "message": "We need to optimize what we have already created to be more accurate.  Do a full code review and determine if there are any system deficiencies or conflicts.  Look at this as a systems engineering problem.",
+    "timestamp": "2026-04-02T19:36:17.387Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 15,
+    "type": "user",
+    "message": "That makes sense.  Proceed.  Will rthat mess with the adaptation algorithm we created?",
+    "timestamp": "2026-04-02T20:12:17.439Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 16,
+    "type": "user",
+    "message": "What would be the end result of the refactoring?  What gains coule we possibly see?",
+    "timestamp": "2026-04-02T20:13:28.422Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 17,
+    "type": "user",
+    "message": "Yes, please proceed.",
+    "timestamp": "2026-04-02T20:15:21.303Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 18,
+    "type": "user",
+    "message": "Once done, update all documents, commit and push to github.",
+    "timestamp": "2026-04-02T20:25:26.600Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 19,
+    "type": "user",
+    "message": "What is next in the roadmap?",
+    "timestamp": "2026-04-02T20:33:37.831Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 20,
+    "type": "user",
+    "message": "proceed with Phases 39 & 40 then we can reassess the plan",
+    "timestamp": "2026-04-02T20:35:20.523Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 21,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-02T20:35:44.390Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 22,
+    "type": "user",
+    "message": "proceed with Phases 39 & 40 then we can reassess the plan",
+    "timestamp": "2026-04-02T20:35:56.645Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 23,
+    "type": "user",
+    "message": "/stats",
+    "timestamp": "2026-04-02T20:36:11.134Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 24,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-02T20:48:39.290Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 25,
+    "type": "user",
+    "message": "proceed with Phases 39 & 40 then we can reassess the plan",
+    "timestamp": "2026-04-02T20:49:55.943Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 26,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-02T20:52:03.302Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 27,
+    "type": "user",
+    "message": "proceed with Phases 39 & 40 then we can reassess the plan",
+    "timestamp": "2026-04-02T20:52:31.854Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 28,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-02T21:17:04.336Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 29,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-02T21:17:14.890Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 30,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-03T01:11:28.234Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 31,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-03T01:11:36.347Z"
+  },
+  {
+    "sessionId": "5db99edf-e286-4f67-8cf1-d7e1a3eefcf8",
+    "messageId": 32,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-03T01:13:19.489Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 0,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-03T01:13:55.851Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 1,
+    "type": "user",
+    "message": "please continue",
+    "timestamp": "2026-04-03T04:41:56.404Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 2,
+    "type": "user",
+    "message": "When you create a wormhole to other parts of the graph based on wormhole synthesis, how are you presenting that to the user to verify correctness or logic?",
+    "timestamp": "2026-04-03T17:08:23.675Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 3,
+    "type": "user",
+    "message": "Let's take a look at the GUI now and make it as fully robust as possible.  I want professional grade graphics and functionality from a data scientist's perspective",
+    "timestamp": "2026-04-03T21:41:25.689Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 4,
+    "type": "user",
+    "message": "restart the GUI server",
+    "timestamp": "2026-04-03T22:16:26.127Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 5,
+    "type": "user",
+    "message": "What is the server address?",
+    "timestamp": "2026-04-03T22:17:32.156Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 6,
+    "type": "user",
+    "message": "Looks like it is down",
+    "timestamp": "2026-04-03T22:18:10.139Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 7,
+    "type": "user",
+    "message": "LOOK AT THE WEB PAGE LOGS AND FIX THE ISSUES",
+    "timestamp": "2026-04-04T01:35:43.746Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 8,
+    "type": "user",
+    "message": "ERROR in Validation: InsightValidator.validate_all() missing 1 required positional argument: 'events",
+    "timestamp": "2026-04-04T01:52:40.612Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 9,
+    "type": "user",
+    "message": "index-B5Zu_GVg.js:4 Method not implemented.\nclose @ index-B5Zu_GVg.js:4\n(anonymous) @ ModifyUpload-DNtVAL0c.js:1\nuntrack @ index-B0zdmtA4.js:5396\n(anonymous) @ svelte_svelte.js:115\nexecute_effect_teardown @ index-B0zdmtA4.js:4456\ndestroy_effect @ index-B0zdmtA4.js:4540\ndestroy_effect_children @ index-B0zdmtA4.js:4488\ndestroy_effect @ index-B0zdmtA4.js:4528\ndestroy_effect_children @ index-B0zdmtA4.js:4488\ndestroy_effect @ index-B0zdmtA4.js:4528\ndestroy_effect_children @ index-B0zdmtA4.js:4488\ndestroy_effect @ index-B0zdmtA4.js:4528\ndestroy_effect_children @ index-B0zdmtA4.js:4488\ndestroy_effect @ index-B0zdmtA4.js:4528\ndestroy_effect_children @ index-B0zdmtA4.js:4488\ndestroy_effect @ index-B0zdmtA4.js:4528\ndestroy_effect_children @ index-B0zdmtA4.js:4488\ndestroy_effect @ index-B0zdmtA4.js:4528\non_destroy @ snippet-B7Rg6G9D.js:132\nfn @ index-B0zdmtA4.js:4614\npause_effect @ index-B0zdmtA4.js:4624\n#commit @ snippet-B7Rg6G9D.js:141\n#resolve @ index-B0zdmtA4.js:1452\nprocess @ index-B0zdmtA4.js:1290\nflush_effects @ index-B0zdmtA4.js:1698\nflush @ index-B0zdmtA4.js:1431\n(anonymous) @ index-B0zdmtA4.js:1601\nrun_all @ index-B0zdmtA4.js:50\nrun_micro_tasks @ index-B0zdmtA4.js:1007\n(anonymous) @ index-B0zdmtA4.js:1025\nindex-B5Zu_GVg.js:4 Method not implemented.\nclose @ index-B5Zu_GVg.js:4\ns.onmessage @ ModifyUpload-DNtVAL0c.js:1\n(anonymous) @ index-B5Zu_GVg.js:4\nPromise.then\nbs @ index-B5Zu_GVg.js:4\nstream @ index-B5Zu_GVg.js:4\nstream_handler @ Index-1f4oQflC.js:1\n(anonymous) @ ModifyUpload-DNtVAL0c.js:1\nuntrack @ index-B0zdmtA4.js:5396\n(anonymous) @ svelte_svelte.js:95\nupdate_reaction @ index-B0zdmtA4.js:4986\nupdate_effect @ index-B0zdmtA4.js:5171\nflush_queued_effects @ index-B0zdmtA4.js:1741\nprocess @ index-B0zdmtA4.js:1303\nflush_effects @ index-B0zdmtA4.js:1698\nflush @ index-B0zdmtA4.js:1431\n(anonymous) @ index-B0zdmtA4.js:1601\nrun_all @ index-B0zdmtA4.js:50\nrun_micro_tasks @ index-B0zdmtA4.js:1007\n(anonymous) @ index-B0zdmtA4.js:1025\nsetTimeout\n(anonymous) @ index-B0zdmtA4.js:5195\ntick @ index-B0zdmtA4.js:5190\nQ @ ModifyUpload-DNtVAL0c.js:2\nj @ ModifyUpload-DNtVAL0c.js:2\nawait in j\nX @ ModifyUpload-DNtVAL0c.js:2\non_files @ ModifyUpload-DNtVAL0c.js:2\nv @ ModifyUpload-DNtVAL0c.js:2",
+    "timestamp": "2026-04-04T01:54:40.331Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 10,
+    "type": "user",
+    "message": "What logging is enabled on the web interface?",
+    "timestamp": "2026-04-04T01:56:40.231Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 11,
+    "type": "user",
+    "message": "We need to test the front end extensively.  Also, make sure the API is working and completely agnostic.",
+    "timestamp": "2026-04-04T01:59:48.062Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 12,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-04T02:02:22.387Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 13,
+    "type": "user",
+    "message": "run GUI testing",
+    "timestamp": "2026-04-04T02:11:42.141Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 14,
+    "type": "user",
+    "message": "@C:\\Users\\bryan\\.gemini\\tmp\\cerebrum\\images\\clipboard-1775268772639.png Any time I select metaqa_movies.csv via \"Upload graph file\" button, E:\\Development\\Cerebrum\\tests\\fixtures\\toy_graph.csv  shows up in the paste block.",
+    "timestamp": "2026-04-04T02:14:36.499Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 15,
+    "type": "user",
+    "message": "index-B5Zu_GVg.js:4 Method not implemented.\nclose @ index-B5Zu_GVg.js:4\n(anonymous) @ ModifyUpload-DNtVAL0c.js:1\nuntrack @ index-B0zdmtA4.js:5396\n(anonymous) @ svelte_svelte.js:115\nexecute_effect_teardown @ index-B0zdmtA4.js:4456\ndestroy_effect @ index-B0zdmtA4.js:4540\ndestroy_effect_children @ index-B0zdmtA4.js:4488\ndestroy_effect @ index-B0zdmtA4.js:4528\ndestroy_effect_children @ index-B0zdmtA4.js:4488\ndestroy_effect @ index-B0zdmtA4.js:4528\ndestroy_effect_children @ index-B0zdmtA4.js:4488\ndestroy_effect @ index-B0zdmtA4.js:4528\ndestroy_effect_children @ index-B0zdmtA4.js:4488\ndestroy_effect @ index-B0zdmtA4.js:4528\ndestroy_effect_children @ index-B0zdmtA4.js:4488\ndestroy_effect @ index-B0zdmtA4.js:4528\ndestroy_effect_children @ index-B0zdmtA4.js:4488\ndestroy_effect @ index-B0zdmtA4.js:4528\non_destroy @ snippet-B7Rg6G9D.js:132\nfn @ index-B0zdmtA4.js:4614\npause_effect @ index-B0zdmtA4.js:4624\n#commit @ snippet-B7Rg6G9D.js:141\n#resolve @ index-B0zdmtA4.js:1452\nprocess @ index-B0zdmtA4.js:1290\nflush_effects @ index-B0zdmtA4.js:1698\nflush @ index-B0zdmtA4.js:1431\n(anonymous) @ index-B0zdmtA4.js:1601\nrun_all @ index-B0zdmtA4.js:50\nrun_micro_tasks @ index-B0zdmtA4.js:1007\n(anonymous) @ index-B0zdmtA4.js:1025\nindex-B5Zu_GVg.js:4 Method not implemented.\nclose @ index-B5Zu_GVg.js:4\ns.onmessage @ ModifyUpload-DNtVAL0c.js:1\n(anonymous) @ index-B5Zu_GVg.js:4\nPromise.then\nbs @ index-B5Zu_GVg.js:4\nstream @ index-B5Zu_GVg.js:4\nstream_handler @ Index-1f4oQflC.js:1\n(anonymous) @ ModifyUpload-DNtVAL0c.js:1\nuntrack @ index-B0zdmtA4.js:5396\n(anonymous) @ svelte_svelte.js:95\nupdate_reaction @ index-B0zdmtA4.js:4986\nupdate_effect @ index-B0zdmtA4.js:5171\nflush_queued_effects @ index-B0zdmtA4.js:1741\nprocess @ index-B0zdmtA4.js:1303\nflush_effects @ index-B0zdmtA4.js:1698\nflush @ index-B0zdmtA4.js:1431\n(anonymous) @ index-B0zdmtA4.js:1601\nrun_all @ index-B0zdmtA4.js:50\nrun_micro_tasks @ index-B0zdmtA4.js:1007\n(anonymous) @ index-B0zdmtA4.js:1025\nsetTimeout\n(anonymous) @ index-B0zdmtA4.js:5195\ntick @ index-B0zdmtA4.js:5190\nQ @ ModifyUpload-DNtVAL0c.js:2\nj @ ModifyUpload-DNtVAL0c.js:2\nawait in j\nX @ ModifyUpload-DNtVAL0c.js:2\non_files @ ModifyUpload-DNtVAL0c.js:2\nv @ ModifyUpload-DNtVAL0c.js:2\n It is still showing the toy_graph.csv in the \"Or paste a file path\" text box automatically.",
+    "timestamp": "2026-04-04T02:19:03.101Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 16,
+    "type": "user",
+    "message": "I hit CTRL_SHFT_R and it still automatically enters \"E:\\Development\\Cerebrum\\tests\\fixtures\\toy_graph.csv \" int in the \"or paste a file path\"",
+    "timestamp": "2026-04-04T02:23:17.716Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 17,
+    "type": "user",
+    "message": "The 3d vector graph isn't resolving.  Also, I want it to show the path for the query.",
+    "timestamp": "2026-04-04T14:11:01.142Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 18,
+    "type": "user",
+    "message": "index-B5Zu_GVg.js:4 Method not implemented.\nclose @ index-B5Zu_GVg.js:4\nindex-B5Zu_GVg.js:4 Method not implemented.\nclose @ index-B5Zu_GVg.js:4\nIndex-B5xYZxn_.js:1 Here\nIndex-B5xYZxn_.js:1 Here",
+    "timestamp": "2026-04-04T16:56:50.717Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 19,
+    "type": "user",
+    "message": "index-B5Zu_GVg.js:4 Method not implemented.\nclose @ index-B5Zu_GVg.js:4\nindex-B5Zu_GVg.js:4 Method not implemented.\nclose @ index-B5Zu_GVg.js:4\nIndex-B5xYZxn_.js:1 Here\nIndex-B5xYZxn_.js:1 Here",
+    "timestamp": "2026-04-04T17:04:31.334Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 20,
+    "type": "user",
+    "message": "/rewind",
+    "timestamp": "2026-04-04T17:09:12.998Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 21,
+    "type": "user",
+    "message": "CONTINUE",
+    "timestamp": "2026-04-04T17:09:39.306Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 22,
+    "type": "user",
+    "message": "Are you having problems?",
+    "timestamp": "2026-04-04T17:17:57.390Z"
+  },
+  {
+    "sessionId": "08fbb125-e0d3-4a56-9eca-b0e613e664a3",
+    "messageId": 23,
+    "type": "user",
+    "message": "update all products including docs, git, etc.  Once complete. commit and push to github.",
+    "timestamp": "2026-04-04T17:23:51.639Z"
+  },
+  {
+    "sessionId": "26a6dfb4-d943-4799-b76b-cbc2835069c8",
+    "messageId": 0,
+    "type": "user",
+    "message": "continue.",
+    "timestamp": "2026-04-04T17:25:31.551Z"
+  },
+  {
+    "sessionId": "26a6dfb4-d943-4799-b76b-cbc2835069c8",
+    "messageId": 1,
+    "type": "user",
+    "message": "Address any pending issues first, then proceed with phase 43",
+    "timestamp": "2026-04-04T17:27:52.596Z"
+  },
+  {
+    "sessionId": "26a6dfb4-d943-4799-b76b-cbc2835069c8",
+    "messageId": 2,
+    "type": "user",
+    "message": "Right now, I want to focus on making the data accessible.  API, web interface, etc, that gives the user proper information.",
+    "timestamp": "2026-04-04T19:05:59.734Z"
+  },
+  {
+    "sessionId": "26a6dfb4-d943-4799-b76b-cbc2835069c8",
+    "messageId": 3,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-04T19:09:55.058Z"
+  },
+  {
+    "sessionId": "ff717778-f6a0-4863-abd5-73c464e3dfad",
+    "messageId": 0,
+    "type": "user",
+    "message": "Right now, I want to focus on making the data accessible.  API, web interface, etc, that gives the user proper information.",
+    "timestamp": "2026-04-04T19:10:39.418Z"
+  },
+  {
+    "sessionId": "ff717778-f6a0-4863-abd5-73c464e3dfad",
+    "messageId": 1,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-04T21:57:47.868Z"
+  },
+  {
+    "sessionId": "626f2903-4af0-479f-89b1-307c5c4361f7",
+    "messageId": 0,
+    "type": "user",
+    "message": "read git files and get caught up with dev",
+    "timestamp": "2026-04-04T21:58:34.476Z"
+  },
+  {
+    "sessionId": "626f2903-4af0-479f-89b1-307c5c4361f7",
+    "messageId": 1,
+    "type": "user",
+    "message": "What is next in the roadmap?",
+    "timestamp": "2026-04-04T22:27:26.365Z"
+  },
+  {
+    "sessionId": "626f2903-4af0-479f-89b1-307c5c4361f7",
+    "messageId": 2,
+    "type": "user",
+    "message": "Update ALL documents, commit and push to git.",
+    "timestamp": "2026-04-04T22:28:06.580Z"
+  },
+  {
+    "sessionId": "626f2903-4af0-479f-89b1-307c5c4361f7",
+    "messageId": 3,
+    "type": "user",
+    "message": "Continue development",
+    "timestamp": "2026-04-04T23:38:49.753Z"
+  },
+  {
+    "sessionId": "626f2903-4af0-479f-89b1-307c5c4361f7",
+    "messageId": 4,
+    "type": "user",
+    "message": "proceed with the Extended IKGWQ evaluation",
+    "timestamp": "2026-04-05T00:19:56.618Z"
+  },
+  {
+    "sessionId": "626f2903-4af0-479f-89b1-307c5c4361f7",
+    "messageId": 5,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-05T00:41:56.535Z"
+  },
+  {
+    "sessionId": "6b6bd370-f341-4dfb-8bda-48a65819c327",
+    "messageId": 0,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-05T00:42:51.406Z"
+  },
+  {
+    "sessionId": "6b6bd370-f341-4dfb-8bda-48a65819c327",
+    "messageId": 1,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-05T00:43:02.141Z"
+  },
+  {
+    "sessionId": "6b6bd370-f341-4dfb-8bda-48a65819c327",
+    "messageId": 2,
+    "type": "user",
+    "message": "Continue development",
+    "timestamp": "2026-04-05T00:43:10.461Z"
+  },
+  {
+    "sessionId": "6b6bd370-f341-4dfb-8bda-48a65819c327",
+    "messageId": 3,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-05T00:43:15.981Z"
+  },
+  {
+    "sessionId": "d0a886f1-6f79-4324-ac64-6f213f3c66eb",
+    "messageId": 0,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-05T00:43:39.270Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 0,
+    "type": "user",
+    "message": "Convert all documents on the /docs folder that are dated 4/6/2026 into professionally stylized word documents.",
+    "timestamp": "2026-04-06T18:52:57.177Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 1,
+    "type": "user",
+    "message": "the date modified in the file details will be 4/6/2026.",
+    "timestamp": "2026-04-06T18:53:41.036Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 2,
+    "type": "user",
+    "message": "Go back through and make sure they make sense from a human readable perspective",
+    "timestamp": "2026-04-06T18:55:47.185Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 3,
+    "type": "user",
+    "message": "Your next task:  Using the CLI and web interface, accomplish a full use-case of the system as a whole.  Start in the medical realm.",
+    "timestamp": "2026-04-07T00:21:27.407Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 4,
+    "type": "user",
+    "message": "Restart the server and create a server autorestart switch to be used during the initial load.  It is currently down. @C:\\Users\\bryan\\.gemini\\tmp\\cerebrum\\images\\clipboard-1775525610752.png",
+    "timestamp": "2026-04-07T01:33:31.903Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 5,
+    "type": "user",
+    "message": "It came up and then dropped.",
+    "timestamp": "2026-04-07T01:37:09.611Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 6,
+    "type": "user",
+    "message": "Create a historical list of databases to pick from and add any to it that you used in the past.  Also, does the program have a way to restore the previous graph if the program corrupts the data?",
+    "timestamp": "2026-04-07T01:41:03.544Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 7,
+    "type": "user",
+    "message": "Can you test the web interface?  I have Open Claude installed.",
+    "timestamp": "2026-04-07T01:51:16.265Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 8,
+    "type": "user",
+    "message": "Can you test the web interface?  I have Open Claude installed.",
+    "timestamp": "2026-04-07T01:53:16.824Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 9,
+    "type": "user",
+    "message": "are you doing something? What is our status?",
+    "timestamp": "2026-04-07T02:02:21.873Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 10,
+    "type": "user",
+    "message": "Run automated web interface testing.  Do you have a way to nove the mouse and actually click the buttons?",
+    "timestamp": "2026-04-07T02:04:09.327Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 11,
+    "type": "user",
+    "message": "Let's get all portions of the app working to include: Reasoning\nStructural Analytics\nInteractive Graph\n3D Explorer\nInsight & Maintenance\nLive Feed",
+    "timestamp": "2026-04-07T02:19:41.390Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 12,
+    "type": "user",
+    "message": "Can you completely reload the web server?  Nothing is working on my end. Also. how do U run the graph through our program to expand the attention heads?",
+    "timestamp": "2026-04-07T02:25:11.641Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 13,
+    "type": "user",
+    "message": "toy_graph.csv is loaded, but Interactive Graph and 3d explorer do not work.",
+    "timestamp": "2026-04-07T04:36:08.779Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 14,
+    "type": "user",
+    "message": "@C:\\Users\\bryan\\.gemini\\tmp\\cerebrum\\images\\clipboard-1775536577527.png toy_graph.csv is loaded, but Interactive Graph and 3d explorer do not work.",
+    "timestamp": "2026-04-07T04:36:19.948Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 15,
+    "type": "user",
+    "message": "When we load the graphs, are they being procesed via DSCF / TSC and CSA?",
+    "timestamp": "2026-04-07T04:40:13.208Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 16,
+    "type": "user",
+    "message": "Can I get an ingestion status line or logs that show when ingesting that show where it is at in the process in real-time?",
+    "timestamp": "2026-04-07T04:41:25.856Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 17,
+    "type": "user",
+    "message": "can you see https://github.com/milla-jovovich/mempalace",
+    "timestamp": "2026-04-07T06:21:56.266Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 18,
+    "type": "user",
+    "message": "see if we can use AAAK intgration and temporal grounding, but if it goes by a different name, use that.",
+    "timestamp": "2026-04-07T06:24:34.704Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 19,
+    "type": "user",
+    "message": "please continue.  Also, how can we surpass thier results?",
+    "timestamp": "2026-04-07T06:31:54.331Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 20,
+    "type": "user",
+    "message": "Once complete, do a full QA run, then run a benchmark and update ALL documents to reflect the changes and results.  Make sure to commit and push to github.\n\nCan this be a memory system like mempalace and have an LLM use it as a memory store as a side project?",
+    "timestamp": "2026-04-07T06:38:10.469Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 21,
+    "type": "user",
+    "message": "Let's talk embeddings.  Is SBERT the best choice for this application?  is there something better?",
+    "timestamp": "2026-04-07T12:09:04.099Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 22,
+    "type": "user",
+    "message": "If we do implemet the Two-Tier strategy, does Cerebrum still ingest and attach the attention heads like our data before?",
+    "timestamp": "2026-04-07T12:12:43.713Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 23,
+    "type": "user",
+    "message": "Yes, please do.  Once done, extensively test and verify improvement via before and after benchmarks.  Next, update ALL documents if the results are an improvement.  Make sure to log everything and also make sure to give proper credit the the authors of mempalace where appropriate.  Finally, come up with a plan to further tweak the program to achieve the highest scores on memory retrieval leaderboards. @C:\\Users\\bryan\\.gemini\\tmp\\cerebrum\\images\\clipboard-1775564478099.png",
+    "timestamp": "2026-04-07T12:21:20.852Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 24,
+    "type": "user",
+    "message": "commit and push",
+    "timestamp": "2026-04-07T12:23:03.314Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 25,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-07T12:23:40.857Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 26,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-07T12:23:44.537Z"
+  },
+  {
+    "sessionId": "8a18bc0e-a6ee-4192-bd4a-7a897ea7ec4d",
+    "messageId": 27,
+    "type": "user",
+    "message": "commit and push",
+    "timestamp": "2026-04-07T12:23:46.913Z"
+  },
+  {
+    "sessionId": "a044680f-a287-45e9-8946-916b61838586",
+    "messageId": 0,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-08T23:50:47.115Z"
+  },
+  {
+    "sessionId": "a044680f-a287-45e9-8946-916b61838586",
+    "messageId": 1,
+    "type": "user",
+    "message": "Proceed",
+    "timestamp": "2026-04-09T00:29:37.279Z"
+  },
+  {
+    "sessionId": "a044680f-a287-45e9-8946-916b61838586",
+    "messageId": 2,
+    "type": "user",
+    "message": "Continue",
+    "timestamp": "2026-04-09T01:30:36.256Z"
+  },
+  {
+    "sessionId": "a044680f-a287-45e9-8946-916b61838586",
+    "messageId": 3,
+    "type": "user",
+    "message": "Suppose I want to keep the entire graph intact because it is a database that should not have data removed.  How would I protect the integrity of the graph so that nothing is removed, only added?",
+    "timestamp": "2026-04-09T12:06:37.412Z"
+  },
+  {
+    "sessionId": "a044680f-a287-45e9-8946-916b61838586",
+    "messageId": 4,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-09T22:06:33.941Z"
+  },
+  {
+    "sessionId": "a044680f-a287-45e9-8946-916b61838586",
+    "messageId": 5,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-09T22:06:46.574Z"
+  },
+  {
+    "sessionId": "a044680f-a287-45e9-8946-916b61838586",
+    "messageId": 6,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-09T22:07:04.998Z"
+  },
+  {
+    "sessionId": "a044680f-a287-45e9-8946-916b61838586",
+    "messageId": 7,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-09T22:07:15.584Z"
+  },
+  {
+    "sessionId": "a044680f-a287-45e9-8946-916b61838586",
+    "messageId": 8,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-10T05:22:50.752Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 0,
+    "type": "user",
+    "message": "read through latest updates via git, logs and docs.  Continue development",
+    "timestamp": "2026-04-10T05:23:39.103Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 1,
+    "type": "user",
+    "message": "Hwt is in phase 63?",
+    "timestamp": "2026-04-10T12:14:35.796Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 2,
+    "type": "user",
+    "message": "Has the GUI been fully updated to reflect these changes?  Also have all the documents been updated?",
+    "timestamp": "2026-04-10T12:15:46.944Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 3,
+    "type": "user",
+    "message": "Do you know about https://aidemos.atmeta.com/tribev2/",
+    "timestamp": "2026-04-10T19:08:12.117Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 4,
+    "type": "user",
+    "message": "/extensions",
+    "timestamp": "2026-04-10T19:15:32.113Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 5,
+    "type": "user",
+    "message": "/extensions",
+    "timestamp": "2026-04-10T19:16:14.867Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 6,
+    "type": "user",
+    "message": "/rewind",
+    "timestamp": "2026-04-10T19:17:03.173Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 7,
+    "type": "user",
+    "message": "What would be a good plan for creating our own version of this without directly copying it?",
+    "timestamp": "2026-04-10T19:17:53.302Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 8,
+    "type": "user",
+    "message": "It does.  How does this fit in the original plan for Cerebrum?  Is this more of a scope creep than anything else?",
+    "timestamp": "2026-04-10T19:21:04.760Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 9,
+    "type": "user",
+    "message": "It most definitely does.  I have been waiting for something like this for a visual feedback mechanism to let the user know something is actually hapenning.  I want to be able to see the traces grow new edges, create new nodes, and create wormholes between the neighborhoods.  Do you have a suggestions about the frontend, i.e. can we use an Unreal Engine plugin to supercharge the visualization?",
+    "timestamp": "2026-04-10T19:29:26.337Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 10,
+    "type": "user",
+    "message": "Yes.  That would be perfect.  Now, quick question:  How will this affect databases like the medical database we have been testing?",
+    "timestamp": "2026-04-10T20:20:12.656Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 11,
+    "type": "user",
+    "message": "As far as I can tell, yes.  Please proceed.",
+    "timestamp": "2026-04-10T20:31:08.960Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 12,
+    "type": "user",
+    "message": "try again",
+    "timestamp": "2026-04-10T22:04:04.672Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 13,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-10T22:49:41.939Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 14,
+    "type": "user",
+    "message": "Please proceed.",
+    "timestamp": "2026-04-10T22:49:58.821Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 15,
+    "type": "user",
+    "message": "Yes.  Can you also create the UE files to set up the interface?",
+    "timestamp": "2026-04-11T00:02:59.066Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 16,
+    "type": "user",
+    "message": "Create an exhaustive Blueprint that I can import, then create the installation script.",
+    "timestamp": "2026-04-11T00:05:23.828Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 17,
+    "type": "user",
+    "message": "yes",
+    "timestamp": "2026-04-11T00:05:46.273Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 18,
+    "type": "user",
+    "message": "go back through your plan and make sure you didn't miss anything.  Make is as painless as possible to install, i.e. as little human interaction as possible.",
+    "timestamp": "2026-04-11T00:06:58.465Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 19,
+    "type": "user",
+    "message": "Update all documents and then commit/push.",
+    "timestamp": "2026-04-11T01:49:05.485Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 20,
+    "type": "user",
+    "message": "Create me detailed instructions on how to create the 3D visualization layer.  If possible, create a script that requires minimal input.",
+    "timestamp": "2026-04-11T01:52:49.421Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 21,
+    "type": "user",
+    "message": "whatever works the best",
+    "timestamp": "2026-04-11T01:53:07.917Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 22,
+    "type": "user",
+    "message": "yes.  Once complete, walk me through the process step-by-step.",
+    "timestamp": "2026-04-11T01:53:53.758Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 23,
+    "type": "user",
+    "message": "yes.  If complete, start the script to install the visualization.",
+    "timestamp": "2026-04-11T01:54:39.556Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 24,
+    "type": "user",
+    "message": "PS E:\\Development\\Cerebrum> python scripts/start_cerebrum.py\nTraceback (most recent call last):\n  File \"E:\\Development\\Cerebrum\\scripts\\start_cerebrum.py\", line 3, in <module>\n    from api.server import create_app\nModuleNotFoundError: No module named 'api'",
+    "timestamp": "2026-04-11T01:57:08.060Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 25,
+    "type": "user",
+    "message": "is this what we want?",
+    "timestamp": "2026-04-11T01:58:54.674Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 26,
+    "type": "user",
+    "message": "Connect your Unreal Engine WebSocket client to ws://localhost:8765?",
+    "timestamp": "2026-04-11T02:01:04.306Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 27,
+    "type": "user",
+    "message": "How do I get the UE program running to connect to the API?",
+    "timestamp": "2026-04-11T02:02:12.914Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 28,
+    "type": "user",
+    "message": "I don't have the project to connect to.",
+    "timestamp": "2026-04-11T02:02:45.185Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 29,
+    "type": "user",
+    "message": "Create the C++ or whatever files we need to create the program.",
+    "timestamp": "2026-04-11T02:05:45.961Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 30,
+    "type": "user",
+    "message": "try to create and run the files now",
+    "timestamp": "2026-04-11T02:07:02.369Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 31,
+    "type": "user",
+    "message": "@C:\\Users\\bryan\\.gemini\\tmp\\cerebrum\\images\\clipboard-1775874170844.png",
+    "timestamp": "2026-04-11T02:22:52.965Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 32,
+    "type": "user",
+    "message": "@C:\\Users\\bryan\\.gemini\\tmp\\cerebrum\\images\\clipboard-1775874244018.png",
+    "timestamp": "2026-04-11T02:24:05.603Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 33,
+    "type": "user",
+    "message": "@C:\\Users\\bryan\\.gemini\\tmp\\cerebrum\\images\\clipboard-1775874424003.png",
+    "timestamp": "2026-04-11T02:27:06.276Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 34,
+    "type": "user",
+    "message": "@C:\\Users\\bryan\\.gemini\\tmp\\cerebrum\\images\\clipboard-1775874763821.png",
+    "timestamp": "2026-04-11T02:32:45.354Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 35,
+    "type": "user",
+    "message": "@C:\\Users\\bryan\\.gemini\\tmp\\cerebrum\\images\\clipboard-1775874964948.png",
+    "timestamp": "2026-04-11T02:36:06.193Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 36,
+    "type": "user",
+    "message": "It was already done. @C:\\Users\\bryan\\.gemini\\tmp\\cerebrum\\images\\clipboard-1775875085420.png",
+    "timestamp": "2026-04-11T02:38:06.383Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 37,
+    "type": "user",
+    "message": "@C:\\Users\\bryan\\.gemini\\tmp\\cerebrum\\images\\clipboard-1775875229633.png",
+    "timestamp": "2026-04-11T02:40:37.327Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 38,
+    "type": "user",
+    "message": "This project requires the 'WebsocketBlueprint' plugin, which could not be found. Would you like to disable it and continue?\n\nIf you do, you will no longer be able to open any assets created with it. If not, the application will close.",
+    "timestamp": "2026-04-11T02:42:30.159Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 39,
+    "type": "user",
+    "message": "I did not download or clone it to my knowledge.",
+    "timestamp": "2026-04-11T02:43:31.357Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 40,
+    "type": "user",
+    "message": "This project requires the 'WebsocketBlueprint' plugin, which could not be found. Would you like to disable it and continue?\n\nIf you do, you will no longer be able to open any assets created with it. If not, the application will close.",
+    "timestamp": "2026-04-11T02:51:16.909Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 41,
+    "type": "user",
+    "message": "The 'WebsocketBlueprint' plugin was designed for build 5.6.0. Attempt to load it anyway?",
+    "timestamp": "2026-04-11T02:55:14.068Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 42,
+    "type": "user",
+    "message": "The following modules are missing or built with a different engine version:\n\n  CerebrumVisualizer\n  EasyWebsockets\n\nWould you like to rebuild them now?",
+    "timestamp": "2026-04-11T02:55:57.858Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 43,
+    "type": "user",
+    "message": "CerebrumVisualizer could not be compiled. Try rebuilding from source manually.",
+    "timestamp": "2026-04-11T02:56:49.540Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 44,
+    "type": "user",
+    "message": "Please write out the files to avoid conflict",
+    "timestamp": "2026-04-11T02:59:11.281Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 45,
+    "type": "user",
+    "message": "Give me an explicit list of files to delete",
+    "timestamp": "2026-04-11T04:39:03.918Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 46,
+    "type": "user",
+    "message": "build worked!",
+    "timestamp": "2026-04-11T04:44:32.452Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 47,
+    "type": "user",
+    "message": "I do not see \"Debug > Start new instance.\"",
+    "timestamp": "2026-04-11T06:07:45.609Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 48,
+    "type": "user",
+    "message": "@C:\\Users\\bryan\\.gemini\\tmp\\cerebrum\\images\\clipboard-1775887821559.png",
+    "timestamp": "2026-04-11T06:10:23.974Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 49,
+    "type": "user",
+    "message": "Having issues with this.  we can come back to it.  What is next that does not rely on the GUI working?",
+    "timestamp": "2026-04-11T06:39:40.349Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 50,
+    "type": "user",
+    "message": "Build all of it in a logical order.",
+    "timestamp": "2026-04-11T06:40:35.933Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 51,
+    "type": "user",
+    "message": "yes, if that is next",
+    "timestamp": "2026-04-11T06:41:11.549Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 52,
+    "type": "user",
+    "message": "yes, please",
+    "timestamp": "2026-04-11T14:09:02.253Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 53,
+    "type": "user",
+    "message": "How can we make the programm react to a reward system?  What could we create to be analogous to Dopamine, Noropinephrin, Oxycontin and possibly Vasopressin?",
+    "timestamp": "2026-04-11T15:56:36.145Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 54,
+    "type": "user",
+    "message": "yes.",
+    "timestamp": "2026-04-11T15:59:29.794Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 55,
+    "type": "user",
+    "message": "go back through the ChemicalModulator and see if there are any improvements that can be made.",
+    "timestamp": "2026-04-11T16:00:56.744Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 56,
+    "type": "user",
+    "message": "yes, create an in-depth plan to ensure all factors are included and press.",
+    "timestamp": "2026-04-11T16:02:15.672Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 57,
+    "type": "user",
+    "message": "yes",
+    "timestamp": "2026-04-11T16:02:35.313Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 58,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-11T16:03:39.169Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 59,
+    "type": "user",
+    "message": "go back through the ChemicalModulator and see if there are any improvements that can be made.",
+    "timestamp": "2026-04-11T16:03:48.128Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 60,
+    "type": "user",
+    "message": "Would this be considered another novel idea",
+    "timestamp": "2026-04-11T16:14:50.021Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 61,
+    "type": "user",
+    "message": "Yes. Additionally, look through the rest of the git logs and history and look for any others that can be added.  Once complete, update all documents FULLY so that nothing is left out.  I will put you in \"plan\" mode to fully utilize youe potential.",
+    "timestamp": "2026-04-11T16:18:11.980Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 62,
+    "type": "user",
+    "message": "proceed with documentation.  Make sure there are comprehensive explanations in all documents according to thier purposes.",
+    "timestamp": "2026-04-11T17:17:27.198Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 63,
+    "type": "user",
+    "message": "Can we call the homones something other than the hormone names or do you think it is the appropriate naming convention?  Seems TOO biological for a computer program",
+    "timestamp": "2026-04-11T17:31:52.315Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 64,
+    "type": "user",
+    "message": "Yes.  Please do.  Once complete, update all documentation, push amd commit.",
+    "timestamp": "2026-04-11T18:50:23.016Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 65,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-11T19:10:48.816Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 66,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-11T19:54:10.862Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 67,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-11T19:54:17.949Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 68,
+    "type": "user",
+    "message": "verify all edits have been properly made",
+    "timestamp": "2026-04-11T19:55:35.189Z"
+  },
+  {
+    "sessionId": "a047394e-e629-47e6-9974-520f51c3bb3f",
+    "messageId": 69,
+    "type": "user",
+    "message": "/auth",
+    "timestamp": "2026-04-11T20:13:30.079Z"
+  },
+  {
+    "sessionId": "0ae033eb-487b-49e8-946f-2f7b6ba3fa49",
+    "messageId": 0,
+    "type": "user",
+    "message": "You have been out for a few.  Get caught back up with the program by reviewring Git logs and then continue development.",
+    "timestamp": "2026-04-11T20:16:15.513Z"
+  },
+  {
+    "sessionId": "0ae033eb-487b-49e8-946f-2f7b6ba3fa49",
+    "messageId": 1,
+    "type": "user",
+    "message": "What do you see as our place in the development cycle?",
+    "timestamp": "2026-04-11T20:30:00.117Z"
+  },
+  {
+    "sessionId": "0ae033eb-487b-49e8-946f-2f7b6ba3fa49",
+    "messageId": 2,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-12T00:04:50.481Z"
+  },
+  {
+    "sessionId": "0ae033eb-487b-49e8-946f-2f7b6ba3fa49",
+    "messageId": 3,
+    "type": "user",
+    "message": "commit and push",
+    "timestamp": "2026-04-12T05:28:30.348Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 0,
+    "type": "user",
+    "message": "Get caught up with the program by reading GIT and logs.",
+    "timestamp": "2026-04-16T12:17:19.986Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 1,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-16T12:24:38.397Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 2,
+    "type": "user",
+    "message": "https://github.com/chrishayuk/larql  can this be used to create the necessary context that is missing in the knowledge graphs?",
+    "timestamp": "2026-04-16T18:13:12.118Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 3,
+    "type": "user",
+    "message": "Yes.  Please proceed.",
+    "timestamp": "2026-04-16T18:28:05.076Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 4,
+    "type": "user",
+    "message": "/model",
+    "timestamp": "2026-04-16T18:54:53.907Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 5,
+    "type": "user",
+    "message": "continue",
+    "timestamp": "2026-04-16T18:55:20.493Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 6,
+    "type": "user",
+    "message": "What is next on the agenda?",
+    "timestamp": "2026-04-16T18:57:37.680Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 7,
+    "type": "user",
+    "message": "Proceed with all 3 logically.  Once complete, run regression testing to ensure nothing broke.  Afterwards, run benchmarks and compare against other programs.",
+    "timestamp": "2026-04-16T19:00:08.144Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 8,
+    "type": "user",
+    "message": "yes",
+    "timestamp": "2026-04-16T19:03:57.733Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 9,
+    "type": "user",
+    "message": "What does that look like performance-wise?  Give me real-world statistic examples.",
+    "timestamp": "2026-04-16T19:38:44.913Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 10,
+    "type": "user",
+    "message": "In number 3, Neural-to-Symbolic Discovery (LARQL Enhancement), is the database using an LLM to fill the gaps, or is it independent of the LLM?",
+    "timestamp": "2026-04-16T19:41:43.579Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 11,
+    "type": "user",
+    "message": "Does the LLM model have to be loaded into VRAM to be queried, or can the file itself be querried?",
+    "timestamp": "2026-04-16T19:43:41.645Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 12,
+    "type": "user",
+    "message": "so I can take the largest LLM currently available and LARQL can query it without taking up VRAM?",
+    "timestamp": "2026-04-16T19:55:15.069Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 13,
+    "type": "user",
+    "message": "Holy crap!  That is a game changer!",
+    "timestamp": "2026-04-16T19:57:06.956Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 14,
+    "type": "user",
+    "message": "I would like to do all 3.  Could the entire LLM be converted into a CEREBRUM data store?",
+    "timestamp": "2026-04-16T19:59:37.706Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 15,
+    "type": "user",
+    "message": "Proceed with the most logical pathway.",
+    "timestamp": "2026-04-16T20:10:41.018Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 16,
+    "type": "user",
+    "message": "It does.  Proceed.",
+    "timestamp": "2026-04-16T20:13:03.899Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 17,
+    "type": "user",
+    "message": "I would like it to be domain agnostic, but if that can be made as part of the ingestion process to make it domain specific, please proceed.",
+    "timestamp": "2026-04-16T20:14:16.378Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 18,
+    "type": "user",
+    "message": "Was everything we talked about completed?",
+    "timestamp": "2026-04-16T20:18:33.659Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 19,
+    "type": "user",
+    "message": "Update all documents.  Commit and push.  Once complete, create a \"how-it-works\" essay.  Make sure you update all products you can get your hands on.  Make sure to specifically touch the Cerebrum Explained and Novel Contributions.",
+    "timestamp": "2026-04-16T20:23:05.046Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 20,
+    "type": "user",
+    "message": "Did you updat eeverything else?",
+    "timestamp": "2026-04-16T20:28:06.100Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 21,
+    "type": "user",
+    "message": "There are a lot more documents that need to be updated than those.",
+    "timestamp": "2026-04-16T20:29:25.710Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 22,
+    "type": "user",
+    "message": "Thank you!  Just one last request:  What would you do next?",
+    "timestamp": "2026-04-16T20:32:59.343Z"
+  },
+  {
+    "sessionId": "7e560ca4-94b0-4737-ab1d-7f9cdc0fab1b",
+    "messageId": 23,
+    "type": "user",
+    "message": "Create a detailed plan for me and save it for further development.",
+    "timestamp": "2026-04-16T20:34:18.527Z"
+  }
+]

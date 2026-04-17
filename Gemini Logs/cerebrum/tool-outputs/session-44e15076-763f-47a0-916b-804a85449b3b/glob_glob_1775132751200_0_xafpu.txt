@@ -1,0 +1,3 @@
+{
+  "output": "Found 7 file(s) matching \"reasoning/*.py\" within E:\\Development\\Cerebrum, sorted by modification time (newest first):\nE:\\Development\\Cerebrum\\reasoning\\distributed_traversal.py\nE:\\Development\\Cerebrum\\reasoning\\consensus_scorer.py\nE:\\Development\\Cerebrum\\reasoning\\traversal.py\nE:\\Development\\Cerebrum\\reasoning\\__init__.py\nE:\\Development\\Cerebrum\\reasoning\\answer_extractor.py\nE:\\Development\\Cerebrum\\reasoning\\path_scorer.py\nE:\\Development\\Cerebrum\\reasoning\\relation_path_prior.py"
+}

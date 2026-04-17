@@ -62,8 +62,8 @@ class TriangulationReport:
     """P4: entity-type / relation-type consistency against the graph's existing edge
     index. 0.5 for completely novel relations (neutral), 1.0 for exact type match."""
 
-    is_wormhole_candidate: bool
-    """Diagnostic flag — True when all four conditions for a genuine wormhole are met.
+    is_SynapticBridge_candidate: bool
+    """Diagnostic flag — True when all four conditions for a genuine SynapticBridge are met.
     NOT used as a classifier feature (derivable from the four scores above)."""
 
 
@@ -151,9 +151,9 @@ class TriangulationEngine:
         # P4 — semantic type consistency
         sem_score = self._semantic_type_score(source_id, target_id, derived_relation)
 
-        # Wormhole diagnostic
+        # SynapticBridge diagnostic
         community_distance = getattr(candidate, "community_distance", 0)
-        is_wormhole = (
+        is_SynapticBridge = (
             rev_conf > 0.0
             and community_distance > 2
             and sem_score > 0.3
@@ -165,12 +165,12 @@ class TriangulationEngine:
             strategy_agreement=strat_agree,
             mean_path_independence=path_indep,
             semantic_type_score=sem_score,
-            is_wormhole_candidate=is_wormhole,
+            is_SynapticBridge_candidate=is_SynapticBridge,
         )
 
         logger.debug(
-            "Triangulation %s→%s: rev=%.3f agree=%.3f indep=%.3f sem=%.3f wormhole=%s",
-            source_id, target_id, rev_conf, strat_agree, path_indep, sem_score, is_wormhole,
+            "Triangulation %s→%s: rev=%.3f agree=%.3f indep=%.3f sem=%.3f SynapticBridge=%s",
+            source_id, target_id, rev_conf, strat_agree, path_indep, sem_score, is_SynapticBridge,
         )
         return report
 

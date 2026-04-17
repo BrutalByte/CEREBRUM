@@ -1,0 +1,3 @@
+{
+  "output": "Found 5 matches for pattern \"class GraphAdapter\" in path \".\":\n---\nFile: PARALLAX.md\nL618: class GraphAdapter(ABC):\n---\nFile: docs\\Parallax_White_Paper.md\nL797: class GraphAdapter(ABC):\n---\nFile: docs\\latex\\batch_build\\Parallax_White_Paper.tex\nL881: class GraphAdapter(ABC):\n---\nFile: docs\\latex\\batch_build\\PAPER.tex\nL796: class GraphAdapter(ABC):\n---\nFile: core\\graph_adapter.py\nL36: class GraphAdapter(ABC):\n---"
+}

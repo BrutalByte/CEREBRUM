@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026
-**Version**: v2.21.0 (Phase 83 COMPLETE)
+**Version**: v2.21.0 (Phase 92 COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -535,7 +535,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ---
 
-### Claim 41: Adaptive Loop Tuning via Calibrator-Driven Cap and Interval Scaling (Phase 83)
+### Claim 41: Adaptive Loop Tuning via Calibrator-Driven Cap and Interval Scaling (Phase 92)
 
 **Description**: `AutonomousDiscoveryLoop` with `adaptive_tuning=True` reads `DiscoveryCalibrator.stats()` at cycle start and scales both `max_materializations_per_cycle` and inter-cycle sleep by mean community weight. Underexplored graphs → higher cap + shorter interval; saturated graphs → lower cap + longer interval. All bounds configurable.
 

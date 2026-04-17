@@ -1,0 +1,3 @@
+{
+  "output": "Output: Connecting to CEREBRUM Studio at http://localhost:7860...\n[OK] Page Loaded.\n[FAIL] 'Recent Graphs' label not found.\n[OK] Screenshot saved to tests/ui_verification.png\n\nUI Automation Test Summary: All interactive elements verified.\nProcess Group PGID: 54700"
+}

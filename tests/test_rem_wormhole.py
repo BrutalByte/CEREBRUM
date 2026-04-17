@@ -17,7 +17,7 @@ class MockAdapter(GraphAdapter):
     def to_networkx(self): return self._G
     def add_edge(self, u, v, relation, confidence=1.0, provenance="", synthetic=False): pass
 
-def test_wormhole_synthesis():
+def test_SynapticBridge_synthesis():
     # Create two disconnected components
     # Comp 1: Apple -- Fruit
     # Comp 2: Orange
@@ -39,22 +39,22 @@ def test_wormhole_synthesis():
     # Run synthesis
     report = rem.run(dry_run=True)
     
-    # Check if apple <-> orange wormhole is proposed
+    # Check if apple <-> orange SynapticBridge is proposed
     # (Similarity is ~0.99)
-    wormholes = [p for p in report.synthesized_edge_list if p[2] == "rem_synthesized_wormhole"]
-    assert len(wormholes) > 0
+    SynapticBridges = [p for p in report.synthesized_edge_list if p[2] == "rem_synthesized_SynapticBridge"]
+    assert len(SynapticBridges) > 0
     
     # Ensure apple and orange were chosen
     found = False
-    for u, v, rel in wormholes:
+    for u, v, rel in SynapticBridges:
         if (u == "apple" and v == "orange") or (u == "orange" and v == "apple"):
             found = True
             break
     assert found
 
-def test_no_wormhole_if_connected():
+def test_no_SynapticBridge_if_connected():
     # If they are already connected (even long path), regular synthesis might catch them
-    # but wormhole phase skips same-component.
+    # but SynapticBridge phase skips same-component.
     G = nx.Graph()
     G.add_edge("a", "b")
     G.add_edge("b", "c")
@@ -74,9 +74,9 @@ def test_no_wormhole_if_connected():
     
     report = rem.run(dry_run=True)
     
-    # Should NOT have wormholes because it's a single component
-    wormholes = [p for p in report.synthesized_edge_list if p[2] == "rem_synthesized_wormhole"]
-    assert len(wormholes) == 0
+    # Should NOT have SynapticBridges because it's a single component
+    SynapticBridges = [p for p in report.synthesized_edge_list if p[2] == "rem_synthesized_SynapticBridge"]
+    assert len(SynapticBridges) == 0
 
 if __name__ == "__main__":
     pytest.main([__file__])

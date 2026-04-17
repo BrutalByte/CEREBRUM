@@ -81,7 +81,7 @@ class FederatedAdapter(GraphAdapter):
     ) -> List[Edge]:
         """
         Merge neighbors from all adapters based on entity aliases.
-        Includes holographic blind discovery (Wormholes) if context_embedding is provided.
+        Includes holographic blind discovery (SynapticBridges) if context_embedding is provided.
         """
         all_edges: List[Edge] = []
         seen_targets: Set[str] = set()
@@ -113,7 +113,7 @@ class FederatedAdapter(GraphAdapter):
                         all_edges.append(e)
                         seen_targets.add(dedupe_key)
 
-        # 4. Blind Discovery (Wormholes) - Milestone 1
+        # 4. Blind Discovery (SynapticBridges) - Milestone 1
         # If we have a context embedding, check OTHER adapters for relevant communities.
         if context_embedding is not None:
             # Find remote adapters whose community centroids match this embedding
@@ -133,12 +133,12 @@ class FederatedAdapter(GraphAdapter):
                     if ent.id in seen_targets:
                         continue
                         
-                    # Materialize a virtual WORMHOLE edge
+                    # Materialize a virtual SynapticBridge edge
                     # Weight is scaled by similarity score
                     all_edges.append(Edge(
                         source_id=entity_id,
                         target_id=ent.id,
-                        relation_type="WORMHOLE",
+                        relation_type="SynapticBridge",
                         weight=sim_score,
                         confidence=sim_score,
                         provenance=f"hologram:{adapter_name}"
@@ -274,7 +274,7 @@ class FederatedAdapter(GraphAdapter):
         owner_name = self._resolve_adapter(entity_id)
         if not owner_name:
             # Check aliases in case it's known under a different ID
-            # This handles 'wormhole' entities from other graphs
+            # This handles 'SynapticBridge' entities from other graphs
             aliases = self.alignment.resolve_aliases("", entity_id)
             for adapter_name, alias_id in aliases:
                 if adapter_name in self.adapters:

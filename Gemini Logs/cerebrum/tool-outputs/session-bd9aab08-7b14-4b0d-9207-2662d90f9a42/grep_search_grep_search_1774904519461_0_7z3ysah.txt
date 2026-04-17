@@ -1,0 +1,3 @@
+{
+  "output": "Found 5 matches for pattern \"Phase 28\" in path \".\":\n---\nFile: tests\\test_cvt_traversal.py\nL2: Tests for CVT-aware traversal — Phase 28A.\n---\nFile: tests\\test_repair_engine.py\nL2: Tests for IncompletenessRepairEngine — Phase 28B.\n---\nFile: tests\\test_kge_engine.py\nL231: # predict_links — Phase 28C\n---\nFile: core\\repair_engine.py\nL2: IncompletenessRepairEngine — Phase 28B\n---\nFile: benchmarks\\ikgwq_eval.py\nL385:     # Phase 28B/C: detect dead-end paths, synthesize missing edges.\n---"
+}

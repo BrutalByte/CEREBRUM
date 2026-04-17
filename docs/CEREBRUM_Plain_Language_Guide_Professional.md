@@ -3,7 +3,7 @@
     <h1 class="title">CEREBRUM EXPLAINED</h1>
     <p class="subtitle">A Plain-Language Guide to the Research</p>
     <div class="meta">
-        <strong>Version 5.0 (v2.21.0 — Phase 83 COMPLETE)</strong><br>
+        <strong>Version 5.0 (v2.21.0 — Phase 92 COMPLETE)</strong><br>
         April 2026 — Independent Researcher
     </div>
 </div>

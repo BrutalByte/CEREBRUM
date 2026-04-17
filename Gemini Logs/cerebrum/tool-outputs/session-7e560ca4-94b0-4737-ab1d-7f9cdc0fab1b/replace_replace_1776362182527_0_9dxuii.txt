@@ -1,0 +1,3 @@
+{
+  "output": "Successfully modified file: E:\\Development\\Cerebrum\\core\\research_agent.py (1 replacements). Here is the updated code:\n...\n        N = len(valid_nodes)\n        if N < 2:\n            return []\n\n        # Stack into (N, d) float32; re-normalise to guard against non-unit vecs\n        vectors = []\n        for n in valid_nodes:\n            v = emb_cache[n]\n            if v is not None:\n                vectors.append(v.astype(np.float32))\n        \n        if not vectors:\n            return []\n            \n        E = np.stack(vectors)\n        norms = np.linalg.norm(E, axis=1, keepdims=True)\n        norms = np.where(norms > 1e-8, norms, 1.0)\n        E = E / norms\n\n        candidates: List[ResearchCandidate] = []\n..."
+}

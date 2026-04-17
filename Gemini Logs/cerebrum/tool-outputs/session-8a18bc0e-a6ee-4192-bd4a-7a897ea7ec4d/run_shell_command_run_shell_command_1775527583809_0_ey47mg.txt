@@ -1,0 +1,3 @@
+{
+  "output": "Output: Connecting to CEREBRUM Studio at http://localhost:7860...\nTraceback (most recent call last):\n  File \"E:\\Development\\Cerebrum\\tests\\test_studio_click.py\", line 60, in <module>\n    test_ui_interaction()\n    ~~~~~~~~~~~~~~~~~~~^^\n  File \"E:\\Development\\Cerebrum\\tests\\test_studio_click.py\", line 19, in test_ui_interaction\n    page.wait_for_selector(\"h1\", text=\"CEREBRUM STUDIO Pro\")\n    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Page.wait_for_selector() got an unexpected keyword argument 'text'\nExit Code: 1\nProcess Group PGID: 54408"
+}

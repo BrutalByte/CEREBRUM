@@ -1,0 +1,3 @@
+{
+  "output": "Output: usage: full_system_eval.py [-h] [--hop HOP] [--sample SAMPLE] [--beam-width BEAM_WIDTH] [--top-k TOP_K] [--no-cache] [--seed SEED] [--coarsen-target COARSEN_TARGET]\n                           [--optimized] [--kge-epochs KGE_EPOCHS] [--opt-beam-width OPT_BEAM_WIDTH]\nfull_system_eval.py: error: unrecognized arguments: --csv tests/fixtures/toy_graph.csv --iterations 3\nExit Code: 1\nProcess Group PGID: 91560"
+}

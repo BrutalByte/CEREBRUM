@@ -1,0 +1,3 @@
+{
+  "output": "Error during grep search operation: Process exited with code 2: regex parse error:\n    \\\\\\\"\\\\\\\"\\\\\\\"\n      ^^\nerror: unrecognized escape sequence\n"
+}

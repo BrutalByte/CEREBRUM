@@ -1,0 +1,17 @@
+{
+  "header": {
+    "timestamp": 0.0,
+    "version": "2.4.0",
+    "layer": "CORTEX"
+  },
+  "event_type": "SYNAPTIC_PULSE",
+  "payload": {
+    "source_node": "string",
+    "target_node": "string",
+    "relation": "string",
+    "weight": 0.0,
+    "hop_count": 0,
+    "features": [0.0],
+    "is_wormhole": false
+  }
+}

@@ -20,7 +20,7 @@ THALAMUS solves the "GIGO" (Garbage In, Garbage Out) problem at the front door.
 
 **Key features include:**
 *   **Bidirectional Deduplication**: Automatically maps aliases to a single canonical ID, ensuring that all data about an entity is consolidated.
-*   **Namespace Isolation (v1.2.0)**: Uses strict prefixing (e.g., `text:`, `signal:`, `remote:`) to keep different data modalities separate, preventing "semantic wormholes" and accidental data leakage.
+*   **Namespace Isolation (v1.2.0)**: Uses strict prefixing (e.g., `text:`, `signal:`, `remote:`) to keep different data modalities separate, preventing "semantic Synaptic Bridges" and accidental data leakage.
 *   **Unlocked Parallel Ingestion (v1.2.0)**: A proprietary two-stage architecture that cleans data across multiple CPU cores simultaneously *before* committing it to the graph. This unblocks query readers and enables unprecedented ingestion speeds.
 
 ### Key Enterprise Benefits

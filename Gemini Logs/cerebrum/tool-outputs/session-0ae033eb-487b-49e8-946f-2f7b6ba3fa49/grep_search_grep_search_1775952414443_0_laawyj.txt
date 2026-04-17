@@ -1,0 +1,3 @@
+{
+  "output": "Error during grep search operation: Operation timed out after 30000ms. In large repositories, consider narrowing your search scope by specifying a 'dir_path' or an 'include_pattern'."
+}

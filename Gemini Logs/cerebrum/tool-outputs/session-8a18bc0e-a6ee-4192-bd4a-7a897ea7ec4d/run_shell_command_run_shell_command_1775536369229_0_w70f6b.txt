@@ -1,0 +1,3 @@
+{
+  "output": "Output: Watching: 'E:\\Development\\Cerebrum\\ui' 'E:\\Development\\Cerebrum'\nProcess Group PGID: 10048"
+}

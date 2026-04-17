@@ -49,7 +49,7 @@ class NeuralEvent(BaseModel):
         weight: float, 
         hop: int, 
         features: Optional[List[float]] = None,
-        is_wormhole: bool = False
+        is_SynapticBridge: bool = False
     ) -> "NeuralEvent":
         """Helper to create a traversal pulse event."""
         return cls(
@@ -61,7 +61,7 @@ class NeuralEvent(BaseModel):
                 "weight": float(weight),
                 "hop_count": hop,
                 "features": features or [],
-                "is_wormhole": is_wormhole
+                "is_SynapticBridge": is_SynapticBridge
             }
         )
 

@@ -1,0 +1,3 @@
+{
+  "output": "Output: Cloning into 'E:\\Development\\Cerebrum\\ue5_project\\Plugins\\WebsocketBlueprint'...\nremote: Repository not found.\nfatal: repository 'https://github.com/n1474335/ue5-websocket-client/' not found\nExit Code: 1\nProcess Group PGID: 94924"
+}

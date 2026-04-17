@@ -1,0 +1,3 @@
+{
+  "error": "Failed to edit, 0 occurrences found for old_string in core/embedding_engine.py. Ensure you're not escaping content incorrectly and check whitespace, indentation, and context. Use read_file tool to verify."
+}

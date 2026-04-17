@@ -1,0 +1,3 @@
+{
+  "output": "Output: diff --git a/core/attention_engine.py b/core/attention_engine.py\nindex 609c050..265f29c 100644\n--- a/core/attention_engine.py\n+++ b/core/attention_engine.py\n@@ -23,6 +23,7 @@ from typing import Dict, Optional, Set, Tuple\n \n import numpy as np\n from core.graph_adapter import GraphAdapter\n+from core.reasoning_logit import ReasoningLogit # New: Unified logit framework\n \n # Return type for compute_weight_with_features:\n # (weight, sim, cs, etw, normalized_distance, hop_decay, pr_v, temporal_decay)\nProcess Group PGID: 72228"
+}

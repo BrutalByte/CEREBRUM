@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: April 2026
-**Status**: Version 2.20.1 · Phase 83 COMPLETE — 1,720+ tests passing
+**Status**: Version 2.20.1 · Phase 92 COMPLETE — 1,720+ tests passing
 **License**: Proprietary — all rights reserved
 
 ---
@@ -134,7 +134,7 @@ inference — though one may optionally be used for natural language generation.
 
 Subsequent phases extend the core with: Bayesian beam search (Phase 19),
 federated reasoning across distributed graph nodes (Phase 32), temporal
-reasoning and wormhole synthesis via the REM Engine (Phases 41–43), a fully
+reasoning and Synaptic Bridge synthesis via the REM Engine (Phases 41–43), a fully
 parameterized 10-term CSA formula with online and batch learning (Phases 43–48),
 abductive hypothesis generation via HypothesisEngine (Phase 50), autonomous
 research assistance via ResearchAgent and ExternalValidator (Phases 51–52),
@@ -210,7 +210,7 @@ The CEREBRUM stack uses the following named layers, reflecting both computationa
 
 **CORTEX** — the reasoning engine: DSCF community detection, CSA attention formula, BeamTraversal (including Bayesian mode), and AnswerExtractor. Named for the cortex, where structured reasoning occurs.
 
-**REM Engine** — graph self-reorganization: pruning low-confidence edges, re-running community detection, and synthesizing new hypothesis edges (wormhole synthesis). Analogous to REM sleep and hippocampal memory consolidation.
+**REM Engine** — graph self-reorganization: pruning low-confidence edges, re-running community detection, and synthesizing new hypothesis edges (Synaptic Bridge synthesis). Analogous to REM sleep and hippocampal memory consolidation.
 
 **Bridge Twin Engine** — experience-dependent structural relay node formation. Analogous to thalamic relay nuclei and LTP/LTD synaptic plasticity.
 
@@ -339,7 +339,7 @@ and KG operations. This is not analogy — each mapping is functional.
 | Attention weight | CSA weight formula (10 params) | Sim + community + edge + dist + PR + temporal + recency + synth + grounding |
 | Context window | Ego-network radius R | How far to traverse |
 | Layer depth L | BFS hop count | Reasoning step count |
-| Wormhole Attention | Federated Link | Cross-graph attention jump |
+| Synaptic Bridge Attention | Federated Link | Cross-graph attention jump |
 | Holographic Index | Compressed Signature | Privacy-preserving discovery |
 | Feed-forward sublayer | Entity-type projection | Type-specific transformation |
 | Residual connection | Previous-hop embedding | Prevents information loss |
@@ -887,7 +887,7 @@ On all four dimensions, CEREBRUM is categorically superior to every baseline —
 | 30 | v1.7.0 | Proactive GraphBridgeEngine |
 | 32 | v1.7.1 | Federated reasoning — DistributedBeamTraversal, /traverse endpoint |
 | 39–40 | v1.7.2 | Async bridge synthesis, IKGWQ hardening |
-| 41–42 | v1.7.3–v1.7.4 | Temporal reasoning, wormhole synthesis (REM), API hardening |
+| 41–42 | v1.7.3–v1.7.4 | Temporal reasoning, Synaptic Bridge synthesis (REM), API hardening |
 | 43 | v1.7.5 | 10-param CSA formula (temporal context, synthesis density, grounding) |
 | 44 | v1.8.0 | IKGWQ-MetaQA benchmark — 40% recall improvement with REM synthesis |
 | 45 | v1.9.0 | 10-param CSAParameterLearner + MetaParameterLearner full upgrade |

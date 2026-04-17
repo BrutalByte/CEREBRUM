@@ -5,10 +5,10 @@ from adapters.networkx_adapter import NetworkXAdapter
 from adapters.federated_adapter import FederatedAdapter
 from core.holographic_index import build_signatures
 
-def test_federated_wormhole_discovery():
+def test_federated_SynapticBridge_discovery():
     """
     Verify that FederatedAdapter can discover semantically similar 
-    entities in remote adapters via WORMHOLE edges.
+    entities in remote adapters via SynapticBridge edges.
     """
     # 1. Setup Graph A (Local)
     adapter_a = NetworkXAdapter(nx.DiGraph())
@@ -39,15 +39,15 @@ def test_federated_wormhole_discovery():
     
     assert "text:Company" in targets
     assert "text:Fruit" in targets 
-    assert "WORMHOLE" in relations
+    assert "SynapticBridge" in relations
     
     # Verify weight/confidence is high for close match
-    wormhole = next(e for e in edges if e.target_id == "text:Fruit")
-    assert wormhole.weight >= 0.7
-    assert wormhole.provenance == "hologram:remote"
+    SynapticBridge = next(e for e in edges if e.target_id == "text:Fruit")
+    assert SynapticBridge.weight >= 0.7
+    assert SynapticBridge.provenance == "hologram:remote"
 
-def test_federated_wormhole_no_match():
-    """Verify that dissimilar entities do not trigger WORMHOLEs."""
+def test_federated_SynapticBridge_no_match():
+    """Verify that dissimilar entities do not trigger SynapticBridges."""
     adapter_a = NetworkXAdapter(nx.DiGraph())
     adapter_a._G.add_node("text:Tesla")
     adapter_a.embeddings = {"text:Tesla": np.array([0.0, 0.0, 1.0], dtype=np.float32)}
@@ -67,4 +67,4 @@ def test_federated_wormhole_no_match():
     edges = fed.get_neighbors("text:Tesla", context_embedding=emb_tesla)
     
     relations = [e.relation_type for e in edges]
-    assert "WORMHOLE" not in relations
+    assert "SynapticBridge" not in relations

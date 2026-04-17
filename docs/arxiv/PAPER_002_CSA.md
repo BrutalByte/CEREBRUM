@@ -63,7 +63,7 @@ a(u,v,k) = sigmoid(
 )
 ```
 
-Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`. The synthesis-density penalty (`-mu*sd`) is particularly significant: it prevents over-reliance on REM-synthesized wormhole edges, maintaining reasoning transparency.
+Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`. The synthesis-density penalty (`-mu*sd`) is particularly significant: it prevents over-reliance on REM-synthesized Synaptic Bridge edges, maintaining reasoning transparency.
 
 **Unified ReasoningLogit Vector.** All 10 features are bundled into a `ReasoningLogit` dataclass that threads through scoring, learning, and feedback logging. This ensures that the full feature vector is available for inspection at every hop, preserving the "Glass-Box" property of the original design.
 

@@ -21,7 +21,7 @@ The Bridge Twin Engine acts as an "Artificial Thalamus" for your graph. When the
 **The process is autonomous:**
 *   **Discovery**: The system monitors query traffic.
 *   **Potentiation**: If a connection meets usage and semantic thresholds, a structural relay is born.
-*   **Optimization**: The new relay provides a 1-hop "Wormhole" for all future queries, reducing 3-hop or 4-hop paths to near-instantaneous traversals.
+*   **Optimization**: The new relay provides a 1-hop "Synaptic Bridge" for all future queries, reducing 3-hop or 4-hop paths to near-instantaneous traversals.
 
 ### Key Enterprise Benefits
 *   **Automatic Performance Tuning**: Your graph optimizes its own physical layout based on your specific business queries.

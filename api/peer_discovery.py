@@ -7,7 +7,7 @@ import logging
 import threading
 import time
 from typing import Optional
-from core.coupling_engine import NeuralCouplingEngine
+from core.neural_coupling_engine import NeuralCouplingEngine
 from core.holographic_index import build_signatures
 
 log = logging.getLogger("cerebrum.discovery")

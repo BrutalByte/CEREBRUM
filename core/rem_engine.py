@@ -369,7 +369,7 @@ class REMEngine:
 
                 proposals.append((u, v, "rem_synthesized"))
 
-        # --- Phase 3b: Cross-Component Synthesis (Wormhole Detection) ---
+        # --- Phase 3b: Cross-Component Synthesis (SynapticBridge Detection) ---
         # Find high-similarity pairs in disconnected components.
         if len(proposals) < self.max_synthesis_proposals:
             components = list(nx.connected_components(G_und))
@@ -408,7 +408,7 @@ class REMEngine:
                         if similarity < self.cross_component_similarity_threshold:
                             continue
 
-                        proposals.append((u, v, "rem_synthesized_wormhole"))
+                        proposals.append((u, v, "rem_synthesized_SynapticBridge"))
 
         # Apply mutations (real runs only)
         if not dry_run:

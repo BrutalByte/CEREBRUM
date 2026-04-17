@@ -1,0 +1,3 @@
+{
+  "output": "Directory listing for E:\\Development\\Cerebrum\\adapters:\n[DIR] __pycache__\n__init__.py (161 bytes)\ncsv_adapter.py (3505 bytes)\ndistributed_adapter.py (25260 bytes)\nfederated_adapter.py (14141 bytes)\nfile_adapter.py (9618 bytes)\nneo4j_adapter.py (8729 bytes)\nneptune_adapter.py (4898 bytes)\nnetworkx_adapter.py (11733 bytes)\nrdf_adapter.py (5737 bytes)\nremote_adapter.py (10675 bytes)\nstream_adapter.py (31696 bytes)"
+}

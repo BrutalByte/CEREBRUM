@@ -1,0 +1,3 @@
+{
+  "output": "Successfully modified file: E:\\Development\\Cerebrum\\core\\research_agent.py (1 replacements). Here is the updated code:\n...\n        if G.number_of_nodes() < 4:\n            return []\n\n        try:\n            import networkx as nx\n            clust: Dict[Any, float] = nx.clustering(G)\n        except Exception:\n            return []\n\n        # Hole score: degree × (1 − clustering); high = genuine bridge\n        hole_scores: Dict[str, float] = {}\n..."
+}

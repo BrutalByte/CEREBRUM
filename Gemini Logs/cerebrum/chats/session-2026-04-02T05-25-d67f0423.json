@@ -1,0 +1,61 @@
+{
+  "sessionId": "d67f0423-b893-4df4-9de7-10868351143b",
+  "projectHash": "b115968ed9a16eb9b037337ed35b03e7d59fad85aa24a974d7ac2c069d662cd1",
+  "startTime": "2026-04-02T05:25:12.657Z",
+  "lastUpdated": "2026-04-02T05:32:20.625Z",
+  "messages": [
+    {
+      "id": "ae5062c2-afca-4916-bd52-4fb977d6a42b",
+      "timestamp": "2026-04-02T05:25:12.657Z",
+      "type": "info",
+      "content": "MCP issues detected. Run /mcp list for status."
+    },
+    {
+      "id": "7bc506ca-0d3c-41b3-b891-4fe60ca5d84f",
+      "timestamp": "2026-04-02T05:25:12.909Z",
+      "type": "info",
+      "content": "You have 1 extension with an update available. Run \"/extensions update exa-mcp-server\"."
+    },
+    {
+      "id": "26761214-d908-48e4-ae20-f92f31ca43ee",
+      "timestamp": "2026-04-02T05:25:15.587Z",
+      "type": "user",
+      "content": [
+        {
+          "text": "read through latest updates via git, logs and docs.  Continue development"
+        }
+      ]
+    },
+    {
+      "id": "d0593648-13d2-4e5f-b563-03e2a0fa3e37",
+      "timestamp": "2026-04-02T05:32:10.169Z",
+      "type": "error",
+      "content": "[API Error: You have exhausted your capacity on this model. Your quota will reset after 11h58m52s.]"
+    },
+    {
+      "id": "8dfbf7a2-a96d-403d-91b0-51089464cfb8",
+      "timestamp": "2026-04-02T05:32:10.170Z",
+      "type": "info",
+      "content": "This request failed. Press F12 for diagnostics, or run /settings and change \"Error Verbosity\" to full for full details."
+    },
+    {
+      "id": "6625d070-26bf-4707-9998-b007082425e0",
+      "timestamp": "2026-04-02T05:32:14.949Z",
+      "type": "info",
+      "content": "\n\nAttempting to open authentication page in your browser.\nOtherwise navigate to:\n\nhttps://accounts.google.com/o/oauth2/v2/auth?redirect_uri=http%3A%2F%2F127.0.0.1%3A62496%2Foauth2callback&access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloud-platform%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile&state=4968da01f904f9f12fdb26e2e1ba6668efe8e12c4dc942e4fc9ee6de771ef481&response_type=code&client_id=681255809395-oo8ft2oprdrnp9e3aqf6av3hmdib135j.apps.googleusercontent.com\n\n\n"
+    },
+    {
+      "id": "61a25336-87d4-4eaf-af82-62832f7d806f",
+      "timestamp": "2026-04-02T05:32:14.964Z",
+      "type": "info",
+      "content": "Waiting for authentication...\n"
+    },
+    {
+      "id": "3ca62f41-fe2d-4651-86d0-d098231eb25f",
+      "timestamp": "2026-04-02T05:32:20.625Z",
+      "type": "info",
+      "content": "Authentication succeeded\n"
+    }
+  ],
+  "kind": "main"
+}

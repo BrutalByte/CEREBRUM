@@ -1,0 +1,3 @@
+{
+  "output": "Output: usage: studio.py [-h] [--port PORT] [--reload]\n\nCEREBRUM Studio\n\noptions:\n  -h, --help            show this help message and exit\n  --port PORT           Port to run on\n  --reload              Use 'gradio ui/studio.py' for real reload\n2026-04-11 13:23:15,147 - httpx - INFO - HTTP Request: GET https://api.gradio.app/pkg-version \"HTTP/1.1 200 OK\"\nProcess Group PGID: 94712"
+}

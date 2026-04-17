@@ -1,0 +1,3 @@
+{
+  "output": "Successfully overwrote file: E:\\Development\\Cerebrum\\ue5_project\\Source\\CerebrumVisualizer\\CerebrumLink.cpp. Here is the updated code:\n#include \"CerebrumLink.h\"\n#include \"Engine/Engine.h\"\n\nUCerebrumLink::UCerebrumLink() \n{ \n    PrimaryComponentTick.bCanEverTick = false; \n}\n\nvoid UCerebrumLink::ConnectToBrain(FString URL) \n{\n    UE_LOG(LogTemp, Log, TEXT(\"CerebrumLink: Attempting connection to %s\"), *URL);\n}\n\nvoid UCerebrumLink::SendToBrain(FString Message)\n{\n    UE_LOG(LogTemp, Log, TEXT(\"CerebrumLink: Sending: %s\"), *Message);\n..."
+}

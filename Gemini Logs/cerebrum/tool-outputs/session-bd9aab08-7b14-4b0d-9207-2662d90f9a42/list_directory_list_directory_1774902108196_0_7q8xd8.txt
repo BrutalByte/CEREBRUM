@@ -1,0 +1,3 @@
+{
+  "output": "Directory listing for E:\\Development\\Cerebrum\\scripts:\n[DIR] __pycache__\nbatch_latex_suite_v2.py (3894 bytes)\nbatch_latex_suite.py (3789 bytes)\nbatch_pdf_gen_v2.py (4472 bytes)\nbatch_pdf_gen_v3.py (3321 bytes)\nbatch_pdf_gen_v4.py (3774 bytes)\nbatch_pdf_gen.py (2860 bytes)\nbuild_arxiv.py (12682 bytes)\nconvert_metaqa.py (1057 bytes)\ncreate_stress_test_graph.py (1716 bytes)\nextract_medical.py (1869 bytes)\nfetch_sources.py (2656 bytes)\nmd_to_docx.py (7932 bytes)\nrebuild_all_publications.py (5108 bytes)\nsetup_webqsp_data.py (17010 bytes)"
+}

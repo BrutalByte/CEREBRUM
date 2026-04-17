@@ -6,7 +6,7 @@
 
 ## Abstract
 
-We present **TriangulationEngine**, a four-perspective validation framework for `ResearchCandidate` objects in CEREBRUM's knowledge graph discovery pipeline. Inspired by triangulation in navigation and qualitative research methodology [denzin1978research], the engine validates each candidate edge from four independent perspectives: (P1) **reverse traversal confidence** — does the graph support the inverse relation?; (P2) **multi-strategy agreement** — do different reasoning configurations agree?; (P3) **path independence** — are the supporting paths structurally independent?; (P4) **semantic type consistency** — is the relation type compatible with the entity class profile? The four perspective scores extend the `AutoApprover` feature vector from 12 to 16 dimensions, providing richer signal for the downstream logistic classifier. A diagnostic `is_wormhole_candidate` flag identifies cross-community bridge proposals warranting special handling.
+We present **TriangulationEngine**, a four-perspective validation framework for `ResearchCandidate` objects in CEREBRUM's knowledge graph discovery pipeline. Inspired by triangulation in navigation and qualitative research methodology [denzin1978research], the engine validates each candidate edge from four independent perspectives: (P1) **reverse traversal confidence** — does the graph support the inverse relation?; (P2) **multi-strategy agreement** — do different reasoning configurations agree?; (P3) **path independence** — are the supporting paths structurally independent?; (P4) **semantic type consistency** — is the relation type compatible with the entity class profile? The four perspective scores extend the `AutoApprover` feature vector from 12 to 16 dimensions, providing richer signal for the downstream logistic classifier. A diagnostic `is_Synaptic Bridge_candidate` flag identifies cross-community bridge proposals warranting special handling.
 
 ---
 
@@ -72,9 +72,9 @@ p4 = type_consistency(source_entity_class, target_entity_class, relation_type)
 - Known-incompatible → p4 = 0.0
 - Novel / unseen relation type → p4 = 0.5 (neutral, no penalty for discovery)
 
-### Wormhole Candidate Flag
+### Synaptic Bridge Candidate Flag
 
-`is_wormhole_candidate = True` when source and target belong to communities with large structural distance (> 2 hops) and P1 × P2 × P3 product > 0.3. Wormhole candidates are high-value cross-community bridge proposals.
+`is_Synaptic Bridge_candidate = True` when source and target belong to communities with large structural distance (> 2 hops) and P1 × P2 × P3 product > 0.3. Synaptic Bridge candidates are high-value cross-community bridge proposals.
 
 ---
 
@@ -90,7 +90,7 @@ report = engine.validate(candidate)
 # report.strategy_agreement  → P2
 # report.mean_path_independence → P3
 # report.semantic_type_score → P4
-# report.is_wormhole_candidate → bool
+# report.is_Synaptic Bridge_candidate → bool
 
 finding.metadata["triangulation"] = report
 ```

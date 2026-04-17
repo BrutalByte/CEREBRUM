@@ -15,8 +15,8 @@ Coverage:
   - P4 semantic_type_score = 1.0 for exact (src_type, tgt_type) match
   - P4 semantic_type_score = 0.65 for one-side type match
   - P4 semantic_type_score = 0.30 for relation known but neither type matches
-  - is_wormhole_candidate = True when all four conditions met
-  - is_wormhole_candidate = False when reverse_confidence = 0
+  - is_SynapticBridge_candidate = True when all four conditions met
+  - is_SynapticBridge_candidate = False when reverse_confidence = 0
   - Type index caches on second call (same graph signature)
   - Type index rebuilds when edge count changes
 """
@@ -334,10 +334,10 @@ def test_p4_empty_derived_relation():
 
 
 # ---------------------------------------------------------------------------
-# Wormhole candidate flag
+# SynapticBridge candidate flag
 # ---------------------------------------------------------------------------
 
-def test_wormhole_candidate_all_conditions_met():
+def test_SynapticBridge_candidate_all_conditions_met():
     prop = _make_proposal(confidence=0.8, independence_scores=[0.9, 0.8])
     rev_prop = _make_proposal(confidence=0.75)
     adapter = _MockAdapter(
@@ -353,27 +353,27 @@ def test_wormhole_candidate_all_conditions_met():
     cand = _make_candidate(source_id="A", target_id="B", community_distance=3)
     report = engine.evaluate(cand, [prop])
     # All four conditions: reverse > 0, community_distance > 2, sem > 0.3, indep > 0.4
-    assert report.is_wormhole_candidate is True
+    assert report.is_SynapticBridge_candidate is True
 
 
-def test_wormhole_candidate_no_reverse():
-    """No reverse path → not a wormhole."""
+def test_SynapticBridge_candidate_no_reverse():
+    """No reverse path → not a SynapticBridge."""
     engine = _make_engine(hyp_responses={})
     prop = _make_proposal(independence_scores=[0.9])
     cand = _make_candidate(community_distance=3)
     report = engine.evaluate(cand, [prop])
-    assert report.is_wormhole_candidate is False
+    assert report.is_SynapticBridge_candidate is False
 
 
-def test_wormhole_candidate_low_community_distance():
-    """Same community → not a wormhole even if reverse path exists."""
+def test_SynapticBridge_candidate_low_community_distance():
+    """Same community → not a SynapticBridge even if reverse path exists."""
     prop = _make_proposal(confidence=0.8, independence_scores=[0.9])
     rev_prop = _make_proposal(confidence=0.75)
     responses = {("B", "A", 3): [rev_prop]}
     engine = _make_engine(hyp_responses=responses)
     cand = _make_candidate(community_distance=1)  # too close
     report = engine.evaluate(cand, [prop])
-    assert report.is_wormhole_candidate is False
+    assert report.is_SynapticBridge_candidate is False
 
 
 # ---------------------------------------------------------------------------

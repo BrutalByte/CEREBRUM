@@ -22,7 +22,7 @@ Holographic Indexing allows each node in a federation to publish a "Hologram"—
 **How it works:**
 *   **Exact Matching**: Using Bloom Filters, nodes can instantly verify if a specific entity exists in a peer's graph without the peer ever revealing its full list of nodes.
 *   **Semantic Matching**: Nodes exchange "Community Centroids"—mathematical summaries of their semantic clusters. This allows a reasoning engine to say: *"I am looking for a concept related to 'Carbon Emissions'; Partner A's hologram indicates they have a high density of knowledge in that semantic region."*
-*   **Wormhole Traversal (v1.2.0)**: Once a match is found, the query "tunnels" to the peer using secure, cryptographically signed requests.
+*   **Synaptic Bridge Traversal (v1.2.0)**: Once a match is found, the query "tunnels" to the peer using secure, cryptographically signed requests.
 
 ### Key Enterprise Benefits
 *   **Zero-Trust Collaboration**: Collaborate with partners or vendors without ever sharing your raw Knowledge Graph.

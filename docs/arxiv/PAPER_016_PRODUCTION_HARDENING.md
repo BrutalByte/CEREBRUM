@@ -51,7 +51,7 @@ This paper documents the eight structural holes found in CEREBRUM v0.4.0 and v1.
 
 #### 2.3 Hole 3: Namespace Collision (IngestionPipeline × SignalEncoder)
 
-**Root cause**: Both `IngestionPipeline` (text entities) and `SignalEncoder` (sensor entities) project into the same entity ID space with no prefix. A sensor named `"Temp_Sensor_1"` and a text entity `"Temp_Sensor_1"` merge into one node — a "semantic wormhole." The merged node receives both text embeddings and sensor signal embeddings, producing a hybrid representation that is meaningless for either modality.
+**Root cause**: Both `IngestionPipeline` (text entities) and `SignalEncoder` (sensor entities) project into the same entity ID space with no prefix. A sensor named `"Temp_Sensor_1"` and a text entity `"Temp_Sensor_1"` merge into one node — a "semantic Synaptic Bridge." The merged node receives both text embeddings and sensor signal embeddings, producing a hybrid representation that is meaningless for either modality.
 
 **Severity**: Data integrity failure — cross-modal entity collision silently corrupts embeddings and CSA attention weights.
 

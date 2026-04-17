@@ -1,0 +1,3 @@
+{
+  "output": "Output: At line:47 char:33\n+ (Get-Content TEST_LOG.md -Raw) + `$new_entry | Set-Content TEST_LOG.m ...\n+                                 ~\nYou must provide a value expression following the '+' operator.\nAt line:47 char:34\n+ (Get-Content TEST_LOG.md -Raw) + `$new_entry | Set-Content TEST_LOG.m ...\n+                                  ~~~~~~~~~~~\nUnexpected token '`$new_entry' in expression or statement.\n    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException\n    + FullyQualifiedErrorId : ExpectedValueExpression\n \nExit Code: 1\nProcess Group PGID: 76584"
+}

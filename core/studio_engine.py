@@ -554,7 +554,7 @@ class StudioEngine:
                 str(u), str(v),
                 title=rel,
                 dashes="rem_synthesized" in rel,
-                color="#ff8844" if "wormhole" in rel else "#8b949e",
+                color="#ff8844" if "SynapticBridge" in rel else "#8b949e",
             )
         import base64
         with tempfile.NamedTemporaryFile(
@@ -595,7 +595,7 @@ class StudioEngine:
             on_path = u_str in path_set and v_str in path_set
             color = (
                 "#00ffff"   if on_path           else
-                "#ff8844"   if "wormhole" in rel  else
+                "#ff8844"   if "SynapticBridge" in rel  else
                 "#8b949e"   if "rem_synthesized" in rel else
                 "#444444"
             )
@@ -606,7 +606,7 @@ class StudioEngine:
                 "color":       color,
                 "width":       3 if on_path else 1,
                 "is_on_path":  on_path,
-                "is_wormhole": "wormhole" in rel,
+                "is_SynapticBridge": "SynapticBridge" in rel,
             })
 
         graph_json     = json.dumps({"nodes": nodes_data, "links": links_data})
@@ -637,7 +637,7 @@ class StudioEngine:
             .linkDirectionalArrowRelPos(1)
             .linkColor(link => link.color)
             .linkWidth(link => link.width)
-            .linkCurvature(link => link.is_wormhole ? 0.2 : 0)
+            .linkCurvature(link => link.is_SynapticBridge ? 0.2 : 0)
             .linkDirectionalParticles(link => link.is_on_path ? 10 : (link.width > 1 ? 2 : 0))
             .linkDirectionalParticleSpeed(link => link.is_on_path ? 0.02 : 0.005)
             .linkDirectionalParticleWidth(link => link.is_on_path ? 4 : 2);

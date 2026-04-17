@@ -1,0 +1,3 @@
+{
+  "output": "Successfully modified file: E:\\Development\\Cerebrum\\core\\thalamus.py (1 replacements). Here is the updated code:\n...\n            except Exception:\n                prov = \"\"\n        else:\n            prov = str(meta.get(\"provenance\", \"\"))\n\n        # Phase 35: Strict Provenance Enforcement\n        if self._strict_prov and not prov:\n            conf = 0.1  # Ungrounded claims are penalized to near-zero confidence\n\n        # 6. Weight (pass through from metadata)\n        try:\n            weight = float(meta.get(\"weight\", 1.0))\n        except (TypeError, ValueError):\n            weight = 1.0\n..."
+}

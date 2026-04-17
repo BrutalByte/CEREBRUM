@@ -1,0 +1,3 @@
+{
+  "output": "Output: \nadapters\\federated_adapter.py:150:    def get_reasoning_branches(\nadapters\\networkx_adapter.py:295:    def get_reasoning_branches(\nadapters\\remote_adapter.py:320:    def get_reasoning_branches(\nProcess Group PGID: 55168"
+}

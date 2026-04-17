@@ -2,7 +2,7 @@
 Distributed Beam Traversal for Federated CEREBRUM (Phase 32).
 
 Extends BeamTraversal to support delegated reasoning. When the traversal
-reaches a node that exists in multiple graphs (aliases) or a WORMHOLE node,
+reaches a node that exists in multiple graphs (aliases) or a SynapticBridge node,
 it can request a 'Reasoning Branch' from the remote node rather than
 fetching neighbors one-by-one over the network.
 """
