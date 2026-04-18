@@ -2443,6 +2443,9 @@ def create_app(
             working_memory_size=s.get("working_memory_size", 0),
             active_goals=s.get("active_goals", 0),
             inference_suppressed=s.get("inference_suppressed", False),
+            consolidation_enabled=s.get("consolidation_enabled", False),
+            total_consolidations=s.get("total_consolidations", 0),
+            total_edges_strengthened=s.get("total_edges_strengthened", 0),
         )
 
     @router.post("/research/loop/start", response_model=LoopStatusResponse, tags=["research"])
@@ -2503,6 +2506,11 @@ def create_app(
             gui_toolkit_url=req.gui_toolkit_url if req.gui_toolkit_url is not None else c.gui_toolkit_url,
             working_memory=req.working_memory if req.working_memory is not None else c.working_memory,
             working_memory_maxlen=req.working_memory_maxlen if req.working_memory_maxlen is not None else c.working_memory_maxlen,
+            consolidation=req.consolidation if req.consolidation is not None else c.consolidation,
+            consolidation_min_score=req.consolidation_min_score if req.consolidation_min_score is not None else c.consolidation_min_score,
+            consolidation_k=req.consolidation_k if req.consolidation_k is not None else c.consolidation_k,
+            consolidation_max_weight=req.consolidation_max_weight if req.consolidation_max_weight is not None else c.consolidation_max_weight,
+            consolidation_hebbian_delta=req.consolidation_hebbian_delta if req.consolidation_hebbian_delta is not None else c.consolidation_hebbian_delta,
         )
         loop.configure(new_cfg)
         return _loop_status_response(loop)

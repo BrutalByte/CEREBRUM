@@ -30,6 +30,7 @@ class NeuralEventType(str, Enum):
     ACTIVE_INFERENCE_PULSE = "ACTIVE_INFERENCE_PULSE" # Phase 93 daydreaming
     GUI_ADAPTATION         = "GUI_ADAPTATION"          # Phase 94 self-modifying GUI
     GOAL_UPDATE            = "GOAL_UPDATE"             # Phase 95 goal status changed
+    CONSOLIDATION_PULSE    = "CONSOLIDATION_PULSE"     # Phase 96 Hebbian replay
 
 class NeuralEventHeader(BaseModel):
     """Metadata for every neural event."""
@@ -133,6 +134,23 @@ class NeuralEvent(BaseModel):
                 "metric_type": metric_type,
                 "metric_value": metric_value,
                 "target_value": target_value,
+            },
+        )
+
+    @classmethod
+    def consolidation_pulse(
+        cls,
+        entries_replayed: int,
+        edges_strengthened: int,
+        mean_delta: float,
+    ) -> "NeuralEvent":
+        """Helper to create a memory consolidation event (Phase 96)."""
+        return cls(
+            event_type=NeuralEventType.CONSOLIDATION_PULSE,
+            payload={
+                "entries_replayed": entries_replayed,
+                "edges_strengthened": edges_strengthened,
+                "mean_delta": mean_delta,
             },
         )
 

@@ -832,6 +832,11 @@ class CerebrumGraph:
                 import time as _time
                 _pe  = trace_info.prediction_error if trace_info is not None else None
                 _sol = trace_info.soliton_index    if trace_info is not None else None
+                # Phase 96: extract edge triples from best path for consolidation
+                _path_edges = []
+                if answers and getattr(answers[0], "best_path", None) is not None:
+                    ns = answers[0].best_path.nodes
+                    _path_edges = [(ns[i-1], ns[i], ns[i+1]) for i in range(1, len(ns), 2)]
                 self._working_memory.record(MemoryEntry(
                     timestamp        = _time.time(),
                     seeds            = original_seeds,
@@ -840,6 +845,7 @@ class CerebrumGraph:
                     soliton_index    = _sol,
                     prediction_error = _pe,
                     source           = "query",
+                    path_edges       = _path_edges,
                 ))
             except Exception as exc:
                 logger.warning("WorkingMemory record failed: %s", exc)

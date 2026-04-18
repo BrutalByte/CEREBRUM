@@ -921,6 +921,12 @@ class LoopConfigSchema(BaseModel):
     # Phase 95: Working Memory + Goal System
     working_memory: Optional[bool] = Field(default=None, description="Enable working memory and goal-directed inference.")
     working_memory_maxlen: Optional[int] = Field(default=None, ge=10, le=1000, description="Maximum entries in the working memory buffer.")
+    # Phase 96: Memory Consolidation
+    consolidation: Optional[bool] = Field(default=None, description="Enable Hebbian replay consolidation of working memory.")
+    consolidation_min_score: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Minimum top_score for a WM entry to be replayed.")
+    consolidation_k: Optional[int] = Field(default=None, ge=1, le=50, description="Max WM entries to replay per consolidation pass.")
+    consolidation_max_weight: Optional[float] = Field(default=None, ge=1.0, le=10.0, description="Upper bound on edge weight after Hebbian boost.")
+    consolidation_hebbian_delta: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Base weight increment per replay, scaled by entry quality.")
 
 
 class CycleRecordSchema(BaseModel):
@@ -971,6 +977,9 @@ class LoopStatusResponse(BaseModel):
     working_memory_size: int = 0
     active_goals: int = 0
     inference_suppressed: bool = False
+    consolidation_enabled: bool = False
+    total_consolidations: int = 0
+    total_edges_strengthened: int = 0
 
 
 # ---------------------------------------------------------------------------

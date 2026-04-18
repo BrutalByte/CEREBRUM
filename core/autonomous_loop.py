@@ -75,6 +75,13 @@ class LoopConfig:
     working_memory: bool = False
     working_memory_maxlen: int = 50
 
+    # Phase 96: Memory Consolidation (Hebbian Replay)
+    consolidation: bool = False
+    consolidation_min_score: float = 0.6
+    consolidation_k: int = 5
+    consolidation_max_weight: float = 2.0
+    consolidation_hebbian_delta: float = 0.05
+
 
 # ---------------------------------------------------------------------------
 # Cycle record
@@ -161,6 +168,24 @@ class AutonomousDiscoveryLoop:
                 logger.info("AutonomousDiscoveryLoop: WorkingMemory + GoalStack enabled.")
             except Exception:
                 logger.exception("AutonomousDiscoveryLoop: failed to init working memory/goal system.")
+
+        # Phase 96: Memory Consolidation
+        self._consolidation_engine = None
+        self._total_consolidations = 0
+        self._total_edges_strengthened = 0
+        if self._config.consolidation:
+            try:
+                from core.consolidation_engine import ConsolidationEngine
+                self._consolidation_engine = ConsolidationEngine(
+                    adapter=graph.adapter,
+                    graph=graph,
+                    min_score=self._config.consolidation_min_score,
+                    max_weight=self._config.consolidation_max_weight,
+                    hebbian_delta=self._config.consolidation_hebbian_delta,
+                )
+                logger.info("AutonomousDiscoveryLoop: ConsolidationEngine enabled.")
+            except Exception:
+                logger.exception("AutonomousDiscoveryLoop: failed to init ConsolidationEngine.")
 
         # Phase 94: GUI Adaptation
         self._gui_engine = None
@@ -369,6 +394,9 @@ class AutonomousDiscoveryLoop:
                 "working_memory_size": len(self._wm._buffer) if self._wm is not None else 0,
                 "active_goals": len(self._goal_stack.all_active()) if self._goal_stack is not None else 0,
                 "inference_suppressed": self._suppress_inference,
+                "consolidation_enabled": cfg.consolidation,
+                "total_consolidations": self._total_consolidations,
+                "total_edges_strengthened": self._total_edges_strengthened,
             }
             return s
 
@@ -399,6 +427,18 @@ class AutonomousDiscoveryLoop:
                     self._suppress_inference = self._goal_evaluator.evaluate(self._goal_stack)
                 except Exception:
                     logger.exception("AutonomousDiscoveryLoop: goal evaluation failed.")
+
+            # 2b. Phase 96: Memory Consolidation (Hebbian replay)
+            if self._consolidation_engine is not None and self._wm is not None:
+                try:
+                    result = self._consolidation_engine.consolidate(
+                        self._wm, k=self._config.consolidation_k
+                    )
+                    with self._lock:
+                        self._total_consolidations += 1
+                        self._total_edges_strengthened += result.edges_strengthened
+                except Exception:
+                    logger.exception("AutonomousDiscoveryLoop: consolidation failed.")
 
             # 3. Active Inference (Daydreaming)
             if self._config.active_inference and (now - last_inference_at) >= self._config.active_inference_interval:

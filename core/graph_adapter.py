@@ -142,6 +142,21 @@ class GraphAdapter(ABC):
             "Override this method to enable provenance rollback."
         )
 
+    def update_edge_weight(
+        self, u: str, v: str, relation: str,
+        delta: float = 0.0, max_weight: float = 2.0
+    ) -> int:
+        """Increase edge weight by delta (Hebbian LTP, Phase 96).
+
+        Returns 1 if the edge was found and updated, 0 otherwise.
+        Raises NotImplementedError by default; adapters that support
+        mutation should override this method.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not implement update_edge_weight(). "
+            "Override this method to enable Hebbian consolidation."
+        )
+
     def get_reasoning_branches(
         self,
         seed_id: str,

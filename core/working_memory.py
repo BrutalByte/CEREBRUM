@@ -10,7 +10,7 @@ import threading
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -22,6 +22,8 @@ class MemoryEntry:
     soliton_index: Optional[float]
     prediction_error: Optional[float]
     source: str                          # "query" | "active_inference" | "goal_directed" | "discovery_cycle"
+    path_edges: List[Tuple[str, str, str]] = field(default_factory=list)
+    # Each triple: (source_entity_id, relation, target_entity_id) from best path
 
 
 _DECAY_LAMBDA = 0.01  # recency decay rate: exp(-λ * seconds_ago)
