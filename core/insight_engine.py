@@ -180,6 +180,9 @@ class InsightEngine:
         self._warm_thread: Optional[threading.Thread] = None
         self._cold_timer: Optional[threading.Timer]   = None
 
+        # Phase 98 Gap 3: optional WorkingMemory attachment
+        self._wm: Optional[Any] = None
+
         self._start_warm_path()
         if cold_scan_interval is not None:
             self._schedule_cold()
@@ -187,6 +190,10 @@ class InsightEngine:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
+
+    def set_working_memory(self, wm: Any) -> None:
+        """Attach a WorkingMemoryBuffer so insights are recorded there (Gap 3)."""
+        self._wm = wm
 
     # --- Hot path (called inline by BeamTraversal, O(1)) ----------------
 
@@ -496,13 +503,34 @@ class InsightEngine:
         """
         nodes = path.nodes
         delta = self.hebbian_delta * insight_score
+        path_edges = []
         for i in range(1, len(nodes), 2):
             u = nodes[i - 1]
+            rel = nodes[i]
             v = nodes[i + 1]
+            path_edges.append((u, rel, v))
             if G.has_edge(u, v):
                 data = G.get_edge_data(u, v)
                 old  = data.get("confidence", 1.0)
                 data["confidence"] = min(1.0, old + delta)
+
+        # Phase 98 Gap 3: record insight to working memory
+        if self._wm is not None and path_edges:
+            try:
+                import time as _time
+                from core.working_memory import MemoryEntry
+                self._wm.record(MemoryEntry(
+                    timestamp=_time.time(),
+                    seeds=[nodes[0]] if nodes else [],
+                    answers=[nodes[-1]] if nodes else [],
+                    top_score=min(1.0, insight_score),
+                    soliton_index=None,
+                    prediction_error=None,
+                    source="insight",
+                    path_edges=path_edges,
+                ))
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------
     # Internal — cold path scheduling

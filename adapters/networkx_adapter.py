@@ -294,11 +294,12 @@ class NetworkXAdapter(GraphAdapter):
 
     def update_edge_weight(
         self, u: str, v: str, relation: str,
-        delta: float = 0.0, max_weight: float = 2.0
+        delta: float = 0.0, max_weight: float = 2.0, min_weight: float = 0.0
     ) -> int:
-        """Increase edge weight by delta (Hebbian LTP, Phase 96).
+        """Add delta to edge weight, clamped to [min_weight, max_weight].
 
-        Returns 1 if the matching edge was found and updated, 0 otherwise.
+        Supports both LTP (positive delta, Phase 96) and LTD (negative delta,
+        Phase 97). Returns 1 if the matching edge was found and updated, 0 otherwise.
         Matches by relation attribute. Works for both simple Graph and MultiGraph.
         """
         if not self._G.has_edge(u, v):
@@ -306,14 +307,51 @@ class NetworkXAdapter(GraphAdapter):
         if self._G.is_multigraph():
             for _key, attrs in (self._G.get_edge_data(u, v) or {}).items():
                 if attrs.get("relation") == relation:
-                    attrs["weight"] = min(max_weight, attrs.get("weight", 1.0) + delta)
+                    attrs["weight"] = min(max_weight, max(min_weight, attrs.get("weight", 1.0) + delta))
                     return 1
         else:
             ed = self._G.get_edge_data(u, v) or {}
             if ed.get("relation") == relation:
-                ed["weight"] = min(max_weight, ed.get("weight", 1.0) + delta)
+                ed["weight"] = min(max_weight, max(min_weight, ed.get("weight", 1.0) + delta))
                 return 1
         return 0
+
+    def update_edge_valence(
+        self, u: str, v: str, relation: str,
+        delta: float = 0.0, min_val: float = -1.0, max_val: float = 1.0
+    ) -> int:
+        """Add delta to edge valence attribute, clamped to [min_val, max_val].
+
+        Valence is separate from weight and lives in edge attribute "valence".
+        Returns 1 if matching edge found and updated, 0 otherwise.
+        """
+        if not self._G.has_edge(u, v):
+            return 0
+        if self._G.is_multigraph():
+            for _key, attrs in (self._G.get_edge_data(u, v) or {}).items():
+                if attrs.get("relation") == relation:
+                    attrs["valence"] = min(max_val, max(min_val, attrs.get("valence", 0.0) + delta))
+                    return 1
+        else:
+            ed = self._G.get_edge_data(u, v) or {}
+            if ed.get("relation") == relation:
+                ed["valence"] = min(max_val, max(min_val, ed.get("valence", 0.0) + delta))
+                return 1
+        return 0
+
+    def get_edge_valence(self, u: str, v: str, relation: str) -> float:
+        """Return the valence attribute of the matching edge, or 0.0 if absent."""
+        if not self._G.has_edge(u, v):
+            return 0.0
+        if self._G.is_multigraph():
+            for attrs in (self._G.get_edge_data(u, v) or {}).values():
+                if attrs.get("relation") == relation:
+                    return float(attrs.get("valence", 0.0))
+        else:
+            ed = self._G.get_edge_data(u, v) or {}
+            if ed.get("relation") == relation:
+                return float(ed.get("valence", 0.0))
+        return 0.0
 
     def get_reasoning_branches(
         self,

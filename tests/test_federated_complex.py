@@ -41,7 +41,7 @@ def test_distributed_boundary_delegation():
                     "context_embedding": context_embedding.tolist() if context_embedding is not None else None,
                     **kwargs
                 }
-                resp = client_b.post("/traverse", json=payload, headers={"X-API-Key": "dev-secret"})
+                resp = client_b.post("/v1/traverse", json=payload, headers={"X-API-Key": "dev-secret"})
                 return resp.json()["branches"]
             def get_entity(self, eid):
                 return adapter_b.get_entity(eid)

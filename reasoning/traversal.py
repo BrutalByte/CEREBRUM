@@ -355,6 +355,13 @@ class BeamTraversal:
         self.quantized = quantized
         # Phase 68: Store hormonal overrides for CSA parameters
         self.csa_overrides = {k: v for k, v in kwargs.items() if k in CSA_PARAM_KEYS}
+        # Phase 99: Thalamic Gating — WM priming map
+        self.node_priming: Dict[str, float] = {}
+        self.priming_boost: float = 0.3
+        # Phase 100: Lateral Inhibition — winner-take-all community NMS
+        self.lateral_inhibition_ratio: float = 0.0
+        # Phase 101: Emotional Valence — aversive/appetitive edge scoring
+        self._valence_engine: Optional[Any] = None
 
 
     def traverse(
@@ -364,6 +371,7 @@ class BeamTraversal:
         query_embedding: Optional[np.ndarray] = None,
         community_merger=None,
         trace_info: Optional["ReasoningTrace"] = None,
+        node_priming: Optional[Dict[str, float]] = None,
     ) -> List[TraversalPath]:
         """
         Run beam traversal from the given seed entity IDs.
@@ -375,6 +383,7 @@ class BeamTraversal:
         query_embedding : Optional[np.ndarray] of the question text.
         community_merger: Optional[QueryGuidedCommunityMerger] instance.
         trace_info      : Optional ReasoningTrace to populate (Phase 62).
+        node_priming    : Optional per-node attention boost map (Phase 99).
         """
         emb_dim = self._infer_dim()
         self.expansions = 0
@@ -398,9 +407,12 @@ class BeamTraversal:
             if _cmap is not None:
                 self.csa.set_query_snapshot(dict(_cmap))
             self.csa.set_query_time(query_time)
+        _active_priming = node_priming if node_priming is not None else self.node_priming
         try:
             # Phase 62: Explainable Reasoning Trace (ERT)
-            paths = self._traverse_inner(seeds, emb_dim, query_time, trace_info=trace_info)
+            paths = self._traverse_inner(seeds, emb_dim, query_time,
+                                         trace_info=trace_info,
+                                         node_priming=_active_priming)
             _dt = (_time.perf_counter() - _t0) * 1000
             _log.info(
                 "Traversal END    paths=%d  expansions=%d  elapsed=%.1fms",
@@ -418,6 +430,7 @@ class BeamTraversal:
         emb_dim: int,
         query_time: Optional[float],
         trace_info: Optional["ReasoningTrace"] = None,
+        node_priming: Optional[Dict[str, float]] = None,
     ) -> "List[TraversalPath]":
         # Initialize beam from seed entities
         beam: List[TraversalPath] = []
@@ -573,6 +586,17 @@ class BeamTraversal:
                             features_vector = ReasoningLogit(sim, cs, etw, nd, hd, pr_v, td, 0.0, 0.0, grounding).to_vector()
 
 
+                        # Phase 99: Thalamic Gating — WM priming boost
+                        if node_priming and v_eff in node_priming:
+                            w = w * (1.0 + self.priming_boost * node_priming[v_eff])
+
+                        # Phase 101: Emotional Valence — aversive edge penalty
+                        _valence_engine = getattr(self, "_valence_engine", None)
+                        if _valence_engine is not None:
+                            _val = _valence_engine.get_valence(path.tail, v_eff, rel_eff)
+                            if _val < 0.0:
+                                w = w * (1.0 + _valence_engine.valence_weight * _val)
+
                         # Path metadata and extension
                         v_emb = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
                         v_cid = self.adapter.get_community(v_eff)
@@ -716,6 +740,41 @@ class BeamTraversal:
 
         return all_paths
 
+    def _apply_lateral_inhibition(
+        self, candidates: "List[TraversalPath]"
+    ) -> "List[TraversalPath]":
+        """Phase 100: Non-Maximum Suppression grouped by tail community.
+
+        Within each community group, lower-ranked paths are suppressed
+        proportionally to their rank. ratio=0 → no change; ratio=1 → strict
+        one-winner-per-community. The winner (rank 0) is never suppressed.
+        """
+        ratio = self.lateral_inhibition_ratio
+        if ratio <= 0.0:
+            return candidates
+
+        # Group by tail community ID
+        groups: Dict[int, List[TraversalPath]] = {}
+        for p in candidates:
+            cid = self.adapter.get_community(p.tail) if p.tail else -1
+            groups.setdefault(cid, []).append(p)
+
+        result = []
+        for group in groups.values():
+            group.sort(key=lambda p: p.score, reverse=True)
+            n = len(group)
+            for rank, p in enumerate(group):
+                if rank == 0:
+                    result.append(p)
+                else:
+                    suppressed_score = p.score * (1.0 - ratio * rank / n)
+                    # Create a shallow copy with suppressed score
+                    import copy
+                    sp = copy.copy(p)
+                    sp.score = max(0.0, suppressed_score)
+                    result.append(sp)
+        return result
+
     def _prune_candidates(
         self,
         candidates: "List[TraversalPath]",
@@ -728,10 +787,15 @@ class BeamTraversal:
         (e.g. Engram-steered pruning).  The default implementation sorts by
         raw path score (or Thompson-sampled Beta score in probabilistic mode).
 
+        Phase 100: Lateral inhibition (community-grouped NMS) is applied
+        before final selection when lateral_inhibition_ratio > 0.
+
         The terminal hop is never pruned — all candidates are returned sorted
         so the answer extractor has the full frontier to deduplicate.
         """
         hop_bw = self._beam_widths.get(hop, self.beam_width)
+        if self.lateral_inhibition_ratio > 0.0:
+            candidates = self._apply_lateral_inhibition(candidates)
         if self.probabilistic:
             _rng = self._rng
             
@@ -784,6 +848,7 @@ class AsyncBeamTraversal(BeamTraversal):
         seeds: List[str],
         query_time: Optional[float] = None,
         trace_info: Optional["ReasoningTrace"] = None,
+        node_priming: Optional[Dict[str, float]] = None,
     ):
         """
         Run beam traversal and yield paths hop-by-hop.
@@ -802,14 +867,14 @@ class AsyncBeamTraversal(BeamTraversal):
                 self.csa.set_query_snapshot(dict(_cmap))
             self.csa.set_query_time(query_time)
         try:
-            async for hop_result in self._traverse_stream_inner(seeds, emb_dim, query_time, trace_info=trace_info):
+            async for hop_result in self._traverse_stream_inner(seeds, emb_dim, query_time, trace_info=trace_info, node_priming=node_priming):
                 yield hop_result
         finally:
             if self.csa is not None:
                 self.csa.clear_query_snapshot()
                 self.csa.set_query_time(None)
 
-    async def _traverse_stream_inner(self, seeds, emb_dim, query_time, trace_info=None):
+    async def _traverse_stream_inner(self, seeds, emb_dim, query_time, trace_info=None, node_priming=None):
         import asyncio
         # Initialize beam from seed entities
         beam: List[TraversalPath] = []
@@ -955,6 +1020,17 @@ class AsyncBeamTraversal(BeamTraversal):
                             grounding = 1.0
                             # Positional order: sim, cs, etw, nd, hd, pr_v, td, nr_v, sd, grounding
                             features_vector = ReasoningLogit(sim, cs, etw, nd, hd, pr_v, td, nr_v, 0.0, grounding).to_vector()
+
+                        # Phase 99: Thalamic Gating — WM priming boost (async parity)
+                        if node_priming and v_eff in node_priming:
+                            w = w * (1.0 + self.priming_boost * node_priming[v_eff])
+
+                        # Phase 101: Emotional Valence — aversive edge penalty (async parity)
+                        _valence_engine = getattr(self, "_valence_engine", None)
+                        if _valence_engine is not None:
+                            _val = _valence_engine.get_valence(path.tail, v_eff, rel_eff)
+                            if _val < 0.0:
+                                w = w * (1.0 + _valence_engine.valence_weight * _val)
 
                         v_emb  = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
                         v_cid  = self.adapter.get_community(v_eff)

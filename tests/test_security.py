@@ -10,16 +10,16 @@ from core.security import FederatedAuth
 from typing import List
 
 @pytest.fixture
-def hardened_client():
-    os.environ["PARALLAX_SHARED_SECRET"] = "a-very-secret-and-long-enough-key-for-hs256"
-    
+def hardened_client(monkeypatch):
+    monkeypatch.setenv("PARALLAX_SHARED_SECRET", "a-very-secret-and-long-enough-key-for-hs256")
+
     g = nx.Graph()
     g.add_node("safe_node")
     adapter = NetworkXAdapter(g)
-    
+
     class MockEngine:
         def encode_entities(self, labels): return {k: np.zeros(64) for k in labels}
-            
+
     from api.server import _state
     _state["adapter"] = adapter
     adapter.community_map = {n: 0 for n in g.nodes()}
@@ -28,7 +28,7 @@ def hardened_client():
     _state["embeddings"] = adapter.embeddings
     _state["csa_metadata"] = {"distances": {}, "adjacent_pairs": set()}
     _state["hologram"] = []
-    
+
     app = create_app(adapter=adapter, embedding_engine=MockEngine())
     return TestClient(app)
 

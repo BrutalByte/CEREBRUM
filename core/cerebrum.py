@@ -107,6 +107,7 @@ class CerebrumGraph:
         self._max_neighbors      = max_neighbors
         self._probabilistic      = probabilistic
         self._warm_start_strength = warm_start_strength
+        self._lateral_inhibition_ratio: float = 0.0  # Phase 100
 
         # Telemetry (Phase 63+)
         self._event_callbacks: List[Callable[[NeuralEvent], None]] = []
@@ -643,6 +644,7 @@ class CerebrumGraph:
             probabilistic       = self._probabilistic,
             warm_start_strength = self._warm_start_strength,
         )
+        self._traversal.lateral_inhibition_ratio = self._lateral_inhibition_ratio
 
         self._built = True
         n_comm = len(set(cm.values()))
@@ -741,6 +743,11 @@ class CerebrumGraph:
                 governor            = ResourceGovernor(memory_threshold_pct=memory_threshold_pct),
                 **csa_overrides # Inject hormonal overrides
             )
+            # Copy Phase 99-101 state from the default traversal
+            traversal.lateral_inhibition_ratio = self._lateral_inhibition_ratio
+            _ve = getattr(self._traversal, "_valence_engine", None)
+            if _ve is not None:
+                traversal._valence_engine = _ve
         else:
             traversal = self._traversal
 
@@ -751,6 +758,9 @@ class CerebrumGraph:
                 pred_prior = self.predictive_coder.predict(seeds)
             except Exception as exc:
                 logger.warning("PredictiveCodingEngine.predict() failed: %s", exc)
+
+        # Phase 99: Thalamic Gating — build WM priming map
+        _priming_map = self._build_priming_map()
 
         try:
             # Phase 70: Looped traversal (arXiv:2510.25741)
@@ -765,6 +775,7 @@ class CerebrumGraph:
                     seeds,
                     query_embedding=query_embedding,
                     trace_info=trace_info,
+                    node_priming=_priming_map if _priming_map else None,
                 )
                 if trace_info is not None:
                     trace_info.loop_trace = loop_trace
@@ -773,6 +784,7 @@ class CerebrumGraph:
                     seeds,
                     query_embedding=query_embedding,
                     trace_info=trace_info,
+                    node_priming=_priming_map if _priming_map else None,
                 )
                 loop_trace = None
         finally:
@@ -856,11 +868,45 @@ class CerebrumGraph:
     # Phase 95: Working Memory + Goal Stack attachment
     # ------------------------------------------------------------------
 
+    def attach_valence_engine(self, engine: Any) -> None:
+        """Phase 101: attach a ValenceEngine to the BeamTraversal."""
+        if self._traversal is not None:
+            self._traversal._valence_engine = engine
+
     def attach_working_memory(self, wm: Any) -> None:
         self._working_memory = wm
 
     def attach_goal_stack(self, stack: Any) -> None:
         self._goal_stack = stack
+
+    def _build_priming_map(self) -> Dict[str, float]:
+        """Phase 99: Thalamic Gating — build a recency-weighted node priming map from WM.
+
+        For each entry in the last 20 WM records, contribute
+        ``recency * top_score`` to every seed and answer node.
+        Result is normalized to [0, 1] and returned as a dict.
+        Empty dict when no WM is attached.
+        """
+        import math as _math
+        import time as _time
+        wm = self._working_memory
+        if wm is None:
+            return {}
+        priming: Dict[str, float] = {}
+        now = _time.time()
+        for entry in wm.recent(20):
+            age = max(0.0, now - entry.timestamp)
+            recency = _math.exp(-0.01 * age)
+            contribution = recency * entry.top_score
+            for node in list(entry.seeds) + list(entry.answers):
+                if node:
+                    priming[node] = priming.get(node, 0.0) + contribution
+        if not priming:
+            return {}
+        max_val = max(priming.values())
+        if max_val <= 0.0:
+            return {}
+        return {k: v / max_val for k, v in priming.items()}
 
     # ------------------------------------------------------------------
     # Convenience properties

@@ -142,15 +142,36 @@ class GraphAdapter(ABC):
             "Override this method to enable provenance rollback."
         )
 
+    def update_edge_valence(
+        self, u: str, v: str, relation: str,
+        delta: float = 0.0, min_val: float = -1.0, max_val: float = 1.0
+    ) -> int:
+        """Add delta to edge valence (aversive/appetitive tone), clamped to [min_val, max_val].
+
+        Valence is stored separately from weight in edge attribute "valence".
+        Raises NotImplementedError by default; override in mutable adapters.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not implement update_edge_valence()."
+        )
+
+    def get_edge_valence(self, u: str, v: str, relation: str) -> float:
+        """Return the valence of the matching edge, or 0.0 if absent.
+
+        Default implementation returns 0.0 (neutral) for adapters that
+        don't store valence; override for full support.
+        """
+        return 0.0
+
     def update_edge_weight(
         self, u: str, v: str, relation: str,
-        delta: float = 0.0, max_weight: float = 2.0
+        delta: float = 0.0, max_weight: float = 2.0, min_weight: float = 0.0
     ) -> int:
-        """Increase edge weight by delta (Hebbian LTP, Phase 96).
+        """Add delta to edge weight, clamped to [min_weight, max_weight].
 
-        Returns 1 if the edge was found and updated, 0 otherwise.
-        Raises NotImplementedError by default; adapters that support
-        mutation should override this method.
+        Supports LTP (positive delta, Phase 96) and LTD (negative delta, Phase 97).
+        Returns 1 if found and updated, 0 otherwise.
+        Raises NotImplementedError by default; override in adapters that support mutation.
         """
         raise NotImplementedError(
             f"{type(self).__name__} does not implement update_edge_weight(). "

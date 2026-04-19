@@ -131,10 +131,21 @@ async def get_authenticated_node(
         except Exception:
             raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid or expired JWT")
 
-    # 3. No credentials provided — allow if no keys are configured (dev mode)
-    if not valid_keys:
+    # 3. No credentials provided — allow only in open dev mode (no keys AND no shared secret)
+    shared_secret = os.getenv("PARALLAX_SHARED_SECRET", "")
+    if not valid_keys and not shared_secret:
         return {"node_id": "anonymous", "scopes": ["query", "search", "graph"]}
     raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Authentication required")
+
+async def _get_health_auth(
+    api_key: Optional[str] = Security(api_key_header),
+    token: Optional[HTTPAuthorizationCredentials] = Security(bearer_scheme),
+) -> Dict:
+    """Health endpoint auth: open in API-key mode, enforced only when PARALLAX_SHARED_SECRET is set."""
+    if not os.getenv("PARALLAX_SHARED_SECRET", ""):
+        return {"node_id": "anonymous", "scopes": []}
+    return await get_authenticated_node(api_key=api_key, token=token)
+
 
 def check_scope(required_scope: str):
     """Dependency factory for checking specific scopes on the authenticated node."""
@@ -453,7 +464,7 @@ def create_app(
         return _state["modulator"].to_state()
 
     @router.get("/health", response_model=HealthResponse, tags=["system"])
-    async def health():
+    async def health(node: Dict = Depends(_get_health_auth)):
         cm  = _state["community_map"] or {}
         emb = _state["embeddings"] or {}
         return HealthResponse(
@@ -2446,6 +2457,12 @@ def create_app(
             consolidation_enabled=s.get("consolidation_enabled", False),
             total_consolidations=s.get("total_consolidations", 0),
             total_edges_strengthened=s.get("total_edges_strengthened", 0),
+            valence_learning_enabled=s.get("valence_learning_enabled", False),
+            synaptic_decay_enabled=s.get("synaptic_decay_enabled", False),
+            total_decay_passes=s.get("total_decay_passes", 0),
+            total_edges_decayed=s.get("total_edges_decayed", 0),
+            default_mode_enabled=s.get("default_mode_enabled", False),
+            total_dmn_pulses=s.get("total_dmn_pulses", 0),
         )
 
     @router.post("/research/loop/start", response_model=LoopStatusResponse, tags=["research"])
@@ -2503,6 +2520,7 @@ def create_app(
             active_inference_interval=req.active_inference_interval if req.active_inference_interval is not None else c.active_inference_interval,
             active_inference_floor=req.active_inference_floor if req.active_inference_floor is not None else c.active_inference_floor,
             gui_adaptation=req.gui_adaptation if req.gui_adaptation is not None else c.gui_adaptation,
+            gui_widget_path=req.gui_widget_path if req.gui_widget_path is not None else c.gui_widget_path,
             gui_toolkit_url=req.gui_toolkit_url if req.gui_toolkit_url is not None else c.gui_toolkit_url,
             working_memory=req.working_memory if req.working_memory is not None else c.working_memory,
             working_memory_maxlen=req.working_memory_maxlen if req.working_memory_maxlen is not None else c.working_memory_maxlen,
@@ -2511,6 +2529,16 @@ def create_app(
             consolidation_k=req.consolidation_k if req.consolidation_k is not None else c.consolidation_k,
             consolidation_max_weight=req.consolidation_max_weight if req.consolidation_max_weight is not None else c.consolidation_max_weight,
             consolidation_hebbian_delta=req.consolidation_hebbian_delta if req.consolidation_hebbian_delta is not None else c.consolidation_hebbian_delta,
+            valence_learning=req.valence_learning if req.valence_learning is not None else c.valence_learning,
+            synaptic_decay=req.synaptic_decay if req.synaptic_decay is not None else c.synaptic_decay,
+            decay_rate=req.decay_rate if req.decay_rate is not None else c.decay_rate,
+            decay_baseline=req.decay_baseline if req.decay_baseline is not None else c.decay_baseline,
+            decay_min_weight=req.decay_min_weight if req.decay_min_weight is not None else c.decay_min_weight,
+            decay_resistance_k=req.decay_resistance_k if req.decay_resistance_k is not None else c.decay_resistance_k,
+            decay_interval=req.decay_interval if req.decay_interval is not None else c.decay_interval,
+            default_mode=req.default_mode if req.default_mode is not None else c.default_mode,
+            default_mode_idle_threshold=req.default_mode_idle_threshold if req.default_mode_idle_threshold is not None else c.default_mode_idle_threshold,
+            default_mode_max_insights=req.default_mode_max_insights if req.default_mode_max_insights is not None else c.default_mode_max_insights,
         )
         loop.configure(new_cfg)
         return _loop_status_response(loop)

@@ -235,6 +235,12 @@ class ResearchAgent:
         # Phase 76: provenance ledger (optional — attached via set_provenance_ledger)
         self._provenance_ledger: Optional[Any] = None
 
+        # Phase 98: working memory + goal hints (optional attachments)
+        self._wm: Optional[Any] = None
+        self._goal_hints: List[str] = []
+        # Phase 101: emotional valence engine (optional)
+        self._valence_engine: Optional[Any] = None
+
         # Optional external validator (set by server or constructor caller)
         self._validator: Optional[Any] = None
 
@@ -334,6 +340,21 @@ class ResearchAgent:
         with self._lock:
             self._provenance_ledger = ledger
 
+    def set_working_memory(self, wm: Any) -> None:
+        """Attach a WorkingMemoryBuffer so approve() records outcomes (Gap 5)."""
+        with self._lock:
+            self._wm = wm
+
+    def set_goal_hints(self, entities: List[str]) -> None:
+        """Set goal-hinted entity IDs to boost discovery scoring (Gap 7)."""
+        with self._lock:
+            self._goal_hints = list(entities)
+
+    def set_valence_engine(self, engine: Any) -> None:
+        """Attach a ValenceEngine for emotional conditioning (Phase 101)."""
+        with self._lock:
+            self._valence_engine = engine
+
     def push_candidate(self, candidate: ResearchCandidate) -> bool:
         """
         Externally push a candidate for evaluation in the next scan cycle.
@@ -414,6 +435,48 @@ class ResearchAgent:
                     edges=edge_triples[:edges_added],
                     cycle_number=cycle_number,
                 )
+
+        # Phase 101: record positive valence for approved edges
+        valence_engine = getattr(self, "_valence_engine", None)
+        if valence_engine is not None and edges_added > 0:
+            for p in finding.proposals[:edges_added]:
+                src = getattr(p, "source_id", None)
+                tgt = getattr(p, "target_id", None)
+                rel = getattr(p, "relation", "")
+                conf = getattr(p, "confidence", 1.0)
+                if src and tgt:
+                    try:
+                        valence_engine.record_outcome(
+                            [(src, rel, tgt)], outcome_score=float(conf)
+                        )
+                    except Exception:
+                        pass
+
+        # Phase 98 Gap 5: record approval to working memory
+        wm = self._wm
+        if wm is not None and edges_added > 0:
+            try:
+                import time as _time
+                from core.working_memory import MemoryEntry
+                for p in finding.proposals[:edges_added]:
+                    src = getattr(p, "source_id", None)
+                    tgt = getattr(p, "target_id", None)
+                    rel = getattr(p, "relation", "")
+                    conf = getattr(p, "confidence", 1.0)
+                    if src and tgt:
+                        wm.record(MemoryEntry(
+                            timestamp=_time.time(),
+                            seeds=[src],
+                            answers=[tgt],
+                            top_score=float(conf),
+                            soliton_index=None,
+                            prediction_error=None,
+                            source="approval",
+                            path_edges=[(src, rel, tgt)],
+                        ))
+            except Exception:
+                pass
+
         return edges_added
 
     def reject(self, finding_id: str) -> bool:
@@ -422,6 +485,7 @@ class ResearchAgent:
 
         Returns True if the finding was found and removed, False otherwise.
         """
+        rejected_finding = None
         with self._lock:
             new_deque: collections.deque = collections.deque(
                 maxlen=self._findings.maxlen
@@ -430,12 +494,27 @@ class ResearchAgent:
             for f in self._findings:
                 if f.finding_id == finding_id:
                     found = True
+                    rejected_finding = f
                 else:
                     new_deque.append(f)
             if not found:
                 raise ValueError(f"Finding not found: {finding_id!r}")
             self._findings = new_deque
-            return True
+
+        # Phase 101: record negative valence for rejected path
+        valence_engine = getattr(self, "_valence_engine", None)
+        if valence_engine is not None and rejected_finding is not None:
+            for p in getattr(rejected_finding, "proposals", []):
+                src = getattr(p, "source_id", None)
+                tgt = getattr(p, "target_id", None)
+                rel = getattr(p, "relation", "")
+                if src and tgt:
+                    try:
+                        valence_engine.record_outcome([(src, rel, tgt)], outcome_score=-1.0)
+                    except Exception:
+                        pass
+
+        return True
 
     def report_outcome(self, finding_id: str, correct: bool) -> None:
         """
@@ -1307,8 +1386,14 @@ class ResearchAgent:
 
         # Calibration: boost underrepresented communities (Phase 73)
         if self._calibrator is not None:
-            # Weight by source community — steers exploration toward dark regions
             cal_w = self._calibrator.get_weight(cid_u)
+            potential = min(1.0, potential * cal_w)
+
+        # Phase 98 Gap 7: goal-hinted entities get a 2× discovery boost
+        goal_hints = self._goal_hints
+        if goal_hints and (u in goal_hints or v in goal_hints):
+            potential = min(1.0, potential * 2.0)
+
         return potential, conn_density
 
     def approve_larql_candidates(self, min_confidence: float = 0.8) -> int:

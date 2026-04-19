@@ -917,6 +917,7 @@ class LoopConfigSchema(BaseModel):
     active_inference_floor: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Minimum reinforcement to trigger inference.")
     # Phase 94: GUI Adaptation
     gui_adaptation: Optional[bool] = Field(default=None, description="Enable self-modifying GUI adaptation engine.")
+    gui_widget_path: Optional[str] = Field(default=None, description="UE Blueprint path for adaptive GUI widget.")
     gui_toolkit_url: Optional[str] = Field(default=None, description="URL of the UE Toolkit REST service.")
     # Phase 95: Working Memory + Goal System
     working_memory: Optional[bool] = Field(default=None, description="Enable working memory and goal-directed inference.")
@@ -927,6 +928,19 @@ class LoopConfigSchema(BaseModel):
     consolidation_k: Optional[int] = Field(default=None, ge=1, le=50, description="Max WM entries to replay per consolidation pass.")
     consolidation_max_weight: Optional[float] = Field(default=None, ge=1.0, le=10.0, description="Upper bound on edge weight after Hebbian boost.")
     consolidation_hebbian_delta: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Base weight increment per replay, scaled by entry quality.")
+    # Phase 101: Emotional Valence (Amygdala)
+    valence_learning: Optional[bool] = Field(default=None, description="Enable emotional valence learning (aversive/appetitive edge conditioning).")
+    # Phase 97: Synaptic Decay (LTD)
+    synaptic_decay: Optional[bool] = Field(default=None, description="Enable LTD synaptic homeostasis decay.")
+    decay_rate: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Fraction of gap closed per decay pass.")
+    decay_baseline: Optional[float] = Field(default=None, ge=0.0, description="Target baseline weight for decay.")
+    decay_min_weight: Optional[float] = Field(default=None, ge=0.0, description="Weight floor — never decay below this.")
+    decay_resistance_k: Optional[float] = Field(default=None, ge=0.1, description="Traversal count at which resistance = 50%.")
+    decay_interval: Optional[float] = Field(default=None, ge=10.0, description="Seconds between decay passes.")
+    # Phase 102: Default Mode Network
+    default_mode: Optional[bool] = Field(default=None, description="Enable DMN self-referential idle reasoning.")
+    default_mode_idle_threshold: Optional[float] = Field(default=None, ge=10.0, description="Seconds of idle before DMN activates.")
+    default_mode_max_insights: Optional[int] = Field(default=None, ge=1, le=20, description="Max insights per DMN scan.")
 
 
 class CycleRecordSchema(BaseModel):
@@ -980,6 +994,12 @@ class LoopStatusResponse(BaseModel):
     consolidation_enabled: bool = False
     total_consolidations: int = 0
     total_edges_strengthened: int = 0
+    valence_learning_enabled: bool = False
+    synaptic_decay_enabled: bool = False
+    total_decay_passes: int = 0
+    total_edges_decayed: int = 0
+    default_mode_enabled: bool = False
+    total_dmn_pulses: int = 0
 
 
 # ---------------------------------------------------------------------------

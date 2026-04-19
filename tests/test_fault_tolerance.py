@@ -334,7 +334,7 @@ class TestProcessPoolFallback:
                    side_effect=BrokenExecutor("paging file too small")):
             with patch("core.community_engine.dscf_communities",
                        return_value=sentinel[0]) as mock_dscf:
-                parts = best_of_n_dscf(G, n_trials=2, seed=0, use_multiprocessing=True)
+                parts = best_of_n_dscf(G, n_trials=2, seed=0, use_multiprocessing=True, use_gpu="cpu")
         # dscf_communities should have been called exactly n_trials=2 times (sequential)
         assert mock_dscf.call_count == 2
         # Result must be non-empty
@@ -353,7 +353,7 @@ class TestProcessPoolFallback:
                        side_effect=BrokenExecutor("injected executor failure")):
                 with patch("core.community_engine.dscf_communities",
                            return_value=sentinel):
-                    best_of_n_dscf(G, n_trials=2, seed=0, use_multiprocessing=True)
+                    best_of_n_dscf(G, n_trials=2, seed=0, use_multiprocessing=True, use_gpu="cpu")
         assert any("falling back to sequential DSCF" in r.getMessage() for r in records)
 
 

@@ -51,19 +51,27 @@ class ConsolidationEngine:
         min_score: float = 0.6,
         max_weight: float = 2.0,
         hebbian_delta: float = 0.05,
+        pe_weight: float = 0.3,
     ) -> None:
         self.adapter = adapter
         self.graph = graph
         self.min_score = min_score
         self.max_weight = max_weight
         self.hebbian_delta = hebbian_delta
+        self.pe_weight = pe_weight  # Gap 2: PE salience weight
 
-    def consolidate(self, wm: "WorkingMemoryBuffer", k: int = 5) -> ConsolidationResult:
+    def consolidate(
+        self,
+        wm: "WorkingMemoryBuffer",
+        k: int = 5,
+        reinforcement_scale: float = 1.0,
+    ) -> ConsolidationResult:
         """Replay up to k WM entries and Hebbian-boost their traversed edges.
 
         Only entries whose top_score >= min_score AND that carry non-empty
-        path_edges are eligible. The top-k by score are selected; lower-quality
-        entries are skipped even if k is not reached.
+        path_edges are eligible. Entries are ranked by salience = top_score +
+        pe_weight * prediction_error (Gap 2). Delta is further scaled by
+        reinforcement_scale from ChemicalModulator (Gap 1).
         """
         t0 = time.time()
 
@@ -71,14 +79,19 @@ class ConsolidationEngine:
             e for e in wm.recent(50)
             if e.top_score >= self.min_score and e.path_edges
         ]
-        candidates.sort(key=lambda e: e.top_score, reverse=True)
+        # Gap 2: rank by salience = score + PE contribution
+        candidates.sort(
+            key=lambda e: e.top_score + self.pe_weight * (e.prediction_error or 0.0),
+            reverse=True,
+        )
         candidates = candidates[:k]
 
         total_strengthened = 0
         total_delta_sum = 0.0
 
         for entry in candidates:
-            delta = self.hebbian_delta * entry.top_score
+            # Gap 1: scale delta by dopamine reinforcement signal
+            delta = self.hebbian_delta * entry.top_score * reinforcement_scale
             for (u, rel, v) in entry.path_edges:
                 try:
                     n = self.adapter.update_edge_weight(

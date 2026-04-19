@@ -131,6 +131,7 @@ class LoopedBeamTraversal:
         query_time: Optional[float] = None,
         query_embedding=None,
         trace_info=None,
+        node_priming=None,
     ) -> Tuple[List[Any], LoopTrace]:
         """
         Execute the looped traversal and return (merged_paths, loop_trace).
@@ -155,6 +156,7 @@ class LoopedBeamTraversal:
                 query_time=query_time,
                 query_embedding=query_embedding,
                 trace_info=trace_info,
+                node_priming=node_priming,
             )
             lt = LoopTrace(
                 loops_run=1,
@@ -169,7 +171,7 @@ class LoopedBeamTraversal:
             return paths, lt
 
         # --- Multi-loop execution ---
-        return self._multi_loop(seeds, query_time, query_embedding, trace_info)
+        return self._multi_loop(seeds, query_time, query_embedding, trace_info, node_priming)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -181,6 +183,7 @@ class LoopedBeamTraversal:
         query_time: Optional[float],
         query_embedding,
         trace_info,
+        node_priming=None,
     ) -> Tuple[List[Any], LoopTrace]:
 
         original_seed_set: Set[str] = set(original_seeds)
@@ -207,6 +210,7 @@ class LoopedBeamTraversal:
                 current_seeds,
                 query_time=query_time,
                 query_embedding=query_embedding,
+                node_priming=node_priming,
             )
 
             # Merge: keep highest-score path per tail entity

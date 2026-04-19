@@ -31,6 +31,15 @@ class NeuralEventType(str, Enum):
     GUI_ADAPTATION         = "GUI_ADAPTATION"          # Phase 94 self-modifying GUI
     GOAL_UPDATE            = "GOAL_UPDATE"             # Phase 95 goal status changed
     CONSOLIDATION_PULSE    = "CONSOLIDATION_PULSE"     # Phase 96 Hebbian replay
+    SYNAPTIC_DECAY         = "SYNAPTIC_DECAY"           # Phase 97 LTD homeostasis
+    VALENCE_UPDATE         = "VALENCE_UPDATE"           # Phase 101 emotional valence
+    DEFAULT_MODE_PULSE     = "DEFAULT_MODE_PULSE"       # Phase 102 DMN idle reasoning
+
+class NeuralCommand(BaseModel):
+    """A command sent from a client (e.g. UE5) to the CEREBRUM server (Phase 90)."""
+    command_type: NeuralCommandType
+    payload: Dict[str, Any] = Field(default_factory=dict)
+
 
 class NeuralEventHeader(BaseModel):
     """Metadata for every neural event."""
@@ -134,6 +143,57 @@ class NeuralEvent(BaseModel):
                 "metric_type": metric_type,
                 "metric_value": metric_value,
                 "target_value": target_value,
+            },
+        )
+
+    @classmethod
+    def default_mode_pulse(
+        cls,
+        insight_count: int,
+        types: "List[str]",
+    ) -> "NeuralEvent":
+        """Helper to create a Default Mode Network pulse event (Phase 102)."""
+        return cls(
+            event_type=NeuralEventType.DEFAULT_MODE_PULSE,
+            payload={
+                "insight_count": insight_count,
+                "types": types,
+            },
+        )
+
+    @classmethod
+    def valence_update(
+        cls,
+        path_edges: int,
+        outcome_score: float,
+        mean_delta: float,
+    ) -> "NeuralEvent":
+        """Helper to create a valence update event (Phase 101)."""
+        return cls(
+            event_type=NeuralEventType.VALENCE_UPDATE,
+            payload={
+                "path_edges": path_edges,
+                "outcome_score": outcome_score,
+                "mean_delta": mean_delta,
+            },
+        )
+
+    @classmethod
+    def synaptic_decay(
+        cls,
+        edges_processed: int,
+        edges_decayed: int,
+        edges_resisted: int,
+        mean_delta: float,
+    ) -> "NeuralEvent":
+        """Helper to create a synaptic decay (LTD) event (Phase 97)."""
+        return cls(
+            event_type=NeuralEventType.SYNAPTIC_DECAY,
+            payload={
+                "edges_processed": edges_processed,
+                "edges_decayed": edges_decayed,
+                "edges_resisted": edges_resisted,
+                "mean_delta": mean_delta,
             },
         )
 

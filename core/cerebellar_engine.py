@@ -62,6 +62,12 @@ class CerebellarEngine:
         self.dissonance_threshold = dissonance_threshold
         self.min_path_score       = min_path_score
         self._total_events: int   = 0
+        # Phase 98 Gap 4: optional WorkingMemory attachment
+        self._wm: Optional[Any]   = None
+
+    def set_working_memory(self, wm: Any) -> None:
+        """Attach a WorkingMemoryBuffer so dissonance events are recorded there (Gap 4)."""
+        self._wm = wm
 
     def process_results(self, seed_id: str, answers: List[Answer]) -> List[DissonanceEvent]:
         """
@@ -119,6 +125,24 @@ class CerebellarEngine:
                 self.research_agent.push_candidate(candidate)
             except Exception as exc:
                 logger.debug("CerebellarEngine: Failed to notify ResearchAgent: %s", exc)
+
+        # Phase 98 Gap 4: record dissonance to working memory (top_score=0 → signals failure)
+        if self._wm is not None:
+            try:
+                import time as _time
+                from core.working_memory import MemoryEntry
+                self._wm.record(MemoryEntry(
+                    timestamp=_time.time(),
+                    seeds=[event.seed_id],
+                    answers=[event.target_id],
+                    top_score=0.0,
+                    soliton_index=None,
+                    prediction_error=event.dissonance,
+                    source="dissonance",
+                    path_edges=[],
+                ))
+            except Exception:
+                pass
 
         # 2. Parameter Punishment (Meta-Learning)
         # We simulate a "confidently wrong" feedback event.

@@ -220,7 +220,7 @@ def test_hypothesis_api_endpoint_smoke():
 
     app = create_app(adapter=adapter, embedding_engine=engine, community_map=cmap)
     with TestClient(app, headers={"X-API-Key": "dev-secret"}) as c:
-        r = c.post("/hypothesize", json={
+        r = c.post("/v1/hypothesize", json={
             "source_id": "newton",
             "target_id": "maxwell",
             "max_paths": 10,

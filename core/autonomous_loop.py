@@ -82,6 +82,22 @@ class LoopConfig:
     consolidation_max_weight: float = 2.0
     consolidation_hebbian_delta: float = 0.05
 
+    # Phase 97: Synaptic Decay (LTD / Synaptic Homeostasis)
+    synaptic_decay: bool = False
+    decay_rate: float = 0.01
+    decay_baseline: float = 1.0
+    decay_min_weight: float = 0.5
+    decay_resistance_k: float = 5.0
+    decay_interval: float = 600.0
+
+    # Phase 101: Emotional Valence (Amygdala)
+    valence_learning: bool = False
+
+    # Phase 102: Default Mode Network (self-referential idle reasoning)
+    default_mode: bool = False
+    default_mode_idle_threshold: float = 120.0
+    default_mode_max_insights: int = 3
+
 
 # ---------------------------------------------------------------------------
 # Cycle record
@@ -165,6 +181,13 @@ class AutonomousDiscoveryLoop:
                     graph.attach_working_memory(self._wm)
                 if hasattr(graph, "attach_goal_stack"):
                     graph.attach_goal_stack(self._goal_stack)
+                # Phase 98 Gaps 3/4/5: attach WM to agent subsystems
+                for attr in ("_insight_engine", "_cerebellar_engine"):
+                    engine = getattr(agent, attr, None)
+                    if engine is not None and hasattr(engine, "set_working_memory"):
+                        engine.set_working_memory(self._wm)
+                if hasattr(agent, "set_working_memory"):
+                    agent.set_working_memory(self._wm)
                 logger.info("AutonomousDiscoveryLoop: WorkingMemory + GoalStack enabled.")
             except Exception:
                 logger.exception("AutonomousDiscoveryLoop: failed to init working memory/goal system.")
@@ -186,6 +209,59 @@ class AutonomousDiscoveryLoop:
                 logger.info("AutonomousDiscoveryLoop: ConsolidationEngine enabled.")
             except Exception:
                 logger.exception("AutonomousDiscoveryLoop: failed to init ConsolidationEngine.")
+
+        # Phase 97: Synaptic Decay (LTD)
+        self._decay_engine = None
+        self._total_decay_passes = 0
+        self._total_edges_decayed = 0
+        self._last_decay_at: float = 0.0
+        if self._config.synaptic_decay:
+            try:
+                from core.synaptic_decay_engine import SynapticDecayEngine
+                self._decay_engine = SynapticDecayEngine(
+                    adapter=graph.adapter,
+                    graph=graph,
+                    baseline_weight=self._config.decay_baseline,
+                    decay_rate=self._config.decay_rate,
+                    min_weight=self._config.decay_min_weight,
+                    resistance_k=self._config.decay_resistance_k,
+                )
+                logger.info("AutonomousDiscoveryLoop: SynapticDecayEngine enabled.")
+            except Exception:
+                logger.exception("AutonomousDiscoveryLoop: failed to init SynapticDecayEngine.")
+
+        # Phase 101: Emotional Valence
+        self._valence_engine = None
+        if self._config.valence_learning:
+            try:
+                from core.valence_engine import ValenceEngine
+                self._valence_engine = ValenceEngine(
+                    adapter=graph.adapter,
+                    graph=graph,
+                )
+                if hasattr(graph, "attach_valence_engine"):
+                    graph.attach_valence_engine(self._valence_engine)
+                if hasattr(agent, "set_valence_engine"):
+                    agent.set_valence_engine(self._valence_engine)
+                logger.info("AutonomousDiscoveryLoop: ValenceEngine enabled.")
+            except Exception:
+                logger.exception("AutonomousDiscoveryLoop: failed to init ValenceEngine.")
+
+        # Phase 102: Default Mode Network
+        self._dmn_engine = None
+        self._total_dmn_pulses = 0
+        self._last_query_at: float = time.time()
+        if self._config.default_mode:
+            try:
+                from core.default_mode_engine import DefaultModeEngine
+                self._dmn_engine = DefaultModeEngine(
+                    adapter=graph.adapter,
+                    graph=graph,
+                    max_insights=self._config.default_mode_max_insights,
+                )
+                logger.info("AutonomousDiscoveryLoop: DefaultModeEngine enabled.")
+            except Exception:
+                logger.exception("AutonomousDiscoveryLoop: failed to init DefaultModeEngine.")
 
         # Phase 94: GUI Adaptation
         self._gui_engine = None
@@ -397,6 +473,12 @@ class AutonomousDiscoveryLoop:
                 "consolidation_enabled": cfg.consolidation,
                 "total_consolidations": self._total_consolidations,
                 "total_edges_strengthened": self._total_edges_strengthened,
+                "valence_learning_enabled": cfg.valence_learning,
+                "synaptic_decay_enabled": cfg.synaptic_decay,
+                "total_decay_passes": self._total_decay_passes,
+                "total_edges_decayed": self._total_edges_decayed,
+                "default_mode_enabled": cfg.default_mode,
+                "total_dmn_pulses": self._total_dmn_pulses,
             }
             return s
 
@@ -428,17 +510,96 @@ class AutonomousDiscoveryLoop:
                 except Exception:
                     logger.exception("AutonomousDiscoveryLoop: goal evaluation failed.")
 
-            # 2b. Phase 96: Memory Consolidation (Hebbian replay)
+            # 2b. Phase 96/98: Memory Consolidation (Hebbian replay + Gap 1 reinforcement)
             if self._consolidation_engine is not None and self._wm is not None:
                 try:
+                    graph = getattr(self._agent, "_adapter", None)
+                    graph = getattr(graph, "graph", graph)
+                    mod = getattr(graph, "modulator", None)
+                    reinforcement_scale = 1.0
+                    if mod is not None:
+                        reinforcement_scale = getattr(mod, "state", {}).get("reinforcement", 1.0)
                     result = self._consolidation_engine.consolidate(
-                        self._wm, k=self._config.consolidation_k
+                        self._wm,
+                        k=self._config.consolidation_k,
+                        reinforcement_scale=reinforcement_scale,
                     )
                     with self._lock:
                         self._total_consolidations += 1
                         self._total_edges_strengthened += result.edges_strengthened
                 except Exception:
                     logger.exception("AutonomousDiscoveryLoop: consolidation failed.")
+
+            # 2c. Phase 98 Gap 6: DiscoveryCalibrator → GoalStack
+            if self._goal_stack is not None:
+                try:
+                    calibrator = getattr(self._agent, "_calibrator", None)
+                    if calibrator is not None:
+                        stats = calibrator.stats()
+                        for cid, info in stats.get("communities", {}).items():
+                            if info.get("weight", 1.0) > 3.0:
+                                goal_desc = f"explore_community_{cid}"
+                                active = self._goal_stack.all_active()
+                                if not any(g.description == goal_desc for g in active):
+                                    from core.goal_system import make_goal
+                                    self._goal_stack.push(make_goal(
+                                        description=goal_desc,
+                                        metric_type="approval_rate",
+                                        target_value=0.15,
+                                        priority=6,
+                                    ))
+                except Exception:
+                    logger.exception("AutonomousDiscoveryLoop: calibrator→goal wiring failed.")
+
+            # 2d. Phase 98 Gap 7: pass goal-hinted entities to ResearchAgent
+            if self._goal_stack is not None and self._goal_evaluator is not None:
+                try:
+                    hints = self._goal_evaluator.get_context_seeds(self._goal_stack, self._wm)
+                    if hasattr(self._agent, "set_goal_hints"):
+                        self._agent.set_goal_hints(hints or [])
+                except Exception:
+                    logger.exception("AutonomousDiscoveryLoop: goal→research wiring failed.")
+
+            # 2e. Phase 97: Synaptic Decay (LTD) — runs on its own slower timer
+            if self._decay_engine is not None:
+                if (now - self._last_decay_at) >= self._config.decay_interval:
+                    try:
+                        result = self._decay_engine.decay(self._wm)
+                        with self._lock:
+                            self._total_decay_passes += 1
+                            self._total_edges_decayed += result.edges_decayed
+                        self._last_decay_at = now
+                    except Exception:
+                        logger.exception("AutonomousDiscoveryLoop: synaptic decay failed.")
+
+            # 2f. Phase 102: Default Mode Network — idle self-reflection
+            if self._dmn_engine is not None:
+                # Derive last real query time from WM entries (source="query"),
+                # since _last_query_at is set at init and CerebrumGraph.query()
+                # has no reference back to this loop.
+                last_real_query = self._last_query_at
+                if self._wm is not None:
+                    for _entry in self._wm.recent(20):
+                        if _entry.source == "query" and _entry.timestamp > last_real_query:
+                            last_real_query = _entry.timestamp
+                idle_secs = now - last_real_query
+                if idle_secs >= self._config.default_mode_idle_threshold:
+                    try:
+                        graph = getattr(self._agent, "_adapter", None)
+                        graph = getattr(graph, "graph", graph)
+                        mod = getattr(graph, "modulator", None)
+                        arousal = getattr(mod, "state", {}).get("arousal", 1.0) if mod else 1.0
+                        if arousal < 1.5:
+                            calibrator = getattr(self._agent, "_calibrator", None)
+                            insights = self._dmn_engine.idle_scan(
+                                wm=self._wm,
+                                goal_stack=self._goal_stack,
+                                calibrator=calibrator,
+                            )
+                            with self._lock:
+                                self._total_dmn_pulses += 1
+                    except Exception:
+                        logger.exception("AutonomousDiscoveryLoop: DMN idle scan failed.")
 
             # 3. Active Inference (Daydreaming)
             if self._config.active_inference and (now - last_inference_at) >= self._config.active_inference_interval:
