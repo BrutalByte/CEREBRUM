@@ -249,7 +249,7 @@ void UCerebrumLink::DispatchTypedEvent(const FString& EventType,
         if (Payload->TryGetObjectField(TEXT("data"), DataObj) && DataObj)
         {
             TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&DataJson);
-            FJsonSerializer::Serialize(*DataObj, Writer);
+            FJsonSerializer::Serialize(DataObj->ToSharedRef(), Writer);
         }
 
         OnGUIAdaptation.Broadcast(Action, Target, DataJson);
