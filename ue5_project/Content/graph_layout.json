@@ -1,0 +1,554 @@
+{
+  "cerebrum_layout_version": "1.1",
+  "api_url": "http://localhost:8200/v1",
+  "node_count": 21,
+  "community_count": 3,
+  "edge_count": 30,
+  "communities": [
+    {
+      "community_id": 0,
+      "color": {
+        "r": 0.9,
+        "g": 0.198,
+        "b": 0.198
+      },
+      "center": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 2500.0
+      },
+      "node_count": 8
+    },
+    {
+      "community_id": 1,
+      "color": {
+        "r": 0.198,
+        "g": 0.4028,
+        "b": 0.9
+      },
+      "center": {
+        "x": -1843.42,
+        "y": 1688.73,
+        "z": 0.0
+      },
+      "node_count": 9
+    },
+    {
+      "community_id": 2,
+      "color": {
+        "r": 0.6077,
+        "g": 0.9,
+        "b": 0.198
+      },
+      "center": {
+        "x": 0.0,
+        "y": -0.0,
+        "z": -2500.0
+      },
+      "node_count": 4
+    }
+  ],
+  "nodes": [
+    {
+      "node_id": "bohr",
+      "label": "Bohr",
+      "community_id": 0,
+      "community_color": {
+        "r": 0.9,
+        "g": 0.198,
+        "b": 0.198
+      },
+      "position": {
+        "x": 297.36,
+        "y": 25.93,
+        "z": 2537.82
+      }
+    },
+    {
+      "node_id": "curie",
+      "label": "Curie",
+      "community_id": 0,
+      "community_color": {
+        "r": 0.9,
+        "g": 0.198,
+        "b": 0.198
+      },
+      "position": {
+        "x": -2.17,
+        "y": 51.33,
+        "z": 2374.41
+      }
+    },
+    {
+      "node_id": "darwin",
+      "label": "Darwin",
+      "community_id": 0,
+      "community_color": {
+        "r": 0.9,
+        "g": 0.198,
+        "b": 0.198
+      },
+      "position": {
+        "x": -80.34,
+        "y": 208.2,
+        "z": 2646.58
+      }
+    },
+    {
+      "node_id": "einstein",
+      "label": "Einstein",
+      "community_id": 0,
+      "community_color": {
+        "r": 0.9,
+        "g": 0.198,
+        "b": 0.198
+      },
+      "position": {
+        "x": -27.16,
+        "y": -181.01,
+        "z": 3058.23
+      }
+    },
+    {
+      "node_id": "faraday",
+      "label": "Faraday",
+      "community_id": 0,
+      "community_color": {
+        "r": 0.9,
+        "g": 0.198,
+        "b": 0.198
+      },
+      "position": {
+        "x": 270.73,
+        "y": 487.9,
+        "z": 2624.06
+      }
+    },
+    {
+      "node_id": "london",
+      "label": "London",
+      "community_id": 0,
+      "community_color": {
+        "r": 0.9,
+        "g": 0.198,
+        "b": 0.198
+      },
+      "position": {
+        "x": -28.21,
+        "y": -6.73,
+        "z": 2995.98
+      }
+    },
+    {
+      "node_id": "maxwell",
+      "label": "Maxwell",
+      "community_id": 0,
+      "community_color": {
+        "r": 0.9,
+        "g": 0.198,
+        "b": 0.198
+      },
+      "position": {
+        "x": -37.46,
+        "y": -229.83,
+        "z": 2529.28
+      }
+    },
+    {
+      "node_id": "newton",
+      "label": "Newton",
+      "community_id": 0,
+      "community_color": {
+        "r": 0.9,
+        "g": 0.198,
+        "b": 0.198
+      },
+      "position": {
+        "x": -348.03,
+        "y": -176.15,
+        "z": 2379.08
+      }
+    },
+    {
+      "node_id": "alexander",
+      "label": "Alexander",
+      "community_id": 1,
+      "community_color": {
+        "r": 0.198,
+        "g": 0.4028,
+        "b": 0.9
+      },
+      "position": {
+        "x": -1397.34,
+        "y": 1525.49,
+        "z": -175.37
+      }
+    },
+    {
+      "node_id": "alexandria",
+      "label": "Alexandria",
+      "community_id": 1,
+      "community_color": {
+        "r": 0.198,
+        "g": 0.4028,
+        "b": 0.9
+      },
+      "position": {
+        "x": -1773.08,
+        "y": 1661.94,
+        "z": 305.48
+      }
+    },
+    {
+      "node_id": "athens",
+      "label": "Athens",
+      "community_id": 1,
+      "community_color": {
+        "r": 0.198,
+        "g": 0.4028,
+        "b": 0.9
+      },
+      "position": {
+        "x": -1888.15,
+        "y": 1521.22,
+        "z": -455.97
+      }
+    },
+    {
+      "node_id": "babylon",
+      "label": "Babylon",
+      "community_id": 1,
+      "community_color": {
+        "r": 0.198,
+        "g": 0.4028,
+        "b": 0.9
+      },
+      "position": {
+        "x": -1944.78,
+        "y": 1940.0,
+        "z": -19.11
+      }
+    },
+    {
+      "node_id": "caesar",
+      "label": "Caesar",
+      "community_id": 1,
+      "community_color": {
+        "r": 0.198,
+        "g": 0.4028,
+        "b": 0.9
+      },
+      "position": {
+        "x": -1839.78,
+        "y": 1629.31,
+        "z": 105.63
+      }
+    },
+    {
+      "node_id": "carthage",
+      "label": "Carthage",
+      "community_id": 1,
+      "community_color": {
+        "r": 0.198,
+        "g": 0.4028,
+        "b": 0.9
+      },
+      "position": {
+        "x": -1834.52,
+        "y": 1722.15,
+        "z": 185.25
+      }
+    },
+    {
+      "node_id": "cleopatra",
+      "label": "Cleopatra",
+      "community_id": 1,
+      "community_color": {
+        "r": 0.198,
+        "g": 0.4028,
+        "b": 0.9
+      },
+      "position": {
+        "x": -1845.86,
+        "y": 1691.52,
+        "z": 417.51
+      }
+    },
+    {
+      "node_id": "hannibal",
+      "label": "Hannibal",
+      "community_id": 1,
+      "community_color": {
+        "r": 0.198,
+        "g": 0.4028,
+        "b": 0.9
+      },
+      "position": {
+        "x": -1915.45,
+        "y": 1566.51,
+        "z": 151.84
+      }
+    },
+    {
+      "node_id": "rome",
+      "label": "Rome",
+      "community_id": 1,
+      "community_color": {
+        "r": 0.198,
+        "g": 0.4028,
+        "b": 0.9
+      },
+      "position": {
+        "x": -1577.26,
+        "y": 1719.8,
+        "z": 20.21
+      }
+    },
+    {
+      "node_id": "augustus",
+      "label": "Augustus",
+      "community_id": 2,
+      "community_color": {
+        "r": 0.6077,
+        "g": 0.9,
+        "b": 0.198
+      },
+      "position": {
+        "x": 45.14,
+        "y": 200.62,
+        "z": -2812.9
+      }
+    },
+    {
+      "node_id": "cicero",
+      "label": "Cicero",
+      "community_id": 2,
+      "community_color": {
+        "r": 0.6077,
+        "g": 0.9,
+        "b": 0.198
+      },
+      "position": {
+        "x": -2.02,
+        "y": -381.48,
+        "z": -2159.01
+      }
+    },
+    {
+      "node_id": "napoleon",
+      "label": "Napoleon",
+      "community_id": 2,
+      "community_color": {
+        "r": 0.6077,
+        "g": 0.9,
+        "b": 0.198
+      },
+      "position": {
+        "x": -20.58,
+        "y": 204.15,
+        "z": -2894.49
+      }
+    },
+    {
+      "node_id": "paris",
+      "label": "Paris",
+      "community_id": 2,
+      "community_color": {
+        "r": 0.6077,
+        "g": 0.9,
+        "b": 0.198
+      },
+      "position": {
+        "x": 37.35,
+        "y": 79.32,
+        "z": -2943.4
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "newton",
+      "target_id": "einstein",
+      "relation_type": "INFLUENCED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "newton",
+      "target_id": "faraday",
+      "relation_type": "INFLUENCED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "newton",
+      "target_id": "london",
+      "relation_type": "LIVED_IN",
+      "weight": 1.0
+    },
+    {
+      "source_id": "einstein",
+      "target_id": "bohr",
+      "relation_type": "COLLABORATED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "einstein",
+      "target_id": "curie",
+      "relation_type": "CORRESPONDED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "einstein",
+      "target_id": "athens",
+      "relation_type": "VISITED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "faraday",
+      "target_id": "maxwell",
+      "relation_type": "INFLUENCED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "faraday",
+      "target_id": "darwin",
+      "relation_type": "CONTEMPORARIES",
+      "weight": 1.0
+    },
+    {
+      "source_id": "bohr",
+      "target_id": "maxwell",
+      "relation_type": "PEERS",
+      "weight": 1.0
+    },
+    {
+      "source_id": "darwin",
+      "target_id": "curie",
+      "relation_type": "CONTEMPORARIES",
+      "weight": 1.0
+    },
+    {
+      "source_id": "caesar",
+      "target_id": "cleopatra",
+      "relation_type": "ALLIED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "caesar",
+      "target_id": "augustus",
+      "relation_type": "PREDECESSOR",
+      "weight": 1.0
+    },
+    {
+      "source_id": "caesar",
+      "target_id": "napoleon",
+      "relation_type": "ADMIRED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "caesar",
+      "target_id": "alexander",
+      "relation_type": "INSPIRED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "caesar",
+      "target_id": "hannibal",
+      "relation_type": "ENEMY_OF",
+      "weight": 1.0
+    },
+    {
+      "source_id": "caesar",
+      "target_id": "rome",
+      "relation_type": "RULED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "cleopatra",
+      "target_id": "alexander",
+      "relation_type": "ANCESTOR_OF",
+      "weight": 1.0
+    },
+    {
+      "source_id": "cleopatra",
+      "target_id": "alexandria",
+      "relation_type": "RULED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "augustus",
+      "target_id": "cicero",
+      "relation_type": "CONTEMPORARY",
+      "weight": 1.0
+    },
+    {
+      "source_id": "napoleon",
+      "target_id": "cicero",
+      "relation_type": "STUDIED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "napoleon",
+      "target_id": "paris",
+      "relation_type": "LED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "hannibal",
+      "target_id": "carthage",
+      "relation_type": "FROM",
+      "weight": 1.0
+    },
+    {
+      "source_id": "rome",
+      "target_id": "athens",
+      "relation_type": "RIVALED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "rome",
+      "target_id": "alexandria",
+      "relation_type": "TRADE_ROUTE",
+      "weight": 1.0
+    },
+    {
+      "source_id": "rome",
+      "target_id": "paris",
+      "relation_type": "ALLIED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "rome",
+      "target_id": "carthage",
+      "relation_type": "ENEMY_OF",
+      "weight": 1.0
+    },
+    {
+      "source_id": "athens",
+      "target_id": "alexandria",
+      "relation_type": "INFLUENCED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "athens",
+      "target_id": "london",
+      "relation_type": "ADMIRED",
+      "weight": 1.0
+    },
+    {
+      "source_id": "alexandria",
+      "target_id": "babylon",
+      "relation_type": "TRADE_ROUTE",
+      "weight": 1.0
+    },
+    {
+      "source_id": "paris",
+      "target_id": "london",
+      "relation_type": "NEIGHBORS",
+      "weight": 1.0
+    }
+  ],
+  "layout_params": {
+    "community_orbit_radius": 2500.0,
+    "node_cluster_radius": 600.0
+  }
+}
