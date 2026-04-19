@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "Blueprint/UserWidget.h"
 #include "CerebrumLink.h"
+#include "CerebrumHUDOverlay.h"
 #include "CerebrumBrain.generated.h"
 
 class ANeuronNodeActor;
@@ -128,9 +129,13 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = "Cerebrum|Spawning")
     TSubclassOf<ASynapseActor> SynapseActorClass;
 
-    /** HUD widget class to create and add to viewport on BeginPlay. Set to WBP_CerebrumHUD. */
+    /** HUD widget class to create and add to viewport on BeginPlay. Set to WBP_CerebrumHUDOverlay. */
     UPROPERTY(EditDefaultsOnly, Category = "Cerebrum|HUD")
-    TSubclassOf<UUserWidget> HUDWidgetClass;
+    TSubclassOf<UCerebrumHUDOverlay> HUDWidgetClass;
+
+    /** Query panel class to create and add to viewport on BeginPlay. Set to WBP_CerebrumQueryPanel. */
+    UPROPERTY(EditDefaultsOnly, Category = "Cerebrum|HUD")
+    TSubclassOf<UUserWidget> QueryWidgetClass;
 
     // ------------------------------------------------------------------
     // Public API (callable from Blueprint)
@@ -178,8 +183,9 @@ public:
     // Blueprint events — override for level-wide VFX / audio
     // ------------------------------------------------------------------
 
-    UFUNCTION(BlueprintImplementableEvent, Category = "Cerebrum|Events")
+    UFUNCTION(BlueprintNativeEvent, Category = "Cerebrum|Events")
     void OnGraphLoaded(int32 NodeCount, int32 EdgeCount);
+    virtual void OnGraphLoaded_Implementation(int32 NodeCount, int32 EdgeCount);
 
     UFUNCTION(BlueprintImplementableEvent, Category = "Cerebrum|Events")
     void OnNewNodeSpawned(ANeuronNodeActor* Node);
@@ -194,8 +200,10 @@ public:
      * Called every time CEREBRUM emits a metabolic state update.
      * Override in a child Blueprint to forward values to WBP_CerebrumHUD progress bars.
      */
-    UFUNCTION(BlueprintImplementableEvent, Category = "Cerebrum|Events")
+    UFUNCTION(BlueprintNativeEvent, Category = "Cerebrum|Events")
     void OnMetabolicUpdate(float Reinforcement, float Arousal, float Novelty,
+                           float Cohesion, float Persistence, float LearningRateScale);
+    virtual void OnMetabolicUpdate_Implementation(float Reinforcement, float Arousal, float Novelty,
                            float Cohesion, float Persistence, float LearningRateScale);
 
     /**
@@ -222,7 +230,11 @@ private:
 
     /** Live HUD widget instance (created from HUDWidgetClass in BeginPlay). */
     UPROPERTY()
-    UUserWidget* HUDWidget = nullptr;
+    UCerebrumHUDOverlay* HUDWidget = nullptr;
+
+    /** Live query panel instance (created from QueryWidgetClass in BeginPlay). */
+    UPROPERTY()
+    UUserWidget* QueryWidget = nullptr;
 
     // ------------------------------------------------------------------
     // Live registries

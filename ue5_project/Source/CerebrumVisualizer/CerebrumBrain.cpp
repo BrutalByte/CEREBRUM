@@ -2,6 +2,7 @@
 #include "NeuronNodeActor.h"
 #include "SynapseActor.h"
 #include "CerebrumLink.h"
+#include "CerebrumHUDOverlay.h"
 
 #include "Json.h"
 #include "JsonUtilities.h"
@@ -48,11 +49,23 @@ void ACerebrumBrain::BeginPlay()
     // Create and display HUD overlay
     if (HUDWidgetClass)
     {
-        HUDWidget = CreateWidget<UUserWidget>(GetWorld(), HUDWidgetClass);
+        HUDWidget = CreateWidget<UCerebrumHUDOverlay>(GetWorld(), HUDWidgetClass);
         if (HUDWidget)
         {
             HUDWidget->AddToViewport();
+            HUDWidget->SetConnectionStatus(false, WebSocketURL);
             UE_LOG(LogTemp, Log, TEXT("CerebrumBrain: HUD widget added to viewport."));
+        }
+    }
+
+    // Create and display query panel
+    if (QueryWidgetClass)
+    {
+        QueryWidget = CreateWidget<UUserWidget>(GetWorld(), QueryWidgetClass);
+        if (QueryWidget)
+        {
+            QueryWidget->AddToViewport();
+            UE_LOG(LogTemp, Log, TEXT("CerebrumBrain: Query panel added to viewport."));
         }
     }
 
@@ -579,9 +592,26 @@ void ACerebrumBrain::HandleMetabolicFlux(float Reinforcement, float Arousal,
                                           float Novelty, float Cohesion,
                                           float Persistence, float LearningRateScale)
 {
-    // Forward to Blueprint implementable event — the child Blueprint wires this
-    // to the WBP_CerebrumHUD progress bars.
     OnMetabolicUpdate(Reinforcement, Arousal, Novelty, Cohesion, Persistence, LearningRateScale);
+}
+
+void ACerebrumBrain::OnMetabolicUpdate_Implementation(float Reinforcement, float Arousal,
+                                                       float Novelty, float Cohesion,
+                                                       float Persistence, float LearningRateScale)
+{
+    if (HUDWidget)
+    {
+        HUDWidget->UpdateMetabolics(Reinforcement, Arousal, Novelty, Cohesion, Persistence);
+    }
+}
+
+void ACerebrumBrain::OnGraphLoaded_Implementation(int32 NodeCount, int32 EdgeCount)
+{
+    if (HUDWidget)
+    {
+        HUDWidget->UpdateNodeCount(NodeCount, EdgeCount);
+        HUDWidget->SetConnectionStatus(true, WebSocketURL);
+    }
 }
 
 void ACerebrumBrain::HandleGUIAdaptation(FString Action, FString Target, FString DataJson)
