@@ -49,3 +49,5 @@ ue5_project/Saved/
 ue5_project/Binaries/
 ue5_project/.vs/
 ue5_project/**/*.VC.db
+ue5_project/DerivedDataCache/
+ue5_project/Content/UnrealClaude/
