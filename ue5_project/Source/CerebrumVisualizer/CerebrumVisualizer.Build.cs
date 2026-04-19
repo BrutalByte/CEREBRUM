@@ -11,10 +11,13 @@ public class CerebrumVisualizer : ModuleRules
             "CoreUObject",
             "Engine",
             "InputCore",
-            "WebsocketBlueprint",
+            "EasyWebsockets",
             "Json",
             "JsonUtilities",
-            "HTTP"          // REST graph pre-load in CerebrumBrain
+            "HTTP",         // REST graph pre-load in CerebrumBrain
+            "UMG",          // UCerebrumQueryWidget / UCerebrumHUDOverlay
+            "Slate",
+            "SlateCore",
         });
 	}
 }

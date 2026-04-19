@@ -138,9 +138,9 @@ def main():
     # ── Community map ───────────────────────────────────────────────────────
     print("  Fetching /communities …")
     comm_resp = get_json(f"{api}/communities", token)
-    community_map: dict[str, int] = comm_resp.get("communities", {})
+    community_map: dict[str, int] = comm_resp.get("node_to_community", {})
     if not community_map:
-        print("  No community data returned. Layout will be empty.")
+        print("  No community data (node_to_community) returned. Layout will be empty.")
 
     # Build reverse map: community_id → [node_ids]
     communities: dict[int, list[str]] = {}

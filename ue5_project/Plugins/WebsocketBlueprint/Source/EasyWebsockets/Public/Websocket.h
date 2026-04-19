@@ -15,8 +15,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnWebSocketClosed, int32, Status
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWebSocketMessageReceived, const FString&,  Message);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWebSocketMessageSent, const FString&, Message);
 
-UCLASS(MinimalAPI, BlueprintType)
-class UWebSocket final : public UObject
+UCLASS(BlueprintType)
+class EASYWEBSOCKETS_API UWebSocket final : public UObject
 {
 	GENERATED_BODY()
 

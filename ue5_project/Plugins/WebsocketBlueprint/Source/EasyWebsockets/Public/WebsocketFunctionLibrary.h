@@ -9,8 +9,8 @@
 
 class UWebSocket;
 
-UCLASS(MinimalAPI)
-class UWebSocketFunctionLibrary final : public UBlueprintFunctionLibrary
+UCLASS()
+class EASYWEBSOCKETS_API UWebSocketFunctionLibrary final : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 

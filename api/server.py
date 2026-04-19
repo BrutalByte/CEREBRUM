@@ -369,9 +369,6 @@ def create_app(
                     translator.initialize_scene() # Phase 92 Initial Interface Setup
                     bridge.add_subscriber(translator.handle_event)
                     print(f"  [API] UE LLM Toolkit Adapter active -> {toolkit_url}")
-                from api.telemetry_bridge import TelemetryBridge
-                bridge = TelemetryBridge(port=ws_port)
-                _state["telemetry_bridge"] = bridge
                 asyncio.ensure_future(bridge.start_server())
                 print(f"  [API] Telemetry bridge started on ws://localhost:{ws_port}")
             except Exception as _e:
@@ -3076,6 +3073,10 @@ def create_app(
     _ui_dir = pathlib.Path(__file__).parent.parent / "ui"
     if _ui_dir.exists():
         app.mount("/ui", StaticFiles(directory=str(_ui_dir), html=True), name="ui")
+
+    _frontend_dist = pathlib.Path(__file__).parent.parent / "frontend" / "dist"
+    if _frontend_dist.exists():
+        app.mount("/app", StaticFiles(directory=str(_frontend_dist), html=True), name="frontend")
 
     return app
 

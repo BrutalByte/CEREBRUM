@@ -1,0 +1,3 @@
+[submodule "ue5_project/Plugins/UELLMToolkit"]
+	path = ue5_project/Plugins/UELLMToolkit
+	url = https://github.com/ColtonWilley/ue-llm-toolkit.git
