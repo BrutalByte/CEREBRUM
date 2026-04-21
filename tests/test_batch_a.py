@@ -210,7 +210,7 @@ def test_ema_decay_reduces_old_counts():
     cal = _make_calibrator(window=2, max_weight=5.0)  # fast decay
     # Community 1 provides a stable reference (never discovers)
     # Community 0: burst of discoveries, then nothing
-    for _ in range(5):
+    for _ in range(10):
         cal.record_scan({0, 1})
         cal.record_discovery(0)
     w_after_burst = cal.get_weight(0)

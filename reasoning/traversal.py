@@ -1,5 +1,5 @@
 """
-Beam-search attention traversal — the forward pass of CEREBRUM (Section 5.1).
+Beam-search attention traversal — the forward pass of CEREBRUM (Section 5.1.05050).
 
 BeamTraversal walks the graph hop-by-hop from seed entities, scoring each
 candidate next-hop using CSA attention weights and pruning to beam_width at
@@ -357,9 +357,14 @@ class BeamTraversal:
         self.csa_overrides = {k: v for k, v in kwargs.items() if k in CSA_PARAM_KEYS}
         # Phase 99: Thalamic Gating — WM priming map
         self.node_priming: Dict[str, float] = {}
-        self.priming_boost: float = 0.315
+        self.priming_boost: float = 0.3
         # Phase 100: Lateral Inhibition — winner-take-all community NMS
         self.lateral_inhibition_ratio: float = 0.0
+        # Phase 106: Thalamic Gating — context-driven branch killing
+        self.thalamic_threshold: float = 0.0
+        # Phase 108: Thalamofrontal Feedback Loop — dynamic metabolic gating
+        self.dynamic_thalamic_gating: bool = True
+        self.gating_sensitivity: float = 0.1
         # Phase 101: Emotional Valence — aversive/appetitive edge scoring
         self._valence_engine: Optional[Any] = None
 
@@ -619,96 +624,96 @@ class BeamTraversal:
                         # Compute community coherence
                         coh = community_coherence(path.community_sequence + [v_cid])
 
-                    # Warm-start: amplify the first-hop beta update to reduce cold-start variance
-                    _prior_scale = 0.500
-                    if (
-                        self.probabilistic
-                        and self.warm_start_strength > 0.0
-                        and len(path.nodes) == 1
-                    ):
-                        _prior_scale = 1.0 + self.warm_start_strength
-
-                    new_path = path.copy_with_extension(
-                        rel=rel_eff,
-                        v=v_eff,
-                        v_cid=v_cid,
-                        v_emb=v_emb,
-                        weight=w,
-                        coherence_score=coh,
-                        edge_confidence=conf_eff,
-                        edge_provenance=prov_eff,
-                        prior_scale=_prior_scale,
-                        features=tuple(features_vector) if features_vector is not None else None,
-                    )
-
-                    # Phase 39: Asynchronous BridgeTwinEngine and InsightEngine updates
-                    if self.task_queue is not None:
-                        if (self.bridge_engine is not None and
-                            u_cid != v_cid and u_cid >= 0 and v_cid >= 0 and
-                            rel_eff != BRIDGE_RELATION):
-                            self.task_queue.enqueue(BridgeTask(
-                                node_id=v_eff,
-                                source_community=v_cid,
-                                dest_community=u_cid,
-                            ))
-                        
-                        if (self.bridge_engine is not None and rel_eff == BRIDGE_RELATION):
-                            self.task_queue.enqueue(BridgeTask(
-                                node_id=v_eff,
-                                source_community=-1, # Not applicable for twin use
-                                dest_community=-1, # Not applicable for twin use
-                                is_twin_use=True,
-                            ))
-                        
-                        if (self.insight_engine is not None and
-                            u_cid != v_cid and u_cid >= 0 and v_cid >= 0):
-                            self.task_queue.enqueue(BridgeTask(
-                                node_id=v_eff,
-                                source_community=u_cid,
-                                dest_community=v_cid,
-                                path_score=new_path.score,
-                                path=new_path,
-                                u_node=path.tail,
-                                v_node=v_eff,
-                            ))
-                    else:
-                        # Fallback to synchronous calls if no task queue (e.g. testing)
+                        # Warm-start: amplify the first-hop beta update to reduce cold-start variance
+                        _prior_scale = 0.500
                         if (
-                            self.bridge_engine is not None
-                            and u_cid != v_cid
-                            and u_cid >= 0
-                            and v_cid >= 0
-                            and rel_eff != BRIDGE_RELATION
+                            self.probabilistic
+                            and self.warm_start_strength > 0.0
+                            and len(path.nodes) == 1
                         ):
-                            self.bridge_engine.record_crossing(
-                                node_id=v_eff,
-                                source_community=v_cid,
-                                dest_community=u_cid,
-                                adapter=self.adapter,
-                            )
+                            _prior_scale = 1.0 + self.warm_start_strength
 
-                        if (
-                            self.bridge_engine is not None
-                            and rel_eff == BRIDGE_RELATION
-                        ):
-                            self.bridge_engine.record_twin_use(v_eff)
+                        new_path = path.copy_with_extension(
+                            rel=rel_eff,
+                            v=v_eff,
+                            v_cid=v_cid,
+                            v_emb=v_emb,
+                            weight=w,
+                            coherence_score=coh,
+                            edge_confidence=conf_eff,
+                            edge_provenance=prov_eff,
+                            prior_scale=_prior_scale,
+                            features=tuple(features_vector) if features_vector is not None else None,
+                        )
 
-                        if (
-                            self.insight_engine is not None
-                            and u_cid != v_cid
-                            and u_cid >= 0
-                            and v_cid >= 0
-                        ):
-                            self.insight_engine.record_crossing(
-                                u=path.tail,
-                                v=v_eff,
-                                u_cid=u_cid,
-                                v_cid=v_cid,
-                                path_score=path.score,
-                                path=path,
-                            )
+                        # Phase 39: Asynchronous BridgeTwinEngine and InsightEngine updates
+                        if self.task_queue is not None:
+                            if (self.bridge_engine is not None and
+                                u_cid != v_cid and u_cid >= 0 and v_cid >= 0 and
+                                rel_eff != BRIDGE_RELATION):
+                                self.task_queue.enqueue(BridgeTask(
+                                    node_id=v_eff,
+                                    source_community=v_cid,
+                                    dest_community=u_cid,
+                                ))
+                            
+                            if (self.bridge_engine is not None and rel_eff == BRIDGE_RELATION):
+                                self.task_queue.enqueue(BridgeTask(
+                                    node_id=v_eff,
+                                    source_community=-1, # Not applicable for twin use
+                                    dest_community=-1, # Not applicable for twin use
+                                    is_twin_use=True,
+                                ))
+                            
+                            if (self.insight_engine is not None and
+                                u_cid != v_cid and u_cid >= 0 and v_cid >= 0):
+                                self.task_queue.enqueue(BridgeTask(
+                                    node_id=v_eff,
+                                    source_community=u_cid,
+                                    dest_community=v_cid,
+                                    path_score=new_path.score,
+                                    path=new_path,
+                                    u_node=path.tail,
+                                    v_node=v_eff,
+                                ))
+                        else:
+                            # Fallback to synchronous calls if no task queue (e.g. testing)
+                            if (
+                                self.bridge_engine is not None
+                                and u_cid != v_cid
+                                and u_cid >= 0
+                                and v_cid >= 0
+                                and rel_eff != BRIDGE_RELATION
+                            ):
+                                self.bridge_engine.record_crossing(
+                                    node_id=v_eff,
+                                    source_community=v_cid,
+                                    dest_community=u_cid,
+                                    adapter=self.adapter,
+                                )
 
-                    candidates.append(new_path)
+                            if (
+                                self.bridge_engine is not None
+                                and rel_eff == BRIDGE_RELATION
+                            ):
+                                self.bridge_engine.record_twin_use(v_eff)
+
+                            if (
+                                self.insight_engine is not None
+                                and u_cid != v_cid
+                                and u_cid >= 0
+                                and v_cid >= 0
+                            ):
+                                self.insight_engine.record_crossing(
+                                    u=path.tail,
+                                    v=v_eff,
+                                    u_cid=u_cid,
+                                    v_cid=v_cid,
+                                    path_score=path.score,
+                                    path=path,
+                                )
+
+                        candidates.append(new_path)
 
             _log.debug(
                 "Hop %d: beam=%d  candidates=%d  expansions_so_far=%d",
@@ -739,6 +744,16 @@ class BeamTraversal:
             # for the answer extractor to score and deduplicate. Pruning here discards
             # valid answers with zero benefit (no further expansion occurs).
             hop_bw = self._beam_widths.get(hop, self.beam_width)
+
+            # Phase 108: Thalamofrontal Feedback Loop
+            # Dynamically adjust the gating threshold for the NEXT hop based on 
+            # the current candidates' quality and metabolic pressure.
+            if self.dynamic_thalamic_gating and candidates:
+                avg_score = sum(p.score for p in candidates) / len(candidates)
+                # Tighten gate if average quality is high; loosen if low.
+                # Inspired by the ALARM theory (Ruhr University Bochum, 2025).
+                self.thalamic_threshold = avg_score * self.gating_sensitivity
+
             beam = self._prune_candidates(candidates, hop)
             
             # Phase 62: Explainable Reasoning Trace (ERT)
@@ -789,6 +804,23 @@ class BeamTraversal:
                     result.append(sp)
         return result
 
+    def _thalamic_gating(
+        self,
+        candidates: "List[TraversalPath]",
+    ) -> "List[TraversalPath]":
+        """Phase 106: Thalamic Context Gating.
+        
+        Prunes paths that fall below the thalamic_threshold. This acts as an 
+        early-exit mechanism for unproductive branches before they reach the 
+        expensive sorting/NMS phase. 
+        
+        The threshold is compared against the path's product-of-grounding scores.
+        """
+        if self.thalamic_threshold <= 0.0:
+            return candidates
+            
+        return [p for p in candidates if p.score >= self.thalamic_threshold]
+
     def _prune_candidates(
         self,
         candidates: "List[TraversalPath]",
@@ -801,6 +833,7 @@ class BeamTraversal:
         (e.g. Engram-steered pruning).  The default implementation sorts by
         raw path score (or Thompson-sampled Beta score in probabilistic mode).
 
+        Phase 106: Thalamic context gating is applied as a hard-filter early-exit.
         Phase 100: Lateral inhibition (community-grouped NMS) is applied
         before final selection when lateral_inhibition_ratio > 0.
 
@@ -808,6 +841,13 @@ class BeamTraversal:
         so the answer extractor has the full frontier to deduplicate.
         """
         hop_bw = self._beam_widths.get(hop, self.beam_width)
+        
+        # Phase 106: Early-exit gating
+        if self.thalamic_threshold > 0.0:
+            candidates = self._thalamic_gating(candidates)
+            if not candidates:
+                return []
+
         if self.lateral_inhibition_ratio > 0.0:
             candidates = self._apply_lateral_inhibition(candidates)
         if self.probabilistic:

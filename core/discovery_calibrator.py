@@ -128,31 +128,35 @@ class DiscoveryCalibrator:
           - No global data yet → 1.0 (neutral)
         """
         with self._lock:
-            scans = self._scan_ema.get(community_id, 0.0)
-            if scans < 0.5:
-                return self.max_weight  # never scanned → max boost
+            return self._get_weight_locked(community_id)
 
-            # Global rate across all communities
-            total_scans = sum(self._scan_ema.values())
-            total_disc = sum(self._discovery_ema.values())
+    def _get_weight_locked(self, community_id: int) -> float:
+        """Internal thread-unsafe implementation of get_weight."""
+        scans = self._scan_ema.get(community_id, 0.0)
+        if scans < 0.5:
+            return self.max_weight  # never scanned → max boost
 
-            if total_scans < 0.5:
-                return 1.0  # no scan data at all
+        # Global rate across all communities
+        total_scans = sum(self._scan_ema.values())
+        total_disc = sum(self._discovery_ema.values())
 
-            if total_disc < 0.5:
-                # No recent discoveries anywhere — treat whole graph as unexplored
-                return self.max_weight
+        if total_scans < 0.5:
+            return 1.0  # no scan data at all
 
-            global_rate = total_disc / total_scans
+        if total_disc < 0.5:
+            # No recent discoveries anywhere — treat whole graph as unexplored
+            return self.max_weight
 
-            # Community rate
-            discoveries = self._discovery_ema.get(community_id, 0.0)
-            community_rate = discoveries / scans
+        global_rate = total_disc / total_scans
 
-            # Ratio: how much below (or above) the global rate is this community?
-            weight = global_rate / (community_rate + self.epsilon)
+        # Community rate
+        discoveries = self._discovery_ema.get(community_id, 0.0)
+        community_rate = discoveries / scans
 
-            return float(min(self.max_weight, max(self.min_weight, weight)))
+        # Ratio: how much below (or above) the global rate is this community?
+        weight = global_rate / (community_rate + self.epsilon)
+
+        return float(min(self.max_weight, max(self.min_weight, weight)))
 
     def stats(self) -> dict:
         """Return a human-readable summary for monitoring."""
@@ -167,7 +171,7 @@ class DiscoveryCalibrator:
                     "scan_ema": round(scans, 3),
                     "discovery_ema": round(discoveries, 3),
                     "rate": round(rate, 4),
-                    "weight": self.get_weight(cid),
+                    "weight": self._get_weight_locked(cid),
                 }
             return {
                 "total_scans": self._total_scans,

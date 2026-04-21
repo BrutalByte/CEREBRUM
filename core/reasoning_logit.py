@@ -46,7 +46,7 @@ class ReasoningLogit:
         if len(params) == 9:
             # Backward compatibility
             a, b, g, d, e, z, eta, iota, theta = params
-            mu = 0.0
+            mu = 0.050
         else:
             a, b, g, d, e, z, eta, iota, mu, theta = params
 

@@ -188,6 +188,7 @@ def main():
     parser.add_argument("--sample", type=int, default=100)
     parser.add_argument("--rem", action="store_true")
     parser.add_argument("--levels", type=int, nargs="+", default=[0, 2, 4])
+    parser.add_argument("--no-cache", action="store_true")
     args = parser.parse_args()
 
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -201,13 +202,29 @@ def main():
     if args.sample:
         qa_all = rng.sample(qa_all, args.sample)
 
-    print(f"Building Embeddings for {G_full.number_of_nodes()} nodes...")
-    se = SentenceEngine()
-    embeddings = se.encode_entities({n: n for n in G_full.nodes()})
+    emb_cache = CACHE_DIR / "metaqa_embeddings.pkl"
+    if emb_cache.exists() and not args.no_cache:
+        print(f"Loading cached embeddings from {emb_cache}...")
+        with open(emb_cache, "rb") as f:
+            embeddings = pickle.load(f)
+    else:
+        print(f"Building Embeddings for {G_full.number_of_nodes()} nodes...")
+        se = SentenceEngine()
+        embeddings = se.encode_entities({n: n for n in G_full.nodes()})
+        with open(emb_cache, "wb") as f:
+            pickle.dump(embeddings, f)
 
-    print("Community Detection...")
-    parts = best_of_n_dscf(G_full, n_trials=1)
-    cmap_full = {n: cid for cid, members in enumerate(parts) for n in members}
+    cmap_cache = CACHE_DIR / "metaqa_cmap.pkl"
+    if cmap_cache.exists() and not args.no_cache:
+        print(f"Loading cached community map from {cmap_cache}...")
+        with open(cmap_cache, "rb") as f:
+            cmap_full = pickle.load(f)
+    else:
+        print("Community Detection...")
+        parts = best_of_n_dscf(G_full, n_trials=1)
+        cmap_full = {n: cid for cid, members in enumerate(parts) for n in members}
+        with open(cmap_cache, "wb") as f:
+            pickle.dump(cmap_full, f)
 
     results = []
     for level in args.levels:

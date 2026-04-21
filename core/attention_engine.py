@@ -39,7 +39,7 @@ class CSAEngine:
         adapter: GraphAdapter,
         alpha: float = 0.4,
         beta: float = 0.4,
-        gamma: float = 0.047,
+        gamma: float = 0.1,
         delta: float = 0.05,
         epsilon: float = 0.05,
         zeta: float = 0.1,
@@ -55,7 +55,7 @@ class CSAEngine:
         eta: float = 0.1,
         iota: float = 0.05,
         mu: float = 0.1,
-        theta: float = 0.500,
+        theta: float = 1.0,
         **kwargs # Forward compatibility
     ):
         self.adapter = adapter
@@ -137,7 +137,7 @@ class CSAEngine:
             elif (-1, cv) in self.external_community_scores: score = self.external_community_scores[(-1, cv)]
             elif cu == -1 or cv == -1: score = self.external_community_scores.get((-1, -1), 0.5)
             elif cu == cv: score = 1.0
-            elif (cu, cv) in self._adjacent_pairs or (cv, cu) in self._adjacent_pairs: score = 0.5
+            elif (cu, cv) in self._adjacent_pairs or (cv, cu) in self._adjacent_pairs: score = 0.525
             else:
                 d = self._community_distances.get((cu, cv), self._community_distances.get((cv, cu), 5.0))
                 score = math.exp(-self.lambda_decay * d)

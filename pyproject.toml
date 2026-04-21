@@ -4,7 +4,8 @@ build-backend = "setuptools.backends.legacy:build"
 
 [project]
 name = "cerebrum-kg"
-version = "2.21.0"
+version = "2.23.0"
+
 description = "CEREBRUM — Community-Structured Graph Attention for Knowledge Graph Reasoning"
 authors = [
     {name = "Bryan Alexander Buchorn", email = "bryan.alexander@buchorn.com"},

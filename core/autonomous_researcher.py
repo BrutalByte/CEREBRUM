@@ -55,6 +55,9 @@ class AutonomousResearcher:
         self.hooks = {
             "core/reasoning_logit.py": {
                 "hook": "def score",
+            },
+            "reasoning/traversal.py": {
+                "hook": "def _thalamic_gating",
             }
         }
         self.history_path = Path("research/mutation_history.json")
@@ -114,7 +117,7 @@ class StructuralEntropyPruner:
             name, val = m.groups()
             try:
                 fval = float(val)
-                if 0.0 < fval < 2.0 or (fval < 100 and fval != int(fval)):
+                if 0.0 <= fval < 2.0 or (fval < 100 and fval != int(fval)):
                     constants.append({"name": name, "value": val, "file": file_path})
             except ValueError:
                 continue
@@ -247,11 +250,17 @@ class StructuralEntropyPruner:
             if mut: structural_candidates.append(mut)
 
         # 2. Sample
+        def _propose_val(c):
+            old_f = float(c['value'])
+            if old_f == 0.0:
+                return "0.050" # Cold-start jump
+            return f"{old_f * 1.05:.3f}"
+
         if structural_candidates:
-            candidates = structural_candidates[:1] + [CodeMutation(c['file'], c['value'], f"{float(c['value'])*1.05:.3f}", c['name']) for c in all_constants[:sample_size-1]]
+            candidates = structural_candidates[:1] + [CodeMutation(c['file'], c['value'], _propose_val(c), c['name']) for c in all_constants[:sample_size-1]]
         else:
             random.shuffle(all_constants)
-            candidates = [CodeMutation(c['file'], c['value'], f"{float(c['value'])*1.05:.3f}", c['name']) for c in all_constants[:sample_size]]
+            candidates = [CodeMutation(c['file'], c['value'], _propose_val(c), c['name']) for c in all_constants[:sample_size]]
 
         for mutation in candidates:
             mutation_id = f"{mutation.file_path}:{mutation.context}:{mutation.new_val}"

@@ -26,11 +26,11 @@ See `PAPER.md` for the full white paper and architecture specification, and `doc
 
 ## Roadmap
 
-**Current Project Status: v2.21.0 — Phase 83 COMPLETE — 1841+ tests passing (1 skipped)**
+**Current Project Status: v2.23.0 — Phase 108 COMPLETE — 1540+ tests passing (1 skipped)**
 
-- [x] **Phase 45: LLM-Knowledge Sync (Engram shorthand)** — Implemented Engram 30x reasoning compression dialect, real-time ingestion status trackers, and historical database management.
-
-- [x] **Phase 0: Theory & Prototyping** (DSCF validated in AI Personal Assistant)
+- [x] **Phase 108: Thalamofrontal Feedback Loop** — dynamic metabolic gating of reasoning. Implements real-time threshold adjustment inspired by the **ALARM Theory** (Ruhr University Bochum, 2025) and human thalamofrontal loop research (Zhang et al., 2025).
+- [x] **Phase 107: De Novo Parameter Synthesis** — autonomous activation of dormant (`0.0`) parameters via "Cold-Start" jump seeds.
+- [x] **Phase 105: Recursive Self-Synthesis** — system architects its own subroutines based on DMN bottleneck audits.
 - [x] **Phase 1: Core Engine** (GraphAdapter, TSC Engine, CSA Attention)
 - [x] **Phase 2: Reasoning Engine** (BeamTraversal, PathScorer) — end-to-end pipeline verified
 - [x] **Phase 3: Adapters & API** (FastAPI server + LLM bridge)
@@ -214,6 +214,8 @@ CEREBRUM stands on the shoulders of decades of foundational research. We explici
 - **Embeddings**: Bordes et al. (2013), Sun et al. (2019)
 - **GraphRAG**: Microsoft Research / Edge et al. (2024)
 - **Avionics Engineering**: Mid-level voting (or mid-value selection) systems used in triplex-redundant aircraft navigation, which provided the inspiration for multi-signal consensus and the "righting" of navigation errors in language graphs.
+- **ALARM Theory**: Ruhr University Bochum (2025) research on the biological origins of consciousness and functional gating, which inspired the Phase 108 Thalamofrontal Feedback Loop.
+- **Thalamofrontal Loop**: Zhang et al. (2025) "Thalamofrontal loop primarily encodes consciousness-related information", which informed the CEREBRUM context-gating architecture.
 
 ## Architecture
 
@@ -340,12 +342,16 @@ $$\text{score}(P) = \left( \prod_{k=1}^L a(u_k, v_k, k) \right) \cdot \text{cohe
 - **Context Window Invariance**: Sublinear complexity independent of graph size.
 - **Topological Analysis**: Inductive bias derived from graph topology requires zero training.
 
-## Project Status (v2.21.0 — Phase 83 COMPLETE)
+## Project Status (v2.23.0 — Phase 108 COMPLETE)
 
-CEREBRUM is currently at **v2.21.0** — `Production/Stable`. All **1841+ tests** are passing (1 skipped).
+CEREBRUM is currently at **v2.23.0** — `Production/Stable`. All **1540+ tests** are passing (1 skipped).
 
 Key features in recent phases:
-- **Phase 83: UE5 3D Neural Visualization**: Production Unreal Engine 5 plugin — `ANeuronNodeActor` (glowing sphere per entity), `ASynapseActor` (oriented cylinder per relation), `ACerebrumBrain` (orchestrator with Fibonacci sphere layout), `UCerebrumLink` (WebSocket delegate bridge). `GET /graph/edges` REST endpoint. `setup_graph_layout.py` pre-computes stable JSON layout. `TelemetryBridge` fully wired into `create_app(ws_port=N)`. All three event types emitted: `SYNAPTIC_PULSE` (traversal), `SYNAPTOGENESIS` (materialization), `SYNAPTIC_PRUNE` (REM). CLI: `--ws-port`.
+- **Phase 108: Thalamofrontal Feedback Loop**: Dynamic metabolic gating of reasoning paths. Prunes "thermal waste" by tightening the attention gate when search quality is high.
+- **Phase 107: De Novo Parameter Synthesis**: Autonomous "Cold-Start" mechanism for activating dormant architectural features.
+- **Phase 105: Recursive Self-Synthesis**: Autonomous subroutine architecture based on performance audits.
+- **Phase 83: UE5 3D Neural Visualization**: Production Unreal Engine 5 plugin — `ANeuronNodeActor` (glowing sphere per entity), `ASynapseActor` (oriented cylinder per relation), `ACerebrumBrain` (orchestrator with Fibonacci sphere layout), `UCerebrumLink` (WebSocket delegate bridge). `GET /graph/edges` REST endpoint. `setup_graph_layout.py` pre-computed stable JSON layout. `TelemetryBridge` fully wired into `create_app(ws_port=N)`. All three event types emitted: `SYNAPTIC_PULSE` (traversal), `SYNAPTOGENESIS` (materialization), `SYNAPTIC_PRUNE` (REM). CLI: `--ws-port`.
+
 - **Phase 82: Adaptive Loop Tuning**: `DiscoveryCalibrator`-driven dynamic scaling of materialization cap and inter-cycle sleep. Underexplored graphs get higher caps and shorter intervals; saturated graphs self-throttle.
 - **Phase 81: Graph Snapshot Persistence**: Portable JSON topology snapshots with non-destructive restore and structural diff. Complements `ProvenanceLedger` for full recovery across restarts.
 - **Phase 80: `remove_edge()` Protocol**: `GraphAdapter` base class defines a clean non-abstract `remove_edge()` contract. All adapters inherit it; `ProvenanceLedger` relies on the protocol without fragile `hasattr()` guards.
