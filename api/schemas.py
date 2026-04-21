@@ -187,6 +187,20 @@ class SimilarSearchResponse(BaseModel):
     results: List[EntityResponse]
 
 
+class BroadcastRequest(BaseModel):
+    """Request for /telemetry/broadcast (Phase 103)."""
+    event_type: str
+    payload: Dict[str, Any]
+
+
+class RecomputeCommunitiesRequest(BaseModel):
+    """Request for /communities/recompute (Phase 103)."""
+    algorithm: str = Field(default="tsc", description="Algorithm: 'tsc', 'dscf', 'louvain'")
+    resolution: float = Field(default=1.0, ge=0.1, le=10.0)
+    max_iter: int = Field(default=50, ge=1, le=500)
+    broadcast: bool = Field(default=True, description="Whether to broadcast a layout_shift event after recomputing")
+
+
 class FeedbackRequest(BaseModel):
     path_nodes: List[str] = Field(..., description="The sequence of nodes in the path")
     edge_features: List[List[float]] = Field(

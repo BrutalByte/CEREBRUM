@@ -47,6 +47,7 @@ from api.schemas import (
     HealthResponse, PathResult, PathNode, CommunityInfo,
     EntityResponse, EdgeResponse, GraphEdgesResponse, SearchResponse,
     SimilarSearchRequest, SimilarSearchResponse, FeedbackRequest,
+    BroadcastRequest, RecomputeCommunitiesRequest,
     CommunityResponse, EmbeddingResponse,
     MaskedEntityResponse, MaskedSearchResponse,
     CommunitySignatureSchema, HologramResponse,
@@ -355,10 +356,17 @@ def create_app(
         if ws_port is not None:
             try:
                 from api.telemetry_bridge import TelemetryBridge
+                from core.gui_adaptation_engine import GUIAdaptationEngine
+
                 bridge = TelemetryBridge(port=ws_port)
                 bridge.command_handler = neural_command_handler # Wire it up
                 _state["telemetry_bridge"] = bridge
                 
+                # Phase 94: Adaptive GUI
+                adaptation = GUIAdaptationEngine(broadcast_fn=bridge.broadcast)
+                _state["gui_adaptation"] = adaptation
+                bridge.add_subscriber(lambda evt: adaptation.process_flux(evt.payload["state"]) if evt.event_type.value == "METABOLIC_FLUX" else None)
+
                 # Phase 92: UE LLM Toolkit Integration
                 toolkit_url = os.getenv("CEREBRUM_UE_TOOLKIT_URL")
                 if toolkit_url:
@@ -2480,6 +2488,122 @@ def create_app(
         loop.stop()
         return _loop_status_response(loop)
 
+    @router.post("/query/trace", response_model=TraceResponse, tags=["reasoning"])
+    async def query_trace(req: QueryRequest, node: Dict = Depends(get_authenticated_node)):
+        """
+        Returns a detailed reasoning trace for 3D visualization highlighting (Phase 103).
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        
+        t0 = time.time()
+        graph = _state["graph_obj"]
+        
+        # Use ReasoningTrace to capture per-hop state
+        from reasoning.trace import ReasoningTrace
+        trace = ReasoningTrace(query=req.query)
+        
+        graph.query(
+            seeds=req.seeds,
+            top_k=req.top_k,
+            max_hop=req.max_hop,
+            beam_width=req.beam_width,
+            trace_info=trace
+        )
+        
+        return TraceResponse(
+            query=req.query,
+            seeds=req.seeds,
+            hops=trace.serialize_hops(),
+            duration_seconds=time.time() - t0
+        )
+
+    @router.post("/system/shutdown", tags=["system"])
+    async def system_shutdown(node: Dict = Depends(check_scope("local-admin"))):
+        """Shut down the CEREBRUM backend."""
+        import os
+        os._exit(0)
+
+    @router.post("/communities/recompute", response_model=CommunitiesResponse, tags=["graph"])
+    async def communities_recompute(req: RecomputeCommunitiesRequest, node: Dict = Depends(get_authenticated_node)):
+        """
+        Re-apply community detection in real-time (Phase 103).
+        Allows swapping DSCF, TSC, or Louvain without re-ingesting data.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        
+        adapter = _state["adapter"]
+        G = adapter.to_networkx()
+        if G.is_directed():
+            G = G.to_undirected()
+            
+        algo = req.algorithm.lower()
+        _api_log.info("Recomputing communities using algorithm: %s (resolution=%.2f)", algo, req.resolution)
+        
+        from core.community_engine import dscf_communities, vectorized_tsc, leiden_communities, lpa_communities
+        
+        partitions = []
+        if algo == "dscf":
+            partitions = dscf_communities(G, resolution=req.resolution, max_iter=req.max_iter)
+        elif algo == "tsc":
+            partitions = vectorized_tsc(G, resolution=req.resolution, max_iter=req.max_iter)
+        elif algo == "louvain" or algo == "leiden":
+            partitions = leiden_communities(G, resolution=req.resolution)
+        elif algo == "lpa":
+            partitions = lpa_communities(G)
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported algorithm: {algo}")
+
+        # Convert partitions to map
+        new_cm = {}
+        for cid, nodes in enumerate(partitions):
+            for n in nodes:
+                new_cm[n] = cid
+        
+        # Update state
+        _state["community_map"] = new_cm
+        adapter.community_map = new_cm
+        
+        # Re-build attention engine (CSA depends on community distances)
+        if _state["attention_engine"]:
+            from core.attention_engine import CSAEngine
+            from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
+            dist = build_community_distance_matrix(G, new_cm)
+            adj = adjacent_community_pairs(G, new_cm)
+            _state["attention_engine"] = CSAEngine(adapter, community_distances=dist, adjacency_map=adj)
+            _api_log.info("CSA Attention Engine rebuilt for new community structure.")
+
+        # Optional telemetry broadcast
+        if req.broadcast and _state.get("telemetry_bridge"):
+            from core.telemetry import NeuralEvent, NeuralEventType
+            event = NeuralEvent(
+                event_type=NeuralEventType.GUI_ADAPTATION,
+                payload={"action": "layout_shift", "target": "clustered", "note": f"Recomputed via {algo}"}
+            )
+            _state["telemetry_bridge"].broadcast(event)
+
+        # Return standard communities response
+        community_members: dict = {}
+        for node_id, cid in new_cm.items():
+            community_members.setdefault(cid, []).append(node_id)
+
+        community_infos = [
+            CommunityInfo(
+                community_id=cid,
+                size=len(members),
+                sample_members=members[:5]
+            )
+            for cid, members in community_members.items()
+        ]
+        
+        return CommunitiesResponse(
+            node_to_community=new_cm,
+            community_count=len(partitions),
+            node_count=len(new_cm),
+            communities=community_infos
+        )
+
     @router.get("/research/loop/status", response_model=LoopStatusResponse, tags=["research"])
     async def research_loop_status(node: Dict = Depends(get_authenticated_node)):
         """Return current autonomous loop health and cumulative statistics."""
@@ -3068,6 +3192,47 @@ def create_app(
     @app.get("/", include_in_schema=False)
     async def root_redirect():
         return RedirectResponse(url="/v1/docs")
+
+    # ── WebSocket telemetry endpoint — same port as REST, no separate process
+    from fastapi import WebSocket, WebSocketDisconnect
+
+    @app.websocket("/ws/telemetry")
+    async def ws_telemetry(websocket: WebSocket):
+        await websocket.accept()
+        bridge = _state.get("telemetry_bridge")
+        if bridge is None:
+            await websocket.close(code=1011, reason="Telemetry bridge not initialised")
+            return
+
+        # Simple list-based subscriber — avoids asyncio.Queue cross-loop issues
+        pending: list = []
+
+        def _collect(event):
+            try:
+                pending.append(event.model_dump_json())
+            except AttributeError:
+                pending.append(event.json())
+
+        bridge.add_subscriber(_collect)
+        ping_counter = 0
+        try:
+            while True:
+                if pending:
+                    msg = pending.pop(0)
+                    await websocket.send_text(msg)
+                else:
+                    await asyncio.sleep(0.05)
+                    ping_counter += 1
+                    if ping_counter >= 600:  # ~30 s keepalive
+                        await websocket.send_text('{"event_type":"ping"}')
+                        ping_counter = 0
+        except (WebSocketDisconnect, Exception):
+            pass
+        finally:
+            try:
+                bridge.subscribers.remove(_collect)
+            except ValueError:
+                pass
 
     import pathlib
     _ui_dir = pathlib.Path(__file__).parent.parent / "ui"

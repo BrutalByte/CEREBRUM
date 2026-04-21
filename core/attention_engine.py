@@ -39,7 +39,7 @@ class CSAEngine:
         adapter: GraphAdapter,
         alpha: float = 0.4,
         beta: float = 0.4,
-        gamma: float = 0.1,
+        gamma: float = 0.047,
         delta: float = 0.05,
         epsilon: float = 0.05,
         zeta: float = 0.1,
@@ -55,7 +55,7 @@ class CSAEngine:
         eta: float = 0.1,
         iota: float = 0.05,
         mu: float = 0.1,
-        theta: float = 1.0,
+        theta: float = 0.500,
         **kwargs # Forward compatibility
     ):
         self.adapter = adapter
@@ -197,6 +197,67 @@ class CSAEngine:
         grounding = 1.0 # Default
 
         return ReasoningLogit(sim, cs, etw, normalized_distance, hd, pr_v, td, nr_v, sd, grounding)
+
+    def compute_weights_batch(
+        self,
+        u: str,
+        v_list: List[str],
+        hop: int,
+        edge_types: List[str],
+        valid_tos: List[Optional[float]],
+        eu: Optional[np.ndarray] = None,
+        ev_list: Optional[List[np.ndarray]] = None,
+        edge_type_weights: Optional[Dict[str, float]] = None,
+    ) -> List[ReasoningLogit]:
+        """Vectorized batch version of compute_weight_with_features."""
+        n = len(v_list)
+        if n == 0: return []
+        
+        if eu is None: eu = self.adapter.get_embedding(u)
+        
+        # 1. Semantic Sim (Vectorized)
+        if ev_list is not None:
+            # Check if ev_list is a list of arrays or a single matrix
+            if isinstance(ev_list, list):
+                EV = np.stack([ev if ev is not None else np.zeros_like(eu) for ev in ev_list])
+            else:
+                EV = ev_list
+            
+            # Dot products
+            dots = np.dot(EV, eu)
+            norms_v = np.linalg.norm(EV, axis=1)
+            norm_u = np.linalg.norm(eu)
+            sims = dots / (norms_v * norm_u + 1e-9)
+        else:
+            sims = [0.0] * n
+            
+        # 2. Community Scores (Still iterative for now due to complex logic)
+        cs_scores = [self.community_score(u, v) for v in v_list]
+        
+        # 3. Features
+        weights = edge_type_weights if edge_type_weights is not None else self.edge_type_weights
+        hd = 1.0 / (1.0 + hop)
+        
+        logits = []
+        for i in range(n):
+            v = v_list[i]
+            etw = weights.get(edge_types[i], 0.0)
+            pr_v = self._pagerank.get(v, 0.0) / self._max_pr if self._pagerank else 0.0
+            nr_v = self._node_recency.get(v, 0.0)
+            
+            td = 0.0
+            if self.use_temporal_decay and self._query_time is not None and valid_tos[i] is not None:
+                time_elapsed = self._query_time - valid_tos[i]
+                if time_elapsed > 0:
+                    decay_rate = RELATION_DECAY_DEFAULTS.get(edge_types[i], self.lambda_decay)
+                    td = math.exp(-decay_rate * time_elapsed)
+                    if self.temporal_window_size and time_elapsed > self.temporal_window_size:
+                        td *= 0.1
+            
+            sd = 1.0 if "rem_synthesized" in edge_types[i] else 0.0
+            logits.append(ReasoningLogit(sims[i], cs_scores[i], etw, 0.0, hd, pr_v, td, nr_v, sd, 1.0))
+            
+        return logits
 
     def get_current_params(self, u: Optional[str] = None) -> Tuple[float, ...]:
         cu = self._get_community(u) if u is not None else -1

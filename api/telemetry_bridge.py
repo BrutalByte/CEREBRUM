@@ -19,6 +19,19 @@ class TelemetryBridge:
         self.clients = set()
         self.subscribers: List[Callable[[NeuralEvent], Any]] = []
         self.command_handler: Optional[Callable[[NeuralCommand], Awaitable[None]]] = None
+        self._queues: List[asyncio.Queue] = []  # FastAPI WebSocket subscribers
+
+    def subscribe_queue(self) -> asyncio.Queue:
+        """Create and register an async queue fed by every broadcast() call."""
+        q: asyncio.Queue = asyncio.Queue(maxsize=500)
+        self._queues.append(q)
+        return q
+
+    def unsubscribe_queue(self, q: asyncio.Queue) -> None:
+        try:
+            self._queues.remove(q)
+        except ValueError:
+            pass
 
 
     def add_subscriber(self, callback: Callable[[NeuralEvent], Any]):
@@ -53,15 +66,20 @@ class TelemetryBridge:
             except Exception as e:
                 log.error(f"Error in telemetry subscriber: {e}")
 
-        # 2. Notify WebSocket clients
-        if not self.clients:
-            return
-
+        # 2. Notify WebSocket clients + FastAPI queue subscribers
         try:
             message = event.model_dump_json()
         except AttributeError:
             message = event.json()
 
+        # Push to FastAPI queue subscribers (non-blocking)
+        for q in list(self._queues):
+            try:
+                q.put_nowait(message)
+            except asyncio.QueueFull:
+                pass
+
+        # Push to legacy websockets clients (UE5 / external)
         live_clients = set(self.clients)
         if live_clients:
             asyncio.ensure_future(

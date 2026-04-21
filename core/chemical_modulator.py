@@ -21,7 +21,7 @@ class ChemicalModulator:
       - Cohesion: Structural Trust / Community binding (Meta: Oxytocin)
       - Persistence: Memory Persistence / Engram steer (Meta: Vasopressin)
     """
-    def __init__(self, baseline: float = 1.0, decay_rate: float = 0.05):
+    def __init__(self, baseline: float = 1.0, decay_rate: float = 0.048):
         self.baseline = baseline
         self.decay_rate = decay_rate
         self.state = {
@@ -105,6 +105,20 @@ class ChemicalModulator:
             config["engram_strength"] *= pe
             
         return config
+
+    def modulate_evolution(self) -> Dict[str, float]:
+        """
+        Phase 104: Metaplasticity.
+        Adjusts the AutonomousResearcher behavior based on metabolic state.
+        
+        - High Arousal (Norepinephrine): Increases mutation probability (exploration).
+        - High Reinforcement (Dopamine): Decreases commit threshold (exploitation).
+        """
+        return {
+            "mutation_rate": 0.1 * self.state["arousal"],
+            "commit_threshold_multiplier": 1.0 / max(0.1, self.state["reinforcement"]),
+            "sample_size": int(2 * self.state["arousal"])
+        }
 
     def to_state(self) -> Dict[str, float]:
         return self.state.copy()

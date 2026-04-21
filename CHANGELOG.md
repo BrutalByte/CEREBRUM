@@ -5,6 +5,21 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.22.0] — 2026-04-20
+### Added
+- **Phase 105: Recursive Self-Synthesis** — system now architects its own subroutines to solve performance gaps.
+  - `core/autonomous_researcher.py`: `AutonomousResearcher` daemon identifies magic constants and structural gaps; generates new Python modules (e.g., `StructuralEntropyPruner`) using "Synthetic Templates"; benchmarks variants and commits winners.
+  - `core/default_mode_engine.py`: `HEURISTIC_BOTTLENECK` audit identifies "High PE / Low Reward" reasoning cycles in Working Memory.
+  - `core/autonomous_loop.py`: full wiring of `AutonomousResearcher` into the discovery loop; DMN insights trigger autonomous synthesis cycles.
+- **Phase 104: Homeostatic Metaplasticity** — metabolic control of the self-improvement process.
+  - `core/chemical_modulator.py`: `modulate_evolution()` scales mutation rates (Arousal) and commit thresholds (Reinforcement).
+  - High arousal frustration increases structural exploration; high reinforcement confidence loosens experimental commit gates.
+- **Structural Mutation Support**: `AutonomousResearcher` can now mutate the mathematical logic of the reasoning engine (e.g., non-linear PageRank scaling or Semantic-Community interaction terms).
+- **Architectural Hoisting & Caching**:
+  - `reasoning/traversal.py`: hoisted CSA and valence engine method lookups out of hot loops; implemented per-hop `emb_cache` and `comm_cache` to eliminate redundant adapter/DB calls.
+  - Results: ~8.2% reduction in median traversal latency on MetaQA benchmark.
+- **`scripts/meta_researcher.py`**: Automated "Research Cycle" harness for measuring → modifying → validating codebase performance.
+
 ---
 
 ## [2.21.0] — 2026-04-17

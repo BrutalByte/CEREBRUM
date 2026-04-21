@@ -8,6 +8,7 @@ and knowledge gaps, generating hypotheses about what it doesn't know. Four audit
   DEAD_ZONE  — nodes absent from all recent WM entries (knowledge that is forgotten)
   UNANSWERED — WM entries with top_score == 0 (queries the system failed to answer)
   FRONTIER   — DiscoveryCalibrator communities with weight > threshold (unexplored)
+  HEURISTIC  — High-expansion nodes with low success rate (efficiency bottlenecks)
 
 Each audit produces DMNInsights that can optionally be auto-pushed as Goals.
 """
@@ -15,6 +16,7 @@ from __future__ import annotations
 
 import logging
 import time
+import random
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
@@ -27,11 +29,12 @@ logger = logging.getLogger("cerebrum.default_mode")
 @dataclass
 class DMNInsight:
     """A single self-referential insight produced by the Default Mode Network."""
-    type: str                          # "isolation" | "dead_zone" | "unanswered" | "frontier"
+    type: str                          # "isolation" | "dead_zone" | "unanswered" | "frontier" | "heuristic"
     description: str
     context_seeds: List[str] = field(default_factory=list)
     priority: int = 5
     auto_push_goal: bool = True
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 class DefaultModeEngine:
@@ -63,11 +66,11 @@ class DefaultModeEngine:
         goal_stack: Optional[Any] = None,
         calibrator: Optional[Any] = None,
     ) -> List[DMNInsight]:
-        """Run all four self-referential audits and return insights.
+        """Run all five self-referential audits and return insights.
 
         Parameters
         ----------
-        wm          : WorkingMemoryBuffer (used by dead_zone and unanswered audits)
+        wm          : WorkingMemoryBuffer (used by dead_zone, unanswered, and heuristic audits)
         goal_stack  : GoalStack (insights may be auto-pushed as Goals)
         calibrator  : DiscoveryCalibrator (used by frontier audit)
         """
@@ -85,6 +88,7 @@ class DefaultModeEngine:
         insights.extend(self._dead_zone_audit(G, wm))
         insights.extend(self._unanswered_audit(wm))
         insights.extend(self._frontier_audit(calibrator))
+        insights.extend(self._heuristic_bottleneck_audit(wm))
 
         # Cap
         insights = insights[:self.max_insights]
@@ -206,6 +210,34 @@ class DefaultModeEngine:
             return insights[:2]
         except Exception:
             return []
+
+    def _heuristic_bottleneck_audit(self, wm: Optional["WorkingMemoryBuffer"]) -> List[DMNInsight]:
+        """Phase 105: Identify performance gaps where search is inefficient."""
+        if wm is None:
+            return []
+        
+        # Analyze WM for "High PE / Low Reward" cycles
+        total_pe = 0.0
+        total_score = 0.0
+        entries = wm.recent(20)
+        if not entries: return []
+        
+        for e in entries:
+            total_pe += e.prediction_error or 0.0
+            total_score += e.top_score or 0.0
+            
+        avg_pe = total_pe / len(entries)
+        avg_score = total_score / len(entries)
+        
+        # If prediction error is high but results are low, we need a new heuristic
+        if avg_pe > 0.5 and avg_score < 0.2:
+            return [DMNInsight(
+                type="heuristic",
+                description="recall_bottleneck_detected",
+                priority=8,
+                metadata={"avg_pe": avg_pe, "avg_score": avg_score}
+            )]
+        return []
 
     def _emit(self, insights: List[DMNInsight]) -> None:
         try:

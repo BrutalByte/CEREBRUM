@@ -141,6 +141,7 @@ class CerebrumGraph:
         active_inference: bool = True,
         gui_adaptation: bool = False,
         gui_toolkit_url: str = "http://localhost:3000",
+        autonomous_research: bool = True,
     ) -> Any:
         from core.autonomous_loop import AutonomousDiscoveryLoop, LoopConfig
         if not self.research_agent:
@@ -150,6 +151,9 @@ class CerebrumGraph:
             active_inference=active_inference,
             gui_adaptation=gui_adaptation,
             gui_toolkit_url=gui_toolkit_url,
+            autonomous_research=autonomous_research,
+            default_mode=True,
+            working_memory=True,
         )
         self.autonomous_loop = AutonomousDiscoveryLoop(self.research_agent, config)
         self.autonomous_loop.start()

@@ -98,6 +98,10 @@ class LoopConfig:
     default_mode_idle_threshold: float = 120.0
     default_mode_max_insights: int = 3
 
+    # Phase 105: Recursive Self-Synthesis
+    autonomous_research: bool = False
+    research_interval: int = 600 # Every 10 mins
+
 
 # ---------------------------------------------------------------------------
 # Cycle record
@@ -262,6 +266,16 @@ class AutonomousDiscoveryLoop:
                 logger.info("AutonomousDiscoveryLoop: DefaultModeEngine enabled.")
             except Exception:
                 logger.exception("AutonomousDiscoveryLoop: failed to init DefaultModeEngine.")
+
+        # Phase 105: Recursive Self-Synthesis
+        self._researcher = None
+        if self._config.autonomous_research:
+            try:
+                from core.autonomous_researcher import AutonomousResearcher
+                self._researcher = AutonomousResearcher(modulator=getattr(graph, "modulator", None))
+                logger.info("AutonomousDiscoveryLoop: AutonomousResearcher enabled.")
+            except Exception:
+                logger.exception("AutonomousDiscoveryLoop: failed to init AutonomousResearcher.")
 
         # Phase 94: GUI Adaptation
         self._gui_engine = None
@@ -596,6 +610,10 @@ class AutonomousDiscoveryLoop:
                                 goal_stack=self._goal_stack,
                                 calibrator=calibrator,
                             )
+                            # Phase 105: Recursive Self-Synthesis
+                            if self._researcher is not None and insights:
+                                self._researcher.process_dmn_insights(insights)
+                                
                             with self._lock:
                                 self._total_dmn_pulses += 1
                     except Exception:
