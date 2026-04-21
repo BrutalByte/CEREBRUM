@@ -13,9 +13,9 @@ export function QueryPanel({ onAnswers }) {
     setError(null)
     try {
       const res = await api.query(query)
-      const ans = res.data.answers || []
-      setAnswers(ans)
-      if (onAnswers) onAnswers(ans)
+      const paths = res.data.paths || []
+      setAnswers(paths)
+      if (onAnswers) onAnswers(paths)
     } catch (e) {
       setError(e.response?.data?.detail || e.message)
     } finally {
@@ -40,10 +40,11 @@ export function QueryPanel({ onAnswers }) {
       </div>
       {error && <div style={styles.error}>{error}</div>}
       <div style={styles.results}>
-        {answers.map((a, i) => (
+        {answers.map((p, i) => (
           <div key={i} style={styles.answer}>
-            <span style={styles.rank}>#{i + 1}</span>
-            <span style={styles.answerText}>{typeof a === 'string' ? a : a.entity || JSON.stringify(a)}</span>
+            <span style={styles.rank}>#{p.rank ?? i + 1}</span>
+            <span style={styles.answerText}>{p.answer_entity}</span>
+            <span style={styles.score}>{(p.score ?? 0).toFixed(3)}</span>
           </div>
         ))}
         {!loading && answers.length === 0 && (
@@ -73,6 +74,7 @@ const styles = {
     background: '#161b22', borderRadius: 5, border: '1px solid #21262d',
   },
   rank: { color: '#58a6ff', fontSize: 11, minWidth: 24 },
-  answerText: { color: '#c9d1d9', fontSize: 13 },
+  answerText: { color: '#c9d1d9', fontSize: 13, flex: 1 },
+  score: { color: '#8b949e', fontSize: 10 },
   empty: { color: '#8b949e', fontSize: 12, textAlign: 'center', marginTop: 16 },
 }

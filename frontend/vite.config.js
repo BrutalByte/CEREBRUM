@@ -7,6 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/v1': 'http://localhost:8200',
+      '/ws': { target: 'ws://localhost:8200', ws: true },
     },
   },
 })

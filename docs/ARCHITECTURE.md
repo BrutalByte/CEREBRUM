@@ -438,6 +438,17 @@ REM_SYNTH -.->|modified graph| NX_ADAPTER
 HYPO_GEN --> HYPO_MAT -.->|synth edges| NX_ADAPTER
 HYPO_MAT --> EXT_VAL
 
+subgraph EVO["⑤ EVOLUTION — Self-Refining Program"]
+    direction TB
+    DMN["DefaultModeEngine\nHEURISTIC_BOTTLENECK\n(audit idle cycles)"]
+    RESEARCHER["AutonomousResearcher\n(Recursive Self-Synthesis)"]
+    SYNTH_MOD["synthesize_module()\n(Code Generation)"]
+    
+    DMN -->|"insights"| RESEARCHER
+    RESEARCHER -->|"propose"| SYNTH_MOD
+    SYNTH_MOD -.->|"hot-patch"| CORTEX
+end
+
 ST_SIM & ST_TAIL & ST_HTTP --> ST_PROC -.->|ingest events| NX_ADAPTER
 
 P_SAVE -.->|snapshot| NX_ADAPTER
@@ -471,6 +482,7 @@ class ENGRAM_VERB,PATH_VERB,JSON_OUT,REST_OUT,UI_OUT,CLI_OUT,FED_OUT,STREAM_OUT 
 class E_REST,E_CLI,E_UI,E_FED,E_STREAM entry
 class API1,API2,API3,API4,API5,API6,API7,API8,API9,API10,API11 api
 class P_PROV,P_SNAP persist
+class DMN,RESEARCHER,SYNTH_MOD learning
 class D_PIPE,D_STDP,D_SIG,D_COMPLETE,D_ENHANCE,D_EMB,D_SAGE,D_COMM,D_COARSEN,D_PROB,D_ENGRAM_CACHE,D_QUERY_EMB,D_MERGER,D_TEMPORAL,D_CVT,D_SYMVAL,D_BRIDGE,D_CALENG,D_PRUNE_MODE,D_PRIOR,D_OUT_TYPE,CACHE_CHK,SAGE_CACHE decision
 ```
 

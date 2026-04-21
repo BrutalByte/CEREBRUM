@@ -27,10 +27,27 @@ export function LoopPanel() {
     }
   }
 
+  const toggleFeature = async (feature, current) => {
+    setLoading(true)
+    try {
+      const config = {}
+      if (feature === 'active_inference') config.active_inference = !current
+      if (feature === 'gui_adaptation') config.gui_adaptation = !current
+      if (feature === 'autonomous_research') config.autonomous_research = !current
+      if (feature === 'recursive_synthesis') config.recursive_synthesis = !current
+      if (feature === 'metaplasticity') config.metaplasticity = !current
+      
+      await api.loopConfigure(config)
+      refresh()
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const running = status?.running ?? false
-  const rate = status?.approval_rate != null ? (status.approval_rate * 100).toFixed(1) : '–'
+  const rate = status?.current_approval_rate != null ? (status.current_approval_rate * 100).toFixed(1) : '–'
   const tripped = status?.circuit_breaker_tripped ?? false
-  const cycles = status?.cycles_completed ?? 0
+  const cycles = status?.total_cycles ?? 0
 
   return (
     <div style={styles.panel}>
@@ -50,6 +67,34 @@ export function LoopPanel() {
         <Stat label="Cycles"      value={cycles} />
         <Stat label="Approval"    value={`${rate}%`} />
         <Stat label="Breaker"     value={tripped ? '⚡ Tripped' : 'OK'} color={tripped ? '#f85149' : '#3fb950'} />
+      </div>
+
+      <div style={styles.featureList}>
+        <FeatureToggle 
+          label="Active Inference" 
+          active={status?.active_inference_enabled} 
+          onToggle={() => toggleFeature('active_inference', status.active_inference_enabled)} 
+        />
+        <FeatureToggle 
+          label="GUI Adaptation" 
+          active={status?.gui_adaptation_enabled} 
+          onToggle={() => toggleFeature('gui_adaptation', status.gui_adaptation_enabled)} 
+        />
+        <FeatureToggle 
+          label="Autonomous Research" 
+          active={status?.autonomous_research_enabled} 
+          onToggle={() => toggleFeature('autonomous_research', status.autonomous_research_enabled)} 
+        />
+        <FeatureToggle 
+          label="Recursive Synthesis" 
+          active={status?.recursive_synthesis_enabled} 
+          onToggle={() => toggleFeature('recursive_synthesis', status.recursive_synthesis_enabled)} 
+        />
+        <FeatureToggle 
+          label="Metaplasticity" 
+          active={status?.metaplasticity_enabled} 
+          onToggle={() => toggleFeature('metaplasticity', status.metaplasticity_enabled)} 
+        />
       </div>
 
       {status?.recent_cycles?.length > 0 && (
@@ -78,6 +123,17 @@ function Stat({ label, value, color }) {
   )
 }
 
+function FeatureToggle({ label, active, onToggle }) {
+  return (
+    <div style={styles.feature} onClick={onToggle}>
+      <div style={{ ...styles.toggle, background: active ? '#238636' : '#30363d' }}>
+        <div style={{ ...styles.knob, transform: active ? 'translateX(12px)' : 'translateX(0)' }} />
+      </div>
+      <span style={styles.featureLabel}>{label}</span>
+    </div>
+  )
+}
+
 const styles = {
   panel: { height: '100%', display: 'flex', flexDirection: 'column', gap: 8 },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
@@ -87,6 +143,11 @@ const styles = {
   stat: { background: '#161b22', borderRadius: 5, padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 2 },
   statLabel: { fontSize: 10, color: '#8b949e', textTransform: 'uppercase' },
   statValue: { fontSize: 14, fontWeight: 700 },
+  featureList: { display: 'flex', flexDirection: 'column', gap: 4, margin: '4px 0' },
+  feature: { display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '2px 0' },
+  featureLabel: { fontSize: 11, color: '#c9d1d9' },
+  toggle: { width: 28, height: 16, borderRadius: 14, padding: 2, transition: 'background 0.2s' },
+  knob: { width: 12, height: 12, borderRadius: '50%', background: '#fff', transition: 'transform 0.2s' },
   cycleList: { flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3 },
   cycle: { display: 'flex', alignItems: 'center', gap: 6, padding: '3px 6px', background: '#0d1117', borderRadius: 4, fontSize: 11 },
   cycleNum: { color: '#58a6ff', minWidth: 28 },

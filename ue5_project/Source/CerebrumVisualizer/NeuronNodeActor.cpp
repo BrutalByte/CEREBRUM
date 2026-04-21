@@ -99,7 +99,7 @@ void ANeuronNodeActor::InitNode(const FString& InNodeId,
     if (SphereMID)
     {
         SphereMID->SetVectorParameterValue(TEXT("BaseColor"), BaseColor);
-        SphereMID->SetScalarParameterValue(TEXT("EmissiveIntensity"), 0.3f);
+        SphereMID->SetScalarParameterValue(TEXT("EmissiveIntensity"), 2.0f);
     }
 
     // Play birth event for Blueprint VFX / sound

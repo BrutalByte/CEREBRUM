@@ -2468,6 +2468,11 @@ def create_app(
             total_edges_decayed=s.get("total_edges_decayed", 0),
             default_mode_enabled=s.get("default_mode_enabled", False),
             total_dmn_pulses=s.get("total_dmn_pulses", 0),
+            # Phase 105: Recursive Self-Synthesis
+            autonomous_research_enabled=s.get("autonomous_research_enabled", False),
+            research_interval=s.get("research_interval", 600),
+            recursive_synthesis_enabled=s.get("recursive_synthesis_enabled", True),
+            metaplasticity_enabled=s.get("metaplasticity_enabled", True),
         )
 
     @router.post("/research/loop/start", response_model=LoopStatusResponse, tags=["research"])
@@ -2660,6 +2665,11 @@ def create_app(
             default_mode=req.default_mode if req.default_mode is not None else c.default_mode,
             default_mode_idle_threshold=req.default_mode_idle_threshold if req.default_mode_idle_threshold is not None else c.default_mode_idle_threshold,
             default_mode_max_insights=req.default_mode_max_insights if req.default_mode_max_insights is not None else c.default_mode_max_insights,
+            # Phase 105: Recursive Self-Synthesis
+            autonomous_research=req.autonomous_research if req.autonomous_research is not None else c.autonomous_research,
+            research_interval=req.research_interval if req.research_interval is not None else c.research_interval,
+            recursive_synthesis=req.recursive_synthesis if req.recursive_synthesis is not None else c.recursive_synthesis,
+            metaplasticity=req.metaplasticity if req.metaplasticity is not None else c.metaplasticity,
         )
         loop.configure(new_cfg)
         return _loop_status_response(loop)

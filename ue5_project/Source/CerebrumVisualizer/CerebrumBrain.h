@@ -4,7 +4,6 @@
 #include "GameFramework/Actor.h"
 #include "Blueprint/UserWidget.h"
 #include "CerebrumLink.h"
-#include "CerebrumHUDOverlay.h"
 #include "CerebrumBrain.generated.h"
 
 class ANeuronNodeActor;
@@ -131,11 +130,7 @@ public:
 
     /** HUD widget class to create and add to viewport on BeginPlay. Set to WBP_CerebrumHUDOverlay. */
     UPROPERTY(EditDefaultsOnly, Category = "Cerebrum|HUD")
-    TSubclassOf<UCerebrumHUDOverlay> HUDWidgetClass;
-
-    /** Query panel class to create and add to viewport on BeginPlay. Set to WBP_CerebrumQueryPanel. */
-    UPROPERTY(EditDefaultsOnly, Category = "Cerebrum|HUD")
-    TSubclassOf<UUserWidget> QueryWidgetClass;
+    TSubclassOf<UUserWidget> HUDWidgetClass;
 
     // ------------------------------------------------------------------
     // Public API (callable from Blueprint)
@@ -183,9 +178,8 @@ public:
     // Blueprint events — override for level-wide VFX / audio
     // ------------------------------------------------------------------
 
-    UFUNCTION(BlueprintNativeEvent, Category = "Cerebrum|Events")
+    UFUNCTION(BlueprintImplementableEvent, Category = "Cerebrum|Events")
     void OnGraphLoaded(int32 NodeCount, int32 EdgeCount);
-    virtual void OnGraphLoaded_Implementation(int32 NodeCount, int32 EdgeCount);
 
     UFUNCTION(BlueprintImplementableEvent, Category = "Cerebrum|Events")
     void OnNewNodeSpawned(ANeuronNodeActor* Node);
@@ -200,10 +194,8 @@ public:
      * Called every time CEREBRUM emits a metabolic state update.
      * Override in a child Blueprint to forward values to WBP_CerebrumHUD progress bars.
      */
-    UFUNCTION(BlueprintNativeEvent, Category = "Cerebrum|Events")
+    UFUNCTION(BlueprintImplementableEvent, Category = "Cerebrum|Events")
     void OnMetabolicUpdate(float Reinforcement, float Arousal, float Novelty,
-                           float Cohesion, float Persistence, float LearningRateScale);
-    virtual void OnMetabolicUpdate_Implementation(float Reinforcement, float Arousal, float Novelty,
                            float Cohesion, float Persistence, float LearningRateScale);
 
     /**
@@ -230,11 +222,9 @@ private:
 
     /** Live HUD widget instance (created from HUDWidgetClass in BeginPlay). */
     UPROPERTY()
-    UCerebrumHUDOverlay* HUDWidget = nullptr;
+    UUserWidget* HUDWidget = nullptr;
 
-    /** Live query panel instance (created from QueryWidgetClass in BeginPlay). */
-    UPROPERTY()
-    UUserWidget* QueryWidget = nullptr;
+
 
     // ------------------------------------------------------------------
     // Live registries

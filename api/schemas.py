@@ -955,6 +955,11 @@ class LoopConfigSchema(BaseModel):
     default_mode: Optional[bool] = Field(default=None, description="Enable DMN self-referential idle reasoning.")
     default_mode_idle_threshold: Optional[float] = Field(default=None, ge=10.0, description="Seconds of idle before DMN activates.")
     default_mode_max_insights: Optional[int] = Field(default=None, ge=1, le=20, description="Max insights per DMN scan.")
+    # Phase 105: Recursive Self-Synthesis
+    autonomous_research: Optional[bool] = Field(default=None, description="Enable autonomous research daemon.")
+    research_interval: Optional[int] = Field(default=None, ge=30, description="Seconds between research cycles.")
+    recursive_synthesis: Optional[bool] = Field(default=None, description="Enable recursive structural logic synthesis.")
+    metaplasticity: Optional[bool] = Field(default=None, description="Enable metabolic scaling of research exploration.")
 
 
 class CycleRecordSchema(BaseModel):
@@ -1014,6 +1019,11 @@ class LoopStatusResponse(BaseModel):
     total_edges_decayed: int = 0
     default_mode_enabled: bool = False
     total_dmn_pulses: int = 0
+    # Phase 105: Recursive Self-Synthesis
+    autonomous_research_enabled: bool = False
+    research_interval: int = 600
+    recursive_synthesis_enabled: bool = True
+    metaplasticity_enabled: bool = True
 
 
 # ---------------------------------------------------------------------------

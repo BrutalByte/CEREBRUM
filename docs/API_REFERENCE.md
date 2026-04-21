@@ -470,7 +470,11 @@ Partially update the loop configuration. All fields are optional; unspecified fi
     "adaptive_min_cap": 1,
     "adaptive_max_cap": 20,
     "adaptive_min_interval": 60.0,
-    "adaptive_max_interval": 3600.0
+    "adaptive_max_interval": 3600.0,
+    "autonomous_research": true,
+    "research_interval": 600,
+    "recursive_synthesis": true,
+    "metaplasticity": true
 }
 ```
 

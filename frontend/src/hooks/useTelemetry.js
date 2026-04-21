@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 
-const WS_URL = 'ws://localhost:8765'
+const WS_URL = `ws://${window.location.host}/ws/telemetry`
 const MAX_EVENTS = 200
 
 export function useTelemetry() {

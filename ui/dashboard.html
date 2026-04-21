@@ -556,6 +556,16 @@
       <span class="widget-title">Graph Explorer</span>
       <div class="widget-actions">
         <input class="w-input" id="WSLOT-g2d-search" placeholder="Search node…" style="width:120px;margin-right:4px;"/>
+        <div style="display:inline-flex; align-items:center; gap:4px; margin-right:4px; background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:3px;">
+          <span style="font-size:10px; color:var(--text-dim);">Algo:</span>
+          <select id="WSLOT-g2d-algo" class="w-input" style="width:70px; height:20px; padding:0; font-size:10px; background:transparent;">
+            <option value="tsc">TSC</option>
+            <option value="dscf">DSCF</option>
+            <option value="louvain">Louvain</option>
+            <option value="lpa">LPA</option>
+          </select>
+          <button id="WSLOT-g2d-recompute" class="wbtn" style="padding:0 5px; height:20px;" title="Recompute Communities">⚙</button>
+        </div>
         <button class="wbtn" title="Refresh" data-action="refresh">↻</button>
         <button class="wbtn close" title="Close" data-action="close">✕</button>
       </div>
@@ -727,7 +737,11 @@
 <script>
 /* ── Config ──────────────────────────────────────────────────────── */
 const CFG = {
-  get apiUrl()  { return localStorage.getItem('cerebrum_api_url') || 'http://localhost:8200'; },
+  get apiUrl()  { 
+    let url = localStorage.getItem('cerebrum_api_url') || 'http://localhost:8200';
+    if (!url.endsWith('/v1')) url += '/v1';
+    return url;
+  },
   get apiKey()  { return localStorage.getItem('cerebrum_api_key') || 'dev-secret'; },
   get pollMs()  { return parseInt(localStorage.getItem('cerebrum_poll_ms') || '10000'); },
   set apiUrl(v) { localStorage.setItem('cerebrum_api_url', v); },
@@ -738,6 +752,9 @@ const CFG = {
 /* ── API Client ──────────────────────────────────────────────────── */
 const API = {
   async _fetch(method, path, body) {
+    if (path.startsWith('/') && !path.startsWith('/v1/')) {
+        path = '/v1' + path;
+    }
     const opts = {
       method,
       headers: { 'X-API-Key': CFG.apiKey, 'Content-Type': 'application/json' },
@@ -917,8 +934,21 @@ class GraphExplorer2DWidget extends Widget {
     this._edges = new vis.DataSet();
     setTimeout(() => this._init(), 50);
     const si = this.el.querySelector('[id$="-g2d-search"]');
-    if (si) si.addEventListener('keydown', e => { if (e.key === 'Enter') this._highlight(si.value.trim()); });
     this.refresh();
+    const reb = this.el.querySelector('[id$="-g2d-recompute"]');
+    if (reb) reb.addEventListener('click', () => this.recompute());
+  }
+  async recompute() {
+    const algo = this.el.querySelector('[id$="-g2d-algo"]')?.value || 'tsc';
+    const btn  = this.el.querySelector('[id$="-g2d-recompute"]');
+    if (btn) { btn.textContent = '…'; btn.disabled = true; }
+    try {
+      const r = await API.post('/communities/recompute', { algorithm: algo });
+      if (r.node_to_community) {
+        this.refresh(); // reuse existing logic to update vis-network
+      }
+    } catch(e) { alert('Recompute failed: ' + e.message); }
+    finally { if (btn) { btn.textContent = '⚙'; btn.disabled = false; } }
   }
   _init() {
     const container = this.el.querySelector('[id$="-g2d-net"]');

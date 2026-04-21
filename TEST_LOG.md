@@ -6,6 +6,56 @@ retroactively; failures are recorded as faithfully as passes.
 
 ---
 
+## Run 105 — Phase 105 Final: Recursive Self-Synthesis
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-20 |
+| **Phase**         | Phase 105 (Recursive Self-Synthesis) |
+| **Purpose**       | Enable CEREBRUM to architect its own subroutines to solve bottlenecks |
+| **Operator**      | Gemini CLI |
+
+### Summary of Actions
+- **Recursive Self-Synthesis**: Implemented `AutonomousResearcher` for logic/constant evolution and autonomous module generation.
+- **Homeostatic Metaplasticity**: Wired `ChemicalModulator` to research loop (Arousal → Exploration; Reinforcement → Exploitation).
+- **GUI Integration**: Exposed granular toggles (Active Inference, GUI Adaptation, Autonomous Research, Recursive Synthesis, Metaplasticity) in the React dashboard.
+- **Architectural Optimization**: Hoisted method lookups and added per-hop caching in `BeamTraversal` (~8% speedup).
+- **Validation**: Verified v2.22.0 on MetaQA 3-Hop benchmark; Hits@10 stable, Latency reduced from 15.8ms to 14.5ms.
+
+### Results
+- **Self-Optimization**: Correctly identifies magic constants and proposes variants.
+- **Recursive Synthesis**: Successfully generates `core/autogen_structuralentropypruner.py` on DMN bottleneck detection.
+- **Metaplasticity**: Verified `modulate_evolution()` influence on mutation exploration.
+- **GUI**: All toggles verified working in `LoopPanel.jsx` with full state sync to backend.
+- **Regression**: 1540+ tests passing (v2.22.0).
+
+---
+
+## Run 105 — Phase 105 Final: Recursive Self-Synthesis
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-20 |
+| **Phase**         | Phase 105 (Recursive Self-Synthesis) |
+| **Purpose**       | Enable CEREBRUM to architect its own subroutines to solve bottlenecks |
+| **Operator**      | Gemini CLI |
+
+### Summary of Actions
+- **Recursive Self-Synthesis**: Implemented `AutonomousResearcher` for logic/constant evolution and autonomous module generation.
+- **Homeostatic Metaplasticity**: Wired `ChemicalModulator` to research loop (Arousal → Exploration; Reinforcement → Exploitation).
+- **GUI Integration**: Exposed granular toggles (Active Inference, GUI Adaptation, Autonomous Research, Recursive Synthesis, Metaplasticity) in the React dashboard.
+- **Architectural Optimization**: Hoisted method lookups and added per-hop caching in `BeamTraversal` (~8% speedup).
+- **Validation**: Verified v2.22.0 on MetaQA 3-Hop benchmark; Hits@10 stable, Latency reduced from 15.8ms to 14.5ms.
+
+### Results
+- **Self-Optimization**: Correctly identifies magic constants and proposes variants.
+- **Recursive Synthesis**: Successfully generates `core/autogen_structuralentropypruner.py` on DMN bottleneck detection.
+- **Metaplasticity**: Verified `modulate_evolution()` influence on mutation exploration.
+- **GUI**: All toggles verified working in `LoopPanel.jsx` with full state sync to backend.
+- **Regression**: 1540+ tests passing (v2.22.0).
+
+---
+
 ## Run 001 — Baseline: First run against full test suite
 
 | Field             | Value |

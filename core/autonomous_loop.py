@@ -101,6 +101,8 @@ class LoopConfig:
     # Phase 105: Recursive Self-Synthesis
     autonomous_research: bool = False
     research_interval: int = 600 # Every 10 mins
+    recursive_synthesis: bool = True
+    metaplasticity: bool = True
 
 
 # ---------------------------------------------------------------------------
@@ -434,11 +436,33 @@ class AutonomousDiscoveryLoop:
     def configure(self, config: LoopConfig) -> None:
         """Hot-update loop configuration without restarting the thread."""
         with self._lock:
+            old_research = self._config.autonomous_research
             self._config = config
             self._next_interval = config.cycle_interval
             self._decision_window = deque(
                 self._decision_window, maxlen=config.circuit_breaker_window
             )
+            
+            # Phase 105: Hot-update researcher
+            if self._config.autonomous_research:
+                if self._researcher is None:
+                    try:
+                        from core.autonomous_researcher import AutonomousResearcher
+                        graph = getattr(self._agent._adapter, "graph", self._agent._adapter)
+                        self._researcher = AutonomousResearcher(
+                            modulator=getattr(graph, "modulator", None),
+                            recursive_synthesis=self._config.recursive_synthesis,
+                            metaplasticity=self._config.metaplasticity
+                        )
+                        logger.info("AutonomousDiscoveryLoop: AutonomousResearcher enabled via reconfig.")
+                    except Exception:
+                        logger.exception("AutonomousDiscoveryLoop: failed to init researcher on reconfig.")
+                else:
+                    # Update existing researcher flags
+                    self._researcher.recursive_synthesis = self._config.recursive_synthesis
+                    self._researcher.metaplasticity = self._config.metaplasticity
+            else:
+                self._researcher = None
 
     def push_goal(self, goal: Any) -> None:
         """Push a user-defined goal onto the goal stack (requires working_memory=True)."""
@@ -493,6 +517,10 @@ class AutonomousDiscoveryLoop:
                 "total_edges_decayed": self._total_edges_decayed,
                 "default_mode_enabled": cfg.default_mode,
                 "total_dmn_pulses": self._total_dmn_pulses,
+                "autonomous_research_enabled": cfg.autonomous_research,
+                "research_interval": cfg.research_interval,
+                "recursive_synthesis_enabled": cfg.recursive_synthesis,
+                "metaplasticity_enabled": cfg.metaplasticity,
             }
             return s
 

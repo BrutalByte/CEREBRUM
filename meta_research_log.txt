@@ -1,0 +1,5 @@
+Mon Apr 20 17:10:28 2026 - BASELINE - H@10: 0.3800, Latency: 14.6ms/q
+Mon Apr 20 17:12:11 2026 - BASELINE - H@10: 0.3100, Latency: 13.9ms/q
+Mon Apr 20 17:13:40 2026 - BASELINE - H@10: 0.4200, Latency: 14.6ms/q
+Mon Apr 20 17:16:50 2026 - BASELINE - H@10: 0.3900, Latency: 20.6ms/q
+Mon Apr 20 17:18:37 2026 - BASELINE - H@10: 0.3100, Latency: 14.9ms/q

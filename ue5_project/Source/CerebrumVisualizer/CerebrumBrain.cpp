@@ -49,23 +49,15 @@ void ACerebrumBrain::BeginPlay()
     // Create and display HUD overlay
     if (HUDWidgetClass)
     {
-        HUDWidget = CreateWidget<UCerebrumHUDOverlay>(GetWorld(), HUDWidgetClass);
+        HUDWidget = CreateWidget<UUserWidget>(GetWorld(), HUDWidgetClass);
         if (HUDWidget)
         {
             HUDWidget->AddToViewport();
-            HUDWidget->SetConnectionStatus(false, WebSocketURL);
+            if (UCerebrumHUDOverlay* Overlay = Cast<UCerebrumHUDOverlay>(HUDWidget))
+            {
+                Overlay->SetConnectionStatus(false, WebSocketURL);
+            }
             UE_LOG(LogTemp, Log, TEXT("CerebrumBrain: HUD widget added to viewport."));
-        }
-    }
-
-    // Create and display query panel
-    if (QueryWidgetClass)
-    {
-        QueryWidget = CreateWidget<UUserWidget>(GetWorld(), QueryWidgetClass);
-        if (QueryWidget)
-        {
-            QueryWidget->AddToViewport();
-            UE_LOG(LogTemp, Log, TEXT("CerebrumBrain: Query panel added to viewport."));
         }
     }
 
@@ -342,6 +334,11 @@ void ACerebrumBrain::ParseGraphPayload(const FString& JsonBody)
     UE_LOG(LogTemp, Log,
            TEXT("CerebrumBrain: Loaded %d nodes from /communities."), NodeCount);
 
+    if (UCerebrumHUDOverlay* Overlay = Cast<UCerebrumHUDOverlay>(HUDWidget))
+    {
+        Overlay->UpdateNodeCount(NodeCount, SynapseRegistry.Num());
+        Overlay->SetConnectionStatus(true, WebSocketURL);
+    }
     OnGraphLoaded(NodeCount, SynapseRegistry.Num());
 }
 
@@ -513,6 +510,11 @@ bool ACerebrumBrain::ParseLayoutPayload(const FString& JsonBody)
                SynapseCount);
     }
 
+    if (UCerebrumHUDOverlay* Overlay = Cast<UCerebrumHUDOverlay>(HUDWidget))
+    {
+        Overlay->UpdateNodeCount(SpawnedCount, SynapseCount);
+        Overlay->SetConnectionStatus(true, WebSocketURL);
+    }
     OnGraphLoaded(SpawnedCount, SynapseCount);
     return SpawnedCount > 0;
 }
@@ -592,30 +594,54 @@ void ACerebrumBrain::HandleMetabolicFlux(float Reinforcement, float Arousal,
                                           float Novelty, float Cohesion,
                                           float Persistence, float LearningRateScale)
 {
+    if (UCerebrumHUDOverlay* Overlay = Cast<UCerebrumHUDOverlay>(HUDWidget))
+    {
+        Overlay->UpdateMetabolics(Reinforcement, Arousal, Novelty, Cohesion, Persistence);
+    }
     OnMetabolicUpdate(Reinforcement, Arousal, Novelty, Cohesion, Persistence, LearningRateScale);
-}
-
-void ACerebrumBrain::OnMetabolicUpdate_Implementation(float Reinforcement, float Arousal,
-                                                       float Novelty, float Cohesion,
-                                                       float Persistence, float LearningRateScale)
-{
-    if (HUDWidget)
-    {
-        HUDWidget->UpdateMetabolics(Reinforcement, Arousal, Novelty, Cohesion, Persistence);
-    }
-}
-
-void ACerebrumBrain::OnGraphLoaded_Implementation(int32 NodeCount, int32 EdgeCount)
-{
-    if (HUDWidget)
-    {
-        HUDWidget->UpdateNodeCount(NodeCount, EdgeCount);
-        HUDWidget->SetConnectionStatus(true, WebSocketURL);
-    }
 }
 
 void ACerebrumBrain::HandleGUIAdaptation(FString Action, FString Target, FString DataJson)
 {
+    UE_LOG(LogTemp, Log, TEXT("CerebrumBrain: GUI Adaptation - Action: %s, Target: %s"), *Action, *Target);
+
+    if (Action == TEXT("layout_shift"))
+    {
+        // Target is the layout scheme: "clustered", "neighborhood", "hierarchical", "force"
+        // DataJson contains "focal_node" if scheme is neighborhood
+
+        TSharedPtr<FJsonObject> Payload;
+        TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(DataJson);
+        FString FocalNode;
+        if (FJsonSerializer::Deserialize(Reader, Payload) && Payload.IsValid())
+        {
+            Payload->TryGetStringField(TEXT("focal_node"), FocalNode);
+        }
+
+        if (Target == TEXT("neighborhood") && !FocalNode.IsEmpty())
+        {
+            // --- Neighborhood Layout (Layered Ego-Network) ---
+            ANeuronNodeActor* AnchorNode = FindNode(FocalNode);
+            if (AnchorNode)
+            {
+                AnchorNode->SetActorLocation(FVector::ZeroVector);
+            }
+            // Trigger Blueprint event for more complex transition/layout logic
+        }
+        else if (Target == TEXT("clustered"))
+        {
+            // Reset to default community layout
+            for (auto& Pair : NodeRegistry)
+            {
+                if (IsValid(Pair.Value))
+                {
+                    FVector NewPos = ComputeNodePosition(Pair.Value->GetCommunityId(), Pair.Key);
+                    Pair.Value->SetActorLocation(NewPos);
+                }
+            }
+        }
+    }
+
     // Forward to Blueprint — child BP calls widget functions (SetVisibility, etc.)
     OnGUIAdaptationEvent(Action, Target, DataJson);
 }

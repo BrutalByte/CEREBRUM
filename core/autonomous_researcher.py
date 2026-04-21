@@ -34,7 +34,13 @@ class CodeMutation:
         self.is_structural = is_structural
 
 class AutonomousResearcher:
-    def __init__(self, target_files: List[str] = None, modulator: Optional[Any] = None):
+    def __init__(
+        self,
+        target_files: List[str] = None,
+        modulator: Optional[Any] = None,
+        recursive_synthesis: bool = True,
+        metaplasticity: bool = True,
+    ):
         self.target_files = target_files or [
             "core/attention_engine.py",
             "core/chemical_modulator.py",
@@ -42,6 +48,9 @@ class AutonomousResearcher:
             "reasoning/traversal.py"
         ]
         self.modulator = modulator
+        self.recursive_synthesis = recursive_synthesis
+        self.metaplasticity = metaplasticity
+
         # Evolutionary Hooks for structural changes
         self.hooks = {
             "core/reasoning_logit.py": {
@@ -112,12 +121,14 @@ class StructuralEntropyPruner:
         return constants
 
     def propose_structural_change(self, file_path: str) -> Optional[CodeMutation]:
+        if not self.recursive_synthesis:
+            return None
         if file_path not in self.hooks:
             return None
             
         # Dynamic mutation rate based on Arousal (Phase 104)
         mutation_rate = 0.3
-        if self.modulator:
+        if self.modulator and self.metaplasticity:
             evo_params = self.modulator.modulate_evolution()
             mutation_rate = evo_params.get("mutation_rate", 0.3)
             
@@ -177,6 +188,8 @@ class StructuralEntropyPruner:
 
     def synthesize_module(self, insight: DMNInsight) -> Optional[str]:
         """Phase 105: Create a new architectural module to solve a detected gap."""
+        if not self.recursive_synthesis:
+            return None
         if insight.description not in self.synthetic_templates:
             return None
             
@@ -215,7 +228,7 @@ class StructuralEntropyPruner:
         
         # Meta-scaling (Phase 104)
         commit_mult = 1.0
-        if self.modulator:
+        if self.modulator and self.metaplasticity:
             evo_params = self.modulator.modulate_evolution()
             commit_mult = evo_params.get("commit_threshold_multiplier", 1.0)
             sample_size = evo_params.get("sample_size", sample_size)
