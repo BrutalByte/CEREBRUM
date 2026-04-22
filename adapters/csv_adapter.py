@@ -1,19 +1,7 @@
-"""
-Bootstrap a CEREBRUM graph from an edge-list CSV file.
-
-Expected CSV format (with header row):
-    source,target,relation
-    newton,einstein,INFLUENCED
-    einstein,bohr,COLLABORATED
-    ...
-
-Column names are configurable. The relation column is optional.
-Pass an IngestionPipeline to normalize entity IDs, relation types,
-and assign confidence/provenance at load time.
-"""
 import csv
 from pathlib import Path
 from typing import Optional, TYPE_CHECKING
+import numpy as np
 
 import networkx as nx
 
@@ -102,6 +90,3 @@ def load_csv_adapter(
                 G.add_edge(src, tgt, relation=rel)
 
     return NetworkXAdapter(G)
-
-
-
