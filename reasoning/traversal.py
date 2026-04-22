@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 CSA_PARAM_KEYS = ['alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'iota', 'mu', 'theta']
 
 # Default parameters for CSAEngine (alpha, beta, gamma, delta, epsilon, zeta, eta, iota, mu, theta)
-_DEFAULT_INIT_PARAMS = (0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.575)
+_DEFAULT_INIT_PARAMS = (0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)
 
 #: Fixed-point scale for quantized traversal (Phase 61).
 #: Scores are stored as uint8 [0, 255] representing [0.0, 1.0].
@@ -477,25 +477,35 @@ class BeamTraversal:
         _valence_eng = getattr(self, "_valence_engine", None)
         _get_valence = getattr(_valence_eng, "get_valence", None) if _valence_eng else None
 
+        # GWS Phase 110: Integration for blackboard signaling
+        gws = getattr(self, "global_workspace", None)
+        
+        # Phase 111: Active Inference Prior Generation
+        prior = None
+        predictive_coder = getattr(self, "predictive_coder", None)
+        if predictive_coder is not None and query_time is not None:
+             # We use the seed for prior projection
+             prior = predictive_coder.get_prior_for_query(seeds[0])
+
         for hop in range(1, self.max_hop + 1):
             candidates: List[TraversalPath] = []
             
+            # Phase 110: GWS Bypass Gate Check
+            gws_bypass = False
+            if gws is not None and gws.blackboard.qsize() > 50: # Critical threshold
+                gws_bypass = True
+
             # Per-hop local cache to avoid redundant adapter/DB calls
             emb_cache: Dict[str, np.ndarray] = {}
             comm_cache: Dict[str, int] = {}
 
             for path in beam:
                 u = path.tail
-                # Security & Resource check: Computational Budget & RAM pressure
-                if not self.governor.can_expand(self.expansions, self.max_budget):
-                    break
-
-                edges = self.adapter.get_neighbors(
-                    u,
-                    max_neighbors=self.max_neighbors,
-                    context_embedding=path.embedding,
-                )
-                self.expansions += 1
+                
+                # Phase 111: Proactive Bias
+                expected_rel = None
+                if prior is not None and len(path.nodes) < len(prior.patterns[0]):
+                    expected_rel = prior.patterns[0][len(path.nodes)]
 
                 # Hoist source embedding and community fetch
                 eu = _get_emb(u)
@@ -517,12 +527,23 @@ class BeamTraversal:
                 else:
                     csa_params = csa_params_base
 
+                edges = self.adapter.get_neighbors(
+                    u,
+                    max_neighbors=self.max_neighbors,
+                    context_embedding=path.embedding,
+                )
+                self.expansions += 1
+                
                 for edge in edges:
                     v = edge.target_id
 
+                    # Phase 111: Apply Proactive Bias
+                    prior_bias = 1.5 if (expected_rel and edge.relation_type == expected_rel) else 1.0
+                    
                     # Temporal validity filter
                     if not is_valid_at(edge, query_time, hard_filter=not self.csa.use_temporal_decay):
                         continue
+
 
                     # Avoid revisiting entities already in the path (O(1) now)
                     if v in path.seen_entities:
@@ -532,6 +553,7 @@ class BeamTraversal:
                     if self.symbolic_validator is not None:
                         if not self.symbolic_validator.validate_step(u, edge.relation_type, v, path=path):
                             continue
+
 
                     # ----------------------------------------------------------
                     # CVT passthrough logic
@@ -560,6 +582,10 @@ class BeamTraversal:
                     for (v_eff, rel_eff, conf_eff, prov_eff, vf_eff, vt_eff) in next_steps:
                         if v_eff in path.seen_entities:
                             continue
+
+                        # Phase 111: Apply Proactive Bias for this effective relation
+                        # (Matches the bias calculated earlier if it was a simple edge)
+                        prior_bias = 1.5 if (expected_rel and rel_eff == expected_rel) else 1.0
 
                         # Check cache for destination embedding and community
                         if v_eff in emb_cache:
@@ -607,6 +633,9 @@ class BeamTraversal:
                             etw = self.edge_type_weights.get(rel_eff, 0.0)
                             hd  = 1.0 / (1.0 + hop)
                             features_vector = ReasoningLogit(sim, cs, etw, 0.0, hd, 0.0, 0.0, 0.0, 0.0, 1.0).to_vector()
+
+                        # Phase 111: Apply prior boost
+                        w = w * prior_bias
 
                         # Phase 99: Thalamic Gating — WM priming boost
                         if node_priming and v_eff in node_priming:

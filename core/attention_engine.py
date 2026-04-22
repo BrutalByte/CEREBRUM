@@ -137,7 +137,7 @@ class CSAEngine:
             elif (-1, cv) in self.external_community_scores: score = self.external_community_scores[(-1, cv)]
             elif cu == -1 or cv == -1: score = self.external_community_scores.get((-1, -1), 0.5)
             elif cu == cv: score = 1.0
-            elif (cu, cv) in self._adjacent_pairs or (cv, cu) in self._adjacent_pairs: score = 0.525
+            elif (cu, cv) in self._adjacent_pairs or (cv, cu) in self._adjacent_pairs: score = 0.5
             else:
                 d = self._community_distances.get((cu, cv), self._community_distances.get((cv, cu), 5.0))
                 score = math.exp(-self.lambda_decay * d)

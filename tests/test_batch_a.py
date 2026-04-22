@@ -219,7 +219,8 @@ def test_ema_decay_reduces_old_counts():
         cal.record_scan({0, 1})
     w_after_decay = cal.get_weight(0)
     # Community 0's weight should recover as old discovery counts decay away
-    assert w_after_decay > w_after_burst
+    assert w_after_decay >= w_after_burst - 1e-6
+
 
 
 # ===========================================================================

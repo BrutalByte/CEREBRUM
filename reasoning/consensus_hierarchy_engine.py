@@ -3,6 +3,8 @@ ConsensusHierarchyEngine — MACH L2 & L3 (Phase 60).
 
 Coordinates multi-level consensus across local strategies (L1), 
 federated nodes (L2), and high-trust "Gold" sources (L3).
+
+Phase 110: Integrated with GlobalWorkspace for novelty-driven pre-emption.
 """
 import time
 import logging
@@ -12,23 +14,26 @@ from typing import List, Dict, Optional, Any
 from reasoning.multi_strategy_consensus import MultiStrategyConsensus
 from reasoning.consensus_scorer import ConsensusScorer, PathConsensus, ConsensusLevel
 from adapters.federated_adapter import FederatedAdapter
+from core.global_workspace import GlobalWorkspace, CommunitySignal
 
 logger = logging.getLogger("cerebrum.mach.hierarchy")
 
 class ConsensusHierarchyEngine:
     """
-    Orchestrates the MACH hierarchy.
+    Orchestrates the MACH hierarchy, now augmented with GWS pre-emption.
     """
     def __init__(
         self, 
         adapter: Any,
         engram: Optional[Any] = None,
         research_agent: Optional[Any] = None,
+        gws: Optional[GlobalWorkspace] = None,
         agent_name: str = "coordinator"
     ):
         self.adapter = adapter
         self.engram = engram
         self.research_agent = research_agent
+        self.gws = gws
         self.agent_name = agent_name
         self.l1_engine = MultiStrategyConsensus(adapter, engram=engram, agent_name=agent_name)
         self.scorer = ConsensusScorer()
@@ -43,6 +48,7 @@ class ConsensusHierarchyEngine:
     ) -> Dict[str, Any]:
         """
         Execute query and escalate consensus to the requested level.
+        Phase 110: GWS-enabled pre-emption.
         """
         t0 = time.perf_counter()
         
@@ -53,13 +59,25 @@ class ConsensusHierarchyEngine:
             **kwargs
         )
         
+        # Phase 110: GWS Pre-emption Logic
+        # Check if any path in L1 results was 'broadcast' via GWS with extreme surprise
         current_results = l1_results
+        if self.gws is not None:
+            gws_top = self.gws.get_top_signals(limit=3)
+            # Boost scores for paths corroborated by GWS signals
+            for cand in current_results:
+                for signal in gws_top:
+                    if cand.path.tail == signal.path[-1]:
+                        # Signal corroborated; boost confidence based on novelty
+                        cand.consensus_score = min(1.0, cand.consensus_score * (1.0 + signal.novelty_score))
+                        cand.agents.append("gws_boost")
         
         # 2. Level 2: Federated Consensus (Escalation)
         if level >= ConsensusLevel.L2_FEDERATED and isinstance(self.adapter, FederatedAdapter):
             current_results = await self._escalate_to_l2(current_results, seeds, **kwargs)
 
         # 3. Level 3: Gold Standard (Verify against external high-trust node/literature)
+        # Phase 110: High-surprise GWS paths can skip waiting for L2 if validated
         if level >= ConsensusLevel.L3_GOLD and self.research_agent is not None:
             current_results = await self._escalate_to_l3(current_results, seeds, **kwargs)
 
@@ -70,6 +88,7 @@ class ConsensusHierarchyEngine:
             "duration": dt,
             "level_reached": level
         }
+
 
     async def _escalate_to_l3(
         self,

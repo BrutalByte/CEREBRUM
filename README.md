@@ -28,7 +28,8 @@ See `PAPER.md` for the full white paper and architecture specification, and `doc
 
 **Current Project Status: v2.23.0 — Phase 108 COMPLETE — 1540+ tests passing (1 skipped)**
 
-- [x] **Phase 108: Thalamofrontal Feedback Loop** — dynamic metabolic gating of reasoning. Implements real-time threshold adjustment inspired by the **ALARM Theory** (Ruhr University Bochum, 2025) and human thalamofrontal loop research (Zhang et al., 2025).
+- [x] **Phase 108: Thalamofrontal Feedback Loop** — dynamic metabolic gating of reasoning.
+- [x] **Phase 110: Global Workspace (GWS)** — Blackboard-based competitive attention bidding. Implements real-time threshold adjustment inspired by the **ALARM Theory** (Ruhr University Bochum, 2025) and human thalamofrontal loop research (Zhang et al., 2025).
 - [x] **Phase 107: De Novo Parameter Synthesis** — autonomous activation of dormant (`0.0`) parameters via "Cold-Start" jump seeds.
 - [x] **Phase 105: Recursive Self-Synthesis** — system architects its own subroutines based on DMN bottleneck audits.
 - [x] **Phase 1: Core Engine** (GraphAdapter, TSC Engine, CSA Attention)

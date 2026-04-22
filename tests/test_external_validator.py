@@ -237,7 +237,8 @@ def test_validator_api_endpoint_smoke():
     app = create_app(adapter=adapter, embedding_engine=engine, community_map=cmap)
     with TestClient(app, headers={"X-API-Key": "dev-secret"}) as c:
         # First generate a hypothesis so there are proposals to validate
-        hyp_r = c.post("/hypothesize", json={
+        hyp_r = c.post("/v1/hypothesize", json={
+
             "source_id": "newton",
             "target_id": "maxwell",
             "max_paths": 5,
@@ -253,7 +254,7 @@ def test_validator_api_endpoint_smoke():
         from api import server as _srv
         _srv._state["external_validator"] = ExternalValidator(adapters=[])
 
-        r = c.post("/research/validate", json={"hypothesis_ids": [], "adapters": []})
+        r = c.post("/v1/research/validate", json={"hypothesis_ids": [], "adapters": []})
         assert r.status_code == 200, r.text
         body = r.json()
         assert "validated" in body
