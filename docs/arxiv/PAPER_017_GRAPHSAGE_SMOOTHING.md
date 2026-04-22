@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.20.1 (Phase 82 COMPLETE — compatible)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Date**: April 2026
 
 ---
@@ -74,3 +74,6 @@ Inference-time GraphSAGE neighbourhood smoothing is a zero-cost structural enric
 2. Vaswani, A., et al. (2017). Attention is All You Need. NIPS.
 3. Veličković, P., et al. (2018). Graph Attention Networks. ICLR.
 4. Reimers, N., & Gurevych, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. EMNLP.
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

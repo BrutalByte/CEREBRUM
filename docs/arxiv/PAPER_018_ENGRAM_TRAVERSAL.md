@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.20.1 (Phase 82 COMPLETE — compatible)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Date**: April 2026
 
 ---
@@ -85,3 +85,6 @@ The Engram pattern as a *soliton* [bengio2025soliton]: a relation-sequence patte
 3. Das, R., et al. (2018). Go for a Walk and Arrive at the Answer: Reasoning over Paths in Knowledge Bases using Reinforcement Learning (MINERVA). ICLR.
 4. Zhu, R.-J., Wang, Z., Hua, K., et al. (2025). Scaling Latent Reasoning via Looped Language Models. arXiv:2510.25741. [zhu2025loooplm]
 5. Bengio, Y. et al. (2025). Consciousness as a Soliton, Not a Process. UCFT 2025 Preprint. [bengio2025soliton]
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

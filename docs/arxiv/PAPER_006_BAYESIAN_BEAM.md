@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.20.1 (Phase 82 COMPLETE — compatible)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Date**: April 2026
 
 ---
@@ -71,3 +71,6 @@ The OPT configuration uses adaptive density-driven beam width selection with a m
 6. Scott, S. L. (2010). A modern Bayesian look at the multi-armed bandit. Applied Stochastic Models in Business and Industry.
 7. Buchorn, B. A., & Sonnet, C. (2026). Bayesian Warm-Starting in CEREBRUM. SPEC_006.md.
 8. Zhu, R.-J., Wang, Z., Hua, K., et al. (2025). Scaling Latent Reasoning via Looped Language Models. arXiv:2510.25741. [zhu2025loooplm]
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

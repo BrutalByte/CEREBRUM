@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.20.1 (Phase 82 COMPLETE — compatible)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Date**: April 2026
 
 ---
@@ -58,3 +58,6 @@ The Signal Encoder has been validated in production and its core alignment metho
 5. Conneau, A., et al. (2017). Word Translation without Parallel Data. ICLR.
 6. Artetxe, M., et al. (2018). A robust self-learning method for fully unsupervised cross-lingual mappings of word embeddings. ACL.
 7. Buchorn, B. A., & Sonnet, C. (2026). Cross-Modal Signal Projections in CEREBRUM. SPEC_008.md.
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

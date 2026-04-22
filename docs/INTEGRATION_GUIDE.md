@@ -1,6 +1,6 @@
 # CEREBRUM Integration Guide
 
-**Version**: v2.21.0
+**Version**: v2.24.0
 **Audience**: Python developers integrating CEREBRUM into an application
 
 This guide covers the Python API directly. For the REST API, see `docs/API_REFERENCE.md`. For deployment, see `docs/DEPLOYMENT.md`.
@@ -494,3 +494,6 @@ edges = resp.json()["edges"]
 ---
 
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.20.1 (Phase 82 COMPLETE — compatible)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Date**: April 2026
 
 ---
@@ -65,3 +65,6 @@ The Bridge Twin Engine has been substantially extended since v1.2.0. The followi
 5. Abbott, L. F., & Nelson, S. B. (2000). Synaptic plasticity: taming the beast. Nature Neuroscience.
 6. Caporale, N., & Dan, Y. (2008). Spike timing-dependent plasticity: a Hebbian learning rule. Annual Review of Neuroscience.
 7. Buchorn, B. A., & Sonnet, C. (2026). Bridge Twin Relays in CEREBRUM. SPEC_003.md.
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

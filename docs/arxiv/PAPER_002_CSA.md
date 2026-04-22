@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.20.1 (Phase 82 COMPLETE — compatible)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Date**: April 2026
 
 ---
@@ -111,3 +111,6 @@ where `affinity` is derived from accumulated `_counts`. This biases beam search 
 9. Wang, Q., et al. (2017). Knowledge Graph Embedding: A Survey of Approaches and Applications. IEEE TKDE.
 10. Buchorn, B. A., & Sonnet, C. (2026). CEREBRUM: Community-Structured Graph Attention. PARALLAX.md.
 11. Hamilton, W., Ying, Z., & Leskovec, J. (2017). Inductive Representation Learning on Large Graphs. NeurIPS.
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

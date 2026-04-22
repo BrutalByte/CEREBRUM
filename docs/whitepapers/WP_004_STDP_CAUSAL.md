@@ -2,7 +2,7 @@
 ## Autonomous Discovery via the STDP Causal Engine
 
 **Date**: March 2026  
-**Status**: v2.1.0 (Phase 82 COMPLETE)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Target Audience**: Data Scientists, IoT Architects, Cybersecurity Analysts, Fintech Leads
 
 ---
@@ -36,3 +36,6 @@ The STDP Causal Engine transforms raw event streams into a structured, causal Kn
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

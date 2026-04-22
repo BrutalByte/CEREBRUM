@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.20.1 (Phase 82 COMPLETE — compatible)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Date**: April 2026
 
 ---
@@ -64,3 +64,6 @@ The temporal stability achieved by TemporalCalibrator — where `eta` and `iota`
 1. Vaswani, A., et al. (2017). Attention is All You Need. NIPS.
 2. Traag, V., et al. (2019). From Louvain to Leiden: guaranteeing well-connected communities. Scientific Reports.
 3. Bengio, Y. et al. (2025). Consciousness as a Soliton, Not a Process. UCFT 2025 Preprint. [bengio2025soliton]
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: April 2026
-**Status**: Version 2.24.0 · Phase 111 COMPLETE — 1,977+ tests passing
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **License**: Proprietary — all rights reserved
 
 ---
@@ -1039,3 +1039,5 @@ CEREBRUM stands on the shoulders of decades of research in graph theory, communi
 - Yih et al. (2016). The value of semantic parse labeling for knowledge base question answering. *ACL* (WebQSP).
 - Zhang et al. (2018). Variational reasoning for question answering with knowledge graphs (MetaQA). *AAAI*.
 
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

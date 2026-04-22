@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.20.1 (Phase 82 COMPLETE — compatible)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Date**: April 2026
 
 ---
@@ -77,3 +77,6 @@ The Glass-Box Reasoning Studio transforms graph attention from an abstract mathe
 5. Samek, W., et al. (2017). Explainable AI: Interpreting, Explaining and Visualizing Deep Learning. Springer.
 6. Lundberg, S. M., & Lee, S. I. (2017). A Unified Approach to Interpreting Model Predictions. NIPS.
 7. Buchorn, B. A., & Sonnet, C. (2026). Interactive Graph Attention in CEREBRUM. SPEC_012.md.
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

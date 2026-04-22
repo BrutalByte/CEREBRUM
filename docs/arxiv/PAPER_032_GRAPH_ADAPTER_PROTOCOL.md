@@ -104,3 +104,6 @@ If `adapter.remove_edge()` raises, the exception propagates to the caller. `Prov
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

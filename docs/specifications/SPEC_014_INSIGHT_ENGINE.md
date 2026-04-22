@@ -1,7 +1,7 @@
 # SPEC_014: Verification and Metacognition
 ## InsightValidator, InsightEngine, and MetaInsightEngine
 
-**Status**: v2.1.0 (Phase 82 COMPLETE)
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Field**: Metacognition / Self-Verification / Second-Order Reasoning
 **Modules**: `core/insight_validator.py`, `core/meta_insight_engine.py`
@@ -141,3 +141,6 @@ meta.query_second_order(start_event_id: str, max_hops: int = 2) -> List[InsightP
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

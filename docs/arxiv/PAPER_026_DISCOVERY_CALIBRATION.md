@@ -121,3 +121,6 @@ Default `max_boost = 3.0`. This rewards repeatedly-surfaced candidates without l
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

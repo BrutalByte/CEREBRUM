@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Affiliations**: Independent Researcher · Anthropic
-**Status**: v2.20.1 (Phase 82 COMPLETE — compatible)
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Date**: April 2026
 
 ---
@@ -201,3 +201,6 @@ In v2.0.1 (Phases 56–57), the hardening scope expands from cross-feature inter
 3. Carlini, N., & Wagner, D. (2017). Towards evaluating the robustness of neural networks. IEEE S&P.
 4. Goodfellow, I., et al. (2014). Generative Adversarial Networks. NeurIPS.
 5. Bi & Poo (1998). Synaptic Modifications in Cultured Hippocampal Neurons. Journal of Neuroscience.
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

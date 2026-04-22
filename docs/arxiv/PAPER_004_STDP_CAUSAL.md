@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.20.1 (Phase 82 COMPLETE — compatible)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Date**: April 2026
 
 ---
@@ -62,3 +62,6 @@ The STDP causal discovery pipeline has been hardened and extended since v1.2.0. 
 5. Sjöström, J., & Gerstner, W. (2010). Spike-timing dependent plasticity. Scholarpedia.
 6. Song, S., Miller, K. D., & Abbott, L. F. (2000). Competitive Hebbian learning through spike-timing-dependent synaptic plasticity. Nature Neuroscience.
 7. Buchorn, B. A., & Sonnet, C. (2026). Lazy STDP Weight Decay in CEREBRUM. SPEC_004.md.
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

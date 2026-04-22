@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.20.1 (Phase 82 COMPLETE — compatible)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Date**: April 2026
 
 ---
@@ -71,3 +71,6 @@ The CEREBRUM framework has undergone substantial development between v1.2.0 and 
 8. Fortunato, S. (2010). Community detection in graphs. Physics reports.
 9. Lancichinetti, A., & Fortunato, S. (2009). Community detection algorithms: A comparative analysis. Physical review E.
 10. Sun, X., et al. (2024). Hybrid Community Detection via Local and Global Signal Fusion. Journal of Graph Reasoning.
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

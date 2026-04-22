@@ -97,3 +97,6 @@ Transforms reasoning from a reactive search to a proactive traversal. The `Predi
 | Adaptive Loop Tuning | on / off | DiscoveryCalibrator-driven dynamic cap scaling | 
 | TelemetryBridge | ws_port set / not set | WebSocket server for UE5 visualization |
 | GUI Adaptation | on / off | metabolic-driven UI structural adaptation |
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.20.1 (Phase 82 COMPLETE — compatible)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Date**: April 2026
 
 ---
@@ -79,3 +79,6 @@ The CEREBRUM Streaming Engine in v1.9.8 has matured from a laboratory prototype 
 3. Aggarwal, C. C., et al. (2010). On Classification of Graph Streams. SIAM Data Mining.
 4. Seber, G. A. F. (1984). Multivariate Observations. Wiley.
 5. Buchorn, B. A., & Sonnet, C. (2026). Streaming Discretization in CEREBRUM. SPEC_013.md.
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

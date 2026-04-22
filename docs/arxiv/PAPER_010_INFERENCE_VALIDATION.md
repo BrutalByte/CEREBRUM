@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.20.1 (Phase 82 COMPLETE — compatible)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Date**: April 2026
 
 ---
@@ -60,3 +60,6 @@ The Inference Validator provides a mathematically sound and self-contained frame
 5. Wang, Z., et al. (2014). Knowledge Graph Embedding by Translating on Hyperplanes. AAAI.
 6. Lin, Y., et al. (2015). Learning Entity and Relation Embeddings for Knowledge Graph Completion. AAAI.
 7. Buchorn, B. A., & Sonnet, C. (2026). Unsupervised Recall Benchmarks in CEREBRUM. SPEC_010.md.
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

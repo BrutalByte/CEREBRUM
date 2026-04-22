@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.20.1 (Phase 82 COMPLETE — compatible)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Date**: April 2026
 
 ---
@@ -149,3 +149,6 @@ Fault tolerance in production systems is not a single feature but a taxonomy of 
 1. Lamport, L. (1978). Time, Clocks, and the Ordering of Events in a Distributed System. Communications of the ACM, 21(7), 558–565.
 2. Bernstein, P. A., & Goodman, N. (1983). Multiversion Concurrency Control — Theory and Algorithms. ACM Transactions on Database Systems, 8(4), 465–483.
 3. Vaswani, A., et al. (2017). Attention is All You Need. NIPS.
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

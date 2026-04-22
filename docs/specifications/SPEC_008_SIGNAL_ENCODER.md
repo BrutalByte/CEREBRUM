@@ -1,7 +1,7 @@
 # SPEC_008: Signal Encoder
 ## Cross-Modal Alignment via Orthogonal Procrustes
 
-**Status**: v2.1.0 (Phase 82 COMPLETE)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Signal Processing / Latent Space Alignment / Multi-Modal AI  
 **Module**: `core/signal_encoder.py`
@@ -67,3 +67,6 @@ To prevent this, CEREBRUM enforces a **Canonical Basis Anchor**:
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

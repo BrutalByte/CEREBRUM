@@ -260,7 +260,7 @@ The Phase 79 integration between `AutonomousDiscoveryLoop` and `ProvenanceLedger
 An optimization in `STDPDiscretizer` that applies weight decay lazily (only when a pair is accessed) rather than on every clock tick, reducing time complexity from $O(N)$ to $O(1)$ per event. See also: STDP.
 
 **Leiden Algorithm (Native)**
-CEREBRUM's GPL-free native reimplementation of the Leiden community detection algorithm in `core/leiden_native.py`. Replaces the `igraph`/`leidenalg` external dependencies removed in v0.2.0.
+CEREBRUM's GPL-free native reimplementation of the Leiden community detection algorithm in `core/leiden_native.py`. Replaces the `igraph`/`leidenalg` external dependencies removed in v2.24.0.
 
 **LPA (Label Propagation Algorithm)**
 A local community detection method where each node adopts the most common community label among its neighbors. Represents the "local topology signal" in DSCF. Fast ($O(E)$) but can produce poor modularity. Combined with modularity gain in DSCF to achieve both speed and quality.
@@ -494,3 +494,6 @@ The mechanism for synchronizing community-map updates across a distributed CEREB
 
 ### UE LLM Toolkit Adapter
 An interface bridge that allows the CEREBRUM Brain Server to animate and communicate with Unreal Engine 5 (UE5) simulations in real-time, mapping neural telemetry events to 3D scene actions.
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

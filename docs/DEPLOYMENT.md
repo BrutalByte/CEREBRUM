@@ -1,6 +1,6 @@
 # CEREBRUM Deployment Guide
 
-**Version**: v2.21.0
+**Version**: v2.24.0
 **Audience**: DevOps, Platform Engineers, System Administrators
 
 ---
@@ -478,3 +478,6 @@ Key metrics to alert on:
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

@@ -18,3 +18,6 @@ The **Prediction Error (PE)** signal — the divergence between the projected pr
 
 ## 4. Conclusion
 Active Inference transforms CEREBRUM from a passive searcher into a proactive reasoner, aligning the system's architecture more closely with the predictive coding mechanisms of the human brain.
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

@@ -2,7 +2,7 @@
 
 **Base URL**: `http://localhost:8200`
 **API Version**: v2.24.0
-**Status**: Phase 111 (Active Inference) COMPLETE
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Authentication**: JWT Bearer token (all endpoints except `/health`)
 
 ---
@@ -1112,3 +1112,6 @@ checkpoint = client.get("/params").json()
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0

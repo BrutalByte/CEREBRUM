@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.20.1 (Phase 82 COMPLETE — compatible)  
+**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
 **Date**: April 2026
 
 ---
@@ -64,3 +64,6 @@ Graceful Degradation AUC across all five levels: **0.89** (1.0 = perfect; 0.5 = 
 5. Tononi, G., & Cirelli, C. (2014). Sleep and the price of plasticity: from synaptic and cellular homeostasis to memory consolidation and integration. Neuron.
 6. Rasch, B., & Born, J. (2013). About sleep's role in memory. Physiological Reviews.
 7. Buchorn, B. A., & Sonnet, C. (2026). Hallucination Pruning in CEREBRUM. SPEC_007.md.
+
+---
+**Reviewed on**: April 21, 2026 for version v2.24.0
