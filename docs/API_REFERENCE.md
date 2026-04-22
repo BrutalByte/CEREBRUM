@@ -1,7 +1,8 @@
 # CEREBRUM REST API Reference
 
 **Base URL**: `http://localhost:8200`
-**API Version**: v2.21.0
+**API Version**: v2.24.0
+**Status**: Phase 111 (Active Inference) COMPLETE
 **Authentication**: JWT Bearer token (all endpoints except `/health`)
 
 ---
@@ -17,6 +18,22 @@ While the REST API provides remote access, the primary programmatic entry point 
 3.  **Enhance (Optional)**: `graph.enhance([GraphBridgeEngine()])`
 4.  **Build**: `graph.build(cache_dir="cache/", community_engine="dscf")`
 5.  **Query**: `answers = graph.query(["start_node"], top_k=10)`
+
+---
+
+## Architecture Extensions (Phases 110 & 111)
+
+### Global Workspace (Phase 110)
+CEREBRUM now includes a **Global Workspace (GWS)** blackboard for competitive attention. 
+- **Mechanism**: Communities broadcast "surprise" signals to a shared `GlobalWorkspace`.
+- **Pre-emption**: The `ConsensusHierarchyEngine` monitors the blackboard and can "pre-empt" standard MACH escalation if a high-novelty signal provides immediate corroboration for a reasoning path.
+- **Cognitive Flexibility**: Allows the system to rapidly switch focus to surprising discoveries without waiting for linear validation stages.
+
+### Active Inference (Phase 111)
+Reasoning has shifted from reactive to proactive.
+- **Predictive Priors**: The `PredictiveCoder` projects "Expected Path" relation sequences from Engram patterns before traversal starts.
+- **Proactive Bias**: Expansion and scoring are biased toward edges that align with the projected prior (`1.5x` boost).
+- **Prediction Error (PE)**: Divergence from the prior triggers metabolic arousal (via `ChemicalModulator`), automatically widening the beam to investigate unexpected structural changes.
 
 ---
 

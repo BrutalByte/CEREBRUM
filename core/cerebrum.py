@@ -115,8 +115,9 @@ class CerebrumGraph:
         # Neuro-Chemical Modulation (Phase 68)
         self.modulator = ChemicalModulator()
 
-        # Predictive Coding (Phase 69) — set via attach_engram()
-        self.predictive_coder: Optional[PredictiveCodingEngine] = None
+        # Global Workspace (Phase 110)
+        from core.global_workspace import GlobalWorkspace
+        self.global_workspace = GlobalWorkspace()
 
         self._csa:       Optional[CSAEngine]    = None
         self._traversal: Optional[BeamTraversal] = None
@@ -648,6 +649,8 @@ class CerebrumGraph:
             probabilistic       = self._probabilistic,
             warm_start_strength = self._warm_start_strength,
         )
+        self._traversal.global_workspace = self.global_workspace
+        self._traversal.predictive_coder = self.predictive_coder
         self._traversal.lateral_inhibition_ratio = self._lateral_inhibition_ratio
 
         self._built = True
@@ -747,6 +750,8 @@ class CerebrumGraph:
                 governor            = ResourceGovernor(memory_threshold_pct=memory_threshold_pct),
                 **csa_overrides # Inject hormonal overrides
             )
+            traversal.global_workspace = self.global_workspace
+            traversal.predictive_coder = self.predictive_coder
             # Copy Phase 99-101 state from the default traversal
             traversal.lateral_inhibition_ratio = self._lateral_inhibition_ratio
             _ve = getattr(self._traversal, "_valence_engine", None)

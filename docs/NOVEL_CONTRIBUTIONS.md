@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026
-**Version**: v2.21.0 (Phase 83 COMPLETE)
+**Version**: v2.24.0 (Phase 111 COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -562,6 +562,26 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 **Novelty Statement**: Existing AI systems have static GUIs designed before deployment. This is the first system in which a knowledge graph reasoner autonomously modifies the structural definition of its own user interface — adding new panels to a live game engine Blueprint asset — based on its own internal metabolic and epistemic state, with changes persisting across editor sessions.
 
 **Relevant files**: `core/gui_adaptation_engine.py`, `api/ue_toolkit_client.py`, `ue5_project/create_initial_gui.py`
+
+---
+
+### Claim 44: Global Workspace (GWS) for Competitive Attention (Phase 110)
+
+**Description**: A blackboard-based communication layer where graph communities broadcast "surprise" (prediction error) signals in real-time during reasoning. The `ConsensusHierarchyEngine` utilizes these asynchronous signals to dynamically boost candidate scores and pre-empt hierarchical validation stages.
+
+**Novelty Statement**: Traditional multi-agent consensus in KGs is hierarchical or sequential. GWS is the first implementation of a biological Global Workspace analog for graph reasoning, enabling competitive focus-switching based on real-time information gain rather than fixed linear escalation.
+
+**Relevant files**: `core/global_workspace.py`, `reasoning/consensus_hierarchy_engine.py`
+
+---
+
+### Claim 45: Proactive Active Inference in Beam Traversal (Phase 111)
+
+**Description**: A reasoning mechanism where a `PredictiveCoder` generates "Expected Path" priors from historical Engram patterns *before* search initiates. These priors are used to bias the beam traversal, reducing the search space for common queries while using the resulting Prediction Error (PE) to drive metabolic arousal for anomaly detection.
+
+**Novelty Statement**: Existing beam search variants for KGs are exclusively reactive, exploring the local topology only after seeing the current state. CEREBRUM is the first KG system to implement predictive coding, where the system anticipates the logical trajectory and only "pays" the computational cost for surprise reduction.
+
+**Relevant files**: `core/predictive_coder.py`, `reasoning/traversal.py`
 
 ---
 

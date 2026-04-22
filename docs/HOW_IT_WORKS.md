@@ -44,9 +44,23 @@ This search is **Bayesian**, meaning it uses Thompson Sampling and Beta distribu
 
 In latest versions, this search is **Looped**. The system can run multiple passes of the search, using the answers from the first pass to refine its strategy for the second pass—much like a human re-reads a difficult sentence to understand it better.
 
+### Active Inference (Phase 111)
+CEREBRUM now performs **Active Inference**, moving from a reactive searcher to a proactive prosector. Before the beam search starts, the **PredictiveCoder** uses historical Engram patterns to project the "Expected Path." This projection biases the search toward likely relation sequences, drastically reducing computational waste for standard queries while focusing energy on "surprising" discoveries.
+
 ---
 
-## 4. The Brain: Metabolic and Mnemonic Regulation
+## 4. The Decision: Multi-Agent Consensus & Global Workspace
+
+To ensure the highest accuracy, CEREBRUM uses **Multi-Agent Consensus Hierarchies (MACH)**. Instead of relying on a single path, it runs multiple reasoning strategies in parallel and requires them to reach a consensus.
+
+### Global Workspace (Phase 110)
+Phase 110 introduces the **Global Workspace (GWS)** blackboard. Communities broadcast "surprise" signals (high-novelty discoveries) to a shared workspace.
+- **Pre-emption**: If the Global Workspace identifies a highly corroborated, high-novelty signal, it can pre-empt the standard hierarchical escalation.
+- **Cognitive Flexibility**: This allows the system to switch "cognitive focus" instantly, prioritizing paths that offer the most information gain (maximum surprise reduction).
+
+---
+
+## 5. The Brain: Metabolic and Mnemonic Regulation
 
 CEREBRUM isn't just a static algorithm; it is a **dynamic system** regulated by biological analogs:
 

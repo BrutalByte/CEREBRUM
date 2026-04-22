@@ -3,27 +3,46 @@
 
 ![CEREBRUM Hero Image](file:///C:/Users/bryan/.gemini/antigravity/brain/77bb37a0-e733-41be-824d-b07e7cce5a6f/cerebrum_hero_v77bb37a0_e730_41be_824d_b07e7cce5a6f_png_1774651388694.png)
 
+**Version**: v2.24.0 (Phase 111 COMPLETE) — April 2026
+**Tests**: 1,977+ passing cases
+
 ---
 
 ### **Visualizing the Process: How CEREBRUM Thinks**
 
 ```mermaid
 graph TD
-    A["Your Question"] --> B["Neighborhood Discovery (DSCF)"]
+    A["Your Question"] --> BP["Prior Projection (Predictive Prior)"]
+    BP --> B["Neighborhood Discovery (DSCF)"]
     B --> C["The Flashlight (Attention/CSA)"]
     C --> D["The Scouts (Beam Search)"]
-    D --> E["A Verified Answer with a Traceable Path"]
+    D --> GWS["Global Workspace (Blackboard)"]
+    GWS --> E["A Verified Answer with a Traceable Path"]
 
     subgraph "The Knowledge Graph"
+    BP
     B
     C
     D
+    GWS
     end
 
     F["Physical Signals\n(Heartbeats, Sensors)"] -- "Translated via Signal Encoder" --> B
     G["New Hypothesis"] -- "Validated via ExternalValidator" --> H["Literature Evidence"]
     I["ResearchAgent\n(Autonomous Discovery)"] --> G
 ```
+
+---
+
+### **4. Focus: The Global Workspace (Phase 110)**
+Just like your brain can suddenly switch focus when you hear your name across a crowded room, CEREBRUM now has a **Global Workspace**. 
+- **The Blackboard**: Communities broadcast "surprising" new facts to a shared blackboard.
+- **Priority**: If a discovery is important enough, the system stops what it's doing to investigate, allowing for true "cognitive flexibility."
+
+### **5. Anticipation: Active Inference (Phase 111)**
+CEREBRUM no longer just searches blindly. It **anticipates**.
+- **Proactive Reasoning**: Before the scouts even leave, the system projects a "likely path" based on its past memories (Engrams).
+- **Speed**: If the prediction is 95% accurate, the system finds the answer instantly. If there is a "Prediction Error," it works harder to figure out why reality differs from its expectation.
 
 ---
 

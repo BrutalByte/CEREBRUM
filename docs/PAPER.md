@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: April 2026
-**Status**: Version 2.21.0 · Phase 94 COMPLETE — 1,835+ tests passing
+**Status**: Version 2.24.0 · Phase 111 COMPLETE — 1,977+ tests passing
 **License**: Proprietary — all rights reserved
 
 ---
@@ -15,6 +15,10 @@
 using community structure as attention heads, BFS hop depth as layer depth, and
 graph-structural features as positional encodings. No training required. No LLM required.
 Every inference step is a verifiable graph edge.
+
+**Phase 110 (Global Workspace)**: Competitive attention blackboard where communities broadcast "surprise" signals to pre-empt hierarchical consensus.
+
+**Phase 111 (Active Inference)**: Proactive traversal using projected relation-pattern priors from Engrams to bias the beam.
 
 **The two core algorithms**:
 
