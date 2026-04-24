@@ -13,13 +13,23 @@ logger = logging.getLogger("cerebrum.deductive")
 class DeductiveTraversal:
     """
     Exhaustive deductive path searcher.
-    
+
     Explores graph branches as a state-machine of logical propositions.
     Validates every hop through the SymbolicValidator before materialization.
     """
-    def __init__(self, adapter, validator):
+    def __init__(
+        self,
+        adapter,
+        validator,
+        causal_relations: Optional[frozenset] = None,
+    ):
         self.adapter = adapter
         self.validator = validator
+        # Mirror CausalEngine's configurability so causal_only=True traversals
+        # and CausalEngine.query() always filter against the same relation set.
+        self._causal_relations: frozenset = (
+            causal_relations if causal_relations is not None else CAUSAL_RELATIONS
+        )
 
     def traverse(self, seed: str, target: str,
                  causal_only: bool = False) -> List[List[str]]:
@@ -58,7 +68,7 @@ class DeductiveTraversal:
                     v = neighbor
                     rel = "unknown"
                 
-                if causal_only and rel not in CAUSAL_RELATIONS:
+                if causal_only and rel not in self._causal_relations:
                     continue
 
                 new_path = path + [rel, v]

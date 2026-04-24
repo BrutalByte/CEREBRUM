@@ -82,10 +82,19 @@ class CausalEngine:
         adapter: Any,
         truth_cache: Optional["TruthCache"] = None,
         max_backdoor_hops: int = 3,
+        causal_relations: Optional[frozenset] = None,
     ) -> None:
         self.adapter = adapter
         self.truth_cache = truth_cache
         self.max_backdoor_hops = max_backdoor_hops
+        # Defaults to the canonical biomedical CAUSAL_RELATIONS frozenset.
+        # Pass a domain-specific preset (e.g. LANGUAGE_GRAPH_CAUSAL_PROXIES from
+        # benchmarks/causal_epistemic_benchmark.py) to adapt the engine to graphs
+        # whose relation vocabulary differs from biomedical convention.
+        # The active set is always logged at query time so callers can audit it.
+        self._causal_relations: frozenset = (
+            causal_relations if causal_relations is not None else CAUSAL_RELATIONS
+        )
 
     def query(
         self,
@@ -208,7 +217,7 @@ class CausalEngine:
 
             for neighbor in neighbors:
                 v, rel, edge_data = self._unpack_neighbor(neighbor)
-                if rel not in CAUSAL_RELATIONS:
+                if rel not in self._causal_relations:
                     continue
                 if v in [path[i] for i in range(0, len(path), 2)]:
                     continue  # avoid cycles
@@ -254,18 +263,25 @@ class CausalEngine:
         return [n for n in common if n not in path_nodes and n != source and n != target]
 
     def _ancestors(self, node_id: str, max_depth: int) -> Set[str]:
-        """Collect all nodes with a directed edge TO node_id up to max_depth."""
+        """
+        Collect nodes reachable within max_depth hops from node_id.
+        For directed graphs: follows in-edges (predecessors).
+        For undirected graphs: follows all neighbors (best-effort approximation —
+        backdoor detection is less precise but still conservative).
+        """
         ancestors: Set[str] = set()
         try:
             G = self.adapter.to_networkx()
         except Exception:
             return ancestors
 
+        use_predecessors = hasattr(G, "predecessors")
         frontier = {node_id}
         for _ in range(max_depth):
             next_frontier: Set[str] = set()
             for n in frontier:
-                for pred in G.predecessors(n):
+                nbrs = G.predecessors(n) if use_predecessors else G.neighbors(n)
+                for pred in nbrs:
                     if pred not in ancestors:
                         ancestors.add(pred)
                         next_frontier.add(pred)
