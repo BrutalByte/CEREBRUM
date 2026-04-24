@@ -100,11 +100,6 @@ class ValenceEngine:
         self._emit(result)
         return result
 
-            "ValenceEngine: outcome=%.3f delta=%.4f edges_updated=%d",
-            outcome_score, delta, updated,
-        )
-        return result
-
     def get_valence(self, u: str, v: str, relation: str) -> float:
         """Return the current valence of an edge (0.0 = neutral)."""
         try:

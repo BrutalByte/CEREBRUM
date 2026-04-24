@@ -103,6 +103,9 @@ class GraphBridgeEngine:
         self.node_id = node_id
         self.registry = registry
 
+    def describe(self) -> str:
+        return f"GraphBridgeEngine(min_sim={self.min_similarity}, top_k={self.top_k})"
+
     def _sign_signal(self, payload: Dict[str, Any]) -> bytes:
         """Sign a signal payload."""
         data = json.dumps(payload, sort_keys=True).encode()

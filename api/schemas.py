@@ -127,6 +127,11 @@ class QueryResponse(BaseModel):
         default=None,
         description="Prediction Error after each loop. None entries where PE was unavailable.",
     )
+    # Phase 121: Metacognitive Monitor — unified epistemic uncertainty
+    epistemic_state: Optional["EpistemicStateSchema"] = Field(
+        default=None,
+        description="Unified epistemic uncertainty summary for this reasoning call.",
+    )
 
 
 class CommunityInfo(BaseModel):
@@ -571,6 +576,75 @@ class REMStatusResponse(BaseModel):
 class REMRollbackResponse(BaseModel):
     operations: int
     message: str
+
+
+# ---------------------------------------------------------------------------
+# Sleep Cycle schemas (Phase 119)
+
+class SleepRunRequest(BaseModel):
+    dry_run: bool = Field(default=False, description="If true, audit only — no mutations.")
+
+
+class SleepReportSchema(BaseModel):
+    started_at: float
+    duration_seconds: float
+    engrams_promoted: int
+    wm_entries_replayed: int
+    edges_strengthened: int
+    rem_shortcuts_added: int
+    edges_decayed: int
+    dmn_insights: int
+    dry_run: bool
+    error: Optional[str] = None
+
+
+class SleepStatusResponse(BaseModel):
+    last_report: Optional[SleepReportSchema] = None
+    is_sleeping: bool = False
+
+
+# ---------------------------------------------------------------------------
+# Causal Inference schemas (Phase 120)
+
+class CausalQueryRequest(BaseModel):
+    source: str = Field(..., description="Source entity ID")
+    target: str = Field(..., description="Target entity ID")
+    max_hop: int = Field(default=4, ge=1, le=8)
+    beam_width: int = Field(default=10, ge=1, le=50)
+
+
+class CausalProofResponse(BaseModel):
+    source: str
+    target: str
+    effect_estimate: float
+    direct_paths: List[List[str]]
+    confounders_detected: List[str]
+    is_confounded: bool
+    temporal_valid: bool
+    causal_relations_used: List[str]
+    confidence: float
+    identification_method: str
+    cached: bool
+
+
+# ---------------------------------------------------------------------------
+# Epistemic State schema (Phase 121)
+# ---------------------------------------------------------------------------
+
+class EpistemicStateSchema(BaseModel):
+    prediction_error: float
+    soliton_index: float
+    hop_entropy: float
+    path_confidence: float
+    dissonance: float
+    consensus_score: float
+    epistemic_uncertainty: float
+    confidence_in_uncertainty: float
+    is_dissonant: bool
+    is_ambiguous: bool
+    is_grounded: bool
+    historical_pe_mean: Optional[float] = None
+    calibration_drift: Optional[float] = None
 
 
 # ---------------------------------------------------------------------------

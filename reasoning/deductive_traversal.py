@@ -6,6 +6,7 @@ to provide 100% logical consistency via axiomatic verification.
 """
 import logging
 from typing import List, Dict, Any, Optional
+from core.causal_engine import CAUSAL_RELATIONS
 
 logger = logging.getLogger("cerebrum.deductive")
 
@@ -20,7 +21,8 @@ class DeductiveTraversal:
         self.adapter = adapter
         self.validator = validator
 
-    def traverse(self, seed: str, target: str) -> List[List[str]]:
+    def traverse(self, seed: str, target: str,
+                 causal_only: bool = False) -> List[List[str]]:
         """Perform an exhaustive search for a verified proof."""
         logger.info(f"DeductiveTraversal: Searching for logical proof {seed} -> {target}")
         
@@ -56,9 +58,12 @@ class DeductiveTraversal:
                     v = neighbor
                     rel = "unknown"
                 
+                if causal_only and rel not in CAUSAL_RELATIONS:
+                    continue
+
                 new_path = path + [rel, v]
                 logger.debug(f"Exploring path: {new_path}")
-                
+
                 # Prune logically impossible paths early (The Prefrontal Bridge)
                 if self.validator.validate(new_path):
                     queue.append(new_path)

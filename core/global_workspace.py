@@ -1,7 +1,7 @@
 import asyncio
 import time
 import logging
-from typing import Dict, List, Optional, Callable
+from typing import Any, Dict, List, Optional, Callable
 from dataclasses import dataclass, field
 
 logger = logging.getLogger("cerebrum.gws")
@@ -45,6 +45,10 @@ class GlobalWorkspace:
             reverse=True
         )
         return sorted_signals[:limit]
+
+    async def broadcast(self, signal: CommunitySignal):
+        """Add a signal to the active workspace, keyed by community_id."""
+        self.active_signals[signal.community_id] = signal
 
     async def cleanup_daemon(self):
         while True:

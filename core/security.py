@@ -6,6 +6,7 @@ Provides Ed25519-based identity and authorization for distributed reasoning clus
 import os
 import time
 from typing import Dict, List, Any, Optional
+import jwt
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives import serialization
 
@@ -36,6 +37,24 @@ class FederatedAuth:
     def sign_payload(payload: bytes) -> bytes:
         """Sign a byte payload using the node's private key."""
         return PRIVATE_KEY.sign(payload)
+
+    @staticmethod
+    def create_token(node_id: str, scopes: List[str], ttl: int = 3600) -> str:
+        """Create a signed JWT for a node identity with given scopes."""
+        secret = os.getenv("PARALLAX_SHARED_SECRET", "dev-secret")
+        payload = {
+            "sub": node_id,
+            "scopes": scopes,
+            "iat": int(time.time()),
+            "exp": int(time.time()) + ttl,
+        }
+        return jwt.encode(payload, secret, algorithm="HS256")
+
+    @staticmethod
+    def validate_token(token: str) -> Dict[str, Any]:
+        """Validate a JWT and return its payload. Raises on failure."""
+        secret = os.getenv("PARALLAX_SHARED_SECRET", "dev-secret")
+        return jwt.decode(token, secret, algorithms=["HS256"])
 
     @staticmethod
     def verify_signature(public_key_pem: str, signature: bytes, payload: bytes) -> bool:

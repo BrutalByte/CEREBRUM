@@ -176,6 +176,25 @@ class CerebrumGraph:
         self._gui_engine = engine
         logger.info("GUIAdaptationEngine attached.")
 
+    def attach_sleep_cycle(self, orchestrator: Any) -> None:
+        """Attach a SleepCycleOrchestrator (Phase 119)."""
+        self._sleep_orchestrator = orchestrator
+        logger.info("SleepCycleOrchestrator attached.")
+
+    def attach_metacognitive_monitor(self, monitor: Any) -> None:
+        """Attach a MetacognitiveMonitor (Phase 121)."""
+        self._metacognitive_monitor = monitor
+        logger.info("MetacognitiveMonitor attached.")
+
+    async def run_sleep_cycle(self, dry_run: bool = False) -> Any:
+        """Trigger an offline consolidation sleep pass (Phase 119)."""
+        orc = getattr(self, "_sleep_orchestrator", None)
+        if orc is None:
+            raise RuntimeError("SleepCycleOrchestrator not attached — call attach_sleep_cycle() first.")
+        import asyncio
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, orc.run, dry_run)
+
     def attach_engram(self, engram) -> None:
         """
         Wire an Engram (or SpeedTalkEngram) to enable predictive coding (Phase 69).
@@ -722,6 +741,11 @@ class CerebrumGraph:
             raise RuntimeError(
                 "Graph has not been built. Call graph.build() first."
             )
+
+        # Phase 119: notify sleep orchestrator of query activity
+        orc = getattr(self, "_sleep_orchestrator", None)
+        if orc is not None:
+            orc.notify_activity()
 
         # Phase 95: merge goal-directed context seeds into query seeds
         original_seeds = list(seeds)

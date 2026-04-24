@@ -104,6 +104,10 @@ class LoopConfig:
     recursive_synthesis: bool = True
     metaplasticity: bool = True
 
+    # Phase 119: Sleep Cycle (offline consolidation)
+    sleep_cycle: bool = False
+    sleep_idle_threshold: float = 300.0
+
 
 # ---------------------------------------------------------------------------
 # Cycle record
@@ -278,6 +282,24 @@ class AutonomousDiscoveryLoop:
                 logger.info("AutonomousDiscoveryLoop: AutonomousResearcher enabled.")
             except Exception:
                 logger.exception("AutonomousDiscoveryLoop: failed to init AutonomousResearcher.")
+
+        # Phase 119: Sleep Cycle (offline consolidation)
+        self._sleep_orchestrator = None
+        if self._config.sleep_cycle:
+            try:
+                from core.sleep_cycle import SleepCycleOrchestrator
+                self._sleep_orchestrator = SleepCycleOrchestrator(
+                    adapter=graph.adapter,
+                    engram_consolidator=None,  # wired externally via attach_sleep_cycle
+                    consolidation_engine=self._consolidation_engine,
+                    synaptic_decay_engine=self._decay_engine,
+                    default_mode_engine=self._dmn_engine,
+                    working_memory=self._wm,
+                    goal_stack=self._goal_stack,
+                )
+                logger.info("AutonomousDiscoveryLoop: SleepCycleOrchestrator enabled.")
+            except Exception:
+                logger.exception("AutonomousDiscoveryLoop: failed to init SleepCycleOrchestrator.")
 
         # Phase 94: GUI Adaptation
         self._gui_engine = None

@@ -55,6 +55,9 @@ from api.schemas import (
     StreamIngestRequest, StreamIngestResponse, StreamStatusResponse,
     BridgeRecordSchema, BridgesResponse,
     REMRunRequest, REMReportSchema, REMStatusResponse, REMRollbackResponse,
+    SleepRunRequest, SleepReportSchema, SleepStatusResponse,
+    CausalQueryRequest, CausalProofResponse,
+    EpistemicStateSchema,
     InferenceReportSchema, InferenceStatusResponse, InferenceRollbackResponse,
     InferenceProposalSchema,
     ChatRequest, ChatResponse, ChatResetResponse, ConversationTurnSchema,
@@ -192,6 +195,9 @@ _state: Dict[str, Any] = {
     "autonomous_loop":  None,   # AutonomousDiscoveryLoop (Phase 74)
     "provenance_ledger": None,  # ProvenanceLedger (Phase 76)
     "ue_toolkit_translator": None, # UE LLM Toolkit Adapter (Phase 92)
+    "sleep_orchestrator": None,    # SleepCycleOrchestrator (Phase 119)
+    "metacognitive_monitor": None, # MetacognitiveMonitor (Phase 121)
+    "graph":             None,     # CerebrumGraph (set when available)
 }
 
 
@@ -685,6 +691,22 @@ def create_app(
             except Exception as _tel_e:
                 _api_log.debug("Telemetry emit failed: %s", _tel_e)
 
+        # Phase 121: Metacognitive Monitor — build EpistemicState
+        _epistemic_state = None
+        monitor = _state.get("metacognitive_monitor")
+        if monitor is not None:
+            try:
+                _trace_obj = result.get("trace")
+                _ep = monitor.assess(
+                    paths=paths,
+                    answers=result.get("answers", []),
+                    trace=_trace_obj,
+                    seed_ids=seeds,
+                )
+                _epistemic_state = EpistemicStateSchema(**_ep.to_dict())
+            except Exception as _me:
+                _api_log.debug("MetacognitiveMonitor.assess failed: %s", _me)
+
         return QueryResponse(
             query=req.query,
             seeds_used=seeds,
@@ -696,6 +718,7 @@ def create_app(
             soliton_index=_soliton_idx,
             loops_run=_loop_trace.loops_run if _loop_trace is not None else None,
             pe_per_loop=[pe for pe in _loop_trace.pe_per_loop if pe is not None] if _loop_trace is not None else None,
+            epistemic_state=_epistemic_state,
         )
 
     @router.post("/query/trace", response_model=TraceResponse, tags=["reasoning"])
@@ -1854,6 +1877,76 @@ def create_app(
                 timestamp=last.timestamp,
             )
         return REMStatusResponse(last_report=schema, can_rollback=rem.can_rollback)
+
+    # ------------------------------------------------------------------
+    # Sleep Cycle endpoints  (/sleep/*)  — Phase 119
+    # ------------------------------------------------------------------
+
+    def _get_sleep_orchestrator():
+        if _state.get("sleep_orchestrator") is None:
+            from core.sleep_cycle import SleepCycleOrchestrator
+            from core.consolidation_engine import ConsolidationEngine
+            from core.synaptic_decay_engine import SynapticDecayEngine
+            from core.default_mode_engine import DefaultModeEngine
+            adapter = _state["adapter"]
+            graph = _state.get("graph")
+            _state["sleep_orchestrator"] = SleepCycleOrchestrator(
+                adapter=adapter,
+                consolidation_engine=ConsolidationEngine(adapter=adapter, graph=graph) if graph else None,
+                synaptic_decay_engine=SynapticDecayEngine(adapter=adapter, graph=graph) if graph else None,
+                default_mode_engine=DefaultModeEngine(adapter=adapter, graph=graph) if graph else None,
+            )
+        return _state["sleep_orchestrator"]
+
+    @router.post("/sleep/run", response_model=SleepReportSchema, tags=["sleep"])
+    async def sleep_run(
+        req: SleepRunRequest,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Trigger an offline consolidation sleep cycle."""
+        import asyncio
+        orc = _get_sleep_orchestrator()
+        loop = asyncio.get_event_loop()
+        report = await loop.run_in_executor(None, orc.run, req.dry_run)
+        return SleepReportSchema(**report.to_dict())
+
+    @router.get("/sleep/status", response_model=SleepStatusResponse, tags=["sleep"])
+    async def sleep_status(node: Dict = Depends(get_authenticated_node)):
+        """Return last sleep report and current sleeping state."""
+        orc = _get_sleep_orchestrator()
+        last = orc.last_report
+        schema = SleepReportSchema(**last.to_dict()) if last else None
+        return SleepStatusResponse(last_report=schema, is_sleeping=orc.is_sleeping)
+
+    # ------------------------------------------------------------------
+    # Causal Inference endpoint  (/causal)  — Phase 120
+    # ------------------------------------------------------------------
+
+    _causal_engine_instance = None
+
+    def _get_causal_engine():
+        nonlocal _causal_engine_instance
+        if _causal_engine_instance is None:
+            from core.causal_engine import CausalEngine
+            from core.truth_cache import TruthCache
+            tc = TruthCache()
+            _causal_engine_instance = CausalEngine(adapter=_state["adapter"], truth_cache=tc)
+        return _causal_engine_instance
+
+    @router.post("/causal", response_model=CausalProofResponse, tags=["causal"])
+    async def causal_query(
+        req: CausalQueryRequest,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Find causal paths between two entities with confounder detection."""
+        engine = _get_causal_engine()
+        proof = engine.query(
+            source=req.source,
+            target=req.target,
+            max_hop=req.max_hop,
+            beam_width=req.beam_width,
+        )
+        return CausalProofResponse(**proof.to_dict())
 
     # ------------------------------------------------------------------
     # Inference endpoints  (/infer/*)
