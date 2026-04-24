@@ -132,6 +132,19 @@ class QueryResponse(BaseModel):
         default=None,
         description="Unified epistemic uncertainty summary for this reasoning call.",
     )
+    # Phase 122: Epistemic Gate — gating decisions derived from EpistemicState
+    low_confidence: bool = Field(
+        default=False,
+        description="True when EU >= suppress_threshold. Answers should be treated with caution.",
+    )
+    epistemic_warning: Optional[str] = Field(
+        default=None,
+        description="Set when CIU < credence_threshold; explains low estimate credence.",
+    )
+    gate_decision: Optional["GateDecisionSchema"] = Field(
+        default=None,
+        description="Full gate decision including triggered actions and action log.",
+    )
 
 
 class CommunityInfo(BaseModel):
@@ -645,6 +658,34 @@ class EpistemicStateSchema(BaseModel):
     is_grounded: bool
     historical_pe_mean: Optional[float] = None
     calibration_drift: Optional[float] = None
+
+
+# ---------------------------------------------------------------------------
+# Phase 122: Epistemic Gate schemas
+# ---------------------------------------------------------------------------
+
+class GateDecisionSchema(BaseModel):
+    eu: float
+    ciu: float
+    low_confidence: bool
+    epistemic_warning: Optional[str] = None
+    triggered_research: bool
+    triggered_sleep: bool
+    action_log: List[str]
+
+
+class EpistemicGateConfigSchema(BaseModel):
+    suppress_threshold: float = 0.75
+    research_threshold: float = 0.70
+    sleep_threshold: float = 0.80
+    credence_threshold: float = 0.30
+    research_cooldown: float = 60.0
+    enabled: bool = True
+
+
+class EpistemicGateStatusResponse(BaseModel):
+    config: EpistemicGateConfigSchema
+    last_research_triggered_ago_seconds: float
 
 
 # ---------------------------------------------------------------------------

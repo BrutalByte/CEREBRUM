@@ -58,6 +58,7 @@ from api.schemas import (
     SleepRunRequest, SleepReportSchema, SleepStatusResponse,
     CausalQueryRequest, CausalProofResponse,
     EpistemicStateSchema,
+    GateDecisionSchema, EpistemicGateConfigSchema, EpistemicGateStatusResponse,
     InferenceReportSchema, InferenceStatusResponse, InferenceRollbackResponse,
     InferenceProposalSchema,
     ChatRequest, ChatResponse, ChatResetResponse, ConversationTurnSchema,
@@ -197,6 +198,7 @@ _state: Dict[str, Any] = {
     "ue_toolkit_translator": None, # UE LLM Toolkit Adapter (Phase 92)
     "sleep_orchestrator": None,    # SleepCycleOrchestrator (Phase 119)
     "metacognitive_monitor": None, # MetacognitiveMonitor (Phase 121)
+    "epistemic_gate":        None, # EpistemicGate (Phase 122)
     "graph":             None,     # CerebrumGraph (set when available)
 }
 
@@ -693,19 +695,47 @@ def create_app(
 
         # Phase 121: Metacognitive Monitor — build EpistemicState
         _epistemic_state = None
+        _ep_raw = None
         monitor = _state.get("metacognitive_monitor")
         if monitor is not None:
             try:
                 _trace_obj = result.get("trace")
-                _ep = monitor.assess(
+                _ep_raw = monitor.assess(
                     paths=paths,
                     answers=result.get("answers", []),
                     trace=_trace_obj,
                     seed_ids=seeds,
                 )
-                _epistemic_state = EpistemicStateSchema(**_ep.to_dict())
+                _epistemic_state = EpistemicStateSchema(**_ep_raw.to_dict())
             except Exception as _me:
                 _api_log.debug("MetacognitiveMonitor.assess failed: %s", _me)
+
+        # Phase 122: Epistemic Gate — derive gating decisions from EpistemicState
+        _gate_decision = None
+        _low_confidence = False
+        _epistemic_warning = None
+        gate = _state.get("epistemic_gate")
+        if gate is not None and _ep_raw is not None:
+            try:
+                _gd = gate.evaluate(_ep_raw)
+                _gate_decision = GateDecisionSchema(**_gd.to_dict())
+                _low_confidence = _gd.low_confidence
+                _epistemic_warning = _gd.epistemic_warning
+                # Fire async side effects
+                if _gd.triggered_research and _state.get("research_agent") is not None:
+                    import asyncio as _asyncio
+                    _asyncio.create_task(
+                        _state["research_agent"].scan_once()
+                    )
+                    _api_log.info("EpistemicGate: ResearchAgent.scan_once() scheduled")
+                if _gd.triggered_sleep:
+                    orc = _state.get("sleep_orchestrator")
+                    if orc is not None:
+                        import asyncio as _asyncio
+                        _asyncio.create_task(orc.run())
+                        _api_log.info("EpistemicGate: SleepCycleOrchestrator.run() scheduled")
+            except Exception as _ge:
+                _api_log.debug("EpistemicGate.evaluate failed: %s", _ge)
 
         return QueryResponse(
             query=req.query,
@@ -719,6 +749,9 @@ def create_app(
             loops_run=_loop_trace.loops_run if _loop_trace is not None else None,
             pe_per_loop=[pe for pe in _loop_trace.pe_per_loop if pe is not None] if _loop_trace is not None else None,
             epistemic_state=_epistemic_state,
+            low_confidence=_low_confidence,
+            epistemic_warning=_epistemic_warning,
+            gate_decision=_gate_decision,
         )
 
     @router.post("/query/trace", response_model=TraceResponse, tags=["reasoning"])
@@ -1917,6 +1950,40 @@ def create_app(
         last = orc.last_report
         schema = SleepReportSchema(**last.to_dict()) if last else None
         return SleepStatusResponse(last_report=schema, is_sleeping=orc.is_sleeping)
+
+    # ------------------------------------------------------------------
+    # Epistemic Gate endpoints  (/epistemic-gate/*)  — Phase 122
+    # ------------------------------------------------------------------
+
+    def _get_epistemic_gate():
+        if _state.get("epistemic_gate") is None:
+            from core.epistemic_gate import EpistemicGate
+            _state["epistemic_gate"] = EpistemicGate()
+        return _state["epistemic_gate"]
+
+    @router.get("/epistemic-gate/config", response_model=EpistemicGateStatusResponse, tags=["epistemic"])
+    async def epistemic_gate_config_get(node: Dict = Depends(get_authenticated_node)):
+        """Return current EpistemicGate configuration and trigger history."""
+        gate = _get_epistemic_gate()
+        d = gate.to_dict()
+        return EpistemicGateStatusResponse(
+            config=EpistemicGateConfigSchema(**d["config"]),
+            last_research_triggered_ago_seconds=d["last_research_triggered_ago_seconds"],
+        )
+
+    @router.post("/epistemic-gate/config", response_model=EpistemicGateStatusResponse, tags=["epistemic"])
+    async def epistemic_gate_config_post(
+        body: EpistemicGateConfigSchema,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Update EpistemicGate thresholds. Only provided fields are changed."""
+        gate = _get_epistemic_gate()
+        gate.update_config(**body.model_dump(exclude_unset=True))
+        d = gate.to_dict()
+        return EpistemicGateStatusResponse(
+            config=EpistemicGateConfigSchema(**d["config"]),
+            last_research_triggered_ago_seconds=d["last_research_triggered_ago_seconds"],
+        )
 
     # ------------------------------------------------------------------
     # Causal Inference endpoint  (/causal)  — Phase 120

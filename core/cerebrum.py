@@ -182,9 +182,27 @@ class CerebrumGraph:
         logger.info("SleepCycleOrchestrator attached.")
 
     def attach_metacognitive_monitor(self, monitor: Any) -> None:
-        """Attach a MetacognitiveMonitor (Phase 121)."""
+        """Attach a MetacognitiveMonitor (Phase 121) and auto-wire available sub-engines."""
         self._metacognitive_monitor = monitor
-        logger.info("MetacognitiveMonitor attached.")
+        # Wire sub-engines that are already on this graph into the monitor so EU
+        # has real signal sources rather than neutral defaults (PE=0.5, etc.).
+        if getattr(monitor, "pc", None) is None and self.predictive_coder is not None:
+            monitor.pc = self.predictive_coder
+        if getattr(monitor, "cm", None) is None:
+            monitor.cm = self.modulator
+        if getattr(monitor, "wm", None) is None and self._working_memory is not None:
+            monitor.wm = self._working_memory
+        logger.info(
+            "MetacognitiveMonitor attached (auto-wired: pc=%s cm=%s wm=%s)",
+            monitor.pc is not None,
+            monitor.cm is not None,
+            monitor.wm is not None,
+        )
+
+    def attach_epistemic_gate(self, gate: Any) -> None:
+        """Attach an EpistemicGate (Phase 122) — evaluated by server after each query."""
+        self._epistemic_gate = gate
+        logger.info("EpistemicGate attached.")
 
     async def run_sleep_cycle(self, dry_run: bool = False) -> Any:
         """Trigger an offline consolidation sleep pass (Phase 119)."""
