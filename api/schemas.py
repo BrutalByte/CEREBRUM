@@ -661,6 +661,44 @@ class EpistemicStateSchema(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Phase 123: Counterfactual Reasoning schemas
+# ---------------------------------------------------------------------------
+
+class InterventionSchema(BaseModel):
+    type: str
+    node: Optional[str] = None
+    source: Optional[str] = None
+    target: Optional[str] = None
+    relation: Optional[str] = None
+    weight: float = 0.5
+
+
+class CounterfactualQueryRequest(BaseModel):
+    source: str
+    target: str
+    interventions: List[InterventionSchema]
+    max_hop: int = 4
+    beam_width: int = 10
+    causal_mode: str = "canonical"
+
+
+class CounterfactualResultSchema(BaseModel):
+    source: str
+    target: str
+    interventions: List[dict]
+    factual_effect: float
+    counterfactual_effect: float
+    effect_delta: float
+    factual_paths: List[List[str]]
+    alternative_paths: List[List[str]]
+    all_paths_blocked: bool
+    paths_blocked_count: int
+    factual_confounders: List[str]
+    counterfactual_identification_method: str
+    cached: bool = False
+
+
+# ---------------------------------------------------------------------------
 # Phase 122: Epistemic Gate schemas
 # ---------------------------------------------------------------------------
 

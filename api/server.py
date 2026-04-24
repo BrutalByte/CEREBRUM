@@ -57,6 +57,7 @@ from api.schemas import (
     REMRunRequest, REMReportSchema, REMStatusResponse, REMRollbackResponse,
     SleepRunRequest, SleepReportSchema, SleepStatusResponse,
     CausalQueryRequest, CausalProofResponse,
+    CounterfactualQueryRequest, CounterfactualResultSchema,
     EpistemicStateSchema,
     GateDecisionSchema, EpistemicGateConfigSchema, EpistemicGateStatusResponse,
     InferenceReportSchema, InferenceStatusResponse, InferenceRollbackResponse,
@@ -2014,6 +2015,62 @@ def create_app(
             beam_width=req.beam_width,
         )
         return CausalProofResponse(**proof.to_dict())
+
+    # ------------------------------------------------------------------
+    # Counterfactual Reasoning endpoint  (/counterfactual)  — Phase 123
+    # ------------------------------------------------------------------
+
+    _cf_engine_instance = None
+
+    def _get_cf_engine(causal_mode: str = "canonical"):
+        nonlocal _cf_engine_instance
+        from core.counterfactual_engine import CounterfactualEngine
+        from core.causal_engine import CAUSAL_RELATIONS
+        if _cf_engine_instance is None:
+            tc = _state.get("truth_cache")
+            _cf_engine_instance = CounterfactualEngine(
+                adapter=_state["adapter"],
+                truth_cache=tc,
+            )
+        if causal_mode == "language_proxy":
+            from benchmarks.causal_epistemic_benchmark import LANGUAGE_GRAPH_CAUSAL_PROXIES
+            _cf_engine_instance._causal_relations = LANGUAGE_GRAPH_CAUSAL_PROXIES
+            _cf_engine_instance._factual_engine._causal_relations = LANGUAGE_GRAPH_CAUSAL_PROXIES
+        else:
+            _cf_engine_instance._causal_relations = CAUSAL_RELATIONS
+            _cf_engine_instance._factual_engine._causal_relations = CAUSAL_RELATIONS
+        return _cf_engine_instance
+
+    @router.post("/counterfactual", response_model=CounterfactualResultSchema, tags=["causal"])
+    async def counterfactual_query(
+        req: CounterfactualQueryRequest,
+        node: Dict = Depends(check_scope("query")),
+    ):
+        """
+        Counterfactual / interventional causal query (Phase 123).
+
+        Simulates a do-calculus intervention on the graph and compares the
+        causal effect estimate before and after.  Supports three intervention
+        types: block_node (cut all causal edges through a node),
+        block_edge (remove a specific edge), and add_edge (inject a
+        hypothetical causal edge).
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        from core.counterfactual_engine import Intervention
+        engine = _get_cf_engine(req.causal_mode)
+        interventions = [
+            Intervention(**iv.model_dump(exclude_none=True))
+            for iv in req.interventions
+        ]
+        result = engine.query(
+            source=req.source,
+            target=req.target,
+            interventions=interventions,
+            max_hop=req.max_hop,
+            beam_width=req.beam_width,
+        )
+        return CounterfactualResultSchema(**result.to_dict())
 
     # ------------------------------------------------------------------
     # Inference endpoints  (/infer/*)

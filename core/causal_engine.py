@@ -280,11 +280,14 @@ class CausalEngine:
         for _ in range(max_depth):
             next_frontier: Set[str] = set()
             for n in frontier:
-                nbrs = G.predecessors(n) if use_predecessors else G.neighbors(n)
-                for pred in nbrs:
-                    if pred not in ancestors:
-                        ancestors.add(pred)
-                        next_frontier.add(pred)
+                try:
+                    nbrs = G.predecessors(n) if use_predecessors else G.neighbors(n)
+                    for pred in nbrs:
+                        if pred not in ancestors:
+                            ancestors.add(pred)
+                            next_frontier.add(pred)
+                except Exception:
+                    pass  # node removed by intervention or not in graph
             frontier = next_frontier
             if not frontier:
                 break

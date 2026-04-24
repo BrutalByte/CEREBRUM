@@ -119,10 +119,10 @@ import random
 import sys
 import time
 
-# Reconfigure stdout to UTF-8 so Unicode audit symbols render correctly on
-# Windows consoles that default to cp1252.
-if hasattr(sys.stdout, "buffer"):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+def _ensure_utf8_stdout() -> None:
+    """Reconfigure stdout to UTF-8 for Windows cp1252 consoles. Called from main() only."""
+    if hasattr(sys.stdout, "buffer"):
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
@@ -828,6 +828,7 @@ def print_sleep_impact(r: SleepImpactResult, skipped: bool = False) -> None:
 # ──────────────────────────────────────────────────────────────────────────────
 
 def main() -> None:
+    _ensure_utf8_stdout()
     parser = argparse.ArgumentParser(
         description="CEREBRUM Causal & Epistemic Benchmark (Phases 119-121)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
