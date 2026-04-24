@@ -1,7 +1,7 @@
 # SPEC_004: Autonomous Causal Discovery via STDP
 ## Temporal Graph Plasticity in Knowledge Streams
 
-**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Causal Inference / Stream Processing / Neuro-Symbolic AI  
 **Module**: `core/discretizer.py`
@@ -68,7 +68,7 @@ This blocks instantaneous adversarial bursts.
 #### 4.3 $\chi^2$ Uniformity Test
 The inter-spike intervals between $u$ and $v$ are binned and tested against a uniform distribution. If the distribution is highly clustered (low p-value), it is rejected as a non-causal coincidence or a rhythmic artifact.
 
-### 5. Implementation Notes (v1.1.0)
+### 5. Implementation Notes (v2.24.0)
 
 *   **Directionality**: Emitted edges are strictly directional: `source` $\xrightarrow{CAUSES}$ `target`.
 *   **Memory Eviction**: Causal pairs whose weights decay below $0.05$ are automatically evicted from the weight map to prevent memory bloat.

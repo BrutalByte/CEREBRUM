@@ -1,7 +1,7 @@
 # SPEC_013: The Streaming Engine
 ## Real-Time Continuous Ingest, Incremental DSCF, and SSE Push
 
-**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Field**: Streaming Systems / Real-Time Reasoning / Event Processing
 **Modules**: `adapters/stream_adapter.py`, `core/discretizer.py`, `core/rebalancer.py`, `api/server.py`
@@ -16,7 +16,7 @@ Static batch ingest is insufficient for real-world deployments where edges arriv
 The `StreamAdapter` wraps any `GraphAdapter` with a thread-safe event queue and sliding-window buffer.
 
 **Unlocked Preprocessing (Hole 10 Fix)**:
-To ensure high-velocity ingestion does not block reasoning queries, v1.2.0 introduces a two-stage ingest pipeline:
+To ensure high-velocity ingestion does not block reasoning queries, v2.24.0 introduces a two-stage ingest pipeline:
 1.  **Stage 1 (Concurrent)**: Raw events are processed by the `IngestionPipeline` (Thalamus) **outside the graph lock**. This includes CPU-bound string normalization, deduplication, and metadata enrichment.
 2.  **Stage 2 (Atomic)**: Fully prepared triples are committed to the adjacency list and sliding-window buffer under a single lock acquisition.
 
@@ -164,7 +164,7 @@ The FastAPI server exposes two Server-Sent Event streams:
 
 SSE connections are managed by an async multiplexer; each subscriber receives events from a shared broadcast queue. The server maintains a maximum of 500 concurrent SSE connections.
 
-### 6. Implementation Notes (v1.2.0)
+### 6. Implementation Notes (v2.24.0)
 
 - **Back-pressure**: If the event queue exceeds `2 × window_size`, the `ingest()` call blocks until the consumer drains below `window_size`. This prevents unbounded memory growth under burst load.
 - **Thalamic Scalability**: By unlocking Stage 1 preprocessing, `StreamAdapter` can handle >10,000 events/sec on modern multi-core hardware without degrading query performance.

@@ -10,8 +10,9 @@ Evolve CEREBRUM from a community-structured reasoning engine into a fully autono
 - **Mechanism:** Implement "Predictive Priors" using Engram patterns to project reasoning paths before search.
 - **Benefit:** Massive computation reduction (pruning before calculation).
 
-## Phase 112: Sleep-Phase Consolidation (REM Cycle)
+## Phase 112: Sleep-Phase Consolidation (REM Cycle) — COMPLETE
 - **Goal:** Autonomous conversion of "discovered" knowledge into "canonical" graph structure.
+- **Mechanism:** Unified `ConsolidationEngine` performs Hebbian Replay and Shortcut Synthesis.
 - **Benefit:** System becomes "self-indexing"; common queries become instantaneous reflexes.
 
 ## Phase 112.5: Federated Security & Identity Hardening

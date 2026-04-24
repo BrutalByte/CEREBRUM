@@ -30,10 +30,15 @@ sliding window evicts edges that haven't been recently reinforced.
 """
 import threading
 import time
+import asyncio
+import logging
+import json
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+from core.security import FederatedAuth
+from core.node_registry import NodeRegistry
 
 # The relation type label for bridge edges — gets w_rel = 1.0 in CSA
 BRIDGE_RELATION = "BRIDGE_TWIN"
@@ -66,7 +71,8 @@ class BridgeRecord:
 # ---------------------------------------------------------------------------
 # Engine
 # ---------------------------------------------------------------------------
-
+logger = logging.getLogger("cerebrum.bridge_engine")
+...
 class BridgeTwinEngine:
     """
     Tracks cross-community traversals and materialises bridge twin nodes when
@@ -94,6 +100,7 @@ class BridgeTwinEngine:
         n_min: int = 5,
         similarity_threshold: float = 0.65,
         prune_after_days: float = 7.0,
+        node_id: str = "local-node",
     ):
         """
         Parameters
@@ -101,10 +108,12 @@ class BridgeTwinEngine:
         n_min                : crossings required before a bridge is considered
         similarity_threshold : min cosine similarity to destination centroid
         prune_after_days     : idle bridges older than this are pruned (LTD)
+        node_id              : unique identity for this agent
         """
         self.n_min = n_min
         self.similarity_threshold = similarity_threshold
         self.prune_after_days = prune_after_days
+        self.node_id = node_id
 
         # (original_id, destination_community_id) -> crossing count
         self._candidates: Dict[Tuple[str, int], int] = {}
@@ -227,10 +236,37 @@ class BridgeTwinEngine:
                             pass
         return pruned
 
+    def describe(self) -> str:
+        return (
+            f"GraphBridgeEngine: cross-component bridges via embedding similarity "
+            f"(min_sim={self.min_similarity}, top_k={self.top_k}, "
+            f"max_degree={self.max_degree}, max_bridges={self.max_bridges:,})"
+        )
+
     def active_bridges(self) -> List[BridgeRecord]:
         """Return a snapshot of all live bridge records."""
         with self._lock:
             return list(self._bridges.values())
+
+    def observe_peer(self, proposal: Dict[str, Any], adapter: Any):
+        """Observe peer success and synthesize local reinforcement."""
+        path = proposal["path"]
+        valence = proposal["valence"]
+        logger.info(f"BridgeEngine: Observing peer success. Valence={valence}, Path={len(path)} edges")
+        
+        # Local validation: simple threshold based on similarity if applicable,
+        # otherwise accept if valence is sufficiently high
+        if valence > 0.7:
+            # Here, we could potentially materialize similar edges locally
+            # or perform Hebbian boosting of the path.
+            for (u, rel, v) in path:
+                adapter.update_edge_weight(u, v, rel, delta=0.01) # Mild reinforcement
+
+    def propagate_consensus(self, node_id: str, proposal: Dict[str, Any], gws: Any):
+        """Propagate consensus signal to the GWS."""
+        logger.info(f"BridgeEngine: Propagating consensus bid for node {node_id}")
+        # Use create_task to schedule the coroutine in the running loop
+        asyncio.create_task(gws.post("consensus_bid", proposal, node_id))
 
     def candidate_count(self, node_id: str, dest_community: int) -> int:
         """How many crossings have been recorded for this (node, dest) pair."""
@@ -291,7 +327,7 @@ class BridgeTwinEngine:
 
         return len(stale)
 
-    # ------------------------------------------------------------------
+# ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 
@@ -351,22 +387,23 @@ class BridgeTwinEngine:
         """
         Materialise the twin node in the adapter's graph and register
         the bridge record.
-
-        The twin:
-          - Shares the original's embedding (identical at birth)
-          - Is assigned to dest_community
-          - Is connected to the original by bidirectional BRIDGE_TWIN edges
-          - Can independently accumulate new edges from its adopted community
-
-        Returns the twin_id.
         """
         twin_id = f"{node_id}::twin::{dest_community}"
+        
+        # Provenance and Authenticated Signature
+        prov = f"rule:bridge_twin|sim:{sim:.4f}|from:{node_id}|to:{dest_community}|node:{'local-node'}"
+        payload = {"original_id": node_id, "twin_id": twin_id, "prov": prov}
+        signature = self._sign_signal(payload).hex()
 
         # Copy node attributes, mark as bridge twin
         original_attrs = dict(adapter._G.nodes.get(node_id, {}))
-        original_attrs["is_bridge_twin"] = True
-        original_attrs["original_id"] = node_id
-        original_attrs["twin_community"] = dest_community
+        original_attrs.update({
+            "is_bridge_twin": True,
+            "original_id": node_id,
+            "twin_community": dest_community,
+            "signature": signature,
+            "signer": "local-node"
+        })
         original_label = original_attrs.get("label", node_id)
         original_attrs["label"] = f"{original_label} [relay@c{dest_community}]"
 
@@ -402,6 +439,12 @@ class BridgeTwinEngine:
         self._bridge_index[(node_id, dest_community)] = twin_id
 
         return twin_id
+
+
+    def _sign_signal(self, payload: Dict[str, Any]) -> bytes:
+        """Sign a signal payload."""
+        data = json.dumps(payload, sort_keys=True).encode()
+        return FederatedAuth.sign_payload(data)
 
 
 # ---------------------------------------------------------------------------

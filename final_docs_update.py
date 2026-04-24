@@ -4,12 +4,12 @@ from datetime import datetime
 
 # CONFIGURATION
 TARGET_VERSION = "v2.24.0"
-TARGET_STATUS = "Phase 111 (Active Inference) COMPLETE"
-REVIEW_DATE = "April 21, 2026"
+TARGET_STATUS = "Phase 112 (Sleep-Phase Consolidation) COMPLETE"
+REVIEW_DATE = "April 22, 2026"
 DOCS_DIR = "docs"
 
 # Patterns to find and replace
-STATUS_PATTERN = re.compile(r"\*\*Status\*\*:.*", re.IGNORECASE)
+STATUS_PATTERN = re.compile(r"\*\*(Status|Version)\*\*:.*", re.IGNORECASE)
 PHASE_PATTERN = re.compile(r"Phase \d+ COMPLETE", re.IGNORECASE)
 VERSION_PATTERN = re.compile(r"v\d+\.\d+\.\d+", re.IGNORECASE)
 

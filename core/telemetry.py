@@ -214,3 +214,22 @@ class NeuralEvent(BaseModel):
             },
         )
 
+    @classmethod
+    def synaptogenesis(
+        cls,
+        u: str,
+        v: str,
+        relation: str,
+        confidence: float,
+    ) -> "NeuralEvent":
+        """Helper to create an edge creation event (Phase 112)."""
+        return cls(
+            event_type=NeuralEventType.SYNAPTOGENESIS,
+            payload={
+                "source_node": u,
+                "target_node": v,
+                "relation": relation,
+                "confidence": confidence,
+            },
+        )
+

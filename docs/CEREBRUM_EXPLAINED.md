@@ -3,7 +3,7 @@
 
 ![CEREBRUM Hero Image](file:///C:/Users/bryan/.gemini/antigravity/brain/77bb37a0-e733-41be-824d-b07e7cce5a6f/cerebrum_hero_v77bb37a0_e730_41be_824d_b07e7cce5a6f_png_1774651388694.png)
 
-**Version**: v2.24.0 (Phase 111 COMPLETE) — April 2026
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 **Tests**: 1,977+ passing cases
 
 ---
@@ -43,6 +43,11 @@ Just like your brain can suddenly switch focus when you hear your name across a 
 CEREBRUM no longer just searches blindly. It **anticipates**.
 - **Proactive Reasoning**: Before the scouts even leave, the system projects a "likely path" based on its past memories (Engrams).
 - **Speed**: If the prediction is 95% accurate, the system finds the answer instantly. If there is a "Prediction Error," it works harder to figure out why reality differs from its expectation.
+
+### **6. Sleep: Sleep-Phase Consolidation (Phase 112)**
+Just like your brain consolidates memories while you sleep, CEREBRUM now has a **REM Cycle**.
+- **Hebbian Replay**: The system replays its best reasoning paths to "strengthen the synapses" (weights) of those connections.
+- **Shortcuts**: If the system finds itself taking the same multi-hop path repeatedly, it synthesizes a direct shortcut. This turns slow, multi-step reasoning into an instantaneous "reflex."
 
 ---
 

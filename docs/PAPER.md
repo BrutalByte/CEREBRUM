@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: April 2026
-**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 **License**: Proprietary — all rights reserved
 
 ---
@@ -94,7 +94,7 @@ cerebrum/
 └── PAPER.md       (this file)
 ```
 
-**Current phase**: Phase 57 COMPLETE (v2.0.1). GraphSAGE neighbourhood smoothing, Engram-steered traversal, TemporalCalibrator, QueryLog persistence, fault tolerance hardening, and Engram durable persistence implemented. 1,490+ tests passing.
+**Current phase**: Phase 57 COMPLETE (v2.24.0). GraphSAGE neighbourhood smoothing, Engram-steered traversal, TemporalCalibrator, QueryLog persistence, fault tolerance hardening, and Engram durable persistence implemented. 1,490+ tests passing.
 
 ---
 
@@ -884,36 +884,36 @@ On all four dimensions, CEREBRUM is categorically superior to every baseline —
 | 0–9 | v0.x | Core theory, DSCF, CSA (5-param), BeamTraversal, initial benchmarks |
 | 10–13 | v0.3.x | Production hardening (JWT, ResourceGovernor, async streaming), Bridge Twin Nodes, STDP causal inference |
 | 14–19 | v0.x–v1.0 | Bayesian beam search, SignalEncoder, IngestionPipeline, namespace isolation, CausalSignificanceFilter, query snapshot isolation |
-| 20 | v1.1.0 | Per-community CSA params, query snapshot isolation, canonical basis anchor |
-| 21–24 | v1.2.0 | Validation, publication readiness, LaTeX pipeline |
-| 25–26 | v1.5.0–v1.6.0 | Hardware universalization, optimized pipeline |
-| 27A–29 | v1.6.2–v1.6.5 | Score-weighted voting, relation priors, CVT passthrough, repair engines |
-| 30 | v1.7.0 | Proactive GraphBridgeEngine |
-| 32 | v1.7.1 | Federated reasoning — DistributedBeamTraversal, /traverse endpoint |
-| 39–40 | v1.7.2 | Async bridge synthesis, IKGWQ hardening |
-| 41–42 | v1.7.3–v1.7.4 | Temporal reasoning, Synaptic Bridge synthesis (REM), API hardening |
-| 43 | v1.7.5 | 10-param CSA formula (temporal context, synthesis density, grounding) |
-| 44 | v1.8.0 | IKGWQ-MetaQA benchmark — 40% recall improvement with REM synthesis |
-| 45 | v1.9.0 | 10-param CSAParameterLearner + MetaParameterLearner full upgrade |
-| 46 | v1.9.1 | Live feedback loop — /params endpoint, edge_features + community_sequence in responses |
-| 47 | v1.9.2 | Params persistence — to_dict/from_dict, POST /params restore, --params-file CLI |
-| 48 | v1.9.3 | Auto-Retrain Scheduler — feedback buffer, POST /retrain with CSAParameterLearner.fit() |
-| 49 | v1.9.4 | TSC Explicit Mode — configurable TSC/DSCF/Leiden/LPA community engine selection |
-| 50 | v1.9.5 | HypothesisEngine — multi-path abductive reasoning, Noisy-OR confidence fusion |
-| 51/52 | v1.9.6 | ResearchAgent autonomous discovery + ExternalValidator (PubMed/arXiv/OpenAlex) |
-| 53 | v1.9.7 | Adaptive search strategy — dynamic beam_width/max_hop via local graph density |
-| 54 | v1.9.8 | Observability — StudioEngine, RingBufferHandler, /logs, /build, CORS, request tracing |
-| 55 | v2.0.0 | GraphSAGE neighbourhood smoothing; Engram-steered traversal (Engram + EngramTraversal); TemporalCalibrator; QueryLog append-only history |
-| 56 | v2.0.0 | Fault tolerance — QueryResponse.partial/error fields; _partial_paths checkpoint; GlobalRebalancer crash guard |
-| 57 | v2.0.1 | Engram durable JSON persistence; /query/stream terminal error chunk; ProcessPoolExecutor sequential fallback |
+| 20 | v2.24.0 | Per-community CSA params, query snapshot isolation, canonical basis anchor |
+| 21–24 | v2.24.0 | Validation, publication readiness, LaTeX pipeline |
+| 25–26 | v2.24.0–v2.24.0 | Hardware universalization, optimized pipeline |
+| 27A–29 | v2.24.0–v2.24.0 | Score-weighted voting, relation priors, CVT passthrough, repair engines |
+| 30 | v2.24.0 | Proactive GraphBridgeEngine |
+| 32 | v2.24.0 | Federated reasoning — DistributedBeamTraversal, /traverse endpoint |
+| 39–40 | v2.24.0 | Async bridge synthesis, IKGWQ hardening |
+| 41–42 | v2.24.0–v2.24.0 | Temporal reasoning, Synaptic Bridge synthesis (REM), API hardening |
+| 43 | v2.24.0 | 10-param CSA formula (temporal context, synthesis density, grounding) |
+| 44 | v2.24.0 | IKGWQ-MetaQA benchmark — 40% recall improvement with REM synthesis |
+| 45 | v2.24.0 | 10-param CSAParameterLearner + MetaParameterLearner full upgrade |
+| 46 | v2.24.0 | Live feedback loop — /params endpoint, edge_features + community_sequence in responses |
+| 47 | v2.24.0 | Params persistence — to_dict/from_dict, POST /params restore, --params-file CLI |
+| 48 | v2.24.0 | Auto-Retrain Scheduler — feedback buffer, POST /retrain with CSAParameterLearner.fit() |
+| 49 | v2.24.0 | TSC Explicit Mode — configurable TSC/DSCF/Leiden/LPA community engine selection |
+| 50 | v2.24.0 | HypothesisEngine — multi-path abductive reasoning, Noisy-OR confidence fusion |
+| 51/52 | v2.24.0 | ResearchAgent autonomous discovery + ExternalValidator (PubMed/arXiv/OpenAlex) |
+| 53 | v2.24.0 | Adaptive search strategy — dynamic beam_width/max_hop via local graph density |
+| 54 | v2.24.0 | Observability — StudioEngine, RingBufferHandler, /logs, /build, CORS, request tracing |
+| 55 | v2.24.0 | GraphSAGE neighbourhood smoothing; Engram-steered traversal (Engram + EngramTraversal); TemporalCalibrator; QueryLog append-only history |
+| 56 | v2.24.0 | Fault tolerance — QueryResponse.partial/error fields; _partial_paths checkpoint; GlobalRebalancer crash guard |
+| 57 | v2.24.0 | Engram durable JSON persistence; /query/stream terminal error chunk; ProcessPoolExecutor sequential fallback |
 | 58–62 | v2.1.x | SpeedTalk phonemic compression; CerebellarEngine; MACH consensus hierarchies; SPQT quantized traversal; Explainable Reasoning Trace (ERT) |
 | 63–67 | v2.2.x | Neural telemetry WebSocket bridge; EngramConsolidator; autonomous hypothesis materialization; Studio v2 dashboard |
 | 68–70 | v2.3.x | ChemicalModulator (metabolic regulation); PredictiveCodingEngine + soliton index; LoopedBeamTraversal (LoopLM-style) |
 | 71–74 | v2.4.x | AutoApprover (tiered SGD); TriangulationEngine; DiscoveryCalibrator; AutonomousDiscoveryLoop + circuit breaker |
 | 75–79 | v2.5.x | Studio v2 provenance panel; ProvenanceLedger; Loop-Provenance Recovery; GraphAdapter remove_edge protocol |
-| 80–83 | v2.21.0 | GraphSnapshot portable persistence; Adaptive Loop Tuning; UE5 3D visualization (UCerebrumLink, ANeuronNodeActor, ASynapseActor, ACerebrumBrain) |
-| 93 | v2.21.0 | Active Inference / Daydreaming — ActiveInferenceEngine seeds idle-period queries from high-PE nodes to consolidate weak priors |
-| 94 | v2.21.0 | Self-Modifying GUI — GUIAdaptationEngine + UEToolkitClient; dual-channel structural (HTTP→Blueprint) and runtime (WebSocket→HUD) adaptation; WBP_CerebrumHUD scaffold |
+| 80–83 | v2.24.0 | GraphSnapshot portable persistence; Adaptive Loop Tuning; UE5 3D visualization (UCerebrumLink, ANeuronNodeActor, ASynapseActor, ACerebrumBrain) |
+| 93 | v2.24.0 | Active Inference / Daydreaming — ActiveInferenceEngine seeds idle-period queries from high-PE nodes to consolidate weak priors |
+| 94 | v2.24.0 | Self-Modifying GUI — GUIAdaptationEngine + UEToolkitClient; dual-channel structural (HTTP→Blueprint) and runtime (WebSocket→HUD) adaptation; WBP_CerebrumHUD scaffold |
 
 ---
 
@@ -976,7 +976,7 @@ Through 57 phases of development the core insight has remained unchanged while t
 
 Phases 55–57 mark the transition from a research-quality system to a production-hardened platform. GraphSAGE neighbourhood smoothing enriches every entity embedding with local structural context in a single $O(|E|)$ pass, requiring no training. The Engram-steered traversal system accumulates relation-sequence patterns from the system's own operational history and applies them as a compounding beam bias — yielding measurably sharper traversal focus on repeated query domains without any supervised training signal. The TemporalCalibrator brings principled, gradient-free calibration of the temporal CSA parameters to maximise Recall@K on held-out validation sets. The fault tolerance architecture ensures that transient failures in any individual component — graph adapters, persistence, community detection, external validators — degrade gracefully to partial results rather than cascading to hard errors.
 
-At v2.0.1, CEREBRUM is empirically validated against 39,093 MetaQA questions, 1,579 WebQSP questions, 5,170 GrailQA questions, and 400 IKGWQ questions across five incompleteness levels. With 1,490+ tests passing and a production-hardened REST API, the framework is ready for deployment in domains where hallucination is unacceptable, training data is unavailable, and interpretability is required by design.
+At v2.24.0, CEREBRUM is empirically validated against 39,093 MetaQA questions, 1,579 WebQSP questions, 5,170 GrailQA questions, and 400 IKGWQ questions across five incompleteness levels. With 1,490+ tests passing and a production-hardened REST API, the framework is ready for deployment in domains where hallucination is unacceptable, training data is unavailable, and interpretability is required by design.
 
 The resulting system is not a statistical approximation of reasoning — it is reasoning. Every answer is a verified path through real edges. Every step names the community it traversed. The Engram names the relation patterns that led there. The computational cost is sub-millisecond per query for graph traversal, independent of graph size for fixed beam width.
 

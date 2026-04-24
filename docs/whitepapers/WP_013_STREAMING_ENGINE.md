@@ -2,7 +2,7 @@
 ## Real-Time Knowledge Graph Reasoning via the Streaming Engine
 
 **Date**: March 2026
-**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: Engineering Leaders, Data Platform Architects, Operations Directors, CTOs
 
 ---

@@ -2,7 +2,7 @@
 ## Self-Verification and Metacognitive Bias Detection via the Insight Engine
 
 **Date**: March 2026
-**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: Risk Officers, Research Directors, Compliance Leads, AI Safety Teams
 
 ---

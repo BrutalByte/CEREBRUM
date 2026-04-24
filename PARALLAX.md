@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: March 2026
-**Status**: Version 2.7.0 · Phase 68 COMPLETE — 1540+ tests passing
+**Status**: Version 2.24.0 · Phase 112 COMPLETE — 1978+ tests passing
 **License**: Proprietary — all rights reserved
 
 ---
@@ -60,8 +60,8 @@ CSA (attention weight for edge u→v at hop k):
 
 ```
 parallax/
-├── core/          graph_adapter, embedding_engine, community_engine, attention_engine, structural_encoder, chemical_modulator
-├── reasoning/     traversal, path_scorer, answer_extractor, trace, engram_consolidation
+├── core/          graph_adapter, embedding_engine, community_engine, attention_engine, structural_encoder, chemical_modulator, consolidation_engine
+├── reasoning/     traversal, path_scorer, answer_extractor, trace, engram_traversal, predictive_coder
 ├── adapters/      networkx, neo4j, rdf, csv
 ├── llm_bridge/    context_formatter
 ├── api/           server, schemas, telemetry_bridge
@@ -74,7 +74,7 @@ parallax/
 └── PAPER.md       (this file)
 ```
 
-**Current phase**: Phase 68 complete (v2.7.0). CEREBRUM now includes Metabolic Homeostasis via dynamic functional regulation (Reinforcement, Arousal, Novelty, Cohesion, Persistence), Explainable Reasoning Trace (ERT) for "glass-box" transparency, Synaptic Pruning & Quantized Traversal (SPQT) for enterprise efficiency, Multi-Agent Consensus Hierarchies (MACH) for three-tier reasoning verification, Cerebellar Error Correction (CEC) for active error-driven meta-learning, SpeedTalk phonemic compression for Engram keys, GraphSAGE neighbourhood smoothing, Engram-steered beam traversal, `TemporalCalibrator`, `QueryLog`, `HypothesisEngine`, `ResearchAgent`, an observability dashboard, and comprehensive fault tolerance hardening. 1540+ tests passing.
+**Current phase**: Phase 112 complete (v2.24.0). CEREBRUM now includes Sleep-Phase Consolidation (REM Cycle) via a unified `ConsolidationEngine` (Hebbian Replay + Shortcut Synthesis), Active Inference proactive reasoning via `PredictiveCoder`, Global Workspace blackboard coordination, Metabolic Homeostasis via dynamic functional regulation (Reinforcement, Arousal, Novelty, Cohesion, Persistence), Explainable Reasoning Trace (ERT) for "glass-box" transparency, Synaptic Pruning & Quantized Traversal (SPQT) for enterprise efficiency, Multi-Agent Consensus Hierarchies (MACH) for three-tier reasoning verification, Cerebellar Error Correction (CEC) for active error-driven meta-learning, SpeedTalk phonemic compression for Engram keys, GraphSAGE neighbourhood smoothing, Engram-steered beam traversal, `TemporalCalibrator`, `QueryLog`, `HypothesisEngine`, `ResearchAgent`, an observability dashboard, and comprehensive fault tolerance hardening. 1978+ tests passing.
 
 ---
 

@@ -66,47 +66,73 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import Dict, List, Optional, Tuple
+import json
+from typing import Dict, List, Optional, Tuple, Any
 
 import numpy as np
-
+from core.security import FederatedAuth
+from core.node_registry import NodeRegistry
 from adapters.networkx_adapter import NetworkXAdapter
 from core.embedding_engine import EmbeddingEngine
 
 logger = logging.getLogger("cerebrum.graph_bridge")
 
-
 class GraphBridgeEngine:
     """
-    Proactive cross-component bridge synthesizer.
-
-    See module docstring for full description.
+    Proactive cross-component bridge synthesizer with authenticated signatures.
     """
-
     def __init__(
         self,
-        min_similarity:     float = 0.80,
-        top_k:              int   = 5,
-        max_degree:         int   = 2,
-        max_bridges:        int   = 500_000,
-        max_frontier_nodes: int   = 10_000,
-        batch_size:         int   = 512,
-        seed:               int   = 42,
+        min_similarity: float = 0.80,
+        top_k: int = 5,
+        max_degree: int = 2,
+        max_bridges: int = 500_000,
+        max_frontier_nodes: int = 10_000,
+        batch_size: int = 512,
+        seed: int = 42,
+        node_id: str = "local-node",
+        registry: Optional[NodeRegistry] = None,
     ):
-        self.min_similarity     = min_similarity
-        self.top_k              = top_k
-        self.max_degree         = max_degree
-        self.max_bridges        = max_bridges
+        self.min_similarity = min_similarity
+        self.top_k = top_k
+        self.max_degree = max_degree
+        self.max_bridges = max_bridges
         self.max_frontier_nodes = max_frontier_nodes
-        self.batch_size         = batch_size
-        self.seed               = seed
+        self.batch_size = batch_size
+        self.seed = seed
+        self.node_id = node_id
+        self.registry = registry
 
-    def describe(self) -> str:
-        return (
-            f"GraphBridgeEngine: cross-component bridges via embedding similarity "
-            f"(min_sim={self.min_similarity}, top_k={self.top_k}, "
-            f"max_degree={self.max_degree}, max_bridges={self.max_bridges:,})"
+    def _sign_signal(self, payload: Dict[str, Any]) -> bytes:
+        """Sign a signal payload."""
+        data = json.dumps(payload, sort_keys=True).encode()
+        return FederatedAuth.sign_payload(data)
+
+    def _add_authenticated_edge(self, G, src, tgt, attrs, sim_val, src_comp, tgt_comp):
+        prov = (
+            f"rule:bridge_embed"
+            f"|sim:{sim_val:.4f}"
+            f"|from:{src}"
+            f"|to:{tgt}"
+            f"|components:{src_comp}->{tgt_comp}"
+            f"|node:{self.node_id}"
         )
+        
+        # Update attributes with provenance
+        attrs["provenance"] = prov
+        
+        # Create a copy of attributes to sign the payload
+        payload_attrs = attrs.copy()
+        payload = {"src": src, "tgt": tgt, "attrs": payload_attrs, "prov": prov}
+        signature = self._sign_signal(payload).hex()
+        
+        # Update attributes with signature and signer
+        attrs.update({
+            "signature": signature,
+            "signer": self.node_id
+        })
+        
+        G.add_edge(src, tgt, **attrs)
 
     # ------------------------------------------------------------------
     # Main entry point
@@ -319,7 +345,10 @@ class GraphBridgeEngine:
         # 5. Apply edges to graph
         # ------------------------------------------------------------------
         for src, tgt, attrs in to_add:
-            G.add_edge(src, tgt, **attrs)
+            sim_val = attrs["confidence"]
+            src_comp = attrs["provenance"].split("components:")[1].split("->")[0]
+            tgt_comp = attrs["provenance"].split("components:")[1].split("->")[1].split("|")[0]
+            self._add_authenticated_edge(G, src, tgt, attrs, sim_val, src_comp, tgt_comp)
 
         new = len(to_add)
         if new:

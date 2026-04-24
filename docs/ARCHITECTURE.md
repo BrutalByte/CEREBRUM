@@ -1,6 +1,6 @@
 # CEREBRUM System Architecture
 
-**Version**: v2.24.0 (Phase 111 COMPLETE)
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 
 Complete data-flow from ingestion to result, including all options, pathways, and decision nodes.
 
@@ -31,7 +31,8 @@ graph TD
     end
     
     subgraph BACKGROUND [BACKGROUND: Homeostasis]
-        REMEngine -->|SynapticConsolidation| GraphBuilder
+        ConsolidationEngine -->|Phase 96: Hebbian Replay| GraphBuilder
+        ConsolidationEngine -->|Phase 112: REM Shortcut Synthesis| GraphBuilder
         InsightEngine -->|InsightLinks| GraphBuilder
         GlobalRebalancer -->|DSCFRecompute| GraphBuilder
     end
@@ -55,14 +56,17 @@ Implements a blackboard-based competitive attention layer, replacing linear MACH
 ### Phase 111: Active Inference
 Transforms reasoning from a reactive search to a proactive traversal. The `PredictiveCoder` generates "Expected Path" priors from Engram patterns, which bias the `BeamTraversal` toward likely sequences. Prediction Errors (PE) trigger metabolic arousal, allowing the system to focus computational energy on "surprising" discoveries.
 
+### Phase 112: Sleep-Phase Consolidation (REM Cycle)
+The `ConsolidationEngine` merges Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 112) into a unified maintenance cycle. During idle periods, the system replays successful Working Memory entries to strengthen synaptic weights and analyzes QueryLog patterns to materialize direct "shortcut" edges (e.g., A -> C skipping B). This turns common multi-hop reasoning into instantaneous reflexive paths.
+
 ## Legend
 
 | Colour | Layer | Description |
 |---|---|---|
 | Dark green | THALAMUS | Ingestion, embedding, community detection |
-| Dark blue | CORTEX | Traversal, attention scoring, answer extraction |
+| Dark blue | CORTEX | Traversal, attention scoring, answer extractor |
 | Purple | Learning | Online SGD, batch retrain, temporal calibration, Engram pattern cache |
-| Orange | Background | REM, InsightEngine, HypothesisEngine, Rebalancer, Stream |
+| Orange | Background | REM (Consolidation), InsightEngine, HypothesisEngine, Rebalancer, Stream |
 | Teal | Persistence | State snapshots, QueryLog, Engram JSON, build caches |
 | Olive | Output | Verbalization, response routing |
 | Red | Entry | REST, CLI, UI, Federated, Stream |

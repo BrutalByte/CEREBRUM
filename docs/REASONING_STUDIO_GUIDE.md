@@ -1,6 +1,6 @@
 # CEREBRUM Reasoning Studio — User Guide
 
-**Version**: v2.24.0
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 **Interface**: Gradio web UI + pyvis graph visualization
 **Business Logic Module**: `core/studio_engine.py` (`StudioEngine`)
 **UI Entry Point**: `ui/studio.py`

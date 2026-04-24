@@ -362,8 +362,11 @@ class BeamTraversal:
         self.lateral_inhibition_ratio: float = 0.0
         # Phase 106: Thalamic Gating — context-driven branch killing
         self.thalamic_threshold: float = 0.0
+        # Phase 117: Prefrontal Bridge (Symbolic Verification)
+        self.symbolic_validator = symbolic_validator
+        
         # Phase 108: Thalamofrontal Feedback Loop — dynamic metabolic gating
-        self.dynamic_thalamic_gating: bool = True
+        self.dynamic_thalamic_gating: bool = False
         self.gating_sensitivity: float = 0.1
         # Phase 101: Emotional Valence — aversive/appetitive edge scoring
         self._valence_engine: Optional[Any] = None

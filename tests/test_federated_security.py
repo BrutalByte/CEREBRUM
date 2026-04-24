@@ -1,79 +1,26 @@
+import pytest
+from core.security import FederatedAuth, PUBLIC_KEY
+from core.node_registry import NodeRegistry
+from cryptography.hazmat.primitives import serialization
 
-import hmac
-import hashlib
-import json
-from unittest.mock import patch, MagicMock
-from adapters.remote_adapter import RemoteCerebrumAdapter
-
-def test_federated_hmac_verification_success():
-    """Verify that valid HMAC signatures are accepted."""
-    secret = "test-secret"
-    adapter = RemoteCerebrumAdapter("http://remote-api", secret=secret)
+def test_federated_security_handshake():
+    # Setup
+    registry = NodeRegistry(registry_path="tmp/node_registry_test.json")
+    node_id = "test-node"
+    pub_key_pem = PUBLIC_KEY.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    ).decode()
+    registry.register_peer(node_id, pub_key_pem)
     
-    body = [{"source_id": "A", "target_id": "B", "relation_type": "knows"}]
-    body_json = json.dumps(body).encode("utf-8")
+    # Sign payload
+    payload = b"hello-world"
+    signature = FederatedAuth.sign_payload(payload)
     
-    # Calculate signature
-    sig = hmac.new(secret.encode("utf-8"), body_json, hashlib.sha256).hexdigest()
+    # Verify signature
+    peer_pub_key = registry.get_public_key(node_id)
+    assert peer_pub_key is not None
+    assert FederatedAuth.verify_signature(peer_pub_key, signature, payload) is True
     
-    mock_resp = MagicMock()
-    mock_resp.status_code = 200
-    mock_resp.content = body_json
-    mock_resp.headers = {"X-Signature": sig}
-    mock_resp.json.return_value = body
-    
-    with patch("requests.get", return_value=mock_resp):
-        edges = adapter.get_neighbors("A")
-        assert len(edges) == 1
-        assert edges[0].target_id == "B"
-
-def test_federated_hmac_verification_failure():
-    """Verify that invalid HMAC signatures cause empty results."""
-    secret = "test-secret"
-    adapter = RemoteCerebrumAdapter("http://remote-api", secret=secret)
-    
-    body = [{"source_id": "A", "target_id": "B", "relation_type": "knows"}]
-    body_json = json.dumps(body).encode("utf-8")
-    
-    # WRONG signature
-    sig = "invalid-sig"
-    
-    mock_resp = MagicMock()
-    mock_resp.status_code = 200
-    mock_resp.content = body_json
-    mock_resp.headers = {"X-Signature": sig}
-    
-    with patch("requests.get", return_value=mock_resp):
-        edges = adapter.get_neighbors("A")
-        # Should be empty because signature check failed
-        assert len(edges) == 0
-
-def test_federated_hmac_missing_signature():
-    """Verify that missing signature is rejected when secret is configured."""
-    secret = "test-secret"
-    adapter = RemoteCerebrumAdapter("http://remote-api", secret=secret)
-    
-    body = {"id": "A", "label": "Entity A"}
-    body_json = json.dumps(body).encode("utf-8")
-    
-    mock_resp = MagicMock()
-    mock_resp.status_code = 200
-    mock_resp.content = body_json
-    mock_resp.headers = {} # No signature
-    
-    with patch("requests.get", return_value=mock_resp):
-        ent = adapter.get_entity("A")
-        assert ent is None
-
-def test_federated_no_secret_allows_all():
-    """Verify that if no secret is set, signature is not required."""
-    adapter = RemoteCerebrumAdapter("http://remote-api")
-    
-    body = [{"source_id": "A", "target_id": "B", "relation_type": "knows"}]
-    mock_resp = MagicMock()
-    mock_resp.status_code = 200
-    mock_resp.json.return_value = body
-    
-    with patch("requests.get", return_value=mock_resp):
-        edges = adapter.get_neighbors("A")
-        assert len(edges) == 1
+    # Test invalid signature
+    assert FederatedAuth.verify_signature(peer_pub_key, signature, b"wrong-payload") is False

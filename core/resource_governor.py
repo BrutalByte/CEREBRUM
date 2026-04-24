@@ -162,3 +162,15 @@ class ResourceGovernor:
         stats = self.get_current_stats()
         stats.update(self.get_gpu_stats())
         return stats
+
+    def check_constraints(self, cpu_limit_pct: float = 80.0) -> bool:
+        """Production check: enforce CPU and Memory usage constraints."""
+        stats = self.get_current_stats()
+        cpu = psutil.cpu_percent()
+        if stats["system_ram_pct"] > self.threshold:
+            logger.warning(f"Memory limit reached: {stats['system_ram_pct']}%")
+            return False
+        if cpu > cpu_limit_pct:
+            logger.warning(f"CPU limit reached: {cpu}%")
+            return False
+        return True

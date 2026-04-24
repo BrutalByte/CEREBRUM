@@ -1,7 +1,7 @@
 # SPEC_007: The REM Cycle
 ## Metacognitive Maintenance and Insight Synthesis
 
-**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Metacognition / System 2 Reasoning / Autonomous Maintenance  
 **Module**: `core/rem_engine.py`
@@ -44,7 +44,7 @@ When triggers are met, REM spawns a background thread to:
 2.  Perform an **Atomic Swap** of the `community_map` under a global lock.
 3.  Call `on_rebalance` hooks for all engines (Bridge, STDP, Thalamus).
 
-### 5. Implementation Notes (v1.1.0)
+### 5. Implementation Notes (v2.24.0)
 
 *   **Resource Throttling**: The `ResourceGovernor` limits REM tasks to 15% of available CPU/Memory. If a high-priority user query arrives, REM tasks are paused (the "Arousal Interrupt").
 *   **Persistence**: All REM actions (prunes, consolidations, re-balances) are logged to the `METADATA` store for forensic audit.
@@ -53,7 +53,13 @@ When triggers are met, REM spawns a background thread to:
     *   **Cold Path (1 hour)**: Bilateral verification and Insight decay.
     *   **REM Path (Daily/Triggered)**: Full modularity re-optimization.
 
-> **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
+### 6. Sleep-Phase Consolidation (Phase 112)
+CEREBRUM v2.24.0 introduces a unified `ConsolidationEngine` that merges traditional REM maintenance with mnemonic optimization.
+
+1.  **Hebbian Replay (Phase 96)**: The engine replays high-salience (high score, low prediction error) traces from Working Memory. Edges participating in these successful reasoning paths receive a weight boost ($+ \Delta w$), increasing their future attention priority (LTP analog).
+2.  **Shortcut Synthesis (Phase 112)**: The engine identifies recurrent multi-hop trajectories in the `QueryLog`. Trajectories exceeding the `threshold` are materialized as direct `REM_SHORTCUT` edges.
+    *   **Effect**: Reduces hop-count and computational complexity for frequently asked questions.
+    *   **Grounding**: Shortcuts inherit the minimum confidence of their component edges and are subject to the same decay rules as standard insights.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

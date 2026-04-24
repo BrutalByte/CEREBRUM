@@ -2,13 +2,13 @@
 ## Forensic Audit and Visibility via the Glass-Box Reasoning Studio
 
 **Date**: March 2026  
-**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: Compliance Officers, Business Analysts, System Integrators, AI Ethicists
 
 ---
 
 ### Executive Summary
-One of the biggest risks in enterprise AI is the "Black Box" problem—the inability to see how a machine reached a specific conclusion. This lack of visibility leads to distrust, regulatory risk, and an inability to debug complex errors. The **Glass-Box Reasoning Studio** is CEREBRUM's proprietary visual interface. It turns the "Invisible Math" of graph attention into a tangible, interactive "Reasoning Trace." For the first time, human experts can watch the AI reason in real-time, audit every step of its logic, and understand the "Why" behind every answer. In v1.2.0, the studio includes adaptive clustering to visualize graphs with over 100,000 entities without visual clutter.
+One of the biggest risks in enterprise AI is the "Black Box" problem—the inability to see how a machine reached a specific conclusion. This lack of visibility leads to distrust, regulatory risk, and an inability to debug complex errors. The **Glass-Box Reasoning Studio** is CEREBRUM's proprietary visual interface. It turns the "Invisible Math" of graph attention into a tangible, interactive "Reasoning Trace." For the first time, human experts can watch the AI reason in real-time, audit every step of its logic, and understand the "Why" behind every answer. In v2.24.0, the studio includes adaptive clustering to visualize graphs with over 100,000 entities without visual clutter.
 
 ### The Problem: The Trust Gap in AI
 When an AI provides an answer in a mission-critical domain (e.g., Medical Diagnosis, Financial Risk, Intelligence), the human operator is left with a binary choice: trust the machine blindly or ignore the result.
@@ -23,7 +23,7 @@ The Reasoning Studio reifies the AI's internal process as a "Physical Trace."
 *   **The Reasoning Trace Viewer**: Visualizes the exact multi-hop path the AI followed. Edges are thicker if the AI focused more "attention" on them, allowing you to see the AI "thinking through" the problem.
 *   **Forensic Math Panel**: Click on any connection to see the raw math breakdown. See exactly how much weight was given to "Semantic Similarity" vs. "Community Consensus" vs. "Historical Strength."
 *   **Live Evolution Feed**: Watch your graph grow and learn in real-time. See "spikes" of activity as data arrives and watch as the system materializes new "Eureka" links (Insights) or causal connections.
-*   **Adaptive Visual Scaling (v1.2.0)**: Automatically clusters dense neighborhoods into "Community Hubs," allowing users to navigate massive graphs while maintaining structural context.
+*   **Adaptive Visual Scaling (v2.24.0)**: Automatically clusters dense neighborhoods into "Community Hubs," allowing users to navigate massive graphs while maintaining structural context.
 
 ### Key Enterprise Benefits
 *   **Rapid Verification**: Human experts can verify a complex reasoning path in seconds rather than hours by visually auditing the trace.

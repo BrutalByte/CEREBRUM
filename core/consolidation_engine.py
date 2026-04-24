@@ -1,20 +1,25 @@
 """
-ConsolidationEngine — Phase 96: Memory Consolidation (Hebbian Replay).
+ConsolidationEngine — Phase 96 & Phase 112.
 
+Phase 96: Memory Consolidation (Hebbian Replay).
 During idle loop cycles, replays high-quality WorkingMemory entries and
-applies Hebbian weight boosts to the edges on those paths. Edges the system
-repeatedly traverses to produce good answers grow permanently stronger —
-the KG analogue of hippocampal replay / sleep consolidation.
+applies Hebbian weight boosts to the edges on those paths.
+
+Phase 112: REM Cycle Daemon.
+Analyzes reasoning traces from QueryLog and materializes high-utility shortcut paths.
 """
 from __future__ import annotations
 
 import logging
 import time
+import asyncio
 from dataclasses import dataclass
-from typing import Any, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core.working_memory import WorkingMemoryBuffer
+    from core.persistence import QueryLog
+    from core.graph_adapter import GraphAdapter
 
 logger = logging.getLogger("cerebrum.consolidation")
 
@@ -29,25 +34,26 @@ class ConsolidationResult:
 
 
 class ConsolidationEngine:
-    """Hebbian replay engine.
-
-    Takes the top-k highest-scoring WorkingMemory entries that carry
-    ``path_edges`` and applies a quality-proportional weight boost to each
-    traversed edge via ``adapter.update_edge_weight()``.
+    """
+    Handles both Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 112).
 
     Parameters
     ----------
-    adapter       : graph adapter (must implement update_edge_weight)
+    adapter       : graph adapter
     graph         : CerebrumGraph — used for telemetry emit()
-    min_score     : minimum top_score an entry must have to be replayed
-    max_weight    : upper bound on any edge weight after boosting
-    hebbian_delta : base weight increment per replay; scaled by entry.top_score
+    query_log     : QueryLog instance for Phase 112
+    threshold     : frequency threshold for shortcut materialization (Phase 112)
+    min_score     : minimum top_score an entry must have to be replayed (Phase 96)
+    max_weight    : upper bound on any edge weight after boosting (Phase 96)
+    hebbian_delta : base weight increment per replay (Phase 96)
     """
 
     def __init__(
         self,
         adapter: Any,
         graph: Any,
+        query_log: Optional[Any] = None,
+        threshold: int = 5,
         min_score: float = 0.6,
         max_weight: float = 2.0,
         hebbian_delta: float = 0.05,
@@ -55,10 +61,12 @@ class ConsolidationEngine:
     ) -> None:
         self.adapter = adapter
         self.graph = graph
+        self.query_log = query_log
+        self.threshold = threshold
         self.min_score = min_score
         self.max_weight = max_weight
         self.hebbian_delta = hebbian_delta
-        self.pe_weight = pe_weight  # Gap 2: PE salience weight
+        self.pe_weight = pe_weight
 
     def consolidate(
         self,
@@ -66,20 +74,14 @@ class ConsolidationEngine:
         k: int = 5,
         reinforcement_scale: float = 1.0,
     ) -> ConsolidationResult:
-        """Replay up to k WM entries and Hebbian-boost their traversed edges.
-
-        Only entries whose top_score >= min_score AND that carry non-empty
-        path_edges are eligible. Entries are ranked by salience = top_score +
-        pe_weight * prediction_error (Gap 2). Delta is further scaled by
-        reinforcement_scale from ChemicalModulator (Gap 1).
-        """
+        """Phase 96: Replay up to k WM entries and Hebbian-boost their traversed edges."""
         t0 = time.time()
 
         candidates = [
             e for e in wm.recent(50)
             if e.top_score >= self.min_score and e.path_edges
         ]
-        # Gap 2: rank by salience = score + PE contribution
+        # Rank by salience = score + PE contribution
         candidates.sort(
             key=lambda e: e.top_score + self.pe_weight * (e.prediction_error or 0.0),
             reverse=True,
@@ -90,10 +92,11 @@ class ConsolidationEngine:
         total_delta_sum = 0.0
 
         for entry in candidates:
-            # Gap 1: scale delta by dopamine reinforcement signal
+            # Scale delta by dopamine reinforcement signal
             delta = self.hebbian_delta * entry.top_score * reinforcement_scale
             for (u, rel, v) in entry.path_edges:
                 try:
+                    # adapter must implement update_edge_weight
                     n = self.adapter.update_edge_weight(
                         u, v, rel, delta=delta, max_weight=self.max_weight
                     )
@@ -117,6 +120,53 @@ class ConsolidationEngine:
         )
         return result
 
+    async def run_rem_cycle(self):
+        """Phase 112: Analyzes logs and synthesizes shortcut edges."""
+        if not self.query_log:
+            logger.warning("REM Cycle: No QueryLog provided, skipping.")
+            return
+
+        logger.info("REM Cycle: Starting consolidation...")
+        traces = self.query_log.get_recent_traces(limit=1000)
+        
+        # Identify high-frequency paths (multi-hop patterns)
+        path_counts: Dict[tuple, int] = {}
+        for trace in traces:
+            if len(trace.path) > 2:
+                # Store as tuple for dictionary key
+                path_tuple = tuple(trace.path)
+                path_counts[path_tuple] = path_counts.get(path_tuple, 0) + 1
+        
+        # Materialize paths meeting threshold
+        materialized_count = 0
+        for path, count in path_counts.items():
+            if count >= self.threshold:
+                self._materialize_path(path)
+                materialized_count += 1
+                
+        logger.info(f"REM Cycle: Consolidation complete. Materialized {materialized_count} shortcut(s).")
+
+    def _materialize_path(self, path: tuple):
+        """Synthesize a shortcut edge A->Z."""
+        src, tgt = path[0], path[-1]
+        logger.info(f"REM Cycle: Materializing shortcut {src} -> {tgt}")
+        self.adapter.add_edge(
+            u=src,
+            v=tgt,
+            relation="REM_SHORTCUT",
+            confidence=0.9,
+            provenance="REM_Consolidation",
+            synthetic=True
+        )
+        # Emit SYNAPTOGENESIS event for telemetry
+        try:
+            from core.telemetry import NeuralEvent
+            self.graph.emit(NeuralEvent.synaptogenesis(
+                u=src, v=tgt, relation="REM_SHORTCUT", confidence=0.9
+            ))
+        except Exception as exc:
+            logger.debug("SYNAPTOGENESIS emit failed: %s", exc)
+
     def _emit(self, result: ConsolidationResult) -> None:
         try:
             from core.telemetry import NeuralEvent
@@ -127,3 +177,10 @@ class ConsolidationEngine:
             ))
         except Exception as exc:
             logger.debug("CONSOLIDATION_PULSE emit failed: %s", exc)
+
+    def track_path_success(self, path: List[str], outcome_score: float):
+        """Track path success to bias future Engram predictive priors."""
+        # Update success metrics for Engrams
+        if self.query_log:
+            self.query_log.log_success(path, outcome_score)
+        logger.debug(f"ConsolidationEngine: Tracked success for path of len {len(path)}")

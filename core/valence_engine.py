@@ -13,6 +13,7 @@ become appetitive.
 from __future__ import annotations
 
 import logging
+import asyncio
 from dataclasses import dataclass
 from typing import Any, List, Optional, Tuple, TYPE_CHECKING
 
@@ -56,6 +57,17 @@ class ValenceEngine:
         self.learning_rate = learning_rate
         self.valence_weight = valence_weight
 
+    def _emit(self, result: ValenceResult) -> None:
+        try:
+            from core.telemetry import NeuralEvent
+            self.graph.emit(NeuralEvent.valence_update(
+                path_edges=result.edges_updated,
+                outcome_score=result.outcome_score,
+                mean_delta=result.mean_delta,
+            ))
+        except Exception as exc:
+            logger.debug("VALENCE_UPDATE emit failed: %s", exc)
+
     def record_outcome(
         self,
         path_edges: List[_PathEdge],
@@ -86,7 +98,8 @@ class ValenceEngine:
             mean_delta=delta if updated else 0.0,
         )
         self._emit(result)
-        logger.debug(
+        return result
+
             "ValenceEngine: outcome=%.3f delta=%.4f edges_updated=%d",
             outcome_score, delta, updated,
         )
@@ -99,13 +112,12 @@ class ValenceEngine:
         except Exception:
             return 0.0
 
-    def _emit(self, result: ValenceResult) -> None:
-        try:
-            from core.telemetry import NeuralEvent
-            self.graph.emit(NeuralEvent.valence_update(
-                path_edges=result.edges_updated,
-                outcome_score=result.outcome_score,
-                mean_delta=result.mean_delta,
-            ))
-        except Exception as exc:
-            logger.debug("VALENCE_UPDATE emit failed: %s", exc)
+    def broadcast_learning(self, path_edges: List[_PathEdge], outcome_score: float, gws: Any, node_id: str):
+        """Broadcast high-valence reasoning success to the GWS."""
+        if outcome_score > 0.5:  # Only broadcast high-confidence successes
+            proposal = {
+                "path": path_edges,
+                "valence": outcome_score
+            }
+            logger.info(f"ValenceEngine: Broadcasting learning success for node {node_id}")
+            asyncio.run(gws.post("learning_channel", proposal, node_id))

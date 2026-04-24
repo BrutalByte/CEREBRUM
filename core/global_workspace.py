@@ -1,7 +1,10 @@
 import asyncio
 import time
-from typing import Dict, List, Optional
+import logging
+from typing import Dict, List, Optional, Callable
 from dataclasses import dataclass, field
+
+logger = logging.getLogger("cerebrum.gws")
 
 @dataclass
 class CommunitySignal:
@@ -15,11 +18,24 @@ class GlobalWorkspace:
     def __init__(self):
         self.blackboard: asyncio.Queue = asyncio.Queue()
         self.active_signals: Dict[int, CommunitySignal] = {}
+        self.subscribers: Dict[str, List[Callable]] = {}
         self.ttl = 5.0 # Seconds
 
-    async def broadcast(self, signal: CommunitySignal):
-        await self.blackboard.put(signal)
-        self.active_signals[signal.community_id] = signal
+    async def post(self, topic: str, data: Any, node_id: str):
+        """Post a reasoning proposal or bid to the blackboard."""
+        entry = {"topic": topic, "data": data, "node_id": node_id, "timestamp": time.time()}
+        await self.blackboard.put(entry)
+        
+        # Trigger subscribers
+        if topic in self.subscribers:
+            for callback in self.subscribers[topic]:
+                callback(topic, entry)
+
+    def subscribe(self, topic: str, callback: Callable):
+        if topic not in self.subscribers:
+            self.subscribers[topic] = []
+        self.subscribers[topic].append(callback)
+        logger.info(f"GWS: Subscribed to {topic}")
 
     def get_top_signals(self, limit: int = 5) -> List[CommunitySignal]:
         # Bidding logic: weight = novelty * confidence

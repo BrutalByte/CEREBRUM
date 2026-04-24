@@ -119,8 +119,13 @@ class CerebrumGraph:
         from core.global_workspace import GlobalWorkspace
         self.global_workspace = GlobalWorkspace()
 
+        # Prefrontal Bridge (Phase 117)
+        from core.symbolic_engine import SymbolicValidator
+        self.symbolic_validator = SymbolicValidator(self.adapter)
+
         self._csa:       Optional[CSAEngine]    = None
         self._traversal: Optional[BeamTraversal] = None
+        self.predictive_coder: Optional[PredictiveCodingEngine] = None
         self._built      = False
 
         # ResearchAgent + AutonomousDiscoveryLoop (Phase 74+)
@@ -130,6 +135,12 @@ class CerebrumGraph:
         # Working Memory + Goal Stack (Phase 95)
         self._working_memory: Optional[Any] = None
         self._goal_stack: Optional[Any] = None
+
+        # Persistence & REM Cycle (Phase 112)
+        from core.persistence import QueryLog
+        self.query_log = QueryLog()
+        from core.consolidation_engine import ConsolidationEngine
+        self.consolidation_engine = ConsolidationEngine(self.adapter, self, query_log=self.query_log)
 
     def set_research_agent(self, agent: Any) -> None:
         self.research_agent = agent
@@ -952,3 +963,7 @@ class CerebrumGraph:
             f"emb={type(self._embedding_engine).__name__}, "
             f"{status})"
         )
+
+    async def run_rem_cycle(self):
+        """Phase 112: Run asynchronous shortcut synthesis (REM cycle)."""
+        await self.consolidation_engine.run_rem_cycle()

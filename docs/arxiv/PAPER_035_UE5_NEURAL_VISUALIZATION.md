@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic  
 **Series**: CEREBRUM Technical Report 035  
 **Phase**: 83  
-**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 **arXiv Category**: `cs.HC` + `cs.IR`  
 **Date**: April 2026
 

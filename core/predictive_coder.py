@@ -97,5 +97,22 @@ class PredictiveCoder:
                 
         return 1.0
 
+    def generate_prior(self, engrams: List[Any]) -> Dict[str, float]:
+        """
+        Phase 116: Generate prior based on success-weighted Engram frequency.
+        """
+        prior: Dict[str, float] = {}
+        for engram in engrams:
+            # Weight frequency by historical success rate
+            success_weight = getattr(engram, "success_rate", 1.0)
+            prior[engram.id] = engram.frequency * success_weight
+        
+        # Normalize
+        total = sum(prior.values())
+        if total > 0:
+            for k in prior:
+                prior[k] /= total
+        return prior
+
 # Alias for backward compatibility
 PredictiveCodingEngine = PredictiveCoder

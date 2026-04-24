@@ -5,6 +5,17 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.24.0] — 2026-04-22
+### Added
+- **Phase 112: REM Cycle Shortcut Synthesis**: Autonomous synthesis of shortcut edges based on high-frequency QueryLog traces.
+- **Phase 111: Active Inference (Proactive Reasoning)**: Daydreaming mode that explores high-probability priors during idle cycles.
+- **Phase 110: Global Workspace (GWS)**: Centralized blackboard for multi-agent signaling and focus-switching.
+- **Phase 109: Counterfactual Reasoning**: Ability to simulate KG state changes and evaluate hypothetical reasoning outcomes.
+
+### Fixed
+- **ConsolidationEngine**: Merged Phase 96 (Hebbian Replay) and Phase 112 (REM Cycle) into a unified engine, restoring system stability.
+- **Telemetry**: Added missing `synaptogenesis` helper for edge creation events.
+
 ## [2.23.0] — 2026-04-20
 ### Added
 - **Phase 108: Thalamofrontal Feedback Loop** — dynamic metabolic gating of reasoning.

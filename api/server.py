@@ -3427,13 +3427,16 @@ def _load(
     # Phase 87: Swarm & Neural Coupling
     from core.neural_coupling_engine import NeuralCouplingEngine
     from api.peer_discovery import PeerDiscovery
+    from core.node_registry import NodeRegistry
     local_url = os.getenv("CEREBRUM_LOCAL_URL", "http://localhost:8200")
     _state['coupling_engine'] = NeuralCouplingEngine(local_url, _state['hologram'])
+    _state['node_registry'] = NodeRegistry()
     _state["peer_discovery"] = PeerDiscovery(
         _state["coupling_engine"], 
         _state["adapter"], 
         _state["community_map"], 
-        _state["embeddings"]
+        _state["embeddings"],
+        _state["node_registry"]
     )
     # Start discovery automatically if CEREBRUM_SWARM_MODE=1
     if os.getenv("CEREBRUM_SWARM_MODE") == "1":

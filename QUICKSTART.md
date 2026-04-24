@@ -129,6 +129,15 @@ curl http://localhost:8200/health
 
 If `CEREBRUM_API_KEYS` is **not set**, the server runs in open dev mode — all requests are accepted without a key. Always set a key before exposing the server on a network.
 
+## Background maintenance (REM Cycle)
+
+CEREBRUM automatically optimizes its internal structure during idle periods. You can also trigger a manual **REM Cycle** pass to strengthen successful paths and synthesize shortcuts:
+
+```bash
+curl -X POST http://localhost:8200/v1/rem/run \
+  -H "X-API-Key: your-key-here"
+```
+
 ---
 
 ## Next steps

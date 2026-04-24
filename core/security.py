@@ -1,45 +1,48 @@
 """
 Federated Security for CEREBRUM.
 
-Provides JWT-based identity and authorization for distributed reasoning clusters.
+Provides Ed25519-based identity and authorization for distributed reasoning clusters.
 """
 import os
 import time
-import jwt
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
+from cryptography.hazmat.primitives.asymmetric import ed25519
+from cryptography.hazmat.primitives import serialization
 
-# Security: In production, rotate this secret or use asymmetric RSA/EdDSA.
-SHARED_SECRET = os.getenv("PARALLAX_SHARED_SECRET", "federation-secret-change-me")
-ALGORITHM = "HS256"
+# Security: In production, load these keys from a secure vault or HSM.
+# Generating defaults for local dev.
+def _load_or_gen_keys():
+    if not os.path.exists("data/cerebrum/node.key"):
+        private_key = ed25519.Ed25519PrivateKey.generate()
+        os.makedirs("data/cerebrum", exist_ok=True)
+        with open("data/cerebrum/node.key", "wb") as f:
+            f.write(private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption()
+            ))
+        return private_key
+    with open("data/cerebrum/node.key", "rb") as f:
+        return serialization.load_pem_private_key(f.read(), password=None)
+
+PRIVATE_KEY = _load_or_gen_keys()
+PUBLIC_KEY = PRIVATE_KEY.public_key()
 
 class FederatedAuth:
     """
-    Handles JWT generation and validation for federated peer-to-peer trust.
+    Handles Ed25519 signing and verification for federated peer-to-peer trust.
     """
     @staticmethod
-    def create_token(
-        node_id: str, 
-        scopes: List[str] = ["query", "search"], 
-        expires_in: int = 3600
-    ) -> str:
-        """Create a signed access token for a peer node."""
-        payload = {
-            "sub": node_id,
-            "iat": int(time.time()),
-            "exp": int(time.time()) + expires_in,
-            "scopes": scopes
-        }
-        return jwt.encode(payload, SHARED_SECRET, algorithm=ALGORITHM)
+    def sign_payload(payload: bytes) -> bytes:
+        """Sign a byte payload using the node's private key."""
+        return PRIVATE_KEY.sign(payload)
 
     @staticmethod
-    def validate_token(token: str) -> Dict[str, Any]:
-        """
-        Validate and decode a JWT. 
-        Returns payload if valid, raises jwt.PyJWTError otherwise.
-        """
-        return jwt.decode(token, SHARED_SECRET, algorithms=[ALGORITHM])
-
-    @staticmethod
-    def has_scope(token_payload: Dict[str, Any], required_scope: str) -> bool:
-        """Check if the token grants a specific capability."""
-        return required_scope in token_payload.get("scopes", [])
+    def verify_signature(public_key_pem: str, signature: bytes, payload: bytes) -> bool:
+        """Verify a signature using a peer's public key."""
+        try:
+            public_key = serialization.load_pem_public_key(public_key_pem.encode())
+            public_key.verify(signature, payload)
+            return True
+        except Exception:
+            return False

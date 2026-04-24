@@ -60,7 +60,21 @@ Phase 110 introduces the **Global Workspace (GWS)** blackboard. Communities broa
 
 ---
 
-## 5. The Brain: Metabolic and Mnemonic Regulation
+## 5. The Sleep: Sleep-Phase Consolidation (REM Cycle)
+
+Knowledge in CEREBRUM is not static. Phase 112 introduces **Sleep-Phase Consolidation**, also known as the **REM Cycle**.
+
+### Hebbian Replay (Phase 96)
+During idle cycles, the system "replays" high-quality entries from its Working Memory. It identifies the most successful reasoning paths and applies **Hebbian weight boosts** to the edges on those paths. This "strengthens the synapses" of successful reasoning, making those paths more likely to be chosen in the future.
+
+### Shortcut Synthesis (Phase 112)
+The REM Cycle also analyzes the **QueryLog** to find patterns of frequent multi-hop reasoning. If the system frequently follows a path from Node A to Node C via Node B, the REM Cycle will eventually **synthesize a shortcut edge** directly from A to C (tagged as `REM_SHORTCUT`).
+- **Efficiency**: These shortcuts allow the system to "jump" over intermediate steps, turning complex reasoning into instantaneous "reflexes."
+- **Self-Indexing**: Over time, the graph becomes self-optimizing, adapting its structure to the specific types of questions it is asked most often.
+
+---
+
+## 6. The Brain: Metabolic and Mnemonic Regulation
 
 CEREBRUM isn't just a static algorithm; it is a **dynamic system** regulated by biological analogs:
 

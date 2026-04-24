@@ -2,7 +2,7 @@
 
 **Base URL**: `http://localhost:8200`
 **API Version**: v2.24.0
-**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 **Authentication**: JWT Bearer token (all endpoints except `/health`)
 
 ---
@@ -34,6 +34,12 @@ Reasoning has shifted from reactive to proactive.
 - **Predictive Priors**: The `PredictiveCoder` projects "Expected Path" relation sequences from Engram patterns before traversal starts.
 - **Proactive Bias**: Expansion and scoring are biased toward edges that align with the projected prior (`1.5x` boost).
 - **Prediction Error (PE)**: Divergence from the prior triggers metabolic arousal (via `ChemicalModulator`), automatically widening the beam to investigate unexpected structural changes.
+
+### Sleep-Phase Consolidation (Phase 112)
+The unified `ConsolidationEngine` manages background graph maintenance.
+- **Hebbian Replay**: Replays high-salience Working Memory paths to strengthen successful reasoning logic.
+- **Shortcut Synthesis**: Converts frequent multi-hop trajectories into direct "reflexive" shortcuts (`REM_SHORTCUT`).
+- **Method**: `await graph.run_rem_cycle()` triggers an asynchronous consolidation pass.
 
 ---
 

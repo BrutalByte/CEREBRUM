@@ -1,7 +1,7 @@
 # SPEC_008: Signal Encoder
 ## Cross-Modal Alignment via Orthogonal Procrustes
 
-**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Signal Processing / Latent Space Alignment / Multi-Modal AI  
 **Module**: `core/signal_encoder.py`
@@ -57,7 +57,7 @@ To prevent this, CEREBRUM enforces a **Canonical Basis Anchor**:
 *   All `SignalEncoders` and `FederatedAdapters` must align directly to the anchor.
 *   Projections are **Atomic** rather than **Nested**, ensuring that a "Temperature Spike" signal aligns with the "High Temperature" entity with constant error bounds regardless of graph depth.
 
-### 5. Implementation Notes (v1.1.0)
+### 5. Implementation Notes (v2.24.0)
 
 *   **Namespace Isolation**: Encoded signals are automatically prefixed with `signal:` to prevent ID collisions with text entities (Hole Fix 1.1.0).
 *   **Performance**: Signal projection is a single matrix-vector multiplication $O(D^2)$, enabling sub-millisecond encoding of live streams.

@@ -2,13 +2,13 @@
 ## The DSCF/TSC Partitioning Engine
 
 **Date**: March 2026  
-**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: CTOs, Data Architects, AI Researchers
 
 ---
 
 ### Executive Summary
-As enterprises move toward GraphRAG and Knowledge Graph-driven AI, the ability to partition massive datasets into meaningful semantic clusters becomes a critical bottleneck. Traditional algorithms often fail on scale-free "hub-and-spoke" networks, leading to unstable clusters that degrade AI reasoning. The **DSCF/TSC Engine** provides a production-hardened solution that uses a multi-signal consensus mechanism to ensure cluster stability, high precision, and extreme scalability. In v1.2.0, the engine achieves a modularity index of **Q=0.88**, providing the most structurally coherent "Attention Heads" for advanced multi-hop reasoning.
+As enterprises move toward GraphRAG and Knowledge Graph-driven AI, the ability to partition massive datasets into meaningful semantic clusters becomes a critical bottleneck. Traditional algorithms often fail on scale-free "hub-and-spoke" networks, leading to unstable clusters that degrade AI reasoning. The **DSCF/TSC Engine** provides a production-hardened solution that uses a multi-signal consensus mechanism to ensure cluster stability, high precision, and extreme scalability. In v2.24.0, the engine achieves a modularity index of **Q=0.88**, providing the most structurally coherent "Attention Heads" for advanced multi-hop reasoning.
 
 ### The Problem: The "Resolution Limit" in Enterprise Graphs
 Most community detection algorithms (like Louvain or Leiden) struggle with two extremes:

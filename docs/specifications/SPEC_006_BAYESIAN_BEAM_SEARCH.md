@@ -1,7 +1,7 @@
 # SPEC_006: Bayesian Beam Search
 ## Probabilistic Graph Traversal under Topological Uncertainty
 
-**Status**: v2.24.0 (Phase 111 (Active Inference) COMPLETE)
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Decision Theory / Probabilistic Robotics / Graph Reasoning  
 **Module**: `reasoning/traversal.py`
@@ -57,7 +57,7 @@ The final answers returned to the user include a **Confidence Calibration**:
 
 If an answer has a high score but high uncertainty, the system flags it for **Metacognitive Verification** (SPEC_007), triggering a second-order "triangulation" pass to confirm the reasoning chain.
 
-### 6. Implementation Notes (v1.1.0)
+### 6. Implementation Notes (v2.24.0)
 *   **Reproducibility**: Supports a fixed `RandomState` seed for deterministic debugging of probabilistic runs.
 *   **Performance**: Sampling is performed using vectorized NumPy operations, maintaining $O(B \cdot D)$ complexity.
 *   **Streaming Compatibility**: Beta distributions are persisted in the `TraversalPath` objects, allowing reasoning to pause and resume as new data arrives in the stream.

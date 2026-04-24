@@ -1,6 +1,6 @@
 # CEREBRUM Performance Tuning Guide
 
-**Version**: v2.24.0
+**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
 
 This guide covers the key parameters affecting query latency, throughput, reasoning quality, and memory usage — and how to tune them for your specific workload.
 

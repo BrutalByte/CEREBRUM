@@ -52,7 +52,7 @@ def build_pipeline(beam_width: int = 10, max_hop: int = 3):
     G       = adapter.to_networkx()
 
     # Step 2 — Community detection (DSCF)
-    parts         = best_of_n_dscf(G, n_trials=5, seed=GLOBAL_SEED, use_multiprocessing=False)
+    parts         = best_of_n_dscf(G, n_trials=5, seed=GLOBAL_SEED, use_multiprocessing=False, use_gpu="cpu")
     community_map = {
         node: cid
         for cid, members in enumerate(parts)
