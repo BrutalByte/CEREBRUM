@@ -84,6 +84,7 @@ class _BaseKGEEngine:
         self.margin     = margin
         self.lr         = lr
         self.batch_size = batch_size
+        self._seed      = seed if seed is not None else 42
         self._rng       = random.Random(seed)
         self._np_rng    = np.random.default_rng(seed)
 
@@ -526,3 +527,247 @@ class RotatEEngine(_BaseKGEEngine):
 
         np.add.at(self._entity_emb, h_idx,   grad_scale * v * neg_g)
         np.add.at(self._entity_emb, nt_idx, -grad_scale * v * neg_g)
+
+
+# ---------------------------------------------------------------------------
+# Phase 135: GPU-accelerated training helpers
+# ---------------------------------------------------------------------------
+
+# Mixin properties added to TransEEngine / RotatEEngine below
+# (avoids touching _BaseKGEEngine's __init__ signature)
+
+def _fit_torch_impl(engine: "_BaseKGEEngine", n_epochs: int, device: str) -> "KGETrainingResult":
+    """
+    GPU training path shared by TransEEngine and RotatEEngine.
+
+    Uses nn.Embedding + Adam + autograd — replaces the per-sample numpy loop
+    with fully-vectorized batch operations on the RTX 5090.
+
+    Called by _BaseKGEEngine.fit() when a CUDA/MPS/HPU device is detected.
+    """
+    import torch
+    import torch.nn as nn
+
+    t0 = time.monotonic()
+    torch.manual_seed(getattr(engine, "_seed", 42))
+
+    n_ent = len(engine._entity_ids)
+    n_rel = len(engine._relation_ids)
+    emb_dim = engine._torch_emb_dim  # dim for TransE, dim*2 for RotatE
+
+    triples_np = np.array(engine._triples, dtype=np.int64)  # (N, 3)
+    if len(triples_np) == 0:
+        return KGETrainingResult(
+            model=engine._model_name, n_entities=n_ent, n_relations=n_rel,
+            n_triples=0, n_epochs=n_epochs, final_loss=0.0,
+            duration_seconds=time.monotonic() - t0, embedding_dim=engine.dim,
+        )
+
+    ent_emb = nn.Embedding(n_ent, emb_dim).to(device)
+    rel_emb = nn.Embedding(n_rel, emb_dim).to(device)
+    nn.init.xavier_uniform_(ent_emb.weight)
+    nn.init.xavier_uniform_(rel_emb.weight)
+    # TransE requires unit-normalised entity embeddings; RotatE skips this
+    if engine._normalise_ent_after_torch:
+        with torch.no_grad():
+            ent_emb.weight.data = nn.functional.normalize(ent_emb.weight.data, dim=1)
+
+    optimizer = torch.optim.Adam(
+        list(ent_emb.parameters()) + list(rel_emb.parameters()), lr=engine.lr
+    )
+
+    triples_t = torch.tensor(triples_np, dtype=torch.long, device=device)
+    N = len(triples_t)
+    rng = np.random.default_rng(getattr(engine, "_seed", 42))
+    margin = engine.margin
+    bs = engine.batch_size
+    final_loss = 0.0
+
+    for _epoch in range(n_epochs):
+        perm = torch.randperm(N, device=device)
+        epoch_loss = 0.0
+        n_batches = 0
+        for start in range(0, N, bs):
+            batch = triples_t[perm[start: start + bs]]
+            h_idx, r_idx, t_idx = batch[:, 0], batch[:, 1], batch[:, 2]
+            # Corrupt: randomly replace head or tail
+            corrupt_head = rng.random() < 0.5
+            neg_idx = torch.randint(0, n_ent, (len(batch),), device=device)
+            nh_idx = neg_idx if corrupt_head else h_idx
+            nt_idx = t_idx   if corrupt_head else neg_idx
+
+            h  = ent_emb(h_idx);  r  = rel_emb(r_idx);  t  = ent_emb(t_idx)
+            nh = ent_emb(nh_idx); nt = ent_emb(nt_idx)
+
+            pos_score = engine._score_torch(h, r, t)
+            neg_score = engine._score_torch(nh, r, nt)
+            loss = torch.clamp(margin + pos_score - neg_score, min=0.0).mean()
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            if engine._normalise_ent_after_torch:
+                with torch.no_grad():
+                    ent_emb.weight.data = nn.functional.normalize(ent_emb.weight.data, dim=1)
+
+            epoch_loss += loss.item()
+            n_batches += 1
+        final_loss = epoch_loss / max(n_batches, 1)
+
+    # Write back to numpy arrays (same shape convention as the CPU path)
+    engine._entity_emb   = ent_emb.weight.detach().cpu().numpy().astype(np.float32)
+    engine._relation_emb = rel_emb.weight.detach().cpu().numpy().astype(np.float32)
+
+    result = KGETrainingResult(
+        model=engine._model_name, n_entities=n_ent, n_relations=n_rel,
+        n_triples=N, n_epochs=n_epochs, final_loss=final_loss,
+        duration_seconds=time.monotonic() - t0, embedding_dim=engine.dim,
+    )
+    engine._result = result
+    return result
+
+
+# Patch properties and methods onto TransEEngine
+TransEEngine._torch_emb_dim = property(lambda self: self.dim)
+TransEEngine._normalise_ent_after_torch = property(lambda self: True)
+
+
+def _transe_score_torch(self, h, r, t):
+    import torch as _torch
+    return _torch.norm(h + r - t, p=2, dim=1)  # (batch,) — lower = more plausible
+
+
+TransEEngine._score_torch = _transe_score_torch
+
+
+def _transe_fit_with_device(self, adapter, n_epochs: int = 100, device: Optional[str] = None) -> KGETrainingResult:
+    t0 = time.monotonic()
+    self._build_vocab(adapter)
+    self._init_embeddings()
+
+    if not self._triples or n_epochs == 0:
+        result = KGETrainingResult(
+            model=self._model_name, n_entities=len(self._entity_ids),
+            n_relations=len(self._relation_ids), n_triples=len(self._triples),
+            n_epochs=0, final_loss=0.0, duration_seconds=time.monotonic() - t0,
+            embedding_dim=self.dim,
+        )
+        self._result = result
+        return result
+
+    # Resolve torch device
+    _torch_dev: Optional[str] = None
+    if device is None:
+        try:
+            import torch
+            from core.hardware import resolve_torch_device
+            _dev = resolve_torch_device("auto")
+            if str(_dev) != "cpu":
+                _torch_dev = str(_dev)
+        except ImportError:
+            pass
+    elif device != "cpu":
+        _torch_dev = device
+
+    if _torch_dev is not None:
+        try:
+            return _fit_torch_impl(self, n_epochs=n_epochs, device=_torch_dev)
+        except Exception:
+            pass  # fall through to numpy path on any GPU error
+
+    # CPU numpy path (original implementation)
+    final_loss = 0.0
+    triples = self._triples
+    for _epoch in range(n_epochs):
+        self._rng.shuffle(triples)
+        epoch_loss = 0.0
+        n_batches = 0
+        for start in range(0, len(triples), self.batch_size):
+            batch = triples[start: start + self.batch_size]
+            epoch_loss += self._train_batch(batch)
+            n_batches += 1
+        final_loss = epoch_loss / max(n_batches, 1)
+
+    result = KGETrainingResult(
+        model=self._model_name, n_entities=len(self._entity_ids),
+        n_relations=len(self._relation_ids), n_triples=len(triples),
+        n_epochs=n_epochs, final_loss=final_loss,
+        duration_seconds=time.monotonic() - t0, embedding_dim=self.dim,
+    )
+    self._result = result
+    return result
+
+
+# Replace fit() on both engines with the device-aware version
+TransEEngine.fit = _transe_fit_with_device
+
+
+# Patch same properties and methods onto RotatEEngine
+RotatEEngine._torch_emb_dim = property(lambda self: self.dim * 2)
+RotatEEngine._normalise_ent_after_torch = property(lambda self: False)
+
+
+def _rotate_score_torch(self, h, r, t):
+    import torch as _torch
+    half = self.dim
+    h_re, h_im = h[:, :half], h[:, half:]
+    r_re, r_im = r[:, :half], r[:, half:]
+    t_re, t_im = t[:, :half], t[:, half:]
+    rot_re = h_re * r_re - h_im * r_im
+    rot_im = h_re * r_im + h_im * r_re
+    diff = _torch.cat([rot_re - t_re, rot_im - t_im], dim=1)
+    return _torch.norm(diff, p=2, dim=1)
+
+
+RotatEEngine._score_torch = _rotate_score_torch
+RotatEEngine.fit = _transe_fit_with_device  # same dispatch logic works for RotatE
+
+
+# ---------------------------------------------------------------------------
+# Phase 135: Blend utility
+# ---------------------------------------------------------------------------
+
+def blend_kge_embeddings(
+    base: Dict[str, np.ndarray],
+    kge: Dict[str, np.ndarray],
+    blend: float = 0.5,
+) -> Dict[str, np.ndarray]:
+    """
+    Linearly interpolate base and KGE embeddings, re-normalising to unit sphere.
+
+    Entities absent from ``kge`` (isolated nodes with no edges) retain their
+    base embedding unchanged — KGE training cannot assign meaningful geometry
+    to nodes that appeared in no training triples.
+
+    Parameters
+    ----------
+    base  : {entity_id -> base embedding vector}  — e.g. sentence-transformer output
+    kge   : {entity_id -> KGE embedding vector}   — from TransEEngine/RotatEEngine
+    blend : fraction of KGE vs base (0.0 = pure base, 1.0 = pure KGE)
+
+    Returns
+    -------
+    New dict with the same keys as ``base``, blended and L2-normalised.
+    """
+    if blend <= 0.0:
+        return dict(base)
+
+    out: Dict[str, np.ndarray] = {}
+    for eid, base_vec in base.items():
+        kge_vec = kge.get(eid)
+        if kge_vec is None:
+            out[eid] = base_vec
+            continue
+        b = base_vec.astype(np.float32)
+        k = kge_vec.astype(np.float32)
+        # Resize kge to match base dim if they differ (e.g. kge_dim != base_dim)
+        if k.shape[0] != b.shape[0]:
+            if k.shape[0] > b.shape[0]:
+                k = k[: b.shape[0]]
+            else:
+                k = np.pad(k, (0, b.shape[0] - k.shape[0]))
+        mixed = blend * k + (1.0 - blend) * b
+        norm = float(np.linalg.norm(mixed))
+        out[eid] = (mixed / norm if norm > 1e-8 else b).astype(np.float32)
+    return out

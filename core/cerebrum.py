@@ -463,6 +463,13 @@ class CerebrumGraph:
         use_graphsage:        bool  = False,
         graphsage_self_weight: float = 0.5,
         graphsage_neighbor_weight: float = 0.5,
+        # Phase 135: KGE topology-aware embedding enrichment
+        use_kge:     bool  = False,
+        kge_model:   str   = "transe",   # "transe" | "rotate"
+        kge_epochs:  int   = 100,
+        kge_dim:     int   = 64,
+        kge_blend:   float = 0.5,
+        kge_device:  Optional[str] = None,  # None → auto (picks RTX 5090)
     ) -> "CerebrumGraph":
         """
         Run the THALAMUS pipeline: embeddings → DSCF communities → CSA.
@@ -548,6 +555,49 @@ class CerebrumGraph:
             if _raw_cache:
                 with open(_raw_cache, "wb") as f:
                     pickle.dump(self.adapter.embeddings, f)
+
+        # ----------------------------------------------------------
+        # 1.3. KGE topology-aware embedding enrichment (Phase 135, optional)
+        # Train TransE/RotatE on graph triples, then blend with base embeddings.
+        # Runs BEFORE GraphSAGE so smoothing propagates enriched vectors.
+        # Skipped when loaded from sage_cache (embeddings already finalized).
+        # ----------------------------------------------------------
+        if use_kge and self.adapter.embeddings and not _loaded_from_sage_cache:
+            if callback: callback(0.15, "Step 1.3/5: KGE Embedding Enrichment...")
+            _kge_cache = (
+                cache / f"embeddings_kge_{kge_model}_{kge_dim}_{kge_epochs}.pkl"
+                if cache else None
+            )
+            _kge_embs = None
+            if _kge_cache and _kge_cache.exists() and not force_rebuild:
+                logger.info("Loading cached KGE embeddings from %s", _kge_cache)
+                with open(_kge_cache, "rb") as _f:
+                    _kge_embs = pickle.load(_f)
+            else:
+                from core.kge_engine import TransEEngine, RotatEEngine
+                _KGECls = TransEEngine if kge_model.lower() == "transe" else RotatEEngine
+                _kge_eng = _KGECls(dim=kge_dim, seed=seed)
+                _kge_result = _kge_eng.fit(self.adapter, n_epochs=kge_epochs, device=kge_device)
+                logger.info(
+                    "KGE %s trained: loss=%.4f in %.1fs",
+                    kge_model, _kge_result.final_loss, _kge_result.duration_seconds,
+                )
+                _kge_embs = {
+                    eid: _kge_eng.get_embedding(eid)
+                    for eid in self.adapter.embeddings
+                }
+                # Remove entities the KGE engine couldn't embed (None values)
+                _kge_embs = {k: v for k, v in _kge_embs.items() if v is not None}
+                if _kge_cache:
+                    with open(_kge_cache, "wb") as _f:
+                        pickle.dump(_kge_embs, _f)
+
+            if _kge_embs:
+                from core.kge_engine import blend_kge_embeddings
+                self.adapter.embeddings = blend_kge_embeddings(
+                    base=self.adapter.embeddings, kge=_kge_embs, blend=kge_blend,
+                )
+                logger.info("KGE blend applied (model=%s, blend=%.2f)", kge_model, kge_blend)
 
         # ----------------------------------------------------------
         # 1.5. GraphSAGE neighborhood smoothing (optional)

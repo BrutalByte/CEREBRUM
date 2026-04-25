@@ -352,3 +352,73 @@ class TestKgeRepairIntegration:
         adapter_mock.community_map = {}
         engine = IncompletenessRepairEngine(adapter_mock, kge_engine=None)
         assert engine._kge_score("A", "B") == 0.5
+
+
+# ---------------------------------------------------------------------------
+# Phase 135: blend utility + GPU training + build() integration
+# ---------------------------------------------------------------------------
+
+class TestBlendKGEEmbeddings:
+    def test_midpoint_blend_is_normalised(self):
+        from core.kge_engine import blend_kge_embeddings
+        base = {"a": np.array([1.0, 0.0], dtype=np.float32)}
+        kge  = {"a": np.array([0.0, 1.0], dtype=np.float32)}
+        out = blend_kge_embeddings(base, kge, blend=0.5)
+        assert abs(np.linalg.norm(out["a"]) - 1.0) < 1e-5
+
+    def test_pure_kge_blend(self):
+        from core.kge_engine import blend_kge_embeddings
+        base = {"x": np.array([1.0, 0.0], dtype=np.float32)}
+        kge  = {"x": np.array([0.0, 1.0], dtype=np.float32)}
+        out = blend_kge_embeddings(base, kge, blend=1.0)
+        np.testing.assert_allclose(out["x"], np.array([0.0, 1.0], dtype=np.float32), atol=1e-5)
+
+    def test_missing_entity_fallback(self):
+        from core.kge_engine import blend_kge_embeddings
+        base = {"a": np.array([1.0, 0.0], dtype=np.float32),
+                "b": np.array([0.0, 1.0], dtype=np.float32)}
+        kge  = {"a": np.array([0.5, 0.5], dtype=np.float32)}  # "b" absent
+        out = blend_kge_embeddings(base, kge, blend=0.5)
+        # "b" not in KGE → retained as-is
+        np.testing.assert_array_equal(out["b"], base["b"])
+
+    def test_zero_blend_returns_base(self):
+        from core.kge_engine import blend_kge_embeddings
+        base = {"x": np.array([1.0, 0.0], dtype=np.float32)}
+        kge  = {"x": np.array([0.0, 1.0], dtype=np.float32)}
+        out = blend_kge_embeddings(base, kge, blend=0.0)
+        np.testing.assert_array_equal(out["x"], base["x"])
+
+
+def test_build_use_kge_integrates():
+    """CerebrumGraph.build(use_kge=True) completes and produces unit-norm embeddings."""
+    from core.cerebrum import CerebrumGraph
+    triples = [
+        ("a", "KNOWS", "b"), ("b", "KNOWS", "c"), ("c", "KNOWS", "d"),
+        ("d", "RELATED", "e"), ("e", "RELATED", "a"),
+    ] * 5
+    g = CerebrumGraph.from_triples(triples)
+    g.build(seed=42, use_kge=True, kge_model="transe", kge_epochs=10, kge_dim=16)
+    for eid in ["a", "b", "c"]:
+        emb = g.adapter.embeddings.get(eid)
+        assert emb is not None, f"Missing embedding for {eid!r}"
+        assert abs(np.linalg.norm(emb.astype(np.float32)) - 1.0) < 0.1
+
+
+def test_transe_gpu_train():
+    """GPU TransE training produces unit-norm embeddings (skipped if CUDA unavailable)."""
+    try:
+        import torch
+        if not torch.cuda.is_available():
+            pytest.skip("CUDA not available")
+    except ImportError:
+        pytest.skip("torch not installed")
+
+    adapter = _small_adapter()
+    kge = TransEEngine(dim=16, seed=0)
+    result = kge.fit(adapter, n_epochs=10, device="cuda")
+    assert result.final_loss >= 0.0
+    for eid in ["A", "B", "C"]:
+        emb = kge.get_embedding(eid)
+        assert emb is not None
+        assert abs(np.linalg.norm(emb) - 1.0) < 0.05
