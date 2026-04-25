@@ -431,10 +431,16 @@ def deductive_consensus_rerank(
     A non-empty proof list → agreement (multiply score by boost).
     Empty proof list → no causal chain found (multiply score by penalty).
     """
+    # Phase 134: cache proof results — avoids redundant O(V+E) BFS for duplicate entity_ids
+    _proof_cache: Dict[Tuple[str, str], bool] = {}
     for ans in answers:
         try:
-            proofs = deductive_traversal.traverse(seed, ans.entity_id, causal_only=True)
-            if proofs:
+            _key = (seed, ans.entity_id)
+            if _key not in _proof_cache:
+                _proof_cache[_key] = bool(
+                    deductive_traversal.traverse(seed, ans.entity_id, causal_only=True)
+                )
+            if _proof_cache[_key]:
                 ans.score = round(ans.score * boost, 6)
             else:
                 ans.score = round(ans.score * penalty, 6)

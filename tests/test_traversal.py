@@ -192,4 +192,63 @@ def test_extract_answers_sorted_by_score():
     assert scores == sorted(scores, reverse=True)
 
 
+# ---------------------------------------------------------------------------
+# Phase 134: batch path parity + embedding cache
+# ---------------------------------------------------------------------------
+
+def test_traversal_batch_path():
+    """Top-3 answers must be identical whether batch or per-step scoring is used."""
+    G = make_test_graph()
+    t_batch = build_traversal(G, max_hop=2, beam_width=5)
+    answers_batch = extract(t_batch.traverse(["alice"]), top_k=3)
+
+    # Shadow the class method on the instance with None — getattr returns None,
+    # so _cwb is None, and traversal falls back to per-step scoring.
+    t_fallback = build_traversal(G, max_hop=2, beam_width=5)
+    t_fallback.csa.compute_weights_batch = None  # type: ignore[assignment]
+
+    answers_fallback = extract(t_fallback.traverse(["alice"]), top_k=3)
+
+    ids_batch    = {a.entity_id for a in answers_batch}
+    ids_fallback = {a.entity_id for a in answers_fallback}
+    assert ids_batch == ids_fallback, (
+        f"Batch path={ids_batch} vs fallback={ids_fallback}"
+    )
+
+
+def test_emb_cache_cross_hop():
+    """Each unique node's embedding must be fetched at most once across all hops."""
+    G = make_test_graph()
+    adapter = NetworkXAdapter(G)
+    engine  = RandomEngine(dim=32)
+    labels  = {n: n for n in G.nodes()}
+    embeddings = engine.encode_entities(labels)
+
+    random.seed(42)
+    parts = dscf_communities(G, max_iter=50)
+    community_map = {node: cid for cid, members in enumerate(parts) for node in members}
+    adapter.community_map = community_map
+    adapter.embeddings    = embeddings
+
+    fetch_counts: dict = {}
+    original_get = adapter.get_embedding
+
+    def counting_get(entity_id):
+        fetch_counts[entity_id] = fetch_counts.get(entity_id, 0) + 1
+        return original_get(entity_id)
+
+    adapter.get_embedding = counting_get
+
+    dist = build_community_distance_matrix(G, community_map)
+    adj  = adjacent_community_pairs(G, community_map)
+    csa  = CSAEngine(adapter=adapter)
+    csa.set_community_graph(dist, adj)
+
+    t = BeamTraversal(adapter=adapter, csa_engine=csa, beam_width=5, max_hop=2)
+    t.traverse(["alice"])
+
+    for node, count in fetch_counts.items():
+        assert count <= 1, f"Node {node!r} embedding fetched {count}× (expected ≤ 1)"
+
+
 

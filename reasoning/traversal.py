@@ -484,6 +484,15 @@ class BeamTraversal:
         all_paths: List[TraversalPath] = list(beam)
         _log.debug("Beam initialised with %d seed path(s)", len(beam))
 
+        # Phase 134: per-query embedding/community caches (survive across hops)
+        emb_cache: Dict[str, np.ndarray] = {}
+        comm_cache: Dict[str, int] = {}
+        # Pre-warm with seed embeddings — avoids re-fetch when seeds appear as u
+        for _sp in beam:
+            emb_cache[_sp.nodes[0]] = _sp.embedding
+            if _sp.community_sequence:
+                comm_cache[_sp.nodes[0]] = _sp.community_sequence[0]
+
         # Hoist method lookups out of all loops
         _cwf = getattr(self.csa, "compute_weight_with_features", None)
         _get_params = getattr(self.csa, "get_current_params", None)
@@ -492,7 +501,7 @@ class BeamTraversal:
 
         # GWS Phase 110: Integration for blackboard signaling
         gws = getattr(self, "global_workspace", None)
-        
+
         # Phase 111: Active Inference Prior Generation
         prior = None
         predictive_coder = getattr(self, "predictive_coder", None)
@@ -502,15 +511,11 @@ class BeamTraversal:
 
         for hop in range(1, self.max_hop + 1):
             candidates: List[TraversalPath] = []
-            
+
             # Phase 110: GWS Bypass Gate Check
             gws_bypass = False
             if gws is not None and gws.blackboard.qsize() > 50: # Critical threshold
                 gws_bypass = True
-
-            # Per-hop local cache to avoid redundant adapter/DB calls
-            emb_cache: Dict[str, np.ndarray] = {}
-            comm_cache: Dict[str, int] = {}
 
             for path in beam:
                 u = path.tail
@@ -520,9 +525,13 @@ class BeamTraversal:
                 if prior is not None and len(path.nodes) < len(prior.patterns[0]):
                     expected_rel = prior.patterns[0][len(path.nodes)]
 
-                # Hoist source embedding and community fetch
-                eu = _get_emb(u)
-                u_cid = _get_comm(u)
+                # Hoist source embedding and community fetch (use cache when available)
+                if u not in emb_cache:
+                    emb_cache[u] = _get_emb(u)
+                eu = emb_cache[u]
+                if u not in comm_cache:
+                    comm_cache[u] = _get_comm(u)
+                u_cid = comm_cache[u]
                 
                 # Hoist current params for this source node
                 if _get_params:
@@ -546,17 +555,16 @@ class BeamTraversal:
                     context_embedding=path.embedding,
                 )
                 self.expansions += 1
-                
+
+                # Phase 134: accumulate all effective next-steps for batch scoring
+                _batch_steps: List[Tuple[str, str, float, str, Any, Any, float]] = []
+
                 for edge in edges:
                     v = edge.target_id
 
-                    # Phase 111: Apply Proactive Bias
-                    prior_bias = 1.5 if (expected_rel and edge.relation_type == expected_rel) else 1.0
-                    
                     # Temporal validity filter
                     if not is_valid_at(edge, query_time, hard_filter=not self.csa.use_temporal_decay):
                         continue
-
 
                     # Avoid revisiting entities already in the path (O(1) now)
                     if v in path.seen_entities:
@@ -567,7 +575,6 @@ class BeamTraversal:
                         if not self.symbolic_validator.validate_step(u, edge.relation_type, v, path=path):
                             continue
 
-
                     # ----------------------------------------------------------
                     # CVT passthrough logic
                     # ----------------------------------------------------------
@@ -575,32 +582,85 @@ class BeamTraversal:
                         cvt_edges = self.adapter.get_neighbors(
                             v, max_neighbors=self.max_neighbors
                         )
-                        next_steps = []
                         for ce in cvt_edges:
                             vv = ce.target_id
                             if vv not in path.seen_entities and not _is_cvt_node(vv):
-                                next_steps.append((
-                                    vv,
-                                    f"{edge.relation_type}|{ce.relation_type}",
+                                _rel = f"{edge.relation_type}|{ce.relation_type}"
+                                _pb = 1.5 if (expected_rel and _rel == expected_rel) else 1.0
+                                _batch_steps.append((
+                                    vv, _rel,
                                     min(edge.confidence, ce.confidence) * CVT_HOP_PENALTY,
-                                    ce.provenance,
-                                    ce.valid_from,
-                                    ce.valid_to,
+                                    ce.provenance, ce.valid_from, ce.valid_to, _pb,
                                 ))
                     else:
-                        next_steps = [
-                            (v, edge.relation_type, edge.confidence, edge.provenance, edge.valid_from, edge.valid_to)
-                        ]
+                        _pb = 1.5 if (expected_rel and edge.relation_type == expected_rel) else 1.0
+                        _batch_steps.append((
+                            v, edge.relation_type, edge.confidence,
+                            edge.provenance, edge.valid_from, edge.valid_to, _pb,
+                        ))
 
-                    for (v_eff, rel_eff, conf_eff, prov_eff, vf_eff, vt_eff) in next_steps:
-                        if v_eff in path.seen_entities:
-                            continue
+                # Phase 134: vectorized batch scoring (one matrix multiply per path per hop)
+                # isinstance guard: MagicMock auto-creates any attr, causing silent failures
+                _cwb = (getattr(self.csa, "compute_weights_batch", None)
+                        if isinstance(self.csa, CSAEngine) else None)
+                _prior_scale = (
+                    1.0 + self.warm_start_strength
+                    if (self.probabilistic and self.warm_start_strength > 0.0 and len(path.nodes) == 1)
+                    else 0.500
+                )
+                _scored_steps: List[Tuple[Any, int, str]] = []  # (new_path, v_cid, rel_eff)
 
-                        # Phase 111: Apply Proactive Bias for this effective relation
-                        # (Matches the bias calculated earlier if it was a simple edge)
-                        prior_bias = 1.5 if (expected_rel and rel_eff == expected_rel) else 1.0
+                if _batch_steps and _cwb is not None:
+                    # --- Batch path: vectorized CSA scoring ---
+                    _v_list   = [s[0] for s in _batch_steps]
+                    _rel_list = [s[1] for s in _batch_steps]
+                    _vt_list  = [s[5] for s in _batch_steps]
 
-                        # Check cache for destination embedding and community
+                    _ev_list: List[Optional[np.ndarray]] = []
+                    for _v in _v_list:
+                        if _v not in emb_cache:
+                            emb_cache[_v] = _get_emb(_v)
+                        _ev_list.append(emb_cache[_v])
+
+                    _logits = _cwb(
+                        u=u, v_list=_v_list, hop=hop,
+                        edge_types=_rel_list, valid_tos=_vt_list,
+                        eu=eu, ev_list=_ev_list,
+                        edge_type_weights=self.edge_type_weights,
+                    )
+
+                    for _i, (v_eff, rel_eff, conf_eff, prov_eff, vf_eff, vt_eff, prior_bias) in enumerate(_batch_steps):
+                        _logit = _logits[_i]
+                        w = _logit.score(csa_params) * prior_bias
+                        features_vector = _logit.to_vector()
+
+                        if self._causal_edge_index and (u, v_eff) in self._causal_edge_index:
+                            w *= (1.0 + self.causal_bonus)
+                        if node_priming and v_eff in node_priming:
+                            w = w * (1.0 + self.priming_boost * node_priming[v_eff])
+                        if _get_valence:
+                            _val = _get_valence(u, v_eff, rel_eff)
+                            if _val < 0.0:
+                                w = w * (1.0 + _valence_eng.valence_weight * _val)
+
+                        if v_eff not in comm_cache:
+                            comm_cache[v_eff] = _get_comm(v_eff)
+                        v_cid = comm_cache[v_eff]
+                        v_emb = _ev_list[_i] if _ev_list[_i] is not None else np.zeros(emb_dim, dtype=np.float32)
+                        coh = community_coherence(path.community_sequence + [v_cid])
+
+                        new_path = path.copy_with_extension(
+                            rel=rel_eff, v=v_eff, v_cid=v_cid, v_emb=v_emb,
+                            weight=w, coherence_score=coh,
+                            edge_confidence=conf_eff, edge_provenance=prov_eff,
+                            prior_scale=_prior_scale,
+                            features=tuple(features_vector) if features_vector is not None else None,
+                        )
+                        _scored_steps.append((new_path, v_cid, rel_eff))
+
+                elif _batch_steps:
+                    # --- Fallback: per-step scoring (test mocks, older CSAEngine) ---
+                    for (v_eff, rel_eff, conf_eff, prov_eff, vf_eff, vt_eff, prior_bias) in _batch_steps:
                         if v_eff in emb_cache:
                             ev = emb_cache[v_eff]
                         else:
@@ -613,7 +673,6 @@ class BeamTraversal:
                             v_cid = _get_comm(v_eff)
                             comm_cache[v_eff] = v_cid
 
-                        # Single call: weight + all feature components
                         _cwf_result = _cwf(
                             u, v_eff, hop=hop,
                             edge_type=rel_eff,
@@ -632,7 +691,6 @@ class BeamTraversal:
                             w = logit_obj.score(csa_params)
                             features_vector = logit_obj.to_vector()
                         else:
-                            # Fallback for older CSAEngine or mocks
                             w = float(self.csa.compute_weight(
                                 u, v_eff, hop=hop,
                                 edge_type=rel_eff,
@@ -647,119 +705,98 @@ class BeamTraversal:
                             hd  = 1.0 / (1.0 + hop)
                             features_vector = ReasoningLogit(sim, cs, etw, 0.0, hd, 0.0, 0.0, 0.0, 0.0, 1.0).to_vector()
 
-                        # Phase 111: Apply prior boost
                         w = w * prior_bias
 
-                        # Phase 124: Causal edge bonus — boosts edges on known causal chains
                         if self._causal_edge_index and (u, v_eff) in self._causal_edge_index:
                             w *= (1.0 + self.causal_bonus)
-
-                        # Phase 99: Thalamic Gating — WM priming boost
                         if node_priming and v_eff in node_priming:
                             w = w * (1.0 + self.priming_boost * node_priming[v_eff])
-
-                        # Phase 101: Emotional Valence — aversive edge penalty
                         if _get_valence:
                             _val = _get_valence(u, v_eff, rel_eff)
                             if _val < 0.0:
                                 w = w * (1.0 + _valence_eng.valence_weight * _val)
 
-                        # Path metadata and extension
                         v_emb = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
-
-                        # Compute community coherence
                         coh = community_coherence(path.community_sequence + [v_cid])
 
-                        # Warm-start: amplify the first-hop beta update to reduce cold-start variance
-                        _prior_scale = 0.500
-                        if (
-                            self.probabilistic
-                            and self.warm_start_strength > 0.0
-                            and len(path.nodes) == 1
-                        ):
-                            _prior_scale = 1.0 + self.warm_start_strength
-
                         new_path = path.copy_with_extension(
-                            rel=rel_eff,
-                            v=v_eff,
-                            v_cid=v_cid,
-                            v_emb=v_emb,
-                            weight=w,
-                            coherence_score=coh,
-                            edge_confidence=conf_eff,
-                            edge_provenance=prov_eff,
+                            rel=rel_eff, v=v_eff, v_cid=v_cid, v_emb=v_emb,
+                            weight=w, coherence_score=coh,
+                            edge_confidence=conf_eff, edge_provenance=prov_eff,
                             prior_scale=_prior_scale,
                             features=tuple(features_vector) if features_vector is not None else None,
                         )
+                        _scored_steps.append((new_path, v_cid, rel_eff))
 
-                        # Phase 39: Asynchronous BridgeTwinEngine and InsightEngine updates
-                        if self.task_queue is not None:
-                            if (self.bridge_engine is not None and
-                                u_cid != v_cid and u_cid >= 0 and v_cid >= 0 and
-                                rel_eff != BRIDGE_RELATION):
-                                self.task_queue.enqueue(BridgeTask(
-                                    node_id=v_eff,
-                                    source_community=v_cid,
-                                    dest_community=u_cid,
-                                ))
-                            
-                            if (self.bridge_engine is not None and rel_eff == BRIDGE_RELATION):
-                                self.task_queue.enqueue(BridgeTask(
-                                    node_id=v_eff,
-                                    source_community=-1, # Not applicable for twin use
-                                    dest_community=-1, # Not applicable for twin use
-                                    is_twin_use=True,
-                                ))
-                            
-                            if (self.insight_engine is not None and
-                                u_cid != v_cid and u_cid >= 0 and v_cid >= 0):
-                                self.task_queue.enqueue(BridgeTask(
-                                    node_id=v_eff,
-                                    source_community=u_cid,
-                                    dest_community=v_cid,
-                                    path_score=new_path.score,
-                                    path=new_path,
-                                    u_node=path.tail,
-                                    v_node=v_eff,
-                                ))
-                        else:
-                            # Fallback to synchronous calls if no task queue (e.g. testing)
-                            if (
-                                self.bridge_engine is not None
-                                and u_cid != v_cid
-                                and u_cid >= 0
-                                and v_cid >= 0
-                                and rel_eff != BRIDGE_RELATION
-                            ):
-                                self.bridge_engine.record_crossing(
-                                    node_id=v_eff,
-                                    source_community=v_cid,
-                                    dest_community=u_cid,
-                                    adapter=self.adapter,
-                                )
+                # Phase 39: Task dispatch — shared for both scoring paths
+                for new_path, v_cid, rel_eff in _scored_steps:
+                    if self.task_queue is not None:
+                        if (self.bridge_engine is not None and
+                            u_cid != v_cid and u_cid >= 0 and v_cid >= 0 and
+                            rel_eff != BRIDGE_RELATION):
+                            self.task_queue.enqueue(BridgeTask(
+                                node_id=new_path.tail,
+                                source_community=v_cid,
+                                dest_community=u_cid,
+                            ))
 
-                            if (
-                                self.bridge_engine is not None
-                                and rel_eff == BRIDGE_RELATION
-                            ):
-                                self.bridge_engine.record_twin_use(v_eff)
+                        if (self.bridge_engine is not None and rel_eff == BRIDGE_RELATION):
+                            self.task_queue.enqueue(BridgeTask(
+                                node_id=new_path.tail,
+                                source_community=-1,
+                                dest_community=-1,
+                                is_twin_use=True,
+                            ))
 
-                            if (
-                                self.insight_engine is not None
-                                and u_cid != v_cid
-                                and u_cid >= 0
-                                and v_cid >= 0
-                            ):
-                                self.insight_engine.record_crossing(
-                                    u=path.tail,
-                                    v=v_eff,
-                                    u_cid=u_cid,
-                                    v_cid=v_cid,
-                                    path_score=path.score,
-                                    path=path,
-                                )
+                        if (self.insight_engine is not None and
+                            u_cid != v_cid and u_cid >= 0 and v_cid >= 0):
+                            self.task_queue.enqueue(BridgeTask(
+                                node_id=new_path.tail,
+                                source_community=u_cid,
+                                dest_community=v_cid,
+                                path_score=new_path.score,
+                                path=new_path,
+                                u_node=path.tail,
+                                v_node=new_path.tail,
+                            ))
+                    else:
+                        # Fallback to synchronous calls if no task queue (e.g. testing)
+                        if (
+                            self.bridge_engine is not None
+                            and u_cid != v_cid
+                            and u_cid >= 0
+                            and v_cid >= 0
+                            and rel_eff != BRIDGE_RELATION
+                        ):
+                            self.bridge_engine.record_crossing(
+                                node_id=new_path.tail,
+                                source_community=v_cid,
+                                dest_community=u_cid,
+                                adapter=self.adapter,
+                            )
 
-                        candidates.append(new_path)
+                        if (
+                            self.bridge_engine is not None
+                            and rel_eff == BRIDGE_RELATION
+                        ):
+                            self.bridge_engine.record_twin_use(new_path.tail)
+
+                        if (
+                            self.insight_engine is not None
+                            and u_cid != v_cid
+                            and u_cid >= 0
+                            and v_cid >= 0
+                        ):
+                            self.insight_engine.record_crossing(
+                                u=path.tail,
+                                v=new_path.tail,
+                                u_cid=u_cid,
+                                v_cid=v_cid,
+                                path_score=path.score,
+                                path=path,
+                            )
+
+                    candidates.append(new_path)
 
             _log.debug(
                 "Hop %d: beam=%d  candidates=%d  expansions_so_far=%d",

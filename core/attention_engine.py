@@ -214,15 +214,16 @@ class CSAEngine:
         if n == 0: return []
         
         if eu is None: eu = self.adapter.get_embedding(u)
-        
+
         # 1. Semantic Sim (Vectorized)
-        if ev_list is not None:
+        if eu is not None and ev_list is not None:
             # Check if ev_list is a list of arrays or a single matrix
             if isinstance(ev_list, list):
-                EV = np.stack([ev if ev is not None else np.zeros_like(eu) for ev in ev_list])
+                zero = np.zeros(eu.shape, dtype=eu.dtype)
+                EV = np.stack([ev if ev is not None else zero for ev in ev_list])
             else:
                 EV = ev_list
-            
+
             # Dot products
             dots = np.dot(EV, eu)
             norms_v = np.linalg.norm(EV, axis=1)
@@ -238,22 +239,29 @@ class CSAEngine:
         weights = edge_type_weights if edge_type_weights is not None else self.edge_type_weights
         hd = 1.0 / (1.0 + hop)
         
+        # Phase 134: cache temporal decay per (valid_to, edge_type) — saves ~80% exp() calls
+        _td_cache: Dict[Tuple[Any, str], float] = {}
         logits = []
         for i in range(n):
             v = v_list[i]
             etw = weights.get(edge_types[i], 0.0)
             pr_v = self._pagerank.get(v, 0.0) / self._max_pr if self._pagerank else 0.0
             nr_v = self._node_recency.get(v, 0.0)
-            
+
             td = 0.0
             if self.use_temporal_decay and self._query_time is not None and valid_tos[i] is not None:
                 time_elapsed = self._query_time - valid_tos[i]
                 if time_elapsed > 0:
-                    decay_rate = RELATION_DECAY_DEFAULTS.get(edge_types[i], self.lambda_decay)
-                    td = math.exp(-decay_rate * time_elapsed)
-                    if self.temporal_window_size and time_elapsed > self.temporal_window_size:
-                        td *= 0.1
-            
+                    _td_key = (valid_tos[i], edge_types[i])
+                    if _td_key in _td_cache:
+                        td = _td_cache[_td_key]
+                    else:
+                        decay_rate = RELATION_DECAY_DEFAULTS.get(edge_types[i], self.lambda_decay)
+                        td = math.exp(-decay_rate * time_elapsed)
+                        if self.temporal_window_size and time_elapsed > self.temporal_window_size:
+                            td *= 0.1
+                        _td_cache[_td_key] = td
+
             sd = 1.0 if "rem_synthesized" in edge_types[i] else 0.0
             logits.append(ReasoningLogit(sims[i], cs_scores[i], etw, 0.0, hd, pr_v, td, nr_v, sd, 1.0))
             

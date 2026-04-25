@@ -203,6 +203,63 @@ def smooth_with_graphsage(
     -------
     New dict with the same keys, smoothed embeddings as float32 arrays.
     """
+    nodes = [str(n) for n in G.nodes() if str(n) in embeddings]
+    if not nodes:
+        return dict(embeddings)
+
+    node_idx: Dict[str, int] = {n: i for i, n in enumerate(nodes)}
+    N = len(nodes)
+    dim = next(iter(embeddings.values())).shape[0]
+
+    # Phase 134: GPU-accelerated scatter-add aggregation via PyTorch
+    try:
+        import torch
+        from core.hardware import resolve_torch_device
+        _device = resolve_torch_device("auto")
+    except ImportError:
+        _device = None
+
+    if _device is not None and str(_device) != "cpu":
+        # Build edge index (undirected: add both directions)
+        src_idx, dst_idx = [], []
+        deg = [0] * N
+        for u_n, v_n in G.edges():
+            us, vs = str(u_n), str(v_n)
+            if us in node_idx and vs in node_idx and us != vs:
+                ui, vi = node_idx[us], node_idx[vs]
+                src_idx.append(ui); dst_idx.append(vi); deg[vi] += 1
+                src_idx.append(vi); dst_idx.append(ui); deg[ui] += 1
+
+        # Upload embedding matrix to GPU
+        E = torch.tensor(
+            np.stack([embeddings[n].astype(np.float32) for n in nodes]),
+            dtype=torch.float32, device=_device,
+        )
+
+        if src_idx:
+            src_t = torch.tensor(src_idx, dtype=torch.long, device=_device)
+            dst_t = torch.tensor(dst_idx, dtype=torch.long, device=_device)
+            deg_t = torch.tensor(deg, dtype=torch.float32, device=_device).clamp(min=1.0)
+
+            for _ in range(max(1, num_layers)):
+                agg = torch.zeros(N, dim, dtype=torch.float32, device=_device)
+                agg.scatter_add_(0, dst_t.unsqueeze(1).expand(-1, dim), E[src_t])
+                h_nbr = agg / deg_t.unsqueeze(1)
+                E = self_weight * E + neighbor_weight * h_nbr
+                if normalize:
+                    E = E / E.norm(dim=1, keepdim=True).clamp(min=1e-8)
+        else:
+            # No edges: apply self-weight only
+            if normalize:
+                E = E / E.norm(dim=1, keepdim=True).clamp(min=1e-8)
+
+        result_np = E.cpu().numpy()
+        out = dict(embeddings)
+        for i, n in enumerate(nodes):
+            out[n] = result_np[i]
+        return out
+
+    # CPU fallback: original numpy implementation
     def _one_pass(embs: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         smoothed: Dict[str, np.ndarray] = {}
         for node in G.nodes():

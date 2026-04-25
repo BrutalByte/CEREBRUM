@@ -162,3 +162,36 @@ def test_sigmoid_midpoint():
 def test_sigmoid_monotone():
     vals = [_sigmoid(x) for x in [-5, -1, 0, 1, 5]]
     assert vals == sorted(vals)
+
+
+# ---------------------------------------------------------------------------
+# Phase 134: batch scoring parity
+# ---------------------------------------------------------------------------
+
+def test_batch_csa_parity():
+    """Batch scores must match per-edge scores within float32 precision."""
+    engine = make_engine()
+    u = "a"
+    v_list = ["b", "c", "m", "x"]
+    hop = 1
+    edge_types = ["KNOWS", "KNOWS", "BRIDGE", "RELATED"]
+    valid_tos = [None, None, None, None]
+    eu = engine.adapter.get_embedding(u)
+    ev_list = [engine.adapter.get_embedding(v) for v in v_list]
+
+    batch_logits = engine.compute_weights_batch(
+        u=u, v_list=v_list, hop=hop,
+        edge_types=edge_types, valid_tos=valid_tos,
+        eu=eu, ev_list=ev_list,
+    )
+    params = engine.get_current_params(u)
+    batch_scores = [l.score(params) for l in batch_logits]
+
+    for i, v in enumerate(v_list):
+        per_logit = engine.compute_weight_with_features(
+            u, v, hop, edge_type=edge_types[i], eu=eu, ev=ev_list[i]
+        )
+        per_score = per_logit.score(params)
+        assert abs(batch_scores[i] - per_score) < 1e-5, (
+            f"Mismatch for ({u},{v}): batch={batch_scores[i]:.6f} per={per_score:.6f}"
+        )

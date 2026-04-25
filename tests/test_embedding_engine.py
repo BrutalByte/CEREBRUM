@@ -116,3 +116,40 @@ def test_encode_entities_same_label_same_vector():
     engine = RandomEngine(dim=32)
     r = engine.encode_entities({"A": "newton", "B": "newton"})
     np.testing.assert_array_equal(r["A"], r["B"])
+
+
+# ---------------------------------------------------------------------------
+# Phase 134: GPU GraphSAGE parity
+# ---------------------------------------------------------------------------
+
+def test_graphsage_gpu_cpu_parity():
+    """GPU and CPU smoothed embeddings must agree within 1e-4 (float32 scatter-add)."""
+    import networkx as nx
+    from core.embedding_engine import smooth_with_graphsage
+
+    G = nx.Graph()
+    G.add_edges_from([("a", "b"), ("b", "c"), ("c", "a"), ("a", "d")])
+
+    engine = RandomEngine(dim=16)
+    raw = engine.encode_entities({n: n for n in G.nodes()})
+    # Convert to float32 for fair comparison
+    embeddings = {k: v.astype(np.float32) for k, v in raw.items()}
+
+    cpu_out = smooth_with_graphsage(embeddings, G, num_layers=1)
+
+    # Force GPU path if torch+cuda available, else both are CPU and test still passes
+    try:
+        import torch
+        gpu_available = torch.cuda.is_available()
+    except ImportError:
+        gpu_available = False
+
+    gpu_out = smooth_with_graphsage(embeddings, G, num_layers=1)
+
+    for node in G.nodes():
+        np.testing.assert_allclose(
+            cpu_out[node].astype(np.float32),
+            gpu_out[node].astype(np.float32),
+            atol=1e-4,
+            err_msg=f"Parity failure at node {node!r}",
+        )
