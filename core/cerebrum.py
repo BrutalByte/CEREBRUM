@@ -71,6 +71,29 @@ if TYPE_CHECKING:
 logger = logging.getLogger("cerebrum.graph")
 
 
+def _compute_beam_widths(mh: int, bw: int, factor: float) -> Dict[int, int]:
+    """
+    Funnel beam profile: linearly ramp beam width from bw*1.0 at hop 1
+    to bw*factor at the penultimate hop. Terminal hop is never pruned
+    (BeamTraversal skips pruning when hop == max_hop), so it is excluded.
+
+    Examples (bw=10, factor=3.0):
+      mh=1 -> {}
+      mh=2 -> {1: 30}
+      mh=3 -> {1: 10, 2: 30}
+      mh=4 -> {1: 10, 2: 20, 3: 30}
+    """
+    if mh <= 1:
+        return {}
+    non_terminal = list(range(1, mh))
+    n = len(non_terminal)
+    widths: Dict[int, int] = {}
+    for i, hop in enumerate(non_terminal):
+        mult = factor if n == 1 else 1.0 + (factor - 1.0) * (i / (n - 1))
+        widths[hop] = max(bw, int(bw * mult))
+    return widths
+
+
 # ---------------------------------------------------------------------------
 # CerebrumGraph
 # ---------------------------------------------------------------------------
@@ -99,6 +122,8 @@ class CerebrumGraph:
         max_neighbors:        int   = 100,
         probabilistic:        bool  = False,
         warm_start_strength:  float = 0.0,
+        beam_profile:         str   = "funnel",
+        beam_profile_factor:  float = 3.0,
     ):
         self.adapter             = adapter
         self._embedding_engine   = embedding_engine or RandomEngine(dim=64)
@@ -107,6 +132,8 @@ class CerebrumGraph:
         self._max_neighbors      = max_neighbors
         self._probabilistic      = probabilistic
         self._warm_start_strength = warm_start_strength
+        self._beam_profile        = beam_profile
+        self._beam_profile_factor = beam_profile_factor
         self._lateral_inhibition_ratio: float = 0.0  # Phase 100
 
         # Telemetry (Phase 63+)
@@ -798,6 +825,8 @@ class CerebrumGraph:
         trace_info:        Optional["ReasoningTrace"] = None,
         max_loops:         int            = 1,
         context_seeds:     Optional[List[str]] = None,
+        beam_profile:      Optional[str]   = None,
+        beam_profile_factor: Optional[float] = None,
     ) -> List[Answer]:
         """
         Traverse the graph from ``seeds`` and return ranked answers.
@@ -866,7 +895,17 @@ class CerebrumGraph:
             base_p = {"alpha": self._csa.alpha, "beta": self._csa.beta, "gamma": self._csa.gamma}
             csa_overrides = self.modulator.modulate_params(base_p)
 
+        # Phase 136: Funnel beam profile — widen intermediate hops to prevent
+        # catastrophic path loss on multi-hop queries.
+        _profile        = beam_profile        or self._beam_profile
+        _profile_factor = beam_profile_factor or self._beam_profile_factor
+        _auto_beam_widths: Dict[int, int] = (
+            _compute_beam_widths(mh, bw, _profile_factor)
+            if _profile == "funnel" else {}
+        )
+
         needs_custom = (mh != self._max_hop or bw != self._beam_width or memory_threshold_pct != 95.0 or bool(csa_overrides))
+        _prev_widths: Dict[int, int] = {}  # only meaningful when not needs_custom
 
         if needs_custom:
             from core.resource_governor import ResourceGovernor
@@ -879,6 +918,7 @@ class CerebrumGraph:
                 probabilistic       = self._probabilistic,
                 warm_start_strength = self._warm_start_strength,
                 governor            = ResourceGovernor(memory_threshold_pct=memory_threshold_pct),
+                beam_widths         = _auto_beam_widths,  # Phase 136
                 **csa_overrides # Inject hormonal overrides
             )
             traversal.global_workspace = self.global_workspace
@@ -890,6 +930,8 @@ class CerebrumGraph:
                 traversal._valence_engine = _ve
         else:
             traversal = self._traversal
+            _prev_widths = traversal._beam_widths
+            traversal._beam_widths = _auto_beam_widths  # Phase 136: temporary override
 
         # Phase 69: Generate predictive prior before traversal
         pred_prior = None
@@ -930,6 +972,9 @@ class CerebrumGraph:
         finally:
             # Phase 68: Natural decay of hormonal state after query completion
             self.modulator.step()
+            # Phase 136: restore shared traversal's beam widths
+            if not needs_custom:
+                self._traversal._beam_widths = _prev_widths
 
         # Phase 69: Compute prediction error and dispatch to regulators
         if self.predictive_coder is not None:
