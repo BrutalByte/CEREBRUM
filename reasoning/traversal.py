@@ -355,6 +355,9 @@ class BeamTraversal:
         self.quantized = quantized
         # Phase 68: Store hormonal overrides for CSA parameters
         self.csa_overrides = {k: v for k, v in kwargs.items() if k in CSA_PARAM_KEYS}
+        # Phase 124: Causal edge index + bonus — set by CerebrumGraph.build()
+        self._causal_edge_index: set = set()
+        self.causal_bonus: float = float(kwargs.get("causal_bonus", 0.3))
         # Phase 99: Thalamic Gating — WM priming map
         self.node_priming: Dict[str, float] = {}
         self.priming_boost: float = 0.3
@@ -639,6 +642,10 @@ class BeamTraversal:
 
                         # Phase 111: Apply prior boost
                         w = w * prior_bias
+
+                        # Phase 124: Causal edge bonus — boosts edges on known causal chains
+                        if self._causal_edge_index and (u, v_eff) in self._causal_edge_index:
+                            w *= (1.0 + self.causal_bonus)
 
                         # Phase 99: Thalamic Gating — WM priming boost
                         if node_priming and v_eff in node_priming:

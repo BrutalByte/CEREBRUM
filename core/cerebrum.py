@@ -701,6 +701,17 @@ class CerebrumGraph:
         self._traversal.predictive_coder = self.predictive_coder
         self._traversal.lateral_inhibition_ratio = self._lateral_inhibition_ratio
 
+        # Phase 124: Causal edge index — O(1) lookup during beam scoring.
+        # Build once at graph load; no CausalEngine invocation required.
+        from core.causal_engine import CAUSAL_RELATIONS as _CAUSAL_RELS
+        _causal_idx: set = set()
+        for u, v, data in G.edges(data=True):
+            rel = data.get("relation", data.get("relation_type", ""))
+            if rel in _CAUSAL_RELS:
+                _causal_idx.add((u, v))
+        self._traversal._causal_edge_index = _causal_idx
+        logger.info("Phase 124: causal edge index built (%d causal edges).", len(_causal_idx))
+
         self._built = True
         n_comm = len(set(cm.values()))
         logger.info(

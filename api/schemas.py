@@ -51,6 +51,15 @@ class QueryRequest(BaseModel):
             "The loop exits early when PE converges or answers stabilise."
         ),
     )
+    causal_bonus: float = Field(
+        default=0.3,
+        ge=0.0,
+        le=2.0,
+        description=(
+            "Phase 124: multiplicative bonus applied to edges whose relation type "
+            "is in CAUSAL_RELATIONS. 0.0 = disabled; 0.3 = default (+30%% weight)."
+        ),
+    )
 
 
 class QueryConsensusRequest(QueryRequest):

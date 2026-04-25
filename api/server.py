@@ -233,7 +233,8 @@ async def _run_query_internal(
     beam_width: int = 10,
     max_budget: int = 1000,
     edge_type_weights: Optional[Dict[str, float]] = None,
-    max_loops: int = 1
+    max_loops: int = 1,
+    causal_bonus: float = 0.3,
 ) -> Dict[str, Any]:
     """Core reasoning logic shared between REST and WebSocket (Phase 90)."""
     from core.attention_engine import CSAEngine
@@ -269,7 +270,14 @@ async def _run_query_internal(
         beam_width=beam_width,
         max_hop=max_hop,
         max_budget=max_budget,
+        causal_bonus=causal_bonus,
     )
+    # Phase 124: propagate causal edge index from CerebrumGraph if available
+    _graph_obj = _state.get("graph_obj")
+    if _graph_obj is not None and hasattr(_graph_obj, "_traversal"):
+        traversal._causal_edge_index = getattr(
+            _graph_obj._traversal, "_causal_edge_index", set()
+        )
 
     # Phase 69: Predictive prior
     try:
@@ -591,7 +599,8 @@ def create_app(
             beam_width=req.beam_width,
             max_budget=req.max_budget,
             edge_type_weights=req.edge_type_weights,
-            max_loops=req.max_loops
+            max_loops=req.max_loops,
+            causal_bonus=req.causal_bonus,
         )
 
         if "error" in result and not result.get("partial"):
