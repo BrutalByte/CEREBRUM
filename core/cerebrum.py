@@ -204,6 +204,15 @@ class CerebrumGraph:
         self._epistemic_gate = gate
         logger.info("EpistemicGate attached.")
 
+    def register_confounders(self, confounder_nodes: list) -> None:
+        """Phase 131: register known confounder nodes as NO_BACKDOOR constraints."""
+        sv = getattr(self._traversal, "symbolic_validator", None) if self._traversal else None
+        if sv is None:
+            logger.warning("register_confounders: no SymbolicValidator attached to traversal.")
+            return
+        sv.register_confounders(confounder_nodes)
+        logger.info("Phase 131: registered %d confounder nodes.", len(confounder_nodes))
+
     async def run_sleep_cycle(self, dry_run: bool = False) -> Any:
         """Trigger an offline consolidation sleep pass (Phase 119)."""
         orc = getattr(self, "_sleep_orchestrator", None)
@@ -557,6 +566,7 @@ class CerebrumGraph:
                 G,
                 self_weight=graphsage_self_weight,
                 neighbor_weight=graphsage_neighbor_weight,
+                num_layers=2,
             )
             if _sage_cache:
                 # Write smoothed result to its own cache file, never to the
@@ -784,7 +794,14 @@ class CerebrumGraph:
         # Handle per-query overrides by creating a temporary traversal if needed
         bw = beam_width or self._beam_width
         mh = max_hop or self._max_hop
-        
+
+        # Phase 125: Epistemic-adaptive beam width using previous query's EU.
+        # On first query _last_eu=0.5 (neutral) so the formula returns bw unchanged.
+        _gate = getattr(self, "_epistemic_gate", None)
+        if _gate is not None:
+            _prev_eu = getattr(_gate, "_last_eu", 0.5)
+            bw = min(bw * 3, max(bw, int(bw * (1.0 + _prev_eu))))
+
         # Phase 68: Neuro-chemical modulation of traversal configuration
         mod_cfg = self.modulator.modulate_traversal({
             "beam_width": bw,

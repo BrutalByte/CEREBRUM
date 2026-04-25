@@ -111,6 +111,8 @@ class EpistemicGate:
         self.config = config or GateConfig()
         self._lock = threading.Lock()
         self._last_research_at: float = 0.0
+        # Phase 125: stores the previous query's EU for adaptive beam width
+        self._last_eu: float = 0.5
 
     # ------------------------------------------------------------------
     # Core API

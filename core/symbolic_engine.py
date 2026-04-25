@@ -65,11 +65,16 @@ class SymbolicValidator:
                         if attrs.get(prop):
                             return False
             elif c.constraint_type == ConstraintType.CAUSAL_ORDERING:
-                # Enforce that valid_from on this edge >= any prior edge timestamp
+                # Phase 131: enforce valid_from ordering. When path is available, read the
+                # last timestamp dynamically; otherwise fall back to static params["last_timestamp"].
                 ts = self._get_edge_timestamp(u, v, relation)
-                prior_ts = c.params.get("last_timestamp")
-                if ts is not None and prior_ts is not None and ts < prior_ts:
-                    return False
+                if ts is not None:
+                    if path is not None:
+                        prior_ts = self._last_path_timestamp(path)
+                    else:
+                        prior_ts = c.params.get("last_timestamp")
+                    if prior_ts is not None and ts < prior_ts:
+                        return False
             elif c.constraint_type == ConstraintType.NO_BACKDOOR:
                 # Reject edges to/from known confounder nodes
                 confounders = c.params.get("confounders", set())
@@ -85,6 +90,30 @@ class SymbolicValidator:
             if recs:
                 return False
         return True
+
+    def register_confounders(self, confounder_nodes: list) -> None:
+        """Phase 131: add or update a NO_BACKDOOR constraint with the given confounder set."""
+        for c in self.constraints:
+            if c.constraint_type == ConstraintType.NO_BACKDOOR:
+                c.params.setdefault("confounders", set()).update(confounder_nodes)
+                return
+        self.constraints.append(IntegrityConstraint(
+            constraint_type=ConstraintType.NO_BACKDOOR,
+            params={"confounders": set(confounder_nodes)},
+        ))
+
+    def _last_path_timestamp(self, path) -> Optional[float]:
+        """Return the most recent valid_from timestamp seen in path.nodes."""
+        nodes = list(getattr(path, "nodes", path) or [])
+        last_ts = None
+        for i in range(0, len(nodes) - 2, 2):
+            u_n = nodes[i]
+            rel_n = nodes[i + 1]
+            v_n = nodes[i + 2]
+            ts = self._get_edge_timestamp(u_n, v_n, rel_n)
+            if ts is not None:
+                last_ts = ts
+        return last_ts
 
     def _get_edge_timestamp(self, u: str, v: str, relation: str) -> Optional[float]:
         try:

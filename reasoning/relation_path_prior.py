@@ -125,6 +125,22 @@ class RelationPathPrior:
                 self._hits[seq] += 1
                 self._global_hits += 1
 
+    def add_causal_prior(self, relation_sequence: Tuple[str, ...], weight: float = 1.0) -> None:
+        """Phase 128: inject a causal path prior from a verified CausalProof.
+
+        Adds synthetic hit/total counts proportional to weight (scaled effect_estimate).
+        Bypasses the frozen check so causal priors can be added at graph build time,
+        before freeze() is called from training data.
+        """
+        seq = tuple(relation_sequence[:self.max_len])
+        if not seq:
+            return
+        count = max(1, int(round(weight * 10)))
+        self._hits[seq] += count
+        self._total[seq] += count
+        self._global_hits += count
+        self._global_total += count
+
     def freeze(self) -> "RelationPathPrior":
         """Lock counts; pre-compute normalisation stats."""
         self._frozen = True

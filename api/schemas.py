@@ -60,6 +60,22 @@ class QueryRequest(BaseModel):
             "is in CAUSAL_RELATIONS. 0.0 = disabled; 0.3 = default (+30%% weight)."
         ),
     )
+    use_counterfactual_rerank: bool = Field(
+        default=False,
+        description=(
+            "Phase 126: re-rank top-K answers by counterfactual robustness. "
+            "Blocks each answer's intermediate path nodes and scores how much the "
+            "causal effect drops. High latency — disabled by default."
+        ),
+    )
+    use_deductive_consensus: bool = Field(
+        default=False,
+        description=(
+            "Phase 132: re-rank top-K answers by deductive BFS consensus. "
+            "Runs DeductiveTraversal (causal_only=True) for each answer entity. "
+            "Expensive (K exhaustive BFS calls) — disabled by default."
+        ),
+    )
 
 
 class QueryConsensusRequest(QueryRequest):
@@ -154,6 +170,11 @@ class QueryResponse(BaseModel):
         default=None,
         description="Full gate decision including triggered actions and action log.",
     )
+    # Phase 127: query session ID for contrastive feedback
+    query_id: Optional[str] = Field(
+        default=None,
+        description="Unique ID for this query session. Pass to /feedback for triplet learning.",
+    )
 
 
 class CommunityInfo(BaseModel):
@@ -240,6 +261,15 @@ class FeedbackRequest(BaseModel):
     )
     community_sequence: List[int] = Field(..., description="Community ID for each entity node in the path")
     reward: float = Field(..., description="Feedback value: 1.0 for helpful, -1.0 for noise")
+    # Phase 127: contrastive learning fields
+    query_id: Optional[str] = Field(
+        default=None,
+        description="query_id from QueryResponse. Enables triplet update using cached hard negative.",
+    )
+    correct_entity: Optional[str] = Field(
+        default=None,
+        description="The correct answer entity. Used with query_id to identify the positive path.",
+    )
 
 
 class ParamsResponse(BaseModel):

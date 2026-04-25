@@ -337,4 +337,108 @@ def extract(
     return answers
 
 
+def counterfactual_rerank(
+    answers: List[Answer],
+    seeds: List[str],
+    adapter: Any,
+    robustness_weight: float = 0.2,
+    causal_relations: Optional[Any] = None,
+) -> List[Answer]:
+    """
+    Phase 126: Re-rank answers by counterfactual robustness.
 
+    For each answer, block its intermediate path node(s) and measure how much
+    the causal effect drops. Answers that survive intervention (small effect_delta)
+    are more robust — they rank higher.
+
+    formula: final_score = base_score * (1 + robustness_weight * (1 - |effect_delta|))
+
+    Parameters
+    ----------
+    answers           : ranked answers from extract()
+    seeds             : original query seeds (used as causal source)
+    adapter           : GraphAdapter — passed to CounterfactualEngine
+    robustness_weight : how much robustness boosts score (default 0.2)
+    causal_relations  : optional frozenset; defaults to CAUSAL_RELATIONS
+
+    Returns
+    -------
+    Re-ranked List[Answer], sorted by adjusted score descending.
+    """
+    if not answers or not seeds:
+        return answers
+
+    try:
+        from core.counterfactual_engine import CounterfactualEngine, Intervention, BLOCK_NODE
+    except ImportError:
+        return answers
+
+    if causal_relations is None:
+        try:
+            from core.causal_engine import CAUSAL_RELATIONS
+            causal_relations = CAUSAL_RELATIONS
+        except ImportError:
+            causal_relations = frozenset()
+
+    engine = CounterfactualEngine(adapter=adapter, causal_relations=causal_relations)
+    seed = seeds[0]
+
+    reranked = []
+    for ans in answers:
+        path = ans.best_path
+        entity_nodes = getattr(path, "entity_nodes", None) if path else None
+        # Collect intermediate nodes (exclude seed and answer endpoints)
+        intermediates = (
+            [n for n in entity_nodes[1:-1] if n != seed and n != ans.entity_id]
+            if entity_nodes and len(entity_nodes) > 2
+            else []
+        )
+
+        if not intermediates:
+            reranked.append((ans, ans.score))
+            continue
+
+        try:
+            ivs = [Intervention(type=BLOCK_NODE, node=n) for n in intermediates]
+            cf = engine.query(seed, ans.entity_id, interventions=ivs, max_hop=4)
+            robustness = 1.0 - abs(cf.effect_delta)
+            adjusted = ans.score * (1.0 + robustness_weight * robustness)
+        except Exception:
+            adjusted = ans.score
+
+        reranked.append((ans, adjusted))
+
+    reranked.sort(key=lambda x: x[1], reverse=True)
+    # Update scores in place and return
+    for ans, new_score in reranked:
+        ans.score = round(new_score, 6)
+    return [ans for ans, _ in reranked]
+
+
+
+
+
+def deductive_consensus_rerank(
+    answers: List[Answer],
+    seed: str,
+    deductive_traversal: Any,
+    boost: float = 1.3,
+    penalty: float = 0.9,
+) -> List[Answer]:
+    """Phase 132: re-rank answers by deductive BFS consensus.
+
+    For each answer entity, run DeductiveTraversal.traverse(seed, target, causal_only=True).
+    A non-empty proof list → agreement (multiply score by boost).
+    Empty proof list → no causal chain found (multiply score by penalty).
+    """
+    for ans in answers:
+        try:
+            proofs = deductive_traversal.traverse(seed, ans.entity_id, causal_only=True)
+            if proofs:
+                ans.score = round(ans.score * boost, 6)
+            else:
+                ans.score = round(ans.score * penalty, 6)
+        except Exception:
+            pass
+    answers.sort(key=lambda a: a.score, reverse=True)
+    return answers

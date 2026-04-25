@@ -201,6 +201,8 @@ _state: Dict[str, Any] = {
     "metacognitive_monitor": None, # MetacognitiveMonitor (Phase 121)
     "epistemic_gate":        None, # EpistemicGate (Phase 122)
     "graph":             None,     # CerebrumGraph (set when available)
+    "_query_path_cache":  {},      # Phase 127: query_id -> (answers, expiry_ts)
+    "_platt_calibration": None,   # Phase 129: PlattCalibration instance
 }
 
 
@@ -656,6 +658,31 @@ def create_app(
         except Exception as exc:
             _api_log.warning("Engram.record failed: %s", exc)
 
+        # Phase 126: Counterfactual re-ranking (opt-in, high latency)
+        if req.use_counterfactual_rerank and answers and adapter is not None:
+            try:
+                from reasoning.answer_extractor import counterfactual_rerank
+                answers = counterfactual_rerank(answers, seeds=seeds, adapter=adapter)
+            except Exception as _cf_e:
+                _api_log.debug("counterfactual_rerank failed: %s", _cf_e)
+
+        # Phase 132: Deductive-Beam Consensus (opt-in, expensive)
+        if req.use_deductive_consensus and answers and seeds:
+            try:
+                from reasoning.answer_extractor import deductive_consensus_rerank
+                from reasoning.deductive_traversal import DeductiveTraversal
+                _deductive = DeductiveTraversal(adapter=adapter)
+                answers = deductive_consensus_rerank(answers, seed=seeds[0],
+                                                     deductive_traversal=_deductive)
+            except Exception as _dc_e:
+                _api_log.debug("deductive_consensus_rerank failed: %s", _dc_e)
+
+        # Phase 129: apply Platt calibration to answer scores
+        _platt = _state.get("_platt_calibration")
+        if _platt is not None and _platt._fitted:
+            for _ans in answers:
+                _ans.score = _platt.transform(_ans.score)
+
         # Format response
         structured = to_structured(answers, query=req.query, adapter=adapter)
         path_results = []
@@ -744,8 +771,21 @@ def create_app(
                         import asyncio as _asyncio
                         _asyncio.create_task(orc.run())
                         _api_log.info("EpistemicGate: SleepCycleOrchestrator.run() scheduled")
+                # Phase 125: update cached EU for adaptive beam width on next query
+                gate._last_eu = _gd.eu
             except Exception as _ge:
                 _api_log.debug("EpistemicGate.evaluate failed: %s", _ge)
+
+        # Phase 127: cache answers for contrastive triplet learning
+        import time as _time
+        from uuid import uuid4 as _uuid4
+        _query_id = str(_uuid4())
+        _cache = _state["_query_path_cache"]
+        _now = _time.monotonic()
+        _cache[_query_id] = (list(answers), _now + 60.0)
+        # Evict expired entries (simple TTL sweep)
+        for _k in [k for k, v in _cache.items() if v[1] < _now]:
+            del _cache[_k]
 
         return QueryResponse(
             query=req.query,
@@ -762,6 +802,7 @@ def create_app(
             low_confidence=_low_confidence,
             epistemic_warning=_epistemic_warning,
             gate_decision=_gate_decision,
+            query_id=_query_id,
         )
 
     @router.post("/query/trace", response_model=TraceResponse, tags=["reasoning"])
@@ -936,6 +977,24 @@ def create_app(
         
         _state["meta_learner"].update_from_feedback(dummy_path, req.reward)
 
+        # Phase 127: contrastive triplet update when query_id is present
+        _triplet_used = False
+        if req.query_id and req.correct_entity:
+            import time as _time
+            _cache = _state["_query_path_cache"]
+            _cached = _cache.get(req.query_id)
+            if _cached is not None and _cached[1] >= _time.monotonic():
+                _cached_answers = _cached[0]
+                # Find the positive path (correct entity) and the best wrong path (hard negative)
+                _pos_path = next((a for a in _cached_answers if a.entity == req.correct_entity), None)
+                _neg_path = next((a for a in _cached_answers if a.entity != req.correct_entity), None)
+                if _pos_path is not None and _neg_path is not None and \
+                   _pos_path.best_path is not None and _neg_path.best_path is not None:
+                    _pos_feat = _pos_path.best_path.mean_edge_features()
+                    _neg_feat = _neg_path.best_path.mean_edge_features()
+                    _state["meta_learner"].triplet_update(_pos_feat, _neg_feat)
+                    _triplet_used = True
+
         # Phase 68: Update metabolic Reinforcement based on feedback reward
         if _state["modulator"]:
             _state["modulator"].update_reinforcement(req.reward)
@@ -943,9 +1002,25 @@ def create_app(
         # Buffer for batch retraining (POST /retrain)
         _state["feedback_buffer"].append({"path": dummy_path, "reward": req.reward})
 
+        # Phase 129: accumulate calibration sample
+        _cal = _state.get("_platt_calibration")
+        if _cal is not None and req.edge_features:
+            try:
+                import numpy as _np129
+                from core.attention_engine import _sigmoid as _sig129
+                _p = _state["meta_learner"].global_prior if _state["meta_learner"] else None
+                if _p is not None:
+                    _feat = _np129.zeros(10, dtype=_np129.float32)
+                    _feat[:len(req.edge_features[0])] = req.edge_features[0][:10]
+                    _raw = float(_np129.dot(_np129.array(_p), _feat))
+                    _cal.record(_sig129(_raw), req.reward > 0)
+            except Exception:
+                pass
+
         return {
             "status": "success",
             "message": "Feedback recorded, model updated",
+            "triplet_update": _triplet_used,
             "buffer_size": len(_state["feedback_buffer"]),
         }
 
@@ -1092,6 +1167,12 @@ def create_app(
 
         if req.clear_buffer:
             _state["feedback_buffer"] = []
+
+        # Phase 129: refit Platt calibration if enough samples
+        _platt_fitted = False
+        _platt = _state.get("_platt_calibration")
+        if _platt is not None:
+            _platt_fitted = _platt.fit()
 
         learned_params = {
             name: float(val)
@@ -3625,6 +3706,10 @@ def _load(
     # 5. Milestone 4: Adaptive Parameter Learning
     if use_meta_learning:
         _state["meta_learner"] = MetaParameterLearner()
+
+    # Phase 129: Platt scaling calibration
+    from core.parameter_learner import PlattCalibration
+    _state["_platt_calibration"] = PlattCalibration()
 
     # Phase 68: Neuro-Chemical Modulation
     from core.chemical_modulator import ChemicalModulator

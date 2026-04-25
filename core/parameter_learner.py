@@ -202,6 +202,72 @@ class MetaParameterLearner:
             theta = np.clip(theta, 0.0, 2.0)
             self.community_overrides[cid] = theta
 
+    def triplet_update(
+        self,
+        positive_features: list,
+        negative_features: list,
+        community_id: int = -1,
+        margin: float = 0.2,
+    ) -> None:
+        """
+        Phase 127: contrastive margin ranking update.
+
+        Minimises: L = max(0, margin - score(pos) + score(neg))
+        Gradient via finite differences on the 10-param vector for the given community.
+        No-op when the positive already scores higher than negative by >= margin.
+
+        Parameters
+        ----------
+        positive_features : 10-element feature tuple for the correct path
+        negative_features : 10-element feature tuple for the hard negative path
+        community_id      : community to update (-1 = global_prior)
+        margin            : target score gap (default 0.2)
+        """
+        if not positive_features or not negative_features:
+            return
+
+        pos = np.zeros(self._n, dtype=np.float32)
+        neg = np.zeros(self._n, dtype=np.float32)
+        pos[: len(positive_features)] = positive_features[: self._n]
+        neg[: len(negative_features)] = negative_features[: self._n]
+
+        signs = _FEATURE_SIGNS[: self._n]
+        theta = self.community_overrides.get(community_id, self.global_prior.copy())
+
+        def _score(feat: np.ndarray) -> float:
+            return _sigmoid(float(np.dot(theta * signs, feat)))
+
+        s_pos = _score(pos)
+        s_neg = _score(neg)
+        loss = max(0.0, margin - s_pos + s_neg)
+        if loss == 0.0:
+            return  # already well-separated — no update needed
+
+        # Finite-difference gradient: dL/dθ_i ≈ (L(θ+h) - L(θ-h)) / (2h)
+        h = 1e-4
+        grad = np.zeros(self._n, dtype=np.float32)
+        for i in range(self._n):
+            theta_p = theta.copy(); theta_p[i] += h
+            theta_n = theta.copy(); theta_n[i] -= h
+
+            def _loss_at(t: np.ndarray) -> float:
+                sp = _sigmoid(float(np.dot(t * signs, pos)))
+                sn = _sigmoid(float(np.dot(t * signs, neg)))
+                return max(0.0, margin - sp + sn)
+
+            grad[i] = (_loss_at(theta_p) - _loss_at(theta_n)) / (2 * h)
+
+        eff_lr = self.learning_rate * self.learning_rate_scale
+        delta = -eff_lr * grad  # gradient descent
+        v = self._velocity.get(community_id, np.zeros(self._n, dtype=np.float32))
+        v = self.momentum * v + delta
+        self._velocity[community_id] = v
+        theta = np.clip(theta + v, 0.0, 2.0)
+        if community_id >= 0:
+            self.community_overrides[community_id] = theta
+        else:
+            self.global_prior = theta
+
     # ------------------------------------------------------------------
     # Serialization
     # ------------------------------------------------------------------
@@ -437,3 +503,64 @@ class CSAParameterLearner:
             self._params[i] = original
             grad.append((loss_plus - loss_minus) / (2.0 * self.h))
         return grad
+
+
+# ---------------------------------------------------------------------------
+# Phase 129: Platt Scaling — calibrated confidence output
+# ---------------------------------------------------------------------------
+
+class PlattCalibration:
+    """Two-parameter sigmoid calibration: P = 1 / (1 + exp(A*score + B)).
+
+    Fitted via gradient descent on accumulated (raw_score, correct:bool) pairs.
+    Requires at least MIN_SAMPLES pairs before fit() has any effect.
+    """
+    MIN_SAMPLES = 20
+
+    def __init__(self) -> None:
+        self.A: float = 1.0   # slope initialised to identity scaling
+        self.B: float = 0.0   # bias initialised to zero shift
+        self._samples: List[Tuple[float, float]] = []   # (raw_score, label)
+        self._fitted: bool = False
+
+    def record(self, raw_score: float, correct: bool) -> None:
+        """Accumulate one feedback sample."""
+        self._samples.append((raw_score, 1.0 if correct else 0.0))
+
+    def fit(self, lr: float = 0.1, iterations: int = 200) -> bool:
+        """Fit A and B via gradient descent on log-loss.  Returns True if fitted."""
+        if len(self._samples) < self.MIN_SAMPLES:
+            return False
+        A, B = self.A, self.B
+        for _ in range(iterations):
+            dA = dB = 0.0
+            for s, y in self._samples:
+                p = 1.0 / (1.0 + math.exp(max(-500.0, min(500.0, A * s + B))))
+                err = p - y
+                dA += err * s
+                dB += err
+            n = len(self._samples)
+            A -= lr * dA / n
+            B -= lr * dB / n
+        self.A, self.B = A, B
+        self._fitted = True
+        return True
+
+    def transform(self, raw_score: float) -> float:
+        """Map a raw sigmoid score to a calibrated probability in (0, 1)."""
+        if not self._fitted:
+            return float(raw_score)
+        val = max(-500.0, min(500.0, self.A * raw_score + self.B))
+        return 1.0 / (1.0 + math.exp(val))
+
+    def to_dict(self) -> dict:
+        return {"A": self.A, "B": self.B, "fitted": self._fitted,
+                "n_samples": len(self._samples)}
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "PlattCalibration":
+        obj = cls()
+        obj.A = float(d.get("A", 1.0))
+        obj.B = float(d.get("B", 0.0))
+        obj._fitted = bool(d.get("fitted", False))
+        return obj

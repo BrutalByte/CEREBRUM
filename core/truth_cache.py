@@ -16,6 +16,12 @@ class TruthCache:
     def __init__(self):
         self._cache: Dict[str, Any] = {}
         self._causal_cache: Dict[str, "CausalProof"] = {}
+        # Phase 128: optional RelationPathPrior to receive causal priors
+        self._relation_prior: Optional[Any] = None
+
+    def attach_relation_prior(self, prior: Any) -> None:
+        """Phase 128: attach a RelationPathPrior to receive causal path boosts."""
+        self._relation_prior = prior
 
     def store_proof(self, path: List[Any], proof: Dict[str, Any]):
         path_hash = hashlib.sha256(json.dumps(path, sort_keys=True).encode()).hexdigest()
@@ -29,6 +35,12 @@ class TruthCache:
         """Store a CausalProof keyed by (source, target)."""
         key = f"{source}||{target}"
         self._causal_cache[key] = proof
+        # Phase 128: push causal path priors to RelationPathPrior if attached
+        if self._relation_prior is not None:
+            for path in proof.direct_paths:
+                rel_seq = tuple(path[i] for i in range(1, len(path), 2))
+                if rel_seq:
+                    self._relation_prior.add_causal_prior(rel_seq, weight=proof.effect_estimate)
 
     def get_causal_proof(self, source: str, target: str) -> Optional["CausalProof"]:
         """Retrieve a cached CausalProof, or None if not present."""

@@ -175,9 +175,14 @@ def smooth_with_graphsage(
     self_weight: float = 0.5,
     neighbor_weight: float = 0.5,
     normalize: bool = True,
+    num_layers: int = 1,
 ) -> Dict[str, np.ndarray]:
     """
-    Apply a single GraphSAGE mean-aggregation pass over ``embeddings``.
+    Apply GraphSAGE mean-aggregation over ``embeddings``.
+
+    Phase 130: ``num_layers`` controls depth. Each layer runs a full
+    mean-aggregation pass over the previous layer's output, capturing
+    wider neighbourhood context (2-layer → 2-hop context).
 
     For each node v:
         h_v' = normalize(self_weight * h_v
@@ -192,45 +197,41 @@ def smooth_with_graphsage(
     self_weight     : weight of the node's own embedding (default 0.5)
     neighbor_weight : weight of the aggregated neighbour mean (default 0.5)
     normalize       : L2-normalise the output vectors (default True)
+    num_layers      : number of aggregation layers (default 1; use 2 for 2-hop context)
 
     Returns
     -------
     New dict with the same keys, smoothed embeddings as float32 arrays.
     """
-    smoothed: Dict[str, np.ndarray] = {}
+    def _one_pass(embs: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        smoothed: Dict[str, np.ndarray] = {}
+        for node in G.nodes():
+            node_str = str(node)
+            if node_str not in embs:
+                continue
+            h_self = embs[node_str].astype(np.float32)
+            neighbour_vecs = []
+            if hasattr(G, "predecessors"):
+                nbrs = set(G.predecessors(node)) | set(G.successors(node))  # type: ignore
+            else:
+                nbrs = set(G.neighbors(node))
+            for nbr in nbrs:
+                nbr_str = str(nbr)
+                if nbr_str in embs and nbr_str != node_str:
+                    neighbour_vecs.append(embs[nbr_str].astype(np.float32))
+            if neighbour_vecs:
+                h_nbr = np.mean(neighbour_vecs, axis=0)
+                h_new = self_weight * h_self + neighbor_weight * h_nbr
+            else:
+                h_new = self_weight * h_self
+            if normalize:
+                norm = np.linalg.norm(h_new)
+                if norm > 1e-8:
+                    h_new = h_new / norm
+            smoothed[node_str] = h_new.astype(np.float32)
+        return smoothed
 
-    for node in G.nodes():
-        node_str = str(node)
-        if node_str not in embeddings:
-            continue
-
-        h_self = embeddings[node_str].astype(np.float32)
-
-        # Collect neighbour embeddings (neighbours for undirected; both
-        # predecessors and successors for directed graphs)
-        neighbour_vecs = []
-        if hasattr(G, "predecessors"):
-            nbrs = set(G.predecessors(node)) | set(G.successors(node)) # type: ignore
-        else:
-            nbrs = set(G.neighbors(node))
-        for nbr in nbrs:
-            nbr_str = str(nbr)
-            if nbr_str in embeddings and nbr_str != node_str:
-                neighbour_vecs.append(embeddings[nbr_str].astype(np.float32))
-
-        if neighbour_vecs:
-            h_nbr = np.mean(neighbour_vecs, axis=0)
-            h_new = self_weight * h_self + neighbor_weight * h_nbr
-        else:
-            # Isolated node: apply self_weight for scale consistency with
-            # connected nodes (which are always scaled by self_weight).
-            h_new = self_weight * h_self
-
-        if normalize:
-            norm = np.linalg.norm(h_new)
-            if norm > 1e-8:
-                h_new = h_new / norm
-
-        smoothed[node_str] = h_new.astype(np.float32)
-
-    return smoothed
+    current = dict(embeddings)
+    for _ in range(max(1, num_layers)):
+        current = _one_pass(current)
+    return current

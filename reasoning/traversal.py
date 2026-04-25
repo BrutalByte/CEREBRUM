@@ -198,6 +198,13 @@ class TraversalPath:
             return 1.0
         return min(self.edge_confidences)
 
+    def mean_edge_features(self) -> Tuple[float, ...]:
+        """Return mean feature vector across all hops; zeros if no features recorded."""
+        if not self.edge_features:
+            return tuple([0.0] * 10)
+        n = len(self.edge_features[0])
+        return tuple(sum(f[i] for f in self.edge_features) / len(self.edge_features) for i in range(n))
+
     def copy_with_extension(
         self,
         rel: str,
