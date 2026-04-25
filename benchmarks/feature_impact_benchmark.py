@@ -296,14 +296,16 @@ def main() -> None:
     print(f"  Beam width: {args.beam_width}  Max hop: {args.max_hop}  Top-K: {args.top_k}")
     print()
 
-    # Build query set once from the base graph (shared across all configs)
+    # Build query set using the same adapter CerebrumGraph builds internally
+    # (NetworkXAdapter), so seed/gold entity IDs match what query() returns.
     print("Building query set from edge list...", end=" ", flush=True)
-    from adapters.file_adapter import load_file_adapter
-    base_adapter = load_file_adapter(graph_path)
+    _probe = CerebrumGraph.from_kb(graph_path)
+    _probe.build(seed=42)
     queries = build_queries(
-        base_adapter,
+        _probe.adapter,
         sample=args.sample if args.sample > 0 else None,
     )
+    del _probe
     print(f"{len(queries)} queries.")
 
     if not queries:
