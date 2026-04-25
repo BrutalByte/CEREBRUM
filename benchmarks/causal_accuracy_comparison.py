@@ -1,13 +1,14 @@
 """
-Phase 133: Full benchmark suite comparing CEREBRUM feature configurations
+Phase 133+: Full benchmark suite comparing CEREBRUM feature configurations
 against legacy KG baselines (TransE MRR ~0.31, RotatE ~0.34, KGBERT ~0.42).
 
-Runs four configurations on MetaQA (default) or other supported datasets:
-  baseline     — CSA only (no causal/adaptive features)
+Runs configurations on MetaQA (default) or other supported datasets:
+  flat         — Phase 136 disabled (beam_profile="flat"); establishes pre-136 baseline
+  baseline     — CSA only + funnel beam (Phase 136 default)
   +causal      — Phase 124: causal-weighted beam scoring
   +adaptive    — Phase 125: epistemic-adaptive beam width
   +counterfactual — Phase 126: counterfactual answer re-ranking
-  +full        — all phases enabled (124-132)
+  +full        — all phases enabled (124-136)
 
 Usage
 -----
@@ -63,6 +64,7 @@ def _run_config(
     use_counterfactual_rerank: bool = False,
     use_deductive_consensus: bool = False,
     beam_width_override: Optional[int] = None,
+    beam_profile: Optional[str] = None,
 ) -> Dict[str, float]:
     """Evaluate one configuration on qa_pairs. Returns MRR, Hits@1, Hits@5."""
     # Apply causal bonus to traversal if set
@@ -82,7 +84,8 @@ def _run_config(
                 if found:
                     seeds = [e.id for e in found]
             answers = graph.query(seeds, top_k=10,
-                                  beam_width=beam_width_override or 10)
+                                  beam_width=beam_width_override or 10,
+                                  beam_profile=beam_profile)
             preds = [a.entity_id for a in answers]
         except Exception:
             preds = []
@@ -135,7 +138,7 @@ def run_comparison(
 ) -> Dict:
     """Run the full comparison and return results dict."""
     if features is None:
-        features = ["baseline", "causal", "adaptive", "counterfactual", "full"]
+        features = ["flat", "baseline", "causal", "adaptive", "counterfactual", "full"]
 
     csv_path = str(_METAQA_CSV)
 
@@ -153,6 +156,9 @@ def run_comparison(
         data_source = "toy_graph (edge rediscovery)"
 
     configs: Dict[str, dict] = {}
+
+    if "flat" in features:
+        configs["flat (no funnel)"] = dict(causal_bonus=0.0, beam_profile="flat")
 
     if "baseline" in features:
         configs["baseline"] = dict(causal_bonus=0.0)
@@ -207,15 +213,16 @@ def _print_table(data: Dict) -> None:
         print(f"{name+' (published)':<22} {m['MRR']:>6.3f} {m['Hits@1']:>8.3f} {m['Hits@5']:>8.3f} {'N/A':>9}")
     print('='*60)
 
-    # Delta table vs baseline
-    baseline_mrr = data["cerebrum"].get("baseline", {}).get("MRR", 0)
-    if baseline_mrr > 0:
-        print("\nDelta vs CEREBRUM baseline:")
+    # Delta table vs flat (Phase 136 disabled) if present, else vs baseline
+    _ref_name = "flat (no funnel)" if "flat (no funnel)" in data["cerebrum"] else "baseline"
+    ref_mrr = data["cerebrum"].get(_ref_name, {}).get("MRR", 0)
+    if ref_mrr > 0:
+        print(f"\nDelta vs {_ref_name}:")
         for name, m in data["cerebrum"].items():
-            if name == "baseline":
+            if name == _ref_name:
                 continue
-            delta = m["MRR"] - baseline_mrr
-            print(f"  {name:<20} dMRR={delta:+.3f}")
+            delta = m["MRR"] - ref_mrr
+            print(f"  {name:<22} dMRR={delta:+.3f}")
     print()
 
 
@@ -224,7 +231,7 @@ def main():
     parser.add_argument("--hop", type=int, default=1, choices=[1, 2, 3])
     parser.add_argument("--sample", type=int, default=None)
     parser.add_argument("--features", type=str, default=None,
-                        help="Comma-separated: baseline,causal,adaptive,counterfactual,full")
+                        help="Comma-separated: flat,baseline,causal,adaptive,counterfactual,full")
     parser.add_argument("--json", action="store_true", dest="as_json")
     args = parser.parse_args()
 
