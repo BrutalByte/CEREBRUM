@@ -83,7 +83,7 @@ def _run_config(
                     seeds = [e.id for e in found]
             answers = graph.query(seeds, top_k=10,
                                   beam_width=beam_width_override or 10)
-            preds = [a.entity for a in answers]
+            preds = [a.entity_id for a in answers]
         except Exception:
             preds = []
         rr, h1, h5 = _mrr_hits(preds, gold)
@@ -99,12 +99,28 @@ def _run_config(
     return {"MRR": rr_sum / n, "Hits@1": h1_sum / n, "Hits@5": h5_sum / n}
 
 
-def _load_qa_pairs(hop: int, sample: Optional[int]) -> List[Tuple[str, str]]:
-    """Load MetaQA QA pairs; fall back to toy_graph stub if data unavailable."""
+def _load_qa_pairs_from_graph(graph: CerebrumGraph, sample: Optional[int],
+                               seed: int = 42) -> List[Tuple[str, str]]:
+    """Build (seed_entity, gold_entity) pairs from the graph's own edge list.
+
+    Uses the same adapter that CerebrumGraph queries against — avoids the
+    column-order mismatch between load_file_adapter and NetworkXAdapter.
+    """
+    G = getattr(graph.adapter, "_G", None)
+    if G is None:
+        return []
+    all_edges = [(u, v) for u, v in G.edges() if u and v]
+    random.seed(seed)
+    if sample and sample < len(all_edges):
+        all_edges = random.sample(all_edges, sample)
+    return all_edges
+
+
+def _load_metaqa_pairs(hop: int, sample: Optional[int]) -> Optional[List[Tuple[str, str]]]:
+    """Load MetaQA QA pairs if the data file exists, else return None."""
     qa_path = Path(__file__).parent / f"data/metaqa/qa_test_{hop}hop.txt"
     if not qa_path.exists():
-        # Minimal stub: single pair exercising the toy graph
-        return [("newton", "gravity")]
+        return None
     pairs = load_qa(str(qa_path))
     if sample and sample < len(pairs):
         pairs = random.sample(pairs, sample)
@@ -121,12 +137,20 @@ def run_comparison(
     if features is None:
         features = ["baseline", "causal", "adaptive", "counterfactual", "full"]
 
-    qa_pairs = _load_qa_pairs(hop, sample)
     csv_path = str(_METAQA_CSV)
 
     # Build one graph (shared across all configs to save time)
     graph = CerebrumGraph.from_kb(csv_path)
     graph.build(seed=42)
+
+    # Use MetaQA data if available; otherwise derive pairs from the toy graph
+    metaqa_pairs = _load_metaqa_pairs(hop, sample)
+    if metaqa_pairs is not None:
+        qa_pairs = metaqa_pairs
+        data_source = f"metaqa-{hop}hop"
+    else:
+        qa_pairs = _load_qa_pairs_from_graph(graph, sample=sample or 30)
+        data_source = "toy_graph (edge rediscovery)"
 
     configs: Dict[str, dict] = {}
 
@@ -161,6 +185,7 @@ def run_comparison(
     output = {
         "hop": hop,
         "n_questions": len(qa_pairs),
+        "data_source": data_source,
         "cerebrum": results,
         "legacy_baselines": LEGACY_BASELINES,
     }
@@ -170,7 +195,8 @@ def run_comparison(
 def _print_table(data: Dict) -> None:
     header = f"{'Config':<22} {'MRR':>6} {'Hits@1':>8} {'Hits@5':>8} {'Time(s)':>9}"
     print(f"\n{'='*60}")
-    print(f"CEREBRUM vs Legacy KG — {data['hop']}-hop, n={data['n_questions']}")
+    src = data.get('data_source', '')
+    print(f"CEREBRUM vs Legacy KG | {data['hop']}-hop, n={data['n_questions']} [{src}]")
     print('='*60)
     print(header)
     print('-'*60)
@@ -189,7 +215,7 @@ def _print_table(data: Dict) -> None:
             if name == "baseline":
                 continue
             delta = m["MRR"] - baseline_mrr
-            print(f"  {name:<20} ΔMRR={delta:+.3f}")
+            print(f"  {name:<20} dMRR={delta:+.3f}")
     print()
 
 

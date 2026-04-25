@@ -986,8 +986,8 @@ def create_app(
             if _cached is not None and _cached[1] >= _time.monotonic():
                 _cached_answers = _cached[0]
                 # Find the positive path (correct entity) and the best wrong path (hard negative)
-                _pos_path = next((a for a in _cached_answers if a.entity == req.correct_entity), None)
-                _neg_path = next((a for a in _cached_answers if a.entity != req.correct_entity), None)
+                _pos_path = next((a for a in _cached_answers if a.entity_id == req.correct_entity), None)
+                _neg_path = next((a for a in _cached_answers if a.entity_id != req.correct_entity), None)
                 if _pos_path is not None and _neg_path is not None and \
                    _pos_path.best_path is not None and _neg_path.best_path is not None:
                     _pos_feat = _pos_path.best_path.mean_edge_features()
