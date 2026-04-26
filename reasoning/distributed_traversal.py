@@ -26,6 +26,7 @@ class DistributedBeamTraversal(BeamTraversal):
         query_time: Optional[float],
         trace_info: Optional["ReasoningTrace"] = None,
         node_priming: Optional[Dict[str, float]] = None,
+        pruning_callback=None,
     ) -> List[TraversalPath]:
         # 1. Initialize beam
         beam: List[TraversalPath] = []
