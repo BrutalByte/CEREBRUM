@@ -2,6 +2,8 @@
 
 **Community-Structured Graph Attention for Knowledge Graph Reasoning**
 
+**Current Version:** v2.33.1 (Phase 143 COMPLETE)
+
 CEREBRUM enables Knowledge Graphs to perform multi-hop reasoning using the structural
 principles of Transformer attention — without an LLM, without training data, and with
 full interpretability of every inference step.

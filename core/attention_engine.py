@@ -33,6 +33,24 @@ RELATION_DECAY_DEFAULTS = {
 
 SoftMemberships = Dict[str, Dict[int, float]]
 
+class HomeostaticModulator:
+    """
+    Phase 143: Homeostatic Synaptic Scaling.
+    Maintains target reasoning activity by scaling incoming weights 
+    based on a rolling average of node activity.
+    """
+    def __init__(self, target_activity=1.0, tau=0.95):
+        self.target = target_activity
+        self.tau = tau
+        self.node_activity = {} # entity_id -> rolling_avg
+    
+    def compute_scaling_factor(self, entity_id: str, current_activity: float) -> float:
+        # Update rolling average
+        prev = self.node_activity.get(entity_id, self.target)
+        self.node_activity[entity_id] = self.tau * prev + (1 - self.tau) * current_activity
+        # Scale factor: target / current
+        return self.target / max(1e-6, self.node_activity[entity_id])
+
 class CSAEngine:
     def __init__(
         self,
@@ -195,6 +213,13 @@ class CSAEngine:
 
         sd = 1.0 if "rem_synthesized" in edge_type else 0.0
         grounding = 1.0 # Default
+
+        # Phase 143: Apply Homeostatic Scaling if modulator exists
+        modulator = getattr(self, "homeostatic_modulator", None)
+        if modulator:
+            scale = modulator.compute_scaling_factor(v, sim + cs)
+            sim *= scale
+            cs *= scale
 
         return ReasoningLogit(sim, cs, etw, normalized_distance, hd, pr_v, td, nr_v, sd, grounding)
 

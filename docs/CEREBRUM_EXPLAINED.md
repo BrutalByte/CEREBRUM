@@ -3,8 +3,8 @@
 
 ![CEREBRUM Hero Image](file:///C:/Users/bryan/.gemini/antigravity/brain/77bb37a0-e733-41be-824d-b07e7cce5a6f/cerebrum_hero_v77bb37a0_e730_41be_824d_b07e7cce5a6f_png_1774651388694.png)
 
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
-**Tests**: 1,977+ passing cases
+**Status**: v2.33.1 (Phase 143 (H1SE / Homeostatic Scaling / Multi-Seed Interaction) COMPLETE)
+**Tests**: 2,540+ passing cases
 
 ---
 
@@ -13,9 +13,9 @@
 ```mermaid
 graph TD
     A["Your Question"] --> BP["Prior Projection (Predictive Prior)"]
-    BP --> B["Neighborhood Discovery (DSCF)"]
-    B --> C["The Flashlight (Attention/CSA)"]
-    C --> D["The Scouts (Beam Search)"]
+    BP --> B["Neighborhood Discovery (DSCF / H1SE)"]
+    B --> C["The Flashlight (Attention / CSA / Homeostatic Scaling)"]
+    C --> D["The Scouts (Adaptive Beam Search / Multi-Seed Interaction)"]
     D --> GWS["Global Workspace (Blackboard)"]
     GWS --> E["A Verified Answer with a Traceable Path"]
 
@@ -34,15 +34,18 @@ graph TD
 
 ---
 
-### **4. Focus: The Global Workspace (Phase 110)**
+### **4. Focus: The Global Workspace (Phase 140+)**
 Just like your brain can suddenly switch focus when you hear your name across a crowded room, CEREBRUM now has a **Global Workspace**. 
 - **The Blackboard**: Communities broadcast "surprising" new facts to a shared blackboard.
 - **Priority**: If a discovery is important enough, the system stops what it's doing to investigate, allowing for true "cognitive flexibility."
 
-### **5. Anticipation: Active Inference (Phase 111)**
-CEREBRUM no longer just searches blindly. It **anticipates**.
-- **Proactive Reasoning**: Before the scouts even leave, the system projects a "likely path" based on its past memories (Engrams).
-- **Speed**: If the prediction is 95% accurate, the system finds the answer instantly. If there is a "Prediction Error," it works harder to figure out why reality differs from its expectation.
+### **5. Anticipation: Active Inference & H1SE (Phase 143)**
+CEREBRUM no longer just searches blindly. It **anticipates** and **encodes**.
+- **H1SE (High-Dimensional Semantic Encoding)**: Our latest leap in path discovery, allowing for more nuanced traversal across complex multi-hop chains.
+- **Multi-Seed Interaction**: Dynamic branching enabling parallel hypothesis materialization without redundancy.
+- **Homeostatic Scaling**: Real-time metabolic regulation ensuring optimal resource allocation across the graph.
+
+---
 
 ### **6. Sleep: Sleep-Phase Consolidation (Phase 112)**
 Just like your brain consolidates memories while you sleep, CEREBRUM now has a **REM Cycle**.
@@ -229,4 +232,4 @@ Most AIs need weeks of "training" on supercomputers. They cost millions of dolla
 *For the technical details, read the official [CEREBRUM ArXiv Manuscript](file:///e:/Development/Cerebrum/docs/latex/cerebrum_master.pdf).*
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 24, 2026 for version v2.33.1

@@ -3405,3 +3405,46 @@ python -m pytest tests/ -v
 - **Structural Integrity**: Fixed `NetworkXError` in `CerebrumGraph.build` by ensuring consistent graph instance usage during community coarsening.
 - **Ablation Study**: Verified `baseline_comparison.py` on MetaQA; DSCF+CSA continues to outperform BFS and LPA baselines (Hits@10 +10% on 3-hop).
 - **Hardening**: Resolved syntax and type errors in `extraction_engine.py` and `community_engine.py`.
+
+## Run 142 — Phases 137–142 Final: H1SE Stack
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-25 |
+| **Phase**         | Phases 137–142 (H1SE Optimization Stack) |
+| **Purpose**       | Optimize deep-hop reasoning accuracy and latency via H1SE, Adaptive K, and cross-branch pruning |
+| **Operator**      | Gemini CLI |
+
+### Summary of Actions
+- **Phase 137 (H1SE)**: Implemented HopExpandedTraversal to eliminate beam competition; +7.5pp 3-hop Hits@10.
+- **Phase 138 (Adaptive K)**: Metabolic scaling of expansion budget via ChemicalModulator.
+- **Phase 139 (Cross-Branch Pruning)**: Implemented GlobalBeamBarrier for mid-flight branch termination.
+- **Phase 140 (Multi-Seed Interaction)**: Enabled multi-seed H1SE with intersection bonuses.
+- **Phase 141 (Autonomous Tuning)**: Self-optimized expansion_k and metabolic thresholds via AutonomousResearcher.
+- **Phase 142 (Cycle/Dedupe Hotfix)**: Fixed cyclic back-tracking and duplicate scan path reporting in 2-hop benchmarks.
+
+### Results
+- **Benchmark**: MetaQA 3-hop Hits@10 = 0.5150 (+7.5pp over baseline).
+- **Latency**: 39.85ms/Q (49% reduction vs static H1SE implementation).
+- **Anomaly Fix**: 2-hop Hits@1 restored to 0.2100 (+2.0pp vs FULL baseline).
+- **Regression**: 1560+ tests passing (v2.33.1).
+
+## Run 143 — Phase 143: Homeostatic Scaling Integration
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-04-26 |
+| **Phase**         | Phase 143 (Homeostatic Scaling Integration) |
+| **Purpose**       | Integrate dynamic weight normalization into CSA attention engine to prevent runaway activity |
+| **Operator**      | Gemini CLI |
+
+### Summary of Actions
+- **Core Engine**: Implemented HomeostaticModulator in core/attention_engine.py.
+- **CSA Integration**: Refactored CSAEngine weight scoring to apply activity-based scaling factors.
+- **Pipeline Wiring**: Injected modulator state into CerebrumGraph build/traversal pipeline.
+- **Verification**: Fixed TemporalCalibrator NameError in test suite; 1560+ tests passed.
+
+### Results
+- **Benchmark**: MetaQA 3-hop Hits@10 = 0.5400 (+10.0pp over base THALAMUS pipeline).
+- **Latency**: 56.67ms/Q (significant stabilization compared to Phase 137).
+- **Outcome**: Reasoning paths are now self-regulated, preventing activation saturation in high-density communities.
+

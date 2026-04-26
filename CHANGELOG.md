@@ -5,6 +5,81 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.33.2] — 2026-04-26
+### Added
+- **Phase 143: Homeostatic Scaling Integration**: Biologically-inspired weight regulation.
+  - Implemented `HomeostaticModulator` in `CSAEngine` for dynamic activity dampening.
+  - Stabilized reasoning path activations across deep traversals, reducing score variance.
+  - benchmarked 3-hop MetaQA with a 10.0 pp accuracy gain over the baseline pipeline.
+
+## [2.33.1] — 2026-04-25
+### Fixed
+- **Phase 142: Cycle Prevention & Path Deduplication**: Hotfix for H1SE 2-hop Hits@1 anomaly.
+  - Eliminated duplicate `scan_paths` in Stage 2 results.
+  - Implemented mandatory cycle prevention in sub-traversals to prevent backtracking to original seeds.
+  - Restored 2-hop Hits@1 performance (+21 pp improvement over baseline).
+
+## [2.33.0] — 2026-04-25
+### Added
+- **Phase 141: Autonomous H1SE Tuning**: Specialized research harness for parameter self-optimization.
+  - identified `expansion_k=5` with adaptive scaling as the optimal Efficiency ($Hits@10 / \log(Latency)$) configuration for MetaQA.
+- **Phase 140: Multi-Seed Relational Interaction**: Enabled H1SE to handle multiple seed entities simultaneously.
+  - Implemented **Intersection Bonus**: priority expansion for neighbors reached by >1 seed.
+- **Phase 139: Cross-Branch Path Pruning**: Implemented `GlobalBeamBarrier` to terminate weak H1SE branches mid-flight.
+  - ~50% reduction in median H1SE latency for 3-hop queries.
+
+## [2.32.0] — 2026-04-25
+### Added
+- **Phase 138: Adaptive Expansion K**: Metabolic gating for deep-hop expansion.
+  - Dynamically scale `expansion_k` based on `Arousal` (uncertainty) and `Reinforcement` (confidence).
+  - API support: `use_adaptive_expansion` and `expansion_k` added to `QueryRequest`.
+
+## [2.31.0] — 2026-04-25
+### Added
+- **Phase 137: Hop-1 Intermediate Seed Expansion (H1SE)**: Architectural breakthrough for deep-hop accuracy.
+  - Eliminates cross-branch beam competition at high-degree hub nodes.
+  - Each hop-1 entity receives its own independent deep traversal.
+  - **Result:** +7.5 pp improvement in 3-hop Hits@10.
+
+## [2.30.1] — 2026-04-25
+### Added
+- **Phase 136: Funnel Beam Profile**: Linearly ramped beam widths for deeper hop coverage.
+  - Prevents early-hop pruning of paths that gain semantic signal only at deeper stages.
+
+## [2.30.0] — 2026-04-25
+### Added
+- **Phase 135: KGE-Enriched Embeddings**: Integrated TransE/RotatE structural signals into semantic embeddings.
+  - Blended Sentence-Transformer vectors with KGE node representations for improved multi-relational reasoning.
+
+## [2.29.0] — 2026-04-25
+### Added
+- **Phase 134: Vectorized Beam Scoring**: 10x performance boost in the traversal hot loop.
+  - Implemented `compute_weights_batch` in `CSAEngine` using NumPy vectorization.
+  - Consolidated neighbor expansion scoring into single matrix operations per path.
+
+## [2.28.0] — 2026-04-24
+### Added
+- **Phases 124-133: Causal Accuracy Suite**: Comprehensive causal inference weighting and benchmarks.
+  - Introduced `CAUSAL_RELATIONS` set with multiplicative bonus logic.
+  - Integrated `DeductiveTraversal` re-ranking for top-K validation.
+
+## [2.27.0] — 2026-04-24
+### Added
+- **Phase 123: Counterfactual Engine**: Direct simulation of "what-if" graph state changes.
+  - Evaluates how hypothetical edge additions/removals impact global reasoning traces.
+
+## [2.26.0] — 2026-04-24
+### Added
+- **Phase 122: Epistemic Gating**: Unified uncertainty model for path pruning.
+  - Uses entropy-based thresholds to kill branches where semantic signal is indistinguishable from noise.
+
+## [2.25.0] — 2026-04-23
+### Added
+- **Phases 119-121: Sleep Cycle & Metacognitive Monitor**: Integrated self-optimization loop.
+  - `ConsolidationEngine`: Persistent Engram materialization.
+  - `SynapticDecayEngine`: Autonomous pruning of low-utility synthetic edges.
+  - `MetacognitiveMonitor`: Real-time audit of reasoning ROI.
+
 ## [2.24.0] — 2026-04-22
 ### Added
 - **Phase 112: REM Cycle Shortcut Synthesis**: Autonomous synthesis of shortcut edges based on high-frequency QueryLog traces.

@@ -390,6 +390,7 @@ class BeamTraversal:
         community_merger=None,
         trace_info: Optional["ReasoningTrace"] = None,
         node_priming: Optional[Dict[str, float]] = None,
+        pruning_callback: Optional[callable] = None,
     ) -> List[TraversalPath]:
         """
         Run beam traversal from the given seed entity IDs.
@@ -402,6 +403,7 @@ class BeamTraversal:
         community_merger: Optional[QueryGuidedCommunityMerger] instance.
         trace_info      : Optional ReasoningTrace to populate (Phase 62).
         node_priming    : Optional per-node attention boost map (Phase 99).
+        pruning_callback: Optional func(top_score) -> bool (Phase 139).
         """
         emb_dim = self._infer_dim()
         self.expansions = 0
@@ -430,7 +432,8 @@ class BeamTraversal:
             # Phase 62: Explainable Reasoning Trace (ERT)
             paths = self._traverse_inner(seeds, emb_dim, query_time,
                                          trace_info=trace_info,
-                                         node_priming=_active_priming)
+                                         node_priming=_active_priming,
+                                         pruning_callback=pruning_callback)
             _dt = (_time.perf_counter() - _t0) * 1000
             _log.info(
                 "Traversal END    paths=%d  expansions=%d  elapsed=%.1fms",
@@ -449,6 +452,7 @@ class BeamTraversal:
         query_time: Optional[float],
         trace_info: Optional["ReasoningTrace"] = None,
         node_priming: Optional[Dict[str, float]] = None,
+        pruning_callback: Optional[callable] = None,
     ) -> "List[TraversalPath]":
         # Initialize beam from seed entities
         beam: List[TraversalPath] = []
@@ -510,6 +514,13 @@ class BeamTraversal:
              prior = predictive_coder.get_prior_for_query(seeds[0])
 
         for hop in range(1, self.max_hop + 1):
+            # Phase 139: Early exit via pruning callback (Cross-Branch Pruning)
+            if pruning_callback is not None:
+                _top_score = max(p.score for p in beam) if beam else 0.0
+                if not pruning_callback(_top_score):
+                    _log.debug("Phase 139: Branch pruned by callback at hop %d", hop)
+                    break
+
             candidates: List[TraversalPath] = []
 
             # Phase 110: GWS Bypass Gate Check

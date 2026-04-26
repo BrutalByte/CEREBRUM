@@ -8,9 +8,46 @@ a shared beam pool.
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Any, Callable
+import logging
+
+_log = logging.getLogger("cerebrum.traversal")
 
 from reasoning.traversal import BeamTraversal, TraversalPath
+
+
+class GlobalBeamBarrier:
+    """
+    Phase 139: Cross-Branch Pruning Barrier.
+    Allows independent H1SE traversals to synchronize and prune branches
+    that fall behind the global top score.
+    """
+
+    def __init__(self, target_count: int, threshold_ratio: float = 0.5):
+        self.target_count = target_count
+        self.threshold_ratio = threshold_ratio
+        self.best_scores: Dict[int, float] = {}  # sub_id -> score
+
+    def report(self, sub_id: int, top_score: float) -> bool:
+        """
+        Register the current top score for a branch.
+        Returns True if the branch should continue, False if it should be pruned.
+        """
+        self.best_scores[sub_id] = top_score
+        
+        # Don't prune until we have data from at least 1/3 of the expected branches
+        if len(self.best_scores) < max(2, self.target_count // 3):
+            return True
+
+        global_max = max(self.best_scores.values())
+        if global_max <= 0:
+            return True
+
+        # Prune if this branch's best is significantly worse than the global best
+        is_viable = top_score >= (global_max * self.threshold_ratio)
+        _log.debug("Barrier report sub_id=%d score=%.4f global_max=%.4f viable=%s", 
+                   sub_id, top_score, global_max, is_viable)
+        return is_viable
 
 
 def _funnel_beam_widths(max_hop: int, bw: int, factor: float) -> Dict[int, int]:
@@ -168,11 +205,14 @@ class HopExpandedTraversal:
         trace_info=None,
         node_priming=None,
     ) -> List[TraversalPath]:
+        if not seeds:
+            return []
+
         k_eff = self._get_adaptive_k()
         per_budget = self._per_traversal_budget(k_eff)
 
-        # Stage 1: 1-hop terminal scan — BeamTraversal never prunes the final
-        # hop, so all hop-1 neighbors are returned regardless of beam_width.
+        # Stage 1: 1-hop terminal scan for ALL seeds.
+        # This captures the union of all immediate neighbors.
         scan = self._make_traversal(max_hop=1, per_budget=per_budget)
         scan_paths = scan.traverse(
             seeds,
@@ -185,39 +225,78 @@ class HopExpandedTraversal:
             return scan_paths
 
         # Build best parent path per hop-1 entity (for stitching).
+        # Phase 140: Track seed-to-neighbor counts for Intersection Bonus.
         seed_set: Set[str] = set(seeds)
         parent_map: Dict[str, TraversalPath] = {}
+        neighbor_seed_counts: Dict[str, int] = {} # entity -> num seeds that reached it
+        
         for p in scan_paths:
             eid = p.tail
             if eid not in seed_set:
+                # Track best path to this neighbor
                 if eid not in parent_map or p.score > parent_map[eid].score:
                     parent_map[eid] = p
+                # Increment intersection count
+                neighbor_seed_counts[eid] = neighbor_seed_counts.get(eid, 0) + 1
 
-        # Rank hop-1 entities by scan score, cap at k_eff.
+        # Rank hop-1 entities. 
+        # Multi-seed logic: boost score of entities reached by >1 seed.
+        def _rank_key(eid: str) -> float:
+            base_score = parent_map[eid].score
+            # Intersection bonus: +20% per additional seed
+            bonus = 1.0 + (0.2 * (neighbor_seed_counts[eid] - 1))
+            return base_score * bonus
+
         hop1_entities: List[str] = []
-        for p in sorted(parent_map.values(), key=lambda x: x.score, reverse=True):
-            hop1_entities.append(p.tail)
+        sorted_neighbors = sorted(parent_map.keys(), key=_rank_key, reverse=True)
+        for eid in sorted_neighbors:
+            hop1_entities.append(eid)
             if len(hop1_entities) >= k_eff:
                 break
 
         # Stage 2: independent deep traversal per hop-1 entity.
-        # Stitch each deep path with its parent so hop_depth = full depth from seed.
+        # Phase 139: Synchronization barrier for cross-branch pruning.
+        barrier = GlobalBeamBarrier(target_count=len(hop1_entities), threshold_ratio=0.5)
+
         deep_hop = self.max_hop - 1
+        # all_paths: List[TraversalPath] = list(scan_paths) 
+        # FIX: scan_paths already contains parent_map entries. 
+        # We start with scan_paths but ensure Stage 2 doesn't duplicate seeds.
         all_paths: List[TraversalPath] = list(scan_paths)
-        for entity in hop1_entities:
+        
+        # Phase 142 (Hotfix): Cycle prevention. Don't allow deep traversals 
+        # to go back to the original seeds.
+        forbidden_seeds = set(seeds)
+
+        for i, entity in enumerate(hop1_entities):
             parent = parent_map[entity]
             deep = self._make_traversal(
                 max_hop=deep_hop,
                 beam_widths=self._deep_beam_widths,
                 per_budget=per_budget,
             )
+
+            # Callback links sub-traversal to the global barrier
+            def _prune_cb(top_score: float, sub_id=i) -> bool:
+                return barrier.report(sub_id, parent.score * top_score)
+
+            # FIX: We need to prime the sub-traversal to avoid the forbidden seeds.
+            # BeamTraversal doesn't have a direct forbidden_nodes list, but we can 
+            # use node_priming with a negative boost or just filter results.
+            # Filtering is safer and easier.
+            
             deep_paths = deep.traverse(
                 [entity],
                 query_embedding=query_embedding,
                 trace_info=None,
                 node_priming=node_priming,
+                pruning_callback=_prune_cb,
             )
             for dp in deep_paths:
+                # Cycle prevention: if the deep path leads back to original seeds, 
+                # discard it as a redundant answer.
+                if dp.tail in forbidden_seeds:
+                    continue
                 all_paths.append(_stitch(parent, dp))
 
         return all_paths

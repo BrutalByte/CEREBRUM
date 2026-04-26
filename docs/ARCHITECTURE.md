@@ -1,6 +1,6 @@
 # CEREBRUM System Architecture
 
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.33.1 (Phase 143 (Homeostatic Scaling Integration) COMPLETE)
 
 Complete data-flow from ingestion to result, including all options, pathways, and decision nodes.
 

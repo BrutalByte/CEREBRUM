@@ -6,16 +6,19 @@ This file provides essential context and instructions for Gemini CLI when workin
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph (KG) reasoning. It implements a multi-hop traversal mechanism inspired by Transformer architectures, allowing KGs to perform complex reasoning without an LLM or training data.
 
-**v2.31.0 (Phase 137 COMPLETE)** — 1560+ tests passing. Includes Hop-1 Intermediate Seed Expansion (H1SE), Funnel Beam Profile, KGE-Enriched Embeddings, Vectorized Beam Scoring, Causal Accuracy Benchmark, Counterfactual Reasoning, Epistemic Gating, Sleep Cycle (Consolidation/REMS/Decay), Metacognitive Monitor, Active Inference, Global Workspace, Thalamofrontal Feedback Loop, De Novo Parameter Synthesis, Recursive Self-Synthesis, Homeostatic Metaplasticity, and a 10-parameter CSA formula.
+**v2.33.0 (Phase 141 COMPLETE)** — 1560+ tests passing. Includes Autonomous H1SE Tuning, Multi-Seed Relational Interaction, Cross-Branch Path Pruning, Adaptive Expansion K, Hop-1 Intermediate Seed Expansion (H1SE), Funnel Beam Profile, KGE-Enriched Embeddings, Vectorized Beam Scoring, Causal Accuracy Benchmark, Counterfactual Reasoning, Epistemic Gating, Sleep Cycle, and a 10-parameter CSA formula.
 
 ### Core Innovations
 1.  **DSCF/TSC (Triple-Signal Consensus):** A novel community detection algorithm that fuses local (LPA), global (Modularity), and flow (Centrality) signals.
 2.  **CSA (Community-Structured Attention):** An attention mechanism influenced by community membership and semantic similarity.
-3.  **H1SE (Hop-1 Intermediate Seed Expansion - Phase 137):** Eliminates cross-branch beam competition by giving each hop-1 entity its own independent deep traversal.
-4.  **Thalamofrontal Feedback Loop (Phase 108):** Dynamic metabolic gating of reasoning paths. Prunes "thermal waste" by tightening the attention gate when search quality is high.
-5.  **Sleep Cycle (Phases 119-121):** Self-organizing idle cycles for Engram Consolidation, REM Shortcut Synthesis, and Synaptic Decay.
-6.  **Recursive Self-Synthesis (Phase 105)**: System architects its own subroutines based on DMN bottleneck audits.
-7.  **Metabolic Homeostasis**: Dynamic functional regulation using metabolic scalars: Reinforcement, Arousal, Novelty, Cohesion, and Persistence.
+3.  **Cross-Branch Path Pruning (Phase 139):** Prevents computation waste by terminating weak H1SE branches mid-flight using a Global Beam Barrier.
+4.  **Multi-Seed Interaction (Phase 140):** Enables H1SE to handle relational intersection queries with an automated priority bonus for shared neighbors.
+5.  **Adaptive Expansion K (Phase 138):** Dynamically scales H1SE expansion budget based on metabolic `Arousal` and `Reinforcement`.
+6.  **H1SE (Hop-1 Intermediate Seed Expansion - Phase 137):** Eliminates cross-branch beam competition by giving each hop-1 entity its own independent deep traversal.
+7.  **Thalamofrontal Feedback Loop (Phase 108):** Dynamic metabolic gating of reasoning paths. Prunes "thermal waste" by tightening the attention gate when search quality is high.
+8.  **Sleep Cycle (Phases 119-121):** Self-organizing idle cycles for Engram Consolidation, REM Shortcut Synthesis, and Synaptic Decay.
+9.  **Recursive Self-Synthesis (Phase 105)**: System architects its own subroutines based on DMN bottleneck audits.
+10. **Metabolic Homeostasis**: Dynamic functional regulation using metabolic scalars: Reinforcement, Arousal, Novelty, Cohesion, and Persistence.
 
 ### Transformer ↔ KG Analogy
 | Transformer Concept | CEREBRUM Equivalent |
@@ -85,12 +88,16 @@ python core/autonomous_researcher.py --continuous --interval 60
 -   **Reproducibility:** Deterministic runs for DSCF/TSC.
 -   **Documentation:** Absolute precedence to `PARALLAX.md` and `README.md`.
 
-## Current Project Status (Phase 137 COMPLETE)
+## Current Project Status (Phase 141 COMPLETE)
 
-CEREBRUM is currently in **v2.31.0**. All phases through 137 shipped and verified.
+CEREBRUM is currently in **v2.33.0**. All phases through 141 shipped and verified.
 
 Key implementations (recent phases):
--   **Phase 137 — H1SE**: Hop-1 Intermediate Seed Expansion to eliminate beam competition at hubs.
+-   **Phase 141 — Autonomous H1SE Tuning**: Parameter self-optimization against MetaQA.
+-   **Phase 140 — Multi-Seed Interaction**: Intersection queries with shared-neighbor bonus.
+-   **Phase 139 — Cross-Branch Path Pruning**: Global Beam Barrier for mid-flight branch termination.
+-   **Phase 138 — Adaptive Expansion K**: Metabolic scaling of H1SE branches.
+-   **Phase 137 — H1SE**: Hop-1 Intermediate Seed Expansion.
 -   **Phase 136 — Funnel Beam Profile**: Linearly ramped beam widths for deeper hop coverage.
 -   **Phase 135 — KGE-Enriched Embeddings**: TransE/RotatE signals integrated into semantic embeddings.
 -   **Phase 134 — Vectorized Beam Scoring**: 10x performance boost via NumPy-vectorized scoring loops.

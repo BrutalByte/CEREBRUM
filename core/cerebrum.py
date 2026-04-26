@@ -55,7 +55,7 @@ import networkx as nx
 import numpy as np
 
 from adapters.networkx_adapter import NetworkXAdapter
-from core.attention_engine import CSAEngine
+from core.attention_engine import CSAEngine, HomeostaticModulator
 from core.embedding_engine import EmbeddingEngine, RandomEngine
 from core.graph_adapter import GraphAdapter
 from core.chemical_modulator import ChemicalModulator   # Phase 68
@@ -138,6 +138,7 @@ class CerebrumGraph:
         self._beam_profile_factor = beam_profile_factor
         self._expansion_k         = expansion_k
         self._use_adaptive_expansion = use_adaptive_expansion
+        self.homeostatic_modulator = HomeostaticModulator(target_activity=1.0) # Phase 143
         self._lateral_inhibition_ratio: float = 0.0  # Phase 100
 
         # Telemetry (Phase 63+)
