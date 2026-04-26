@@ -125,6 +125,8 @@ class HopExpandedTraversal:
         warm_start_strength: float = 0.0,
         modulator=None,
         use_adaptive_expansion: bool = True,
+        min_diversity_target: int = 15,
+        residual_k: int = 10,
         **traversal_kwargs,
     ):
         self.adapter = adapter
@@ -139,6 +141,8 @@ class HopExpandedTraversal:
         self.warm_start_strength = warm_start_strength
         self.modulator = modulator
         self.use_adaptive_expansion = use_adaptive_expansion
+        self.min_diversity_target = min_diversity_target
+        self.residual_k = residual_k
         self._traversal_kwargs = traversal_kwargs
         self._deep_beam_widths = _funnel_beam_widths(
             max_hop - 1, beam_width, beam_profile_factor
@@ -247,8 +251,9 @@ class HopExpandedTraversal:
             bonus = 1.0 + (0.2 * (neighbor_seed_counts[eid] - 1))
             return base_score * bonus
 
-        hop1_entities: List[str] = []
+        # sorted_neighbors is kept in scope for the Phase 145 residual sweep.
         sorted_neighbors = sorted(parent_map.keys(), key=_rank_key, reverse=True)
+        hop1_entities: List[str] = []
         for eid in sorted_neighbors:
             hop1_entities.append(eid)
             if len(hop1_entities) >= k_eff:
@@ -259,12 +264,12 @@ class HopExpandedTraversal:
         barrier = GlobalBeamBarrier(target_count=len(hop1_entities), threshold_ratio=0.5)
 
         deep_hop = self.max_hop - 1
-        # all_paths: List[TraversalPath] = list(scan_paths) 
-        # FIX: scan_paths already contains parent_map entries. 
+        # all_paths: List[TraversalPath] = list(scan_paths)
+        # FIX: scan_paths already contains parent_map entries.
         # We start with scan_paths but ensure Stage 2 doesn't duplicate seeds.
         all_paths: List[TraversalPath] = list(scan_paths)
-        
-        # Phase 142 (Hotfix): Cycle prevention. Don't allow deep traversals 
+
+        # Phase 142 (Hotfix): Cycle prevention. Don't allow deep traversals
         # to go back to the original seeds.
         forbidden_seeds = set(seeds)
 
@@ -281,10 +286,10 @@ class HopExpandedTraversal:
                 return barrier.report(sub_id, parent.score * top_score)
 
             # FIX: We need to prime the sub-traversal to avoid the forbidden seeds.
-            # BeamTraversal doesn't have a direct forbidden_nodes list, but we can 
+            # BeamTraversal doesn't have a direct forbidden_nodes list, but we can
             # use node_priming with a negative boost or just filter results.
             # Filtering is safer and easier.
-            
+
             deep_paths = deep.traverse(
                 [entity],
                 query_embedding=query_embedding,
@@ -293,10 +298,47 @@ class HopExpandedTraversal:
                 pruning_callback=_prune_cb,
             )
             for dp in deep_paths:
-                # Cycle prevention: if the deep path leads back to original seeds, 
+                # Cycle prevention: if the deep path leads back to original seeds,
                 # discard it as a redundant answer.
                 if dp.tail in forbidden_seeds:
                     continue
                 all_paths.append(_stitch(parent, dp))
+
+        # Phase 145: Residual Hop-1 Expansion (RHE).
+        # If unique terminal-depth answers are below min_diversity_target AND
+        # unexplored hop-1 entities remain, run a reduced-budget residual sweep
+        # to improve coverage of long-tail hop-1 branches.
+        if deep_hop >= 1 and self.residual_k > 0:
+            explored_set = set(hop1_entities[:k_eff])
+            remaining_neighbors = [
+                e for e in sorted_neighbors if e not in explored_set
+            ]
+            current_terminals = {
+                p.tail for p in all_paths if p.hop_depth >= self.max_hop
+            }
+            if len(current_terminals) < self.min_diversity_target and remaining_neighbors:
+                residual_budget = max(50, per_budget // 2)
+                for entity in remaining_neighbors[:self.residual_k]:
+                    parent = parent_map.get(entity)
+                    if parent is None:
+                        continue
+                    deep = self._make_traversal(
+                        max_hop=deep_hop,
+                        beam_widths=self._deep_beam_widths,
+                        per_budget=residual_budget,
+                    )
+                    deep_paths = deep.traverse(
+                        [entity],
+                        query_embedding=query_embedding,
+                        trace_info=None,
+                        node_priming=node_priming,
+                    )
+                    for dp in deep_paths:
+                        if dp.tail not in forbidden_seeds:
+                            all_paths.append(_stitch(parent, dp))
+                    _log.debug(
+                        "Phase 145 RHE: residual entity=%s added %d paths",
+                        entity, len(deep_paths),
+                    )
 
         return all_paths

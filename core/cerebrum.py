@@ -834,6 +834,9 @@ class CerebrumGraph:
         beam_profile_factor: Optional[float] = None,
         hop_expand:        bool            = False,
         expansion_k:       Optional[int]   = None,
+        branch_bonus_weight: float         = 0.25,
+        residual_k:        int             = 10,
+        min_diversity_target: int          = 15,
     ) -> List[Answer]:
         """
         Traverse the graph from ``seeds`` and return ranked answers.
@@ -850,6 +853,8 @@ class CerebrumGraph:
         query_embedding : optional query vector for semantic alignment
         relation_prior  : optional RelationPathPrior or GraphRelationPrior
         vote_weight     : convergence voting weight (default 0.30)
+        branch_bonus_weight : Phase 144 DBC — multiplicative bonus for answers
+                          reached via multiple distinct hop-1 branches (default 0.25)
         memory_threshold_pct : safety threshold for resource usage (default 95.0)
         trace_info      : optional ReasoningTrace to populate (Phase 62).
         max_loops       : LoopLM-style iterative refinement depth (Phase 70,
@@ -948,19 +953,21 @@ class CerebrumGraph:
             _ek = expansion_k if expansion_k is not None else self._expansion_k
             _uae = self._use_adaptive_expansion
             traversal = HopExpandedTraversal(
-                adapter             = self.adapter,
-                csa_engine          = self._csa,
-                beam_width          = bw,
-                max_hop             = mh,
-                max_neighbors       = self._max_neighbors,
-                expansion_k         = _ek,
-                beam_profile_factor = _profile_factor,
-                max_budget          = getattr(self._traversal, "max_budget", 10_000),
-                governor            = getattr(self._traversal, "governor", None),
-                probabilistic       = self._probabilistic,
-                warm_start_strength = self._warm_start_strength,
-                modulator           = self.modulator,
+                adapter               = self.adapter,
+                csa_engine            = self._csa,
+                beam_width            = bw,
+                max_hop               = mh,
+                max_neighbors         = self._max_neighbors,
+                expansion_k           = _ek,
+                beam_profile_factor   = _profile_factor,
+                max_budget            = getattr(self._traversal, "max_budget", 10_000),
+                governor              = getattr(self._traversal, "governor", None),
+                probabilistic         = self._probabilistic,
+                warm_start_strength   = self._warm_start_strength,
+                modulator             = self.modulator,
                 use_adaptive_expansion = _uae,
+                min_diversity_target  = min_diversity_target,
+                residual_k            = residual_k,
                 **csa_overrides,
             )
             traversal._causal_edge_index = getattr(
@@ -1049,11 +1056,12 @@ class CerebrumGraph:
 
         answers = extract(
             paths,
-            top_k        = top_k,
-            min_hop      = min_hop,
-            query_embedding = query_embedding,
-            relation_prior  = relation_prior,
-            vote_weight     = vote_weight,
+            top_k               = top_k,
+            min_hop             = min_hop,
+            query_embedding     = query_embedding,
+            relation_prior      = relation_prior,
+            vote_weight         = vote_weight,
+            branch_bonus_weight = branch_bonus_weight,
         )
 
         # Phase 95: record query result into working memory buffer

@@ -121,6 +121,13 @@ class Answer:
     Normalized weighted vote sum [0, 1] across all paths reaching this entity.
     """
 
+    branch_count: int = 0
+    """
+    Phase 144: Number of distinct first-intermediate nodes (hop-1 branch sources)
+    across all paths reaching this entity. branch_count > 1 means independent
+    corroborating evidence from separate reasoning branches.
+    """
+
     def __repr__(self) -> str:
         flags = f", flags={len(self.contradiction_flags)}" if self.contradiction_flags else ""
         return f"Answer(entity={self.entity_id!r}, score={self.score:.4f}{flags})"
@@ -204,6 +211,7 @@ def extract(
     vote_weight: float = 0.30,
     relation_prior: Optional[Any] = None,
     weight_prior: float = 0.15,
+    branch_bonus_weight: float = 0.25,
 ) -> List[Answer]:
     """
     Extract the top-K answer entities from a list of TraversalPaths.
@@ -227,6 +235,10 @@ def extract(
                      Higher values prefer entities reached by more distinct paths
                      (ensemble-like voting). Default 0.3.
                      Set to 0.0 to restore legacy behaviour (path score only).
+    branch_bonus_weight : Phase 144 — multiplicative bonus scaling for answers
+                     reached via multiple distinct first-intermediate-node branches.
+                     0.25 means a 2-branch answer scores ~17% higher (log1p(1)*0.25);
+                     a 4-branch answer scores ~35% higher. Set to 0.0 to disable.
 
     Returns
     -------
@@ -259,23 +271,41 @@ def extract(
     # Each path contributes its score as a vote weight — high-confidence paths
     # count more than low-confidence paths toward the entity's vote total.
     # More/stronger independent reasoning chains converging = stronger signal.
+    #
+    # Phase 144: Also track distinct first-intermediate nodes (branch sources).
+    # Paths sharing nodes[2] came from the same hop-1 branch; paths with different
+    # nodes[2] represent independent corroborating evidence.
     best: Dict[str, tuple] = {}        # entity -> (best_path, best_score)
     vote_weight_sum: Dict[str, float] = {}  # entity -> sum of path scores
+    branch_sets: Dict[str, set] = {}   # entity -> set of distinct branch keys
     for path, s in scored:
         entity = path.tail
         vote_weight_sum[entity] = vote_weight_sum.get(entity, 0.0) + s
         if entity not in best or s > best[entity][1]:
             best[entity] = (path, s)
+        # Branch key: nodes[2] for multi-hop paths (the hop-1 intermediary);
+        # nodes[0] (seed) for 1-hop paths where no branching applies.
+        branch_id = path.nodes[2] if len(path.nodes) >= 5 else path.nodes[0]
+        branch_sets.setdefault(entity, set()).add(branch_id)
 
     # Normalise weighted vote sums to [0, 1] relative to the highest-voted entity
     max_vote_sum = max(vote_weight_sum.values()) if vote_weight_sum else 1.0
 
-    # Combine path score with normalised weighted vote sum
+    # Combine path score with normalised weighted vote sum.
+    # Phase 144: Apply branch-diversity multiplier — log-scale bonus for answers
+    # reached via multiple independent hop-1 branches.
+    import math as _math
     def combined(entity_id: str, path_score: float) -> float:
         if vote_weight <= 0.0:
-            return path_score
-        norm_votes = vote_weight_sum[entity_id] / max_vote_sum
-        return (1.0 - vote_weight) * path_score + vote_weight * norm_votes
+            base = path_score
+        else:
+            norm_votes = vote_weight_sum[entity_id] / max_vote_sum
+            base = (1.0 - vote_weight) * path_score + vote_weight * norm_votes
+        if branch_bonus_weight > 0.0:
+            n_br = len(branch_sets.get(entity_id, set()))
+            branch_factor = 1.0 + branch_bonus_weight * _math.log1p(n_br - 1) if n_br > 1 else 1.0
+            return base * branch_factor
+        return base
 
     # Sort and return top-K
     top_candidates = sorted(
@@ -284,7 +314,9 @@ def extract(
         reverse=True,
     )[:top_k]
     # Unpack to (path, combined_score) for answer construction below
-    ranked_answers = [(v[0], combined(k, v[1])) for k, v in top_candidates]
+    # Clamp scores to [0, 1] for display. Ranking itself uses un-clamped combined()
+    # so the branch multiplier can exceed 1.0 during sorting without breaking callers.
+    ranked_answers = [(v[0], min(1.0, combined(k, v[1]))) for k, v in top_candidates]
 
     answers = []
     for path, s in ranked_answers:
@@ -326,6 +358,7 @@ def extract(
                 score_uncertainty=path.score_variance,
                 path_score=round(raw_path_score, 6),
                 consensus_score=round(norm_votes, 6),
+                branch_count=len(branch_sets.get(ent_id, set())),
             )
         )
 

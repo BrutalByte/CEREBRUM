@@ -98,6 +98,35 @@ class QueryRequest(BaseModel):
             "when confident."
         ),
     )
+    branch_bonus_weight: float = Field(
+        default=0.25,
+        ge=0.0,
+        le=2.0,
+        description=(
+            "Phase 144: multiplicative bonus for answers corroborated by multiple "
+            "distinct hop-1 branches. 0.25 = default (+17%% for 2 branches, +35%% "
+            "for 4 branches via log-scale). Set to 0.0 to disable."
+        ),
+    )
+    residual_k: int = Field(
+        default=10,
+        ge=0,
+        le=50,
+        description=(
+            "Phase 145: number of additional long-tail hop-1 entities to explore "
+            "when terminal-answer diversity is below min_diversity_target. "
+            "0 = disabled."
+        ),
+    )
+    min_diversity_target: int = Field(
+        default=15,
+        ge=1,
+        le=200,
+        description=(
+            "Phase 145: minimum number of unique terminal answers required before "
+            "skipping the residual sweep. Only meaningful when hop_expand=True."
+        ),
+    )
 
 
 class QueryConsensusRequest(QueryRequest):
