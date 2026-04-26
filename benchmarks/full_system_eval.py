@@ -671,6 +671,8 @@ def main():
                         help="Run VARIANT D: FULL + H1SE (Hop-1 Seed Expansion, Phase 137).")
     parser.add_argument("--expansion-k", type=int, default=20,
                         help="expansion_k for H1SE variant (default: 20).")
+    parser.add_argument("--adaptive-k", action="store_true",
+                        help="Enable Phase 138 Adaptive Expansion K (Metabolic-Gated).")
     args = parser.parse_args()
 
     use_cache = not args.no_cache
@@ -851,6 +853,7 @@ def main():
                 beam_width=bw,
                 max_hop=h,
                 expansion_k=args.expansion_k,
+                use_adaptive_expansion=args.adaptive_k,
                 probabilistic=True,
                 warm_start_strength=3,
             )

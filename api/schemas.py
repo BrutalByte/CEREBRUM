@@ -76,6 +76,28 @@ class QueryRequest(BaseModel):
             "Expensive (K exhaustive BFS calls) — disabled by default."
         ),
     )
+    hop_expand: bool = Field(
+        default=False,
+        description=(
+            "Phase 137: enable Hop-1 Intermediate Seed Expansion. "
+            "Runs an independent deep traversal for each of the top expansion_k "
+            "hop-1 neighbors to eliminate beam competition."
+        ),
+    )
+    expansion_k: int = Field(
+        default=20,
+        ge=1,
+        le=100,
+        description="Phase 137: maximum number of hop-1 entities to expand.",
+    )
+    use_adaptive_expansion: bool = Field(
+        default=True,
+        description=(
+            "Phase 138: scale expansion_k dynamically based on metabolic signals "
+            "(arousal and reinforcement). More expansion when uncertain; less "
+            "when confident."
+        ),
+    )
 
 
 class QueryConsensusRequest(QueryRequest):

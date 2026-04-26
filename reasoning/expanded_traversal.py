@@ -86,6 +86,8 @@ class HopExpandedTraversal:
         governor=None,
         probabilistic: bool = False,
         warm_start_strength: float = 0.0,
+        modulator=None,
+        use_adaptive_expansion: bool = True,
         **traversal_kwargs,
     ):
         self.adapter = adapter
@@ -98,6 +100,8 @@ class HopExpandedTraversal:
         self.governor = governor
         self.probabilistic = probabilistic
         self.warm_start_strength = warm_start_strength
+        self.modulator = modulator
+        self.use_adaptive_expansion = use_adaptive_expansion
         self._traversal_kwargs = traversal_kwargs
         self._deep_beam_widths = _funnel_beam_widths(
             max_hop - 1, beam_width, beam_profile_factor
@@ -106,12 +110,31 @@ class HopExpandedTraversal:
         self._causal_edge_index: set = set()
         self.causal_bonus: float = float(traversal_kwargs.get("causal_bonus", 0.3))
 
-    def _per_traversal_budget(self) -> int:
+    def _get_adaptive_k(self) -> int:
         """
-        Divide max_budget evenly: 1 slot for the scan + expansion_k deep slots.
-        Guarantees total expansions <= max_budget regardless of expansion_k.
+        Phase 138: Scale expansion_k based on metabolic signals.
+        High arousal/uncertainty -> more expansion.
+        High reinforcement/confidence -> less expansion.
         """
-        return max(100, self.max_budget // (self.expansion_k + 1))
+        if not self.use_adaptive_expansion or self.modulator is None:
+            return self.expansion_k
+
+        # Metabolic signals: 0.0 to 1.0
+        arousal = getattr(self.modulator, "arousal", 0.0)
+        reinforcement = getattr(self.modulator, "reinforcement", 0.0)
+
+        # Formula: more expansion when aroused, less when reinforced.
+        # Scale ranges from 0.2 (confident) to 2.0 (exploring).
+        scale = 1.0 + arousal - reinforcement
+        k_eff = int(self.expansion_k * max(0.2, min(2.0, scale)))
+        return max(1, k_eff)
+
+    def _per_traversal_budget(self, k: int) -> int:
+        """
+        Divide max_budget evenly: 1 slot for the scan + k deep slots.
+        Guarantees total expansions <= max_budget regardless of k.
+        """
+        return max(100, self.max_budget // (k + 1))
 
     def _make_traversal(
         self,
@@ -145,7 +168,8 @@ class HopExpandedTraversal:
         trace_info=None,
         node_priming=None,
     ) -> List[TraversalPath]:
-        per_budget = self._per_traversal_budget()
+        k_eff = self._get_adaptive_k()
+        per_budget = self._per_traversal_budget(k_eff)
 
         # Stage 1: 1-hop terminal scan — BeamTraversal never prunes the final
         # hop, so all hop-1 neighbors are returned regardless of beam_width.
@@ -169,11 +193,11 @@ class HopExpandedTraversal:
                 if eid not in parent_map or p.score > parent_map[eid].score:
                     parent_map[eid] = p
 
-        # Rank hop-1 entities by scan score, cap at expansion_k.
+        # Rank hop-1 entities by scan score, cap at k_eff.
         hop1_entities: List[str] = []
         for p in sorted(parent_map.values(), key=lambda x: x.score, reverse=True):
             hop1_entities.append(p.tail)
-            if len(hop1_entities) >= self.expansion_k:
+            if len(hop1_entities) >= k_eff:
                 break
 
         # Stage 2: independent deep traversal per hop-1 entity.

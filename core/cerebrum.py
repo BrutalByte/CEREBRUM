@@ -125,6 +125,7 @@ class CerebrumGraph:
         beam_profile:         str   = "funnel",
         beam_profile_factor:  float = 3.0,
         expansion_k:          int   = 20,
+        use_adaptive_expansion: bool = True,
     ):
         self.adapter             = adapter
         self._embedding_engine   = embedding_engine or RandomEngine(dim=64)
@@ -136,6 +137,7 @@ class CerebrumGraph:
         self._beam_profile        = beam_profile
         self._beam_profile_factor = beam_profile_factor
         self._expansion_k         = expansion_k
+        self._use_adaptive_expansion = use_adaptive_expansion
         self._lateral_inhibition_ratio: float = 0.0  # Phase 100
 
         # Telemetry (Phase 63+)
@@ -943,6 +945,7 @@ class CerebrumGraph:
         if hop_expand and mh >= 2:
             from reasoning.expanded_traversal import HopExpandedTraversal
             _ek = expansion_k if expansion_k is not None else self._expansion_k
+            _uae = self._use_adaptive_expansion
             traversal = HopExpandedTraversal(
                 adapter             = self.adapter,
                 csa_engine          = self._csa,
@@ -955,6 +958,8 @@ class CerebrumGraph:
                 governor            = getattr(self._traversal, "governor", None),
                 probabilistic       = self._probabilistic,
                 warm_start_strength = self._warm_start_strength,
+                modulator           = self.modulator,
+                use_adaptive_expansion = _uae,
                 **csa_overrides,
             )
             traversal._causal_edge_index = getattr(
