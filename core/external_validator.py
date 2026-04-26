@@ -573,6 +573,10 @@ class ExternalValidator:
             status = "unvalidated"
         elif contested:
             status = "contested"
+        elif hit_count == 0 and errors:
+            # All adapters that were queried returned errors — we have no
+            # evidence either way; "novel" would be a false claim.
+            status = "unvalidated"
         elif hit_count == 0:
             status = "novel"
         elif clinical_active or 1 <= hit_count <= 9:
@@ -651,6 +655,6 @@ class ExternalValidator:
             try:
                 hits = adapter.search(proxy.source, proxy.derived_relation, proxy.target)
                 all_hits.extend(hits)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("_search_opposing %s error: %s", adapter.name(), exc)
         return all_hits

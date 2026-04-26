@@ -285,7 +285,8 @@ async def _run_query_internal(
     try:
         if _state["predictive_coder"]:
             _state["predictive_coder"].predict(seeds)
-    except: pass
+    except Exception as _exc:
+        _api_log.debug("predictive_coder.predict() failed: %s", _exc)
 
     try:
         if max_loops > 1:

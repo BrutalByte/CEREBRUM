@@ -124,6 +124,7 @@ class CerebrumGraph:
         warm_start_strength:  float = 0.0,
         beam_profile:         str   = "funnel",
         beam_profile_factor:  float = 3.0,
+        expansion_k:          int   = 20,
     ):
         self.adapter             = adapter
         self._embedding_engine   = embedding_engine or RandomEngine(dim=64)
@@ -134,6 +135,7 @@ class CerebrumGraph:
         self._warm_start_strength = warm_start_strength
         self._beam_profile        = beam_profile
         self._beam_profile_factor = beam_profile_factor
+        self._expansion_k         = expansion_k
         self._lateral_inhibition_ratio: float = 0.0  # Phase 100
 
         # Telemetry (Phase 63+)
@@ -827,6 +829,8 @@ class CerebrumGraph:
         context_seeds:     Optional[List[str]] = None,
         beam_profile:      Optional[str]   = None,
         beam_profile_factor: Optional[float] = None,
+        hop_expand:        bool            = False,
+        expansion_k:       Optional[int]   = None,
     ) -> List[Answer]:
         """
         Traverse the graph from ``seeds`` and return ranked answers.
@@ -904,7 +908,7 @@ class CerebrumGraph:
             if _profile == "funnel" else {}
         )
 
-        needs_custom = (mh != self._max_hop or bw != self._beam_width or memory_threshold_pct != 95.0 or bool(csa_overrides))
+        needs_custom = (mh != self._max_hop or bw != self._beam_width or memory_threshold_pct != 95.0 or bool(csa_overrides) or hop_expand)
         _prev_widths: Dict[int, int] = {}  # only meaningful when not needs_custom
 
         if needs_custom:
@@ -932,6 +936,30 @@ class CerebrumGraph:
             traversal = self._traversal
             _prev_widths = traversal._beam_widths
             traversal._beam_widths = _auto_beam_widths  # Phase 136: temporary override
+
+        # Phase 137: H1SE — replace traversal with HopExpandedTraversal when
+        # hop_expand=True. needs_custom=True guarantees no shared-traversal
+        # restore is needed in the finally block.
+        if hop_expand and mh >= 2:
+            from reasoning.expanded_traversal import HopExpandedTraversal
+            _ek = expansion_k if expansion_k is not None else self._expansion_k
+            traversal = HopExpandedTraversal(
+                adapter             = self.adapter,
+                csa_engine          = self._csa,
+                beam_width          = bw,
+                max_hop             = mh,
+                max_neighbors       = self._max_neighbors,
+                expansion_k         = _ek,
+                beam_profile_factor = _profile_factor,
+                max_budget          = getattr(self._traversal, "max_budget", 10_000),
+                governor            = getattr(self._traversal, "governor", None),
+                probabilistic       = self._probabilistic,
+                warm_start_strength = self._warm_start_strength,
+                **csa_overrides,
+            )
+            traversal._causal_edge_index = getattr(
+                self._traversal, "_causal_edge_index", set()
+            )
 
         # Phase 69: Generate predictive prior before traversal
         pred_prior = None

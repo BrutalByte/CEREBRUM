@@ -51,3 +51,6 @@ ue5_project/.vs/
 ue5_project/**/*.VC.db
 ue5_project/DerivedDataCache/
 ue5_project/Content/UnrealClaude/
+
+.gemini/
+gha-creds-*.json

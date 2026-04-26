@@ -4,9 +4,12 @@ Core reasoning logit framework for CEREBRUM.
 Consolidates all signals (semantic, community, grounding, etc.) into a unified structure
 to ensure consistency across traversal, pruning, and ranking.
 """
+import logging
 from dataclasses import dataclass
 from typing import Tuple
 import numpy as np
+
+_logger = logging.getLogger("cerebrum.reasoning_logit")
 
 @dataclass
 class ReasoningLogit:
@@ -44,11 +47,21 @@ class ReasoningLogit:
         mu is the penalty for synthetic/synthesis density.
         """
         if len(params) == 9:
-            # Backward compatibility
-            a, b, g, d, e, z, eta, iota, theta = params
-            mu = 0.050
-        else:
-            a, b, g, d, e, z, eta, iota, mu, theta = params
+            # Auto-migrate pre-Phase-45 checkpoint: inject default mu between
+            # iota (index 7) and theta (index 8).
+            _logger.warning(
+                "ReasoningLogit.score() received a 9-parameter vector "
+                "(pre-Phase-45 checkpoint). Auto-migrating: inserting "
+                "mu=0.050 at position 8. Run POST /retrain to persist the "
+                "upgraded 10-parameter schema."
+            )
+            params = params[:8] + (0.050,) + params[8:]
+        elif len(params) != 10:
+            raise ValueError(
+                f"ReasoningLogit.score() requires 10 parameters "
+                f"(alpha..theta), got {len(params)}."
+            )
+        a, b, g, d, e, z, eta, iota, mu, theta = params
 
         raw = (
             a * self.sim

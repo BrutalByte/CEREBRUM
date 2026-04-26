@@ -667,6 +667,10 @@ def main():
                              "30 epochs ~= 5 min on CPU, cached after first run).")
     parser.add_argument("--opt-beam-width", type=int, default=20,
                         help="Beam width for OPTIMIZED variant (default: 20).")
+    parser.add_argument("--h1se", action="store_true",
+                        help="Run VARIANT D: FULL + H1SE (Hop-1 Seed Expansion, Phase 137).")
+    parser.add_argument("--expansion-k", type=int, default=20,
+                        help="expansion_k for H1SE variant (default: 20).")
     args = parser.parse_args()
 
     use_cache = not args.no_cache
@@ -825,6 +829,38 @@ def main():
               f"MRR={m['mrr']:.4f}  "
               f"({m['ms_per_q']:.2f}ms/Q)")
     print()
+
+    # ===================================================================
+    # VARIANT D: H1SE (Phase 137 — Hop-1 Seed Expansion)
+    # ===================================================================
+    results_h1se: List[Dict] = []
+
+    if args.h1se:
+        from reasoning.expanded_traversal import HopExpandedTraversal
+        print("-" * 72)
+        print("  VARIANT D — H1SE  (FULL + Hop-1 Intermediate Seed Expansion)")
+        print(f"  expansion_k={args.expansion_k}  beam_width={bw}")
+        print("-" * 72)
+        for h in hops:
+            qa_norm_h1se = normalize_qa(raw_qa[h])
+            print(f"  [{h}-hop]  {len(qa_norm_h1se):,} questions  "
+                  f"({len(raw_qa[h]) - len(qa_norm_h1se):,} dropped — seed not in graph)")
+            het = HopExpandedTraversal(
+                adapter=adapter_full,
+                csa_engine=csa_full,
+                beam_width=bw,
+                max_hop=h,
+                expansion_k=args.expansion_k,
+                probabilistic=True,
+                warm_start_strength=3,
+            )
+            m = evaluate_hop(h, het, qa_norm_h1se, top_k=args.top_k, adapter=adapter_full)
+            results_h1se.append(m)
+            print(f"    Hits@1={m['hits_1']:.4f}  "
+                  f"Hits@10={m['hits_10']:.4f}  "
+                  f"MRR={m['mrr']:.4f}  "
+                  f"({m['ms_per_q']:.2f}ms/Q)")
+        print()
 
     # ===================================================================
     # VARIANT C: OPTIMIZED (all improvements stacked)
@@ -1014,10 +1050,13 @@ def main():
     # ===================================================================
     # Comparison table
     # ===================================================================
-    has_opt = bool(results_opt)
+    has_opt  = bool(results_opt)
+    has_h1se = bool(results_h1se)
     print("=" * 72)
     if has_opt:
         print("  RESULTS: RAW vs FULL THALAMUS vs OPTIMIZED")
+    elif has_h1se:
+        print("  RESULTS: RAW vs FULL vs H1SE (Phase 137)")
     else:
         print("  RESULTS: Raw Ingestion vs Full THALAMUS Pipeline")
     print("=" * 72)
@@ -1026,14 +1065,18 @@ def main():
     if has_opt:
         print(f"  {'':30}  {'RAW':>8}  {'FULL':>8}  {'OPT':>8}  {'OPT-RAW':>9}")
         print(f"  {'-'*30}  {'-'*8}  {'-'*8}  {'-'*8}  {'-'*9}")
+    elif has_h1se:
+        print(f"  {'':30}  {'RAW':>8}  {'FULL':>8}  {'H1SE':>8}  {'H1SE-FULL':>10}")
+        print(f"  {'-'*30}  {'-'*8}  {'-'*8}  {'-'*8}  {'-'*10}")
     else:
         print(f"  {'':30}  {'RAW':>8}  {'FULL':>8}  {'DELTA':>8}")
         print(f"  {'-'*30}  {'-'*8}  {'-'*8}  {'-'*8}")
 
     full_iter = results_full if results_full else [{}] * len(results_raw)
     opt_iter  = results_opt  if results_opt  else [{}] * len(results_raw)
+    h1se_iter = results_h1se if results_h1se else [{}] * len(results_raw)
 
-    for r_raw, r_full, r_opt in zip(results_raw, full_iter, opt_iter):
+    for r_raw, r_full, r_opt, r_h1se in zip(results_raw, full_iter, opt_iter, h1se_iter):
         h = r_raw["hop"]
         for metric, label in [("hits_1", "Hits@1"), ("hits_10", "Hits@10"), ("mrr", "MRR")]:
             raw_v  = r_raw.get(metric, 0.0)
@@ -1044,6 +1087,12 @@ def main():
                 sign   = "+" if delta >= 0 else ""
                 print(f"  {h}-hop {label:25}  {raw_v:8.4f}  {full_v:8.4f}  "
                       f"{opt_v:8.4f}  {sign}{delta:+.4f}")
+            elif has_h1se:
+                h1se_v = r_h1se.get(metric, 0.0)
+                delta  = h1se_v - full_v
+                sign   = "+" if delta >= 0 else ""
+                print(f"  {h}-hop {label:25}  {raw_v:8.4f}  {full_v:8.4f}  "
+                      f"{h1se_v:8.4f}  {sign}{delta:+.4f}")
             else:
                 delta = full_v - raw_v
                 sign  = "+" if delta >= 0 else ""
@@ -1054,6 +1103,9 @@ def main():
         if has_opt:
             ms_opt = r_opt.get("ms_per_q", 0.0)
             print(f"  {h}-hop {'Latency (ms/Q)':25}  {ms_raw:8.2f}  {ms_full:8.2f}  {ms_opt:8.2f}")
+        elif has_h1se:
+            ms_h1se = r_h1se.get("ms_per_q", 0.0)
+            print(f"  {h}-hop {'Latency (ms/Q)':25}  {ms_raw:8.2f}  {ms_full:8.2f}  {ms_h1se:8.2f}")
         else:
             print(f"  {h}-hop {'Latency (ms/Q)':25}  {ms_raw:8.2f}  {ms_full:8.2f}")
         print()
@@ -1064,6 +1116,14 @@ def main():
     avg_delta_full = sum(f - r for f, r in zip(h10_full, h10_raw)) / max(len(h10_raw), 1)
     print(f"  FULL avg Hits@10 improvement vs RAW:  {avg_delta_full:+.4f} "
           f"({avg_delta_full*100:+.1f} pp)")
+    if has_h1se:
+        h10_h1se = [r["hits_10"] for r in results_h1se]
+        avg_h1se_vs_full = sum(h - f for h, f in zip(h10_h1se, h10_full)) / max(len(h10_full), 1)
+        avg_h1se_vs_raw  = sum(h - r for h, r in zip(h10_h1se, h10_raw))  / max(len(h10_raw),  1)
+        print(f"  H1SE avg Hits@10 improvement vs FULL: {avg_h1se_vs_full:+.4f} "
+              f"({avg_h1se_vs_full*100:+.1f} pp)")
+        print(f"  H1SE avg Hits@10 improvement vs RAW:  {avg_h1se_vs_raw:+.4f} "
+              f"({avg_h1se_vs_raw*100:+.1f} pp)")
     if has_opt:
         h10_opt = [r["hits_10"] for r in results_opt]
         avg_delta_opt = sum(o - r for o, r in zip(h10_opt, h10_raw)) / max(len(h10_raw), 1)
@@ -1108,6 +1168,10 @@ def main():
         for m in results_full:
             row = {k: m[k] for k in writer.fieldnames if k in m}
             row.update({"variant": "FULL", "beam_width": bw})
+            writer.writerow(row)
+        for m in results_h1se:
+            row = {k: m[k] for k in writer.fieldnames if k in m}
+            row.update({"variant": "H1SE", "beam_width": bw})
             writer.writerow(row)
         for m in results_opt:
             row = {k: m[k] for k in writer.fieldnames if k in m}

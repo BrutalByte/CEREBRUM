@@ -63,7 +63,21 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
+import logging as _logging
+
 from core.stream_engine import StreamEvent
+
+# scipy is optional — chi-squared burst detection degrades gracefully without it.
+try:
+    from scipy.stats import chisquare as _scipy_chisquare
+    _HAS_SCIPY = True
+except ImportError:
+    _scipy_chisquare = None  # type: ignore[assignment]
+    _HAS_SCIPY = False
+    _logging.getLogger("cerebrum.discretizer").warning(
+        "scipy not installed — STDPDiscretizer chi-squared burst detection is "
+        "disabled. Install scipy for full causal significance filtering."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -490,12 +504,17 @@ def _chi_squared_uniformity(
 
     expected_per_bucket = len(times) / k
 
+    if not _HAS_SCIPY:
+        # scipy unavailable — skip burst detection, pass through.
+        # Caller can check discretizer.scipy_available for observability.
+        return True, 1.0
     try:
-        from scipy.stats import chisquare as _chisquare
-        _, pvalue = _chisquare(observed, f_exp=[expected_per_bucket] * k)
+        _, pvalue = _scipy_chisquare(observed, f_exp=[expected_per_bucket] * k)
         return float(pvalue) >= alpha, float(pvalue)
-    except Exception:
-        # scipy unavailable or test error — pass through (fail open)
+    except Exception as exc:
+        _logging.getLogger("cerebrum.discretizer").debug(
+            "chi-squared test error: %s", exc
+        )
         return True, 1.0
 
 
@@ -574,6 +593,9 @@ class STDPDiscretizer:
         self.ttl = ttl
         self.min_causal_span = min_causal_span
         self.use_chi_squared = use_chi_squared
+        # Reflects whether scipy is available for burst detection.
+        # Callers can read this to know if chi-squared filtering is active.
+        self.scipy_available: bool = _HAS_SCIPY
 
         # source_id → last spike timestamp
         self._last_fire: Dict[str, float] = {}
