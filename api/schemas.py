@@ -99,7 +99,7 @@ class QueryRequest(BaseModel):
         ),
     )
     branch_bonus_weight: float = Field(
-        default=0.25,
+        default=0.0,
         ge=0.0,
         le=2.0,
         description=(

@@ -211,7 +211,7 @@ def extract(
     vote_weight: float = 0.30,
     relation_prior: Optional[Any] = None,
     weight_prior: float = 0.15,
-    branch_bonus_weight: float = 0.25,
+    branch_bonus_weight: float = 0.0,
 ) -> List[Answer]:
     """
     Extract the top-K answer entities from a list of TraversalPaths.

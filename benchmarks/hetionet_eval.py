@@ -448,7 +448,7 @@ def evaluate_variant(
 
 def build_traversal(
     adapter, G, cmap, embeddings, beam_width, max_hop,
-    variant="dscf", edge_type_weights=None
+    variant="dscf", edge_type_weights=None, max_communities: int = 2000,
 ) -> BeamTraversal:
     """Build a BeamTraversal for a given community map and variant type."""
     # Attach communities and embeddings to adapter for lookups
@@ -465,7 +465,7 @@ def build_traversal(
         return BeamTraversal(adapter=adapter, csa_engine=csa,
                              beam_width=beam_width, max_hop=max_hop)
 
-    dist = build_community_distance_matrix(G, cmap)
+    dist = build_community_distance_matrix(G, cmap, max_communities=max_communities)
     adj = adjacent_community_pairs(G, cmap)
     csa = CSAEngine(adapter=adapter)
     csa.set_community_graph(dist, adj)
@@ -596,7 +596,14 @@ def main():
     purity_lpa, _ = compute_type_alignment(node_type_map, cmap_lpa)
     print(f"  Type alignment (LPA communities): {purity_lpa:.4f}")
 
-    # Coarsen DSCF to ≤300 so build_community_distance_matrix stays within cap.
+    # Variant F: raw DSCF (K=5916, purity=0.673) with expanded distance-matrix cap.
+    # The BFS runs on the community-level graph (K nodes), so K=5916 takes ~40s
+    # — acceptable for benchmark setup. Bypasses coarsening-induced purity loss.
+    purity_raw, _ = compute_type_alignment(node_type_map, cmap_dscf_raw)
+    print(f"  Raw DSCF: {len(set(cmap_dscf_raw.values()))} communities  "
+          f"purity={purity_raw:.4f}  (will use max_communities=10000)")
+
+    # Coarsen DSCF to ~300 so the normal distance-matrix cap (2000) is honoured.
     # Variant A: pure structural coarsening (edge-count only).
     # Variant E: LPA-guided coarsening — merge small DSCF communities preferring
     #            targets that share the same LPA community (type-coherent).
@@ -679,17 +686,29 @@ def main():
         m_e = evaluate_variant("Hybrid+CSA", t_hybrid, qa_pairs, hop, args.top_k)
         print(f"      Hits@1={m_e['hits_1']:.4f}  Hits@10={m_e['hits_10']:.4f}  MRR={m_e['mrr']:.4f}")
 
+        # Variant F — raw DSCF (no coarsening, max_communities cap raised to 10000)
+        print(f"\n  [F] Raw DSCF (K={len(set(cmap_dscf_raw.values()))}, purity={purity_raw:.3f}, cap=10000)...")
+        t_raw = build_traversal(adapter, G, cmap_dscf_raw, embeddings,
+                                args.beam_width, hop, variant="dscf",
+                                edge_type_weights=edge_type_weights,
+                                max_communities=10000)
+        m_f = evaluate_variant("RawDSCF+CSA", t_raw, qa_pairs, hop, args.top_k)
+        print(f"      Hits@1={m_f['hits_1']:.4f}  Hits@10={m_f['hits_10']:.4f}  MRR={m_f['mrr']:.4f}")
+
         delta_dscf = m_a["hits_1"] - m_c["hits_1"]
         delta_hyb  = m_e["hits_1"] - m_c["hits_1"]
+        delta_raw  = m_f["hits_1"] - m_c["hits_1"]
         sign_d = "+" if delta_dscf >= 0 else ""
         sign_h = "+" if delta_hyb  >= 0 else ""
-        print(f"\n  DSCF-BFS Hits@1 delta:   {sign_d}{delta_dscf:.4f}")
-        print(f"  Hybrid-BFS Hits@1 delta: {sign_h}{delta_hyb:.4f}")
+        sign_r = "+" if delta_raw  >= 0 else ""
+        print(f"\n  DSCF-BFS Hits@1 delta:    {sign_d}{delta_dscf:.4f}")
+        print(f"  Hybrid-BFS Hits@1 delta:  {sign_h}{delta_hyb:.4f}")
+        print(f"  RawDSCF-BFS Hits@1 delta: {sign_r}{delta_raw:.4f}")
         print()
 
         all_results.append({
             "template": template_name, "hop": hop,
-            "dscf": m_a, "lpa": m_b, "bfs": m_c, "hybrid": m_e,
+            "dscf": m_a, "lpa": m_b, "bfs": m_c, "hybrid": m_e, "raw_dscf": m_f,
         })
 
     # ------------------------------------------------------------------
@@ -698,15 +717,13 @@ def main():
     if all_results:
         print("=== Summary by Template ===\n")
         print(f"  {'Template':<35} {'Hop':<5} {'DSCF H@1':>10} {'LPA H@1':>9} "
-              f"{'Hybrid H@1':>11} {'BFS H@1':>9} {'d Hybrid-BFS':>13}")
-        print("  " + "-" * 97)
+              f"{'Hybrid H@1':>11} {'RawDSCF H@1':>13} {'BFS H@1':>9}")
+        print("  " + "-" * 105)
         for r in all_results:
-            a, b, c, e = r["dscf"], r["lpa"], r["bfs"], r["hybrid"]
-            delta_h = e["hits_1"] - c["hits_1"]
-            sign_h  = "+" if delta_h >= 0 else ""
+            a, b, c, e, f = r["dscf"], r["lpa"], r["bfs"], r["hybrid"], r["raw_dscf"]
             print(f"  {r['template']:<35} {r['hop']:<5} "
                   f"{a['hits_1']:>10.4f} {b['hits_1']:>9.4f} {e['hits_1']:>11.4f} "
-                  f"{c['hits_1']:>9.4f} {sign_h}{delta_h:>11.4f}")
+                  f"{f['hits_1']:>13.4f} {c['hits_1']:>9.4f}")
 
     # ------------------------------------------------------------------
     # Save
@@ -715,7 +732,7 @@ def main():
     out_file = CACHE_DIR / "hetionet_results.csv"
     rows = []
     for r in all_results:
-        for m in [r["dscf"], r["lpa"], r["bfs"], r["hybrid"]]:
+        for m in [r["dscf"], r["lpa"], r["bfs"], r["hybrid"], r["raw_dscf"]]:
             rows.append({
                 "template": r["template"], "hop": r["hop"],
                 "variant": m["variant"],

@@ -834,7 +834,7 @@ class CerebrumGraph:
         beam_profile_factor: Optional[float] = None,
         hop_expand:        bool            = False,
         expansion_k:       Optional[int]   = None,
-        branch_bonus_weight: float         = 0.25,
+        branch_bonus_weight: float         = 0.0,
         residual_k:        int             = 10,
         min_diversity_target: int          = 15,
     ) -> List[Answer]:
