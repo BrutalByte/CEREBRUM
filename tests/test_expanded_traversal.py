@@ -197,85 +197,76 @@ class TestExpansionKCap:
 
 class TestResidualHopExpansion:
     def test_residual_sweep_fires_on_low_diversity(self):
-        """Low k_eff leaves few terminal answers → residual sweep adds more paths."""
-        # A → B1, B2, B3 each → C_i (5 hop-1 entities, each leads to a unique answer)
+        """Low k_eff leaves few 3-hop terminal answers → residual sweep adds more paths.
+
+        RHE requires deep_hop >= 2 (i.e. max_hop >= 3) so we use 3-hop chains.
+        """
+        # A → B_i → C_i → D_i  (5 independent 3-hop chains)
         triples = [("A", "r1", f"B{i}") for i in range(5)]
         triples += [(f"B{i}", "r2", f"C{i}") for i in range(5)]
+        triples += [(f"C{i}", "r3", f"D{i}") for i in range(5)]
         g = _build_simple_graph(triples)
 
-        # k_eff=2 → Stage 2 covers only top-2 Bs.
-        # min_diversity_target=10 > 2 terminals → residual fires.
+        # k_eff=2 → Stage 2 covers only top-2 Bs → finds ≤2 D_i terminals.
+        # min_diversity_target=10 > 2 → residual fires over remaining Bs.
         het = HopExpandedTraversal(
             adapter=g.adapter, csa_engine=g._csa,
-            beam_width=5, max_hop=2, expansion_k=2,
-            use_adaptive_expansion=False,  # disable metabolic scaling for determinism
+            beam_width=5, max_hop=3, expansion_k=2,
+            use_adaptive_expansion=False,
             min_diversity_target=10, residual_k=5,
         )
         paths = het.traverse(["A"])
-        tails = {p.tail for p in paths if p.hop_depth >= 2}
-        # Residual sweep should have found additional C_i entities
+        tails = {p.tail for p in paths if p.hop_depth >= 3}
         assert len(tails) > 2, f"Expected >2 unique answers, got {sorted(tails)}"
 
     def test_residual_sweep_skipped_when_sufficient_coverage(self):
         """When terminal diversity meets the target, residual sweep does not fire."""
+        # A → B_i → C_i → D_i  (20 independent 3-hop chains)
         triples = [("A", "r1", f"B{i}") for i in range(20)]
         triples += [(f"B{i}", "r2", f"C{i}") for i in range(20)]
+        triples += [(f"C{i}", "r3", f"D{i}") for i in range(20)]
         g = _build_simple_graph(triples)
 
-        # k_eff=20, min_diversity_target=5 → Stage 2 easily exceeds target.
-        # Residual should NOT be triggered.
+        # k_eff=20 → all Bs explored; 20 unique D terminals >> min_diversity_target=5.
         het = HopExpandedTraversal(
             adapter=g.adapter, csa_engine=g._csa,
-            beam_width=5, max_hop=2, expansion_k=20,
+            beam_width=5, max_hop=3, expansion_k=20,
             use_adaptive_expansion=False,
             min_diversity_target=5, residual_k=50,
         )
-
-        residual_fired = []
-        original_make = het._make_traversal
-
-        def tracking_make(max_hop, beam_widths=None, per_budget=None):
-            t = original_make(max_hop, beam_widths=beam_widths, per_budget=per_budget)
-            # Tag the traversal so we can detect residual calls (budget=per_budget//2)
-            t._residual_tagged = per_budget
-            return t
-
-        het._make_traversal = tracking_make
         paths = het.traverse(["A"])
-        tails = {p.tail for p in paths if p.hop_depth >= 2}
-        # With k_eff=20 and min_diversity=5, residual should not have been needed
+        tails = {p.tail for p in paths if p.hop_depth >= 3}
         assert len(tails) >= 5, f"Expected >=5 unique answers, got {sorted(tails)}"
 
     def test_residual_sweep_finds_additional_answers(self):
-        """When k_eff=1, residual sweep recovers answers from other hop-1 branches."""
-        # A connects to B1, B2, B3; all lead to answer C
+        """When k_eff=1, residual sweep recovers answers from other 3-hop branches."""
+        # A → B1/B2/B3 → C_i → D_i  (unique 3-hop terminal per branch)
         triples = [("A", "r1", "B1"), ("A", "r1", "B2"), ("A", "r1", "B3")]
-        triples += [("B1", "r2", "C"), ("B2", "r2", "C"), ("B3", "r2", "C")]
-        # Also add D reachable only from B2 and B3 (not B1)
-        triples += [("B2", "r2", "D"), ("B3", "r2", "D")]
+        triples += [("B1", "r2", "C1"), ("B2", "r2", "C2"), ("B3", "r2", "C3")]
+        triples += [("C1", "r3", "D1"), ("C2", "r3", "D2"), ("C3", "r3", "D2")]
+
         g = _build_simple_graph(triples)
 
-        # Without residual (k_eff=1, residual_k=0): only top-1 hop-1 explored
+        # Without residual: k_eff=1 → only top-1 B explored → misses D2 (if B1 is top)
         het_no_residual = HopExpandedTraversal(
             adapter=g.adapter, csa_engine=g._csa,
-            beam_width=5, max_hop=2, expansion_k=1,
+            beam_width=5, max_hop=3, expansion_k=1,
             use_adaptive_expansion=False,
-            min_diversity_target=100, residual_k=0,  # disabled
+            min_diversity_target=100, residual_k=0,
         )
         paths_no = het_no_residual.traverse(["A"])
-        tails_no = {p.tail for p in paths_no if p.hop_depth >= 2}
+        tails_no = {p.tail for p in paths_no if p.hop_depth >= 3}
 
-        # With residual (k_eff=1, residual_k=5): residual explores B2, B3
+        # With residual: explores B2, B3 → recovers D2
         het_residual = HopExpandedTraversal(
             adapter=g.adapter, csa_engine=g._csa,
-            beam_width=5, max_hop=2, expansion_k=1,
+            beam_width=5, max_hop=3, expansion_k=1,
             use_adaptive_expansion=False,
-            min_diversity_target=100, residual_k=5,  # covers B2, B3
+            min_diversity_target=100, residual_k=5,
         )
         paths_res = het_residual.traverse(["A"])
-        tails_res = {p.tail for p in paths_res if p.hop_depth >= 2}
+        tails_res = {p.tail for p in paths_res if p.hop_depth >= 3}
 
-        # Residual version should find at least as many answers (D via B2/B3)
         assert len(tails_res) >= len(tails_no), (
-            f"Residual should find ≥ non-residual answers: {tails_res} vs {tails_no}"
+            f"Residual should find >= non-residual answers: {tails_res} vs {tails_no}"
         )

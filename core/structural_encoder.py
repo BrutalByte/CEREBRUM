@@ -216,6 +216,9 @@ def coarsen_communities(
     community_map: Dict[str, int],
     target_max: int = 500,
     min_size: int = 3,
+    consensus_map: Optional[Dict[str, int]] = None,
+    consensus_weight: float = 0.5,
+    hard_consensus: bool = False,
 ) -> Dict[str, int]:
     """
     Merge small communities into their most-connected neighbors until the
@@ -243,6 +246,25 @@ def coarsen_communities(
     min_size : int
         Communities smaller than this are always candidates for merging,
         even if K <= target_max.
+    consensus_map : optional Dict[str, int]
+        A second community assignment (e.g. from LPA) used as a soft merge
+        guide. When provided, the merge-target score is boosted by
+        ``consensus_weight`` for candidates that share the same consensus
+        community as the majority of nodes being merged.  This steers
+        coarsening to preserve the type-coherent groupings captured by the
+        secondary algorithm while retaining DSCF's structural backbone.
+        Pass ``None`` to use pure edge-count merging (original behaviour).
+    consensus_weight : float
+        Multiplicative boost applied to edge-count scores when a candidate
+        merge target shares the same consensus community.  Default 0.5
+        (50% bonus).  Higher values give LPA more influence over merging.
+    hard_consensus : bool
+        When ``True`` and ``consensus_map`` is provided, merges are RESTRICTED
+        to candidates that share the same dominant consensus community as the
+        source.  Falls back to edge-count when no same-consensus neighbors exist.
+        Produces more type-coherent communities than the soft ``consensus_weight``
+        boost when the consensus partition already captures meaningful structure
+        (e.g. LPA on a typed biomedical graph).
 
     Returns
     -------
@@ -259,15 +281,48 @@ def coarsen_communities(
     for node, cid in cmap.items():
         members.setdefault(cid, []).append(node)
 
+    # Pre-compute dominant consensus community per DSCF community (for hybrid mode).
+    # dominant_consensus[cid] = the LPA community that the plurality of cid's members belong to.
+    dominant_consensus: Dict[int, int] = {}
+    if consensus_map is not None:
+        for cid, mlist in members.items():
+            lpa_counts: Dict[int, int] = {}
+            for node in mlist:
+                lpa_cid = consensus_map.get(node)
+                if lpa_cid is not None:
+                    lpa_counts[lpa_cid] = lpa_counts.get(lpa_cid, 0) + 1
+            if lpa_counts:
+                dominant_consensus[cid] = max(lpa_counts, key=lambda c: lpa_counts[c])
+
     def _best_neighbor(cid: int) -> Optional[int]:
-        """Neighbor community with the most shared edges — O(size × degree)."""
-        counts: Dict[int, int] = {}
+        """Neighbor community with the most shared edges — O(size × degree).
+
+        When consensus_map is active, candidates sharing the same dominant LPA
+        community as cid receive a multiplicative boost, steering merges to
+        preserve type-coherent groupings.
+        """
+        counts: Dict[int, float] = {}
         for node in members.get(cid, []):
             for nbr in G.neighbors(node):
                 nc = cmap.get(nbr)
                 if nc is not None and nc != cid:
-                    counts[nc] = counts.get(nc, 0) + 1
-        return max(counts, key=lambda c: counts[c]) if counts else None
+                    counts[nc] = counts.get(nc, 0.0) + 1.0
+        if not counts:
+            return None
+        if consensus_map is not None:
+            src_lpa = dominant_consensus.get(cid)
+            if src_lpa is not None:
+                if hard_consensus:
+                    # Restrict merge to same-LPA neighbors; fallback to any on no match
+                    same_lpa = {nc: v for nc, v in counts.items()
+                                if dominant_consensus.get(nc) == src_lpa}
+                    if same_lpa:
+                        return max(same_lpa, key=lambda c: same_lpa[c])
+                else:
+                    for nc in counts:
+                        if dominant_consensus.get(nc) == src_lpa:
+                            counts[nc] *= (1.0 + consensus_weight)
+        return max(counts, key=lambda c: counts[c])
 
     def _merge(src: int, dst: int) -> None:
         """Merge community src into dst, updating cmap and members in O(size)."""

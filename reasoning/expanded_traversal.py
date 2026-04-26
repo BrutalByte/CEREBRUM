@@ -308,7 +308,7 @@ class HopExpandedTraversal:
         # If unique terminal-depth answers are below min_diversity_target AND
         # unexplored hop-1 entities remain, run a reduced-budget residual sweep
         # to improve coverage of long-tail hop-1 branches.
-        if deep_hop >= 1 and self.residual_k > 0:
+        if deep_hop >= 2 and self.residual_k > 0:
             explored_set = set(hop1_entities[:k_eff])
             remaining_neighbors = [
                 e for e in sorted_neighbors if e not in explored_set
