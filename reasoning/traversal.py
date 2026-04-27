@@ -655,8 +655,13 @@ class BeamTraversal:
                             _val = _get_valence(u, v_eff, rel_eff)
                             if _val < 0.0:
                                 w = w * (1.0 + _valence_eng.valence_weight * _val)
-                        if hop == self.max_hop and self.terminal_relation_boost:
-                            w *= self.terminal_relation_boost.get(rel_eff, 1.0)
+                        if self.terminal_relation_boost:
+                            if hop == self.max_hop:
+                                w *= self.terminal_relation_boost.get(rel_eff, 1.0)
+                            elif hop == self.max_hop - 1:
+                                tb = self.terminal_relation_boost.get(rel_eff, 1.0)
+                                if tb > 1.0:
+                                    w *= tb ** 0.5  # penultimate cascade: 3.0 → ~1.73×
 
                         if v_eff not in comm_cache:
                             comm_cache[v_eff] = _get_comm(v_eff)
@@ -730,8 +735,13 @@ class BeamTraversal:
                             _val = _get_valence(u, v_eff, rel_eff)
                             if _val < 0.0:
                                 w = w * (1.0 + _valence_eng.valence_weight * _val)
-                        if hop == self.max_hop and self.terminal_relation_boost:
-                            w *= self.terminal_relation_boost.get(rel_eff, 1.0)
+                        if self.terminal_relation_boost:
+                            if hop == self.max_hop:
+                                w *= self.terminal_relation_boost.get(rel_eff, 1.0)
+                            elif hop == self.max_hop - 1:
+                                tb = self.terminal_relation_boost.get(rel_eff, 1.0)
+                                if tb > 1.0:
+                                    w *= tb ** 0.5  # penultimate cascade: 3.0 → ~1.73×
 
                         v_emb = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
                         coh = community_coherence(path.community_sequence + [v_cid])

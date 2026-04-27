@@ -252,7 +252,7 @@ def build_or_load_prior(
 # Ordered keyword rules: first match wins.
 _RELATION_KEYWORDS = [
     ("directed_by",    ["direct", "director"]),
-    ("written_by",     ["writ", "writer", "written", "screenwriter", "screenplay"]),
+    ("written_by",     ["writ", "wrote", "writer", "written", "screenwriter", "screenplay"]),
     ("starred_actors", ["star", "actor", "actress", "appear", "acted"]),
     ("has_genre",      ["genre", "type of film"]),
     ("has_tags",       ["tag", "keyword"]),
@@ -263,18 +263,28 @@ _RELATION_KEYWORDS = [
 ]
 
 
-def detect_target_relation(question: str, kb_relations: List[str]) -> Optional[str]:
+def detect_target_relation(
+    question: str,
+    kb_relations: List[str],
+    prefix_words: int = 4,
+) -> Optional[str]:
     """
     Map a question string to a MetaQA KB relation type via keyword matching.
+
+    Scans only the first `prefix_words` words of the question. MetaQA grammar
+    always places the answer type at the start of the question, so prefix
+    matching avoids false hits from intermediate-hop keywords described later
+    in multi-hop questions (e.g. "who acted in movies directed by [E]" →
+    answer = starred_actors, not directed_by).
 
     Returns the best-matching relation if it is present in kb_relations,
     otherwise None (→ no boost applied, graceful degradation).
     """
-    q = question.lower()
+    prefix = " ".join(question.lower().split()[:prefix_words])
     for relation, keywords in _RELATION_KEYWORDS:
         if relation not in kb_relations:
             continue
-        if any(kw in q for kw in keywords):
+        if any(kw in prefix for kw in keywords):
             return relation
     return None
 
@@ -349,23 +359,24 @@ def evaluate_hop(
             except Exception:
                 pass
 
-        # Phase 146: Terminal Relation Boost — detect target relation from question text.
-        # Applied only at 2-hop: 3-hop questions contain multiple relation keywords
-        # (all three hops described in text), making detection ambiguous and causing
-        # false boosts that hurt ranking.
+        # Phase 146/147: Terminal Relation Boost — detect target relation from
+        # question prefix (first 5 words).  Applied at all hops: prefix-only
+        # scanning avoids false hits from intermediate-hop keywords in multi-hop
+        # questions.  Penultimate cascade fires automatically inside traversal.
         _trb: Dict[str, float] = {}
-        if question_text and _kb_relations and hop == 2:
+        if question_text and _kb_relations:
             detected = detect_target_relation(question_text, _kb_relations)
             if detected:
                 _trb = {detected: 3.0}
 
         answers_obj = graph.query(
-            seeds                  = [seed],
-            top_k                  = top_k,
-            min_hop                = eval_min_hop,
-            max_hop                = hop,
-            query_embedding        = query_emb,
-            relation_prior         = relation_prior,
+            seeds                   = [seed],
+            top_k                   = top_k,
+            min_hop                 = eval_min_hop,
+            max_hop                 = hop,
+            hop_expand              = (hop >= 2),   # Phase 147: enable H1SE for multi-hop
+            query_embedding         = query_emb,
+            relation_prior          = relation_prior,
             terminal_relation_boost = _trb,
         )
         pred = [a.entity_id for a in answers_obj]

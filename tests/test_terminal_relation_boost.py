@@ -175,3 +175,77 @@ def test_detect_target_relation_metaqa():
             f"  Expected: {expected_relation}\n"
             f"  Got:      {result}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Test 5: prefix-only detection avoids false hits from intermediate keywords
+# ---------------------------------------------------------------------------
+
+def test_detect_prefix_avoids_intermediate_keywords():
+    """
+    Phase 147: detect_target_relation scans only the first 5 words.
+    'who acted in movies directed by [E]' has answer = starred_actors,
+    not directed_by.  Full-question scan returns directed_by (wrong);
+    prefix scan correctly returns starred_actors.
+    """
+    from benchmarks.metaqa_eval import detect_target_relation
+
+    KB_RELATIONS = [
+        "directed_by", "starred_actors", "written_by", "has_genre",
+        "has_tags", "in_language", "release_year",
+        "has_imdb_rating", "has_imdb_votes",
+    ]
+
+    ambiguous_cases = [
+        # answer type first → prefix captures it
+        ("who acted in movies directed by [E]",     "starred_actors"),
+        ("what actors starred in films written by [E]", "starred_actors"),
+        ("who wrote the films directed by [E]",     "written_by"),
+    ]
+
+    for question, expected_relation in ambiguous_cases:
+        result = detect_target_relation(question, KB_RELATIONS, prefix_words=4)
+        assert result == expected_relation, (
+            f"Question: '{question}'\n"
+            f"  Expected: {expected_relation}\n"
+            f"  Got:      {result}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Test 6: penultimate cascade fires at hop N-1 with sqrt of terminal boost
+# ---------------------------------------------------------------------------
+
+def test_penultimate_cascade_fires_at_hop_n_minus_1():
+    """
+    Phase 147: 3-hop graph with a shared relation at hops 2 and 3.
+
+    seed → rel_hop1 → mid → rel_TARGET → bridge → rel_TARGET → answer_A
+    seed → rel_hop1 → mid → rel_TARGET → bridge → rel_OTHER  → answer_B
+
+    With boost={rel_TARGET: 9.0}:
+    - Terminal (hop 3): answer_A boosted 9×
+    - Penultimate (hop 2): bridge_A boosted sqrt(9)=3× over bridge_B
+
+    answer_A must score above answer_B.
+    """
+    edges = [
+        ("seed",  "rel_hop1",   "mid"),
+        ("mid",   "rel_TARGET", "bridge_A"),
+        ("mid",   "rel_TARGET", "bridge_B"),
+        ("bridge_A", "rel_TARGET", "answer_A"),
+        ("bridge_B", "rel_OTHER",  "answer_B"),
+    ]
+    _, t = _make_adapter_and_traversal(edges, max_hop=3, boost={"rel_TARGET": 9.0})
+    paths = t.traverse(["seed"])
+    depth3 = [p for p in paths if p.hop_depth == 3]
+    assert depth3, "Should have depth-3 paths"
+
+    by_tail = {p.tail: p for p in depth3}
+    assert "answer_A" in by_tail, "answer_A must be reachable"
+    assert "answer_B" in by_tail, "answer_B must be reachable"
+
+    assert by_tail["answer_A"].score > by_tail["answer_B"].score, (
+        f"Expected answer_A ({by_tail['answer_A'].score:.4f}) > "
+        f"answer_B ({by_tail['answer_B'].score:.4f}) via terminal + penultimate cascade"
+    )
