@@ -237,6 +237,7 @@ async def _run_query_internal(
     edge_type_weights: Optional[Dict[str, float]] = None,
     max_loops: int = 1,
     causal_bonus: float = 0.3,
+    terminal_relation_boost: Optional[Dict[str, float]] = None,
 ) -> Dict[str, Any]:
     """Core reasoning logic shared between REST and WebSocket (Phase 90)."""
     from core.attention_engine import CSAEngine
@@ -273,6 +274,7 @@ async def _run_query_internal(
         max_hop=max_hop,
         max_budget=max_budget,
         causal_bonus=causal_bonus,
+        terminal_relation_boost=terminal_relation_boost or {},
     )
     # Phase 124: propagate causal edge index from CerebrumGraph if available
     _graph_obj = _state.get("graph_obj")
@@ -604,6 +606,7 @@ def create_app(
             edge_type_weights=req.edge_type_weights,
             max_loops=req.max_loops,
             causal_bonus=req.causal_bonus,
+            terminal_relation_boost=req.terminal_relation_boost or None,
         )
 
         if "error" in result and not result.get("partial"):

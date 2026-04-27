@@ -127,6 +127,15 @@ class QueryRequest(BaseModel):
             "skipping the residual sweep. Only meaningful when hop_expand=True."
         ),
     )
+    terminal_relation_boost: Dict[str, float] = Field(
+        default_factory=dict,
+        description=(
+            "Phase 146: per-relation-type multiplicative score boost applied only "
+            "at the final beam-expansion hop. E.g. {'directed_by': 3.0} pushes "
+            "director-path answers above other relation types. Detected automatically "
+            "from query text in metaqa_eval; pass explicitly for other KGs."
+        ),
+    )
 
 
 class QueryConsensusRequest(QueryRequest):

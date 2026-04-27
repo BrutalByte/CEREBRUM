@@ -365,6 +365,8 @@ class BeamTraversal:
         # Phase 124: Causal edge index + bonus — set by CerebrumGraph.build()
         self._causal_edge_index: set = set()
         self.causal_bonus: float = float(kwargs.get("causal_bonus", 0.3))
+        # Phase 146: Terminal Relation Boost — applied only at the final hop
+        self.terminal_relation_boost: Dict[str, float] = dict(kwargs.get("terminal_relation_boost", {}) or {})
         # Phase 99: Thalamic Gating — WM priming map
         self.node_priming: Dict[str, float] = {}
         self.priming_boost: float = 0.3
@@ -653,6 +655,8 @@ class BeamTraversal:
                             _val = _get_valence(u, v_eff, rel_eff)
                             if _val < 0.0:
                                 w = w * (1.0 + _valence_eng.valence_weight * _val)
+                        if hop == self.max_hop and self.terminal_relation_boost:
+                            w *= self.terminal_relation_boost.get(rel_eff, 1.0)
 
                         if v_eff not in comm_cache:
                             comm_cache[v_eff] = _get_comm(v_eff)
@@ -726,6 +730,8 @@ class BeamTraversal:
                             _val = _get_valence(u, v_eff, rel_eff)
                             if _val < 0.0:
                                 w = w * (1.0 + _valence_eng.valence_weight * _val)
+                        if hop == self.max_hop and self.terminal_relation_boost:
+                            w *= self.terminal_relation_boost.get(rel_eff, 1.0)
 
                         v_emb = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
                         coh = community_coherence(path.community_sequence + [v_cid])

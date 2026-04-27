@@ -246,6 +246,40 @@ def build_or_load_prior(
 
 
 # ---------------------------------------------------------------------------
+# Phase 146: Zero-shot relation detection from question text
+# ---------------------------------------------------------------------------
+
+# Ordered keyword rules: first match wins.
+_RELATION_KEYWORDS = [
+    ("directed_by",    ["direct", "director"]),
+    ("written_by",     ["writ", "writer", "written", "screenwriter", "screenplay"]),
+    ("starred_actors", ["star", "actor", "actress", "appear", "acted"]),
+    ("has_genre",      ["genre", "type of film"]),
+    ("has_tags",       ["tag", "keyword"]),
+    ("in_language",    ["language", "spoken"]),
+    ("release_year",   ["year", "release", "when was"]),
+    ("has_imdb_rating",["rating", "imdb", "score"]),
+    ("has_imdb_votes", ["votes"]),
+]
+
+
+def detect_target_relation(question: str, kb_relations: List[str]) -> Optional[str]:
+    """
+    Map a question string to a MetaQA KB relation type via keyword matching.
+
+    Returns the best-matching relation if it is present in kb_relations,
+    otherwise None (→ no boost applied, graceful degradation).
+    """
+    q = question.lower()
+    for relation, keywords in _RELATION_KEYWORDS:
+        if relation not in kb_relations:
+            continue
+        if any(kw in q for kw in keywords):
+            return relation
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Per-hop evaluation  (thin harness over CerebrumGraph.query)
 # ---------------------------------------------------------------------------
 
@@ -280,6 +314,17 @@ def evaluate_hop(
     # For 1-hop and 3-hop: allow min_hop=1 (shortcuts are valid).
     eval_min_hop = 2 if hop == 2 else 1
 
+    # Phase 146: discover KB relation vocabulary once for TRB detection
+    _kb_relations: List[str] = []
+    try:
+        _kb_relations = list({
+            e.relation_type
+            for eid in list(graph.adapter._G.nodes())[:500]
+            for e in graph.adapter.get_neighbors(eid)
+        })
+    except Exception:
+        pass
+
     t0 = time.time()
     for i, qa in enumerate(qa_pairs):
         if has_question:
@@ -304,13 +349,24 @@ def evaluate_hop(
             except Exception:
                 pass
 
+        # Phase 146: Terminal Relation Boost — detect target relation from question text.
+        # Applied only at 2-hop: 3-hop questions contain multiple relation keywords
+        # (all three hops described in text), making detection ambiguous and causing
+        # false boosts that hurt ranking.
+        _trb: Dict[str, float] = {}
+        if question_text and _kb_relations and hop == 2:
+            detected = detect_target_relation(question_text, _kb_relations)
+            if detected:
+                _trb = {detected: 3.0}
+
         answers_obj = graph.query(
-            seeds           = [seed],
-            top_k           = top_k,
-            min_hop         = eval_min_hop,
-            max_hop         = hop,
-            query_embedding = query_emb,
-            relation_prior  = relation_prior,
+            seeds                  = [seed],
+            top_k                  = top_k,
+            min_hop                = eval_min_hop,
+            max_hop                = hop,
+            query_embedding        = query_emb,
+            relation_prior         = relation_prior,
+            terminal_relation_boost = _trb,
         )
         pred = [a.entity_id for a in answers_obj]
 
@@ -448,7 +504,7 @@ def main():
             hop,
             sample           = args.sample,
             seed             = args.seed,
-            include_question = (query_engine is not None),
+            include_question = True,  # Phase 146: always load for TRB detection
         )
         n_label = f"{len(qa_pairs):,}" + (" (sample)" if args.sample else "")
         print(f"  {n_label} test questions")
