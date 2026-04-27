@@ -97,14 +97,14 @@ class NetworkXAdapter(GraphAdapter):
                 )
             )
 
-        # Truncate to max_neighbors using insertion order.
-        # NOTE: cosine-similarity pre-sorting was evaluated and removed — it
-        # biases toward same-type neighbors (path embedding ≈ source entity)
-        # and suppresses correct cross-type hops (actor→movie, movie→genre).
-        # The CSA attention formula in BeamTraversal already handles relevance
-        # scoring; pre-filtering at the adapter level double-counts the wrong
-        # signal.  A larger cap (100 vs the old 50) provides better coverage
-        # without insertion-order bias affecting common-degree nodes.
+        # Truncate to max_neighbors. When the cap fires we shuffle first so that
+        # minority-type edges (e.g. Disease edges among a compound's 300+ Side
+        # Effect and Gene edges) are not systematically excluded by insertion order.
+        # CSA in BeamTraversal handles relevance scoring; pre-sorting by embedding
+        # similarity would double-count the same-type bias and was removed.
+        if len(edges) > max_neighbors:
+            import random as _random
+            _random.shuffle(edges)
         return edges[:max_neighbors]
 
     def find_entities(self, query: str, top_k: int = 10) -> List[Entity]:

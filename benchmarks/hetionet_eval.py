@@ -449,6 +449,7 @@ def evaluate_variant(
 def build_traversal(
     adapter, G, cmap, embeddings, beam_width, max_hop,
     variant="dscf", edge_type_weights=None, max_communities: int = 2000,
+    max_neighbors: int = 300,
 ) -> BeamTraversal:
     """Build a BeamTraversal for a given community map and variant type."""
     # Attach communities and embeddings to adapter for lookups
@@ -463,7 +464,8 @@ def build_traversal(
         adapter.community_map = cmap_uniform
         csa = UniformCSAEngine(adapter=adapter)
         return BeamTraversal(adapter=adapter, csa_engine=csa,
-                             beam_width=beam_width, max_hop=max_hop)
+                             beam_width=beam_width, max_hop=max_hop,
+                             max_neighbors=max_neighbors)
 
     dist = build_community_distance_matrix(G, cmap, max_communities=max_communities)
     adj = adjacent_community_pairs(G, cmap)
@@ -471,7 +473,8 @@ def build_traversal(
     csa.set_community_graph(dist, adj)
     return BeamTraversal(adapter=adapter, csa_engine=csa,
                          beam_width=beam_width, max_hop=max_hop,
-                         edge_type_weights=edge_type_weights)
+                         edge_type_weights=edge_type_weights,
+                         max_neighbors=max_neighbors)
 
 
 # ---------------------------------------------------------------------------
@@ -486,7 +489,11 @@ def main():
                         help=f"QA template to evaluate. Options: "
                              f"{', '.join(QA_TEMPLATES.keys())}. Default: all.")
     parser.add_argument("--n-questions",    type=int,  default=200)
-    parser.add_argument("--beam-width",     type=int,  default=10)
+    parser.add_argument("--beam-width",     type=int,  default=10,
+                        help="Beam width for traversal. Use 50+ for compound-centric "
+                             "templates (avg 232 neighbors per compound) at the cost of "
+                             "regressing gene/pathway templates. Degree-adaptive beam "
+                             "is tracked as a future improvement.")
     parser.add_argument("--top-k",          type=int,  default=10)
     parser.add_argument("--max-edges",      type=int,  default=None,
                         help="Cap edges loaded (for dev runs, e.g. 100000)")
