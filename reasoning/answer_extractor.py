@@ -208,10 +208,12 @@ def extract(
     weight_attention: float = 0.4,
     weight_community: float = 0.3,
     weight_semantic: float  = 0.3,
-    vote_weight: float = 0.30,
+    vote_weight: float = 0.45,
     relation_prior: Optional[Any] = None,
     weight_prior: float = 0.15,
     branch_bonus_weight: float = 0.0,
+    degree_penalty_weight: float = 0.0,
+    adapter: Optional[Any] = None,
 ) -> List[Answer]:
     """
     Extract the top-K answer entities from a list of TraversalPaths.
@@ -304,7 +306,12 @@ def extract(
         if branch_bonus_weight > 0.0:
             n_br = len(branch_sets.get(entity_id, set()))
             branch_factor = 1.0 + branch_bonus_weight * _math.log1p(n_br - 1) if n_br > 1 else 1.0
-            return base * branch_factor
+            base *= branch_factor
+        if degree_penalty_weight > 0.0 and adapter is not None:
+            # Phase 148: Degree Penalty to suppress hub flooding
+            deg = adapter.get_degree(entity_id)
+            penalty = 1.0 / (1.0 + degree_penalty_weight * _math.log1p(deg))
+            base *= penalty
         return base
 
     # Sort and return top-K

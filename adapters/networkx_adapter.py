@@ -232,9 +232,10 @@ class NetworkXAdapter(GraphAdapter):
         return -1
 
     def get_embedding(self, entity_id: str) -> Optional["np.ndarray"]:
-        """Requires embeddings to be attached to the adapter instance."""
-        if hasattr(self, "embeddings"):
-            return self.embeddings.get(entity_id)
+        return self.embeddings.get(entity_id) if hasattr(self, 'embeddings') else None
+
+    def get_degree(self, entity_id: str) -> int:
+        return self._G.degree(entity_id) if entity_id in self._G else 0
         return None
 
     def add_edge(

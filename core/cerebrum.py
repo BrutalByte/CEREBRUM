@@ -825,7 +825,7 @@ class CerebrumGraph:
         beam_width:        Optional[int]  = None,
         query_embedding:   Optional[np.ndarray] = None,
         relation_prior=None,
-        vote_weight:       float          = 0.30,
+        vote_weight:       float          = 0.45,
         memory_threshold_pct: float       = 95.0,
         trace_info:        Optional["ReasoningTrace"] = None,
         max_loops:         int            = 1,
@@ -838,6 +838,8 @@ class CerebrumGraph:
         residual_k:        int             = 10,
         min_diversity_target: int          = 15,
         terminal_relation_boost: Optional[Dict[str, float]] = None,
+        beam_widths:             Optional[Dict[int, int]] = None,
+        degree_penalty_weight:   float = 0.0,
     ) -> List[Answer]:
         """
         Traverse the graph from ``seeds`` and return ranked answers.
@@ -912,12 +914,12 @@ class CerebrumGraph:
         # catastrophic path loss on multi-hop queries.
         _profile        = beam_profile        or self._beam_profile
         _profile_factor = beam_profile_factor or self._beam_profile_factor
-        _auto_beam_widths: Dict[int, int] = (
+        _auto_beam_widths: Dict[int, int] = beam_widths if beam_widths is not None else (
             _compute_beam_widths(mh, bw, _profile_factor)
             if _profile == "funnel" else {}
         )
 
-        needs_custom = (mh != self._max_hop or bw != self._beam_width or memory_threshold_pct != 95.0 or bool(csa_overrides) or hop_expand)
+        needs_custom = (mh != self._max_hop or bw != self._beam_width or memory_threshold_pct != 95.0 or bool(csa_overrides) or hop_expand or (beam_widths is not None))
         _prev_widths: Dict[int, int] = {}  # only meaningful when not needs_custom
 
         _trb = terminal_relation_boost or {}
@@ -972,6 +974,7 @@ class CerebrumGraph:
                 min_diversity_target  = min_diversity_target,
                 residual_k            = residual_k,
                 terminal_relation_boost = _trb,
+                beam_widths           = _auto_beam_widths,
                 **csa_overrides,
             )
             traversal._causal_edge_index = getattr(

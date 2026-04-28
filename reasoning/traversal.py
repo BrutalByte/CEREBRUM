@@ -657,7 +657,10 @@ class BeamTraversal:
                                 w = w * (1.0 + _valence_eng.valence_weight * _val)
                         if self.terminal_relation_boost:
                             if hop == self.max_hop:
-                                w *= self.terminal_relation_boost.get(rel_eff, 1.0)
+                                # Phase 148: Negative Terminal Boost (Penalty for non-target relations)
+                                # If a target is known, unmatched relations are crushed (0.1x).
+                                boost = self.terminal_relation_boost.get(rel_eff, 0.01)
+                                w *= boost
                             elif hop == self.max_hop - 1:
                                 tb = self.terminal_relation_boost.get(rel_eff, 1.0)
                                 if tb > 1.0:
@@ -737,7 +740,10 @@ class BeamTraversal:
                                 w = w * (1.0 + _valence_eng.valence_weight * _val)
                         if self.terminal_relation_boost:
                             if hop == self.max_hop:
-                                w *= self.terminal_relation_boost.get(rel_eff, 1.0)
+                                # Phase 148: Negative Terminal Boost (Penalty for non-target relations)
+                                # If a target is known, unmatched relations are crushed (0.1x).
+                                boost = self.terminal_relation_boost.get(rel_eff, 0.01)
+                                w *= boost
                             elif hop == self.max_hop - 1:
                                 tb = self.terminal_relation_boost.get(rel_eff, 1.0)
                                 if tb > 1.0:
