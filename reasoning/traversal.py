@@ -302,6 +302,15 @@ class TraversalPath:
 
 
 class BeamTraversal:
+    def _calculate_conflict_entropy(self, candidates: List[TraversalPath]) -> float:
+        if not candidates: return 0.0
+        scores = np.array([p.score for p in candidates])
+        probs = scores / (scores.sum() + 1e-9)
+        return -np.sum(probs * np.log2(probs + 1e-9))
+        if not candidates: return 0.0
+        scores = np.array([p.score for p in candidates])
+        probs = scores / (scores.sum() + 1e-9)
+        return -np.sum(probs * np.log2(probs + 1e-9))
     """
     Beam-search traversal using CSA attention weights.
 
@@ -942,6 +951,11 @@ class BeamTraversal:
         candidates: "List[TraversalPath]",
         hop: int,
     ) -> "List[TraversalPath]":
+        """
+        # Phase 149: Monitor reasoning entropy
+        entropy = self._calculate_conflict_entropy(candidates)
+        if entropy > 2.0: # Threshold for high hub-flooding
+            _log.debug("CingulateEngine: High conflict entropy=%.4f hop=%d", entropy, hop)
         """
         Prune *candidates* to beam width and return the surviving beam.
 

@@ -88,7 +88,13 @@ class GraphAdapter(ABC):
 
     @abstractmethod
     def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:
-        """Return the embedding vector for entity_id, or None."""
+        ...
+
+    @abstractmethod
+    def get_degree(self, entity_id: str) -> int:
+        return 0
+        ...
+
         ...
 
     @abstractmethod

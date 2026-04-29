@@ -298,6 +298,7 @@ def evaluate_hop(
     graph:            CerebrumGraph,
     qa_pairs:         List[Tuple],
     top_k:            int            = 10,
+    beam_width:       int            = 10,
     embedding_engine=None,
     relation_prior=None,
 ) -> Dict:
@@ -367,14 +368,18 @@ def evaluate_hop(
         if question_text and _kb_relations:
             detected = detect_target_relation(question_text, _kb_relations)
             if detected:
-                _trb = {detected: 3.0}
+                # Phase 148: tune TRB factor based on hop depth
+                # 3-hop needs a stronger push to overcome hub-entity noise.
+                boost_factor = 25.0 if hop == 3 else 3.0
+                _trb = {detected: boost_factor}
 
         answers_obj = graph.query(
             seeds                   = [seed],
             top_k                   = top_k,
             min_hop                 = eval_min_hop,
             max_hop                 = hop,
-            hop_expand              = (hop >= 2),   # Phase 147: enable H1SE for multi-hop
+            hop_expand              = (hop >= 2),
+            beam_widths             = {h: beam_width * h for h in range(1, hop + 1)},
             query_embedding         = query_emb,
             relation_prior          = relation_prior,
             terminal_relation_boost = _trb,
@@ -523,7 +528,8 @@ def main():
         print(f"  Running traversal (beam_width={args.beam_width}, max_hop={hop}{prior_label})...")
 
         metrics = evaluate_hop(hop, graph, qa_pairs,
-                               top_k=args.top_k, embedding_engine=query_engine,
+                               top_k=args.top_k, beam_width=args.beam_width,
+                               embedding_engine=query_engine,
                                relation_prior=priors.get(hop))
         results.append(metrics)
 

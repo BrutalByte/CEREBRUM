@@ -183,6 +183,12 @@ class HopExpandedTraversal:
         beam_widths: Optional[Dict[int, int]] = None,
         per_budget: Optional[int] = None,
     ) -> BeamTraversal:
+        # Ensure we don't pass duplicate beam_widths or other explicit args via kwargs
+        clean_kwargs = self._traversal_kwargs.copy()
+        clean_kwargs.pop('beam_widths', None)
+        # relation boost is explicitly handled below if not in clean_kwargs
+        trb = clean_kwargs.pop('terminal_relation_boost', None)
+
         t = BeamTraversal(
             adapter=self.adapter,
             csa_engine=self.csa,
@@ -194,7 +200,8 @@ class HopExpandedTraversal:
             probabilistic=self.probabilistic,
             warm_start_strength=self.warm_start_strength,
             beam_widths=beam_widths or {},
-            **self._traversal_kwargs,
+            terminal_relation_boost=trb,
+            **clean_kwargs,
         )
         t._causal_edge_index = self._causal_edge_index
         t.causal_bonus = self.causal_bonus
@@ -221,7 +228,7 @@ class HopExpandedTraversal:
         scan_paths = scan.traverse(
             seeds,
             query_embedding=query_embedding,
-            trace_info=None,
+            trace_info=trace_info,
             node_priming=node_priming,
         )
 
@@ -293,7 +300,7 @@ class HopExpandedTraversal:
             deep_paths = deep.traverse(
                 [entity],
                 query_embedding=query_embedding,
-                trace_info=None,
+                trace_info=trace_info,
                 node_priming=node_priming,
                 pruning_callback=_prune_cb,
             )
@@ -330,7 +337,7 @@ class HopExpandedTraversal:
                     deep_paths = deep.traverse(
                         [entity],
                         query_embedding=query_embedding,
-                        trace_info=None,
+                        trace_info=trace_info,
                         node_priming=node_priming,
                     )
                     for dp in deep_paths:

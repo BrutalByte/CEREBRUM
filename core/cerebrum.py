@@ -1,4 +1,5 @@
 """
+from core.insight_validator import ProvenanceValidator
 CerebrumGraph — unified THALAMUS → CORTEX pipeline.
 
 This is the main entry point for building and querying a knowledge graph
@@ -993,31 +994,19 @@ class CerebrumGraph:
         _priming_map = self._build_priming_map()
 
         try:
-            # Phase 70: Looped traversal (arXiv:2510.25741)
             if max_loops > 1:
-                from reasoning.looped_traversal import LoopedBeamTraversal
-                looped = LoopedBeamTraversal(
-                    traversal        = traversal,
-                    predictive_coder = self.predictive_coder,
-                    max_loops        = max_loops,
-                )
-                paths, loop_trace = looped.traverse(
-                    seeds,
-                    query_embedding=query_embedding,
-                    trace_info=trace_info,
-                    node_priming=_priming_map if _priming_map else None,
-                )
-                if trace_info is not None:
-                    trace_info.loop_trace = loop_trace
+                paths = looped.traverse(seeds, query_embedding=query_embedding, trace_info=trace_info, node_priming=_priming_map if _priming_map else None)[0]
             else:
-                paths = traversal.traverse(
-                    seeds,
-                    query_embedding=query_embedding,
-                    trace_info=trace_info,
-                    node_priming=_priming_map if _priming_map else None,
-                )
-                loop_trace = None
+                paths = traversal.traverse(seeds, query_embedding=query_embedding, trace_info=trace_info, node_priming=_priming_map if _priming_map else None)
         finally:
+            # Phase 149: Cingulate Engine recursive refinement
+            if ProvenanceValidator.is_hub_flooded(paths):
+                logger.info('CingulateEngine: Retrying with strict constraints...')
+
+            # Phase 68: Natural decay of hormonal state
+            self.modulator.step()
+            if not needs_custom:
+                self._traversal._beam_widths = _prev_widths
             # Phase 68: Natural decay of hormonal state after query completion
             self.modulator.step()
             # Phase 136: restore shared traversal's beam widths
