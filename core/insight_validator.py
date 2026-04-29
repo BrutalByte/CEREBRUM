@@ -27,13 +27,16 @@ strongly prefers paths that have been independently verified.
 """
 from __future__ import annotations
 
+import logging
 import threading
+from typing import List
 
 import networkx as nx
 
 from core.graph_adapter import GraphAdapter
 from core.insight_engine import INSIGHT_RELATION, InsightEvent
 
+_log = logging.getLogger("cerebrum.insight")
 
 # Status constants — also used in tests
 STATUS_CORROBORATED = "corroborated"
@@ -236,3 +239,39 @@ class InsightValidator:
                 "Override _get_graph() for other backends."
             )
         return G
+
+
+class ProvenanceValidator:
+    """Phase 149: Verifier agent logic to detect hub-flooding."""
+
+    @staticmethod
+    def is_hub_flooded(paths: List, threshold: float = 0.5) -> bool:
+        """Analyze path results for high-degree hub signatures."""
+        if not paths:
+            return False
+
+        # Case 1: Answer objects (already extracted)
+        if hasattr(paths[0], 'branch_count'):
+            hubs = [p for p in paths[:5] if p.branch_count > 50 or p.score > 0.9]
+            if len(hubs) >= 3:
+                _log.warning("CingulateEngine: Hub flooding detected (Answer mode).")
+                return True
+            return False
+
+        # Case 2: TraversalPath objects (pre-extraction)
+        tail_branches: dict = {}
+        for p in paths:
+            if not hasattr(p, 'nodes') or len(p.nodes) < 1:
+                continue
+            tail = p.tail
+            branch_id = p.nodes[2] if len(p.nodes) >= 3 else p.nodes[0]
+            if tail not in tail_branches:
+                tail_branches[tail] = set()
+            tail_branches[tail].add(branch_id)
+
+        hubs = [t for t, branches in tail_branches.items() if len(branches) > 50]
+        if len(hubs) >= 3:
+            _log.warning("CingulateEngine: Hub flooding detected (Path mode). Hubs: %s", hubs[:3])
+            return True
+
+        return False

@@ -1,5 +1,5 @@
 """
-Beam-search attention traversal — the forward pass of CEREBRUM (Section 5.1.05050).
+Beam-search attention traversal - the forward pass of CEREBRUM (Section 5.1.05050).
 
 BeamTraversal walks the graph hop-by-hop from seed entities, scoring each
 candidate next-hop using CSA attention weights and pruning to beam_width at
@@ -54,8 +54,8 @@ def _is_cvt_node(node_id: str) -> bool:
     CVT (Compound Value Type) nodes have opaque MID identifiers of the form
     ``/m/xxxxx`` or ``/g/xxxxx``.  They carry no semantic label and therefore
     produce near-zero cosine-similarity scores when used as attention targets.
-    Identifying them lets BeamTraversal collapse A→CVT→B into a single hop
-    scored on the A↔B semantic similarity instead.
+    Identifying them lets BeamTraversal collapse A->CVT->B into a single hop
+    scored on the A<->B semantic similarity instead.
     """
     return isinstance(node_id, str) and (
         node_id.startswith("/m/") or node_id.startswith("/g/")
@@ -79,8 +79,8 @@ def is_valid_at(edge, query_time: Optional[float], hard_filter: bool = True) -> 
     Return True if the edge is temporally active at query_time.
 
     Rules:
-      - query_time is None  → no temporal filter, always valid
-      - valid_from is None  → edge has no start constraint
+      - query_time is None  -> no temporal filter, always valid
+      - valid_from is None  -> edge has no start constraint
       
     An edge is active when query_time >= valid_from.
     If hard_filter is True, it also checks query_time <= valid_to.
@@ -141,25 +141,25 @@ class TraversalPath:
     """Raw feature components for parameter learning: (sim, cs, etw, nd, hd, pr, td, nr, grounding)."""
 
     beta_alpha: float = 1.0
-    """Beta distribution α — accumulated effective successes (sum of edge weights)."""
+    """Beta distribution alpha - accumulated effective successes (sum of edge weights)."""
 
     beta_beta: float = 1.0
-    """Beta distribution β — accumulated effective failures (sum of 1-weight per edge)."""
+    """Beta distribution beta - accumulated effective failures (sum of 1-weight per edge)."""
 
     @property
     def posterior_mean(self) -> float:
-        """E[Beta(α, β)] = α / (α + β). Equals 0.5 at initialization."""
+        """E[Beta(alpha, beta)] = alpha / (alpha + beta). Equals 0.5 at initialization."""
         return self.beta_alpha / (self.beta_alpha + self.beta_beta)
 
     @property
     def score_variance(self) -> float:
-        """Var[Beta(α, β)] = αβ / ((α+β)² * (α+β+1))."""
+        """Var[Beta(alpha, beta)] = alphabeta / ((alpha+beta)^2 * (alpha+beta+1))."""
         a, b = self.beta_alpha, self.beta_beta
         s = a + b
         return (a * b) / (s * s * (s + 1))
 
     def sample_score(self, rng: "np.random.Generator") -> float:
-        """Thompson sample from Beta(α, β). Used in probabilistic beam selection."""
+        """Thompson sample from Beta(alpha, beta). Used in probabilistic beam selection."""
         return float(rng.beta(self.beta_alpha, self.beta_beta))
 
     def __post_init__(self):
@@ -302,15 +302,6 @@ class TraversalPath:
 
 
 class BeamTraversal:
-    def _calculate_conflict_entropy(self, candidates: List[TraversalPath]) -> float:
-        if not candidates: return 0.0
-        scores = np.array([p.score for p in candidates])
-        probs = scores / (scores.sum() + 1e-9)
-        return -np.sum(probs * np.log2(probs + 1e-9))
-        if not candidates: return 0.0
-        scores = np.array([p.score for p in candidates])
-        probs = scores / (scores.sum() + 1e-9)
-        return -np.sum(probs * np.log2(probs + 1e-9))
     """
     Beam-search traversal using CSA attention weights.
 
@@ -323,6 +314,19 @@ class BeamTraversal:
           - Prune candidates to beam_width by path score
       - Return all paths explored (caller selects top-K answers)
     """
+
+    def _calculate_conflict_entropy(self, candidates: List["TraversalPath"]) -> float:
+        """Phase 149: Measure the distribution entropy of candidate scores."""
+        if not candidates:
+            return 0.0
+        scores = np.array([p.score for p in candidates], dtype=np.float32)
+        total = np.sum(scores)
+        if total == 0:
+            return 0.0
+        probs = scores / (total + 1e-9)
+        return -float(np.sum(probs * np.log2(probs + 1e-9)))
+
+
 
     def __init__(
         self,
@@ -369,27 +373,28 @@ class BeamTraversal:
         self.task_queue = task_queue
         self._partial_paths: List[TraversalPath] = []
         self.quantized = quantized
+        self.epistemic_gaps = []  # Phase 150
         # Phase 68: Store hormonal overrides for CSA parameters
         self.csa_overrides = {k: v for k, v in kwargs.items() if k in CSA_PARAM_KEYS}
-        # Phase 124: Causal edge index + bonus — set by CerebrumGraph.build()
+        # Phase 124: Causal edge index + bonus - set by CerebrumGraph.build()
         self._causal_edge_index: set = set()
         self.causal_bonus: float = float(kwargs.get("causal_bonus", 0.3))
-        # Phase 146: Terminal Relation Boost — applied only at the final hop
+        # Phase 146: Terminal Relation Boost - applied only at the final hop
         self.terminal_relation_boost: Dict[str, float] = dict(kwargs.get("terminal_relation_boost", {}) or {})
-        # Phase 99: Thalamic Gating — WM priming map
+        # Phase 99: Thalamic Gating - WM priming map
         self.node_priming: Dict[str, float] = {}
         self.priming_boost: float = 0.3
-        # Phase 100: Lateral Inhibition — winner-take-all community NMS
+        # Phase 100: Lateral Inhibition - winner-take-all community NMS
         self.lateral_inhibition_ratio: float = 0.0
-        # Phase 106: Thalamic Gating — context-driven branch killing
+        # Phase 106: Thalamic Gating - context-driven branch killing
         self.thalamic_threshold: float = 0.0
         # Phase 117: Prefrontal Bridge (Symbolic Verification)
         self.symbolic_validator = symbolic_validator
         
-        # Phase 108: Thalamofrontal Feedback Loop — dynamic metabolic gating
+        # Phase 108: Thalamofrontal Feedback Loop - dynamic metabolic gating
         self.dynamic_thalamic_gating: bool = False
         self.gating_sensitivity: float = 0.1
-        # Phase 101: Emotional Valence — aversive/appetitive edge scoring
+        # Phase 101: Emotional Valence - aversive/appetitive edge scoring
         self._valence_engine: Optional[Any] = None
 
 
@@ -425,7 +430,7 @@ class BeamTraversal:
             seeds, self.max_hop, self.beam_width, self.max_budget,
         )
 
-        # Hole 1 — Mid-Flight Community Swap: snapshot the community map once
+        # Hole 1 - Mid-Flight Community Swap: snapshot the community map once
         # at query start so all CSA computations for this query use a consistent
         # partition, even if GlobalRebalancer commits a new map mid-traversal.
         _cmap = getattr(self.adapter, "community_map", None)
@@ -502,7 +507,7 @@ class BeamTraversal:
         # Phase 134: per-query embedding/community caches (survive across hops)
         emb_cache: Dict[str, np.ndarray] = {}
         comm_cache: Dict[str, int] = {}
-        # Pre-warm with seed embeddings — avoids re-fetch when seeds appear as u
+        # Pre-warm with seed embeddings - avoids re-fetch when seeds appear as u
         for _sp in beam:
             emb_cache[_sp.nodes[0]] = _sp.embedding
             if _sp.community_sequence:
@@ -673,7 +678,7 @@ class BeamTraversal:
                             elif hop == self.max_hop - 1:
                                 tb = self.terminal_relation_boost.get(rel_eff, 1.0)
                                 if tb > 1.0:
-                                    w *= tb ** 0.5  # penultimate cascade: 3.0 → ~1.73×
+                                    w *= tb ** 0.5  # penultimate cascade: 3.0 -> ~1.73x
 
                         if v_eff not in comm_cache:
                             comm_cache[v_eff] = _get_comm(v_eff)
@@ -756,7 +761,7 @@ class BeamTraversal:
                             elif hop == self.max_hop - 1:
                                 tb = self.terminal_relation_boost.get(rel_eff, 1.0)
                                 if tb > 1.0:
-                                    w *= tb ** 0.5  # penultimate cascade: 3.0 → ~1.73×
+                                    w *= tb ** 0.5  # penultimate cascade: 3.0 -> ~1.73x
 
                         v_emb = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
                         coh = community_coherence(path.community_sequence + [v_cid])
@@ -770,7 +775,7 @@ class BeamTraversal:
                         )
                         _scored_steps.append((new_path, v_cid, rel_eff))
 
-                # Phase 39: Task dispatch — shared for both scoring paths
+                # Phase 39: Task dispatch - shared for both scoring paths
                 for new_path, v_cid, rel_eff in _scored_steps:
                     if self.task_queue is not None:
                         if (self.bridge_engine is not None and
@@ -845,7 +850,7 @@ class BeamTraversal:
                 hop, len(beam), len(candidates), self.expansions,
             )
             if not candidates:
-                _log.debug("Hop %d: no candidates — stopping early", hop)
+                _log.debug("Hop %d: no candidates - stopping early", hop)
                 break
 
             # Phase 37: Self-Doubt (Calibration)
@@ -865,7 +870,7 @@ class BeamTraversal:
                     for p in candidates:
                         p.score *= result.confidence_multiplier
 
-            # At the terminal hop, skip pruning — all reachable endpoints are kept
+            # At the terminal hop, skip pruning - all reachable endpoints are kept
             # for the answer extractor to score and deduplicate. Pruning here discards
             # valid answers with zero benefit (no further expansion occurs).
             hop_bw = self._beam_widths.get(hop, self.beam_width)
@@ -900,7 +905,7 @@ class BeamTraversal:
         """Phase 100: Non-Maximum Suppression grouped by tail community.
 
         Within each community group, lower-ranked paths are suppressed
-        proportionally to their rank. ratio=0 → no change; ratio=1 → strict
+        proportionally to their rank. ratio=0 -> no change; ratio=1 -> strict
         one-winner-per-community. The winner (rank 0) is never suppressed.
         """
         ratio = self.lateral_inhibition_ratio
@@ -952,12 +957,13 @@ class BeamTraversal:
         hop: int,
     ) -> "List[TraversalPath]":
         """
-        # Phase 149: Monitor reasoning entropy
-        entropy = self._calculate_conflict_entropy(candidates)
-        if entropy > 2.0: # Threshold for high hub-flooding
-            _log.debug("CingulateEngine: High conflict entropy=%.4f hop=%d", entropy, hop)
-        """
         Prune *candidates* to beam width and return the surviving beam.
+
+        # Phase 149: Monitor reasoning entropy (Cingulate Engine)
+        entropy = self._calculate_conflict_entropy(candidates)
+        self._last_entropy = entropy
+        if entropy > 2.0:
+            _log.debug("CingulateEngine: High conflict entropy=%.4f hop=%d", entropy, hop)
 
         Override in subclasses to inject alternative scoring strategies
         (e.g. Engram-steered pruning).  The default implementation sorts by
@@ -967,7 +973,7 @@ class BeamTraversal:
         Phase 100: Lateral inhibition (community-grouped NMS) is applied
         before final selection when lateral_inhibition_ratio > 0.
 
-        The terminal hop is never pruned — all candidates are returned sorted
+        The terminal hop is never pruned - all candidates are returned sorted
         so the answer extractor has the full frontier to deduplicate.
         """
         hop_bw = self._beam_widths.get(hop, self.beam_width)
@@ -978,6 +984,17 @@ class BeamTraversal:
             if not candidates:
                 return []
 
+
+        # Phase 150: Detect Epistemic Gaps (Frontal Engine)
+        if hop > 1 and candidates and not any(p.score > 0.4 for p in candidates):
+            # Identify the top potential but "grounding-starved" paths
+            for p in sorted(candidates, key=lambda x: x.score, reverse=True)[:2]:
+                self.epistemic_gaps.append({
+                    "source": p.nodes[0],
+                    "target": p.tail,
+                    "score": p.score,
+                    "hop": hop
+                })
         if self.lateral_inhibition_ratio > 0.0:
             candidates = self._apply_lateral_inhibition(candidates)
         if self.probabilistic:
@@ -1044,7 +1061,7 @@ class AsyncBeamTraversal(BeamTraversal):
         emb_dim = self._infer_dim()
         self.expansions = 0
 
-        # Hole 1 — Mid-Flight Community Swap: snapshot at stream start.
+        # Hole 1 - Mid-Flight Community Swap: snapshot at stream start.
         _cmap = getattr(self.adapter, "community_map", None)
         if self.csa is not None:
             if _cmap is not None:
@@ -1205,11 +1222,11 @@ class AsyncBeamTraversal(BeamTraversal):
                             # Positional order: sim, cs, etw, nd, hd, pr_v, td, nr_v, sd, grounding
                             features_vector = ReasoningLogit(sim, cs, etw, nd, hd, pr_v, td, nr_v, 0.0, grounding).to_vector()
 
-                        # Phase 99: Thalamic Gating — WM priming boost (async parity)
+                        # Phase 99: Thalamic Gating - WM priming boost (async parity)
                         if node_priming and v_eff in node_priming:
                             w = w * (1.0 + self.priming_boost * node_priming[v_eff])
 
-                        # Phase 101: Emotional Valence — aversive edge penalty (async parity)
+                        # Phase 101: Emotional Valence - aversive edge penalty (async parity)
                         _valence_engine = getattr(self, "_valence_engine", None)
                         if _valence_engine is not None:
                             _val = _valence_engine.get_valence(path.tail, v_eff, rel_eff)

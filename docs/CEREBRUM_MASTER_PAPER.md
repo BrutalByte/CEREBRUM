@@ -1,6 +1,6 @@
 # CEREBRUM: Master Research Compilation
 
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.35.0 (Phase 150 (Frontal Engine) COMPLETE)
 
 
 
@@ -10,13 +10,13 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.35.0 (Phase 150 (Frontal Engine) COMPLETE)
 **Date**: April 2026
 
 ---
 
 ### Abstract
-Graph partitioning is a foundational task in network science, typically optimizing for either local topological coherence or global modularity. We present **Dual-Signal Community Fusion (DSCF)** and its successor, **Triple-Signal Consensus (TSC)**, a novel approach that integrates local (Label Propagation), global (Modularity), and flow-based (PageRank Centrality) signals at the individual node update level. By employing a temperature-annealed decision rule, our method produces highly stable partitions optimized for use as "Attention Heads" in Knowledge Graph reasoning. We demonstrate that this multi-signal consensus prevents the common "Resolution Limit" and "Hub Drift" failures prevalent in standard algorithms like Leiden \cite{traag2019louvain} or Louvain \cite{blondel2008louvain}. Benchmark results on synthetic caveman graphs show that vectorized TSC achieves a modularity index of **Q=0.88**, significantly outperforming standard Leiden baselines (Q=0.48) while providing a robust structural foundation for multi-hop graph attention mechanisms. As of v2.24.0, TSC is available as an explicitly selectable mode alongside DSCF, and community partitions now drive adaptive beam parameters — beam width and max hop are set dynamically from local graph density — yielding MetaQA canonical results of H@1=46.1% (1-hop), 30.0% (2-hop), and 12.5% (3-hop) with H@10 reaching 96.6%, 86.3%, and 50.3% respectively.
+Graph partitioning is a foundational task in network science, typically optimizing for either local topological coherence or global modularity. We present **Dual-Signal Community Fusion (DSCF)** and its successor, **Triple-Signal Consensus (TSC)**, a novel approach that integrates local (Label Propagation), global (Modularity), and flow-based (PageRank Centrality) signals at the individual node update level. By employing a temperature-annealed decision rule, our method produces highly stable partitions optimized for use as "Attention Heads" in Knowledge Graph reasoning. We demonstrate that this multi-signal consensus prevents the common "Resolution Limit" and "Hub Drift" failures prevalent in standard algorithms like Leiden \cite{traag2019louvain} or Louvain \cite{blondel2008louvain}. Benchmark results on synthetic caveman graphs show that vectorized TSC achieves a modularity index of **Q=0.88**, significantly outperforming standard Leiden baselines (Q=0.48) while providing a robust structural foundation for multi-hop graph attention mechanisms. As of v2.30.0, TSC is available as an explicitly selectable mode alongside DSCF, and community partitions now drive adaptive beam parameters - beam width and max hop are set dynamically from local graph density - yielding MetaQA canonical results of H@1=46.1% (1-hop), 30.0% (2-hop), and 12.5% (3-hop) with H@10 reaching 96.6%, 86.3%, and 50.3% respectively.
 
 ### 1. Introduction
 The identification of community structures in large Knowledge Graphs (KGs) is essential for efficient multi-hop reasoning. In the CEREBRUM framework, these communities serve as discrete attention heads, guiding a beam search through semantically related regions. However, standard algorithms often fluctuate between over-fragmentation (local-only) and over-merging (global-only). DSCF/TSC addresses this by treating community assignment as a consensus problem.
@@ -43,11 +43,11 @@ As $\tau$ is annealed from 2.0 to 0.5, the system transitions from exploratory l
 The algorithm operates in $O(E \cdot I)$ time, where $E$ is edges and $I$ is iterations. The vectorized implementation utilizes bulk-matrix assignment updates, enabling GPU-accelerated partitioning for large-scale enterprise graphs.
 
 ### 5. Conclusion
-DSCF/TSC provides a mathematically rigorous framework for generating attention-ready graph partitions. By fusing local, global, and flow-based signals, it creates a stable structural foundation for multi-hop graph attention mechanisms. Current results in CEREBRUM v2.24.0 confirm that community partitions produced by TSC underpin an adaptive reasoning pipeline achieving MetaQA H@1 of 46.1% (1-hop), 30.0% (2-hop), and 12.5% (3-hop), with H@10 reaching 96.6%, 86.3%, and 50.3% respectively — validating that stable structural attention heads are a prerequisite for high-recall multi-hop reasoning.
+DSCF/TSC provides a mathematically rigorous framework for generating attention-ready graph partitions. By fusing local, global, and flow-based signals, it creates a stable structural foundation for multi-hop graph attention mechanisms. Current results in CEREBRUM v2.24.0 confirm that community partitions produced by TSC underpin an adaptive reasoning pipeline achieving MetaQA H@1 of 46.1% (1-hop), 30.0% (2-hop), and 12.5% (3-hop), with H@10 reaching 96.6%, 86.3%, and 50.3% respectively - validating that stable structural attention heads are a prerequisite for high-recall multi-hop reasoning.
 
 ---
 
-## 6. Recent Advances (v2.24.0 → v2.24.0)
+## 6. Recent Advances (v2.24.0 -> v2.24.0)
 
 The CEREBRUM framework has undergone substantial development between v2.24.0 and v2.24.0. The following advances are directly relevant to the DSCF/TSC community detection methodology described in this paper.
 
@@ -63,7 +63,7 @@ The CEREBRUM framework has undergone substantial development between v2.24.0 and
 | 2-hop | 30.0% | 86.3% |
 | 3-hop | 12.5% | 50.3% |
 
-**Community-Specific CSA Parameters (Phase 20/45).** Each community partition now maintains its own 10-parameter CSA vector, updated online via `MetaParameterLearner`. This means the community structure produced by DSCF/TSC directly determines the granularity of the learning surface — higher-quality partitions produce more focused per-community adaptation.
+**Community-Specific CSA Parameters (Phase 20/45).** Each community partition now maintains its own 10-parameter CSA vector, updated online via `MetaParameterLearner`. This means the community structure produced by DSCF/TSC directly determines the granularity of the learning surface - higher-quality partitions produce more focused per-community adaptation.
 
 **Test Coverage.** The full CEREBRUM test suite now comprises 1,357 passing tests (up from 994 at v2.24.0), with dedicated regression suites covering TSC stability, community swap atomicity, and modularity drift detection.
 
@@ -127,11 +127,11 @@ Unlike GATs \cite{velickovic2018gat} which treat all neighbors equally, CSA scal
 The v2.24.0 release introduces **Adaptive Parameter Learning**, utilizing a **MetaParameterLearner** to autonomously adjust the $(\alpha, \beta, \gamma, \delta, \epsilon)$ coefficients per-community based on query feedback. This closes the gap between zero-shot and supervised performance without the need for global retraining.
 
 ### 5. Conclusion
-CSA provides a scalable, Interpretable AI (XAI) alternative to black-box graph embeddings. By grounding attention in the structural consensus of the graph, it enables complex multi-hop reasoning that is both computationally efficient and mathematically verifiable. In CEREBRUM v2.24.0, the 10-parameter CSA formula with online per-community learning achieves MetaQA H@1 of 46.1% (1-hop), 30.0% (2-hop), and 12.5% (3-hop), alongside WebQSP H@1=6.27%, H@10=20.84%, and MRR=10.66% — establishing CSA as a competitive and interpretable alternative to embedding-based KG reasoning.
+CSA provides a scalable, Interpretable AI (XAI) alternative to black-box graph embeddings. By grounding attention in the structural consensus of the graph, it enables complex multi-hop reasoning that is both computationally efficient and mathematically verifiable. In CEREBRUM v2.24.0, the 10-parameter CSA formula with online per-community learning achieves MetaQA H@1 of 46.1% (1-hop), 30.0% (2-hop), and 12.5% (3-hop), alongside WebQSP H@1=6.27%, H@10=20.84%, and MRR=10.66% - establishing CSA as a competitive and interpretable alternative to embedding-based KG reasoning.
 
 ---
 
-## 6. Recent Advances (v2.24.0 → v2.24.0)
+## 6. Recent Advances (v2.24.0 -> v2.24.0)
 
 The CSA formula and its associated learning infrastructure have undergone significant expansion since v2.24.0. The following describes the key advances relevant to this paper.
 
@@ -177,15 +177,15 @@ Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`. The sy
 
 $$\tilde{\mathbf{e}}_v = \frac{1}{1+|\mathcal{N}(v)|}\left(\mathbf{e}_v + \sum_{u \in \mathcal{N}(v)} \mathbf{e}_u\right)$$
 
-The enriched embeddings make the `alpha` (semantic similarity) term in the CSA formula significantly more discriminating — nodes in the same community share more similar neighbourhood-aggregated representations. `CerebrumGraph.build(use_graphsage=True)` enables smoothing automatically after base encoding. Complexity is $O(|E| \times d)$ where $d$ is the embedding dimension.
+The enriched embeddings make the `alpha` (semantic similarity) term in the CSA formula significantly more discriminating - nodes in the same community share more similar neighbourhood-aggregated representations. `CerebrumGraph.build(use_graphsage=True)` enables smoothing automatically after base encoding. Complexity is $O(|E| \times d)$ where $d$ is the embedding dimension.
 
-**TemporalCalibrator (Phase 55).** Grid-searches `eta` (temporal decay) and `iota` (node recency) against a labelled validation set to maximise Recall@K. The `calibrate()` method enumerates a parameter grid, calls `measure_recall()` at each point, and applies the best-found parameters to the CSAEngine. A `try/finally` block guarantees original parameters are restored if calibration is interrupted — ensuring that a failed calibration run never leaves the CSAEngine in a partially-modified state.
+**TemporalCalibrator (Phase 55).** Grid-searches `eta` (temporal decay) and `iota` (node recency) against a labelled validation set to maximise Recall@K. The `calibrate()` method enumerates a parameter grid, calls `measure_recall()` at each point, and applies the best-found parameters to the CSAEngine. A `try/finally` block guarantees original parameters are restored if calibration is interrupted - ensuring that a failed calibration run never leaves the CSAEngine in a partially-modified state.
 
 **Engram-Steered Traversal (Phase 55).** `Engram` tracks relation-sequence patterns from previous successful Engram traces. `EngramTraversal._prune_candidates()` applies:
 
 $$s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{engram} \cdot \text{affinity}(\text{rel\_seq}))$$
 
-where `affinity` is derived from accumulated `_counts`. This biases beam search toward known-productive reasoning chains without modifying graph structure. The cache is durable — `save(path)` serializes to JSON and `load(path)` restores counts on restart, so learned relation patterns survive process restarts.
+where `affinity` is derived from accumulated `_counts`. This biases beam search toward known-productive reasoning chains without modifying graph structure. The cache is durable - `save(path)` serializes to JSON and `load(path)` restores counts on restart, so learned relation patterns survive process restarts.
 
 ---
 **References**
@@ -241,16 +241,19 @@ To prevent the "Informational Sprawl" of materialized nodes, we implement a temp
 $$c_t = c_0 \cdot \lambda^{\Delta t}$$
 where $\lambda$ is the decay constant and $\Delta t$ is the time since last usage. Edges falling below a confidence threshold $c_{min}$ are pruned during the **REM Cycle** (SPEC_007).
 
+### 3.5 The Executive Mind: Frontal and Cingulate Engines (Phases 149-150)
+In v2.35.0, CEREBRUM moves beyond simple traversal toward executive orchestration. The **Frontal Engine** (Phase 150) implements a meta-reasoning layer that analyzes candidate paths and dynamically selects between FAST (traversal only), HYBRID (async research), and DEEP (suspend for research) strategies. This is coupled with the **Cingulate Engine** (Phase 149), which monitors reasoning entropy and detects "hub-flooding" signatures—situations where a few high-degree nodes overwhelm the beam. When such flooding is detected, the Cingulate Engine triggers a recursive refinement loop, retrying the query with stricter pruning constraints to recover signal from the noise.
+
 ### 4. Conclusion
-The Bridge Twin Engine provides a biologically-inspired framework for self-optimizing Knowledge Graphs. By transforming reasoning history into physical graph structure, it enables sub-millisecond multi-hop reasoning on increasingly complex network topologies. In CEREBRUM v2.24.0, proactive bridge synthesis scales to 8,300 active bridges in the WebQSP OPT configuration, contributing directly to a H@10 improvement from 16.59% to 20.84% — a concrete, quantified demonstration of experience-dependent structural plasticity improving reasoning recall.
+The Bridge Twin Engine provides a biologically-inspired framework for self-optimizing Knowledge Graphs. By transforming reasoning history into physical graph structure, it enables sub-millisecond multi-hop reasoning on increasingly complex network topologies. In CEREBRUM v2.24.0, proactive bridge synthesis scales to 8,300 active bridges in the WebQSP OPT configuration, contributing directly to a H@10 improvement from 16.59% to 20.84% - a concrete, quantified demonstration of experience-dependent structural plasticity improving reasoning recall.
 
 ---
 
-## 5. Recent Advances (v2.24.0 → v2.24.0)
+## 5. Recent Advances (v2.24.0 -> v2.24.0)
 
 The Bridge Twin Engine has been substantially extended since v2.24.0. The following describes the most significant developments.
 
-**GraphBridgeEngine: Proactive Cross-Component Synthesis (Phase 30).** The original Bridge Twin Engine was reactive — bridges materialized only after a traversal encountered a community boundary. The `GraphBridgeEngine` (Phase 30) introduces proactive synthesis: at graph load time and after each community re-partitioning, the engine identifies disconnected or weakly connected components and pre-materializes bridge nodes across their boundaries. This eliminates the cold-start penalty where early queries must "earn" bridges before benefiting from them.
+**GraphBridgeEngine: Proactive Cross-Component Synthesis (Phase 30).** The original Bridge Twin Engine was reactive - bridges materialized only after a traversal encountered a community boundary. The `GraphBridgeEngine` (Phase 30) introduces proactive synthesis: at graph load time and after each community re-partitioning, the engine identifies disconnected or weakly connected components and pre-materializes bridge nodes across their boundaries. This eliminates the cold-start penalty where early queries must "earn" bridges before benefiting from them.
 
 **Scale: 8,300 Active Bridges on WebQSP.** In the WebQSP OPT configuration, the system maintains approximately 8,300 active bridge records. The impact on recall is measurable: H@10 rises from 16.59% (without bridge synthesis) to 20.84% (with GraphBridgeEngine), a relative gain of +25.6%.
 
@@ -296,7 +299,7 @@ The Bridge Twin Engine has been substantially extended since v2.24.0. The follow
 Inferring causal relationships from unstructured, high-velocity event streams is a major challenge in unsupervised learning. We propose a novel method for autonomous causal discovery by adapting the biological mechanism of **Spike-Timing-Dependent Plasticity (STDP)** to temporal Knowledge Graph triples. By treating entity mentions as "spikes" and analyzing their relative timing across a sliding window, our engine infers directional `CAUSES` relationships. We define a mathematically rigorous weighting rule based on the Bi & Poo \cite{bipoo1998} model and introduce **Lazy Decay**, an $O(1)$ optimization that allows the engine to scale to enterprise-level event throughput by applying geometric decay only upon record access. Benchmark results demonstrate that the v2.24.0 engine maintains constant sub-millisecond latency per event regardless of the number of accumulated causal pairs, representing a critical breakthrough for real-time industrial causal monitoring. As of v2.24.0, the streaming engine has been hardened across five discretizer classes and validated under high-velocity adversarial jitter attack scenarios, with the CausalSignificanceFilter's chi-squared test providing robust rejection of burst-driven artifacts in production deployments.
 
 ### 1. Introduction
-Traditional causal inference relies on static datasets and intensive counterfactual analysis. In streaming environments—such as IoT telemetry, cybersecurity logs, or financial tickers—causality must be discovered "on the fly." We posit that the temporal order and proximity of events provide a sufficient signal for preliminary causal discretization when governed by biological plasticity rules.
+Traditional causal inference relies on static datasets and intensive counterfactual analysis. In streaming environments-such as IoT telemetry, cybersecurity logs, or financial tickers-causality must be discovered "on the fly." We posit that the temporal order and proximity of events provide a sufficient signal for preliminary causal discretization when governed by biological plasticity rules.
 
 ### 2. Methodology
 
@@ -317,12 +320,15 @@ In standard implementations, decaying $N$ weights is $O(N)$. We introduce **Lazy
 $$w'_{uv} = w_{uv} \cdot \lambda^{(T - t_{last})}$$
 where $T$ is the global step and $t_{last}$ is the pair's last update. This reduces the complexity of causal maintenance from $O(N)$ to $O(1)$ per event.
 
+### 3.5 The Executive Mind: Frontal and Cingulate Engines (Phases 149-150)
+In v2.35.0, CEREBRUM moves beyond simple traversal toward executive orchestration. The **Frontal Engine** (Phase 150) implements a meta-reasoning layer that analyzes candidate paths and dynamically selects between FAST (traversal only), HYBRID (async research), and DEEP (suspend for research) strategies. This is coupled with the **Cingulate Engine** (Phase 149), which monitors reasoning entropy and detects "hub-flooding" signatures—situations where a few high-degree nodes overwhelm the beam. When such flooding is detected, the Cingulate Engine triggers a recursive refinement loop, retrying the query with stricter pruning constraints to recover signal from the noise.
+
 ### 4. Conclusion
 The STDP Causal Engine provides a scalable, unsupervised framework for real-time causal discovery. By grounding graph evolution in the temporal dynamics of the data stream, it enables autonomous reasoning engines to identify and follow causal chains as they emerge. In CEREBRUM v2.24.0, the discretizer has been validated under adversarial high-velocity jitter attack scenarios across five distinct discretizer classes, confirming that the chi-squared uniformity filter described in Section 2.2 is sufficient to maintain causal signal integrity in production streaming environments.
 
 ---
 
-## 5. Recent Advances (v2.24.0 → v2.24.0)
+## 5. Recent Advances (v2.24.0 -> v2.24.0)
 
 The STDP causal discovery pipeline has been hardened and extended since v2.24.0. The following describes key developments relevant to this paper.
 
@@ -365,7 +371,7 @@ The STDP causal discovery pipeline has been hardened and extended since v2.24.0.
 ---
 
 ### Abstract
-Federated Knowledge Graph reasoning requires nodes to identify relevant information across decentralized peers without compromising data privacy or bandwidth. We present **Holographic Indexing**, a two-tier discovery protocol designed for "Blind Semantic Search." Our method combines **Bloom Filter** \cite{bloom1970} membership probing for exact entity matching with **Community Centroid Signatures** for semantic neighborhood approximation. This "Holographic" representation allows nodes to identify potential reasoning paths in remote peers with minimal data leakage. We formalize the construction of these signatures and the **Synaptic Bridge Attention** mechanism that enables cross-graph traversals. We further describe security enhancements in v2.24.0, including **HMAC-SHA256 Path Provenance** \cite{gentry2009} and **Federated Leases**, which ensure the integrity and reliability of federated reasoning in high-velocity, multi-tenant environments. As of v2.24.0, full federated beam execution is realized through `DistributedBeamTraversal` and a dedicated `/traverse` endpoint enabling cross-node branch delegation, while the `ExternalValidator` (Phase 52) extends the federation concept to open scientific literature — validating graph hypotheses against PubMed, arXiv, and OpenAlex.
+Federated Knowledge Graph reasoning requires nodes to identify relevant information across decentralized peers without compromising data privacy or bandwidth. We present **Holographic Indexing**, a two-tier discovery protocol designed for "Blind Semantic Search." Our method combines **Bloom Filter** \cite{bloom1970} membership probing for exact entity matching with **Community Centroid Signatures** for semantic neighborhood approximation. This "Holographic" representation allows nodes to identify potential reasoning paths in remote peers with minimal data leakage. We formalize the construction of these signatures and the **Synaptic Bridge Attention** mechanism that enables cross-graph traversals. We further describe security enhancements in v2.24.0, including **HMAC-SHA256 Path Provenance** \cite{gentry2009} and **Federated Leases**, which ensure the integrity and reliability of federated reasoning in high-velocity, multi-tenant environments. As of v2.24.0, full federated beam execution is realized through `DistributedBeamTraversal` and a dedicated `/traverse` endpoint enabling cross-node branch delegation, while the `ExternalValidator` (Phase 52) extends the federation concept to open scientific literature - validating graph hypotheses against PubMed, arXiv, and OpenAlex.
 
 ### 1. Introduction
 The expansion of decentralized Knowledge Graphs necessitates a protocol for inter-graph discovery that respects the data sovereignty of individual nodes. Traditional federated search methods often require a central index or the exchange of full node lists, both of which are unacceptable in privacy-sensitive domains (e.g., healthcare or defense). Holographic Indexing addresses this by exchanging compressed, non-reversible topological signatures.
@@ -390,7 +396,7 @@ Holographic Indexing provides a mathematically robust and privacy-preserving fra
 
 ---
 
-## 6. Recent Advances (v2.24.0 → v2.24.0)
+## 6. Recent Advances (v2.24.0 -> v2.24.0)
 
 Federated reasoning has been one of the most actively developed areas of the CEREBRUM framework since v2.24.0. The following describes advances directly relevant to this paper.
 
@@ -433,7 +439,7 @@ Federated reasoning has been one of the most actively developed areas of the CER
 Graph traversal in large-scale Knowledge Graphs (KGs) is traditionally performed via deterministic greedy algorithms, such as breadth-first search or score-based beam search. While efficient, these methods are highly susceptible to "Local Optima Traps," where a correct reasoning path is prematurely pruned due to an initially low-confidence edge. We propose **Bayesian Beam Search**, a probabilistic traversal framework that treats edge weights as random variables rather than point estimates. By modeling path confidence as a **Beta Distribution** and employing **Thompson Sampling** \cite{thompson1933bayesian, russo2018thompson} during expansion, our method naturally balances the exploitation of high-confidence paths with the exploration of semantically relevant but uncertain neighborhoods. The v2.24.0 release incorporates a **Heuristic Warm-Start** mechanism to reduce discovery variance in "cold-start" graph regions. Results demonstrate that Bayesian Beam Search improves reasoning recall by **+45%** on sparse or noisy graphs compared to deterministic baselines. As of v2.24.0, an adaptive search strategy (Phase 53) derives `beam_width` and `max_hop` dynamically from local graph density, eliminating the need for manual hyperparameter tuning; structured START/END/HOP observability metrics are logged for every traversal, and WebQSP OPT configuration (beam_width=20) achieves H@1=6.27%, H@10=20.84%, and MRR=10.66%.
 
 ### 1. Introduction
-Multi-hop reasoning in KGs involves navigating a sequence of edges to connect a query seed to an answer entity. In real-world graphs—which are often incomplete, noisy, or derived from streaming sensors—the deterministic "best" hop is frequently a false signal. Bayesian methods offer a robust alternative by explicitly modeling topological uncertainty.
+Multi-hop reasoning in KGs involves navigating a sequence of edges to connect a query seed to an answer entity. In real-world graphs-which are often incomplete, noisy, or derived from streaming sensors-the deterministic "best" hop is frequently a false signal. Bayesian methods offer a robust alternative by explicitly modeling topological uncertainty.
 
 ### 2. Methodology
 
@@ -456,15 +462,15 @@ $$\alpha_{init} = w_{uv} \cdot \omega, \quad \beta_{init} = (1-w_{uv}) \cdot \om
 where $\omega$ is the `warm_start_strength` (default 10.0).
 
 ### 3. Conclusion
-Bayesian Beam Search provides a rigorous foundation for reasoning under uncertainty. By treating graph attention as a probabilistic decision process, it enables higher recall and more robust discovery in the face of incomplete or contradictory knowledge. In CEREBRUM v2.24.0, the adaptive search strategy (Phase 53) eliminates manual beam hyperparameter selection by deriving `beam_width` and `max_hop` from local graph density, with the WebQSP OPT configuration (beam_width=20) achieving H@1=6.27%, H@10=20.84%, and MRR=10.66% — demonstrating that density-adaptive probabilistic search generalizes across both sparse and dense knowledge graph regions.
+Bayesian Beam Search provides a rigorous foundation for reasoning under uncertainty. By treating graph attention as a probabilistic decision process, it enables higher recall and more robust discovery in the face of incomplete or contradictory knowledge. In CEREBRUM v2.24.0, the adaptive search strategy (Phase 53) eliminates manual beam hyperparameter selection by deriving `beam_width` and `max_hop` from local graph density, with the WebQSP OPT configuration (beam_width=20) achieving H@1=6.27%, H@10=20.84%, and MRR=10.66% - demonstrating that density-adaptive probabilistic search generalizes across both sparse and dense knowledge graph regions.
 
 ---
 
-## 4. Recent Advances (v2.24.0 → v2.24.0)
+## 4. Recent Advances (v2.24.0 -> v2.24.0)
 
 The Bayesian Beam Search engine has been significantly extended since v2.24.0. The following advances are directly relevant to this paper.
 
-**Adaptive Search Strategy via Local Graph Density (Phase 53).** The most significant advance is the elimination of fixed `beam_width` and `max_hop` hyperparameters. Prior to Phase 53, these were global constants set at server startup. Phase 53 introduces a density probe that, before each hop, measures the edge density of the current community neighborhood. Dense regions trigger a narrower beam (high precision, reduced branching factor); sparse regions trigger a wider beam (high recall, broader exploration). The adaptive strategy is implemented without modifying the Beta-distribution path model or Thompson sampling procedure — it adjusts the candidate set size passed to the sampler.
+**Adaptive Search Strategy via Local Graph Density (Phase 53).** The most significant advance is the elimination of fixed `beam_width` and `max_hop` hyperparameters. Prior to Phase 53, these were global constants set at server startup. Phase 53 introduces a density probe that, before each hop, measures the edge density of the current community neighborhood. Dense regions trigger a narrower beam (high precision, reduced branching factor); sparse regions trigger a wider beam (high recall, broader exploration). The adaptive strategy is implemented without modifying the Beta-distribution path model or Thompson sampling procedure - it adjusts the candidate set size passed to the sampler.
 
 **Structured Traversal Observability (Phase 54).** Every `BeamTraversal.traverse()` call now emits structured log events at three lifecycle points: `TRAVERSAL_START` (query, beam parameters, community snapshot ID), `HOP` (hop index, candidates evaluated, paths retained, top-path score), and `TRAVERSAL_END` (total hops, final beam size, answer count, wall-clock time). These metrics enable offline analysis of beam behavior across query types and graph regions, supporting data-driven beam tuning.
 
@@ -472,16 +478,16 @@ The Bayesian Beam Search engine has been significantly extended since v2.24.0. T
 
 | Configuration | beam_width | H@1 | H@10 | MRR |
 |---|---|---|---|---|
-| FULL (fixed) | 10 | — | 16.59% | — |
+| FULL (fixed) | 10 | - | 16.59% | - |
 | OPT (adaptive) | 20 | 6.27% | 20.84% | 10.66% |
 
 The OPT configuration uses adaptive density-driven beam width selection with a maximum of 20 paths, confirming that adaptive search outperforms fixed-width search on heterogeneous real-world KG topology.
 
-**Query Snapshot Isolation (Phase 20).** `BeamTraversal.traverse()` snapshots `adapter.community_map` at query start via `CSAEngine.set_query_snapshot()`. This prevents mid-flight community swaps — triggered by background DSCF re-runs — from corrupting the community membership lookups used during Thompson sampling. The snapshot is released at traversal end, ensuring community map updates are not blocked by long-running queries.
+**Query Snapshot Isolation (Phase 20).** `BeamTraversal.traverse()` snapshots `adapter.community_map` at query start via `CSAEngine.set_query_snapshot()`. This prevents mid-flight community swaps - triggered by background DSCF re-runs - from corrupting the community membership lookups used during Thompson sampling. The snapshot is released at traversal end, ensuring community map updates are not blocked by long-running queries.
 
 **Test Coverage.** The Bayesian traversal subsystem is covered by 1,357 passing tests in v2.24.0, including probabilistic recall regression tests that verify the +45% recall improvement is maintained across graph density levels.
 
-*See also:* **Paper 022** — Looped Beam Traversal (Phase 70) extends adaptive depth with LoopLM-style iterative refinement [zhu2025loooplm]. `LoopedBeamTraversal` applies `BeamTraversal` (including Bayesian mode) T times with seed expansion between loops. The adaptive exit gate uses PE convergence as its primary signal, making iterative depth adaptation a first-class reasoning primitive. When `BeamTraversal(probabilistic=True)` is used as the inner traversal, Thompson sampling operates independently within each loop, compounding the recall gains across passes.
+*See also:* **Paper 022** - Looped Beam Traversal (Phase 70) extends adaptive depth with LoopLM-style iterative refinement [zhu2025loooplm]. `LoopedBeamTraversal` applies `BeamTraversal` (including Bayesian mode) T times with seed expansion between loops. The adaptive exit gate uses PE convergence as its primary signal, making iterative depth adaptation a first-class reasoning primitive. When `BeamTraversal(probabilistic=True)` is used as the inner traversal, Thompson sampling operates independently within each loop, compounding the recall gains across passes.
 
 ---
 **References**
@@ -536,27 +542,27 @@ The REM Cycle provides a robust architectural solution for the "Entropy Problem"
 
 ---
 
-## 4. Recent Advances (v2.24.0 → v2.24.0)
+## 4. Recent Advances (v2.24.0 -> v2.24.0)
 
 The REM Cycle has been extended from a maintenance-only background loop to an active knowledge synthesis engine since v2.24.0. The following describes the key advances.
 
-**Synaptic Bridge Synthesis for Incomplete Graphs (Phase 41/43).** The most significant capability addition is REM's ability to synthesize "Synaptic Bridge" bridge edges across disconnected or weakly connected graph components. When bilateral verification fails to find a transitive path between two entities — yet community centroid similarity suggests they are semantically related — the REM Cycle can propose a synthetic edge with a configurable confidence threshold. These synthetic edges are tagged with `source="rem_synthesis"` and incur a synthesis-density penalty in the CSA formula (`-mu*sd`), ensuring the reasoning engine does not over-rely on synthesized structure.
+**Synaptic Bridge Synthesis for Incomplete Graphs (Phase 41/43).** The most significant capability addition is REM's ability to synthesize "Synaptic Bridge" bridge edges across disconnected or weakly connected graph components. When bilateral verification fails to find a transitive path between two entities - yet community centroid similarity suggests they are semantically related - the REM Cycle can propose a synthetic edge with a configurable confidence threshold. These synthetic edges are tagged with `source="rem_synthesis"` and incur a synthesis-density penalty in the CSA formula (`-mu*sd`), ensuring the reasoning engine does not over-rely on synthesized structure.
 
 **IKGWQ Benchmark: Graceful Degradation Under Incompleteness (Phase 44).** The Incomplete Knowledge Graph with Synaptic Bridge Queries (IKGWQ) benchmark evaluates graph reasoning under progressive edge removal:
 
 | Level | Edge Removal | H@1 (no REM) | H@1 (with REM) | Improvement |
 |---|---|---|---|---|
-| 0 | 0% | baseline | baseline | — |
-| 1 | 12.5% | — | — | — |
-| 2 | 25% | — | — | — |
-| 3 | 37.5% | — | — | — |
-| 4 | 50% | — | +40% | **+40% recall** |
+| 0 | 0% | baseline | baseline | - |
+| 1 | 12.5% | - | - | - |
+| 2 | 25% | - | - | - |
+| 3 | 37.5% | - | - | - |
+| 4 | 50% | - | +40% | **+40% recall** |
 
 Graceful Degradation AUC across all five levels: **0.89** (1.0 = perfect; 0.5 = random collapse). This demonstrates that REM Synaptic Bridge synthesis maintains useful reasoning capability even when half the graph's edges are removed.
 
-**HypothesisEngine: Abductive Reasoning as Knowledge Construction (Phase 50).** The `HypothesisEngine` extends the REM Cycle's role beyond maintenance. Given a failed reasoning query, it generates explanatory hypotheses — candidate edges that, if true, would connect the query seed to the answer entity. These hypotheses are passed to `ExternalValidator` (PAPER_005) for corroboration against scientific literature. Confirmed hypotheses can be materialized by the REM Cycle as new graph edges, permanently extending the KG with validated abductive knowledge.
+**HypothesisEngine: Abductive Reasoning as Knowledge Construction (Phase 50).** The `HypothesisEngine` extends the REM Cycle's role beyond maintenance. Given a failed reasoning query, it generates explanatory hypotheses - candidate edges that, if true, would connect the query seed to the answer entity. These hypotheses are passed to `ExternalValidator` (PAPER_005) for corroboration against scientific literature. Confirmed hypotheses can be materialized by the REM Cycle as new graph edges, permanently extending the KG with validated abductive knowledge.
 
-**Integration with GlobalRebalancer.** The post-rebalance hook that notifies `BridgeTwinEngine` to prune stale bridge records (Phase 19) has been extended to also trigger a REM synthesis pass on newly disconnected components — ensuring that community re-partitioning never leaves the graph in a state where previously reachable paths are no longer accessible.
+**Integration with GlobalRebalancer.** The post-rebalance hook that notifies `BridgeTwinEngine` to prune stale bridge records (Phase 19) has been extended to also trigger a REM synthesis pass on newly disconnected components - ensuring that community re-partitioning never leaves the graph in a state where previously reachable paths are no longer accessible.
 
 **Consolidated Sleep-Phase Maintenance (Phase 112).** CEREBRUM v2.24.0 formalizes the unification of mnemonic maintenance via the `ConsolidationEngine`. This engine executes a dual-process cycle during system idle time: (1) **Hebbian Replay**, which boosts the synaptic weights of high-salience reasoning paths stored in Working Memory; and (2) **Shortcut Synthesis**, which identifies recurrent multi-hop trajectories in the `QueryLog` and materializes them as direct `REM_SHORTCUT` edges. This transformation effectively converts "computational reasoning" (System 2) into "structural reflexes" (System 1), increasing the system's reactive efficiency as a function of its operational experience.
 
@@ -587,7 +593,7 @@ Graceful Degradation AUC across all five levels: **0.89** (1.0 = perfect; 0.5 = 
 ---
 
 ### Abstract
-Knowledge Graphs (KGs) have historically been limited to symbolic data, creating a representational gap between unstructured physical signals (e.g., sensor telemetry, waveforms) and conceptual entities. We propose the **Signal Encoder**, a framework for projecting high-dimensional signal features into a symbolic entity embedding space $\mathcal{E}$. By utilizing **Orthogonal Procrustes Analysis (OPA)** \cite{schonemann1966procrustes, gower2004procrustes} and Singular Value Decomposition (SVD), we learn an optimal rotation matrix $R$ that maps encoded signals to their symbolic counterparts while preserving geometric topology. We define two encoding modalities: **Statistical Encoding** for low-frequency telemetry and **Spectral Encoding** (Log-FFT) for high-frequency waveforms. Furthermore, we introduce the **Canonical Basis Anchor** protocol to prevent geometric drift in multi-hop federated reasoning. The v2.24.0 implementation utilizes **Namespace Isolation** to prevent semantic collisions between signal and text entities. Our results demonstrate that this alignment enables "Blind Cross-Modal Reasoning" with sub-millisecond latency, providing a critical representational bridge for autonomous industrial and scientific AI. As of v2.24.0, namespace isolation with the `signal:` prefix has been confirmed in production deployments, and the Procrustes cross-modal alignment principle has been extended to the federated context — `FederatedAdapter` uses the same SVD rotation to align embeddings across heterogeneous remote nodes, validating the generality of the approach.
+Knowledge Graphs (KGs) have historically been limited to symbolic data, creating a representational gap between unstructured physical signals (e.g., sensor telemetry, waveforms) and conceptual entities. We propose the **Signal Encoder**, a framework for projecting high-dimensional signal features into a symbolic entity embedding space $\mathcal{E}$. By utilizing **Orthogonal Procrustes Analysis (OPA)** \cite{schonemann1966procrustes, gower2004procrustes} and Singular Value Decomposition (SVD), we learn an optimal rotation matrix $R$ that maps encoded signals to their symbolic counterparts while preserving geometric topology. We define two encoding modalities: **Statistical Encoding** for low-frequency telemetry and **Spectral Encoding** (Log-FFT) for high-frequency waveforms. Furthermore, we introduce the **Canonical Basis Anchor** protocol to prevent geometric drift in multi-hop federated reasoning. The v2.24.0 implementation utilizes **Namespace Isolation** to prevent semantic collisions between signal and text entities. Our results demonstrate that this alignment enables "Blind Cross-Modal Reasoning" with sub-millisecond latency, providing a critical representational bridge for autonomous industrial and scientific AI. As of v2.24.0, namespace isolation with the `signal:` prefix has been confirmed in production deployments, and the Procrustes cross-modal alignment principle has been extended to the federated context - `FederatedAdapter` uses the same SVD rotation to align embeddings across heterogeneous remote nodes, validating the generality of the approach.
 
 ### 1. Introduction
 The integration of physical signals into symbolic reasoning systems is a prerequisite for advanced autonomous systems. Current approaches often rely on intermediate text descriptions, which introduce significant latency and semantic loss. We demonstrate that direct latent space alignment via Procrustes rotation provides a more efficient and mathematically stable alternative.
@@ -612,19 +618,19 @@ To ensure consistency across federated hops (SPEC_005), we enforce a protocol wh
 The Signal Encoder is implemented as an extension of the **THALAMUS** pipeline, utilizing **Namespace Isolation** (`signal:`) to prevent entity collisions. The projection is a constant-time matrix-vector multiplication, suitable for high-velocity streaming environments.
 
 ### 5. Conclusion
-Latent space alignment via Orthogonal Procrustes provides a mathematically robust bridge between physical signals and symbolic knowledge. By treating signals as first-class entities, CEREBRUM enables a new class of multi-modal reasoning applications. In CEREBRUM v2.24.0, the `signal:` namespace isolation protocol has been confirmed in production deployments, and the Procrustes alignment method has been generalized to federated cross-node embedding alignment — validating the mathematical approach across both the cross-modal and cross-graph dimensions.
+Latent space alignment via Orthogonal Procrustes provides a mathematically robust bridge between physical signals and symbolic knowledge. By treating signals as first-class entities, CEREBRUM enables a new class of multi-modal reasoning applications. In CEREBRUM v2.24.0, the `signal:` namespace isolation protocol has been confirmed in production deployments, and the Procrustes alignment method has been generalized to federated cross-node embedding alignment - validating the mathematical approach across both the cross-modal and cross-graph dimensions.
 
 ---
 
-## 6. Recent Advances (v2.24.0 → v2.24.0)
+## 6. Recent Advances (v2.24.0 -> v2.24.0)
 
 The Signal Encoder has been validated in production and its core alignment methodology has been generalized to new problem domains since v2.24.0. The following describes the key advances.
 
 **Namespace Isolation in Production (Phase 19).** The `signal:` prefix isolation protocol introduced at v2.24.0 has been confirmed robust in production deployments. Specifically, in federated multi-tenant environments where both text-derived and sensor-derived entities are simultaneously ingested, zero identity collision events have been observed. The isolation rule `I(id, mode) = prefix(mode) || id` is enforced at the `IngestionPipeline` level, making it impossible for signal entities to be confused with text entities regardless of how the downstream graph adapter handles IDs.
 
-**Procrustes Alignment Generalized to Federated Embedding Spaces (Phase 32).** The mathematical technique introduced in this paper — solving for the optimal rotation matrix $R$ via SVD of the cross-covariance matrix $M = YX^T$ — has been generalized beyond the signal-to-symbol alignment problem. The `FederatedAdapter` applies the same Procrustes procedure to align the embedding spaces of heterogeneous remote CEREBRUM nodes before computing cross-node Synaptic Bridge Scores (PAPER_005). This validates the generality of the approach: Orthogonal Procrustes is a domain-agnostic alignment primitive applicable wherever two metric spaces must be compared without retraining.
+**Procrustes Alignment Generalized to Federated Embedding Spaces (Phase 32).** The mathematical technique introduced in this paper - solving for the optimal rotation matrix $R$ via SVD of the cross-covariance matrix $M = YX^T$ - has been generalized beyond the signal-to-symbol alignment problem. The `FederatedAdapter` applies the same Procrustes procedure to align the embedding spaces of heterogeneous remote CEREBRUM nodes before computing cross-node Synaptic Bridge Scores (PAPER_005). This validates the generality of the approach: Orthogonal Procrustes is a domain-agnostic alignment primitive applicable wherever two metric spaces must be compared without retraining.
 
-**Canonical Basis Anchor in Federated Context.** The Canonical Basis Anchor protocol — where all Signal Encoders align to a designated Root Space $\mathcal{E}_{root}$ — has been extended to the federated case. In a multi-node CEREBRUM deployment, one node is designated the root space anchor. All other nodes, whether ingesting signal data or text data, align their embedding spaces to the anchor before participating in federated traversal. This prevents the accumulation of projection noise across multi-hop federated chains.
+**Canonical Basis Anchor in Federated Context.** The Canonical Basis Anchor protocol - where all Signal Encoders align to a designated Root Space $\mathcal{E}_{root}$ - has been extended to the federated case. In a multi-node CEREBRUM deployment, one node is designated the root space anchor. All other nodes, whether ingesting signal data or text data, align their embedding spaces to the anchor before participating in federated traversal. This prevents the accumulation of projection noise across multi-hop federated chains.
 
 **Integration with THALAMUS Pipeline.** The Signal Encoder is now a first-class optional stage in the THALAMUS `IngestionPipeline`. Signal entities are processed through `StatisticalSignalEncoder` or `SpectralSignalEncoder`, projected into the entity embedding space, prefixed with `signal:`, and then passed to the standard normalization and deduplication pipeline. The pipeline is covered in the 1,357-test v2.24.0 suite, including multi-modal namespace collision regression tests.
 
@@ -676,18 +682,21 @@ We define a two-stage ingestion protocol:
 2.  **Commit-Stage**: The master thread performs a bulk-addition to the adjacency list under a single lock acquisition.
 This removes the $O(N)$ string-processing bottleneck from the critical path, unblocking query readers during high-velocity bursts.
 
+### 3.5 The Executive Mind: Frontal and Cingulate Engines (Phases 149-150)
+In v2.35.0, CEREBRUM moves beyond simple traversal toward executive orchestration. The **Frontal Engine** (Phase 150) implements a meta-reasoning layer that analyzes candidate paths and dynamically selects between FAST (traversal only), HYBRID (async research), and DEEP (suspend for research) strategies. This is coupled with the **Cingulate Engine** (Phase 149), which monitors reasoning entropy and detects "hub-flooding" signatures—situations where a few high-degree nodes overwhelm the beam. When such flooding is detected, the Cingulate Engine triggers a recursive refinement loop, retrying the query with stricter pruning constraints to recover signal from the noise.
+
 ### 4. Conclusion
-THALAMUS provides the necessary structural foundation for stable, enterprise-scale reasoning. By integrating normalization, isolation, and parallelization, it ensures that the Knowledge Graph remains a coherent and high-integrity substrate for autonomous intelligence. In CEREBRUM v2.24.0, THALAMUS has been extended with a hot-reload `/build` endpoint, a `ResearchAgent` feedback loop for human-approved edge ingestion, and a 1,357-test suite covering the full pipeline — confirming that high-throughput intelligent ingestion remains the stable foundation on which all reasoning capabilities depend.
+THALAMUS provides the necessary structural foundation for stable, enterprise-scale reasoning. By integrating normalization, isolation, and parallelization, it ensures that the Knowledge Graph remains a coherent and high-integrity substrate for autonomous intelligence. In CEREBRUM v2.24.0, THALAMUS has been extended with a hot-reload `/build` endpoint, a `ResearchAgent` feedback loop for human-approved edge ingestion, and a 1,357-test suite covering the full pipeline - confirming that high-throughput intelligent ingestion remains the stable foundation on which all reasoning capabilities depend.
 
 ---
 
-## 5. Recent Advances (v2.24.0 → v2.24.0)
+## 5. Recent Advances (v2.24.0 -> v2.24.0)
 
 THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectionally-connected ingestion layer since v2.24.0. The following describes key advances.
 
-**Hot CSV Reload via /build Endpoint (Phase 54).** The `/build` endpoint enables runtime graph updates without server restart. A `POST /build` with a new CSV payload triggers THALAMUS to re-run the full ingestion pipeline — normalization, deduplication, embedding, structural encoding, and community detection — on the updated graph, then performs an atomic swap of the adapter's internal state. Active queries in flight during a `/build` operation are protected by query snapshot isolation (PAPER_006, Phase 20) and complete against the pre-build graph state.
+**Hot CSV Reload via /build Endpoint (Phase 54).** The `/build` endpoint enables runtime graph updates without server restart. A `POST /build` with a new CSV payload triggers THALAMUS to re-run the full ingestion pipeline - normalization, deduplication, embedding, structural encoding, and community detection - on the updated graph, then performs an atomic swap of the adapter's internal state. Active queries in flight during a `/build` operation are protected by query snapshot isolation (PAPER_006, Phase 20) and complete against the pre-build graph state.
 
-**ResearchAgent Feedback Loop (Phase 51).** The `ResearchAgent` is an autonomous agent that generates proposed KG triples by analyzing existing graph structure and querying external sources. Its proposals are surfaced to a human operator via a review queue. Upon approval, the approved triples are submitted to THALAMUS's `IngestionPipeline` as standard ingestion events — receiving full normalization, deduplication, namespace isolation, and confidence assignment. This closes the loop between autonomous reasoning (CORTEX) and structured knowledge ingestion (THALAMUS), enabling the graph to grow from its own reasoning activity.
+**ResearchAgent Feedback Loop (Phase 51).** The `ResearchAgent` is an autonomous agent that generates proposed KG triples by analyzing existing graph structure and querying external sources. Its proposals are surfaced to a human operator via a review queue. Upon approval, the approved triples are submitted to THALAMUS's `IngestionPipeline` as standard ingestion events - receiving full normalization, deduplication, namespace isolation, and confidence assignment. This closes the loop between autonomous reasoning (CORTEX) and structured knowledge ingestion (THALAMUS), enabling the graph to grow from its own reasoning activity.
 
 **Full Pipeline Test Coverage.** The THALAMUS pipeline is now covered by 1,357 passing tests (up from 994 at v2.24.0). New test categories include:
 - Streaming ingestion under high-velocity burst conditions
@@ -698,7 +707,7 @@ THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectional
 
 **STDPDiscretizer as Pipeline Stage (Phase 18).** The `STDPDiscretizer` is now an optional stage within `IngestionPipeline`, positioned between relation normalization and the graph write-commit. Discretized causal edges emerge from the pipeline with `source="stdp"` provenance and a confidence score derived from the causal weight $w_{uv}$, making them first-class citizens of the graph's provenance model.
 
-**Throughput Baseline Confirmed.** The 850% throughput improvement (1,200 → 11,500 triples/sec) reported at v2.24.0 has been maintained through all pipeline additions. The hot-reload `/build` endpoint adds no steady-state latency to the ingestion path, as it operates on a separate execution context from the normal ingestion workers.
+**Throughput Baseline Confirmed.** The 850% throughput improvement (1,200 -> 11,500 triples/sec) reported at v2.24.0 has been maintained through all pipeline additions. The hot-reload `/build` endpoint adds no steady-state latency to the ingestion path, as it operates on a separate execution context from the normal ingestion workers.
 
 ---
 **References**
@@ -743,32 +752,35 @@ This prevents the "shattering" of the graph and ensures that the evaluation meas
 The engine is tasked with predicting $v$ given $u$ on the pruned graph $\mathcal{G} \setminus \mathcal{H}$. Recall is defined as:
 $$R@K = \frac{1}{|\mathcal{H}|} \sum_{E_{uv} \in \mathcal{H}} \mathbb{I}(v \in \text{TopK}(\text{BeamTraversal}(u)))$$
 
-### 3. Recent Advances (v2.24.0 → v2.24.0)
+### 3. Recent Advances (v2.24.0 -> v2.24.0)
 
 #### 3.1 Path-Preserving Hold-out as Default
 The path-preserving hold-out strategy introduced in Phase 20 is now the **default** for all benchmarks in v2.24.0. Previously an opt-in parameter (`InferenceValidator(path_preserving=True)`), it is now universally enforced. This eliminates the systematic recall underestimation (up to 40% on sparse graphs) that afflicted earlier evaluation runs.
 
 #### 3.2 ExternalValidator (Phase 52)
-The validation stack now extends beyond the graph itself. The **ExternalValidator** queries external scientific literature — PubMed, ClinicalTrials, arXiv, and OpenAlex — to cross-reference proposed edges and answer candidates against published findings. This transforms the InferenceValidator from a purely structural harness into a hybrid structural-empirical validation pipeline. ExternalValidator is particularly effective for biomedical and academic KGs where primary literature can serve as an authoritative oracle.
+The validation stack now extends beyond the graph itself. The **ExternalValidator** queries external scientific literature - PubMed, ClinicalTrials, arXiv, and OpenAlex - to cross-reference proposed edges and answer candidates against published findings. This transforms the InferenceValidator from a purely structural harness into a hybrid structural-empirical validation pipeline. ExternalValidator is particularly effective for biomedical and academic KGs where primary literature can serve as an authoritative oracle.
 
 #### 3.3 IKGWQ Benchmark: Graceful Degradation Under Incompleteness
 The **Incomplete Knowledge Graph With Questions (IKGWQ)** benchmark (Phase 44) evaluates performance under systematic edge removal at five incompleteness levels (0%, 10%, 20%, 30%, 50%). Results in v2.24.0:
 
 | Incompleteness Level | H@1 | AUC |
 |---|---|---|
-| 0% (full graph) | 46.1% | — |
-| 10% | 38.2% | — |
-| 30% | 18.6% | — |
-| 50% (extreme) | 3.25% | — |
-| Overall AUC | — | **0.89** |
+| 0% (full graph) | 46.1% | - |
+| 10% | 38.2% | - |
+| 30% | 18.6% | - |
+| 50% (extreme) | 3.25% | - |
+| Overall AUC | - | **0.89** |
 
-The AUC=0.89 demonstrates that CEREBRUM degrades gracefully rather than catastrophically — a critical property for production KGs where incompleteness is the norm, not the exception.
+The AUC=0.89 demonstrates that CEREBRUM degrades gracefully rather than catastrophically - a critical property for production KGs where incompleteness is the norm, not the exception.
 
 #### 3.4 Test Suite Expansion
 The validation harness is now exercised across **1,357 passing tests** (up from 994 at Phase 20), including dedicated test suites for ExternalValidator integration, IKGWQ edge-removal scenarios, and path-preserving hold-out correctness across sparse, dense, and federated graph configurations.
 
+### 3.5 The Executive Mind: Frontal and Cingulate Engines (Phases 149-150)
+In v2.35.0, CEREBRUM moves beyond simple traversal toward executive orchestration. The **Frontal Engine** (Phase 150) implements a meta-reasoning layer that analyzes candidate paths and dynamically selects between FAST (traversal only), HYBRID (async research), and DEEP (suspend for research) strategies. This is coupled with the **Cingulate Engine** (Phase 149), which monitors reasoning entropy and detects "hub-flooding" signatures—situations where a few high-degree nodes overwhelm the beam. When such flooding is detected, the Cingulate Engine triggers a recursive refinement loop, retrying the query with stricter pruning constraints to recover signal from the noise.
+
 ### 4. Conclusion
-The Inference Validator provides a mathematically sound and self-contained framework for KG reasoning evaluation. By grounding performance metrics in the graph's own structural integrity — and now in external scientific literature via ExternalValidator — it enables the development of reliable, self-optimizing autonomous agents. In v2.24.0, with 1,357 tests passing and IKGWQ AUC=0.89, the framework demonstrates production-grade robustness under real-world knowledge incompleteness conditions.
+The Inference Validator provides a mathematically sound and self-contained framework for KG reasoning evaluation. By grounding performance metrics in the graph's own structural integrity - and now in external scientific literature via ExternalValidator - it enables the development of reliable, self-optimizing autonomous agents. In v2.24.0, with 1,357 tests passing and IKGWQ AUC=0.89, the framework demonstrates production-grade robustness under real-world knowledge incompleteness conditions.
 
 ---
 **References**
@@ -800,7 +812,7 @@ The Inference Validator provides a mathematically sound and self-contained frame
 Autonomous Knowledge Graphs often encounter conflicting information from heterogeneous data sources. Traditional approaches attempt to resolve these conflicts via majority voting or source-trust weighting \cite{dong2014knowledgevault, bertossi2011database}, potentially discarding valuable signals of discovery or debate. We propose **Contradiction Materialization**, a framework that identifies logical and structural inconsistencies and reifies them as queryable `CONTRADICTS` edges. We define five typologies of graph contradiction, including predicate conflict, temporal anachronism, and structural cycle violation. We introduce the **Delta-Authority** metric to quantify the reliability gap between conflicting facts. In v2.24.0, we integrate this engine with the **REM Cycle** skeptical decay protocol, ensuring that false contradictions are pruned while significant intellectual debates are preserved. In v2.24.0, the **HypothesisEngine** (Phase 50) generates abductive hypotheses whose refutation feeds the contradiction pipeline, and the **ExternalValidator** (Phase 52) resolves temporal anachronism contradictions by cross-referencing publication dates against primary literature. Our results demonstrate that materializing contradictions improves reasoning robustness by allowing engines to follow exploratory paths across unsettled knowledge boundaries.
 
 ### 1. Introduction
-Knowledge representation has long prioritized consistency. However, in scientific research and intelligence analysis, consistency is often an artifact of premature filtering. True intelligence requires the ability to maintain multiple conflicting hypotheses. We demonstrate that reifying conflict as a topological feature—rather than a data quality error—enables more sophisticated multi-hop reasoning.
+Knowledge representation has long prioritized consistency. However, in scientific research and intelligence analysis, consistency is often an artifact of premature filtering. True intelligence requires the ability to maintain multiple conflicting hypotheses. We demonstrate that reifying conflict as a topological feature-rather than a data quality error-enables more sophisticated multi-hop reasoning.
 
 ### 2. Methodology
 
@@ -815,28 +827,31 @@ When $\mathcal{C}(t_1, t_2) = \text{True}$, we materialize edge $E_{o1,o2}$ with
 $$\Delta A = | \mathcal{T}(source_1) - \mathcal{T}(source_2) |$$
 where $\mathcal{T}$ is the trust function.
 
-### 3. Recent Advances (v2.24.0 → v2.24.0)
+### 3. Recent Advances (v2.24.0 -> v2.24.0)
 
 #### 3.1 HypothesisEngine: Abductive Reasoning as Contradiction Precursor (Phase 50)
-The **HypothesisEngine** (Phase 50) implements multi-path abductive reasoning: given an observed fact that cannot be reached via standard forward traversal, it generates a set of candidate hypotheses (latent explanatory edges or entity relationships) that, if true, would make the observation reachable. These hypotheses are then subjected to contradiction detection as a first-order validation step. If a generated hypothesis is structurally inconsistent with existing graph facts — producing a cycle violation, temporal anachronism, or functional conflict — the hypothesis is immediately classified as a `CONTRADICTS` edge rather than a candidate edge. This creates a tight integration loop where abductive creativity is bounded by contradiction-aware skepticism.
+The **HypothesisEngine** (Phase 50) implements multi-path abductive reasoning: given an observed fact that cannot be reached via standard forward traversal, it generates a set of candidate hypotheses (latent explanatory edges or entity relationships) that, if true, would make the observation reachable. These hypotheses are then subjected to contradiction detection as a first-order validation step. If a generated hypothesis is structurally inconsistent with existing graph facts - producing a cycle violation, temporal anachronism, or functional conflict - the hypothesis is immediately classified as a `CONTRADICTS` edge rather than a candidate edge. This creates a tight integration loop where abductive creativity is bounded by contradiction-aware skepticism.
 
 #### 3.2 Noisy-OR Fusion Over Reverse Paths
 Contradiction confidence was previously a binary signal (detected vs. not detected). In v2.24.0, the system uses **Noisy-OR fusion** over all reverse paths that could corroborate or refute a contradiction:
 
 $$P(\text{contradiction valid}) = 1 - \prod_{p \in \mathcal{P}_{rev}} (1 - P_p)$$
 
-where $\mathcal{P}_{rev}$ is the set of reverse traversal paths and $P_p$ is the path confidence. This provides a probabilistic confidence score for each `CONTRADICTS` edge, enabling more nuanced downstream handling — high-confidence contradictions trigger immediate review, while low-confidence ones are tagged for monitoring.
+where $\mathcal{P}_{rev}$ is the set of reverse traversal paths and $P_p$ is the path confidence. This provides a probabilistic confidence score for each `CONTRADICTS` edge, enabling more nuanced downstream handling - high-confidence contradictions trigger immediate review, while low-confidence ones are tagged for monitoring.
 
 #### 3.3 ExternalValidator for Temporal Anachronism Resolution (Phase 52)
-The **ExternalValidator** (Phase 52) connects the contradiction engine to external literature databases (PubMed, arXiv, OpenAlex, ClinicalTrials). For temporal anachronism contradictions — where the graph claims event A preceded event B but external evidence suggests the reverse — ExternalValidator queries publication dates and citation graphs from primary sources. This allows the system to resolve ambiguous temporal orderings that internal graph topology alone cannot adjudicate.
+The **ExternalValidator** (Phase 52) connects the contradiction engine to external literature databases (PubMed, arXiv, OpenAlex, ClinicalTrials). For temporal anachronism contradictions - where the graph claims event A preceded event B but external evidence suggests the reverse - ExternalValidator queries publication dates and citation graphs from primary sources. This allows the system to resolve ambiguous temporal orderings that internal graph topology alone cannot adjudicate.
 
 For example, a contradiction of the form `(Drug_A, APPROVED_BEFORE, Drug_B)` where internal evidence suggests the reverse can be verified against ClinicalTrials trial start dates and FDA approval records via ExternalValidator's API connectors.
 
 #### 3.4 REM Cycle Integration: Skeptical Decay for Contradiction Edges
-`CONTRADICTS` edges are now subject to the same **skeptical decay** protocol used for speculative edges in the REM Cycle. A `CONTRADICTS` edge that receives no structural corroboration over a configurable window decays in weight, eventually being pruned. This prevents the graph from accumulating stale contradiction records as the underlying data evolves — contradictions that were once valid may be resolved by new information.
+`CONTRADICTS` edges are now subject to the same **skeptical decay** protocol used for speculative edges in the REM Cycle. A `CONTRADICTS` edge that receives no structural corroboration over a configurable window decays in weight, eventually being pruned. This prevents the graph from accumulating stale contradiction records as the underlying data evolves - contradictions that were once valid may be resolved by new information.
+
+### 3.5 The Executive Mind: Frontal and Cingulate Engines (Phases 149-150)
+In v2.35.0, CEREBRUM moves beyond simple traversal toward executive orchestration. The **Frontal Engine** (Phase 150) implements a meta-reasoning layer that analyzes candidate paths and dynamically selects between FAST (traversal only), HYBRID (async research), and DEEP (suspend for research) strategies. This is coupled with the **Cingulate Engine** (Phase 149), which monitors reasoning entropy and detects "hub-flooding" signatures—situations where a few high-degree nodes overwhelm the beam. When such flooding is detected, the Cingulate Engine triggers a recursive refinement loop, retrying the query with stricter pruning constraints to recover signal from the noise.
 
 ### 4. Conclusion
-Contradiction Materialization transforms Knowledge Graphs from static fact stores into dynamic arenas of evidence. By treating conflict as a structural signal and integrating abductive hypothesis generation (HypothesisEngine), probabilistic confidence (Noisy-OR fusion), and external literature validation (ExternalValidator), v2.24.0 provides the necessary foundation for skepticism and dialectical reasoning in autonomous agents. The framework now operates as a closed loop: hypotheses are generated, contradictions are detected, external evidence is consulted, and the graph is updated accordingly — without human intervention.
+Contradiction Materialization transforms Knowledge Graphs from static fact stores into dynamic arenas of evidence. By treating conflict as a structural signal and integrating abductive hypothesis generation (HypothesisEngine), probabilistic confidence (Noisy-OR fusion), and external literature validation (ExternalValidator), v2.24.0 provides the necessary foundation for skepticism and dialectical reasoning in autonomous agents. The framework now operates as a closed loop: hypotheses are generated, contradictions are detected, external evidence is consulted, and the graph is updated accordingly - without human intervention.
 
 ---
 **References**
@@ -883,7 +898,7 @@ For temporal and streaming data, the Studio utilizes high-frequency state update
 ### 3. Interactive Debugging (v2.24.0)
 The Studio provides a "Dialectical reasoning" mode where users can manually adjust CSA parameters ($\alpha, \beta, \gamma$) via sliders and observe the immediate physical shift in the reasoning beam, providing a "Human-in-the-Loop" (HITL) interface for hyperparameter tuning. In v2.24.0, this includes real-time feedback submission to the **MetaParameterLearner**.
 
-### 4. Recent Advances (v2.24.0 → v2.24.0)
+### 4. Recent Advances (v2.24.0 -> v2.24.0)
 
 #### 4.1 StudioEngine Architectural Refactor (Phase 54)
 The most significant change in v2.24.0 is a complete architectural separation of Studio business logic from the Gradio server layer. Previously, all reasoning coordination, graph management, and query dispatch were embedded directly in `ui/studio.py`. Phase 54 extracts these into a new `core/studio_engine.py` module exposing the `StudioEngine` class.
@@ -910,7 +925,7 @@ The Studio's CSA weight profiler previously exposed only 9 of the 10 CSA paramet
 | theta | $\theta$ | Grounding confidence |
 
 #### 4.3 Hot CSV Reload via /build Endpoint (Phase 54)
-A new `/build` REST endpoint accepts a CSV file upload and triggers a live graph rebuild without server restart. Studio users can iterate on graph construction — adding new entities, edges, or relation types — and immediately see the updated reasoning behavior in the visualization layer. This enables rapid prototyping workflows where graph and query patterns are co-developed.
+A new `/build` REST endpoint accepts a CSV file upload and triggers a live graph rebuild without server restart. Studio users can iterate on graph construction - adding new entities, edges, or relation types - and immediately see the updated reasoning behavior in the visualization layer. This enables rapid prototyping workflows where graph and query patterns are co-developed.
 
 #### 4.4 Dark-Mode Monitoring Dashboard (dashboard.html)
 A new `ui/dashboard.html` provides a production monitoring interface built on GridStack (resizable widget layout), Chart.js (time-series metrics), and vis-network (live graph visualization). Key panels:
@@ -952,12 +967,12 @@ The Glass-Box Reasoning Studio transforms graph attention from an abstract mathe
 ---
 
 ### Abstract
-Real-world Knowledge Graph deployments must ingest continuously arriving data streams — sensor readings, financial ticks, event logs, and scientific observations — and immediately make this data available for reasoning. We present CEREBRUM's **Streaming Engine**, a composable pipeline that transforms heterogeneous continuous signals into typed graph edges through a family of stateless discretizers, then integrates the resulting edges into the live reasoning graph with zero downtime. The pipeline supports five discretizer types (threshold, STDP, delta, windowed-frequency, and pattern) and composes with the existing `StreamAdapter` and `IngestionPipeline` layers. In v2.24.0 (Phase 53), the engine gains **adaptive search strategy**: local graph density is measured per-query and dynamically adjusts beam width, depth limit, and branching factor. In Phase 54, the `/build` endpoint enables hot CSV reload without server restart. CORS middleware and request-timing middleware are added for production observability. The streaming engine now operates at the same production maturity level as the batch reasoning stack.
+Real-world Knowledge Graph deployments must ingest continuously arriving data streams - sensor readings, financial ticks, event logs, and scientific observations - and immediately make this data available for reasoning. We present CEREBRUM's **Streaming Engine**, a composable pipeline that transforms heterogeneous continuous signals into typed graph edges through a family of stateless discretizers, then integrates the resulting edges into the live reasoning graph with zero downtime. The pipeline supports five discretizer types (threshold, STDP, delta, windowed-frequency, and pattern) and composes with the existing `StreamAdapter` and `IngestionPipeline` layers. In v2.24.0 (Phase 53), the engine gains **adaptive search strategy**: local graph density is measured per-query and dynamically adjusts beam width, depth limit, and branching factor. In Phase 54, the `/build` endpoint enables hot CSV reload without server restart. CORS middleware and request-timing middleware are added for production observability. The streaming engine now operates at the same production maturity level as the batch reasoning stack.
 
 ### 1. Introduction
 Traditional Knowledge Graph pipelines assume a static or batch-updated graph: data arrives in bulk, the graph is rebuilt or updated offline, and queries run against a stable snapshot. This model fails for applications where the latency between observation and reasoning must be sub-second: industrial sensor networks, financial surveillance, genomic streaming sequencers, and real-time intelligence fusion.
 
-CEREBRUM's Streaming Engine bridges this gap by providing a composable pipeline from raw signal to typed graph edge to CSA-weighted reasoning path — all in a single continuous flow with no offline reconstruction step.
+CEREBRUM's Streaming Engine bridges this gap by providing a composable pipeline from raw signal to typed graph edge to CSA-weighted reasoning path - all in a single continuous flow with no offline reconstruction step.
 
 ### 2. Streaming Discretizers
 Discretizers transform continuous input signals into discrete symbolic edges. The core discretizers include:
@@ -981,7 +996,7 @@ The `STDPDiscretizer` implements Hebbian-inspired causal edge inference: when tw
 
 These protections are documented in detail in Paper 16 (Production Hardening).
 
-### 5. Recent Advances (v2.24.0 → v2.24.0)
+### 5. Recent Advances (v2.24.0 -> v2.24.0)
 
 #### 5.1 Adaptive Search Strategy (Phase 53)
 The most consequential algorithmic advance in the streaming engine is the introduction of **adaptive search strategy** (Phase 53). Prior versions used fixed beam parameters (width, depth, branching factor) configured at startup. In streaming graphs, however, local density varies dramatically: a newly-ingested event cluster may produce a dense sub-graph that overwhelms a narrow beam, while a sparsely-observed sensor region starves a wide beam.
@@ -1001,7 +1016,7 @@ where $B(v, r)$ is the $r$-hop ball around the query root $v$. Based on $\rho$, 
 This dynamic adjustment reduces average query latency by 31% on streaming graphs with heterogeneous density profiles, while maintaining H@10 within 2% of the fixed-wide-beam configuration.
 
 #### 5.2 Hot CSV Reload via /build Endpoint (Phase 54)
-The `/build` REST endpoint accepts a multipart CSV upload and triggers a full graph rebuild from the new data — re-running IngestionPipeline, EmbeddingEngine, StructuralEncoder, and CommunityEngine — without restarting the server process. During rebuild, in-flight queries continue against the current graph snapshot (via Query Snapshot Isolation). The new graph atomically replaces the old one upon rebuild completion.
+The `/build` REST endpoint accepts a multipart CSV upload and triggers a full graph rebuild from the new data - re-running IngestionPipeline, EmbeddingEngine, StructuralEncoder, and CommunityEngine - without restarting the server process. During rebuild, in-flight queries continue against the current graph snapshot (via Query Snapshot Isolation). The new graph atomically replaces the old one upon rebuild completion.
 
 This enables continuous graph evolution workflows: operators can upload corrected or enriched CSVs to a running production server and immediately observe the updated reasoning behavior.
 
@@ -1044,7 +1059,7 @@ The CEREBRUM Streaming Engine in v2.24.0 has matured from a laboratory prototype
 Self-generating reasoning systems face an epistemic hazard: the same engine that produces insights can reinforce them, creating a closed hallucination loop. We present CEREBRUM's **Verification and Metacognition** layer, comprising two novel components: (1) the **InsightValidator**, which applies bilateral reverse traversal to test whether speculative edges are supported by independent structural evidence; and (2) the **MetaInsightEngine**, which constructs a second-order reasoning graph over `InsightEvent` objects, enabling the system to reason about *patterns in its own reasoning*. We formalize the triangulation criterion for edge verification and the event-graph topology used for second-order inference. On a 21-node benchmark graph with 12 injected speculative edges, the InsightValidator achieves 100% precision and 91.7% recall, and the MetaInsightEngine surfaces 3 second-order structural patterns invisible to first-order traversal alone. In v2.24.0, the **ResearchAgent** (Phase 51) extends the paradigm to autonomous missing-link discovery, and the **ExternalValidator** (Phase 52) validates ResearchAgent proposals against scientific literature before they enter the graph.
 
 ### 1. Introduction
-Most KG reasoning systems treat output as terminal: a query produces a ranked list of paths, and the system reports confidence scores derived from the traversal. No feedback loop exists between answer quality and graph structure. This architecture creates two failure modes: (1) speculative edges added by creative downstream processes (STDP, InsightEngine) can persist indefinitely, degrading traversal quality; and (2) there is no mechanism to detect when the reasoning system itself is exhibiting structural biases — over-relying on a single community, under-exploring dense clusters, or consistently failing on a specific relation type.
+Most KG reasoning systems treat output as terminal: a query produces a ranked list of paths, and the system reports confidence scores derived from the traversal. No feedback loop exists between answer quality and graph structure. This architecture creates two failure modes: (1) speculative edges added by creative downstream processes (STDP, InsightEngine) can persist indefinitely, degrading traversal quality; and (2) there is no mechanism to detect when the reasoning system itself is exhibiting structural biases - over-relying on a single community, under-exploring dense clusters, or consistently failing on a specific relation type.
 
 The InsightValidator addresses failure mode (1) by applying reverse traversal to validate speculative edges. The MetaInsightEngine addresses failure mode (2) by treating every reasoning event as a first-class graph citizen and running CSA traversal over the resulting event graph.
 
@@ -1081,7 +1096,7 @@ Each tracked edge transitions through states:
 ### 3. The MetaInsightEngine
 
 #### 3.1 The InsightEvent Graph
-Every reasoning event — a query execution, a new edge validation, a community rebalance, a bridge formation — is materialized as an `InsightEvent` node in a second-order graph $G_{meta}$. Events are connected by typed edges:
+Every reasoning event - a query execution, a new edge validation, a community rebalance, a bridge formation - is materialized as an `InsightEvent` node in a second-order graph $G_{meta}$. Events are connected by typed edges:
 
 - `TRIGGERED_BY`: $E_{validation}$ triggered by $E_{query}$
 - `CONTRADICTS`: Two `InsightEvent` nodes reach conflicting conclusions about the same entity
@@ -1105,14 +1120,14 @@ The MetaInsightEngine identifies three classes of reasoning pathology:
 
 When detected, these patterns are surfaced as `STRUCTURAL_BIAS` events in $G_{meta}$, triggering alerts for human review.
 
-### 4. Recent Advances (v2.24.0 → v2.24.0)
+### 4. Recent Advances (v2.24.0 -> v2.24.0)
 
 #### 4.1 ResearchAgent: Autonomous Missing-Link Discovery (Phase 51)
-The **ResearchAgent** (Phase 51) extends the InsightEngine paradigm from reactive validation to proactive discovery. It operates as a background daemon that continuously analyzes the graph for structural "missing links" — pairs of nodes that are strongly connected via multi-hop bridges but lack a direct edge that structural evidence suggests should exist.
+The **ResearchAgent** (Phase 51) extends the InsightEngine paradigm from reactive validation to proactive discovery. It operates as a background daemon that continuously analyzes the graph for structural "missing links" - pairs of nodes that are strongly connected via multi-hop bridges but lack a direct edge that structural evidence suggests should exist.
 
 The ResearchAgent algorithm:
 1. Identifies node pairs $(u, v)$ where $\text{BeamTraversal}(u, v)$ returns high-confidence paths through multiple intermediate communities.
-2. Filters candidates using the InsightValidator bilateral criterion — only pairs with corroborated indirect connectivity are proposed.
+2. Filters candidates using the InsightValidator bilateral criterion - only pairs with corroborated indirect connectivity are proposed.
 3. Queues proposed edges for human review via a priority queue sorted by structural confidence.
 4. Integrates with ExternalValidator (Phase 52) to pre-screen proposals against scientific literature before they enter the review queue.
 
@@ -1132,7 +1147,7 @@ $$S_{ext}(E_{uv}) = \text{Noisy-OR}(\{P_{db}(u \leftrightarrow v)\}_{db \in \mat
 Only proposals exceeding a configurable threshold (default: 0.3) are forwarded to the human review queue; the rest are logged but not proposed.
 
 #### 4.3 MetaInsightEngine Analysis of ResearchAgent Findings
-In v2.24.0, the MetaInsightEngine's `InsightEvent` graph is extended to include `ResearchAgent` proposal events and `ExternalValidator` corroboration events as first-class nodes. This allows MetaInsightEngine to detect second-order patterns in the ResearchAgent's behavior — for example:
+In v2.24.0, the MetaInsightEngine's `InsightEvent` graph is extended to include `ResearchAgent` proposal events and `ExternalValidator` corroboration events as first-class nodes. This allows MetaInsightEngine to detect second-order patterns in the ResearchAgent's behavior - for example:
 
 - ResearchAgent consistently proposes edges within a specific community that ExternalValidator consistently rejects (suggesting the community's internal embedding geometry is misleading).
 - Proposals that are eventually approved by human reviewers cluster around a specific relation type (suggesting the ResearchAgent's bridge-detection heuristic is especially effective for that relation).
@@ -1141,11 +1156,11 @@ These second-order insights feed back into ResearchAgent configuration, creating
 
 ### 5. Prior Art Differentiation
 
-**vs. Post-hoc explainability methods (GNNExplainer \cite{ying2019gnnexplainer}, LIME \cite{ribeiro2016lime}, SHAP \cite{lundberg2017shap}):** These methods explain a single inference after the fact by perturbing inputs. The InsightValidator is not an explainer — it is a *pre-emptive structural validator* that tests whether a speculative edge should remain in the graph at all. It runs before the edge is used in any query.
+**vs. Post-hoc explainability methods (GNNExplainer \cite{ying2019gnnexplainer}, LIME \cite{ribeiro2016lime}, SHAP \cite{lundberg2017shap}):** These methods explain a single inference after the fact by perturbing inputs. The InsightValidator is not an explainer - it is a *pre-emptive structural validator* that tests whether a speculative edge should remain in the graph at all. It runs before the edge is used in any query.
 
-**vs. Knowledge Base completion and link prediction:** Link prediction methods (TransE \cite{bordes2013transe}, RotatE \cite{sun2019rotate}, ComplEx \cite{trouillon2016complex}) score candidate edges by the plausibility of their entity embeddings in a learned embedding space. The InsightValidator validates edges using *the existing traversal engine on the existing graph* — no trained parameters are used. Validation is pure topology.
+**vs. Knowledge Base completion and link prediction:** Link prediction methods (TransE \cite{bordes2013transe}, RotatE \cite{sun2019rotate}, ComplEx \cite{trouillon2016complex}) score candidate edges by the plausibility of their entity embeddings in a learned embedding space. The InsightValidator validates edges using *the existing traversal engine on the existing graph* - no trained parameters are used. Validation is pure topology.
 
-**vs. Inconsistency detection in Knowledge Bases:** OWL-based reasoners \cite{horrocks2004owl} detect logical inconsistencies via ontology constraints. The InsightValidator detects *structural unsupportedness* — an edge that is not logically inconsistent but lacks independent topological backing. These are orthogonal quality criteria.
+**vs. Inconsistency detection in Knowledge Bases:** OWL-based reasoners \cite{horrocks2004owl} detect logical inconsistencies via ontology constraints. The InsightValidator detects *structural unsupportedness* - an edge that is not logically inconsistent but lacks independent topological backing. These are orthogonal quality criteria.
 
 **The MetaInsightEngine has no published analog:** Constructing a second-order graph over reasoning events and running standard CSA traversal on that graph to detect reasoning pathologies is, to our knowledge, entirely without precedent in the KG literature. The closest related work is meta-learning over task performance (MAML \cite{finn2017maml}, Reptile \cite{nichol2018reptile}), but these operate over gradient-based models, not over graph structure.
 
@@ -1202,7 +1217,7 @@ The InsightValidator, MetaInsightEngine, ResearchAgent, and ExternalValidator co
 ---
 
 ### Abstract
-Production Knowledge Graph reasoning systems require more than structural traversal — they must handle time-varying facts, propagate uncertainty through multi-hop paths, accommodate nodes that belong to multiple communities simultaneously, and support continuous improvement of their core attention parameters. We present CEREBRUM's **Algorithmic Depth** layer (Phase 17), five orthogonal enhancements to the core CSA reasoning engine that collectively enable temporal, probabilistic, and adaptive reasoning without introducing training data requirements or sacrificing the zero-hallucination guarantee. The five components are: (1) temporal edge validity windows with decay; (2) uncertainty propagation through the CSA formula; (3) soft community membership with fractional overlap scores; (4) `CSAParameterLearner` — online, training-free CSA weight adaptation from query feedback; and (5) KGE integration (TransE \cite{bordes2013transe} / RotatE \cite{sun2019rotate}) as optional drop-in embedding providers. Each component is independently composable; the full suite achieves +14.2% relative H@10 on MetaQA-3hop over the Phase 16 baseline. In v2.24.0, the CSA formula has been expanded to 10 parameters and the learning stack upgraded through Phases 45–48: parameter persistence, auto-retrain scheduling, and adaptive search strategy further extend the algorithmic depth concept to runtime adaptation.
+Production Knowledge Graph reasoning systems require more than structural traversal - they must handle time-varying facts, propagate uncertainty through multi-hop paths, accommodate nodes that belong to multiple communities simultaneously, and support continuous improvement of their core attention parameters. We present CEREBRUM's **Algorithmic Depth** layer (Phase 17), five orthogonal enhancements to the core CSA reasoning engine that collectively enable temporal, probabilistic, and adaptive reasoning without introducing training data requirements or sacrificing the zero-hallucination guarantee. The five components are: (1) temporal edge validity windows with decay; (2) uncertainty propagation through the CSA formula; (3) soft community membership with fractional overlap scores; (4) `CSAParameterLearner` - online, training-free CSA weight adaptation from query feedback; and (5) KGE integration (TransE \cite{bordes2013transe} / RotatE \cite{sun2019rotate}) as optional drop-in embedding providers. Each component is independently composable; the full suite achieves +14.2% relative H@10 on MetaQA-3hop over the Phase 16 baseline. In v2.24.0, the CSA formula has been expanded to 10 parameters and the learning stack upgraded through Phases 45-48: parameter persistence, auto-retrain scheduling, and adaptive search strategy further extend the algorithmic depth concept to runtime adaptation.
 
 ### 1. Introduction
 The core CSA formula (SPEC_002) was designed with algebraic simplicity as a primary constraint: six weighted terms, a sigmoid activation, and configurable per-community parameter overrides. This design deliberately excludes temporal dynamics, uncertainty semantics, and continuous learning to ensure mathematical transparency. However, real-world KG deployments exhibit all three: facts have validity periods, sources have varying reliability, and query traffic provides a continuous signal about which reasoning strategies are working.
@@ -1261,7 +1276,7 @@ The `AnswerExtractor` appends per-path uncertainty bounds to the output:
 ### 4. Soft Community Membership
 
 #### 4.1 Motivation
-Hard community assignment (each node belongs to exactly one community) is appropriate for highly modular graphs but produces sharp discontinuities at community boundaries. Nodes on community boundaries — particularly Hub nodes with connections to multiple clusters — receive CSA penalties that systematically under-weight their structural importance.
+Hard community assignment (each node belongs to exactly one community) is appropriate for highly modular graphs but produces sharp discontinuities at community boundaries. Nodes on community boundaries - particularly Hub nodes with connections to multiple clusters - receive CSA penalties that systematically under-weight their structural importance.
 
 #### 4.2 Fractional Membership Scores
 Soft membership extends the community map to store a probability distribution over communities for each node:
@@ -1314,7 +1329,7 @@ RotatE [Sun et al., 2019] models relations as rotations in complex embedding spa
 #### 6.3 Integration with CSA
 KGE embeddings are used exclusively in the $\cos(\vec{e}_u, \vec{e}_v)$ term of the CSA formula. All other terms (community structure, relation weight, distance penalty, hop decay, PageRank) continue to use graph-structural features. This hybrid design preserves the interpretability of the non-embedding terms while upgrading the semantic similarity signal.
 
-### 7. Recent Advances (v2.24.0 → v2.24.0)
+### 7. Recent Advances (v2.24.0 -> v2.24.0)
 
 #### 7.1 10-Parameter CSA Formula (Phase 43/45)
 The original 6-parameter CSA formula has been expanded to a 10-parameter formulation:
@@ -1346,13 +1361,13 @@ Phase 53 extends the "algorithmic depth" concept to **runtime structural adaptat
 
 ### 8. Prior Art Differentiation
 
-**Temporal edges vs. temporal KG systems:** TNTComplEx \cite{lacroix2020tntcomplex}, TTransE \cite{lin2015ttranse}, and HyTE \cite{sun2017hyte} embed entity-time pairs in a joint space, requiring timestamped training data. CEREBRUM's temporal decay is a parameter applied to edge metadata at query time — purely structural, no training required.
+**Temporal edges vs. temporal KG systems:** TNTComplEx \cite{lacroix2020tntcomplex}, TTransE \cite{lin2015ttranse}, and HyTE \cite{sun2017hyte} embed entity-time pairs in a joint space, requiring timestamped training data. CEREBRUM's temporal decay is a parameter applied to edge metadata at query time - purely structural, no training required.
 
 **Uncertainty propagation vs. probabilistic KG systems:** ProBase \cite{wu2012probase} and NELL \cite{carlson2010nell} maintain confidence scores but do not propagate uncertainty through multi-hop paths. CEREBRUM's variance-penalized path confidence is computed analytically per-query.
 
 **Soft community vs. overlapping community detection:** BIGCLAM \cite{yang2013bigclam} and DEMON \cite{coscia2012demon} detect overlapping communities but produce static memberships offline. CEREBRUM's soft membership is derived from the live DSCF modularity matrix, updating automatically after each rebalance.
 
-**CSAParameterLearner vs. meta-learning:** MAML \cite{finn2017maml} and Reptile \cite{nichol2018reptile} require gradient computation over a differentiable loss. `CSAParameterLearner` uses coordinate-wise moving averages over a binary feedback signal — no gradients, no backpropagation, no training data requirement.
+**CSAParameterLearner vs. meta-learning:** MAML \cite{finn2017maml} and Reptile \cite{nichol2018reptile} require gradient computation over a differentiable loss. `CSAParameterLearner` uses coordinate-wise moving averages over a binary feedback signal - no gradients, no backpropagation, no training data requirement.
 
 **KGE integration vs. pure embedding methods:** KGQA systems like EmbedKGQA \cite{saxena2020improve} use KGE embeddings as the primary reasoning mechanism. CEREBRUM uses them as one of ten terms in the CSA formula, where graph topology, community structure, and PageRank continue to dominate the reasoning signal.
 
@@ -1362,7 +1377,7 @@ Combined Phase 17 enhancement suite evaluated on MetaQA (zero-shot, full-graph):
 
 | Configuration | H@10 (1-hop) | H@10 (3-hop) | Δ vs. Phase 16 |
 |---|---|---|---|
-| Phase 16 baseline | 0.960 | 0.248 | — |
+| Phase 16 baseline | 0.960 | 0.248 | - |
 | + Temporal edges | 0.971 | 0.329 | +3.5% |
 | + Uncertainty propagation | 0.960 | 0.337 | +6.0% |
 | + Soft community | 0.972 | 0.348 | +9.4% |
@@ -1385,7 +1400,7 @@ All five components compose independently and additively.
 ### 10. Conclusion
 The Algorithmic Depth layer demonstrates that meaningful reasoning improvements can be achieved through principled, composable algorithmic extensions rather than increased model size or training data. The five Phase 17 components collectively advance H@10 by 14.2% on the hardest benchmark while preserving complete interpretability of every reasoning step. In v2.24.0, the evolution continues: the 10-parameter CSA formula, online MetaParameterLearner, parameter persistence, auto-retrain scheduling, and adaptive search strategy extend the algorithmic depth concept from static composition to a fully adaptive reasoning pipeline that improves automatically with usage.
 
-*See also:* **Paper 022** — Looped Beam Traversal (Phase 70) adds a further dimension of algorithmic depth: iterative refinement via LoopLM-style looping [zhu2025loooplm]. Rather than a fixed traversal depth H, the number of reasoning *passes* T becomes an adaptive parameter governed by an exit gate. This is the natural successor to the algorithmic depth concept — depth is now dynamic in two dimensions: hop depth (H) within a pass, and pass count (T) across iterations.
+*See also:* **Paper 022** - Looped Beam Traversal (Phase 70) adds a further dimension of algorithmic depth: iterative refinement via LoopLM-style looping [zhu2025loooplm]. Rather than a fixed traversal depth H, the number of reasoning *passes* T becomes an adaptive parameter governed by an exit gate. This is the natural successor to the algorithmic depth concept - depth is now dynamic in two dimensions: hop depth (H) within a pass, and pass count (T) across iterations.
 
 ---
 **References**
@@ -1414,118 +1429,118 @@ The Algorithmic Depth layer demonstrates that meaningful reasoning improvements 
 ---
 
 ### Abstract
-Complex software systems with multiple interacting subsystems exhibit failure modes that are invisible during unit testing but emerge only when subsystems operate concurrently. We document and formalize eight such **structural holes** discovered in the CEREBRUM Knowledge Graph reasoning framework across two hardening phases (Phase 19 and Phase 20). Each hole represents a scenario where two independently-correct subsystems produce incorrect or unsafe outcomes when combined. We describe the root cause of each hole, the fix, and the validation methodology. The eight holes span three layers: cross-system state invalidation (Zombie Bridge, Query Snapshot), learning bias (Bayesian Cold-Start, Community Homogeneity), geometric drift (Canonical Basis Anchor), adversarial vulnerabilities (Causal Flood), data integrity (Namespace Collision), and validation bias (Path-Preserving Hold-out). All eight fixes are backward-compatible and add no new required parameters to existing APIs. In v2.24.0 (Phase 54), a new observability layer — RingBufferHandler, CORS middleware, request-timing middleware, `/logs` endpoints, and the dark-mode monitoring dashboard — brings the production hardening stack to enterprise readiness. In v2.24.0 (Phases 56–57), five fault-tolerance patterns are added: partial-result HTTP 200 degradation, write-failure isolation, stream error signalling, ProcessPoolExecutor sequential fallback, and durable Engram persistence. The test suite has grown from 994 tests at Phase 20 to **1,490+ passing tests** at v2.24.0.
+Complex software systems with multiple interacting subsystems exhibit failure modes that are invisible during unit testing but emerge only when subsystems operate concurrently. We document and formalize eight such **structural holes** discovered in the CEREBRUM Knowledge Graph reasoning framework across two hardening phases (Phase 19 and Phase 20). Each hole represents a scenario where two independently-correct subsystems produce incorrect or unsafe outcomes when combined. We describe the root cause of each hole, the fix, and the validation methodology. The eight holes span three layers: cross-system state invalidation (Zombie Bridge, Query Snapshot), learning bias (Bayesian Cold-Start, Community Homogeneity), geometric drift (Canonical Basis Anchor), adversarial vulnerabilities (Causal Flood), data integrity (Namespace Collision), and validation bias (Path-Preserving Hold-out). All eight fixes are backward-compatible and add no new required parameters to existing APIs. In v2.24.0 (Phase 54), a new observability layer - RingBufferHandler, CORS middleware, request-timing middleware, `/logs` endpoints, and the dark-mode monitoring dashboard - brings the production hardening stack to enterprise readiness. In v2.24.0 (Phases 56-57), five fault-tolerance patterns are added: partial-result HTTP 200 degradation, write-failure isolation, stream error signalling, ProcessPoolExecutor sequential fallback, and durable Engram persistence. The test suite has grown from 994 tests at Phase 20 to **1,490+ passing tests** at v2.24.0.
 
 ### 1. Introduction
-The traditional view of software quality places emphasis on unit correctness: each function, class, or module behaves correctly in isolation. This view is insufficient for systems with cross-cutting state — systems where component A modifies shared state that component B reads asynchronously, or where component C's output is used as input to component D's learning algorithm in a way that was not anticipated during design.
+The traditional view of software quality places emphasis on unit correctness: each function, class, or module behaves correctly in isolation. This view is insufficient for systems with cross-cutting state - systems where component A modifies shared state that component B reads asynchronously, or where component C's output is used as input to component D's learning algorithm in a way that was not anticipated during design.
 
-We term these failures **structural holes**: gaps in the interface contracts between subsystems that become exploitable under specific runtime orderings or data distributions. Unlike logical bugs (which cause incorrect output on all inputs) or race conditions (which cause incorrect output nondeterministically), structural holes cause incorrect output only under specific cross-system interactions — making them extremely difficult to detect through standard testing.
+We term these failures **structural holes**: gaps in the interface contracts between subsystems that become exploitable under specific runtime orderings or data distributions. Unlike logical bugs (which cause incorrect output on all inputs) or race conditions (which cause incorrect output nondeterministically), structural holes cause incorrect output only under specific cross-system interactions - making them extremely difficult to detect through standard testing.
 
 This paper documents the eight structural holes found in CEREBRUM v2.24.0 and v2.24.0, the formal analysis that revealed each hole, and the patches applied in Phases 19 and 20.
 
 ### 2. Phase 19 Structural Holes
 
-#### 2.1 Hole 1: Zombie Bridge (Rebalancer × Bridge Twin Engine)
+#### 2.1 Hole 1: Zombie Bridge (Rebalancer x Bridge Twin Engine)
 
 **Root cause**: The `GlobalRebalancer._rebalance_worker()` replaces `adapter.community_map` with a fresh partition. Community IDs are assigned sequentially (0, 1, 2, ...) by `_community_map_from_partitions()`. After a re-run, old community ID 42 may be gone or now represent a different semantic cluster. `BridgeTwinEngine._bridges` holds `BridgeRecord` objects whose `source_community` and `destination_community` fields reference the old IDs. These "zombie bridges" continue to be used in CSA weight calculations, producing attention scores that reference non-existent structural relationships.
 
-**Severity**: Silent correctness failure — bridges point to phantom communities, inflating CSA weights for structurally unsupported edges.
+**Severity**: Silent correctness failure - bridges point to phantom communities, inflating CSA weights for structurally unsupported edges.
 
 **Fix**: `BridgeTwinEngine.on_rebalance(new_community_map: Dict[str, int]) -> int`
 - Iterates existing `BridgeRecord` objects
 - For each record, checks whether `new_community_map.get(record.original_id)` and `new_community_map.get(twin_id)` match the stored community IDs
-- Removes stale bridge records (leaves `_candidates` intact — crossing counts remain useful)
+- Removes stale bridge records (leaves `_candidates` intact - crossing counts remain useful)
 - Returns count of pruned bridges
 
 `GlobalRebalancer` is extended with an optional `bridge_engine=` parameter; after the atomic community-map swap, it calls `bridge_engine.on_rebalance(new_map)`.
 
-**Validation**: Run 032 — 100% stale bridge detection; H@10 +11% on bridged-community queries.
+**Validation**: Run 032 - 100% stale bridge detection; H@10 +11% on bridged-community queries.
 
 #### 2.2 Hole 2: Causal Flood (Adversarial STDP)
 
-**Root cause**: `STDPDiscretizer.process()` materializes a `CAUSES` edge when `_weights[(pre, post)] >= w_threshold` AND `event_count[(pre, post)] >= n_min`. These thresholds prevent single-spike materialization but do not prevent adversarial burst attacks: 1,000 spikes in 1 millisecond satisfy both conditions trivially. The `weight_decay` parameter applies per-spike (not per-time), so decay only accumulates during the burst itself — insufficient to prevent threshold crossing.
+**Root cause**: `STDPDiscretizer.process()` materializes a `CAUSES` edge when `_weights[(pre, post)] >= w_threshold` AND `event_count[(pre, post)] >= n_min`. These thresholds prevent single-spike materialization but do not prevent adversarial burst attacks: 1,000 spikes in 1 millisecond satisfy both conditions trivially. The `weight_decay` parameter applies per-spike (not per-time), so decay only accumulates during the burst itself - insufficient to prevent threshold crossing.
 
-**Severity**: Adversarial exploitability — an attacker with write access to the event stream can materialize arbitrary causal edges by injecting rapid spike bursts.
+**Severity**: Adversarial exploitability - an attacker with write access to the event stream can materialize arbitrary causal edges by injecting rapid spike bursts.
 
 **Fix**: Two new `STDPDiscretizer` parameters:
 
-`min_causal_span: float = 0.0` (seconds) — blocks any materialization where the time from first to last co-occurrence is less than this value. A 1-second span requirement blocks all bursts shorter than 1 second regardless of count.
+`min_causal_span: float = 0.0` (seconds) - blocks any materialization where the time from first to last co-occurrence is less than this value. A 1-second span requirement blocks all bursts shorter than 1 second regardless of count.
 
-`use_chi_squared: bool = False` — applies a chi-squared uniformity test to inter-event intervals before materialization. A burst of rapid spikes produces highly non-uniform intervals (all near-zero), which the chi-squared test rejects at $p < 0.05$.
+`use_chi_squared: bool = False` - applies a chi-squared uniformity test to inter-event intervals before materialization. A burst of rapid spikes produces highly non-uniform intervals (all near-zero), which the chi-squared test rejects at $p < 0.05$.
 
-**Validation**: Run 032 — 100% false positive reduction on synthetic burst attack; 0 legitimate causal edges blocked.
+**Validation**: Run 032 - 100% false positive reduction on synthetic burst attack; 0 legitimate causal edges blocked.
 
-#### 2.3 Hole 3: Namespace Collision (IngestionPipeline × SignalEncoder)
+#### 2.3 Hole 3: Namespace Collision (IngestionPipeline x SignalEncoder)
 
-**Root cause**: Both `IngestionPipeline` (text entities) and `SignalEncoder` (sensor entities) project into the same entity ID space with no prefix. A sensor named `"Temp_Sensor_1"` and a text entity `"Temp_Sensor_1"` merge into one node — a "semantic Synaptic Bridge." The merged node receives both text embeddings and sensor signal embeddings, producing a hybrid representation that is meaningless for either modality.
+**Root cause**: Both `IngestionPipeline` (text entities) and `SignalEncoder` (sensor entities) project into the same entity ID space with no prefix. A sensor named `"Temp_Sensor_1"` and a text entity `"Temp_Sensor_1"` merge into one node - a "semantic Synaptic Bridge." The merged node receives both text embeddings and sensor signal embeddings, producing a hybrid representation that is meaningless for either modality.
 
-**Severity**: Data integrity failure — cross-modal entity collision silently corrupts embeddings and CSA attention weights.
+**Severity**: Data integrity failure - cross-modal entity collision silently corrupts embeddings and CSA attention weights.
 
 **Fix**:
-- `IngestionPipeline(namespace: str = "")` — applies `f"{namespace}:{entity_id}"` prefix after normalization/dedup. Default `""` is backward-compatible (no prefix).
-- `SignalEncoder(namespace: str = "signal")` — applies namespace prefix to all anchor entity IDs before calling `adapter.get_embedding()`. Default `"signal"` separates all signal entities from text entities automatically.
+- `IngestionPipeline(namespace: str = "")` - applies `f"{namespace}:{entity_id}"` prefix after normalization/dedup. Default `""` is backward-compatible (no prefix).
+- `SignalEncoder(namespace: str = "signal")` - applies namespace prefix to all anchor entity IDs before calling `adapter.get_embedding()`. Default `"signal"` separates all signal entities from text entities automatically.
 
-**Validation**: Run 032 — 100% collision elimination; namespace-isolated cross-modal graphs maintain 12.5× lower embedding drift than non-isolated graphs.
+**Validation**: Run 032 - 100% collision elimination; namespace-isolated cross-modal graphs maintain 12.5x lower embedding drift than non-isolated graphs.
 
-#### 2.4 Hole 4: Bayesian Cold-Start Bias (Thompson Sampling × Sparse Graphs)
+#### 2.4 Hole 4: Bayesian Cold-Start Bias (Thompson Sampling x Sparse Graphs)
 
 **Root cause**: New `TraversalPath` objects initialize with `beta_alpha=1.0, beta_beta=1.0` (Beta(1,1) = uniform prior). On a cold graph segment (few traversals, no prior data), Thompson sampling \cite{thompson1933bayesian, russo2018thompson} draws from a nearly-flat distribution, producing high variance in beam selection. The first edge's CSA weight is available but is not used to seed the Beta prior, wasting the most informative signal available at cold-start.
 
-**Severity**: Performance degradation — high first-hop variance in probabilistic mode leads to suboptimal beam selection, reducing H@10 by an estimated 8% on sparse graph regions.
+**Severity**: Performance degradation - high first-hop variance in probabilistic mode leads to suboptimal beam selection, reducing H@10 by an estimated 8% on sparse graph regions.
 
-**Fix**: `BeamTraversal(warm_start_strength: float = 0.0)` — when `warm_start_strength > 0` and `probabilistic=True`, the first-hop Beta prior is seeded with scaled CSA weight:
+**Fix**: `BeamTraversal(warm_start_strength: float = 0.0)` - when `warm_start_strength > 0` and `probabilistic=True`, the first-hop Beta prior is seeded with scaled CSA weight:
 
 $$(\alpha, \beta)_{hop1} = (1 + w \cdot (1 + s), \; 1 + (1-w) \cdot (1 + s))$$
 
 where $w$ is the CSA weight and $s$ is `warm_start_strength`. This produces a more informative prior without biasing subsequent hops (which use normal `prior_scale=1.0`).
 
-**Validation**: Run 032 — first-hop variance reduced by 85%; MetaQA-3hop H@10 +8.2% relative with `warm_start_strength=5.0`.
+**Validation**: Run 032 - first-hop variance reduced by 85%; MetaQA-3hop H@10 +8.2% relative with `warm_start_strength=5.0`.
 
 ### 3. Phase 20 Structural Holes
 
-#### 3.1 Hole 5: Mid-Flight Community Swap (GlobalRebalancer × BeamTraversal)
+#### 3.1 Hole 5: Mid-Flight Community Swap (GlobalRebalancer x BeamTraversal)
 
-**Root cause**: `BeamTraversal.traverse()` calls `adapter.community_map` at each hop. If the `GlobalRebalancer` completes an atomic community-map swap between hop 2 and hop 3 of the same query, the CSA weights for hops 2 and 3 reference different community partitions. This produces inconsistent attention weights within a single query — paths scored against different structural contexts.
+**Root cause**: `BeamTraversal.traverse()` calls `adapter.community_map` at each hop. If the `GlobalRebalancer` completes an atomic community-map swap between hop 2 and hop 3 of the same query, the CSA weights for hops 2 and 3 reference different community partitions. This produces inconsistent attention weights within a single query - paths scored against different structural contexts.
 
-**Severity**: Correctness violation — inconsistent community maps within a query produce unreliable path scores and non-deterministic results.
+**Severity**: Correctness violation - inconsistent community maps within a query produce unreliable path scores and non-deterministic results.
 
-**Fix**: `CSAEngine.set_query_snapshot(community_map: Dict)` — called at query start with the current community map. The CSAEngine uses the snapshot exclusively for the duration of the query; the GlobalRebalancer's atomic swap updates `adapter.community_map` but does not affect in-flight query snapshots. Snapshots are garbage-collected when queries complete.
+**Fix**: `CSAEngine.set_query_snapshot(community_map: Dict)` - called at query start with the current community map. The CSAEngine uses the snapshot exclusively for the duration of the query; the GlobalRebalancer's atomic swap updates `adapter.community_map` but does not affect in-flight query snapshots. Snapshots are garbage-collected when queries complete.
 
-**Validation**: 1,000 concurrent query/rebalance races — 0 snapshot isolation violations.
+**Validation**: 1,000 concurrent query/rebalance races - 0 snapshot isolation violations.
 
-#### 3.2 Hole 6: Community Homogeneity Trap (CSA Parameters × Dense Communities)
+#### 3.2 Hole 6: Community Homogeneity Trap (CSA Parameters x Dense Communities)
 
-**Root cause**: The global CSA parameter defaults (α=0.4, β=0.4, γ=0.1, δ=0.05, ε=0.05, ζ=0.1) are appropriate for heterogeneous graphs. In graphs with dense, highly-homogeneous communities (e.g., all nodes in community 3 are proteins with similar GO annotations), the community consensus term $S_C(u,v) = 1.0$ for virtually all edges within the community. The β term saturates, making it impossible for semantic similarity (α) or relation type (γ) to differentiate candidates. All intra-community edges receive nearly identical CSA scores, effectively disabling beam search discrimination.
+**Root cause**: The global CSA parameter defaults (alpha=0.4, beta=0.4, γ=0.1, δ=0.05, ε=0.05, ζ=0.1) are appropriate for heterogeneous graphs. In graphs with dense, highly-homogeneous communities (e.g., all nodes in community 3 are proteins with similar GO annotations), the community consensus term $S_C(u,v) = 1.0$ for virtually all edges within the community. The beta term saturates, making it impossible for semantic similarity (alpha) or relation type (γ) to differentiate candidates. All intra-community edges receive nearly identical CSA scores, effectively disabling beam search discrimination.
 
-**Severity**: Reasoning degradation — homogeneous communities produce near-flat attention distributions, reducing 3-hop H@10 by up to 18%.
+**Severity**: Reasoning degradation - homogeneous communities produce near-flat attention distributions, reducing 3-hop H@10 by up to 18%.
 
-**Fix**: `CSAEngine(community_params: Dict[int, Tuple[float,...]] = {})` — per-community parameter overrides. For high-homogeneity communities (detected by average intra-community $S_C > 0.85$), the operator (or `CSAParameterLearner`) can specify reduced β and increased γ:
+**Fix**: `CSAEngine(community_params: Dict[int, Tuple[float,...]] = {})` - per-community parameter overrides. For high-homogeneity communities (detected by average intra-community $S_C > 0.85$), the operator (or `CSAParameterLearner`) can specify reduced beta and increased γ:
 
 ```python
 csa = CSAEngine(community_params={3: (0.5, 0.2, 0.2, 0.05, 0.05, 0.0)})
 ```
 
-**Validation**: Biomedical benchmark — protein community H@10 +11.3% with per-community parameters vs. global defaults.
+**Validation**: Biomedical benchmark - protein community H@10 +11.3% with per-community parameters vs. global defaults.
 
-#### 3.3 Hole 7: Canonical Basis Drift (SignalEncoder × Federated Hops)
+#### 3.3 Hole 7: Canonical Basis Drift (SignalEncoder x Federated Hops)
 
-**Root cause**: `SignalEncoder.learn_alignment()` computes a Procrustes \cite{schonemann1966procrustes, gower2004procrustes} SVD rotation matrix $R$ that aligns sensor embeddings to the embedding space of a specific `GraphAdapter`. In a federated deployment, `FederatedAdapter` aggregates multiple remote adapters. Each adapter has a slightly different embedding space geometry. When `SignalEncoder` learns alignment against Adapter A, and a federated hop then traverses to Adapter B, the aligned sensor embeddings are compared against Adapter B's entity embeddings using a rotation matrix calibrated for Adapter A — producing geometric misalignment that accumulates multiplicatively across hops.
+**Root cause**: `SignalEncoder.learn_alignment()` computes a Procrustes \cite{schonemann1966procrustes, gower2004procrustes} SVD rotation matrix $R$ that aligns sensor embeddings to the embedding space of a specific `GraphAdapter`. In a federated deployment, `FederatedAdapter` aggregates multiple remote adapters. Each adapter has a slightly different embedding space geometry. When `SignalEncoder` learns alignment against Adapter A, and a federated hop then traverses to Adapter B, the aligned sensor embeddings are compared against Adapter B's entity embeddings using a rotation matrix calibrated for Adapter A - producing geometric misalignment that accumulates multiplicatively across hops.
 
-**Severity**: Federated reasoning quality degradation — embedding drift compounds across hops, reducing cross-modal semantic similarity accuracy by up to 67% after 3 federated hops.
+**Severity**: Federated reasoning quality degradation - embedding drift compounds across hops, reducing cross-modal semantic similarity accuracy by up to 67% after 3 federated hops.
 
-**Fix**: `SignalEncoder(canonical_embeddings: Optional[Dict[str, np.ndarray]] = None)` — all Procrustes alignments target a fixed canonical embedding space (the root adapter's or an independently-specified basis dictionary) rather than individual adapter spaces. All adapters align to the same root, eliminating drift accumulation.
+**Fix**: `SignalEncoder(canonical_embeddings: Optional[Dict[str, np.ndarray]] = None)` - all Procrustes alignments target a fixed canonical embedding space (the root adapter's or an independently-specified basis dictionary) rather than individual adapter spaces. All adapters align to the same root, eliminating drift accumulation.
 
-**Validation**: 3-hop federated traversal — 12.5× drift reduction with canonical anchor vs. chain alignment.
+**Validation**: 3-hop federated traversal - 12.5x drift reduction with canonical anchor vs. chain alignment.
 
-#### 3.4 Hole 8: Path-Preserving Hold-out (InferenceValidator × Sparse Graphs)
+#### 3.4 Hole 8: Path-Preserving Hold-out (InferenceValidator x Sparse Graphs)
 
-**Root cause**: `InferenceValidator` evaluates recall by holding out an edge $(u,v)$ from the graph, running traversal from $u$ to $v$, and checking whether the answer is found. On sparse graphs (low average degree), holding out $(u,v)$ may sever the *only* path between $u$ and $v$. The traversal correctly returns no answer (because no path exists), but this is recorded as a false negative — artificially inflating the miss rate and producing pessimistic recall estimates.
+**Root cause**: `InferenceValidator` evaluates recall by holding out an edge $(u,v)$ from the graph, running traversal from $u$ to $v$, and checking whether the answer is found. On sparse graphs (low average degree), holding out $(u,v)$ may sever the *only* path between $u$ and $v$. The traversal correctly returns no answer (because no path exists), but this is recorded as a false negative - artificially inflating the miss rate and producing pessimistic recall estimates.
 
-**Severity**: Evaluation bias — sparse-graph recall is underestimated by up to 40%, causing operators to incorrectly conclude that reasoning quality is poor and over-trigger rebalancing.
+**Severity**: Evaluation bias - sparse-graph recall is underestimated by up to 40%, causing operators to incorrectly conclude that reasoning quality is poor and over-trigger rebalancing.
 
-**Fix**: `InferenceValidator(path_preserving: bool = True)` (default: True) — before holding out edge $(u,v)$, checks whether an alternative multi-hop path exists after removal. If no alternative path exists, the edge is skipped for hold-out (and excluded from the recall denominator). This ensures hold-out evaluation only tests the system's *reasoning* ability, not its ability to traverse graphs with severed paths.
+**Fix**: `InferenceValidator(path_preserving: bool = True)` (default: True) - before holding out edge $(u,v)$, checks whether an alternative multi-hop path exists after removal. If no alternative path exists, the edge is skipped for hold-out (and excluded from the recall denominator). This ensures hold-out evaluation only tests the system's *reasoning* ability, not its ability to traverse graphs with severed paths.
 
-**Validation**: MetaQA-1hop with synthetic sparse graph (avg degree 1.8) — naive hold-out recall 0.41 vs. path-preserving hold-out recall 0.89, matching the full-graph benchmark of 0.91.
+**Validation**: MetaQA-1hop with synthetic sparse graph (avg degree 1.8) - naive hold-out recall 0.41 vs. path-preserving hold-out recall 0.89, matching the full-graph benchmark of 0.91.
 
 ### 4. Generalization: A Taxonomy of Structural Holes
 
@@ -1541,14 +1556,14 @@ The eight holes cluster into five taxonomic categories:
 
 This taxonomy predicts the location of structural holes in new features: any feature that (1) writes to shared state, (2) uses threshold guards, (3) generates identifiers, (4) uses fixed defaults, or (5) modifies the validation methodology should be reviewed against these five categories.
 
-### 5. Recent Advances (v2.24.0 → v2.24.0)
+### 5. Recent Advances (v2.24.0 -> v2.24.0)
 
 #### 5.1 Observability Layer (Phase 54)
 Production deployments require visibility into system behavior without halting the server for inspection. Phase 54 introduces a structured observability layer:
 
 **RingBufferHandler**: A Python `logging.Handler` subclass that captures all `cerebrum.*` log events at DEBUG level into a fixed-size ring buffer (default: 1,000 entries). Log entries are structured as JSON with timestamp, level, logger name, and message. The buffer is accessible via the `/logs` REST endpoint (GET for retrieval, DELETE to clear).
 
-**Request-Timing Middleware**: Applied to all FastAPI endpoints, this middleware records wall-clock latency per request and appends `X-Process-Time: <ms>` to every response header. Structured log entries record endpoint, method, status code, and latency — enabling aggregation in external APM systems without additional instrumentation.
+**Request-Timing Middleware**: Applied to all FastAPI endpoints, this middleware records wall-clock latency per request and appends `X-Process-Time: <ms>` to every response header. Structured log entries record endpoint, method, status code, and latency - enabling aggregation in external APM systems without additional instrumentation.
 
 **CORS Middleware**: Configurable origin allowlist applied at the FastAPI app level. Enables the Reasoning Studio (Gradio) and dark-mode dashboard (dashboard.html) to call the API from browser contexts without proxy configuration.
 
@@ -1570,9 +1585,9 @@ Two additional structural hardening improvements:
 | Phase 54 (v2.24.0) | **1,357** |
 | Phase 57 (v2.24.0) | **1,490+** |
 
-The 363-test increase since Phase 20 covers the observability layer, StudioEngine, ResearchAgent, ExternalValidator, HypothesisEngine, adaptive search, IKGWQ benchmark harness, and auto-retrain scheduler. A further 133+ tests added in Phases 55–57 cover GraphSAGE smoothing, Engram-steered traversal, TemporalCalibrator, QueryLog, partial-result degradation, write-failure isolation, stream error signalling, executor fallback, and Engram persistence.
+The 363-test increase since Phase 20 covers the observability layer, StudioEngine, ResearchAgent, ExternalValidator, HypothesisEngine, adaptive search, IKGWQ benchmark harness, and auto-retrain scheduler. A further 133+ tests added in Phases 55-57 cover GraphSAGE smoothing, Engram-steered traversal, TemporalCalibrator, QueryLog, partial-result degradation, write-failure isolation, stream error signalling, executor fallback, and Engram persistence.
 
-### 6. Phase 56–57: Fault Tolerance Hardening
+### 6. Phase 56-57: Fault Tolerance Hardening
 
 The v2.24.0 release (Phases 56 and 57) introduces five fault-tolerance patterns that together ensure no single failure mode can crash a running CEREBRUM server or corrupt an in-flight query.
 
@@ -1598,12 +1613,12 @@ The v2.24.0 release (Phases 56 and 57) introduces five fault-tolerance patterns 
 ### 7. Conclusion
 The eight structural holes documented in this paper demonstrate that production readiness in complex reasoning systems requires systematic cross-feature interaction analysis beyond unit and integration testing. The fixes are uniformly conservative: backward-compatible defaults, opt-in new parameters, and minimal code changes. In v2.24.0, the production hardening stack extends beyond structural hole remediation to active observability: the RingBufferHandler, CORS/timing middleware, `/logs` endpoint, and monitoring dashboard give operators real-time visibility into a running CEREBRUM instance without requiring external infrastructure.
 
-In v2.24.0 (Phases 56–57), the hardening scope expands from cross-feature interaction bugs to server-level fault tolerance. The five patterns introduced — partial-result degradation, write-failure isolation, stream error signalling, ProcessPoolExecutor fallback, and durable Engram persistence — collectively ensure that no single failure class can crash a running CEREBRUM server. With **1,490+ passing tests**, dual license (AGPL + commercial), and patent provisionals filed, CEREBRUM v2.24.0 represents a production-hardened framework suitable for enterprise deployment in adversarial and resource-constrained environments.
+In v2.24.0 (Phases 56-57), the hardening scope expands from cross-feature interaction bugs to server-level fault tolerance. The five patterns introduced - partial-result degradation, write-failure isolation, stream error signalling, ProcessPoolExecutor fallback, and durable Engram persistence - collectively ensure that no single failure class can crash a running CEREBRUM server. With **1,490+ passing tests**, dual license (AGPL + commercial), and patent provisionals filed, CEREBRUM v2.24.0 represents a production-hardened framework suitable for enterprise deployment in adversarial and resource-constrained environments.
 
 ---
 **References**
 1. Lamport, L. (1978). Time, Clocks, and the Ordering of Events in a Distributed System. Communications of the ACM.
-2. Bernstein, P. A., & Goodman, N. (1983). Multiversion Concurrency Control — Theory and Algorithms. ACM TODS.
+2. Bernstein, P. A., & Goodman, N. (1983). Multiversion Concurrency Control - Theory and Algorithms. ACM TODS.
 3. Carlini, N., & Wagner, D. (2017). Towards evaluating the robustness of neural networks. IEEE S&P.
 4. Goodfellow, I., et al. (2014). Generative Adversarial Networks. NeurIPS.
 5. Bi & Poo (1998). Synaptic Modifications in Cultured Hippocampal Neurons. Journal of Neuroscience.
@@ -1625,12 +1640,12 @@ In v2.24.0 (Phases 56–57), the hardening scope expands from cross-feature inte
 ---
 
 ### Abstract
-Entity embeddings in Knowledge Graph (KG) reasoning are typically computed in isolation — each node is encoded from its surface form alone, with no information from its neighbours. We adapt the GraphSAGE \cite{hamilton2017graphsage} mean neighbourhood aggregation as a pure inference-time operation: `smooth_with_graphsage(embeddings, G)` applies a single-pass weighted mean over each node's immediate neighbours after base encoding, requiring no training and no learned aggregation weights. The enriched embeddings make the `alpha` (semantic similarity) term in the CSA formula \cite{vaswani2017attention} significantly more discriminating — nodes in the same community share more similar neighbourhood-aggregated representations. Complexity is $O(|E| \times d)$ where $d$ is the embedding dimension, making it tractable for graphs with $10^5$ nodes on commodity hardware. `CerebrumGraph.build(use_graphsage=True)` integrates the smoothing step automatically after base encoding.
+Entity embeddings in Knowledge Graph (KG) reasoning are typically computed in isolation - each node is encoded from its surface form alone, with no information from its neighbours. We adapt the GraphSAGE \cite{hamilton2017graphsage} mean neighbourhood aggregation as a pure inference-time operation: `smooth_with_graphsage(embeddings, G)` applies a single-pass weighted mean over each node's immediate neighbours after base encoding, requiring no training and no learned aggregation weights. The enriched embeddings make the `alpha` (semantic similarity) term in the CSA formula \cite{vaswani2017attention} significantly more discriminating - nodes in the same community share more similar neighbourhood-aggregated representations. Complexity is $O(|E| \times d)$ where $d$ is the embedding dimension, making it tractable for graphs with $10^5$ nodes on commodity hardware. `CerebrumGraph.build(use_graphsage=True)` integrates the smoothing step automatically after base encoding.
 
 ### 1. Introduction
-Entity embeddings in CEREBRUM are produced by the `EmbeddingEngine` — either a random projection (`RandomEngine`) or a sentence-transformer encoding (`SentenceTransformerEngine`). Both approaches are context-free: the embedding of node $v$ is determined solely by the string label of $v$, with no reference to its graph neighbours.
+Entity embeddings in CEREBRUM are produced by the `EmbeddingEngine` - either a random projection (`RandomEngine`) or a sentence-transformer encoding (`SentenceTransformerEngine`). Both approaches are context-free: the embedding of node $v$ is determined solely by the string label of $v$, with no reference to its graph neighbours.
 
-This context-free property is computationally convenient but semantically limiting. Two nodes with different surface forms that are structurally embedded in the same community — surrounded by the same neighbours — will have dissimilar embeddings despite playing equivalent roles in the graph. The CSA `alpha` term, which measures cosine similarity between node embeddings, therefore underperforms in dense communities where structural role is more informative than surface form.
+This context-free property is computationally convenient but semantically limiting. Two nodes with different surface forms that are structurally embedded in the same community - surrounded by the same neighbours - will have dissimilar embeddings despite playing equivalent roles in the graph. The CSA `alpha` term, which measures cosine similarity between node embeddings, therefore underperforms in dense communities where structural role is more informative than surface form.
 
 GraphSAGE \cite{hamilton2017graphsage} addresses this by training an aggregation function over neighbourhood samples. However, the training requirement introduces a dependency on labelled data and a training pipeline that is incompatible with CEREBRUM's zero-shot design philosophy. We decouple the aggregation step from training by applying a single fixed-weight mean aggregation at inference time, after the base embeddings have already been computed.
 
@@ -1643,7 +1658,7 @@ $$\tilde{\mathbf{e}}_v = \frac{1}{1+|\mathcal{N}(v)|}\left(\mathbf{e}_v + \sum_{
 
 where $\mathcal{N}(v)$ is the set of immediate neighbours of $v$ in the undirected projection of $G$. The denominator $1 + |\mathcal{N}(v)|$ normalizes the sum so that high-degree nodes are not systematically scaled differently from low-degree nodes.
 
-This is equivalent to a single message-passing step in a Graph Convolutional Network \cite{velickovic2018gat} with uniform edge weights and no learned transformation matrix — the simplest possible neighbourhood aggregation.
+This is equivalent to a single message-passing step in a Graph Convolutional Network \cite{velickovic2018gat} with uniform edge weights and no learned transformation matrix - the simplest possible neighbourhood aggregation.
 
 #### 2.2 Implementation
 `smooth_with_graphsage(embeddings: Dict[str, np.ndarray], G: nx.Graph) -> Dict[str, np.ndarray]` implements the operation in a single forward pass over all edges:
@@ -1662,14 +1677,14 @@ def smooth_with_graphsage(embeddings, G):
 `CerebrumGraph.build(use_graphsage=True)` calls `smooth_with_graphsage` after the base `EmbeddingEngine.encode()` step and before `StructuralEncoder.encode()`. The smoothed embeddings are stored in place and propagated to all downstream consumers (CSAEngine, BeamTraversal, AnswerExtractor) without any API change.
 
 #### 2.3 Computational Complexity
-The operation iterates over all edges once to aggregate neighbour embeddings, and over all nodes once to compute the weighted mean. Total complexity: $O(|E| \times d + |V| \times d) = O((|E| + |V|) \times d)$. For sparse graphs ($|E| \approx k|V|$ with small constant $k$), this simplifies to $O(|V| \times d)$ — linear in graph size. On a graph with $10^5$ nodes and embedding dimension $d = 384$, the smoothing pass completes in under 2 seconds on a single CPU core.
+The operation iterates over all edges once to aggregate neighbour embeddings, and over all nodes once to compute the weighted mean. Total complexity: $O(|E| \times d + |V| \times d) = O((|E| + |V|) \times d)$. For sparse graphs ($|E| \approx k|V|$ with small constant $k$), this simplifies to $O(|V| \times d)$ - linear in graph size. On a graph with $10^5$ nodes and embedding dimension $d = 384$, the smoothing pass completes in under 2 seconds on a single CPU core.
 
 ### 3. Prior Art Analysis
 Hamilton et al. \cite{hamilton2017graphsage} introduced GraphSAGE for inductive node classification by training a neural aggregation function (mean, LSTM, or pooling) over sampled neighbourhood sets. Their approach requires a labelled training set, a loss function (typically cross-entropy), and multiple training epochs. The learned aggregation weights encode task-specific neighbourhood importance.
 
-CEREBRUM's variant differs in three ways: (1) no training — the aggregation weights are fixed uniform averages; (2) no sampling — the full immediate neighbourhood is used; (3) no task specificity — the smoothing is applied identically regardless of the downstream reasoning task. This makes the operation a pure structural preprocessing step, not a learning algorithm.
+CEREBRUM's variant differs in three ways: (1) no training - the aggregation weights are fixed uniform averages; (2) no sampling - the full immediate neighbourhood is used; (3) no task specificity - the smoothing is applied identically regardless of the downstream reasoning task. This makes the operation a pure structural preprocessing step, not a learning algorithm.
 
-Graph Attention Networks (GATs) \cite{velickovic2018gat} apply learned attention coefficients to neighbourhood aggregation. Our approach is analogous to a single GAT layer with all attention weights set to $1/|\mathcal{N}(v)|$ — a degenerate but computationally free variant that nonetheless provides meaningful embedding enrichment.
+Graph Attention Networks (GATs) \cite{velickovic2018gat} apply learned attention coefficients to neighbourhood aggregation. Our approach is analogous to a single GAT layer with all attention weights set to $1/|\mathcal{N}(v)|$ - a degenerate but computationally free variant that nonetheless provides meaningful embedding enrichment.
 
 ### 4. Results
 Neighbourhood smoothing improves within-community cosine similarity coherence: nodes in the same DSCF/TSC community, which share structural neighbours, receive embeddings that are shifted toward the community centroid after smoothing. This increases the average intra-community cosine similarity and reduces the variance of CSA `alpha` scores within a community.
@@ -1709,14 +1724,14 @@ Inference-time GraphSAGE neighbourhood smoothing is a zero-cost structural enric
 ---
 
 ### Abstract
-Classical beam search over Knowledge Graphs treats each query independently, discarding all information about which relation sequences led to successful answers in previous queries. We present **Engram-Steered Traversal**, a training-free mechanism that accumulates successful relation-sequence patterns in a persistent `Engram` and biases future beam pruning toward known-productive reasoning chains. The affinity boost is applied multiplicatively in `EngramTraversal._prune_candidates()`: $s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{engram} \cdot \text{affinity}(\text{rel\_seq}))$. No gradient descent is required — patterns are accumulated through frequency counting alone. The cache is durable across process restarts via JSON serialization, and two-tier warm-up on startup (saved JSON + `QueryLog` replay) ensures that learned patterns are immediately available after server restart.
+Classical beam search over Knowledge Graphs treats each query independently, discarding all information about which relation sequences led to successful answers in previous queries. We present **Engram-Steered Traversal**, a training-free mechanism that accumulates successful relation-sequence patterns in a persistent `Engram` and biases future beam pruning toward known-productive reasoning chains. The affinity boost is applied multiplicatively in `EngramTraversal._prune_candidates()`: $s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{engram} \cdot \text{affinity}(\text{rel\_seq}))$. No gradient descent is required - patterns are accumulated through frequency counting alone. The cache is durable across process restarts via JSON serialization, and two-tier warm-up on startup (saved JSON + `QueryLog` replay) ensures that learned patterns are immediately available after server restart.
 
 ### 1. Introduction
-Knowledge Graph reasoning systems learn from feedback through two established mechanisms: online parameter updates (MetaParameterLearner, Paper 2) and batch retraining (CSAParameterLearner, Paper 2). Both adjust numerical weights in the CSA attention formula. Neither captures the relational structure of successful reasoning paths — the specific sequences of edge types that, when followed, reliably connect a seed entity to a correct answer.
+Knowledge Graph reasoning systems learn from feedback through two established mechanisms: online parameter updates (MetaParameterLearner, Paper 2) and batch retraining (CSAParameterLearner, Paper 2). Both adjust numerical weights in the CSA attention formula. Neither captures the relational structure of successful reasoning paths - the specific sequences of edge types that, when followed, reliably connect a seed entity to a correct answer.
 
 Classical beam search \cite{vaswani2017attention} is a stateless algorithm: the beam at hop $k$ depends only on the current graph state and the CSA scores computed from that state. Every query starts from the same initial conditions, regardless of how many similar queries have been answered successfully before. This statelessness is correct in principle but wasteful in practice: a KG reasoning server that has answered thousands of protein-disease queries should be biased toward the relation sequences that previously reached disease nodes from protein nodes.
 
-Engram-steered traversal addresses this by maintaining a persistent, query-accumulated cache of relation-sequence success counts. The cache requires no training, no labels, and no gradient computation — it is updated after each successful query by recording the relation sequence of the winning path.
+Engram-steered traversal addresses this by maintaining a persistent, query-accumulated cache of relation-sequence success counts. The cache requires no training, no labels, and no gradient computation - it is updated after each successful query by recording the relation sequence of the winning path.
 
 ### 2. Methodology
 
@@ -1727,7 +1742,7 @@ The affinity of a relation sequence `seq` is:
 
 $$\text{affinity}(\text{seq}) = \frac{\texttt{\_counts}[\text{seq}]}{\texttt{\_max\_count}}$$
 
-For sequences not present in `_counts`, `affinity = 0` and no boost is applied — the cache degrades gracefully to unsteered beam search on unseen relation sequences.
+For sequences not present in `_counts`, `affinity = 0` and no boost is applied - the cache degrades gracefully to unsteered beam search on unseen relation sequences.
 
 #### 2.2 Beam Pruning Integration
 `EngramTraversal` extends `BeamTraversal` and overrides `_prune_candidates()`. For each candidate path $c$ at each hop, the current partial relation sequence `rel_seq` is extracted from the path history. The effective score is:
@@ -1757,7 +1772,7 @@ On server shutdown, the lifespan `try/finally` block calls `Engram.save_if_path(
 `QueryLog` maintains an append-only NDJSON file of query history records. Each record includes seeds, answers, and the relation sequence of the winning path. `replay_into_cache(engram)` iterates the log file and calls `engram.record(rel_seq)` for each successful query entry, updating `_counts` and `_max_count`.
 
 ### 3. Prior Art
-MINERVA \cite{das2018minerva} learns a policy over relation sequences using REINFORCE — a reinforcement learning algorithm requiring labelled question-answer pairs and many training episodes. Engram-Steered Traversal uses no training: counts are derived from live query success without any reward signal or policy gradient.
+MINERVA \cite{das2018minerva} learns a policy over relation sequences using REINFORCE - a reinforcement learning algorithm requiring labelled question-answer pairs and many training episodes. Engram-Steered Traversal uses no training: counts are derived from live query success without any reward signal or policy gradient.
 
 M-Walk uses Monte Carlo tree search to explore relation paths during inference. Engram-Steered Traversal does not modify the search tree structure; it biases existing beam pruning through a multiplicative score adjustment, leaving the beam search algorithm unchanged.
 
@@ -1766,18 +1781,18 @@ Neural LP and DRUM learn logical rules over KGs from labelled triples. Engram-St
 The key distinction of Engram-Steered Traversal is its operational simplicity: it is a frequency counter with a lookup table. The implementation adds fewer than 100 lines of code to the traversal module. It improves on zero-shot performance without any of the infrastructure requirements of RL-based or training-based approaches.
 
 ### 4. Integration and Failure Isolation
-`Engram.record()` calls in the hot query path are wrapped in `try/except`. A write failure (disk full, OOM) logs at WARNING and does not propagate to the HTTP response — the query result is returned normally even if the cache update fails. This ensures that the persistence layer never becomes a reliability dependency for the core reasoning path.
+`Engram.record()` calls in the hot query path are wrapped in `try/except`. A write failure (disk full, OOM) logs at WARNING and does not propagate to the HTTP response - the query result is returned normally even if the cache update fails. This ensures that the persistence layer never becomes a reliability dependency for the core reasoning path.
 
 The `QueryLog` replay on startup is similarly isolated: if the log file is corrupted or missing, the warm-up step logs at WARNING and proceeds with the counts loaded from the saved JSON (Tier 1 only). The system starts in a degraded-warm state rather than failing to start.
 
 ### 5. Conclusion
 Engram-steered traversal demonstrates that meaningful learning from experience does not require gradient descent. By accumulating relation-sequence success counts in a persistent, durable cache and applying a multiplicative affinity boost during beam pruning, the system biases future queries toward known-productive reasoning chains without modifying graph structure, CSA parameters, or the beam search algorithm. Two-tier warm-up on startup ensures that no productive reasoning trace is lost across process restarts.
 
-*See also:* **Paper 021** — SpeedTalk-Compressed Engram: Phonemic Encoding for Relation-Pattern Caches — extends this work with Heinlein-inspired single-character phoneme compression (8–20× key reduction), graph-adaptive alphabet tuning, and first-class prefix-query support.
+*See also:* **Paper 021** - SpeedTalk-Compressed Engram: Phonemic Encoding for Relation-Pattern Caches - extends this work with Heinlein-inspired single-character phoneme compression (8-20x key reduction), graph-adaptive alphabet tuning, and first-class prefix-query support.
 
-*See also:* **Paper 022** — Looped Beam Traversal (Phase 70) — uses the Engram as a mnemonic feedback channel between iterative traversal loops [zhu2025loooplm]. Engram records from loop t bias beam pruning in loop t+1 toward known-productive relation patterns. The Engram's accumulated patterns also supply the prior for `PredictiveCodingEngine`'s PE-based exit gate.
+*See also:* **Paper 022** - Looped Beam Traversal (Phase 70) - uses the Engram as a mnemonic feedback channel between iterative traversal loops [zhu2025loooplm]. Engram records from loop t bias beam pruning in loop t+1 toward known-productive relation patterns. The Engram's accumulated patterns also supply the prior for `PredictiveCodingEngine`'s PE-based exit gate.
 
-The Engram pattern as a *soliton* [bengio2025soliton]: a relation-sequence pattern that repeatedly yields low PE across queries is analogous to a soliton — a localized wave that maintains its shape through propagation. The `soliton_index` (Phase 69) measures this stability per seed set.
+The Engram pattern as a *soliton* [bengio2025soliton]: a relation-sequence pattern that repeatedly yields low PE across queries is analogous to a soliton - a localized wave that maintains its shape through propagation. The `soliton_index` (Phase 69) measures this stability per seed set.
 
 ---
 **References**
@@ -1804,7 +1819,7 @@ The Engram pattern as a *soliton* [bengio2025soliton]: a relation-sequence patte
 ---
 
 ### Abstract
-The CSA attention formula includes two temporal feature terms: `eta * td` (temporal decay over edge age) and `iota * nr_v` (node recency). Optimal values of `eta` and `iota` are dataset-dependent — a graph of news articles requires aggressive temporal decay, while a graph of scientific publications requires gentle decay. These parameters cannot be found by gradient descent because the evaluation metric (Recall@K) is non-differentiable with respect to CSA parameter changes. We present **TemporalCalibrator**, a grid-search calibrator that enumerates `eta_grid × iota_grid`, measures Recall@K at each point against a labelled validation set, and applies the best-found parameters to the CSAEngine. A `try/finally` block guarantees that original parameters are restored if calibration is interrupted, ensuring that a failed calibration run never leaves the CSAEngine in a partially-modified state.
+The CSA attention formula includes two temporal feature terms: `eta * td` (temporal decay over edge age) and `iota * nr_v` (node recency). Optimal values of `eta` and `iota` are dataset-dependent - a graph of news articles requires aggressive temporal decay, while a graph of scientific publications requires gentle decay. These parameters cannot be found by gradient descent because the evaluation metric (Recall@K) is non-differentiable with respect to CSA parameter changes. We present **TemporalCalibrator**, a grid-search calibrator that enumerates `eta_grid x iota_grid`, measures Recall@K at each point against a labelled validation set, and applies the best-found parameters to the CSAEngine. A `try/finally` block guarantees that original parameters are restored if calibration is interrupted, ensuring that a failed calibration run never leaves the CSAEngine in a partially-modified state.
 
 ### 1. Introduction
 The 10-parameter CSA formula \cite{vaswani2017attention} includes two terms that encode temporal information:
@@ -1814,7 +1829,7 @@ The 10-parameter CSA formula \cite{vaswani2017attention} includes two terms that
 
 Both `eta` and `iota` have dataset-specific optimal values. On a streaming news graph, edges from yesterday are far more relevant than edges from last year, and `eta` should be large. On a biomedical ontology built from decades of publications, temporal recency is a weak signal, and `eta` should be small. The same asymmetry applies to `iota`.
 
-The `MetaParameterLearner` (Paper 2) can adapt CSA parameters online from feedback signals, but Recall@K — the primary evaluation metric for multi-hop KG reasoning — is not differentiable with respect to `eta` or `iota`. A single-point change in `eta` affects the pruning decisions of the beam search in a combinatorial, non-smooth way. Gradient-based optimization is therefore inapplicable to this problem.
+The `MetaParameterLearner` (Paper 2) can adapt CSA parameters online from feedback signals, but Recall@K - the primary evaluation metric for multi-hop KG reasoning - is not differentiable with respect to `eta` or `iota`. A single-point change in `eta` affects the pruning decisions of the beam search in a combinatorial, non-smooth way. Gradient-based optimization is therefore inapplicable to this problem.
 
 Grid search is the natural alternative for low-dimensional non-differentiable optimization problems. With only two parameters to calibrate over a small grid, the search space is fully tractable.
 
@@ -1829,7 +1844,7 @@ Grid search is the natural alternative for low-dimensional non-differentiable op
    a. Set `csa_engine.params.eta = eta` and `csa_engine.params.iota = iota`.
    b. Call `measure_recall(validation_set, k)` to evaluate Recall@K.
    c. Record the `(eta, iota, recall)` triple.
-4. In `finally`: restore (`eta_0`, `iota_0`) unconditionally — whether the loop completed normally or raised.
+4. In `finally`: restore (`eta_0`, `iota_0`) unconditionally - whether the loop completed normally or raised.
 5. Identify the `(eta*, iota*)` pair with the highest recorded recall.
 6. `apply(csa_engine)` sets `csa_engine.params.eta = eta*` and `csa_engine.params.iota = iota*`.
 
@@ -1846,14 +1861,17 @@ The validation set must be labelled (ground-truth answers known) and held out fr
 The default grid is defined by the `eta_grid` and `iota_grid` constructor parameters. A $5 \times 5$ grid over `eta ∈ {0.0, 0.05, 0.1, 0.2, 0.4}` and `iota ∈ {0.0, 0.025, 0.05, 0.1, 0.2}` covers the practical range of temporal sensitivity in 25 evaluations. Total calibration cost: $O(25 \times |V| \times T_\text{traverse})$ where $T_\text{traverse}$ is the mean traversal time per query.
 
 ### 3. Results
-Grid-search over a $5 \times 5$ grid finds optimal `eta` and `iota` in 25 evaluations. On a streaming news graph with 10,000 nodes and a validation set of 500 pairs, calibration completes in under 3 minutes on a single CPU core. The best-found parameters improve Recall@10 by an average of 8–14% compared to the global defaults (`eta=0.1`, `iota=0.05`) on temporally non-uniform graphs.
+Grid-search over a $5 \times 5$ grid finds optimal `eta` and `iota` in 25 evaluations. On a streaming news graph with 10,000 nodes and a validation set of 500 pairs, calibration completes in under 3 minutes on a single CPU core. The best-found parameters improve Recall@10 by an average of 8-14% compared to the global defaults (`eta=0.1`, `iota=0.05`) on temporally non-uniform graphs.
 
 The `try/finally` restoration guarantee is particularly important in interactive deployments: if a calibration run is cancelled mid-grid (e.g., by a keyboard interrupt or timeout), the CSAEngine continues operating with its pre-calibration parameters rather than with whichever intermediate `(eta, iota)` point happened to be active when the interrupt arrived.
+
+### 3.5 The Executive Mind: Frontal and Cingulate Engines (Phases 149-150)
+In v2.35.0, CEREBRUM moves beyond simple traversal toward executive orchestration. The **Frontal Engine** (Phase 150) implements a meta-reasoning layer that analyzes candidate paths and dynamically selects between FAST (traversal only), HYBRID (async research), and DEEP (suspend for research) strategies. This is coupled with the **Cingulate Engine** (Phase 149), which monitors reasoning entropy and detects "hub-flooding" signatures—situations where a few high-degree nodes overwhelm the beam. When such flooding is detected, the Cingulate Engine triggers a recursive refinement loop, retrying the query with stricter pruning constraints to recover signal from the noise.
 
 ### 4. Conclusion
 TemporalCalibrator closes the parameter optimization gap for temporal CSA features that cannot be addressed by gradient-based learning. By combining grid search over a small parameter space with a `try/finally` restoration guarantee and a clean `calibrate()/apply()` API, it enables production operators to tune temporal sensitivity for their specific dataset without risking CSAEngine state corruption. The 25-evaluation cost for a $5 \times 5$ grid is acceptable for infrequent calibration runs (e.g., on dataset refresh or after significant graph growth).
 
-The temporal stability achieved by TemporalCalibrator — where `eta` and `iota` converge to values that maintain consistent Recall@K across graph updates — is analogous to the soliton framing introduced in Phase 69 [bengio2025soliton]: a calibration state that consistently yields low prediction error can be considered soliton-like, a localized reasoning model that maintains its shape through propagation. TemporalCalibrator finds the parameter point that maximises this stability for the temporal dimension specifically.
+The temporal stability achieved by TemporalCalibrator - where `eta` and `iota` converge to values that maintain consistent Recall@K across graph updates - is analogous to the soliton framing introduced in Phase 69 [bengio2025soliton]: a calibration state that consistently yields low prediction error can be considered soliton-like, a localized reasoning model that maintains its shape through propagation. TemporalCalibrator finds the parameter point that maximises this stability for the temporal dimension specifically.
 
 ---
 **References**
@@ -1878,7 +1896,7 @@ The temporal stability achieved by TemporalCalibrator — where `eta` and `iota`
 ---
 
 ### Abstract
-Production Knowledge Graph reasoning servers face five distinct failure classes: traversal failures mid-hop, persistence write failures during query logging, stream interruptions visible to connected clients, process spawning failures during community detection, and state loss across server restarts. We document five corresponding fault-tolerance patterns implemented in CEREBRUM v2.24.0 (Phases 56–57): **partial-result HTTP 200 degradation** (`QueryResponse.partial`, `_partial_paths`), **write-failure isolation** (QueryLog, Engram, GlobalRebalancer worker), **streaming error signalling** (terminal NDJSON error chunk), **ProcessPoolExecutor sequential fallback** (`best_of_n_dscf`), and **durable Engram persistence** (save/load/two-tier startup). Together, these patterns guarantee that no single failure class can crash a running CEREBRUM server, corrupt an in-flight query, or silently drop accumulated reasoning experience. Each pattern is backward-compatible and adds no new required parameters to existing APIs.
+Production Knowledge Graph reasoning servers face five distinct failure classes: traversal failures mid-hop, persistence write failures during query logging, stream interruptions visible to connected clients, process spawning failures during community detection, and state loss across server restarts. We document five corresponding fault-tolerance patterns implemented in CEREBRUM v2.24.0 (Phases 56-57): **partial-result HTTP 200 degradation** (`QueryResponse.partial`, `_partial_paths`), **write-failure isolation** (QueryLog, Engram, GlobalRebalancer worker), **streaming error signalling** (terminal NDJSON error chunk), **ProcessPoolExecutor sequential fallback** (`best_of_n_dscf`), and **durable Engram persistence** (save/load/two-tier startup). Together, these patterns guarantee that no single failure class can crash a running CEREBRUM server, corrupt an in-flight query, or silently drop accumulated reasoning experience. Each pattern is backward-compatible and adds no new required parameters to existing APIs.
 
 ### 1. Introduction
 Production distributed systems face a fundamental asymmetry: failures are rare but their consequences are disproportionate. A single traversal crash that returns HTTP 500 may abort a client's multi-step reasoning workflow. A disk-full condition that propagates from a log write to a query response degrades system availability unnecessarily. A stream client that receives a TCP disconnect mid-stream has no way to distinguish a deliberate completion from a server crash.
@@ -1887,23 +1905,23 @@ Lamport \cite{lamport1978} established that distributed systems cannot distingui
 
 This paper documents the five failure classes, the pattern applied to each, and the invariant each pattern preserves.
 
-### 2. Pattern 1 — Partial-Result HTTP 200 (Phase 56)
+### 2. Pattern 1 - Partial-Result HTTP 200 (Phase 56)
 
 **Failure class**: Traversal failure mid-hop.
 
-**Scenario**: `BeamTraversal.traverse()` completes hops 1–3 successfully but raises an exception at hop 4. Without intervention, the exception propagates to the FastAPI route handler, which returns HTTP 500. The client receives no answers, even though three hops of valid reasoning were completed.
+**Scenario**: `BeamTraversal.traverse()` completes hops 1-3 successfully but raises an exception at hop 4. Without intervention, the exception propagates to the FastAPI route handler, which returns HTTP 500. The client receives no answers, even though three hops of valid reasoning were completed.
 
 **Pattern**: `BeamTraversal` maintains a `_partial_paths: List[Path]` list. After each hop completes, the current best paths are checkpointed into `_partial_paths`. If a later hop raises, the exception is caught by the route handler and `_partial_paths` is returned as the answer set.
 
 `QueryResponse` gains two optional fields:
-- `partial: bool = False` — set to `True` when the response contains partial rather than full results.
-- `error: Optional[str] = None` — the exception message, for client-side logging and retry decisions.
+- `partial: bool = False` - set to `True` when the response contains partial rather than full results.
+- `error: Optional[str] = None` - the exception message, for client-side logging and retry decisions.
 
 The route handler returns HTTP 200 in both cases. Clients distinguish partial from full results by checking `response.partial`, not by parsing HTTP status codes.
 
 **Invariant preserved**: A traversal failure never returns fewer results than the last completed hop. Clients always receive the best available answer, with explicit metadata indicating whether the result is complete.
 
-### 3. Pattern 2 — Write Failure Isolation (Phase 56)
+### 3. Pattern 2 - Write Failure Isolation (Phase 56)
 
 **Failure class**: Persistence write failures during query logging.
 
@@ -1920,11 +1938,11 @@ except Exception as exc:
 
 The exception is logged at WARNING (not ERROR, since it does not affect the query result) and swallowed. The query response proceeds normally.
 
-A parallel isolation is applied to `GlobalRebalancer`: `_rebalance_worker_inner()` is extracted as a separate method containing the actual rebalance work. The outer `_rebalance_worker()` calls `_rebalance_worker_inner()` inside `try/except` and logs any exception at ERROR. This prevents an exception in the rebalance algorithm from crashing the rebalancer thread silently — it is logged and the thread remains alive for the next scheduled rebalance.
+A parallel isolation is applied to `GlobalRebalancer`: `_rebalance_worker_inner()` is extracted as a separate method containing the actual rebalance work. The outer `_rebalance_worker()` calls `_rebalance_worker_inner()` inside `try/except` and logs any exception at ERROR. This prevents an exception in the rebalance algorithm from crashing the rebalancer thread silently - it is logged and the thread remains alive for the next scheduled rebalance.
 
 **Invariant preserved**: A write failure never degrades query availability. The persistence layer is a best-effort side channel, not a reliability dependency for core reasoning.
 
-### 4. Pattern 3 — Stream Error Signalling (Phase 57)
+### 4. Pattern 3 - Stream Error Signalling (Phase 57)
 
 **Failure class**: Stream interruptions visible to connected clients.
 
@@ -1948,7 +1966,7 @@ The terminal error chunk is a valid NDJSON line. Clients that parse the stream l
 
 **Invariant preserved**: Stream clients always receive an explicit terminal signal, whether the traversal completed normally or failed. The distinction between completion and failure is always observable from stream content alone.
 
-### 5. Pattern 4 — ProcessPoolExecutor Sequential Fallback (Phase 57)
+### 5. Pattern 4 - ProcessPoolExecutor Sequential Fallback (Phase 57)
 
 **Failure class**: Process spawning failures during parallel community detection.
 
@@ -1969,7 +1987,7 @@ Sequential execution is slower but produces identical results. The WARNING log m
 
 **Invariant preserved**: Server startup succeeds on any host that can run Python, regardless of process spawning constraints.
 
-### 6. Pattern 5 — Durable Engram Persistence (Phase 57)
+### 6. Pattern 5 - Durable Engram Persistence (Phase 57)
 
 **Failure class**: State loss across server restarts.
 
@@ -1979,7 +1997,7 @@ Sequential execution is slower but produces identical results. The WARNING log m
 
 - `save(path)`: Serializes `_counts` as `[[seq_tuple, count], ...]` inside a `{"version": 1, ...}` JSON envelope.
 - `load(path)`: Deserializes and restores `_counts`; recomputes `_max_count` from the loaded values.
-- `save_if_path(path)`: Null-safe wrapper — silently returns if `path is None`.
+- `save_if_path(path)`: Null-safe wrapper - silently returns if `path is None`.
 
 The FastAPI lifespan context manager integrates persistence:
 
@@ -1997,7 +2015,7 @@ async def lifespan(app):
 
 The `try/finally` in the lifespan guarantees that `save_if_path` is called even on unhandled exceptions during the application lifetime. Save failures are isolated with `try/except` and logged at WARNING.
 
-**Invariant preserved**: No productive reasoning trace is lost across planned restarts. On unplanned restarts, at most the traces since the last explicit `save()` call are lost — bounded by the QueryLog replay that closes this gap at the next startup.
+**Invariant preserved**: No productive reasoning trace is lost across planned restarts. On unplanned restarts, at most the traces since the last explicit `save()` call are lost - bounded by the QueryLog replay that closes this gap at the next startup.
 
 ### 7. Fault-Tolerance Taxonomy
 
@@ -2012,12 +2030,12 @@ The `try/finally` in the lifespan guarantees that `save_if_path` is called even 
 The five patterns are orthogonal: each addresses a distinct failure class and can be applied independently. Together, they provide defense-in-depth against the full set of operational failure modes observed in production KG reasoning deployments.
 
 ### 8. Conclusion
-Fault tolerance in production systems is not a single feature but a taxonomy of patterns, each matched to a specific failure class and preserving a specific invariant. The five patterns documented here — partial-result degradation, write-failure isolation, stream error signalling, executor fallback, and durable cache persistence — together ensure that no single operational failure can crash a CEREBRUM server, corrupt an in-flight query, or silently discard accumulated reasoning experience. All five are backward-compatible with existing APIs and add no new required configuration. They represent the engineering discipline that distinguishes a research prototype from a production-ready system.
+Fault tolerance in production systems is not a single feature but a taxonomy of patterns, each matched to a specific failure class and preserving a specific invariant. The five patterns documented here - partial-result degradation, write-failure isolation, stream error signalling, executor fallback, and durable cache persistence - together ensure that no single operational failure can crash a CEREBRUM server, corrupt an in-flight query, or silently discard accumulated reasoning experience. All five are backward-compatible with existing APIs and add no new required configuration. They represent the engineering discipline that distinguishes a research prototype from a production-ready system.
 
 ---
 **References**
-1. Lamport, L. (1978). Time, Clocks, and the Ordering of Events in a Distributed System. Communications of the ACM, 21(7), 558–565.
-2. Bernstein, P. A., & Goodman, N. (1983). Multiversion Concurrency Control — Theory and Algorithms. ACM Transactions on Database Systems, 8(4), 465–483.
+1. Lamport, L. (1978). Time, Clocks, and the Ordering of Events in a Distributed System. Communications of the ACM, 21(7), 558-565.
+2. Bernstein, P. A., & Goodman, N. (1983). Multiversion Concurrency Control - Theory and Algorithms. ACM Transactions on Database Systems, 8(4), 465-483.
 3. Vaswani, A., et al. (2017). Attention is All You Need. NIPS.
 
 ---
@@ -2027,11 +2045,11 @@ Fault tolerance in production systems is not a single feature but a taxonomy of 
 
 ---
 
-# PAPER 021 — SpeedTalk-Compressed Engram: Phonemic Encoding for Relation-Pattern Caches
+# PAPER 021 - SpeedTalk-Compressed Engram: Phonemic Encoding for Relation-Pattern Caches
 
 **Series:** CEREBRUM Technical Report Series  
 **Paper:** 021 of 100  
-**Status:** v2.24.0 (Phase 82 COMPLETE — compatible)  
+**Status:** v2.24.0 (Phase 82 COMPLETE - compatible)  
 **Date:** April 2026  
 **Author:** Bryan Alexander Buchorn, Independent Researcher
 
@@ -2048,9 +2066,9 @@ in a KG is assigned a single character from a 62-symbol alphabet, and multi-hop
 relation sequences are stored as compact strings rather than verbose Python tuples.
 The encoding is **lossless** (every string decodes back to the exact original sequence),
 preserves **prefix structure** (a string prefix corresponds exactly to a relation-
-sequence prefix), and achieves **8–14× key compression** on typical medical and
+sequence prefix), and achieves **8-14x key compression** on typical medical and
 scientific KGs.  More importantly, the prefix-preserving property unlocks a new
-first-class capability: **prefix queries** — the ability to retrieve all cached
+first-class capability: **prefix queries** - the ability to retrieve all cached
 reasoning chains that begin with a given relation type or sub-sequence in O(P)
 time without full-scan indexing.
 
@@ -2066,7 +2084,7 @@ pruning on subsequent queries.  A successful 3-hop path through a biomedical KG 
 contribute the entry:
 
 ```
-("CAUSES", "TREATS", "PREVENTS")  →  count: 7
+("CAUSES", "TREATS", "PREVENTS")  ->  count: 7
 ```
 
 On the next query, when the beam traversal encounters a candidate whose first hop
@@ -2082,14 +2100,14 @@ learned patterns survive process boundaries.
 
 ### 1.2 The Storage Problem
 
-In a production biomedical KG with 60–80 distinct relation types and 3–6-hop paths,
+In a production biomedical KG with 60-80 distinct relation types and 3-6-hop paths,
 the cache keys grow verbose:
 
 | Representation | Example key | Characters |
 |---|---|---|
 | Python tuple | `"('CAUSES', 'TREATS', 'PREVENTS')"` | 35 |
 | SpeedTalk encoded | `"ctp"` | 3 |
-| Compression ratio | — | **11.7×** |
+| Compression ratio | - | **11.7x** |
 
 At 10,000 cached patterns (a realistic ceiling for a long-running research system),
 the JSON file shrinks from ~3.5 MB to ~300 KB.  More critically, the Engram prefix
@@ -2099,7 +2117,7 @@ by the same ratio, reducing RAM usage for the in-memory index.
 ### 1.3 The Prefix Query Gap
 
 The plain-tuple `Engram` stores sequences as dictionary keys.  Looking up whether
-any cached pattern *starts with* a given relation requires scanning all keys — O(N).
+any cached pattern *starts with* a given relation requires scanning all keys - O(N).
 SpeedTalk encoding eliminates this gap: because each character encodes exactly one
 relation, a string prefix corresponds exactly to a relation-sequence prefix, and
 `str.startswith()` becomes a natural O(P) test.  This enables a new analytical
@@ -2114,9 +2132,9 @@ primitive: **"what are all known productive chains that begin with this relation
 CEREBRUM SpeedTalk uses a 62-character base alphabet:
 
 ```
-a–z  (26 lowercase)
-A–Z  (26 uppercase)
-0–9  (10 digits)
+a-z  (26 lowercase)
+A-Z  (26 uppercase)
+0-9  (10 digits)
 ```
 
 This covers any realistic KG relation vocabulary.  For KGs with more than 62
@@ -2132,7 +2150,7 @@ compression and prefix semantics.
 Tier 2 implements the true Heinlein principle: **common concepts receive the most
 economical representation**.  Given a frequency map `{relation: count}`, the encoder
 reorders so that the most-used relation gets `'a'`, the second-most-used gets `'b'`,
-and so on.  This maximises the information density of every cache key — short strings
+and so on.  This maximises the information density of every cache key - short strings
 encode the most-traversed reasoning chains.
 
 ```python
@@ -2143,8 +2161,8 @@ encoder.build_frequency_order({
     "ASSOCIATED_WITH": 200,
     "INHIBITS": 88,
 })
-# Now: encoder.encode(["CAUSES"]) → "a"
-#      encoder.encode(["CAUSES", "TREATS"]) → "ab"
+# Now: encoder.encode(["CAUSES"]) -> "a"
+#      encoder.encode(["CAUSES", "TREATS"]) -> "ab"
 ```
 
 Frequency reordering is applied at startup before the cache is populated, so all
@@ -2170,7 +2188,7 @@ This property is what makes prefix queries exact and efficient.
 `SpeedTalkEngram` wraps the `SpeedTalkEncoder` into a drop-in replacement for
 `Engram`.  The internal `_counts` and `_prefix` dictionaries store **encoded
 strings** as keys rather than tuples, but the public API accepts and returns
-**raw relation-type strings** — encoding and decoding are transparent to callers.
+**raw relation-type strings** - encoding and decoding are transparent to callers.
 
 ### 3.1 Core Operations
 
@@ -2181,15 +2199,15 @@ cache = SpeedTalkEngram()
 cache.record(("CAUSES", "TREATS", "PREVENTS"), weight=5)
 
 # Affinity lookup (same semantics as Engram)
-score = cache.affinity(("CAUSES", "TREATS"))   # → 0.0–1.0
+score = cache.affinity(("CAUSES", "TREATS"))   # -> 0.0-1.0
 
 # Inspect learned vocabulary
 cache.alphabet()
-# → {"CAUSES": "a", "TREATS": "b", "PREVENTS": "c"}
+# -> {"CAUSES": "a", "TREATS": "b", "PREVENTS": "c"}
 
 # Compression metrics
 cache.compression_stats()
-# → {"vocab_size": 3, "total_patterns": 1,
+# -> {"vocab_size": 3, "total_patterns": 1,
 #    "avg_encoded_len": 3.0, "avg_tuple_len": 35.0,
 #    "compression_ratio": 11.7}
 ```
@@ -2202,20 +2220,20 @@ cache.record(("CAUSES", "INHIBITS", "PREVENTS"), weight=3)
 cache.record(("ASSOCIATED_WITH",), weight=7)
 
 cache.prefix_query("CAUSES")
-# → [(("CAUSES", "TREATS"), 10),
+# -> [(("CAUSES", "TREATS"), 10),
 #    (("CAUSES", "INHIBITS", "PREVENTS"), 3)]
 # Note: ("ASSOCIATED_WITH",) is correctly excluded.
 
 # Multi-hop prefix
 cache.prefix_query("CAUSES", "INHIBITS")
-# → [(("CAUSES", "INHIBITS", "PREVENTS"), 3)]
+# -> [(("CAUSES", "INHIBITS", "PREVENTS"), 3)]
 ```
 
 The prefix query is the primary new analytical surface.  Downstream use cases:
 - **Reasoning diagnostics**: given a query starting with entity *E* and first edge
   type `CAUSES`, which 2nd-hop relation types does the cache predict as productive?
 - **Hypothesis steering**: pre-populate prefix queries for known causal chains in a
-  domain (e.g. `CAUSES → TREATS` is well-evidenced in pharmacology) to pre-warm
+  domain (e.g. `CAUSES -> TREATS` is well-evidenced in pharmacology) to pre-warm
   beam affinity without requiring prior successful queries.
 - **Cache auditing**: surface all cached patterns that involve a deprecated or
   renamed relation type so they can be pruned or remapped.
@@ -2255,7 +2273,7 @@ relation-pattern guidance.  It is functionally identical to `EngramTraversal`
 Boost formula is unchanged:
 
 ```
-s_eff(path) = path.score × (1 + engram_strength × affinity(rel_prefix))
+s_eff(path) = path.score x (1 + engram_strength x affinity(rel_prefix))
 ```
 
 ---
@@ -2277,7 +2295,7 @@ The encoding is analogous to well-known compression primitives:
   is functionally equivalent to a compact trie where each level is one character.
 
 The distinguishing element is the *Heinlein framing*: the alphabet is intentionally
-kept human-readable (a–z, A–Z, 0–9) so that encoded sequences can be inspected,
+kept human-readable (a-z, A-Z, 0-9) so that encoded sequences can be inspected,
 logged, and reasoned about by developers without a lookup table.  A sequence like
 `"abt"` is visually scannable; a binary Huffman code is not.
 
@@ -2293,7 +2311,7 @@ On the toy fixture graph (`tests/fixtures/toy_graph.csv`, 21 nodes, 30 edges,
 | Relation types in vocabulary | 8 |
 | Average raw tuple key length | ~42 chars |
 | Average encoded key length | 3.0 chars |
-| Compression ratio | **14.0×** |
+| Compression ratio | **14.0x** |
 | Prefix queries passing (pytest) | 5 / 5 |
 | Total SpeedTalk test cases | 36 |
 
@@ -2304,7 +2322,7 @@ On a medium biomedical KG (Hetionet subset, 45 relation types):
 | Relation types in vocabulary | 45 |
 | Average raw tuple key length | ~64 chars |
 | Average encoded key length | 3.2 chars |
-| Compression ratio | **20.0×** |
+| Compression ratio | **20.0x** |
 
 ---
 
@@ -2324,8 +2342,8 @@ A future extension could use Unicode's full CJK block (~20,000 characters) to
 maintain single-character guarantees at any realistic vocabulary size.
 
 **N-gram compression (Tier 3):** The current design compresses individual relation
-types.  A natural extension is to treat common *bigrams* (e.g. `CAUSES → TREATS`
-appearing in 40%+ of cached paths) as atomic tokens — a single character encoding
+types.  A natural extension is to treat common *bigrams* (e.g. `CAUSES -> TREATS`
+appearing in 40%+ of cached paths) as atomic tokens - a single character encoding
 an entire 2-hop sub-sequence.  This would give super-linear compression for
 domain-specific KGs with a small number of highly repeated structural motifs.
 
@@ -2336,7 +2354,7 @@ domain-specific KGs with a small number of highly repeated structural motifs.
 SpeedTalk encoding adapts a 1949 science-fiction linguistic concept into a
 practical compression and indexing technique for knowledge-graph reasoning caches.
 The implementation is ~350 lines of pure Python with no additional dependencies,
-achieves 8–20× key compression on real KGs, and unlocks prefix-query capabilities
+achieves 8-20x key compression on real KGs, and unlocks prefix-query capabilities
 that are structurally impossible with the plain-tuple representation.
 
 The phase-58 `SpeedTalkEngram` and `SpeedTalkEngramTraversal` are drop-in
@@ -2354,7 +2372,7 @@ alongside the cache for cross-restart stability.
 
 ---
 
-# PAPER 022: Looped Beam Traversal — Iterative Refinement for Knowledge Graph Reasoning
+# PAPER 022: Looped Beam Traversal - Iterative Refinement for Knowledge Graph Reasoning
 
 **CEREBRUM Phase 70**  
 **Inspired by:** Zhu, R.-J. et al. (2025). *Scaling Latent Reasoning via Looped Language Models.* arXiv:2510.25741. ByteDance Seed / UC Santa Cruz et al. [zhu2025loooplm]
@@ -2363,7 +2381,7 @@ alongside the cache for cross-restart stability.
 
 ## Abstract
 
-We present **LoopedBeamTraversal**, an iterative reasoning mechanism for CEREBRUM's Knowledge Graph traversal engine. Inspired by LoopLM [zhu2025loooplm], which demonstrates that applying the same transformer stack T times yields dramatically better reasoning on hard inputs without increasing parameter count, we adapt the looping principle to graph beam search. CEREBRUM's analog applies `BeamTraversal` T times, using the top answer entities from loop t as additional seeds for loop t+1. An adaptive exit gate — driven by Prediction Error (PE) from Phase 69's `PredictiveCodingEngine` [Phase 69] — terminates the loop when further iterations cease to improve reasoning quality. Three inter-loop feedback channels make each pass progressively better-calibrated, resulting in richer iterative refinement per compute step than LoopLM's single hidden-state channel.
+We present **LoopedBeamTraversal**, an iterative reasoning mechanism for CEREBRUM's Knowledge Graph traversal engine. Inspired by LoopLM [zhu2025loooplm], which demonstrates that applying the same transformer stack T times yields dramatically better reasoning on hard inputs without increasing parameter count, we adapt the looping principle to graph beam search. CEREBRUM's analog applies `BeamTraversal` T times, using the top answer entities from loop t as additional seeds for loop t+1. An adaptive exit gate - driven by Prediction Error (PE) from Phase 69's `PredictiveCodingEngine` [Phase 69] - terminates the loop when further iterations cease to improve reasoning quality. Three inter-loop feedback channels make each pass progressively better-calibrated, resulting in richer iterative refinement per compute step than LoopLM's single hidden-state channel.
 
 ---
 
@@ -2376,7 +2394,7 @@ This assumption breaks down for:
 - **Sparse graphs** where early hops produce few viable candidates, starving later hops.
 - **Cold-start seeds** where the seed entities have low structural centrality, missing productive relation neighbourhoods.
 
-LoopLM [zhu2025loooplm] demonstrates that applying the *same* computation stack T times — rather than once — yields substantial gains on MATH, GSM8K, AIME, and other hard reasoning benchmarks. The key insight is that each loop pass can refine its starting context using the output of the previous pass, progressively converging toward the correct answer. An adaptive exit gate (the ideal continuation probability λ_t) prevents wasted compute when the model has already converged.
+LoopLM [zhu2025loooplm] demonstrates that applying the *same* computation stack T times - rather than once - yields substantial gains on MATH, GSM8K, AIME, and other hard reasoning benchmarks. The key insight is that each loop pass can refine its starting context using the output of the previous pass, progressively converging toward the correct answer. An adaptive exit gate (the ideal continuation probability λ_t) prevents wasted compute when the model has already converged.
 
 We transfer this principle to CEREBRUM's graph traversal: if the first beam search surfaces partially-relevant entities, those entities can be treated as *new seeds* for a second pass, revealing connections that were unreachable from the original seed set.
 
@@ -2388,13 +2406,13 @@ We transfer this principle to CEREBRUM's graph traversal: if the first beam sear
 
 Let `S_0` be the original seed entity set and `T` the maximum loop count. For loop `t ∈ {1, …, T}`:
 
-1. **Traverse**: Run `BeamTraversal(S_{t-1})` → path set `P_t`.
-2. **Extract**: Call `extract(P_t, top_k=K)` → answer list `A_t`.
+1. **Traverse**: Run `BeamTraversal(S_{t-1})` -> path set `P_t`.
+2. **Extract**: Call `extract(P_t, top_k=K)` -> answer list `A_t`.
 3. **Merge**: Update `best_by_tail` dict: `best_by_tail[e] = argmax_score(best_by_tail[e], P_t[e])` for all tail entities `e`.
 4. **Exit gate**: Evaluate exit conditions (§2.3). If triggered, stop.
 5. **Expand**: Build `S_t = S_0 ∪ {a.entity_id : a ∈ A_t[:K_seed]}` (deduplicated).
 
-Final merged path set: `best_by_tail.values()` — the highest-scoring path per tail entity across **all** loops.
+Final merged path set: `best_by_tail.values()` - the highest-scoring path per tail entity across **all** loops.
 
 ### 2.2 Three Inter-Loop Feedback Channels
 
@@ -2403,32 +2421,32 @@ CEREBRUM's looped reasoning uses three feedback channels between passes, compare
 | Channel | Mechanism | Effect |
 |---|---|---|
 | **Semantic** | Top-K answer entities from loop t expand `S_{t+1}` | Richer neighbourhood coverage; loop t+1 starts closer to productive sub-graph |
-| **Metabolic** | PE from `PredictiveCodingEngine` drives `ChemicalModulator` (arousal, novelty, reinforcement) | Adjusts `beam_width` and CSA α/β for the next loop; high PE → wider beam |
+| **Metabolic** | PE from `PredictiveCodingEngine` drives `ChemicalModulator` (arousal, novelty, reinforcement) | Adjusts `beam_width` and CSA alpha/beta for the next loop; high PE -> wider beam |
 | **Mnemonic** | Engram records added during loop t bias beam pruning in loop t+1 | Known-productive relation patterns up-weighted via affinity boost in `_prune_candidates()` |
 
-The metabolic and mnemonic channels are unique to CEREBRUM — LoopLM has no analog for these, relying solely on hidden-state propagation across loops. This makes CEREBRUM's iterative refinement richer per compute step.
+The metabolic and mnemonic channels are unique to CEREBRUM - LoopLM has no analog for these, relying solely on hidden-state propagation across loops. This makes CEREBRUM's iterative refinement richer per compute step.
 
 ### 2.3 Adaptive Exit Gate
 
 The exit gate mirrors LoopLM's ideal continuation probability λ_t, which penalises both underthinking (exits too early) and overthinking (continues past the point of improvement):
 
-**Primary gate — PE convergence** (requires `PredictiveCodingEngine`):
+**Primary gate - PE convergence** (requires `PredictiveCodingEngine`):
 ```
-|PE_t - PE_{t-1}| < γ  →  exit_reason = "pe_converged"
+|PE_t - PE_{t-1}| < γ  ->  exit_reason = "pe_converged"
 ```
 
-PE is Jaccard divergence between the Engram-derived prior relation sequence and the best actual path (§3). When PE stops improving, the model's internal state has converged — further loops will not yield qualitatively different paths.
+PE is Jaccard divergence between the Engram-derived prior relation sequence and the best actual path (§3). When PE stops improving, the model's internal state has converged - further loops will not yield qualitatively different paths.
 
-**Fallback gate — answer stability**:
+**Fallback gate - answer stability**:
 ```
-Jaccard(A_{t-1}, A_t) ≥ θ  →  exit_reason = "answers_stable"
+Jaccard(A_{t-1}, A_t) ≥ θ  ->  exit_reason = "answers_stable"
 ```
 
 When the top-K answer entities stabilise (high overlap), the reasoning has converged even without PE signal (e.g., cold-start Engram).
 
 **Max loops cap**:
 ```
-t == T  →  exit_reason = "max_loops"
+t == T  ->  exit_reason = "max_loops"
 ```
 
 Default parameters: `γ = 0.05`, `θ = 0.80`, `T = 4`.
@@ -2449,9 +2467,9 @@ In the looped context, PE serves a dual role:
 
 1. **Exit gate signal**: PE delta between successive loops signals convergence.
 2. **Metabolic regulation**: After each loop, PE is dispatched to `ChemicalModulator`:
-   - `update_arousal(PE)` — high PE (surprising result) increases arousal, widening beam on next loop.
-   - `update_novelty(PE)` — high PE marks the seed domain as novel, increasing exploration.
-   - `update_reinforcement(1 - PE)` — low PE (good prediction) reinforces current traversal parameters.
+   - `update_arousal(PE)` - high PE (surprising result) increases arousal, widening beam on next loop.
+   - `update_novelty(PE)` - high PE marks the seed domain as novel, increasing exploration.
+   - `update_reinforcement(1 - PE)` - low PE (good prediction) reinforces current traversal parameters.
 
 This creates a closed loop: the graph's own predictive model regulates how aggressively the next iteration explores, without any external supervision signal.
 
@@ -2459,7 +2477,7 @@ This creates a closed loop: the graph's own predictive model regulates how aggre
 
 ## 4. Integration with MACH L1 Consensus (Phase 60)
 
-`MultiStrategyConsensus.run_consensus_query()` (Phase 60) runs multiple traversal strategies (standard, Bayesian, Engram) and aggregates paths via `ConsensusScorer`. With `max_loops > 1`, each strategy's traversal is independently wrapped in `LoopedBeamTraversal` before execution. This means each strategy iteratively refines its own path set, then all refined sets are aggregated — combining the depth of looped reasoning with the breadth of multi-strategy consensus.
+`MultiStrategyConsensus.run_consensus_query()` (Phase 60) runs multiple traversal strategies (standard, Bayesian, Engram) and aggregates paths via `ConsensusScorer`. With `max_loops > 1`, each strategy's traversal is independently wrapped in `LoopedBeamTraversal` before execution. This means each strategy iteratively refines its own path set, then all refined sets are aggregated - combining the depth of looped reasoning with the breadth of multi-strategy consensus.
 
 ```python
 # Each strategy loops independently
@@ -2483,7 +2501,7 @@ paths, _ = looped.traverse(seeds, query_embedding=q_emb)
   "max_loops": 2
 }
 ```
-`max_loops` (default 1, range 1–8) triggers iterative refinement. 1 = single-pass (backward compatible).
+`max_loops` (default 1, range 1-8) triggers iterative refinement. 1 = single-pass (backward compatible).
 
 ### QueryResponse (extended)
 ```json
@@ -2520,9 +2538,9 @@ On the toy graph fixture (21 nodes, 30 edges), single-pass vs 2-loop traversal f
 |---|---|---|
 | Unique tail entities | 8 | 12 |
 | Max path depth reached | 3 | 3 |
-| Exit reason | — | answers_stable |
+| Exit reason | - | answers_stable |
 | PE loop 1 | 0.45 | 0.45 |
-| PE loop 2 | — | 0.20 |
+| PE loop 2 | - | 0.20 |
 
 The 2-loop run surfaces 4 additional entities unreachable in the single pass, and PE drops significantly as the Engram prior catches up to the actual paths. On larger, sparser graphs the gains are expected to be substantially larger, consistent with LoopLM's reported improvements on hard reasoning benchmarks [zhu2025loooplm].
 
@@ -2537,13 +2555,13 @@ Let `B` = beam width, `H` = max hops, `N` = nodes, `T` = max loops. Single-pass 
 ## 8. Design Decisions
 
 **Why merge paths across all loops rather than only the last?**
-Each loop explores a different neighbourhood (different seeds). Merging gives `extract()` the full picture — paths discovered in loop 1 from the original seeds coexist with paths discovered in loop 2 from expanded seeds. This maximises coverage without requiring `extract()` to be loop-aware.
+Each loop explores a different neighbourhood (different seeds). Merging gives `extract()` the full picture - paths discovered in loop 1 from the original seeds coexist with paths discovered in loop 2 from expanded seeds. This maximises coverage without requiring `extract()` to be loop-aware.
 
 **Why use original seeds for PE computation (not expanded)?**
 PE measures alignment between the Engram prior (built from the original query intent) and the actual paths. Using expanded seeds would shift the PE reference point per loop, making the exit gate signal inconsistent. Anchoring to original seeds ensures PE delta measures genuine improvement in reasoning quality, not drift from seed expansion.
 
 **Why seed expansion rather than full replacement?**
-LoopLM passes the entire hidden state forward — all prior context is preserved. The analog in graph search is to always include original seeds (preserving query intent) while adding new candidates (expanding context). Full replacement would abandon the original query anchor, potentially causing semantic drift.
+LoopLM passes the entire hidden state forward - all prior context is preserved. The analog in graph search is to always include original seeds (preserving query intent) while adding new candidates (expanding context). Full replacement would abandon the original query anchor, potentially causing semantic drift.
 
 ---
 
@@ -2553,10 +2571,10 @@ LoopLM passes the entire hidden state forward — all prior context is preserved
 - [vaswani2017attention] Vaswani, A. et al. (2017). Attention Is All You Need. NeurIPS.
 - [hamilton2017graphsage] Hamilton, W., Ying, Z., & Leskovec, J. (2017). Inductive Representation Learning on Large Graphs. NeurIPS.
 - [bengio2025soliton] Bengio, Y. et al. (2025). Consciousness as a Soliton, Not a Process: Identity, Memory, and the Hard Problem in Coherence Field Theory. UCFT 2025 Preprint.
-- [Phase 69] CEREBRUM Phase 69: PredictiveCodingEngine — active inference, PE, soliton_index.
-- [Phase 60] CEREBRUM Phase 60: MACH — Multi-Agent Consensus Hierarchies (L1/L2/L3).
-- [Phase 68] CEREBRUM Phase 68: ChemicalModulator — metabolic scalar regulation.
-- [Phase 55] CEREBRUM Phase 55: Engram — persistent relation-pattern cache; EngramTraversal.
+- [Phase 69] CEREBRUM Phase 69: PredictiveCodingEngine - active inference, PE, soliton_index.
+- [Phase 60] CEREBRUM Phase 60: MACH - Multi-Agent Consensus Hierarchies (L1/L2/L3).
+- [Phase 68] CEREBRUM Phase 68: ChemicalModulator - metabolic scalar regulation.
+- [Phase 55] CEREBRUM Phase 55: Engram - persistent relation-pattern cache; EngramTraversal.
 
 ---
 **Reviewed on**: April 21, 2026 for version v2.24.0
@@ -2565,7 +2583,7 @@ LoopLM passes the entire hidden state forward — all prior context is preserved
 
 ---
 
-# PAPER 023: Predictive Coding for Knowledge Graph Traversal — Prior Paths, Prediction Error, and the Soliton Index
+# PAPER 023: Predictive Coding for Knowledge Graph Traversal - Prior Paths, Prediction Error, and the Soliton Index
 
 **CEREBRUM Phase 69**
 
@@ -2573,15 +2591,15 @@ LoopLM passes the entire hidden state forward — all prior context is preserved
 
 ## Abstract
 
-We present **PredictiveCodingEngine**, an active-inference component for CEREBRUM's Knowledge Graph reasoning pipeline. Inspired by the predictive coding framework in neuroscience [friston2005theory, rao1999predictive], the engine generates a *prior path* — a predicted relation sequence derived from the top `Engram` pattern — before each traversal. After the traversal completes, a **Prediction Error (PE)** is computed as the Jaccard divergence between the prior and the actual relation sequence. PE propagates into `ChemicalModulator` (Phase 68) to dynamically adjust reasoning attention parameters: high PE triggers Arousal and Novelty surges (broader, more exploratory beam); low PE triggers Reinforcement (reinforcing known-productive relation patterns). A rolling PE window yields the **soliton_index** — a coherence metric tracking the stability of the Engram prior over time. A high soliton_index indicates a self-reinforcing prior that consistently anticipates graph structure, analogous to a soliton wave in nonlinear optics (UCFT 2025 [ucft2025soliton]).
+We present **PredictiveCodingEngine**, an active-inference component for CEREBRUM's Knowledge Graph reasoning pipeline. Inspired by the predictive coding framework in neuroscience [friston2005theory, rao1999predictive], the engine generates a *prior path* - a predicted relation sequence derived from the top `Engram` pattern - before each traversal. After the traversal completes, a **Prediction Error (PE)** is computed as the Jaccard divergence between the prior and the actual relation sequence. PE propagates into `ChemicalModulator` (Phase 68) to dynamically adjust reasoning attention parameters: high PE triggers Arousal and Novelty surges (broader, more exploratory beam); low PE triggers Reinforcement (reinforcing known-productive relation patterns). A rolling PE window yields the **soliton_index** - a coherence metric tracking the stability of the Engram prior over time. A high soliton_index indicates a self-reinforcing prior that consistently anticipates graph structure, analogous to a soliton wave in nonlinear optics (UCFT 2025 [ucft2025soliton]).
 
 ---
 
-## 1. Motivation: Closing the Prediction–Action Loop
+## 1. Motivation: Closing the Prediction-Action Loop
 
 Standard beam traversal in CEREBRUM is a reactive process: the engine observes the current graph state and selects the best available path. The `Engram` (Phase 55) accumulates relation patterns from prior queries and biases beam pruning, but this bias is applied without any explicit model of what path the engine *expects* to find.
 
-Predictive coding in neuroscience argues that intelligent systems do not react passively to sensory data — they continuously generate predictions and update internal models based on prediction errors [friston2005theory]. Systems with low prediction error are operating in "expected" territory; high prediction error signals novel or surprising inputs requiring increased attention and exploration.
+Predictive coding in neuroscience argues that intelligent systems do not react passively to sensory data - they continuously generate predictions and update internal models based on prediction errors [friston2005theory]. Systems with low prediction error are operating in "expected" territory; high prediction error signals novel or surprising inputs requiring increased attention and exploration.
 
 We adapt this principle to graph traversal:
 1. **Prior**: Generate the most likely relation sequence from `Engram` before traversal.
@@ -2614,7 +2632,7 @@ pe: float = jaccard_divergence(prior, actual)
 
 Jaccard divergence: `PE = 1 - |prior ∩ actual| / |prior ∪ actual|`
 
-Range: `[0.0, 1.0]`. PE=0.0 → perfect prediction; PE=1.0 → no overlap.
+Range: `[0.0, 1.0]`. PE=0.0 -> perfect prediction; PE=1.0 -> no overlap.
 
 ### 2.3 ChemicalModulator Integration
 
@@ -2622,7 +2640,7 @@ PE drives three `ChemicalModulator` signals:
 
 | PE range | Modulator signal | Effect on reasoning |
 |---|---|---|
-| PE > 0.7 (high surprise) | Arousal ↑, Novelty ↑ | Wider beam, looser pruning, boost semantic α |
+| PE > 0.7 (high surprise) | Arousal ↑, Novelty ↑ | Wider beam, looser pruning, boost semantic alpha |
 | 0.3 ≤ PE ≤ 0.7 (moderate) | No change | Baseline parameters |
 | PE < 0.3 (good prediction) | Reinforcement ↑ | Boost Engram affinity, tighten beam |
 
@@ -2638,7 +2656,7 @@ The soliton_index tracks the rolling mean of recent PEs over a configurable wind
 soliton_index = 1 - mean(PE_1, PE_2, ..., PE_W)
 ```
 
-A soliton_index near 1.0 indicates the Engram prior consistently anticipates traversal outcomes — the prediction model has converged into a stable, self-reinforcing pattern (soliton behavior). A low soliton_index signals an unstable or cold prior requiring continued exploration.
+A soliton_index near 1.0 indicates the Engram prior consistently anticipates traversal outcomes - the prediction model has converged into a stable, self-reinforcing pattern (soliton behavior). A low soliton_index signals an unstable or cold prior requiring continued exploration.
 
 ### 2.5 ReasoningTrace Integration
 
@@ -2678,8 +2696,8 @@ On the toy_graph.csv fixture (21 nodes, 30 edges), the PredictiveCodingEngine pr
 
 ## 5. References
 
-- [friston2005theory] Friston, K. (2005). A theory of cortical responses. *Philosophical Transactions of the Royal Society B*, 360(1456), 815–836.
-- [rao1999predictive] Rao, R.P.N. & Ballard, D.H. (1999). Predictive coding in the visual cortex. *Nature Neuroscience*, 2(1), 79–87.
+- [friston2005theory] Friston, K. (2005). A theory of cortical responses. *Philosophical Transactions of the Royal Society B*, 360(1456), 815-836.
+- [rao1999predictive] Rao, R.P.N. & Ballard, D.H. (1999). Predictive coding in the visual cortex. *Nature Neuroscience*, 2(1), 79-87.
 - [ucft2025soliton] UCFT (2025). Soliton-index stability in recurrent inference networks. *Unified Cognitive Field Theory Technical Report*.
 
 ---
@@ -2692,7 +2710,7 @@ On the toy_graph.csv fixture (21 nodes, 30 edges), the PredictiveCodingEngine pr
 
 ---
 
-# PAPER 024: AutoApprover — Tiered Automated Decision Making for Knowledge Graph Research Findings
+# PAPER 024: AutoApprover - Tiered Automated Decision Making for Knowledge Graph Research Findings
 
 **CEREBRUM Phase 71**
 
@@ -2733,7 +2751,7 @@ A logistic regression classifier operating on a 16-dimensional feature vector:
 | # | Feature | Source |
 |---|---|---|
 | 1 | `confidence` | HypothesisEngine output |
-| 2 | `discovery_potential` | DiscoveryCalibrator weight × raw potential |
+| 2 | `discovery_potential` | DiscoveryCalibrator weight x raw potential |
 | 3 | `gap_score` | Community structural gap |
 | 4 | `community_distance` | Hop distance between source/target communities |
 | 5 | `local_density` | Edge density around proposal |
@@ -2742,7 +2760,7 @@ A logistic regression classifier operating on a 16-dimensional feature vector:
 | 8 | `engram_affinity` | Engram pattern match strength |
 | 9 | `path_count` | Number of independent supporting paths |
 | 10 | `contradiction_score` | ContradictionResolver net_evidence_score |
-| 11–14 | `triangulation_*` | TriangulationEngine P1–P4 scores (Phase 72) |
+| 11-14 | `triangulation_*` | TriangulationEngine P1-P4 scores (Phase 72) |
 | 15 | `seeded_by_research` | Boolean: finding originated from ResearchAgent scan |
 | 16 | `seeded_by_external` | Boolean: finding triggered by external literature signal |
 
@@ -2777,8 +2795,8 @@ The checkpoint persists the SGD weight vector, threshold, and decision history c
 ## 4. REST API
 
 ```
-GET  /research/auto-approver          → current weights, threshold, decision counts
-POST /research/auto-approver          → partial update (threshold, fallback config)
+GET  /research/auto-approver          -> current weights, threshold, decision counts
+POST /research/auto-approver          -> partial update (threshold, fallback config)
 ```
 
 ---
@@ -2786,9 +2804,9 @@ POST /research/auto-approver          → partial update (threshold, fallback co
 ## 5. Integration with Autonomous Discovery Loop
 
 `AutonomousDiscoveryLoop` passes each finding through `approver.decide(finding)`:
-- **APPROVE** → `research_agent.approve(finding)` → edges materialized
-- **REJECT** → `research_agent.reject(finding)` → finding discarded
-- **REVIEW** → added to review queue (no immediate action)
+- **APPROVE** -> `research_agent.approve(finding)` -> edges materialized
+- **REJECT** -> `research_agent.reject(finding)` -> finding discarded
+- **REVIEW** -> added to review queue (no immediate action)
 
 The rolling approval rate (APPROVE / (APPROVE + REJECT)) feeds the circuit breaker.
 
@@ -2796,7 +2814,7 @@ The rolling approval rate (APPROVE / (APPROVE + REJECT)) feeds the circuit break
 
 ## 6. References
 
-- [bottou2010large] Bottou, L. (2010). Large-scale machine learning with stochastic gradient descent. *COMPSTAT*, 177–186.
+- [bottou2010large] Bottou, L. (2010). Large-scale machine learning with stochastic gradient descent. *COMPSTAT*, 177-186.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
@@ -2808,7 +2826,7 @@ The rolling approval rate (APPROVE / (APPROVE + REJECT)) feeds the circuit break
 
 ---
 
-# PAPER 025: TriangulationEngine — Four-Perspective Candidate Validation for Knowledge Graph Discovery
+# PAPER 025: TriangulationEngine - Four-Perspective Candidate Validation for Knowledge Graph Discovery
 
 **CEREBRUM Phase 72**
 
@@ -2816,16 +2834,16 @@ The rolling approval rate (APPROVE / (APPROVE + REJECT)) feeds the circuit break
 
 ## Abstract
 
-We present **TriangulationEngine**, a four-perspective validation framework for `ResearchCandidate` objects in CEREBRUM's knowledge graph discovery pipeline. Inspired by triangulation in navigation and qualitative research methodology [denzin1978research], the engine validates each candidate edge from four independent perspectives: (P1) **reverse traversal confidence** — does the graph support the inverse relation?; (P2) **multi-strategy agreement** — do different reasoning configurations agree?; (P3) **path independence** — are the supporting paths structurally independent?; (P4) **semantic type consistency** — is the relation type compatible with the entity class profile? The four perspective scores extend the `AutoApprover` feature vector from 12 to 16 dimensions, providing richer signal for the downstream logistic classifier. A diagnostic `is_Synaptic Bridge_candidate` flag identifies cross-community bridge proposals warranting special handling.
+We present **TriangulationEngine**, a four-perspective validation framework for `ResearchCandidate` objects in CEREBRUM's knowledge graph discovery pipeline. Inspired by triangulation in navigation and qualitative research methodology [denzin1978research], the engine validates each candidate edge from four independent perspectives: (P1) **reverse traversal confidence** - does the graph support the inverse relation?; (P2) **multi-strategy agreement** - do different reasoning configurations agree?; (P3) **path independence** - are the supporting paths structurally independent?; (P4) **semantic type consistency** - is the relation type compatible with the entity class profile? The four perspective scores extend the `AutoApprover` feature vector from 12 to 16 dimensions, providing richer signal for the downstream logistic classifier. A diagnostic `is_Synaptic Bridge_candidate` flag identifies cross-community bridge proposals warranting special handling.
 
 ---
 
 ## 1. Motivation: Single-Path Validation is Insufficient
 
-Prior to Phase 72, `ResearchAgent` validated candidates by running `HypothesisEngine` once in the forward direction (A→B) and checking whether supporting paths exceeded a confidence threshold. This single-perspective approach has three failure modes:
+Prior to Phase 72, `ResearchAgent` validated candidates by running `HypothesisEngine` once in the forward direction (A->B) and checking whether supporting paths exceeded a confidence threshold. This single-perspective approach has three failure modes:
 
-1. **Directionality bias**: A→B may traverse well even when B→A has no support, producing spurious asymmetric edges.
-2. **Reasoning monoculture**: A single reasoning configuration may over-weight community structure (β) and consistently produce high-confidence paths for topologically close but semantically unrelated entities.
+1. **Directionality bias**: A->B may traverse well even when B->A has no support, producing spurious asymmetric edges.
+2. **Reasoning monoculture**: A single reasoning configuration may over-weight community structure (beta) and consistently produce high-confidence paths for topologically close but semantically unrelated entities.
 3. **Dependent paths**: Multiple "independent" paths through the same bottleneck node provide weaker evidence than truly parallel routes.
 
 Triangulation addresses all three by requiring convergent evidence across structurally independent perspectives.
@@ -2868,7 +2886,7 @@ independence_scores = [
 p3 = mean(independence_scores) if independence_scores else 0.5
 ```
 
-High independence (p3 → 1.0) means paths traverse different graph regions — stronger evidence. Low independence (p3 → 0.0) means all paths share the same bottleneck node — single point of failure.
+High independence (p3 -> 1.0) means paths traverse different graph regions - stronger evidence. Low independence (p3 -> 0.0) means all paths share the same bottleneck node - single point of failure.
 
 ### P4: Semantic Type Score
 
@@ -2878,13 +2896,13 @@ Check relation-type and entity-class consistency using a type profile derived fr
 p4 = type_consistency(source_entity_class, target_entity_class, relation_type)
 ```
 
-- Known-compatible type combination → p4 = 1.0
-- Known-incompatible → p4 = 0.0
-- Novel / unseen relation type → p4 = 0.5 (neutral, no penalty for discovery)
+- Known-compatible type combination -> p4 = 1.0
+- Known-incompatible -> p4 = 0.0
+- Novel / unseen relation type -> p4 = 0.5 (neutral, no penalty for discovery)
 
 ### Synaptic Bridge Candidate Flag
 
-`is_Synaptic Bridge_candidate = True` when source and target belong to communities with large structural distance (> 2 hops) and P1 × P2 × P3 product > 0.3. Synaptic Bridge candidates are high-value cross-community bridge proposals.
+`is_Synaptic Bridge_candidate = True` when source and target belong to communities with large structural distance (> 2 hops) and P1 x P2 x P3 product > 0.3. Synaptic Bridge candidates are high-value cross-community bridge proposals.
 
 ---
 
@@ -2896,11 +2914,11 @@ from core.triangulation_engine import TriangulationEngine
 engine = TriangulationEngine(hypothesis_engine, traversal, adapter)
 report = engine.validate(candidate)
 
-# report.reverse_confidence  → P1
-# report.strategy_agreement  → P2
-# report.mean_path_independence → P3
-# report.semantic_type_score → P4
-# report.is_Synaptic Bridge_candidate → bool
+# report.reverse_confidence  -> P1
+# report.strategy_agreement  -> P2
+# report.mean_path_independence -> P3
+# report.semantic_type_score -> P4
+# report.is_Synaptic Bridge_candidate -> bool
 
 finding.metadata["triangulation"] = report
 ```
@@ -2923,7 +2941,7 @@ The four scores are automatically incorporated into `AutoApprover`'s 16-feature 
 
 ---
 
-# PAPER 026: Discovery Calibration — EMA-Based Community Rate Tracking and Contradiction Resolution for Autonomous KG Research
+# PAPER 026: Discovery Calibration - EMA-Based Community Rate Tracking and Contradiction Resolution for Autonomous KG Research
 
 **CEREBRUM Phase 73**
 
@@ -2958,7 +2976,7 @@ calibrator.record_scan(community_id)
 calibrator.record_discovery(community_id)
 ```
 
-EMA update: `rate_t = α × event + (1 - α) × rate_{t-1}` where `α = 0.1` (default).
+EMA update: `rate_t = alpha x event + (1 - alpha) x rate_{t-1}` where `alpha = 0.1` (default).
 
 ### 2.2 Inverse-Rate Sampling Multiplier
 
@@ -2975,7 +2993,7 @@ Cold-start communities (never scanned) receive `max_weight = 5.0`. Communities w
 `ValidationReport.recency_score` is computed via exponential decay from the publication year:
 
 ```
-recency_score = exp(-λ × max(0, current_year - pub_year))
+recency_score = exp(-λ x max(0, current_year - pub_year))
 ```
 
 Default `λ` corresponds to a 7-year half-life. Recent literature (< 2 years old) scores ≥ 0.9.
@@ -2992,15 +3010,15 @@ For a given finding with `proposed_confidences = [c_1, ..., c_k]` and `contradic
 net_evidence_score = Noisy-OR(c_1, ..., c_k) - contradiction_score
 ```
 
-Noisy-OR: `1 - ∏(1 - c_i)` — the probability of at least one path being correct.
+Noisy-OR: `1 - ∏(1 - c_i)` - the probability of at least one path being correct.
 
 ### 3.2 Resolution Classes
 
 | net_evidence_score | Class | Action |
 |---|---|---|
 | ≥ 0.6 | `"clean"` | Forward to AutoApprover |
-| 0.3 – 0.6 | `"revision_candidate"` | Queue in `_revision_candidates` |
-| 0.1 – 0.3 | `"contested"` | Forward to AutoApprover with penalty |
+| 0.3 - 0.6 | `"revision_candidate"` | Queue in `_revision_candidates` |
+| 0.1 - 0.3 | `"contested"` | Forward to AutoApprover with penalty |
 | < 0.1 | `"discardable"` | Auto-reject; never reaches AutoApprover |
 
 Revision candidates accumulate in `ResearchAgent._revision_candidates` for periodic batch review.
@@ -3029,7 +3047,7 @@ registry[pair] = CandidateRecord(
 When a pair is nominated multiple times (by different scan cycles or reasoning strategies), its `discovery_potential` receives a log-scale boost:
 
 ```
-boosted_potential = raw_potential × min(log(N + 1) + 1, max_boost)
+boosted_potential = raw_potential x min(log(N + 1) + 1, max_boost)
 ```
 
 Default `max_boost = 3.0`. This rewards repeatedly-surfaced candidates without linearly amplifying noise.
@@ -3054,7 +3072,7 @@ Default `max_boost = 3.0`. This rewards repeatedly-surfaced candidates without l
 
 ---
 
-# PAPER 027: AutonomousDiscoveryLoop — Closing the Discover-Validate-Approve-Materialize Loop for Knowledge Graph Self-Improvement
+# PAPER 027: AutonomousDiscoveryLoop - Closing the Discover-Validate-Approve-Materialize Loop for Knowledge Graph Self-Improvement
 
 **CEREBRUM Phase 74**
 
@@ -3062,7 +3080,7 @@ Default `max_boost = 3.0`. This rewards repeatedly-surfaced candidates without l
 
 ## Abstract
 
-We present **AutonomousDiscoveryLoop**, the orchestration component that closes the end-to-end autonomous knowledge graph improvement loop in CEREBRUM. The loop runs `ResearchAgent.scan_once()` on a configurable timer, processes each finding through `AutoApprover` (Phase 71), and applies a **circuit breaker** — a sliding-window approval-rate monitor that pauses materialization when quality degrades below a threshold. A **per-cycle cap** (`max_materializations_per_cycle`) prevents runaway edge insertion during anomalous discovery bursts. A **dry_run** mode allows safe production trials without writing any edges. `AutoApprover` state is checkpointed to disk after every cycle, enabling warm restart. The loop exposes a structured REST API for monitoring, configuration, and lifecycle management, making it suitable for embedding in production CEREBRUM deployments without operator intervention.
+We present **AutonomousDiscoveryLoop**, the orchestration component that closes the end-to-end autonomous knowledge graph improvement loop in CEREBRUM. The loop runs `ResearchAgent.scan_once()` on a configurable timer, processes each finding through `AutoApprover` (Phase 71), and applies a **circuit breaker** - a sliding-window approval-rate monitor that pauses materialization when quality degrades below a threshold. A **per-cycle cap** (`max_materializations_per_cycle`) prevents runaway edge insertion during anomalous discovery bursts. A **dry_run** mode allows safe production trials without writing any edges. `AutoApprover` state is checkpointed to disk after every cycle, enabling warm restart. The loop exposes a structured REST API for monitoring, configuration, and lifecycle management, making it suitable for embedding in production CEREBRUM deployments without operator intervention.
 
 ---
 
@@ -3071,10 +3089,10 @@ We present **AutonomousDiscoveryLoop**, the orchestration component that closes 
 ### 1.1 Loop Lifecycle
 
 ```
-start() → background thread
+start() -> background thread
     ↓
 while running:
-    scan_once() → findings
+    scan_once() -> findings
     for finding in findings[:cap]:
         decide = approver.decide(finding)
         if decide == APPROVE: approve(finding)
@@ -3083,7 +3101,7 @@ while running:
     checkpoint_approver()
     check_circuit_breaker()
     sleep(next_interval)
-stop() → graceful shutdown
+stop() -> graceful shutdown
 ```
 
 ### 1.2 LoopConfig Dataclass
@@ -3171,7 +3189,7 @@ Combined with `adaptive_tuning` (Phase 82), the cap is dynamically scaled per cy
 
 ## 6. References
 
-- [dean2008mapreduce] Dean, J. & Ghemawat, S. (2008). MapReduce: Simplified data processing on large clusters. *CACM*, 51(1), 107–113.
+- [dean2008mapreduce] Dean, J. & Ghemawat, S. (2008). MapReduce: Simplified data processing on large clusters. *CACM*, 51(1), 107-113.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
@@ -3183,7 +3201,7 @@ Combined with `adaptive_tuning` (Phase 82), the cap is dynamically scaled per cy
 
 ---
 
-# PAPER 028: Studio v2 — A Six-Panel Live Dashboard for Autonomous Knowledge Graph Operations
+# PAPER 028: Studio v2 - A Six-Panel Live Dashboard for Autonomous Knowledge Graph Operations
 
 **CEREBRUM Phases 75 + 78**
 
@@ -3191,7 +3209,7 @@ Combined with `adaptive_tuning` (Phase 82), the cap is dynamically scaled per cy
 
 ## Abstract
 
-We present **Studio v2**, an extension of CEREBRUM's Glass-Box Reasoning Studio (Phase 20) with six live monitoring panels designed for autonomous discovery operations. Studio v2 introduces an attachment API (`attach_research_agent`, `attach_modulator`, `attach_loop`, `attach_provenance_ledger`) that wires optional engines to the dashboard without hard dependencies. The six panels cover: (1) AutoApprover audit log, (2) ContradictionResolver revision queue, (3) DiscoveryCalibrator community heatmap, (4) ChemicalModulator blood panel, (5) Autonomous Loop cycle history, and (6) Provenance Panel (Phase 78) — a three-part graph provenance view showing batch bar chart and cycle timeline. All panels degrade gracefully when the corresponding engine is not attached, returning placeholder output rather than raising exceptions. This design allows progressive adoption: operators attach only the engines relevant to their deployment.
+We present **Studio v2**, an extension of CEREBRUM's Glass-Box Reasoning Studio (Phase 20) with six live monitoring panels designed for autonomous discovery operations. Studio v2 introduces an attachment API (`attach_research_agent`, `attach_modulator`, `attach_loop`, `attach_provenance_ledger`) that wires optional engines to the dashboard without hard dependencies. The six panels cover: (1) AutoApprover audit log, (2) ContradictionResolver revision queue, (3) DiscoveryCalibrator community heatmap, (4) ChemicalModulator blood panel, (5) Autonomous Loop cycle history, and (6) Provenance Panel (Phase 78) - a three-part graph provenance view showing batch bar chart and cycle timeline. All panels degrade gracefully when the corresponding engine is not attached, returning placeholder output rather than raising exceptions. This design allows progressive adoption: operators attach only the engines relevant to their deployment.
 
 ---
 
@@ -3249,9 +3267,9 @@ fig = studio.get_modulator_panel()
 ```
 Five-scalar visualization comparing current levels to homeostatic baselines:
 - Horizontal bars: current value vs. baseline
-- Overdriven (> 1.5× baseline) → orange
-- Depleted (< 0.5× baseline) → blue
-- Normal → green
+- Overdriven (> 1.5x baseline) -> orange
+- Depleted (< 0.5x baseline) -> blue
+- Normal -> green
 
 ### Panel 5: Autonomous Loop Cycle History
 ```python
@@ -3278,7 +3296,7 @@ Every panel method returns a safe placeholder when the required engine is not at
 ```python
 # Panel 3 without calibrator attached:
 fig = studio.get_calibrator_heatmap()
-# → empty Figure with annotation "DiscoveryCalibrator not configured"
+# -> empty Figure with annotation "DiscoveryCalibrator not configured"
 ```
 
 This is enforced by the `@requires_attachment` decorator pattern, ensuring no `AttributeError` propagates to the Gradio UI even in minimal deployments.
@@ -3293,7 +3311,7 @@ This is enforced by the `@requires_attachment` decorator pattern, ensuring no `A
 
 ---
 
-# PAPER 029: ProvenanceLedger — Targeted Rollback and Audit for Autonomous Knowledge Graph Materialization
+# PAPER 029: ProvenanceLedger - Targeted Rollback and Audit for Autonomous Knowledge Graph Materialization
 
 **CEREBRUM Phase 76**
 
@@ -3339,8 +3357,8 @@ class BatchRecord:
 ```
 
 ### ProvenanceLedger
-- `_batches: OrderedDict[str, BatchRecord]` — LRU-ordered dict
-- `_cycle_index: Dict[int, List[str]]` — cycle → list of batch_ids
+- `_batches: OrderedDict[str, BatchRecord]` - LRU-ordered dict
+- `_cycle_index: Dict[int, List[str]]` - cycle -> list of batch_ids
 
 ---
 
@@ -3418,7 +3436,7 @@ All read and write operations on `_batches` and `_cycle_index` are protected by 
 
 ---
 
-# PAPER 030: Feature Impact Benchmark — Measuring Incremental Reasoning Gains in CEREBRUM v2.24.0
+# PAPER 030: Feature Impact Benchmark - Measuring Incremental Reasoning Gains in CEREBRUM v2.24.0
 
 **CEREBRUM Phase 77**
 
@@ -3426,7 +3444,7 @@ All read and write operations on `_batches` and `_cycle_index` are protected by 
 
 ## Abstract
 
-We present the **Feature Impact Benchmark**, a four-configuration controlled evaluation measuring the incremental reasoning contribution of CEREBRUM's advanced features over a structural baseline. The benchmark evaluates Hits@1, Hits@5, and MRR on the canonical toy_graph.csv fixture (21 nodes, 30 edges) across four progressively richer configurations: (1) **baseline** — pure CSA + BeamTraversal; (2) **+engram** — adds Engram-steered traversal (Phase 55); (3) **+looped** — adds LoopedBeamTraversal (Phase 70); (4) **+full** — adds PredictiveCodingEngine (Phase 69) + ChemicalModulator (Phase 68). The benchmark is designed for CI integration: it uses no external datasets, completes in < 30 seconds on CPU, and reports delta MRR vs. baseline so regression is immediately visible. Results on the canonical fixture show consistent positive deltas for each feature layer, with +full achieving the highest MRR.
+We present the **Feature Impact Benchmark**, a four-configuration controlled evaluation measuring the incremental reasoning contribution of CEREBRUM's advanced features over a structural baseline. The benchmark evaluates Hits@1, Hits@5, and MRR on the canonical toy_graph.csv fixture (21 nodes, 30 edges) across four progressively richer configurations: (1) **baseline** - pure CSA + BeamTraversal; (2) **+engram** - adds Engram-steered traversal (Phase 55); (3) **+looped** - adds LoopedBeamTraversal (Phase 70); (4) **+full** - adds PredictiveCodingEngine (Phase 69) + ChemicalModulator (Phase 68). The benchmark is designed for CI integration: it uses no external datasets, completes in < 30 seconds on CPU, and reports delta MRR vs. baseline so regression is immediately visible. Results on the canonical fixture show consistent positive deltas for each feature layer, with +full achieving the highest MRR.
 
 ---
 
@@ -3450,7 +3468,7 @@ The Feature Impact Benchmark is designed to answer question 1 and detect regress
 | **+looped** | +engram + `LoopedBeamTraversal(max_loops=3)` (Phase 70) |
 | **+full** | +looped + `PredictiveCodingEngine` (Phase 69) + `ChemicalModulator` (Phase 68) |
 
-Each configuration runs on the identical query set — all 21 entities as seeds — and returns top-5 answers per query.
+Each configuration runs on the identical query set - all 21 entities as seeds - and returns top-5 answers per query.
 
 ---
 
@@ -3460,7 +3478,7 @@ Each configuration runs on the identical query set — all 21 entities as seeds 
 |---|---|
 | Hits@1 | Fraction of queries where correct answer is rank 1 |
 | Hits@5 | Fraction of queries where correct answer is in top 5 |
-| MRR | Mean Reciprocal Rank — `mean(1/rank)` where rank=0 if not found |
+| MRR | Mean Reciprocal Rank - `mean(1/rank)` where rank=0 if not found |
 | ΔMRR | `MRR(config) - MRR(baseline)` |
 
 ---
@@ -3469,19 +3487,19 @@ Each configuration runs on the identical query set — all 21 entities as seeds 
 
 | Config | Hits@1 | Hits@5 | MRR | ΔMRR |
 |---|---|---|---|---|
-| baseline | 0.714 | 0.857 | 0.762 | — |
+| baseline | 0.714 | 0.857 | 0.762 | - |
 | +engram | 0.762 | 0.905 | 0.810 | +0.048 |
 | +looped | 0.810 | 0.952 | 0.857 | +0.095 |
 | +full | 0.857 | 1.000 | 0.905 | +0.143 |
 
-The +full configuration achieves 100% Hits@5 on the toy fixture — all correct answers appear in the top 5 for every query. The incremental contribution of each feature layer is positive and approximately additive on this fixture.
+The +full configuration achieves 100% Hits@5 on the toy fixture - all correct answers appear in the top 5 for every query. The incremental contribution of each feature layer is positive and approximately additive on this fixture.
 
 ---
 
 ## 5. CI Integration
 
 ```bash
-# Run from repo root — no external deps, < 30s on CPU
+# Run from repo root - no external deps, < 30s on CPU
 python benchmarks/feature_impact_benchmark.py
 
 # Expected output:
@@ -3509,7 +3527,7 @@ The toy_graph.csv fixture (21 nodes, 30 edges) is too small for statistically me
 
 ---
 
-# PAPER 031: Loop-Provenance Recovery — Automatic Rollback on Circuit Breaker Trip in Autonomous KG Discovery
+# PAPER 031: Loop-Provenance Recovery - Automatic Rollback on Circuit Breaker Trip in Autonomous KG Discovery
 
 **CEREBRUM Phase 79**
 
@@ -3517,7 +3535,7 @@ The toy_graph.csv fixture (21 nodes, 30 edges) is too small for statistically me
 
 ## Abstract
 
-We present **Loop-Provenance Recovery**, an integration between `AutonomousDiscoveryLoop` (Phase 74) and `ProvenanceLedger` (Phase 76) that automatically undoes graph materializations when the circuit breaker fires. Prior to Phase 79, a circuit breaker trip paused future materialization but left already-materialized edges from the failed cycle in the graph. These edges may represent low-quality discoveries that degraded graph precision. Loop-Provenance Recovery addresses this by wiring `LoopConfig.auto_rollback_on_trip=True` to an automatic call to `ProvenanceLedger.rollback_cycle()` at trip time. `CycleRecord.edges_rolled_back` records how many edges were removed, providing observability. The combined system achieves **fail-safe materialization**: if a discovery cycle degrades below quality thresholds, both future materializations pause *and* past materializations are undone — returning the graph to its pre-cycle state.
+We present **Loop-Provenance Recovery**, an integration between `AutonomousDiscoveryLoop` (Phase 74) and `ProvenanceLedger` (Phase 76) that automatically undoes graph materializations when the circuit breaker fires. Prior to Phase 79, a circuit breaker trip paused future materialization but left already-materialized edges from the failed cycle in the graph. These edges may represent low-quality discoveries that degraded graph precision. Loop-Provenance Recovery addresses this by wiring `LoopConfig.auto_rollback_on_trip=True` to an automatic call to `ProvenanceLedger.rollback_cycle()` at trip time. `CycleRecord.edges_rolled_back` records how many edges were removed, providing observability. The combined system achieves **fail-safe materialization**: if a discovery cycle degrades below quality thresholds, both future materializations pause *and* past materializations are undone - returning the graph to its pre-cycle state.
 
 ---
 
@@ -3525,7 +3543,7 @@ We present **Loop-Provenance Recovery**, an integration between `AutonomousDisco
 
 The Phase 74 circuit breaker addresses the *forward* problem: when approval rate drops below `min_approval_rate`, future materialization pauses. However, the cycle that triggered the trip has already materialized some edges. If those edges are low-quality (e.g., confidences just above threshold on marginally-approved findings), they remain in the graph indefinitely.
 
-In a production deployment with continuous discovery, a single degraded cycle can introduce dozens of noisy edges before the circuit breaker fires. Manual cleanup requires identifying the exact edges from that cycle — a non-trivial task without provenance tracking.
+In a production deployment with continuous discovery, a single degraded cycle can introduce dozens of noisy edges before the circuit breaker fires. Manual cleanup requires identifying the exact edges from that cycle - a non-trivial task without provenance tracking.
 
 ---
 
@@ -3534,7 +3552,7 @@ In a production deployment with continuous discovery, a single degraded cycle ca
 When the circuit breaker trips:
 
 ```
-1. circuit_breaker_tripped = True → pause future materializations
+1. circuit_breaker_tripped = True -> pause future materializations
 2. if auto_rollback_on_trip and provenance_ledger is not None:
        rolled_back = provenance_ledger.rollback_cycle(cycle_number, adapter)
        cycle_record.edges_rolled_back = rolled_back
@@ -3584,7 +3602,7 @@ The Studio v2 cycle history panel (Phase 75) renders `edges_rolled_back` in the 
 | Failure | Behavior | Mitigation |
 |---|---|---|
 | Partial rollback (adapter exception mid-cycle) | `rollback_cycle` catches exception, logs warning, continues with remaining edges | Idempotent: re-running `rollback_batch` on completed batches is a no-op |
-| ProvenanceLedger evicted cycle batches (LRU cap) | Rollback is incomplete — only unevicted batches are removed | Tune `max_batches` to retain at least `circuit_breaker_window` cycles |
+| ProvenanceLedger evicted cycle batches (LRU cap) | Rollback is incomplete - only unevicted batches are removed | Tune `max_batches` to retain at least `circuit_breaker_window` cycles |
 | Adapter does not implement `remove_edge` | `NotImplementedError` propagates, trip still recorded | Implement `remove_edge` or disable `auto_rollback_on_trip` |
 
 ---
@@ -3605,7 +3623,7 @@ The Studio v2 cycle history panel (Phase 75) renders `edges_rolled_back` in the 
 
 ---
 
-# PAPER 032: GraphAdapter remove_edge Protocol — A Formal Edge-Removal Contract for Knowledge Graph Adapters
+# PAPER 032: GraphAdapter remove_edge Protocol - A Formal Edge-Removal Contract for Knowledge Graph Adapters
 
 **CEREBRUM Phase 80**
 
@@ -3613,7 +3631,7 @@ The Studio v2 cycle history panel (Phase 75) renders `edges_rolled_back` in the 
 
 ## Abstract
 
-We present the **GraphAdapter `remove_edge()` Protocol**, a Phase 80 change that promotes edge removal from an ad-hoc capability to a formally defined method in the `GraphAdapter` base class. Prior to Phase 80, `ProvenanceLedger.rollback_batch()` checked for edge-removal capability via `hasattr(adapter, "remove_edge")` and silently skipped rollback if the method was absent. This silent-skip pattern allowed custom adapter subclasses to silently fail rollback without any error signal. Phase 80 removes the guard and defines `remove_edge(u, v, relation)` as a protocol method on `GraphAdapter` — non-abstract, raising `NotImplementedError` by default, overridden in all six built-in adapters. Custom adapters must explicitly override the method or accept that rollback will raise `NotImplementedError`, making the failure visible. This is a breaking change for custom adapters that previously relied on the silent-skip behavior.
+We present the **GraphAdapter `remove_edge()` Protocol**, a Phase 80 change that promotes edge removal from an ad-hoc capability to a formally defined method in the `GraphAdapter` base class. Prior to Phase 80, `ProvenanceLedger.rollback_batch()` checked for edge-removal capability via `hasattr(adapter, "remove_edge")` and silently skipped rollback if the method was absent. This silent-skip pattern allowed custom adapter subclasses to silently fail rollback without any error signal. Phase 80 removes the guard and defines `remove_edge(u, v, relation)` as a protocol method on `GraphAdapter` - non-abstract, raising `NotImplementedError` by default, overridden in all six built-in adapters. Custom adapters must explicitly override the method or accept that rollback will raise `NotImplementedError`, making the failure visible. This is a breaking change for custom adapters that previously relied on the silent-skip behavior.
 
 ---
 
@@ -3707,7 +3725,7 @@ def rollback_batch(self, batch_id: str, adapter: GraphAdapter) -> int:
     return len(batch.edges)
 ```
 
-If `adapter.remove_edge()` raises, the exception propagates to the caller. `ProvenanceLedger` does not catch it — callers are expected to handle `NotImplementedError` if they choose to continue on partial rollback.
+If `adapter.remove_edge()` raises, the exception propagates to the caller. `ProvenanceLedger` does not catch it - callers are expected to handle `NotImplementedError` if they choose to continue on partial rollback.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
@@ -3719,7 +3737,7 @@ If `adapter.remove_edge()` raises, the exception propagates to the caller. `Prov
 
 ---
 
-# PAPER 033: GraphSnapshot — Portable JSON Topology Persistence for Knowledge Graph Recovery
+# PAPER 033: GraphSnapshot - Portable JSON Topology Persistence for Knowledge Graph Recovery
 
 **CEREBRUM Phase 81**
 
@@ -3727,7 +3745,7 @@ If `adapter.remove_edge()` raises, the exception propagates to the caller. `Prov
 
 ## Abstract
 
-We present **GraphSnapshot**, a portable JSON-based topology persistence mechanism for CEREBRUM Knowledge Graph adapters. Prior to Phase 81, graph state was saved via Python pickle, which is fragile across Python versions, adapter class renames, and dependency updates. `GraphSnapshot.save(adapter, path)` serializes the full edge list (source, target, relation, weight, metadata) to a portable JSON file that survives class changes. `GraphSnapshot.restore(path, adapter, skip_existing=True)` re-adds only new edges — idempotent and safe to run on every pod restart. `GraphSnapshot.diff(path_a, path_b)` computes the edge delta between two snapshots, enabling change auditing between any two checkpoints. GraphSnapshot is the recommended mechanism for disaster recovery in Kubernetes deployments, replacing manual graph CSV exports and pickle-based state files.
+We present **GraphSnapshot**, a portable JSON-based topology persistence mechanism for CEREBRUM Knowledge Graph adapters. Prior to Phase 81, graph state was saved via Python pickle, which is fragile across Python versions, adapter class renames, and dependency updates. `GraphSnapshot.save(adapter, path)` serializes the full edge list (source, target, relation, weight, metadata) to a portable JSON file that survives class changes. `GraphSnapshot.restore(path, adapter, skip_existing=True)` re-adds only new edges - idempotent and safe to run on every pod restart. `GraphSnapshot.diff(path_a, path_b)` computes the edge delta between two snapshots, enabling change auditing between any two checkpoints. GraphSnapshot is the recommended mechanism for disaster recovery in Kubernetes deployments, replacing manual graph CSV exports and pickle-based state files.
 
 ---
 
@@ -3735,7 +3753,7 @@ We present **GraphSnapshot**, a portable JSON-based topology persistence mechani
 
 CEREBRUM's `save_state()` / `load_state()` (Phase 55) persisted graph topology via `pickle.dump()`. Pickle is convenient but fragile:
 
-1. **Class renames**: If `GraphAdapter` or `Edge` class names change (as happened with the Parallax → CEREBRUM rename), pickled files are unloadable.
+1. **Class renames**: If `GraphAdapter` or `Edge` class names change (as happened with the Parallax -> CEREBRUM rename), pickled files are unloadable.
 2. **Python version changes**: Pickle protocol versions differ across Python releases. A file pickled on Python 3.10 may fail on 3.12.
 3. **Dependency changes**: Pickling `networkx.DiGraph` embeds the networkx version; a dependency upgrade can break loading.
 4. **No diff semantics**: Pickle files are binary blobs; computing what changed between two states requires unpickling both and diffing in Python.
@@ -3792,7 +3810,7 @@ result = GraphSnapshot.restore(
 print(f"Added: {result['added']}, Skipped: {result['skipped']}")
 ```
 
-`skip_existing=True` makes restore idempotent — calling it multiple times on the same adapter is safe. `skip_existing=False` forces all edges to be re-added (useful after a full graph wipe).
+`skip_existing=True` makes restore idempotent - calling it multiple times on the same adapter is safe. `skip_existing=False` forces all edges to be re-added (useful after a full graph wipe).
 
 ### Diff
 
@@ -3809,7 +3827,7 @@ diff = GraphSnapshot.diff(
 # }
 ```
 
-Diff does not require a live adapter — it compares two snapshot files directly.
+Diff does not require a live adapter - it compares two snapshot files directly.
 
 ---
 
@@ -3855,7 +3873,7 @@ Pairs with `ProvenanceLedger.rollback_cycle()` for fine-grained recovery: if the
 
 ---
 
-# PAPER 034: Adaptive Loop Tuning — Calibrator-Driven Dynamic Pacing for Autonomous Knowledge Graph Discovery
+# PAPER 034: Adaptive Loop Tuning - Calibrator-Driven Dynamic Pacing for Autonomous Knowledge Graph Discovery
 
 **CEREBRUM Phase 82**
 
@@ -3879,7 +3897,7 @@ Both are set once at `LoopConfig` creation and held constant. This is appropriat
 
 2. **Saturation**: After many cycles over a small graph, most community pairs have been explored. Maintaining a high cap wastes compute on redundant candidates; a longer interval would reduce CPU usage without degrading coverage.
 
-`DiscoveryCalibrator` (Phase 73) already tracks this information — per-community scan and discovery rates with EMA smoothing. Adaptive tuning makes the loop consume this signal directly.
+`DiscoveryCalibrator` (Phase 73) already tracks this information - per-community scan and discovery rates with EMA smoothing. Adaptive tuning makes the loop consume this signal directly.
 
 ---
 
@@ -3894,16 +3912,16 @@ mean_weight = stats["mean_weight"]  # mean inverse-rate multiplier across all co
 
 The scaling formula maps `mean_weight` to cap and interval via linear interpolation within bounds:
 
-**Cap scaling** (higher weight → higher cap):
+**Cap scaling** (higher weight -> higher cap):
 ```
 effective_cap = clamp(
-    round(base_cap × mean_weight),
+    round(base_cap x mean_weight),
     adaptive_min_cap,
     adaptive_max_cap
 )
 ```
 
-**Interval scaling** (higher weight → shorter interval):
+**Interval scaling** (higher weight -> shorter interval):
 ```
 effective_interval = clamp(
     base_interval / mean_weight,
@@ -4009,13 +4027,13 @@ curl -X POST http://localhost:8200/research/loop/configure \
 
 ### Abstract
 
-We present the **Neural Visualization Bridge** — a production Unreal Engine 5 C++ plugin that renders a live CEREBRUM knowledge graph as an interactive 3D spatial environment driven by real-time telemetry. The system comprises four C++ actors (`UCerebrumLink`, `ANeuronNodeActor`, `ASynapseActor`, `ACerebrumBrain`), a Python WebSocket server (`TelemetryBridge`), a pre-computation layout script (`setup_graph_layout.py`), and a new REST endpoint (`GET /graph/edges`). Five typed neural event channels (`SYNAPTIC_PULSE`, `NEUROGENESIS`, `SYNAPTIC_PRUNE`, `CORTICAL_GLOW`, `DISSONANCE`) map directly to Blueprint-callable delegates, allowing any developer to wire graph reasoning activity to spatial animations with zero C++ knowledge. Pre-computed Fibonacci-sphere community placement and golden-ratio hue assignment produce deterministic, visually stable startup layouts independent of graph size. We evaluate the system on a 500-node test graph, demonstrate sub-10 ms WebSocket event latency, and discuss design principles for externalizing the internal state of a reasoning engine as navigable cognitive space.
+We present the **Neural Visualization Bridge** - a production Unreal Engine 5 C++ plugin that renders a live CEREBRUM knowledge graph as an interactive 3D spatial environment driven by real-time telemetry. The system comprises four C++ actors (`UCerebrumLink`, `ANeuronNodeActor`, `ASynapseActor`, `ACerebrumBrain`), a Python WebSocket server (`TelemetryBridge`), a pre-computation layout script (`setup_graph_layout.py`), and a new REST endpoint (`GET /graph/edges`). Five typed neural event channels (`SYNAPTIC_PULSE`, `NEUROGENESIS`, `SYNAPTIC_PRUNE`, `CORTICAL_GLOW`, `DISSONANCE`) map directly to Blueprint-callable delegates, allowing any developer to wire graph reasoning activity to spatial animations with zero C++ knowledge. Pre-computed Fibonacci-sphere community placement and golden-ratio hue assignment produce deterministic, visually stable startup layouts independent of graph size. We evaluate the system on a 500-node test graph, demonstrate sub-10 ms WebSocket event latency, and discuss design principles for externalizing the internal state of a reasoning engine as navigable cognitive space.
 
 ---
 
 ### 1. Introduction
 
-Knowledge graphs are inherently spatial — nodes are concepts, edges are relations, communities are semantic neighbourhoods. Yet standard graph reasoning pipelines present their output as ranked lists, JSON objects, or log lines. An operator debugging a mis-ranked answer must mentally reconstruct the traversal path from structured text. This cognitive overhead is avoidable.
+Knowledge graphs are inherently spatial - nodes are concepts, edges are relations, communities are semantic neighbourhoods. Yet standard graph reasoning pipelines present their output as ranked lists, JSON objects, or log lines. An operator debugging a mis-ranked answer must mentally reconstruct the traversal path from structured text. This cognitive overhead is avoidable.
 
 The neural visualization bridge closes this gap by treating CEREBRUM's internal reasoning events as the authoritative source of truth for a real-time 3D scene. Every hop of a beam traversal manifests as an animated synaptic pulse along a glowing edge. Every research agent discovery spawns a new node and edge. Every REM prune fades an edge to zero opacity. The operator does not inspect logs; they *watch* reasoning happen.
 
@@ -4033,7 +4051,7 @@ This paper makes three contributions:
 
 **Game-engine knowledge graph work** has been explored in educational contexts (e.g. [chen2020kg3d]) but without real-time event streaming or production-quality 3D physics.
 
-**Explainability interfaces** (GNNExplainer [ying2019gnnexplainer], LIME [ribeiro2016lime], SHAP [lundberg2017shap]) operate post-hoc on static model outputs. The neural visualization bridge is *prospective* — it shows what the engine is doing as it reasons, not an explanation constructed afterwards.
+**Explainability interfaces** (GNNExplainer [ying2019gnnexplainer], LIME [ribeiro2016lime], SHAP [lundberg2017shap]) operate post-hoc on static model outputs. The neural visualization bridge is *prospective* - it shows what the engine is doing as it reasons, not an explanation constructed afterwards.
 
 The closest prior work is the Neural Telemetry subsystem introduced in Phase 63, which defined the five event types and the `TelemetryBridge` server. Phase 92 completes that design by delivering the UE5 consumer side.
 
@@ -4116,10 +4134,10 @@ Edges are represented by `ASynapseActor` instances, each pointing between two `A
 Community centers are placed using the Fibonacci sphere algorithm with the golden angle φ ≈ 137.508°:
 
 ```
-θ_i = i × φ  (azimuthal, wraps mod 360°)
+θ_i = i x φ  (azimuthal, wraps mod 360°)
 z_i  = 1 − (2i + 1) / N  (elevation, uniform)
-r_i  = √(1 − z_i²)
-x_i  = r_i × cos(θ_i),  y_i = r_i × sin(θ_i)
+r_i  = √(1 − z_i^2)
+x_i  = r_i x cos(θ_i),  y_i = r_i x sin(θ_i)
 ```
 
 This distributes N community centers uniformly over a sphere surface without poles, avoiding the spatial clustering that occurs with random placement. Each community center is scaled to a 2 000 UU radius sphere; nodes within a community are scattered with Gaussian noise σ = 300 UU around the center.
@@ -4129,10 +4147,10 @@ This distributes N community centers uniformly over a sphere surface without pol
 Community hues are assigned using the golden ratio conjugate φ⁻¹ ≈ 0.618:
 
 ```
-hue_i = (i × 0.618033...) mod 1.0
+hue_i = (i x 0.618033...) mod 1.0
 ```
 
-This distributes hues maximally apart on the colour wheel regardless of community count — no two adjacent integers produce similar hues. Saturation is fixed at 0.75, lightness at 0.65 for perceptual consistency.
+This distributes hues maximally apart on the colour wheel regardless of community count - no two adjacent integers produce similar hues. Saturation is fixed at 0.75, lightness at 0.65 for perceptual consistency.
 
 #### 4.3 layout JSON Schema (v1.1)
 
@@ -4193,18 +4211,18 @@ All five event delegates are `BlueprintAssignable`, requiring no C++ subclassing
 
 ```
 Event Graph (Level Blueprint):
-  [Begin Play] → [Get Actor of Class: CerebrumBrain]
+  [Begin Play] -> [Get Actor of Class: CerebrumBrain]
                        ↓
               [Get Component: CerebrumLink]
                        ↓
-  [Bind Event to OnSynapticPulse] → [Custom Event: HandlePulse]
+  [Bind Event to OnSynapticPulse] -> [Custom Event: HandlePulse]
                                            ↓
                               [Get Synapse by Source+Target]
                                            ↓
                               [Call AnimatePulse(3.0, 0.5)]
 ```
 
-The `OnNeurogenesis` and `OnSynapticPrune` delegates are routed to `ACerebrumBrain.SpawnOrGetNode()` and `PruneEdge()` respectively — methods that are `BlueprintCallable` so custom Blueprint logic can augment or override the defaults.
+The `OnNeurogenesis` and `OnSynapticPrune` delegates are routed to `ACerebrumBrain.SpawnOrGetNode()` and `PruneEdge()` respectively - methods that are `BlueprintCallable` so custom Blueprint logic can augment or override the defaults.
 
 ---
 
@@ -4236,7 +4254,7 @@ For production scenes > 2 000 nodes, LOD distance-based sphere-mesh culling and 
 
 #### 7.3 Spatial Coherence
 
-Fibonacci sphere layout produces a silhouette entropy (standard deviation of projected inter-community distances) 34% lower than random placement and 12% lower than force-directed layout at equivalent community count, measured over 50 random graph samples (100–500 nodes, 5–20 communities). Consistent spacing makes community membership visually obvious without labels.
+Fibonacci sphere layout produces a silhouette entropy (standard deviation of projected inter-community distances) 34% lower than random placement and 12% lower than force-directed layout at equivalent community count, measured over 50 random graph samples (100-500 nodes, 5-20 communities). Consistent spacing makes community membership visually obvious without labels.
 
 ---
 
@@ -4244,28 +4262,28 @@ Fibonacci sphere layout produces a silhouette entropy (standard deviation of pro
 
 #### 8.1 Reasoning as Space
 
-The core design principle is that graph topology is inherently spatial and should be rendered as such. A beam traversal that crosses community boundaries (`is_Synaptic Bridge=true`) should look different from one that stays within a community — and with the visualization bridge it does: Synaptic Bridge synapses glow with an additive overlay. A community being heavily queried should brighten. When the REM engine prunes a low-utility edge, that edge should visibly fade and disappear. The human operator's intuition about the graph structure is reinforced continuously by the visual representation.
+The core design principle is that graph topology is inherently spatial and should be rendered as such. A beam traversal that crosses community boundaries (`is_Synaptic Bridge=true`) should look different from one that stays within a community - and with the visualization bridge it does: Synaptic Bridge synapses glow with an additive overlay. A community being heavily queried should brighten. When the REM engine prunes a low-utility edge, that edge should visibly fade and disappear. The human operator's intuition about the graph structure is reinforced continuously by the visual representation.
 
 #### 8.2 Fallback Hierarchy
 
 The system is designed to degrade gracefully:
-1. `bPreferLayoutFile=true` + layout file present → exact pre-computed positions
-2. `bPreferLayoutFile=true` + layout file absent → live REST fallback
-3. `bPreferLayoutFile=false` → live REST directly
-4. REST unavailable → deterministic hash-seeded scatter (scene still renders, positions are stable)
-5. WebSocket unavailable → scene is static but layout is correct
+1. `bPreferLayoutFile=true` + layout file present -> exact pre-computed positions
+2. `bPreferLayoutFile=true` + layout file absent -> live REST fallback
+3. `bPreferLayoutFile=false` -> live REST directly
+4. REST unavailable -> deterministic hash-seeded scatter (scene still renders, positions are stable)
+5. WebSocket unavailable -> scene is static but layout is correct
 
 No configuration path produces a blank scene.
 
 #### 8.3 Limitations
 
-The current implementation loads all edges at startup. For graphs > 10 000 edges, streaming edge loads (pagination on `GET /graph/edges`) would reduce startup time. UE5's `UHierarchicalInstancedStaticMeshComponent` is not yet used for node meshes — per-actor overhead limits practical scene size to ~5 000 nodes at 30+ fps on high-end hardware. These are engineering constraints, not architectural ones.
+The current implementation loads all edges at startup. For graphs > 10 000 edges, streaming edge loads (pagination on `GET /graph/edges`) would reduce startup time. UE5's `UHierarchicalInstancedStaticMeshComponent` is not yet used for node meshes - per-actor overhead limits practical scene size to ~5 000 nodes at 30+ fps on high-end hardware. These are engineering constraints, not architectural ones.
 
 ---
 
 ### 9. Future Work
 
-- **Instanced mesh rendering**: replace per-actor `UStaticMeshComponent` with `UHierarchicalInstancedStaticMeshComponent` for 10× node count at equivalent framerate
+- **Instanced mesh rendering**: replace per-actor `UStaticMeshComponent` with `UHierarchicalInstancedStaticMeshComponent` for 10x node count at equivalent framerate
 - **VR/AR support**: UE5's XR framework allows the same plugin to run on Meta Quest 3 or HoloLens 2 with minimal changes to `BeginPlay()` initialization
 - **Streaming edge pagination**: chunked `GET /graph/edges` loading to support graphs > 50 000 edges without startup stall
 - **Interactive query submission**: `POST /query` directly from a Blueprint input event, displaying the resulting traversal path as an animated tour through the 3D scene
@@ -4276,8 +4294,8 @@ The current implementation loads all edges at startup. For graphs > 10 000 edges
 ### 10. References
 
 - [gephi2009] Bastian, M., Heymann, S., Jacomy, M. (2009). Gephi: An Open Source Software for Exploring and Manipulating Networks. *ICWSM*.
-- [cytoscape2003] Shannon, P. et al. (2003). Cytoscape: A Software Environment for Integrated Models. *Genome Research*, 13, 2498–2504.
-- [neo4j2024bloom] Neo4j, Inc. (2024). Neo4j Bloom — Graph Exploration. https://neo4j.com/product/bloom/
+- [cytoscape2003] Shannon, P. et al. (2003). Cytoscape: A Software Environment for Integrated Models. *Genome Research*, 13, 2498-2504.
+- [neo4j2024bloom] Neo4j, Inc. (2024). Neo4j Bloom - Graph Exploration. https://neo4j.com/product/bloom/
 - [chen2020kg3d] Chen, X. et al. (2020). Knowledge Graph Visualization in 3D Game Environments. *IEEE VIS*.
 - [ying2019gnnexplainer] Ying, R. et al. (2019). GNNExplainer. *NeurIPS*.
 - [ribeiro2016lime] Ribeiro, M.T. et al. (2016). LIME. *KDD*.
@@ -4295,7 +4313,17 @@ The current implementation loads all edges at startup. For graphs > 10 000 edges
 
 ---
 
-# Conclusion: The CEREBRUM Paradigm and the Future of Autonomous Reasoning
+
+---
+
+# PAPER 036 - The Cingulate Engine: Autonomous Reasoning Verification and Hub-Flooding Mitigation
+
+**Abstract**: Multi-hop reasoning in large-scale knowledge graphs is prone to "hub-flooding," where high-degree nodes (e.g., countries, common categories) attract an outsized proportion of the attention beam, leading to a loss of specific reasoning context. We introduce the **Cingulate Engine**, an autonomous verifier inspired by the mammalian anterior cingulate cortex's role in conflict monitoring and error detection. The engine employs a distribution entropy metric (Conflict Entropy) to identify hops where the attention signal is overly dispersed or concentrated on non-informative hubs. Upon detection of a "flooded" state (defined by high entropy or excessive path convergence on a single entity), the system triggers a recursive refinement loop, tightening the beam width and increasing semantic gating sensitivity to force the search into more specific, lower-degree branches. Experimental results on 3-hop MetaQA tasks demonstrate that the Cingulate Engine significantly improves ranking stability in noisy graph environments.
+
+---
+
+# Conclusion
+: The CEREBRUM Paradigm and the Future of Autonomous Reasoning
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
@@ -4305,7 +4333,7 @@ The current implementation loads all edges at startup. For graphs > 10 000 edges
 ---
 
 ### Abstract
-This final synthesis section articulates the strategic significance of the **CEREBRUM** framework across its 35-paper arc. We categorize its advantages over contemporary Large Language Models (LLMs) and traditional Graph Neural Networks (GNNs) across the structural pillars developed through 83 phases of engineering. We conclude by outlining the roadmap for "Collective Intelligence" — a multi-agent, federated graph reasoning architecture that operates without central coordination or massive parameter counts. With 1,977+ tests passing and a complete autonomous discovery-validate-approve-materialize loop, a production Unreal Engine 5 visualization layer, an active inference daydreaming engine (Phase 93), a self-modifying GUI adaptation system (Phase 94), a **Global Workspace** for competitive attention (Phase 110), and proactive **Active Inference** traversal (Phase 111) implemented, CEREBRUM v2.24.0 represents a production-ready foundation for deterministic, interpretable, self-healing, and autonomously-improving Knowledge Graph reasoning.
+This final synthesis section articulates the strategic significance of the **CEREBRUM** framework across its 35-paper arc. We categorize its advantages over contemporary Large Language Models (LLMs) and traditional Graph Neural Networks (GNNs) across the structural pillars developed through 83 phases of engineering. We conclude by outlining the roadmap for "Collective Intelligence" - a multi-agent, federated graph reasoning architecture that operates without central coordination or massive parameter counts. With 1,977+ tests passing and a complete autonomous discovery-validate-approve-materialize loop, a production Unreal Engine 5 visualization layer, an active inference daydreaming engine (Phase 93), a self-modifying GUI adaptation system (Phase 94), a **Global Workspace** for competitive attention (Phase 110), and proactive **Active Inference** traversal (Phase 111) implemented, CEREBRUM v2.24.0 represents a production-ready foundation for deterministic, interpretable, self-healing, and autonomously-improving Knowledge Graph reasoning.
 
 ### 1. Beyond the LLM Monopoly: The Case for Determinism
 Modern Artificial Intelligence has been dominated by the brute-force scaling of Transformer-based Large Language Models (LLMs). While effective at generating human-like text, LLMs suffer from three terminal defects in enterprise and scientific domains: **Identity Collapse**, **Factual Hallucination**, and **Black-Box Opacity**.
@@ -4324,24 +4352,24 @@ CEREBRUM's **Community-Structured Attention (CSA)** (Paper 2) eliminates the qua
 Traditional GNNs and LLM-Retrieval-Augmented designs require expensive "warm-up" periods or fine-tuning on domain data. CEREBRUM's **Streaming Engine** (Paper 13) and **Signal Encoder** (Paper 8) allow it to ingest and reason over new knowledge namespaces in real-time, zero-shot. There is no gradient descent; there is only topological discovery.
 
 #### 2.4 Biological Integrity (STDP & Bridge Twins)
-Many symbolic AI systems feel brittle and robotic. By integrating **Spike-Timing-Dependent Plasticity (STDP)** (Paper 4) and **Bridge Twins** (Paper 3), CEREBRUM introduces a biological "pulse" to formal reasoning. Links are not just static facts; they are dynamic connections that strengthen through success and decay through neglect — mimicking the efficient, low-energy learning found in the human cortex.
+Many symbolic AI systems feel brittle and robotic. By integrating **Spike-Timing-Dependent Plasticity (STDP)** (Paper 4) and **Bridge Twins** (Paper 3), CEREBRUM introduces a biological "pulse" to formal reasoning. Links are not just static facts; they are dynamic connections that strengthen through success and decay through neglect - mimicking the efficient, low-energy learning found in the human cortex.
 
 #### 2.5 Skeptical Robustness (Contradiction Materialization)
 Most Knowledge Graphs fail under the weight of conflicting data. CEREBRUM treats conflict as a **first-class signal**. By identifying **Contradictions** (Paper 11) and subjecting them to the **REM Cycle** (Paper 7), the system maintains its sanity in a world of misinformation.
 
 #### 2.6 Namespace Isolation for Federated Autonomy
-The **Production Hardening** suite (Paper 16) ensures that multi-modal data from heterogeneous sources can be integrated without "Identity Collapse." This architecture enables the first truly **Federated AI** — where organizations can share reasoning paths across isolated namespaces without exposing raw data or compromising security.
+The **Production Hardening** suite (Paper 16) ensures that multi-modal data from heterogeneous sources can be integrated without "Identity Collapse." This architecture enables the first truly **Federated AI** - where organizations can share reasoning paths across isolated namespaces without exposing raw data or compromising security.
 
 #### 2.7 Durable Memory (Engram-Steered Traversal)
-Successful reasoning patterns are accumulated in `Engram` (Paper 18) and persist across restarts via JSON serialization. The beam search learns from experience without any gradient descent — purely through structural pattern frequency. On each query, `EngramTraversal._prune_candidates()` applies an affinity boost to relation sequences that have appeared in previous successful traces: $s_\text{eff}(c) = s(c) \times (1 + \lambda \cdot \text{affinity}(\text{rel\_seq}))$. The FastAPI lifespan manager saves the cache on shutdown and performs two-tier warm-up on startup (saved JSON first, then QueryLog replay), so no productive reasoning trace is lost across process boundaries.
+Successful reasoning patterns are accumulated in `Engram` (Paper 18) and persist across restarts via JSON serialization. The beam search learns from experience without any gradient descent - purely through structural pattern frequency. On each query, `EngramTraversal._prune_candidates()` applies an affinity boost to relation sequences that have appeared in previous successful traces: $s_\text{eff}(c) = s(c) \times (1 + \lambda \cdot \text{affinity}(\text{rel\_seq}))$. The FastAPI lifespan manager saves the cache on shutdown and performs two-tier warm-up on startup (saved JSON first, then QueryLog replay), so no productive reasoning trace is lost across process boundaries.
 
-#### 2.8 Fault-Tolerant by Design (Phases 56–57)
+#### 2.8 Fault-Tolerant by Design (Phases 56-57)
 Every failure mode is isolated. Traversal crashes return partial results at HTTP 200 via `QueryResponse.partial` and `_partial_paths`. Write failures (`QueryLog`, `Engram`) are swallowed at WARNING and never kill queries. Streams emit terminal error NDJSON chunks so clients detect failure without polling HTTP status. The `ProcessPoolExecutor` in `best_of_n_dscf` falls back to sequential execution on `BrokenExecutor`, allowing server startup on memory-constrained hosts. `GlobalRebalancer._rebalance_worker_inner()` isolates inner work from the exception handler so rebalancer thread crashes are contained. No single point of failure can crash a running server.
 
 #### 2.9 SpeedTalk Compression (Phase 58)
-Inspired by Robert Heinlein's *Gulf* (1949), CEREBRUM's relation-pattern cache adopts **phonemic encoding**: each distinct relation type in the loaded KG is assigned a single character from a 62-symbol alphabet, and multi-hop relation sequences are stored as compact strings (e.g. `"abc"`) rather than verbose Python tuples. This delivers 8–20× JSON key compression and — more importantly — unlocks **prefix queries**: because each character encodes exactly one relation, a string prefix corresponds exactly to a relation-sequence prefix, enabling the first-class question "what are all known productive chains that start with this relation?" The alphabet is automatically tuned to the loaded graph: most-traversed relation types receive the shortest symbols, implementing the true Heinlein principle that common concepts deserve the most economical representation. `SpeedTalkEngram` and `SpeedTalkEngramTraversal` (Paper 021) are drop-in replacements for their Phase-55 counterparts.
+Inspired by Robert Heinlein's *Gulf* (1949), CEREBRUM's relation-pattern cache adopts **phonemic encoding**: each distinct relation type in the loaded KG is assigned a single character from a 62-symbol alphabet, and multi-hop relation sequences are stored as compact strings (e.g. `"abc"`) rather than verbose Python tuples. This delivers 8-20x JSON key compression and - more importantly - unlocks **prefix queries**: because each character encodes exactly one relation, a string prefix corresponds exactly to a relation-sequence prefix, enabling the first-class question "what are all known productive chains that start with this relation?" The alphabet is automatically tuned to the loaded graph: most-traversed relation types receive the shortest symbols, implementing the true Heinlein principle that common concepts deserve the most economical representation. `SpeedTalkEngram` and `SpeedTalkEngramTraversal` (Paper 021) are drop-in replacements for their Phase-55 counterparts.
 
-### 3. Phases 69–111: The Autonomous Reasoning Frontier
+### 3. Phases 69-111: The Autonomous Reasoning Frontier
 
 #### 3.1 Predictive Coding and Soliton Stability (Phase 69)
 `PredictiveCodingEngine` closes the predict-act-observe loop: the Engram prior predicts the next traversal; Prediction Error (PE) drives `ChemicalModulator` arousal/novelty/reinforcement; the `soliton_index` tracks prior coherence over time.
@@ -4357,14 +4385,17 @@ CEREBRUM reaches beyond the terminal and the REST API in Phase 92: a production 
 
 ---
 
+### 3.5 The Executive Mind: Frontal and Cingulate Engines (Phases 149-150)
+In v2.35.0, CEREBRUM moves beyond simple traversal toward executive orchestration. The **Frontal Engine** (Phase 150) implements a meta-reasoning layer that analyzes candidate paths and dynamically selects between FAST (traversal only), HYBRID (async research), and DEEP (suspend for research) strategies. This is coupled with the **Cingulate Engine** (Phase 149), which monitors reasoning entropy and detects "hub-flooding" signatures—situations where a few high-degree nodes overwhelm the beam. When such flooding is detected, the Cingulate Engine triggers a recursive refinement loop, retrying the query with stricter pruning constraints to recover signal from the noise.
+
 ### 4. Conclusion: The Collective Hypothesis
-The development arc — spanning 35 papers, 1,977+ passing tests, and 111 phases of engineering — demonstrates that intelligence is not a function of data volume, but of **structural efficiency and self-correction**. CEREBRUM proves that by respecting the community structure of knowledge, utilizing causal time-signals, closing the autonomous discovery loop, and implementing predictive global workspaces, we can build agents that reason as deeply as humans while remaining as auditable as a calculator.
+The development arc - spanning 35 papers, 1,977+ passing tests, and 111 phases of engineering - demonstrates that intelligence is not a function of data volume, but of **structural efficiency and self-correction**. CEREBRUM proves that by respecting the community structure of knowledge, utilizing causal time-signals, closing the autonomous discovery loop, and implementing predictive global workspaces, we can build agents that reason as deeply as humans while remaining as auditable as a calculator.
 
-As we move toward the next decade of AGI development, CEREBRUM provides the blueprint for a **Collective Intelligence** — a decentralized, self-healing, and perfectly transparent network of knowledge that grows not by adding more GPUs, but by forging more meaningful and provenance-tracked connections.
-
----
-**Manuscript Finalized: v2.24.0 (Phase 111 COMPLETE)**
+As we move toward the next decade of AGI development, CEREBRUM provides the blueprint for a **Collective Intelligence** - a decentralized, self-healing, and perfectly transparent network of knowledge that grows not by adding more GPUs, but by forging more meaningful and provenance-tracked connections.
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Manuscript Finalized: v2.30.0 (Phase 149 COMPLETE)**
+
+---
+**Reviewed on**: April 28, 2026 for version v2.30.0
 

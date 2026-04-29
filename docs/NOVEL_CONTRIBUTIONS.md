@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.30.0 (Phase 149 (Cingulate Engine) COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -23,7 +23,7 @@
 - Louvain (Blondel et al., 2008): Global modularity only, no LPA signal
 - Leiden (Traag et al., 2019): Refinement phase + modularity, no LPA signal
 - LPA (Raghavan et al., 2007): Local propagation only, no modularity signal
-- LPA-Louvain hybrids (Sun et al., 2024): Apply signals to disjoint node subsets by degree threshold — categorically different from DSCF's per-node simultaneous fusion
+- LPA-Louvain hybrids (Sun et al., 2024): Apply signals to disjoint node subsets by degree threshold - categorically different from DSCF's per-node simultaneous fusion
 
 **Key Technical Differentiator**: The specific architectural choice to compute both $\Delta Q_{modularity}(v, c)$ and $f_{LPA}(v, c)$ for every candidate community $c$ at every node $v$ in every iteration, then fuse them via: $\text{score}(v, c) = \alpha \cdot \Delta Q(v,c) + \beta \cdot f_{LPA}(v,c) + \gamma \cdot \text{flow}(v,c)$
 
@@ -32,7 +32,7 @@
 
 ---
 
-### Claim 2: Community-Structured Attention (CSA) Formula — 10-Parameter Extension
+### Claim 2: Community-Structured Attention (CSA) Formula - 10-Parameter Extension
 
 **Description**: A graph edge attention weight formula that incorporates community membership as a soft global constraint alongside semantic similarity, relation type, path length penalty, hop decay, PageRank centrality, temporal decay, node recency, synthesis-density penalty, and grounding confidence. The formula is training-free, computed analytically from graph topology at query time. The current formulation extends the original 6-parameter formula to 10 learnable parameters.
 
@@ -53,7 +53,7 @@ Where:
 
 Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
-**Novelty Statement**: Graph Attention Networks (GAT, HAN, HGT) compute local attention over immediate neighborhoods using learned weight matrices. CSA is the first attention formulation that includes global community membership ($S_C(u,v)$) as a term. The 10-parameter extension further adds temporal, recency, synthesis-quality, and grounding dimensions — none of which appear in any published GNN attention formula.
+**Novelty Statement**: Graph Attention Networks (GAT, HAN, HGT) compute local attention over immediate neighborhoods using learned weight matrices. CSA is the first attention formulation that includes global community membership ($S_C(u,v)$) as a term. The 10-parameter extension further adds temporal, recency, synthesis-quality, and grounding dimensions - none of which appear in any published GNN attention formula.
 
 **Closest Prior Art**:
 - GAT (Veličković et al., 2018): Local neighborhood attention, learned weights, no community term
@@ -61,7 +61,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 - HGT (Hu et al., 2020): Heterogeneous attention, learned, no community term
 - GraphRAG (Microsoft, Edge et al., 2024): Communities used for LLM summarization, not as attention weights in traversal
 
-**Key Technical Differentiator**: The $\beta \cdot S_C(u,v)$ term (community co-membership from live DSCF partitions, not learned parameters), extended with four novel dimensions: temporal decay, node recency, synthesis-density penalty, and grounding confidence — producing the first 10-dimensional analytically-computed KG attention formula.
+**Key Technical Differentiator**: The $\beta \cdot S_C(u,v)$ term (community co-membership from live DSCF partitions, not learned parameters), extended with four novel dimensions: temporal decay, node recency, synthesis-density penalty, and grounding confidence - producing the first 10-dimensional analytically-computed KG attention formula.
 
 **Relevant files**: `core/attention_engine.py`, `core/reasoning_logit.py`
 **Documented in**: `docs/arxiv/PAPER_002_CSA.md`, `docs/specifications/SPEC_002_CSA.md`
@@ -72,7 +72,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 **Description**: A multi-hop KG traversal architecture where beam search is guided exclusively by CSA attention weights derived from graph topology, producing a complete verifiable reasoning trace at zero inference cost (no trained model, no LLM).
 
-**Novelty Statement**: All published multi-hop KG reasoning systems using beam search (MINERVA, DeepPath, BeamQA) require training on labeled question-answer pairs. CEREBRUM's BeamTraversal uses CSA weights computed analytically from graph structure — achieving competitive H@10 on MetaQA zero-shot, with no training data.
+**Novelty Statement**: All published multi-hop KG reasoning systems using beam search (MINERVA, DeepPath, BeamQA) require training on labeled question-answer pairs. CEREBRUM's BeamTraversal uses CSA weights computed analytically from graph structure - achieving competitive H@10 on MetaQA zero-shot, with no training data.
 
 **Closest Prior Art**:
 - MINERVA (Das et al., 2018): RL-trained path agent, requires labeled QA pairs
@@ -102,16 +102,16 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 **Description**: A streaming discretizer that materializes directional `CAUSES` edges in a Knowledge Graph from event timing patterns, using Hebbian-inspired weight accumulation with configurable LTP/LTD asymmetry and lazy O(1) weight decay.
 
-**Novelty Statement**: STDP has been applied to spiking neural network learning rules extensively, but no published work applies STDP mechanics to dynamic causal edge discovery in Knowledge Graphs. The combination of: (1) Hebbian co-occurrence weighting, (2) directional edge materialization (pre→post), (3) lazy weight decay reducing per-event complexity from O(N) to O(1), and (4) adversarial causal flood protection (min_causal_span, chi-squared) is an original contribution.
+**Novelty Statement**: STDP has been applied to spiking neural network learning rules extensively, but no published work applies STDP mechanics to dynamic causal edge discovery in Knowledge Graphs. The combination of: (1) Hebbian co-occurrence weighting, (2) directional edge materialization (pre->post), (3) lazy weight decay reducing per-event complexity from O(N) to O(1), and (4) adversarial causal flood protection (min_causal_span, chi-squared) is an original contribution.
 
 **Relevant files**: `core/discretizer.py`
 **Documented in**: `docs/arxiv/PAPER_004_STDP_CAUSAL.md`
 
 ---
 
-### Claim 6: REM Cycle — Sleep-Inspired KG Maintenance
+### Claim 6: REM Cycle - Sleep-Inspired KG Maintenance
 
-**Description**: A three-phase background maintenance loop (Prune → Consolidate → Synthesize) for autonomous KG quality management, inspired by the biological sleep-cycle memory consolidation model (synaptic homeostasis, NREM slow-wave, hippocampal replay).
+**Description**: A three-phase background maintenance loop (Prune -> Consolidate -> Synthesize) for autonomous KG quality management, inspired by the biological sleep-cycle memory consolidation model (synaptic homeostasis, NREM slow-wave, hippocampal replay).
 
 **Novelty Statement**: KG maintenance systems (NELL, ATOMIC) focus on *adding* new facts. The REM Cycle's three-phase design for autonomous removal, structural consolidation, and proactive synthesis with differential decay rates per edge relation type has no precedent in the KG maintenance literature.
 
@@ -150,7 +150,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 **Description**: Application of Beta-distribution path modeling and Thompson sampling to multi-hop KG beam search, with a warm-start mechanism that seeds the first-hop Beta prior from the CSA attention weight to reduce cold-start variance.
 
-**Novelty Statement**: Bayesian bandits and Thompson sampling are well-established in recommendation and exploration-exploitation literature. Their application to *multi-hop KG beam search with path-level Beta distributions* seeded from graph-structural attention weights is novel — no prior KG reasoning paper uses this formulation.
+**Novelty Statement**: Bayesian bandits and Thompson sampling are well-established in recommendation and exploration-exploitation literature. Their application to *multi-hop KG beam search with path-level Beta distributions* seeded from graph-structural attention weights is novel - no prior KG reasoning paper uses this formulation.
 
 **Relevant files**: `reasoning/traversal.py`
 **Documented in**: `docs/arxiv/PAPER_006_BAYESIAN_BEAM.md`
@@ -161,7 +161,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 **Description**: A systematic methodology for identifying and patching cross-feature interaction bugs ("structural holes") in complex KG systems, covering five taxonomic categories: stale reference, adversarial input, namespace collision, bias/saturation, and evaluation artifacts.
 
-**Novelty Statement**: The specific taxonomy of structural hole categories as applied to KG reasoning systems — and the complete set of eight patched holes with backward-compatible fixes — constitutes a novel engineering contribution for production KG deployment.
+**Novelty Statement**: The specific taxonomy of structural hole categories as applied to KG reasoning systems - and the complete set of eight patched holes with backward-compatible fixes - constitutes a novel engineering contribution for production KG deployment.
 
 **Documented in**: `docs/arxiv/PAPER_016_PRODUCTION_HARDENING.md`
 
@@ -173,7 +173,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 **Description**: The complete CEREBRUM system integrating DSCF community detection, CSA attention, zero-shot beam traversal, LTP/LTD bridge twins, STDP causal inference, REM Cycle maintenance, Bayesian beam search, cross-modal alignment, federated discovery, streaming ingest, metacognitive verification, and production hardening into a single coherent framework with zero training data requirements and complete reasoning transparency.
 
-**Novelty Statement**: No prior work integrates this combination of capabilities in a single KG reasoning framework. The specific architectural choices — using communities as attention heads, using traversal co-occurrence for structural modification, using STDP timing for causal discovery, and composing these into a sleep-cycle maintenance loop — represent a novel systems-level contribution.
+**Novelty Statement**: No prior work integrates this combination of capabilities in a single KG reasoning framework. The specific architectural choices - using communities as attention heads, using traversal co-occurrence for structural modification, using STDP timing for causal discovery, and composing these into a sleep-cycle maintenance loop - represent a novel systems-level contribution.
 
 ---
 
@@ -199,7 +199,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 13: Autonomous Missing-Link Discovery with Human-in-the-Loop Approval Queue (ResearchAgent)
 
-**Description**: An autonomous background daemon that continuously monitors graph connectivity metrics (degree distribution, betweenness centrality, community bridge density) to identify candidate under-connected nodes, then proposes novel edges connecting those nodes via multi-hop bridge analysis. All proposals are queued for human review before materialization — no edge is added to the graph without explicit human approval.
+**Description**: An autonomous background daemon that continuously monitors graph connectivity metrics (degree distribution, betweenness centrality, community bridge density) to identify candidate under-connected nodes, then proposes novel edges connecting those nodes via multi-hop bridge analysis. All proposals are queued for human review before materialization - no edge is added to the graph without explicit human approval.
 
 **Novelty Statement**: Automated KG completion (TransE, RotatE, ComplEx) predicts missing links using trained embedding models and applies them automatically. The CEREBRUM ResearchAgent differs in three respects: (1) it operates without training, using structural graph analysis only; (2) it targets systematically under-connected nodes rather than random triple prediction; (3) it enforces a mandatory human-in-the-loop approval stage before any graph modification. The combination of training-free structural gap detection and supervised materialization is original.
 
@@ -216,7 +216,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 14: Automated Literature Validation of Graph Hypotheses Against Live Scientific Databases (ExternalValidator)
 
-**Description**: A validation layer that accepts proposed KG edges (from ResearchAgent or HypothesisEngine) and automatically queries live scientific literature databases — PubMed, ClinicalTrials.gov, arXiv, and OpenAlex — to retrieve relevant publications. Each proposal is scored by literature support density and annotated with specific citations. The validator returns a structured evidence report per proposal.
+**Description**: A validation layer that accepts proposed KG edges (from ResearchAgent or HypothesisEngine) and automatically queries live scientific literature databases - PubMed, ClinicalTrials.gov, arXiv, and OpenAlex - to retrieve relevant publications. Each proposal is scored by literature support density and annotated with specific citations. The validator returns a structured evidence report per proposal.
 
 **Novelty Statement**: KG systems with external validation (e.g., Google's KG with Freebase provenance, Wikidata with reference citations) rely on pre-linked static provenance. The ExternalValidator performs dynamic, query-time validation against multiple heterogeneous live databases. No published KG system performs automated multi-database literature retrieval as a first-class validation step in the hypothesis/edge proposal pipeline.
 
@@ -269,7 +269,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 **Description**: A federated KG reasoning architecture in which a coordinating node (DistributedBeamTraversal) partitions a multi-hop query into sub-paths, delegates sub-path traversal to remote CEREBRUM nodes via `POST /traverse`, and merges returned path fragments into a unified ranked result. Embedding alignment between nodes is performed via Procrustes SVD rotation applied to shared anchor entity embeddings, ensuring that semantic similarity scores from remote nodes are geometrically comparable to local scores.
 
-**Novelty Statement**: Federated KG systems (SPARQL federation, Wikidata federation) delegate full sub-queries to remote endpoints but do not perform embedding alignment between nodes — they rely on shared URIs, not vector similarity. Federated GNN systems (FedGNN, FedE) aggregate model gradients, not traversal path fragments. The CEREBRUM federated architecture is the first to combine: (1) sub-path delegation (not full sub-query or gradient aggregation), (2) real-time Procrustes alignment of remote embedding spaces, and (3) path-fragment merging that preserves full CSA attention scores across node boundaries.
+**Novelty Statement**: Federated KG systems (SPARQL federation, Wikidata federation) delegate full sub-queries to remote endpoints but do not perform embedding alignment between nodes - they rely on shared URIs, not vector similarity. Federated GNN systems (FedGNN, FedE) aggregate model gradients, not traversal path fragments. The CEREBRUM federated architecture is the first to combine: (1) sub-path delegation (not full sub-query or gradient aggregation), (2) real-time Procrustes alignment of remote embedding spaces, and (3) path-fragment merging that preserves full CSA attention scores across node boundaries.
 
 **Closest Prior Art**:
 - SPARQL Federation (W3C, 2013): Full sub-query delegation, no embedding alignment
@@ -285,7 +285,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 18: Online SGD and Batch Gradient Descent Parameter Learning with Full Persistence for 10-Parameter KG Attention (CSA Parameter Learner)
 
-**Description**: A dual-mode parameter learning system for the 10-parameter CSA attention formula comprising: (1) `MetaParameterLearner` — an online SGD learner that updates per-community parameter overrides from individual feedback events (`POST /feedback`) with configurable learning rate and momentum; (2) `CSAParameterLearner` — a batch gradient descent learner that retrains the global 10-parameter prior from accumulated positive/negative path pairs (`POST /retrain`). Both learners support full state serialization (`to_dict()`/`from_dict()`) enabling checkpoint/restore via `POST /params` and `--params-file` CLI flag at startup.
+**Description**: A dual-mode parameter learning system for the 10-parameter CSA attention formula comprising: (1) `MetaParameterLearner` - an online SGD learner that updates per-community parameter overrides from individual feedback events (`POST /feedback`) with configurable learning rate and momentum; (2) `CSAParameterLearner` - a batch gradient descent learner that retrains the global 10-parameter prior from accumulated positive/negative path pairs (`POST /retrain`). Both learners support full state serialization (`to_dict()`/`from_dict()`) enabling checkpoint/restore via `POST /params` and `--params-file` CLI flag at startup.
 
 **Novelty Statement**: KGE training systems (TransE, RotatE, ComplEx) learn entity/relation embeddings, not attention formula parameters. No published attention-based KG reasoning system supports: (1) per-community parameter overrides (as distinct from global parameters), (2) online SGD updates from real-time feedback without full retraining, (3) batch retraining from a feedback buffer without embedding re-learning, and (4) full parameter persistence enabling cold-start from a prior session's learned weights. The combination of per-community granularity, online + batch dual modes, and cross-session persistence is entirely novel.
 
@@ -305,7 +305,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 **Description**: `smooth_with_graphsage(embeddings, G)` applies a single-pass weighted mean aggregation of each entity's embedding with its graph neighbours, enriching entity representations with local structural context without any training. Activated via `CerebrumGraph.build(use_graphsage=True)`.
 
-**Novelty Statement**: GraphSAGE (Hamilton et al., 2017) and its descendants are trained models that require labelled data and multiple aggregation layers. CEREBRUM's implementation applies a single aggregation pass at inference time, on top of any base encoder (random or sentence-transformer), to enrich embeddings with neighbourhood context for the CSA semantic similarity term — without any training loop, loss function, or labelled data.
+**Novelty Statement**: GraphSAGE (Hamilton et al., 2017) and its descendants are trained models that require labelled data and multiple aggregation layers. CEREBRUM's implementation applies a single aggregation pass at inference time, on top of any base encoder (random or sentence-transformer), to enrich embeddings with neighbourhood context for the CSA semantic similarity term - without any training loop, loss function, or labelled data.
 
 **Closest Prior Art**:
 - GraphSAGE (Hamilton et al., 2017): Trained, multi-layer, requires supervision
@@ -318,16 +318,16 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ---
 
-### Claim 20: Engram-Steered Beam Traversal — Relation-Pattern-Biased Beam Pruning
+### Claim 20: Engram-Steered Beam Traversal - Relation-Pattern-Biased Beam Pruning
 
-**Description**: `Engram` stores compressed relation-sequence tuples from prior successful reasoning paths. `EngramTraversal` biases beam pruning at each hop via: `effective_score = score × (1 + engram_strength × affinity)`, where `affinity` is computed from a prefix index over the stored patterns. The cache persists to disk across process restarts via JSON serialization.
+**Description**: `Engram` stores compressed relation-sequence tuples from prior successful reasoning paths. `EngramTraversal` biases beam pruning at each hop via: `effective_score = score x (1 + engram_strength x affinity)`, where `affinity` is computed from a prefix index over the stored patterns. The cache persists to disk across process restarts via JSON serialization.
 
 **Novelty Statement**: Reinforcement learning-based path selection (e.g., MINERVA, M-Walk) trains a policy on labelled data. CEREBRUM's Engram steering is training-free: it accumulates successful reasoning patterns from live queries and immediately biases future traversal without any training loop, labelled data, or gradient computation.
 
 **Closest Prior Art**:
 - MINERVA (Das et al., 2018): RL-trained policy network
 - M-Walk (Shen et al., 2018): Monte Carlo tree search with trained value network
-- Engram shorthand dialect (Phase 45): Compression format — Engram steering (Phase 55) is a distinct mechanism that uses the pattern space, not the compressed notation itself
+- Engram shorthand dialect (Phase 45): Compression format - Engram steering (Phase 55) is a distinct mechanism that uses the pattern space, not the compressed notation itself
 
 **Key Technical Differentiator**: Real-time, training-free accumulation of logical structure from successful queries, immediately biasing future traversal through a multiplicative score boost.
 
@@ -335,19 +335,19 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ---
 
-### Claim 21: TemporalCalibrator — Training-Free Grid-Search Recall@K Calibration for Temporal KG Parameters
+### Claim 21: TemporalCalibrator - Training-Free Grid-Search Recall@K Calibration for Temporal KG Parameters
 
 **Description**: `TemporalCalibrator` performs grid-search calibration of the CSA `eta` (temporal decay) and `iota` (node recency) parameters by measuring Recall@K against a labelled validation set. A `try/finally` guarantee restores original parameters after any failure. No gradient computation or training data required.
 
-**Novelty Statement**: Hyperparameter calibration for temporal KG reasoning typically requires a trained model with a differentiable loss function. CEREBRUM's calibrator uses only Recall@K computed over graph traversal paths — a non-differentiable, training-free metric — with grid search over a small 2D parameter space.
+**Novelty Statement**: Hyperparameter calibration for temporal KG reasoning typically requires a trained model with a differentiable loss function. CEREBRUM's calibrator uses only Recall@K computed over graph traversal paths - a non-differentiable, training-free metric - with grid search over a small 2D parameter space.
 
 **Relevant files**: `core/temporal_calibrator.py`
 
 ---
 
-### Claim 22: Fault-Tolerant KG Reasoning Server — Partial-Result Graceful Degradation
+### Claim 22: Fault-Tolerant KG Reasoning Server - Partial-Result Graceful Degradation
 
-**Description**: A server-side pattern where any traversal failure returns HTTP 200 with `partial=True` + error message and whatever paths were collected before the failure (`_partial_paths` checkpoint), rather than HTTP 500. Persistence layer write failures (QueryLog, Engram) are independently isolated — neither can crash the reasoning endpoint. The streaming endpoint yields a terminal error NDJSON chunk on failure rather than silently terminating.
+**Description**: A server-side pattern where any traversal failure returns HTTP 200 with `partial=True` + error message and whatever paths were collected before the failure (`_partial_paths` checkpoint), rather than HTTP 500. Persistence layer write failures (QueryLog, Engram) are independently isolated - neither can crash the reasoning endpoint. The streaming endpoint yields a terminal error NDJSON chunk on failure rather than silently terminating.
 
 **Novelty Statement**: Knowledge graph reasoning APIs universally return error codes on failure. CEREBRUM's partial-result pattern allows clients to consume useful intermediate results even when reasoning fails mid-execution, with explicit partial/error semantics distinguishing full success from graceful degradation.
 
@@ -357,7 +357,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 23: SpeedTalk Phonemic Compression for Reasoning Patterns
 
-**Description**: A Heinlein-inspired phonemic compression algorithm that maps KG relation types to a single-character alphabet (a–z, A–Z, 0–9). High-frequency relation sequences are stored as compact strings rather than verbose tuples, achieving 8–20× key compression. The phonemic representation preserves prefix structure, enabling O(P) prefix queries for real-time beam steering.
+**Description**: A Heinlein-inspired phonemic compression algorithm that maps KG relation types to a single-character alphabet (a-z, A-Z, 0-9). High-frequency relation sequences are stored as compact strings rather than verbose tuples, achieving 8-20x key compression. The phonemic representation preserves prefix structure, enabling O(P) prefix queries for real-time beam steering.
 
 **Novelty Statement**: Key-value compression in databases typically uses generic algorithms (Zstd, LZ4). SpeedTalk is the first domain-specific compression for KG reasoning patterns that uses phonemic mapping to maintain structural searchability (prefix match) while drastically reducing memory overhead.
 
@@ -367,7 +367,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 24: Cerebellar Error Correction (CEC) via Dissonance Detection
 
-**Description**: An active error-driven meta-learning loop that monitors reasoning calls for "dissonant" predictions — paths with high CSA attention scores but low consensus across multiple independent reasoning strategies (MACH L1). Dissonant seeds are automatically pushed to the ResearchAgent for autonomous external validation.
+**Description**: An active error-driven meta-learning loop that monitors reasoning calls for "dissonant" predictions - paths with high CSA attention scores but low consensus across multiple independent reasoning strategies (MACH L1). Dissonant seeds are automatically pushed to the ResearchAgent for autonomous external validation.
 
 **Novelty Statement**: Error correction in AI usually involves backpropagation during training. CEC is an online, training-free mechanism that detects structural dissonance at inference time and triggers targeted corrective research, effectively closing the loop between reasoning and discovery.
 
@@ -375,7 +375,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ---
 
-### Claim 25: Multi-Agent Consensus Hierarchies (MACH) — Three-Tier Verification
+### Claim 25: Multi-Agent Consensus Hierarchies (MACH) - Three-Tier Verification
 
 **Description**: A three-tier reasoning verification framework comprising: (1) L1 Local Consensus (multi-strategy voting); (2) L2 Federated Consensus (cross-node path confirmation); and (3) L3 Gold Standard Consensus (ResearchAgent validation against live scientific literature). Higher levels represent more rigorous/expensive verification steps.
 
@@ -387,7 +387,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 26: Synaptic Pruning and Quantized Traversal (SPQT) for KG Efficiency
 
-**Description**: A dual efficiency optimization comprising: (1) Synaptic Pruning — utility-based removal of low-confidence synthetic edges based on age and usage patterns; and (2) Quantized Traversal — `uint8` fixed-point math for path scoring (mapping [0.0, 1.0] to [0, 255]), reducing memory overhead and improving traversal speed on high-hop queries.
+**Description**: A dual efficiency optimization comprising: (1) Synaptic Pruning - utility-based removal of low-confidence synthetic edges based on age and usage patterns; and (2) Quantized Traversal - `uint8` fixed-point math for path scoring (mapping [0.0, 1.0] to [0, 255]), reducing memory overhead and improving traversal speed on high-hop queries.
 
 **Novelty Statement**: Model quantization is standard for neural networks (INT8/FP8). SPQT is the first application of fixed-point quantization specifically to KG beam-search scoring, and the first to combine it with utility-based structural pruning inspired by biological synaptic homeostasis.
 
@@ -447,7 +447,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 32: Predictive Coding Engine with Soliton Index (Phase 69)
 
-**Description**: `PredictiveCodingEngine` generates a *prior path* from the top Engram pattern before each traversal. After traversal, a **Prediction Error (PE)** is computed as the Jaccard divergence between prior and actual relation sequences. PE drives ChemicalModulator signals. The `soliton_index = 1 − mean(recent PEs)` measures prior stability — a self-reinforcing prior that consistently yields low PE behaves as a soliton (self-localising wave).
+**Description**: `PredictiveCodingEngine` generates a *prior path* from the top Engram pattern before each traversal. After traversal, a **Prediction Error (PE)** is computed as the Jaccard divergence between prior and actual relation sequences. PE drives ChemicalModulator signals. The `soliton_index = 1 − mean(recent PEs)` measures prior stability - a self-reinforcing prior that consistently yields low PE behaves as a soliton (self-localising wave).
 
 **Novelty Statement**: Predictive coding has been applied to neural perception (Rao & Ballard 1999). This is the first application to symbolic KG reasoning: a training-free prior derived from empirical traversal history, with a wave-coherence metric (`soliton_index`) for prior stability monitoring.
 
@@ -457,7 +457,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 33: Looped Beam Traversal with Adaptive Exit Gate (Phase 70)
 
-**Description**: `LoopedBeamTraversal` wraps any beam engine and applies it T times. Between loops: top-K answer entities expand seeds (semantic channel), PE→ChemicalModulator adjusts beam params (metabolic channel), Engram records bias pruning (mnemonic channel). Adaptive exit gate: `|ΔPE| < γ` (primary) or answer-set Jaccard ≥ θ (fallback).
+**Description**: `LoopedBeamTraversal` wraps any beam engine and applies it T times. Between loops: top-K answer entities expand seeds (semantic channel), PE->ChemicalModulator adjusts beam params (metabolic channel), Engram records bias pruning (mnemonic channel). Adaptive exit gate: `|ΔPE| < γ` (primary) or answer-set Jaccard ≥ θ (fallback).
 
 **Novelty Statement**: LoopLM-style iteration (arXiv:2510.25741) applies looping to neural language models. This is the first application to symbolic KG beam search, with three distinct inter-loop feedback channels (semantic, metabolic, mnemonic) and a prediction-error-driven exit condition rather than a fixed iteration count.
 
@@ -477,7 +477,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 35: Four-Perspective TriangulationEngine for Candidate Validation (Phase 72)
 
-**Description**: `TriangulationEngine` validates `ResearchCandidate` objects from four independent perspectives: P1 reverse confidence (HypothesisEngine run B→A), P2 strategy agreement (3-config voting fraction), P3 mean path independence (Jaccard independence across proposals), P4 semantic type consistency (relation-type/entity-class match). Results extend the AutoApprover feature vector from 12 to 16 dimensions.
+**Description**: `TriangulationEngine` validates `ResearchCandidate` objects from four independent perspectives: P1 reverse confidence (HypothesisEngine run B->A), P2 strategy agreement (3-config voting fraction), P3 mean path independence (Jaccard independence across proposals), P4 semantic type consistency (relation-type/entity-class match). Results extend the AutoApprover feature vector from 12 to 16 dimensions.
 
 **Novelty Statement**: KG link prediction evaluates forward-direction confidence only. No prior system applies simultaneous reverse traversal, multi-strategy voting, path independence, and semantic type consistency as a four-perspective validation unit on the same candidate.
 
@@ -497,7 +497,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 37: Autonomous Discovery Loop with Circuit Breaker (Phase 74)
 
-**Description**: `AutonomousDiscoveryLoop` closes the discover→validate→approve→materialize loop without human intervention. Features: sliding-window circuit breaker (pauses materialization if approval rate falls below threshold), per-cycle materialization cap, dry-run mode, and AutoApprover checkpoint persistence after every cycle with decisions.
+**Description**: `AutonomousDiscoveryLoop` closes the discover->validate->approve->materialize loop without human intervention. Features: sliding-window circuit breaker (pauses materialization if approval rate falls below threshold), per-cycle materialization cap, dry-run mode, and AutoApprover checkpoint persistence after every cycle with decisions.
 
 **Novelty Statement**: Autonomous KG population systems (NELL, ATOMIC) run batch updates without feedback-loop safety mechanisms. This is the first KG discovery loop with a sliding-window circuit breaker that dynamically pauses based on approval quality, with dry-run mode and per-cycle caps.
 
@@ -509,7 +509,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 **Description**: `ProvenanceLedger` records every edge materialized by `ResearchAgent.approve()` with batch_id, finding_id, and cycle_number. `rollback_batch(batch_id, adapter)` removes exactly one approval's edges. `rollback_cycle(cycle_number, adapter)` removes all edges from a given loop cycle. LRU eviction, thread-safe.
 
-**Novelty Statement**: KG update systems offer at most version snapshots for rollback. Fine-grained per-batch and per-cycle targeted edge removal — scoped to individual autonomous-approval transactions — with LRU-bounded ledger and thread-safe semantics is novel.
+**Novelty Statement**: KG update systems offer at most version snapshots for rollback. Fine-grained per-batch and per-cycle targeted edge removal - scoped to individual autonomous-approval transactions - with LRU-bounded ledger and thread-safe semantics is novel.
 
 **Relevant files**: `core/provenance_ledger.py`
 
@@ -529,7 +529,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 **Description**: `GraphSnapshot` serializes graph topology to a portable, human-readable JSON format (not pickle). `restore(skip_existing=True)` re-adds only new edges, preserving all edge attributes. `diff(path_a, path_b)` identifies exact edge additions and removals between two snapshots without loading a live graph.
 
-**Novelty Statement**: KG persistence typically uses binary serialization or full database dumps. A topology-portable, pickle-free, skip-existing restore with structural diff — without requiring the original adapter class — is novel.
+**Novelty Statement**: KG persistence typically uses binary serialization or full database dumps. A topology-portable, pickle-free, skip-existing restore with structural diff - without requiring the original adapter class - is novel.
 
 **Relevant files**: `core/persistence.py`
 
@@ -537,7 +537,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 41: Adaptive Loop Tuning via Calibrator-Driven Cap and Interval Scaling (Phase 92)
 
-**Description**: `AutonomousDiscoveryLoop` with `adaptive_tuning=True` reads `DiscoveryCalibrator.stats()` at cycle start and scales both `max_materializations_per_cycle` and inter-cycle sleep by mean community weight. Underexplored graphs → higher cap + shorter interval; saturated graphs → lower cap + longer interval. All bounds configurable.
+**Description**: `AutonomousDiscoveryLoop` with `adaptive_tuning=True` reads `DiscoveryCalibrator.stats()` at cycle start and scales both `max_materializations_per_cycle` and inter-cycle sleep by mean community weight. Underexplored graphs -> higher cap + shorter interval; saturated graphs -> lower cap + longer interval. All bounds configurable.
 
 **Novelty Statement**: Autonomous KG discovery loops use fixed caps and intervals. This is the first system to dynamically scale both materialization rate and cycle frequency from a per-community EMA exploration metric, creating a closed-loop adaptive pacing mechanism.
 
@@ -557,9 +557,9 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 43: Signal-Driven Self-Modifying GUI via Dual-Channel Structural and Runtime Adaptation (Phase 94)
 
-**Description**: `GUIAdaptationEngine` observes a rolling window of `SignalSnapshot` records (arousal, soliton_index, approval_rate, circuit_breaker_tripped, inference_pulses) and applies idempotent rule-based adaptations via two independent channels: (1) **structural channel** — HTTP calls to the ue-llm-toolkit API (`localhost:3000`) programmatically add new UMG widget panels to a live UE5 Blueprint asset that persists across sessions; (2) **runtime channel** — `GUI_ADAPTATION` WebSocket events broadcast to connected UE5 clients to show, hide, or collapse existing panels at 60fps. Rules include: HIGH_AROUSAL → add DissonanceMeter panel; CIRCUIT_BREAKER → show warning banner; INFERENCE_MILESTONE → add InferenceHistoryBox; LOW_REINFORCEMENT → collapse active inference panel. All rules are idempotent via `_applied: Set[str]`.
+**Description**: `GUIAdaptationEngine` observes a rolling window of `SignalSnapshot` records (arousal, soliton_index, approval_rate, circuit_breaker_tripped, inference_pulses) and applies idempotent rule-based adaptations via two independent channels: (1) **structural channel** - HTTP calls to the ue-llm-toolkit API (`localhost:3000`) programmatically add new UMG widget panels to a live UE5 Blueprint asset that persists across sessions; (2) **runtime channel** - `GUI_ADAPTATION` WebSocket events broadcast to connected UE5 clients to show, hide, or collapse existing panels at 60fps. Rules include: HIGH_AROUSAL -> add DissonanceMeter panel; CIRCUIT_BREAKER -> show warning banner; INFERENCE_MILESTONE -> add InferenceHistoryBox; LOW_REINFORCEMENT -> collapse active inference panel. All rules are idempotent via `_applied: Set[str]`.
 
-**Novelty Statement**: Existing AI systems have static GUIs designed before deployment. This is the first system in which a knowledge graph reasoner autonomously modifies the structural definition of its own user interface — adding new panels to a live game engine Blueprint asset — based on its own internal metabolic and epistemic state, with changes persisting across editor sessions.
+**Novelty Statement**: Existing AI systems have static GUIs designed before deployment. This is the first system in which a knowledge graph reasoner autonomously modifies the structural definition of its own user interface - adding new panels to a live game engine Blueprint asset - based on its own internal metabolic and epistemic state, with changes persisting across editor sessions.
 
 **Relevant files**: `core/gui_adaptation_engine.py`, `api/ue_toolkit_client.py`, `ue5_project/create_initial_gui.py`
 
@@ -585,6 +585,16 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ---
 
+### Claim 46: Cingulate Engine - Autonomous Conflict-Driven Reasoning Verification
+
+**Description**: A real-time reasoning verifier inspired by the mammalian anterior cingulate cortex (ACC). It monitors the distribution of attention signals across the beam search using a "Conflict Entropy" metric. High entropy or excessive convergence on high-degree hubs (hub-flooding) triggers an autonomous recursive refinement loop that dynamically adjusts beam parameters (width, gating sensitivity) to force reasoning into more specific, informative paths.
+
+**Novelty Statement**: KG reasoning systems typically accept the results of a fixed-parameter beam search or use external post-hoc ranking. The Cingulate Engine is the first implementation of an *internal autonomous conflict monitor* that uses distribution entropy to trigger recursive search refinement at query time, specifically to mitigate the "Hub-Flooding" failure mode in large-scale KGs.
+
+**Relevant files**: `reasoning/traversal.py` (`_calculate_conflict_entropy`), `core/insight_validator.py` (`ProvenanceValidator`), `core/cerebrum.py` (`query` retry loop)
+
+---
+
 ## Prior Art Summary Table
 
 | CEREBRUM Component | Closest Prior Art | Key Distinction |
@@ -596,7 +606,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 | Bridge Twins (LTP/LTD) | GNN shortcuts, agentic expansion | Experience-dependent vs. static/agent-added |
 | STDP causal edges in KG | SNN-STDP | Neural learning rule vs. KG edge discovery |
 | REM Cycle maintenance | NELL, ATOMIC, KGE training | Proactive pruning + synthesis vs. fact addition |
-| Procrustes sensor→KG | MMKG, MKGFormer | Sensor signals vs. image/text only |
+| Procrustes sensor->KG | MMKG, MKGFormer | Sensor signals vs. image/text only |
 | Holographic Index | Federated learning, SPARQL federation | Privacy-preserving structural discovery |
 | Bayesian beam + warm-start | Bandit algorithms | KG-specific Beta seeding from CSA weights |
 | Structural hole taxonomy | Standard testing methodology | Cross-feature interaction analysis for KG |
@@ -613,7 +623,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 | Fault-tolerant partial results (HTTP 200) | Standard KG APIs | Partial-result semantics + isolated persistence failures + streaming error chunk |
 | **SpeedTalk Phonemic Compression** | Generic (Zstd, LZ4) | KG-specific phonemic mapping + prefix-searchable |
 | **Cerebellar Error Correction (CEC)** | Training-time backprop | Inference-time dissonance detection + autonomous research |
-| **MACH (Consensus Hierarchies)** | Simple voting / ensembles | Multi-tier scaling: Local → Federated → Gold Literature |
+| **MACH (Consensus Hierarchies)** | Simple voting / ensembles | Multi-tier scaling: Local -> Federated -> Gold Literature |
 | **SPQT (Quantized Traversal)** | NN Quantization (INT8) | First application to symbolic KG beam scoring + synaptic pruning |
 | **Explainable Reasoning Trace (ERT)** | Path-only explanation | Complete PROCESS audit including pruned competitors |
 | **Neural Telemetry Bridge** | Static graph viz (Gephi) | Live per-hop pulse streaming to high-fidelity 3D engines |
@@ -630,6 +640,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 | **Adaptive Loop Tuning** | Fixed caps / intervals | Calibrator-driven dynamic cap + interval scaling per cycle |
 | **Active Inference / Daydreaming** | Offline KGE retraining, scheduled batch jobs | First application of free-energy minimization principle to symbolic KG: idle-period self-querying from high-PE nodes |
 | **Self-Modifying GUI (dual-channel)** | Static dashboards, manual UI updates | First AI system to structurally modify its own game-engine Blueprint UI based on internal metabolic + epistemic state |
+| **Cingulate Engine (conflict-driven)** | ACC monitoring (neuroscience), Post-hoc re-ranking | First internal autonomous conflict monitor using entropy to trigger recursive refinement for hub-flooding mitigation |
 
 ---
 
@@ -646,4 +657,4 @@ For commercial licensing: **bryan.alexander@buchorn.com**
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 28, 2026 for version v2.30.0

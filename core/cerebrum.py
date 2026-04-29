@@ -1,6 +1,5 @@
 """
-from core.insight_validator import ProvenanceValidator
-CerebrumGraph — unified THALAMUS → CORTEX pipeline.
+CerebrumGraph - unified THALAMUS -> CORTEX pipeline.
 
 This is the main entry point for building and querying a knowledge graph
 with CEREBRUM.  It replaces the manual wiring that previously lived inside
@@ -46,6 +45,7 @@ Usage
         print(a.entity_id, a.score, a.path_confidence)
 """
 from __future__ import annotations
+from core.frontal_engine import FrontalEngine, ReasoningStrategy
 
 import logging
 import pickle
@@ -63,6 +63,7 @@ from core.chemical_modulator import ChemicalModulator   # Phase 68
 from core.predictive_coder import PredictiveCodingEngine, PredictionResult  # Phase 69
 from reasoning.answer_extractor import Answer, extract
 from reasoning.traversal import BeamTraversal
+from core.insight_validator import ProvenanceValidator
 from core.telemetry import NeuralEvent, NeuralEventType
 
 from typing import TYPE_CHECKING, Callable
@@ -101,7 +102,7 @@ def _compute_beam_widths(mh: int, bw: int, factor: float) -> Dict[int, int]:
 
 class CerebrumGraph:
     """
-    Encapsulates the full THALAMUS → CORTEX pipeline for a single KG.
+    Encapsulates the full THALAMUS -> CORTEX pipeline for a single KG.
 
     Parameters
     ----------
@@ -147,6 +148,8 @@ class CerebrumGraph:
 
         # Neuro-Chemical Modulation (Phase 68)
         self.modulator = ChemicalModulator()
+        self.frontal = FrontalEngine(modulator=self.modulator)
+        self._research_agent = None
 
         # Global Workspace (Phase 110)
         from core.global_workspace import GlobalWorkspace
@@ -177,6 +180,7 @@ class CerebrumGraph:
 
     def set_research_agent(self, agent: Any) -> None:
         self.research_agent = agent
+        self._research_agent = agent
         if hasattr(agent, "_adapter"):
             agent._adapter.graph = self
 
@@ -233,7 +237,7 @@ class CerebrumGraph:
         )
 
     def attach_epistemic_gate(self, gate: Any) -> None:
-        """Attach an EpistemicGate (Phase 122) — evaluated by server after each query."""
+        """Attach an EpistemicGate (Phase 122) - evaluated by server after each query."""
         self._epistemic_gate = gate
         logger.info("EpistemicGate attached.")
 
@@ -250,7 +254,7 @@ class CerebrumGraph:
         """Trigger an offline consolidation sleep pass (Phase 119)."""
         orc = getattr(self, "_sleep_orchestrator", None)
         if orc is None:
-            raise RuntimeError("SleepCycleOrchestrator not attached — call attach_sleep_cycle() first.")
+            raise RuntimeError("SleepCycleOrchestrator not attached - call attach_sleep_cycle() first.")
         import asyncio
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, orc.run, dry_run)
@@ -260,7 +264,7 @@ class CerebrumGraph:
         Wire an Engram (or SpeedTalkEngram) to enable predictive coding (Phase 69).
 
         Call this after ``build()`` and after the Engram has been warmed up.
-        Safe to call multiple times — replaces the previous engine.
+        Safe to call multiple times - replaces the previous engine.
         """
         self.predictive_coder = PredictiveCodingEngine(engram, self.adapter)
         logger.info("PredictiveCodingEngine attached (%d cached patterns).", engram.size())
@@ -427,7 +431,7 @@ class CerebrumGraph:
         Apply provable inference rules to augment the graph before building.
 
         Every rule adds synthetic edges with full provenance metadata.
-        No statistical predictions are made — only logical deductions.
+        No statistical predictions are made - only logical deductions.
 
         Parameters
         ----------
@@ -443,7 +447,7 @@ class CerebrumGraph:
             total += n
         if total:
             logger.info("graph_completion: %d synthetic edges added total", total)
-        # Invalidate built state — must rebuild after completing
+        # Invalidate built state - must rebuild after completing
         self._built = False
         return self
 
@@ -502,10 +506,10 @@ class CerebrumGraph:
         kge_epochs:  int   = 100,
         kge_dim:     int   = 64,
         kge_blend:   float = 0.5,
-        kge_device:  Optional[str] = None,  # None → auto (picks RTX 5090)
+        kge_device:  Optional[str] = None,  # None -> auto (picks RTX 5090)
     ) -> "CerebrumGraph":
         """
-        Run the THALAMUS pipeline: embeddings → DSCF communities → CSA.
+        Run the THALAMUS pipeline: embeddings -> DSCF communities -> CSA.
 
         Parameters
         ----------
@@ -543,7 +547,7 @@ class CerebrumGraph:
         nodes = list(G.nodes())
 
         if not nodes:
-            raise ValueError("Graph has no nodes — nothing to build.")
+            raise ValueError("Graph has no nodes - nothing to build.")
 
         # ----------------------------------------------------------
         # 1. Embeddings
@@ -560,7 +564,7 @@ class CerebrumGraph:
         _loaded_from_sage_cache = bool(not force_rebuild and _sage_cache and _sage_cache.exists())
 
         if _loaded_from_sage_cache:
-            # Fast path: load fully-smoothed embeddings — skip encoding AND SAGE
+            # Fast path: load fully-smoothed embeddings - skip encoding AND SAGE
             logger.info("Loading cached GraphSAGE embeddings from %s", _sage_cache)
             with open(_sage_cache, "rb") as f:
                 self.adapter.embeddings = pickle.load(f)
@@ -569,7 +573,7 @@ class CerebrumGraph:
             with open(_raw_cache, "rb") as f:
                 self.adapter.embeddings = pickle.load(f)
         else:
-            # Build label map: node_id → human-readable label
+            # Build label map: node_id -> human-readable label
             entity_labels: Dict[str, str] = {}
             for n in nodes:
                 data  = G.nodes[n]
@@ -635,7 +639,7 @@ class CerebrumGraph:
         # ----------------------------------------------------------
         # 1.5. GraphSAGE neighborhood smoothing (optional)
         # Guarded by a separate cache key so smoothing is applied exactly
-        # once — loading from sage_cache above already skips this block.
+        # once - loading from sage_cache above already skips this block.
         # ----------------------------------------------------------
         if use_graphsage and self.adapter.embeddings and not _loaded_from_sage_cache:
             if callback: callback(0.2, "Step 1.5/5: GraphSAGE Neighborhood Smoothing...")
@@ -794,7 +798,7 @@ class CerebrumGraph:
         self._traversal.predictive_coder = self.predictive_coder
         self._traversal.lateral_inhibition_ratio = self._lateral_inhibition_ratio
 
-        # Phase 124: Causal edge index — O(1) lookup during beam scoring.
+        # Phase 124: Causal edge index - O(1) lookup during beam scoring.
         # Build once at graph load; no CausalEngine invocation required.
         from core.causal_engine import CAUSAL_RELATIONS as _CAUSAL_RELS
         _causal_idx: set = set()
@@ -857,7 +861,7 @@ class CerebrumGraph:
         query_embedding : optional query vector for semantic alignment
         relation_prior  : optional RelationPathPrior or GraphRelationPrior
         vote_weight     : convergence voting weight (default 0.30)
-        branch_bonus_weight : Phase 144 DBC — multiplicative bonus for answers
+        branch_bonus_weight : Phase 144 DBC - multiplicative bonus for answers
                           reached via multiple distinct hop-1 branches (default 0.25)
         memory_threshold_pct : safety threshold for resource usage (default 95.0)
         trace_info      : optional ReasoningTrace to populate (Phase 62).
@@ -911,7 +915,7 @@ class CerebrumGraph:
             base_p = {"alpha": self._csa.alpha, "beta": self._csa.beta, "gamma": self._csa.gamma}
             csa_overrides = self.modulator.modulate_params(base_p)
 
-        # Phase 136: Funnel beam profile — widen intermediate hops to prevent
+        # Phase 136: Funnel beam profile - widen intermediate hops to prevent
         # catastrophic path loss on multi-hop queries.
         _profile        = beam_profile        or self._beam_profile
         _profile_factor = beam_profile_factor or self._beam_profile_factor
@@ -951,7 +955,7 @@ class CerebrumGraph:
             _prev_widths = traversal._beam_widths
             traversal._beam_widths = _auto_beam_widths  # Phase 136: temporary override
 
-        # Phase 137: H1SE — replace traversal with HopExpandedTraversal when
+        # Phase 137: H1SE - replace traversal with HopExpandedTraversal when
         # hop_expand=True. needs_custom=True guarantees no shared-traversal
         # restore is needed in the finally block.
         if hop_expand and mh >= 2:
@@ -990,24 +994,77 @@ class CerebrumGraph:
             except Exception as exc:
                 logger.warning("PredictiveCodingEngine.predict() failed: %s", exc)
 
-        # Phase 99: Thalamic Gating — build WM priming map
+        # Phase 99: Thalamic Gating - build WM priming map
         _priming_map = self._build_priming_map()
 
+        # Phase 70: Looped Reasoning (Recursive refinement)
+        looped = None
+        if max_loops > 1:
+            from reasoning.looped_traversal import LoopedBeamTraversal
+            looped = LoopedBeamTraversal(
+                traversal=traversal,
+                predictive_coder=self.predictive_coder,
+                max_loops=max_loops
+            )
+
         try:
-            if max_loops > 1:
+            if max_loops > 1 and looped is not None:
                 paths = looped.traverse(seeds, query_embedding=query_embedding, trace_info=trace_info, node_priming=_priming_map if _priming_map else None)[0]
             else:
                 paths = traversal.traverse(seeds, query_embedding=query_embedding, trace_info=trace_info, node_priming=_priming_map if _priming_map else None)
-        finally:
-            # Phase 149: Cingulate Engine recursive refinement
-            if ProvenanceValidator.is_hub_flooded(paths):
-                logger.info('CingulateEngine: Retrying with strict constraints...')
+            
 
+            # Phase 150: Frontal Engine executive strategy
+            entropy = getattr(traversal, "_last_entropy", 0.0)
+            strategy = self.frontal.determine_strategy(paths, entropy=entropy)
+            logger.debug("FrontalEngine: strategy=%s agent_attached=%s gap_count=%d", strategy, self._research_agent is not None, len(getattr(traversal, "epistemic_gaps", [])))
+
+
+            if strategy == ReasoningStrategy.DEEP and self._research_agent and getattr(traversal, "epistemic_gaps", []):
+                logger.info("FrontalEngine: Suspending for DEEP research...")
+                for gap in traversal.epistemic_gaps[:2]:
+                    # Step 4: Targeted ResearchAgent coupling
+                    if hasattr(self._research_agent, "push_candidate"):
+                        from core.research_agent import ResearchCandidate
+                        self._research_agent.push_candidate(ResearchCandidate(
+                            source_id=gap["source"],
+                            target_id=gap["target"],
+                            discovery_potential=0.9,
+                            gap_score=1.0 - gap["score"],
+                            community_distance=1,
+                            seeded_by="frontal_engine"
+                        ))
+                
+                # Trigger immediate scan
+                self._research_agent.scan_once()
+                # Retry with new knowledge
+                logger.info("FrontalEngine: Resuming query after research.")
+                paths = traversal.traverse(seeds, query_embedding=query_embedding, node_priming=_priming_map)
+
+            elif strategy == ReasoningStrategy.HYBRID and self._research_agent and getattr(traversal, "epistemic_gaps", []):
+                logger.info("FrontalEngine: Dispatching HYBRID async research.")
+                for gap in traversal.epistemic_gaps[:2]:
+                    if hasattr(self._research_agent, "push_candidate"):
+                        from core.research_agent import ResearchCandidate
+                        self._research_agent.push_candidate(ResearchCandidate(
+                            source_id=gap["source"],
+                            target_id=gap["target"],
+                            discovery_potential=0.7,
+                            gap_score=1.0 - gap["score"],
+                            community_distance=1,
+                            seeded_by="frontal_engine"
+                        ))
+                # Agent will pick these up in its next background cycle
+
+            # Phase 149: Cingulate Engine recursive refinement (Legacy fallback)
+            if strategy == ReasoningStrategy.FAST and ProvenanceValidator.is_hub_flooded(paths):
+                logger.info('CingulateEngine: Retrying with strict constraints...')
+                traversal.beam_width = max(2, traversal.beam_width // 2)
+                paths = traversal.traverse(seeds, query_embedding=query_embedding, node_priming=_priming_map)
+
+
+        finally:
             # Phase 68: Natural decay of hormonal state
-            self.modulator.step()
-            if not needs_custom:
-                self._traversal._beam_widths = _prev_widths
-            # Phase 68: Natural decay of hormonal state after query completion
             self.modulator.step()
             # Phase 136: restore shared traversal's beam widths
             if not needs_custom:
@@ -1103,7 +1160,7 @@ class CerebrumGraph:
         self._goal_stack = stack
 
     def _build_priming_map(self) -> Dict[str, float]:
-        """Phase 99: Thalamic Gating — build a recency-weighted node priming map from WM.
+        """Phase 99: Thalamic Gating - build a recency-weighted node priming map from WM.
 
         For each entry in the last 20 WM records, contribute
         ``recency * top_score`` to every seed and answer node.
