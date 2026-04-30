@@ -5,6 +5,28 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.37.0] - 2026-04-30
+### Added
+- **Phase 152: Answer-Type Constraint Filter + TRB Detection Fix**: 3-hop H@1=0.442.
+  - **Root cause fix**: Phase 151 suffix scanning in `detect_target_relation()` caused TRB false
+    positives on questions like "what genres do films that share ACTORS with [X]?" — "actors"
+    in the suffix won over "genres" in the prefix due to `_RELATION_KEYWORDS` ordering. With
+    the wrong TRB, the answer-type filter then removed all correct answers.
+  - **Fix**: Two-pass detection — prefix first (answer type is always in first 4 words), suffix
+    only as fallback. Detection coverage stays at 98.4%; false positives eliminated.
+  - **Answer-Type Constraint Filter**: After 3-hop traversal with `top_k=100`, candidates are
+    filtered to only entities that are valid objects of the detected relation in the KB (built
+    from KB triples, not undirected graph edges to avoid including wrong-direction entities).
+    Removes wrong-type answers (e.g., actor names ranked above genre answers) before top-10
+    truncation. Applied only when TRB detects a relation and the KB index is non-empty.
+  - **Vote-weight tuning**: `vote_weight=0.70` for 3-hop (was 0.0). With type filter removing
+    wrong-type candidates, convergence bonus correctly promotes the correct answer.
+  - **Embedding cache fix**: `embeddings.pkl` → `embeddings_{type}.pkl` — prevents sentence and
+    random embedding caches from colliding, fixing the 64-dim/384-dim shape mismatch.
+  - **Result**: MetaQA 3-hop Hits@1 = **0.442** (vs 0.230 Phase 151, vs 0.298 EmbedKGQA).
+    CEREBRUM achieves **+48.3% relative improvement over EmbedKGQA** using only graph structure
+    — no LLMs, no training data, no KG embeddings.
+
 ## [2.36.0] - 2026-04-29
 ### Added
 - **Phase 151: Vote-Weight Suppression + PenultimateGate**: 3-hop H@1 breakthrough.

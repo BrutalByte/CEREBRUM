@@ -553,7 +553,10 @@ class CerebrumGraph:
         # 1. Embeddings
         # ----------------------------------------------------------
         if callback: callback(0.1, "Step 1/5: Loading/Encoding Embeddings...")
-        emb_cache = cache / "embeddings.pkl" if cache else None
+        # Phase 152: embedding cache key includes engine type so random and
+        # sentence-transformer caches never collide.
+        _emb_tag = type(self._embedding_engine).__name__.lower().replace("embeddingengine", "") or "base"
+        emb_cache = cache / f"embeddings_{_emb_tag}.pkl" if cache else None
 
         # Track whether embeddings came from cache so later steps know
         # whether structural enrichment and GraphSAGE need to be applied.

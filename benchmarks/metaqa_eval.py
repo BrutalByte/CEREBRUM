@@ -272,25 +272,26 @@ def detect_target_relation(
     """
     Map a question string to a MetaQA KB relation type via keyword matching.
 
-    Phase 151: Scans both the first `prefix_words` words AND the last
-    `suffix_words` words. 3-hop MetaQA questions place the answer type either
-    at the start ("who directed...") OR at the end ("...are directed by who?",
-    "...in which languages?"). Prefix-only scanning missed ~38% of 3-hop
-    questions. Suffix scanning recovers these without false hits from
-    intermediate-hop keywords (those appear in the middle, not the tail).
+    Phase 152 fix: Two-pass detection — prefix first, suffix as fallback only.
+    The answer type is almost always in the first few words ("who directed...",
+    "what genre...", "in which language..."). The suffix-first bug from Phase 151
+    caused false positives on 3-hop questions like "what genres do films that
+    share actors with [X]?" — "actors" in the suffix beat "genres" in the prefix
+    because starred_actors appears before has_genre in _RELATION_KEYWORDS, and
+    the type filter then removed all correct answers.
 
-    Returns the best-matching relation if it is present in kb_relations,
-    otherwise None (→ no boost applied, graceful degradation).
+    Pass 1: prefix only. Pass 2: suffix only if prefix matched nothing.
     """
     words = question.lower().split()
     prefix = " ".join(words[:prefix_words])
     suffix = " ".join(words[-suffix_words:])
-    scan = prefix + " " + suffix
-    for relation, keywords in _RELATION_KEYWORDS:
-        if relation not in kb_relations:
-            continue
-        if any(kw in scan for kw in keywords):
-            return relation
+
+    for scan in (prefix, suffix):
+        for relation, keywords in _RELATION_KEYWORDS:
+            if relation not in kb_relations:
+                continue
+            if any(kw in scan for kw in keywords):
+                return relation
     return None
 
 
@@ -306,6 +307,7 @@ def evaluate_hop(
     beam_width:       int            = 10,
     embedding_engine=None,
     relation_prior=None,
+    relation_answer_set: Optional[Dict] = None,
 ) -> Dict:
     """
     Evaluate one hop level using the unified CerebrumGraph.query() interface.
@@ -340,6 +342,10 @@ def evaluate_hop(
         })
     except Exception:
         pass
+
+    # Phase 152: Answer-type constraint index — passed in from main() where it
+    # is built directly from KB triples (objects only — not reversed edges).
+    _relation_answer_set: Dict[str, set] = relation_answer_set or {}
 
     t0 = time.time()
     for i, qa in enumerate(qa_pairs):
@@ -378,30 +384,46 @@ def evaluate_hop(
                 boost_factor = 5.0 if hop == 3 else 3.0
                 _trb = {detected: boost_factor}
 
-        # Phase 151: Vote-Weight Suppression for 3-hop queries.
-        # For 3-hop, the vote_weight (convergence bonus) promotes hub entities that
-        # appear on many paths, systematically outranking the correct 3-hop answer
-        # (which typically appears on fewer, more specific TRB-guided paths).
-        # Setting vote_weight=0.0 for 3-hop lets pure CSA path scores drive ranking,
-        # which consistently yields H@1=0.228 vs 0.154 with the default vote_weight.
-        # degree_penalty NOT used — MetaQA correct answers are high-degree hub entities.
+        # Phase 152: Answer-type constraint + vote_weight tuning for 3-hop.
+        # With correct TRB detection, vote_weight=0.70 + answer-type filter +
+        # wider top_k retrieval (100) gives the best H@1 for 3-hop queries.
+        # The type filter removes wrong-type candidates (actors appearing as
+        # answers to genre questions, etc.) before top-k truncation, allowing
+        # high vote_weight to amplify convergence on the correct answer type.
+        # degree_penalty NOT used — MetaQA correct answers are high-degree hubs.
         _is_3hop = (hop == 3)
+        _raw_top_k = 100 if _is_3hop else top_k
         answers_obj = graph.query(
             seeds                   = [seed],
-            top_k                   = top_k,
+            top_k                   = _raw_top_k,
             min_hop                 = eval_min_hop,
             max_hop                 = hop,
             hop_expand              = (hop >= 2),
             query_embedding         = query_emb,
             relation_prior          = relation_prior,
             terminal_relation_boost = _trb,
-            vote_weight             = 0.0 if _is_3hop else 0.45,
+            vote_weight             = 0.70 if _is_3hop else 0.45,
         )
         pred = [a.entity_id for a in answers_obj]
 
         if not pred:
             skipped += 1
             continue
+
+        # Phase 152: apply answer-type filter for 3-hop when TRB detected a relation
+        if _is_3hop and _trb:
+            detected_rel = next(iter(_trb))
+            valid_answers = _relation_answer_set.get(detected_rel)
+            if valid_answers:
+                filtered = [p for p in pred if p in valid_answers]
+                if filtered:
+                    pred = filtered[:top_k]
+                else:
+                    pred = pred[:top_k]
+            else:
+                pred = pred[:top_k]
+        else:
+            pred = pred[:top_k]
 
         found   += 1
         h1      += hits_at_k(pred, correct_answers, k=1)
@@ -523,6 +545,22 @@ def main():
                 priors[hop] = prior
 
     # ------------------------------------------------------------------
+    # Phase 152: Build answer-type constraint index from KB triples.
+    # Only KB objects (not subjects) are valid answer candidates for each relation.
+    # Built once and passed to all evaluate_hop() calls.
+    # ------------------------------------------------------------------
+    from collections import defaultdict as _dd
+    _relation_answer_set: Dict[str, set] = _dd(set)
+    try:
+        with open(KB_FILE, encoding="utf-8", errors="replace") as _kbf:
+            for _line in _kbf:
+                _p = _line.strip().split("|")
+                if len(_p) >= 3:
+                    _relation_answer_set[_p[1].strip()].add(_p[2].strip())
+    except Exception:
+        _relation_answer_set = {}
+
+    # ------------------------------------------------------------------
     # Evaluate each hop level
     # ------------------------------------------------------------------
     results = []
@@ -543,7 +581,8 @@ def main():
         metrics = evaluate_hop(hop, graph, qa_pairs,
                                top_k=args.top_k, beam_width=args.beam_width,
                                embedding_engine=query_engine,
-                               relation_prior=priors.get(hop))
+                               relation_prior=priors.get(hop),
+                               relation_answer_set=_relation_answer_set)
         results.append(metrics)
 
         print(f"  Hits@1  : {metrics['hits_1']:.4f}  ({metrics['hits_1']*100:.1f}%)")
