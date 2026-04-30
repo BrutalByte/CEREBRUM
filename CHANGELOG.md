@@ -19,8 +19,8 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - **Test infrastructure fix**: `get_degree()` abstract method (added in Phase 149) was missing from
     5 production adapters (`FederatedAdapter`, `Neo4jAdapter`, `NeptuneAdapter`, `RemoteCerebrumAdapter`)
     and 5 test `MockAdapter` stubs. Fixed 32 test failures + 13 errors → **2163 passing, 3 UI-server errors**.
-  - **Result (500-sample)**: MetaQA 3-hop H@1 = **0.468** (vs 0.442 Phase 152), H@10 = **0.758**
-    (vs 0.682), MRR = **0.573** (vs 0.518).
+  - **Result (full 14,274-question run)**: MetaQA 3-hop H@1 = **0.4511** (vs 0.442 Phase 152),
+    H@10 = **0.7100** (vs 0.682), MRR = **0.5461** (vs 0.518). Runtime: 397.6s.
 
 ## [2.37.0] - 2026-04-30
 ### Added
