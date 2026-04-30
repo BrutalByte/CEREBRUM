@@ -213,6 +213,50 @@ def test_detect_prefix_avoids_intermediate_keywords():
 
 
 # ---------------------------------------------------------------------------
+# Test 6: Phase 153 pre-passes fix 3-hop false-positive patterns
+# ---------------------------------------------------------------------------
+
+def test_detect_phase153_prepasses():
+    """
+    Phase 153: Three pre-passes handle false positives in 3-hop templates.
+
+    Pre-pass 1: "when ..." → always release_year (not starred_actors even if
+      "starred" appears before "release" in the question).
+    Pre-pass 2: "...in which TERM" — last word before which/what terminal
+      suffix captures answer type without entity-name contamination.
+    Pre-pass 3: "what are/is the primary TERM" — 6-word prefix catches
+      answer types at position 5 without triggering intermediate keywords.
+    """
+    from benchmarks.metaqa_eval import detect_target_relation
+
+    KB_RELATIONS = [
+        "directed_by", "starred_actors", "written_by", "has_genre",
+        "has_tags", "in_language", "release_year",
+        "has_imdb_rating", "has_imdb_votes",
+    ]
+
+    phase153_cases = [
+        # Pre-pass 1: "when" → release_year (not starred_actors / directed_by)
+        ("when did the films starred by Gone With The Wind actors release",  "release_year"),
+        ("when did the films directed by the Inception director release",    "release_year"),
+        ("when did the movies release whose actors also appear in Matrix",   "release_year"),
+        # Pre-pass 2: "in which TERM" at sentence end
+        ("the movies that share actors with the movie Billy Budd were in which languages", "in_language"),
+        ("the movies that share directors with the movie Sheitan were in which genres",    "has_genre"),
+        ("the movies that share actors with the movie Body of Lies were released in which years", "release_year"),
+        # Pre-pass 3: "what are the primary TERM"
+        ("what are the primary languages in the movies written by the writer of Titanic", "in_language"),
+    ]
+
+    for question, expected_relation in phase153_cases:
+        result = detect_target_relation(question, KB_RELATIONS)
+        assert result == expected_relation, (
+            f"Question: '{question}'\n"
+            f"  Expected: {expected_relation}\n"
+            f"  Got:      {result}"
+        )
+
+# ---------------------------------------------------------------------------
 # Test 6: penultimate cascade fires at hop N-1 with sqrt of terminal boost
 # ---------------------------------------------------------------------------
 
