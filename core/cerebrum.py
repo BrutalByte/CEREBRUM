@@ -845,6 +845,7 @@ class CerebrumGraph:
         terminal_relation_boost: Optional[Dict[str, float]] = None,
         beam_widths:             Optional[Dict[int, int]] = None,
         degree_penalty_weight:   float = 0.0,
+        penultimate_decay:       float = 0.0,
     ) -> List[Answer]:
         """
         Traverse the graph from ``seeds`` and return ranked answers.
@@ -941,6 +942,7 @@ class CerebrumGraph:
                 governor            = ResourceGovernor(memory_threshold_pct=memory_threshold_pct),
                 beam_widths         = _auto_beam_widths,  # Phase 136
                 terminal_relation_boost = _trb,
+                penultimate_decay   = penultimate_decay,   # Phase 151
                 **csa_overrides # Inject hormonal overrides
             )
             traversal.global_workspace = self.global_workspace
@@ -980,6 +982,7 @@ class CerebrumGraph:
                 residual_k            = residual_k,
                 terminal_relation_boost = _trb,
                 beam_widths           = _auto_beam_widths,
+                penultimate_decay     = penultimate_decay,   # Phase 151: flows via traversal_kwargs
                 **csa_overrides,
             )
             traversal._causal_edge_index = getattr(
@@ -1109,12 +1112,14 @@ class CerebrumGraph:
 
         answers = extract(
             paths,
-            top_k               = top_k,
-            min_hop             = min_hop,
-            query_embedding     = query_embedding,
-            relation_prior      = relation_prior,
-            vote_weight         = vote_weight,
-            branch_bonus_weight = branch_bonus_weight,
+            top_k                 = top_k,
+            min_hop               = min_hop,
+            query_embedding       = query_embedding,
+            relation_prior        = relation_prior,
+            vote_weight           = vote_weight,
+            branch_bonus_weight   = branch_bonus_weight,
+            degree_penalty_weight = degree_penalty_weight,  # Phase 151 bug fix
+            adapter               = self.adapter,           # Phase 151 bug fix
         )
 
         # Phase 95: record query result into working memory buffer

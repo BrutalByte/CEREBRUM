@@ -143,6 +143,8 @@ class HopExpandedTraversal:
         self.use_adaptive_expansion = use_adaptive_expansion
         self.min_diversity_target = min_diversity_target
         self.residual_k = residual_k
+        # Phase 151: PenultimateGate — hop-1 branch score-gap filter
+        self.penultimate_decay: float = float(traversal_kwargs.get("penultimate_decay", 0.0))
         self._traversal_kwargs = traversal_kwargs
         self._deep_beam_widths = _funnel_beam_widths(
             max_hop - 1, beam_width, beam_profile_factor
@@ -265,6 +267,13 @@ class HopExpandedTraversal:
             hop1_entities.append(eid)
             if len(hop1_entities) >= k_eff:
                 break
+
+        # Phase 151: PenultimateGate — drop hop-1 branches below decay_factor * best_score.
+        # Prevents weak intermediate branches from polluting Stage 2 final-hop expansion.
+        if self.penultimate_decay > 0.0 and hop1_entities:
+            best_h1 = max(_rank_key(e) for e in hop1_entities)
+            floor_h1 = self.penultimate_decay * best_h1
+            hop1_entities = [e for e in hop1_entities if _rank_key(e) >= floor_h1]
 
         # Stage 2: independent deep traversal per hop-1 entity.
         # Phase 139: Synchronization barrier for cross-branch pruning.

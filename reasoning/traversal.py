@@ -348,6 +348,7 @@ class BeamTraversal:
         calibration_engine = None,
         task_queue: Optional[TaskQueue] = None,
         quantized: bool = False,
+        penultimate_decay: float = 0.0,
         **kwargs,
     ):
         self.graph              = graph
@@ -374,6 +375,8 @@ class BeamTraversal:
         self._partial_paths: List[TraversalPath] = []
         self.quantized = quantized
         self.epistemic_gaps = []  # Phase 150
+        # Phase 151: PenultimateGate — score-gap filter at hop max_hop-1
+        self.penultimate_decay: float = penultimate_decay
         # Phase 68: Store hormonal overrides for CSA parameters
         self.csa_overrides = {k: v for k, v in kwargs.items() if k in CSA_PARAM_KEYS}
         # Phase 124: Causal edge index + bonus - set by CerebrumGraph.build()
@@ -995,6 +998,20 @@ class BeamTraversal:
                     "score": p.score,
                     "hop": hop
                 })
+
+        # Phase 151: PenultimateGate — score-gap filter at the penultimate hop.
+        # Drops candidates whose score falls below decay_factor * best_score,
+        # preventing weak middle-hop paths from polluting the final hop expansion.
+        # Only fires at hop == max_hop - 1 (not terminal, not earlier hops).
+        if (
+            self.penultimate_decay > 0.0
+            and hop == self.max_hop - 1
+            and candidates
+        ):
+            best = max(p.score for p in candidates)
+            floor = self.penultimate_decay * best
+            candidates = [p for p in candidates if p.score >= floor]
+
         if self.lateral_inhibition_ratio > 0.0:
             candidates = self._apply_lateral_inhibition(candidates)
         if self.probabilistic:
