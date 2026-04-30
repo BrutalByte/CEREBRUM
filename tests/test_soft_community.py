@@ -146,6 +146,7 @@ class _MockAdapter(GraphAdapter):
     def to_networkx(self): return None
     def get_neighbors(self, *args, **kwargs) -> list: return []
     def add_edge(self, *args, **kwargs) -> None: pass
+    def get_degree(self, entity_id: str) -> int: return 0
 
 
 def test_soft_community_score_same_community_nodes():

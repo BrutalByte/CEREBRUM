@@ -183,6 +183,9 @@ class RemoteCerebrumAdapter(GraphAdapter):
             pass
         return []
 
+    def get_degree(self, entity_id: str) -> int:
+        return 0
+
     def add_edge(
         self,
         u: str,

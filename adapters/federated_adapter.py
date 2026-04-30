@@ -305,6 +305,16 @@ class FederatedAdapter(GraphAdapter):
             emb = emb @ R
         return emb
 
+    def get_degree(self, entity_id: str) -> int:
+        """Return sum of degrees across all sub-adapters that know this entity."""
+        total = 0
+        for adapter in self._adapters:
+            try:
+                total += adapter.get_degree(entity_id)
+            except Exception:
+                pass
+        return total
+
     def add_edge(
         self,
         u: str,

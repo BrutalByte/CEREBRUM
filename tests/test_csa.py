@@ -26,6 +26,7 @@ class MockAdapter(GraphAdapter):
     def get_embedding(self, entity_id): return self.embeddings.get(entity_id)
     def find_similar(self, embedding, top_k=10): return []
     def add_edge(self, u, v, relation, confidence=1.0, provenance="", synthetic=False): pass
+    def get_degree(self, entity_id: str) -> int: return 0
 
 # ---------------------------------------------------------------------------
 # Fixtures

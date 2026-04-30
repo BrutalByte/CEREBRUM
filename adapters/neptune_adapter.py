@@ -125,6 +125,13 @@ class NeptuneAdapter(GraphAdapter):
     def get_community(self, entity_id: str) -> int:
         return -1
 
+    def get_degree(self, entity_id: str) -> int:
+        try:
+            result = self._g.V(entity_id).bothE().count().next()
+            return int(result)
+        except Exception:
+            return 0
+
     def add_edge(
         self,
         u: str,

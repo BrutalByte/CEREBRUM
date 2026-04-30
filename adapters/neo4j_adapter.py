@@ -211,6 +211,18 @@ class Neo4jAdapter(GraphAdapter):
         """Community IDs are not natively maintained by default in Neo4j adapter."""
         return -1
 
+    def get_degree(self, entity_id: str) -> int:
+        try:
+            with self._driver.session() as session:
+                result = session.run(
+                    "MATCH (n {id: $id})-[r]-() RETURN count(r) AS deg",
+                    id=entity_id,
+                )
+                record = result.single()
+                return int(record["deg"]) if record else 0
+        except Exception:
+            return 0
+
     def add_edge(
         self,
         u: str,

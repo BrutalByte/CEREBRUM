@@ -19,6 +19,7 @@ class MockAdapter(GraphAdapter):
     def find_entities(self, *args, **kwargs) -> list: return []
     def get_entity(self, entity_id: str): return None
     def to_networkx(self): return None
+    def get_degree(self, entity_id: str) -> int: return 0
 
 def test_bridge_bonus_influence():
     # Simple setup

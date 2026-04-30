@@ -14,6 +14,7 @@ class MockAdapter(GraphAdapter):
     def get_neighbors(self, node_id): return []
     def to_networkx(self): return None
     def add_edge(self, u, v, relation, confidence=1.0, provenance="", synthetic=False): pass
+    def get_degree(self, entity_id: str) -> int: return 0
 
 def test_temporal_scoring_recency_bias():
     adapter = MockAdapter()
