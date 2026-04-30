@@ -5,6 +5,23 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.38.0] - 2026-04-30
+### Added
+- **Phase 153: TRB Detection Accuracy + Test Infrastructure Repair**
+  - **Three targeted pre-passes** in `detect_target_relation()` reduce wrong relation detection from
+    16.8% to ~5.8% on 3-hop MetaQA questions:
+    1. `"when ..."` pre-pass → always `release_year` (prevents "when did the films STARRED by X release"
+       from firing `starred_actors` due to "star" keyword appearing before temporal keywords).
+    2. Terminal `"in which TERM"` last-word check → detects answer type at sentence-final position
+       without entity-name contamination from 6-word suffix scan.
+    3. `"what are/is ..."` extended prefix (4→6 words) → catches `"what are the primary languages"`
+       where answer type appears at word position 5.
+  - **Test infrastructure fix**: `get_degree()` abstract method (added in Phase 149) was missing from
+    5 production adapters (`FederatedAdapter`, `Neo4jAdapter`, `NeptuneAdapter`, `RemoteCerebrumAdapter`)
+    and 5 test `MockAdapter` stubs. Fixed 32 test failures + 13 errors → **2163 passing, 3 UI-server errors**.
+  - **Result (500-sample)**: MetaQA 3-hop H@1 = **0.468** (vs 0.442 Phase 152), H@10 = **0.758**
+    (vs 0.682), MRR = **0.573** (vs 0.518).
+
 ## [2.37.0] - 2026-04-30
 ### Added
 - **Phase 152: Answer-Type Constraint Filter + TRB Detection Fix**: 3-hop H@1=0.442.
