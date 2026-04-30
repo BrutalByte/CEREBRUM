@@ -273,17 +273,37 @@ def detect_target_relation(
     Map a question string to a MetaQA KB relation type via keyword matching.
 
     Phase 152 fix: Two-pass detection — prefix first, suffix as fallback only.
-    The answer type is almost always in the first few words ("who directed...",
-    "what genre...", "in which language..."). The suffix-first bug from Phase 151
-    caused false positives on 3-hop questions like "what genres do films that
-    share actors with [X]?" — "actors" in the suffix beat "genres" in the prefix
-    because starred_actors appears before has_genre in _RELATION_KEYWORDS, and
-    the type filter then removed all correct answers.
+    Phase 153 fix: Three targeted pre-passes before the two-pass keyword scan:
+      (1) "when ..." → release_year — "when did the films STARRED by X release"
+          has "star" in the prefix which would fire starred_actors first.
+      (2) Answer type at end of sentence ("...in which LANGUAGES/GENRES/YEARS")
+          — scan ONLY the terminal 1-3 words before entity contamination hits.
+      (3) "what are the primary RELATION" — prefix_words=6 only for "what are"
+          starters, safe because "share actors" never appears there.
 
-    Pass 1: prefix only. Pass 2: suffix only if prefix matched nothing.
+    Pass 1: prefix (first 4 or 6 words). Pass 2: suffix if no match.
     """
     words = question.lower().split()
-    prefix = " ".join(words[:prefix_words])
+
+    # Pre-pass 1: "when..." is always release_year (unambiguous temporal marker).
+    if words and words[0] == "when" and "release_year" in kb_relations:
+        return "release_year"
+
+    # Pre-pass 2: "...in which TERM" suffix — the answer type is the LAST WORD
+    # when the template ends with "in which X" (genres, languages, years, etc.).
+    # Check only the last word to avoid entity-name contamination of the suffix.
+    if len(words) >= 2 and words[-2] in ("which", "what"):
+        last_word = words[-1]
+        for relation, keywords in _RELATION_KEYWORDS:
+            if relation not in kb_relations:
+                continue
+            if any(kw in last_word for kw in keywords):
+                return relation
+
+    # Pre-pass 3: "what are the primary TERM" — extend prefix only for "what
+    # are/is" starters (safe because "share actors" never follows "what are").
+    effective_prefix = 6 if (len(words) >= 2 and words[0] == "what" and words[1] in ("are", "is")) else prefix_words
+    prefix = " ".join(words[:effective_prefix])
     suffix = " ".join(words[-suffix_words:])
 
     for scan in (prefix, suffix):
