@@ -5,6 +5,31 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.39.0] - 2026-04-30
+### Added
+- **Phase 154: Distinct-Branch Convergence (DBC) Scoring for 3-hop reranking**
+  - **Root cause of H@1 gap**: H@10=71.0% but H@1=45.1% — correct answer was in beam but ranked
+    2nd–10th in ~26% of questions. `vote_weight=0.70` promotes entities reached by many paths, but
+    globally-popular entities (hub actors, hub directors) accumulate high vote sums even when not
+    specifically connected to the seed. The hop-2 branch signal is more discriminative.
+  - **Fix**: Enable `branch_bonus_weight=0.25` for 3-hop evaluation. The `extract_answers()` function
+    already tracked `branch_sets[entity]` — the set of distinct hop-2 intermediate nodes (entities
+    at position `nodes[2]`) from which the terminal entity is reached. The multiplicative bonus:
+    `factor = 1.0 + 0.25 * log1p(n_branches - 1)` upgrades entities confirmed via multiple
+    *independent* intermediate paths (2 branches: +17%, 5 branches: +40%, 10 branches: +55%).
+  - **Ablation** (500-sample, fixed seed 42):
+    | Config               | H@1   | H@10  | MRR   |
+    |----------------------|-------|-------|-------|
+    | Phase 153 (bb=0.0)   | 0.468 | 0.758 | 0.573 |
+    | beam_width=20        | 0.474 | 0.770 | 0.579 |
+    | bb=0.25 (bw=10)      | 0.496 | 0.756 | 0.591 |
+    | bb=0.25 + bw=20      | 0.480 | 0.762 | 0.581 |
+    Best config: `bb=0.25, bw=10` — branch diversity is diluted by wider beams.
+  - **API**: `--branch-bonus` CLI flag (default 0.25); wired through `evaluate_hop()` →
+    `graph.query(branch_bonus_weight=...)` → `extract_answers()`. Zero overhead when disabled.
+  - **Result (full 14,274-question run)**: MetaQA 3-hop H@1 = **0.4572** (vs 0.4511 Phase 153),
+    H@10 = **0.7092** (flat), MRR = **0.5499** (vs 0.5461). Runtime: 396.7s.
+
 ## [2.38.0] - 2026-04-30
 ### Added
 - **Phase 153: TRB Detection Accuracy + Test Infrastructure Repair**

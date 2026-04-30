@@ -328,6 +328,7 @@ def evaluate_hop(
     embedding_engine=None,
     relation_prior=None,
     relation_answer_set: Optional[Dict] = None,
+    branch_bonus_weight: float       = 0.0,
 ) -> Dict:
     """
     Evaluate one hop level using the unified CerebrumGraph.query() interface.
@@ -423,6 +424,7 @@ def evaluate_hop(
             relation_prior          = relation_prior,
             terminal_relation_boost = _trb,
             vote_weight             = 0.70 if _is_3hop else 0.45,
+            branch_bonus_weight     = branch_bonus_weight if _is_3hop else 0.0,
         )
         pred = [a.entity_id for a in answers_obj]
 
@@ -488,6 +490,9 @@ def main():
     parser.add_argument("--use-prior",  action="store_true", default=False,
                         help="Build and use RelationPathPrior from training data "
                              "for 2-hop and 3-hop re-ranking (cached after first run).")
+    parser.add_argument("--branch-bonus", type=float, default=0.25,
+                        help="Phase 154 DBC: branch-diversity bonus weight for 3-hop "
+                             "reranking (default 0.25; set 0.0 to disable).")
     parser.add_argument("--seed",       type=int,   default=42)
     args = parser.parse_args()
 
@@ -602,7 +607,8 @@ def main():
                                top_k=args.top_k, beam_width=args.beam_width,
                                embedding_engine=query_engine,
                                relation_prior=priors.get(hop),
-                               relation_answer_set=_relation_answer_set)
+                               relation_answer_set=_relation_answer_set,
+                               branch_bonus_weight=args.branch_bonus)
         results.append(metrics)
 
         print(f"  Hits@1  : {metrics['hits_1']:.4f}  ({metrics['hits_1']*100:.1f}%)")

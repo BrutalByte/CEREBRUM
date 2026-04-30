@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026
-**Status**: v2.38.0 (Phase 153 (TRB Detection Accuracy) COMPLETE)
+**Status**: v2.39.0 (Phase 154 (Distinct-Branch Convergence) COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -644,6 +644,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 | **Answer-Type Constraint Filter** | KGE post-hoc ranking, entity type constraints | KB-object-only type index built at query time; hard filter applied after wide retrieval (top-100) before final top-k truncation |
 | **Two-Pass TRB Detection (Phase 152/153)** | Keyword matching, NER-based question decomposition | Prefix-first, suffix-fallback with unambiguous pre-passes ("when"→release_year, last-word "in which X") eliminates cross-branch keyword collision in 3-hop templates |
 | **Vote-Weight Suppression for Deep Hops** | Vote/convergence bonuses (uniform) | Per-hop vote_weight calibration (0.0 for 3-hop, 0.45 for 2-hop): convergence bonus promotes wrong hub answers unless suppressed at maximum hop depth |
+| **Distinct-Branch Convergence (DBC)** | Path count aggregation, GraftNet joint training | Log-scale bonus on entities confirmed via structurally independent hop-2 intermediaries; zero overhead when n_branches=1; no training required |
 
 ---
 
@@ -653,7 +654,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 **Novelty Statement**: Existing KG QA systems apply entity type constraints either at graph construction time (type-constrained embedding) or via post-hoc neural classifiers. CEREBRUM's answer-type filter is applied dynamically at query time from the KB's own triple structure, requires no training data, and is strictly constrained to observed KB objects — not type ontologies or predicted entity classes. Combined with a wider initial retrieval window, this allows a high `vote_weight` (convergence bonus) to amplify correctly-typed candidates without being overwhelmed by popular wrong-type hub entities.
 
-**Result**: H@1 MetaQA 3-hop: 23.0% (Phase 151, TRB only) → 44.2% (Phase 152, + type filter) → 46.8% (Phase 153, + TRB accuracy improvements). CEREBRUM surpasses all published baselines (GraftNet 22.8%, EmbedKGQA 29.8%) using only graph structure — no LLMs, no training data, no KG embeddings.
+**Result**: H@1 MetaQA 3-hop: 23.0% (Phase 151, TRB only) → 44.2% (Phase 152, + type filter) → 45.1% (Phase 153, full 14K run) → **45.7%** (Phase 154, + DBC). CEREBRUM surpasses all published baselines (GraftNet 22.8%, EmbedKGQA 29.8%) using only graph structure — no LLMs, no training data, no KG embeddings.
 
 **Relevant files**: `benchmarks/metaqa_eval.py` (`evaluate_hop`, `detect_target_relation`, `_relation_answer_set`)
 
@@ -666,6 +667,20 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 **Novelty Statement**: Standard NLP question classification assumes a fixed-length prefix is sufficient for intent detection. In multi-hop KG templates, intermediate relation keywords (actors, directors, writers) appear in the first 5-8 words, causing false positives that corrupt downstream type filtering. The pre-pass structure specifically targets the structural invariants of MetaQA-style 3-hop templates, reducing wrong detection from 16.8% to ~5.8% without expanding the prefix window globally.
 
 **Relevant files**: `benchmarks/metaqa_eval.py` (`detect_target_relation`)
+
+---
+
+### Claim 49: Distinct-Branch Convergence (DBC) Reranking for Multi-Hop KG QA
+
+**Description**: After beam traversal, `extract_answers()` tracks for each terminal entity the set of distinct hop-2 intermediate nodes (second-position intermediaries, `path.nodes[2]`) from which it is reached. A multiplicative branch-diversity bonus `factor = 1.0 + w * log1p(n_branches - 1)` is applied to the combined score, where `w=0.25` empirically. This promotes entities confirmed via multiple *independent* 3-hop chains over hub entities that accumulate high vote sums via repetitive paths through the same intermediate node.
+
+**Novelty Statement**: Existing ensemble-style KG reranking (e.g., PathRanker, NSM, GraftNet) aggregates path scores by count or weighted sum, without distinguishing path independence. CEREBRUM's branch key (`nodes[2]`) measures structural independence at the second hop — paths sharing the same hop-2 intermediary are treated as a single "branch" regardless of their count. A log-scale bonus rewards genuine multi-branch corroboration without over-penalizing single-branch evidence (factor=1.0 when n=1). This is distinct from vote_weight (which accumulates total path scores) and from branch_count (which counts total paths): it specifically measures the *structural diversity* of the evidence base.
+
+**Key Technical Differentiator**: For a 3-hop path seed→e1→e2→answer, two paths sharing the same e2 but different e1 are considered a *single branch* (corroborating evidence from the same intermediate structure). Two paths using different e2 values (different hop-2 nodes) are independent branches. This distinction is not captured by standard path count aggregation.
+
+**Result**: 500-sample ablation: H@1 0.468 → 0.496 (+2.8pp), MRR 0.573 → 0.591 (+1.8pp). Full 14,274-question run: H@1 0.4511 → **0.4572** (+0.61pp), MRR 0.5461 → **0.5499** (+0.38pp), H@10 flat.
+
+**Relevant files**: `reasoning/answer_extractor.py` (`extract_answers`, `branch_sets`, `branch_bonus_weight`), `benchmarks/metaqa_eval.py` (`--branch-bonus` flag)
 
 ---
 
@@ -682,4 +697,4 @@ For commercial licensing: **bryan.alexander@buchorn.com**
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 30, 2026 for version v2.38.0
+**Reviewed on**: April 30, 2026 for version v2.39.0
