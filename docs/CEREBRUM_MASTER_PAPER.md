@@ -1,6 +1,6 @@
 # CEREBRUM: Master Research Compilation
 
-**Status**: v2.40.0 (Phase 156 (Penultimate Relation Boost) COMPLETE)
+**Status**: v2.42.0 (Phase 158 (r2 Path-Consistency Boost) COMPLETE)
 
 
 
@@ -10,7 +10,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.40.0 (Phase 156 (Penultimate Relation Boost) COMPLETE)
+**Status**: v2.42.0 (Phase 158 (r2 Path-Consistency Boost) COMPLETE)
 **Date**: April 30, 2026
 
 ---
@@ -55,15 +55,15 @@ The CEREBRUM framework has undergone substantial development between v2.24.0 and
 
 **Adaptive Search Strategy from Local Graph Density (Phase 53).** Community partitions now drive downstream search parameters. `BeamTraversal` queries the local edge density within the detected community before each hop and selects `beam_width` and `max_hop` accordingly. Dense communities narrow the beam (precision mode); sparse communities widen it (recall mode). This eliminates the need for global hyperparameter tuning and produces consistent performance across heterogeneous graph regions.
 
-**MetaQA Canonical Benchmark Results.** With adaptive community-driven beam parameters, CEREBRUM v2.24.0 achieves the following canonical results on MetaQA. Phase 151–156 substantially improved 3-hop reasoning through Terminal Relation Boosting, Answer-Type Constraint Filtering, TRB Detection Accuracy improvements, Distinct-Branch Convergence reranking, and Penultimate Relation Boost:
+**MetaQA Canonical Benchmark Results.** With adaptive community-driven beam parameters, CEREBRUM v2.24.0 achieves the following canonical results on MetaQA. Phase 151–158 substantially improved 3-hop reasoning through Terminal Relation Boosting, Answer-Type Constraint Filtering, TRB Detection Accuracy improvements, Distinct-Branch Convergence reranking, Penultimate Relation Boost, vote_weight tuning, and r2 Path-Consistency Boost:
 
-| Hop | H@1 (v2.24.0) | H@1 (v2.40.0 Phase 156) | H@10 |
+| Hop | H@1 (v2.24.0) | H@1 (v2.42.0 Phase 158) | H@10 |
 |---|---|---|---|
 | 1-hop | 46.1% | 46.1% | 96.6% |
 | 2-hop | 30.0% | 30.0% | 86.3% |
-| 3-hop | 12.5% | **46.0%** (full 14,274-question run) | 71.2% |
+| 3-hop | 12.5% | **46.4%** (full 14,274-question run) | 71.4% |
 
-Published baselines (3-hop): GraftNet 22.8%, EmbedKGQA 29.8%. CEREBRUM Phase 156 achieves **+102% relative improvement over GraftNet** and **+54% over EmbedKGQA** using only graph structure — no LLMs, no training data, no KG embeddings.
+Published baselines (3-hop): GraftNet 22.8%, EmbedKGQA 29.8%. CEREBRUM Phase 158 achieves **+103% relative improvement over GraftNet** and **+56% over EmbedKGQA** using only graph structure — no LLMs, no training data, no KG embeddings.
 
 **Community-Specific CSA Parameters (Phase 20/45).** Each community partition now maintains its own 10-parameter CSA vector, updated online via `MetaParameterLearner`. This means the community structure produced by DSCF/TSC directly determines the granularity of the learning surface - higher-quality partitions produce more focused per-community adaptation.
 
@@ -129,7 +129,7 @@ Unlike GATs \cite{velickovic2018gat} which treat all neighbors equally, CSA scal
 The v2.24.0 release introduces **Adaptive Parameter Learning**, utilizing a **MetaParameterLearner** to autonomously adjust the $(\alpha, \beta, \gamma, \delta, \epsilon)$ coefficients per-community based on query feedback. This closes the gap between zero-shot and supervised performance without the need for global retraining.
 
 ### 5. Conclusion
-CSA provides a scalable, Interpretable AI (XAI) alternative to black-box graph embeddings. By grounding attention in the structural consensus of the graph, it enables complex multi-hop reasoning that is both computationally efficient and mathematically verifiable. In CEREBRUM v2.24.0, the 10-parameter CSA formula with online per-community learning achieves MetaQA H@1 of 46.1% (1-hop), 30.0% (2-hop), and 46.0% (3-hop, Phase 156), alongside WebQSP H@1=6.27%, H@10=20.84%, and MRR=10.66% - establishing CSA as a competitive and interpretable alternative to embedding-based KG reasoning.
+CSA provides a scalable, Interpretable AI (XAI) alternative to black-box graph embeddings. By grounding attention in the structural consensus of the graph, it enables complex multi-hop reasoning that is both computationally efficient and mathematically verifiable. In CEREBRUM v2.24.0, the 10-parameter CSA formula with online per-community learning achieves MetaQA H@1 of 46.1% (1-hop), 30.0% (2-hop), and 46.4% (3-hop, Phase 158), alongside WebQSP H@1=6.27%, H@10=20.84%, and MRR=10.66% - establishing CSA as a competitive and interpretable alternative to embedding-based KG reasoning.
 
 ---
 

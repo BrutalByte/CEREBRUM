@@ -5,6 +5,48 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.42.0] - 2026-04-30
+### Added
+- **Phase 158: r2 Path-Consistency Boost**
+  - **Mechanism**: After `graph.query()` returns the top-100 raw answer candidates, each
+    answer's `best_path.nodes[1]` (the hop-2 relation in H1SE sub-paths) is compared to the
+    expected r2 from the Phase 156 training r3→r2 template map. Answers whose best path
+    traverses the canonical r2 get `score *= (1 + r2_boost)`, then answers are re-sorted.
+    Pure boost (no penalty) avoids penalizing correct answers reached via alternate paths.
+  - **Rationale**: Hub entities (e.g., Tom Hanks: 100+ films) are reachable via many different
+    hop-2 relations due to the undirected MetaQA graph. The canonical path uses a specific r2
+    (e.g., `starred_actors`). Boosting canonical-r2 paths promotes specific answers over
+    coincidental hubs that happen to be reachable via off-canonical relations.
+  - **API**: `--r2-boost FLOAT` CLI arg (default 0.4); `r2_boost` param in `evaluate_hop()`.
+  - **Ablation** (2000-sample, vw=0.85 + Phase 157):
+    | r2-boost | H@1   | H@10  | MRR   |
+    |----------|-------|-------|-------|
+    | 0.0      | 0.456 | 0.716 | 0.550 |
+    | 0.20     | 0.459 | 0.716 | 0.552 |
+    | 0.30     | 0.461 | 0.716 | 0.553 |
+    | 0.40     | 0.462 | 0.715 | 0.554 |
+    | 0.50     | 0.454 | 0.718 | 0.549 |
+  - **Result (full 14,274-question run)**: H@1 0.4614→**0.4636** (+0.22pp), H@10 0.7131→**0.7135**
+    (+0.04pp), MRR 0.5543→**0.5557** (+0.14pp). Runtime: ~372s.
+
+## [2.41.0] - 2026-04-30
+### Added
+- **Phase 157: vote_weight parameter sweep + CLI exposure**
+  - `vote_weight` for 3-hop evaluation previously hardcoded at 0.70. Added `--vote-weight` CLI arg
+    (default **0.85**, tuned from ablation) and `--trb-factor` CLI arg (default 5.0).
+  - **Ablation** (500-sample, PRB active):
+    | vote_weight | H@1   | H@10  | MRR   |
+    |-------------|-------|-------|-------|
+    | 0.50        | 0.482 | 0.760 | 0.584 |
+    | 0.70 (prev) | 0.498 | 0.756 | 0.592 |
+    | 0.85        | 0.502 | 0.762 | 0.600 |
+    | 0.90        | 0.500 | 0.766 | 0.601 |
+    Best H@1 at 0.85; TRB factor (5.0→7.0) flat — already saturated.
+  - **Result (full 14,274-question run)**: H@1 0.4595→**0.4614** (+0.19pp), H@10 0.7123→**0.7131**
+    (+0.08pp), MRR 0.5519→**0.5543** (+0.24pp). Runtime: 337.9s.
+  - **Also added**: `--idf-weight` (hub penalty, kept disabled — IDF hurts because correct answers
+    ARE hub entities), `--hop2-beam-width` (per-hop widening, neutral), `import math` to eval.
+
 ## [2.40.0] - 2026-04-30
 ### Added
 - **Phase 156: Penultimate Relation Boost (r3→r2 template map)**

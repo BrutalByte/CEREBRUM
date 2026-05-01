@@ -55,6 +55,7 @@ Notes
 
 import argparse
 import csv
+import math
 import pickle
 import re
 import random
@@ -330,6 +331,12 @@ def evaluate_hop(
     relation_answer_set: Optional[Dict] = None,
     branch_bonus_weight: float       = 0.0,
     r2_map:           Optional[Dict[str, str]] = None,
+    vote_weight_3hop: float          = 0.85,
+    trb_factor_3hop:  float          = 5.0,
+    answer_freq_map:  Optional[Dict] = None,
+    idf_weight:       float          = 0.0,
+    hop2_beam_width:  Optional[int]  = None,
+    r2_boost:         float          = 0.0,
 ) -> Dict:
     """
     Evaluate one hop level using the unified CerebrumGraph.query() interface.
@@ -403,7 +410,7 @@ def evaluate_hop(
             if detected:
                 # Phase 151: TRB factor — 5.0 is sufficient with vote_weight=0.0;
                 # higher values (25.0) were counter-productive per ablation.
-                boost_factor = 5.0 if hop == 3 else 3.0
+                boost_factor = trb_factor_3hop if hop == 3 else 3.0
                 _trb = {detected: boost_factor}
 
         # Phase 152: Answer-type constraint + vote_weight tuning for 3-hop.
@@ -424,6 +431,13 @@ def evaluate_hop(
             if _r2:
                 _prb = {_r2: _trb[_detected_r3] ** 0.5}
 
+        # Phase 158: per-hop beam widths — {1: hop2_beam_width} widens the H1SE
+        # sub-traversal's hop-1 (= original hop-2), improving coverage by allowing
+        # more intermediate entities to survive into the final hop.
+        _beam_widths: Optional[Dict[int, int]] = None
+        if _is_3hop and hop2_beam_width is not None and hop2_beam_width > beam_width:
+            _beam_widths = {1: hop2_beam_width}
+
         answers_obj = graph.query(
             seeds                      = [seed],
             top_k                      = _raw_top_k,
@@ -434,9 +448,44 @@ def evaluate_hop(
             relation_prior             = relation_prior,
             terminal_relation_boost    = _trb,
             penultimate_relation_boost = _prb,
-            vote_weight                = 0.70 if _is_3hop else 0.45,
+            vote_weight                = vote_weight_3hop if _is_3hop else 0.45,
             branch_bonus_weight        = branch_bonus_weight if _is_3hop else 0.0,
+            beam_widths                = _beam_widths,
         )
+        # Phase 157: IDF hub-entity penalty — applied before answer-type filter.
+        # Penalizes entities that appear very frequently as objects of the target
+        # relation (e.g., Tom Hanks in 100 films). Only applied for high-cardinality
+        # relations (>100 unique answer entities) where hub inflation is a problem.
+        # Categorical relations (genres ~20, languages ~30) are skipped.
+        if _is_3hop and _trb and idf_weight > 0.0 and answer_freq_map:
+            _detected_r3_idf = next(iter(_trb))
+            _freq_ctr = answer_freq_map.get(_detected_r3_idf)
+            _n_unique = len(_relation_answer_set.get(_detected_r3_idf, set()))
+            if _freq_ctr and _n_unique > 100:
+                for _ans in answers_obj:
+                    _freq = _freq_ctr.get(_ans.entity_id, 1)
+                    _ans.score *= 1.0 / (1.0 + idf_weight * math.log1p(_freq))
+                answers_obj.sort(key=lambda a: a.score, reverse=True)
+
+        # Phase 158: r2 path-consistency boost — answers whose best path reached
+        # hop-2 via the expected r2 (from the r3→r2 training map) are boosted.
+        # For H1SE sub-paths, nodes[1] is the first edge relation (= original r2).
+        # Pure boost (no penalty) avoids hurting alternate-path correct answers.
+        if _is_3hop and _trb and r2_boost > 0.0 and r2_map:
+            _detected_r3_pc = next(iter(_trb))
+            _expected_r2_pc = r2_map.get(_detected_r3_pc)
+            if _expected_r2_pc:
+                _changed = False
+                for _ans in answers_obj:
+                    _bp = _ans.best_path
+                    if _bp is not None and len(_bp.nodes) >= 2:
+                        _path_r2 = _bp.nodes[1]  # odd index 1 = first edge relation
+                        if _path_r2 == _expected_r2_pc:
+                            _ans.score *= (1.0 + r2_boost)
+                            _changed = True
+                if _changed:
+                    answers_obj.sort(key=lambda a: a.score, reverse=True)
+
         pred = [a.entity_id for a in answers_obj]
 
         if not pred:
@@ -504,6 +553,24 @@ def main():
     parser.add_argument("--branch-bonus", type=float, default=0.25,
                         help="Phase 154 DBC: branch-diversity bonus weight for 3-hop "
                              "reranking (default 0.25; set 0.0 to disable).")
+    parser.add_argument("--vote-weight", type=float, default=0.85,
+                        help="Vote convergence weight for 3-hop scoring "
+                             "(default 0.85, tuned Phase 157).")
+    parser.add_argument("--trb-factor",  type=float, default=5.0,
+                        help="Terminal Relation Boost multiplier for 3-hop "
+                             "(default 5.0).")
+    parser.add_argument("--idf-weight",  type=float, default=0.0,
+                        help="IDF penalty weight for hub-entity de-ranking. "
+                             "Applied only to high-cardinality relations (>100 unique "
+                             "answer entities). score *= 1/(1+w*log1p(freq)). "
+                             "Default 0.0 (disabled).")
+    parser.add_argument("--hop2-beam-width", type=int, default=None,
+                        help="Per-hop beam width override at hop-2 for 3-hop traversal. "
+                             "Default: same as --beam-width.")
+    parser.add_argument("--r2-boost", type=float, default=0.0,
+                        help="Phase 158: path-consistency r2 boost. Answers whose best "
+                             "path has r2 == expected r2 (from training r3->r2 map) get "
+                             "score *= (1 + r2-boost). Default 0.0 (disabled).")
     parser.add_argument("--seed",       type=int,   default=42)
     args = parser.parse_args()
 
@@ -586,6 +653,7 @@ def main():
     # ------------------------------------------------------------------
     from collections import defaultdict as _dd, Counter as _Counter
     _relation_answer_set: Dict[str, set] = _dd(set)
+    _answer_freq: Dict[str, Any] = _dd(_Counter)   # Phase 157: IDF freq per relation
     _kb_index: Dict[str, Dict[str, List[str]]] = {}   # entity -> {rel: [targets]}
     try:
         with open(KB_FILE, encoding="utf-8", errors="replace") as _kbf:
@@ -594,9 +662,11 @@ def main():
                 if len(_p) >= 3:
                     _s, _r, _o = _p[0].strip(), _p[1].strip(), _p[2].strip()
                     _relation_answer_set[_r].add(_o)
+                    _answer_freq[_r][_o] += 1      # Phase 157: count appearances
                     _kb_index.setdefault(_s, {}).setdefault(_r, []).append(_o)
     except Exception:
         _relation_answer_set = {}
+        _answer_freq = {}
 
     # ------------------------------------------------------------------
     # Phase 156: Build r3 → most-common-r2 map from 3-hop training data.
@@ -658,7 +728,13 @@ def main():
                                relation_prior=priors.get(hop),
                                relation_answer_set=_relation_answer_set,
                                branch_bonus_weight=args.branch_bonus,
-                               r2_map=_r2_for_r3)
+                               r2_map=_r2_for_r3,
+                               vote_weight_3hop=args.vote_weight,
+                               trb_factor_3hop=args.trb_factor,
+                               answer_freq_map=_answer_freq,
+                               idf_weight=args.idf_weight,
+                               hop2_beam_width=args.hop2_beam_width,
+                               r2_boost=args.r2_boost)
         results.append(metrics)
 
         print(f"  Hits@1  : {metrics['hits_1']:.4f}  ({metrics['hits_1']*100:.1f}%)")
@@ -677,6 +753,8 @@ def main():
     print(f"  Beam width: {args.beam_width}")
     print(f"  Top-K     : {args.top_k}")
     print(f"  Prior     : {'yes (2-hop, 3-hop)' if args.use_prior else 'no'}")
+    _h2bw_str = str(args.hop2_beam_width) if args.hop2_beam_width else f"{args.beam_width} (flat)"
+    print(f"  VoteWt(3h): {args.vote_weight}  TRB-factor(3h): {args.trb_factor}  hop2-bw: {_h2bw_str}")
     if args.sample:
         print(f"  Sample    : {args.sample} per hop")
     print()

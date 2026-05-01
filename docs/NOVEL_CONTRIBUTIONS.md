@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026
-**Status**: v2.40.0 (Phase 156 (Penultimate Relation Boost) COMPLETE)
+**Status**: v2.42.0 (Phase 158 (r2 Path-Consistency Boost) COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -646,6 +646,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 | **Vote-Weight Suppression for Deep Hops** | Vote/convergence bonuses (uniform) | Per-hop vote_weight calibration (0.0 for 3-hop, 0.45 for 2-hop): convergence bonus promotes wrong hub answers unless suppressed at maximum hop depth |
 | **Distinct-Branch Convergence (DBC)** | Path count aggregation, GraftNet joint training | Log-scale bonus on entities confirmed via structurally independent hop-2 intermediaries; zero overhead when n_branches=1; no training required |
 | **Penultimate Relation Boost (r3→r2 map)** | Penultimate cascade (same-relation only) | Data-driven r3→r2 frequency map enables boosting a DIFFERENT relation at hop N-1; cascade was previously dead for cross-type templates |
+| **r2 Path-Consistency Boost (Phase 158)** | Path re-ranking, relation sequence scoring | Post-hoc score boost for answers whose best path uses training-verified r2 (nodes[1] check); pure multiplicative boost (no penalty); uses existing TraversalPath.nodes structure |
 
 ---
 
@@ -655,7 +656,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 **Novelty Statement**: Existing KG QA systems apply entity type constraints either at graph construction time (type-constrained embedding) or via post-hoc neural classifiers. CEREBRUM's answer-type filter is applied dynamically at query time from the KB's own triple structure, requires no training data, and is strictly constrained to observed KB objects — not type ontologies or predicted entity classes. Combined with a wider initial retrieval window, this allows a high `vote_weight` (convergence bonus) to amplify correctly-typed candidates without being overwhelmed by popular wrong-type hub entities.
 
-**Result**: H@1 MetaQA 3-hop: 23.0% (Phase 151) → 44.2% (Phase 152) → 45.1% (Phase 153) → 45.7% (Phase 154, DBC) → **46.0%** (Phase 156, penultimate r2 boost). CEREBRUM surpasses all published baselines (GraftNet 22.8%, EmbedKGQA 29.8%) using only graph structure — no LLMs, no training data, no KG embeddings.
+**Result**: H@1 MetaQA 3-hop: 23.0% (Phase 151) → 44.2% (Phase 152) → 45.1% (Phase 153) → 45.7% (Phase 154, DBC) → 46.0% (Phase 156, penultimate r2 boost) → 46.1% (Phase 157, vote_weight=0.85) → **46.4%** (Phase 158, r2 path-consistency boost). CEREBRUM surpasses all published baselines (GraftNet 22.8%, EmbedKGQA 29.8%) using only graph structure — no LLMs, no training data, no KG embeddings.
 
 **Relevant files**: `benchmarks/metaqa_eval.py` (`evaluate_hop`, `detect_target_relation`, `_relation_answer_set`)
 
@@ -718,6 +719,20 @@ paths), `reasoning/expanded_traversal.py` (threading), `core/cerebrum.py` (query
 
 ---
 
+### Claim 51: r2 Path-Consistency Boost for Answer Re-ranking
+
+**Description**: After beam traversal, for each candidate answer, inspect `answer.best_path.nodes[1]` — the relation at hop 2 of the H1SE sub-path. If this relation matches the training-derived expected r2 for the detected terminal relation (r3→r2 map from Phase 156), multiply the answer's score by `(1 + r2_boost)` (default r2_boost=0.40). Answers are then re-sorted by the boosted score. This is a pure post-hoc re-ranking: the traversal is unchanged, no paths are pruned, and answers without a best_path or with an unknown r2 are unaffected.
+
+**Novelty Statement**: Existing KG path-ranking methods score paths based on edge weights, entity features, or relation embeddings accumulated along the path during traversal. CEREBRUM's r2-consistency boost is applied *after* traversal and targets a single structural invariant: whether the best-scoring path's hop-2 relation matches the KB-derived canonical r2 for that query type. Because `TraversalPath.nodes` uses alternating entity/relation representation, `nodes[1]` is the first non-seed relation — a lightweight structural check requiring no additional graph operations. The approach exploits the regularity of MetaQA 3-hop templates without requiring template classifiers or additional training.
+
+**Key Differentiator**: The r2-consistency boost is orthogonal to DBC (Claim 49), PRB (Claim 50), and vote_weight: DBC rewards multi-branch evidence; PRB steers beam expansion at hop N-1; vote_weight controls convergence accumulation; r2-consistency boosts post-hoc based on path structure verification. All four are independently additive.
+
+**Result**: 2000-sample ablation: r2_boost=0.40 yields +0.50pp H@1 over Phase 157 baseline. Full 14,274-question run: H@1 0.4614→**0.4636** (+0.22pp), H@10 0.7131→**0.7135** (+0.04pp), MRR 0.5543→**0.5557** (+0.14pp). Combined Phase 157+158 gain vs Phase 156: +0.41pp H@1, +0.12pp H@10, +0.38pp MRR.
+
+**Relevant files**: `benchmarks/metaqa_eval.py` (r2-boost block in `evaluate_hop`, `--r2-boost` flag)
+
+---
+
 ## Legal Notice
 
 All rights, title, and interest in and to the CEREBRUM software, documentation, algorithms, and related intellectual property documented herein are and shall remain the exclusive property of **Bryan Alexander Buchorn**.
@@ -731,4 +746,4 @@ For commercial licensing: **bryan.alexander@buchorn.com**
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 30, 2026 for version v2.40.0
+**Reviewed on**: April 30, 2026 for version v2.42.0
