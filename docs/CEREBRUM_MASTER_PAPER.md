@@ -47,7 +47,7 @@ DSCF/TSC provides a mathematically rigorous framework for generating attention-r
 
 ---
 
-## 6. Recent Advances (v2.24.0 -> v2.24.0)
+## 6. Recent Advances (v2.24.0 -> v2.40.0)
 
 The CEREBRUM framework has undergone substantial development between v2.24.0 and v2.24.0. The following advances are directly relevant to the DSCF/TSC community detection methodology described in this paper.
 
@@ -55,9 +55,9 @@ The CEREBRUM framework has undergone substantial development between v2.24.0 and
 
 **Adaptive Search Strategy from Local Graph Density (Phase 53).** Community partitions now drive downstream search parameters. `BeamTraversal` queries the local edge density within the detected community before each hop and selects `beam_width` and `max_hop` accordingly. Dense communities narrow the beam (precision mode); sparse communities widen it (recall mode). This eliminates the need for global hyperparameter tuning and produces consistent performance across heterogeneous graph regions.
 
-**MetaQA Canonical Benchmark Results.** With adaptive community-driven beam parameters, CEREBRUM v2.24.0 achieves the following canonical results on MetaQA. Phase 151–153 substantially improved 3-hop reasoning through Terminal Relation Boosting, Answer-Type Constraint Filtering, and TRB Detection Accuracy improvements:
+**MetaQA Canonical Benchmark Results.** With adaptive community-driven beam parameters, CEREBRUM v2.24.0 achieves the following canonical results on MetaQA. Phase 151–156 substantially improved 3-hop reasoning through Terminal Relation Boosting, Answer-Type Constraint Filtering, TRB Detection Accuracy improvements, Distinct-Branch Convergence reranking, and Penultimate Relation Boost:
 
-| Hop | H@1 (v2.24.0) | H@1 (v2.38.0 Phase 153) | H@10 |
+| Hop | H@1 (v2.24.0) | H@1 (v2.40.0 Phase 156) | H@10 |
 |---|---|---|---|
 | 1-hop | 46.1% | 46.1% | 96.6% |
 | 2-hop | 30.0% | 30.0% | 86.3% |
@@ -129,11 +129,11 @@ Unlike GATs \cite{velickovic2018gat} which treat all neighbors equally, CSA scal
 The v2.24.0 release introduces **Adaptive Parameter Learning**, utilizing a **MetaParameterLearner** to autonomously adjust the $(\alpha, \beta, \gamma, \delta, \epsilon)$ coefficients per-community based on query feedback. This closes the gap between zero-shot and supervised performance without the need for global retraining.
 
 ### 5. Conclusion
-CSA provides a scalable, Interpretable AI (XAI) alternative to black-box graph embeddings. By grounding attention in the structural consensus of the graph, it enables complex multi-hop reasoning that is both computationally efficient and mathematically verifiable. In CEREBRUM v2.24.0, the 10-parameter CSA formula with online per-community learning achieves MetaQA H@1 of 46.1% (1-hop), 30.0% (2-hop), and 46.8% (3-hop, Phase 153), alongside WebQSP H@1=6.27%, H@10=20.84%, and MRR=10.66% - establishing CSA as a competitive and interpretable alternative to embedding-based KG reasoning.
+CSA provides a scalable, Interpretable AI (XAI) alternative to black-box graph embeddings. By grounding attention in the structural consensus of the graph, it enables complex multi-hop reasoning that is both computationally efficient and mathematically verifiable. In CEREBRUM v2.24.0, the 10-parameter CSA formula with online per-community learning achieves MetaQA H@1 of 46.1% (1-hop), 30.0% (2-hop), and 46.0% (3-hop, Phase 156), alongside WebQSP H@1=6.27%, H@10=20.84%, and MRR=10.66% - establishing CSA as a competitive and interpretable alternative to embedding-based KG reasoning.
 
 ---
 
-## 6. Recent Advances (v2.24.0 -> v2.24.0)
+## 6. Recent Advances (v2.24.0 -> v2.40.0)
 
 The CSA formula and its associated learning infrastructure have undergone significant expansion since v2.24.0. The following describes the key advances relevant to this paper.
 
@@ -251,7 +251,7 @@ The Bridge Twin Engine provides a biologically-inspired framework for self-optim
 
 ---
 
-## 5. Recent Advances (v2.24.0 -> v2.24.0)
+## 5. Recent Advances (v2.24.0 -> v2.40.0)
 
 The Bridge Twin Engine has been substantially extended since v2.24.0. The following describes the most significant developments.
 
@@ -330,7 +330,7 @@ The STDP Causal Engine provides a scalable, unsupervised framework for real-time
 
 ---
 
-## 5. Recent Advances (v2.24.0 -> v2.24.0)
+## 5. Recent Advances (v2.24.0 -> v2.40.0)
 
 The STDP causal discovery pipeline has been hardened and extended since v2.24.0. The following describes key developments relevant to this paper.
 
@@ -398,7 +398,7 @@ Holographic Indexing provides a mathematically robust and privacy-preserving fra
 
 ---
 
-## 6. Recent Advances (v2.24.0 -> v2.24.0)
+## 6. Recent Advances (v2.24.0 -> v2.40.0)
 
 Federated reasoning has been one of the most actively developed areas of the CEREBRUM framework since v2.24.0. The following describes advances directly relevant to this paper.
 
@@ -468,7 +468,7 @@ Bayesian Beam Search provides a rigorous foundation for reasoning under uncertai
 
 ---
 
-## 4. Recent Advances (v2.24.0 -> v2.24.0)
+## 4. Recent Advances (v2.24.0 -> v2.40.0)
 
 The Bayesian Beam Search engine has been significantly extended since v2.24.0. The following advances are directly relevant to this paper.
 
@@ -544,7 +544,7 @@ The REM Cycle provides a robust architectural solution for the "Entropy Problem"
 
 ---
 
-## 4. Recent Advances (v2.24.0 -> v2.24.0)
+## 4. Recent Advances (v2.24.0 -> v2.40.0)
 
 The REM Cycle has been extended from a maintenance-only background loop to an active knowledge synthesis engine since v2.24.0. The following describes the key advances.
 
@@ -624,7 +624,7 @@ Latent space alignment via Orthogonal Procrustes provides a mathematically robus
 
 ---
 
-## 6. Recent Advances (v2.24.0 -> v2.24.0)
+## 6. Recent Advances (v2.24.0 -> v2.40.0)
 
 The Signal Encoder has been validated in production and its core alignment methodology has been generalized to new problem domains since v2.24.0. The following describes the key advances.
 
@@ -692,7 +692,7 @@ THALAMUS provides the necessary structural foundation for stable, enterprise-sca
 
 ---
 
-## 5. Recent Advances (v2.24.0 -> v2.24.0)
+## 5. Recent Advances (v2.24.0 -> v2.40.0)
 
 THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectionally-connected ingestion layer since v2.24.0. The following describes key advances.
 
@@ -754,7 +754,7 @@ This prevents the "shattering" of the graph and ensures that the evaluation meas
 The engine is tasked with predicting $v$ given $u$ on the pruned graph $\mathcal{G} \setminus \mathcal{H}$. Recall is defined as:
 $$R@K = \frac{1}{|\mathcal{H}|} \sum_{E_{uv} \in \mathcal{H}} \mathbb{I}(v \in \text{TopK}(\text{BeamTraversal}(u)))$$
 
-### 3. Recent Advances (v2.24.0 -> v2.24.0)
+### 3. Recent Advances (v2.24.0 -> v2.40.0)
 
 #### 3.1 Path-Preserving Hold-out as Default
 The path-preserving hold-out strategy introduced in Phase 20 is now the **default** for all benchmarks in v2.24.0. Previously an opt-in parameter (`InferenceValidator(path_preserving=True)`), it is now universally enforced. This eliminates the systematic recall underestimation (up to 40% on sparse graphs) that afflicted earlier evaluation runs.
@@ -829,7 +829,7 @@ When $\mathcal{C}(t_1, t_2) = \text{True}$, we materialize edge $E_{o1,o2}$ with
 $$\Delta A = | \mathcal{T}(source_1) - \mathcal{T}(source_2) |$$
 where $\mathcal{T}$ is the trust function.
 
-### 3. Recent Advances (v2.24.0 -> v2.24.0)
+### 3. Recent Advances (v2.24.0 -> v2.40.0)
 
 #### 3.1 HypothesisEngine: Abductive Reasoning as Contradiction Precursor (Phase 50)
 The **HypothesisEngine** (Phase 50) implements multi-path abductive reasoning: given an observed fact that cannot be reached via standard forward traversal, it generates a set of candidate hypotheses (latent explanatory edges or entity relationships) that, if true, would make the observation reachable. These hypotheses are then subjected to contradiction detection as a first-order validation step. If a generated hypothesis is structurally inconsistent with existing graph facts - producing a cycle violation, temporal anachronism, or functional conflict - the hypothesis is immediately classified as a `CONTRADICTS` edge rather than a candidate edge. This creates a tight integration loop where abductive creativity is bounded by contradiction-aware skepticism.
@@ -900,7 +900,7 @@ For temporal and streaming data, the Studio utilizes high-frequency state update
 ### 3. Interactive Debugging (v2.24.0)
 The Studio provides a "Dialectical reasoning" mode where users can manually adjust CSA parameters ($\alpha, \beta, \gamma$) via sliders and observe the immediate physical shift in the reasoning beam, providing a "Human-in-the-Loop" (HITL) interface for hyperparameter tuning. In v2.24.0, this includes real-time feedback submission to the **MetaParameterLearner**.
 
-### 4. Recent Advances (v2.24.0 -> v2.24.0)
+### 4. Recent Advances (v2.24.0 -> v2.40.0)
 
 #### 4.1 StudioEngine Architectural Refactor (Phase 54)
 The most significant change in v2.24.0 is a complete architectural separation of Studio business logic from the Gradio server layer. Previously, all reasoning coordination, graph management, and query dispatch were embedded directly in `ui/studio.py`. Phase 54 extracts these into a new `core/studio_engine.py` module exposing the `StudioEngine` class.
@@ -998,7 +998,7 @@ The `STDPDiscretizer` implements Hebbian-inspired causal edge inference: when tw
 
 These protections are documented in detail in Paper 16 (Production Hardening).
 
-### 5. Recent Advances (v2.24.0 -> v2.24.0)
+### 5. Recent Advances (v2.24.0 -> v2.40.0)
 
 #### 5.1 Adaptive Search Strategy (Phase 53)
 The most consequential algorithmic advance in the streaming engine is the introduction of **adaptive search strategy** (Phase 53). Prior versions used fixed beam parameters (width, depth, branching factor) configured at startup. In streaming graphs, however, local density varies dramatically: a newly-ingested event cluster may produce a dense sub-graph that overwhelms a narrow beam, while a sparsely-observed sensor region starves a wide beam.
@@ -1122,7 +1122,7 @@ The MetaInsightEngine identifies three classes of reasoning pathology:
 
 When detected, these patterns are surfaced as `STRUCTURAL_BIAS` events in $G_{meta}$, triggering alerts for human review.
 
-### 4. Recent Advances (v2.24.0 -> v2.24.0)
+### 4. Recent Advances (v2.24.0 -> v2.40.0)
 
 #### 4.1 ResearchAgent: Autonomous Missing-Link Discovery (Phase 51)
 The **ResearchAgent** (Phase 51) extends the InsightEngine paradigm from reactive validation to proactive discovery. It operates as a background daemon that continuously analyzes the graph for structural "missing links" - pairs of nodes that are strongly connected via multi-hop bridges but lack a direct edge that structural evidence suggests should exist.
@@ -1331,7 +1331,7 @@ RotatE [Sun et al., 2019] models relations as rotations in complex embedding spa
 #### 6.3 Integration with CSA
 KGE embeddings are used exclusively in the $\cos(\vec{e}_u, \vec{e}_v)$ term of the CSA formula. All other terms (community structure, relation weight, distance penalty, hop decay, PageRank) continue to use graph-structural features. This hybrid design preserves the interpretability of the non-embedding terms while upgrading the semantic similarity signal.
 
-### 7. Recent Advances (v2.24.0 -> v2.24.0)
+### 7. Recent Advances (v2.24.0 -> v2.40.0)
 
 #### 7.1 10-Parameter CSA Formula (Phase 43/45)
 The original 6-parameter CSA formula has been expanded to a 10-parameter formulation:
@@ -1558,7 +1558,7 @@ The eight holes cluster into five taxonomic categories:
 
 This taxonomy predicts the location of structural holes in new features: any feature that (1) writes to shared state, (2) uses threshold guards, (3) generates identifiers, (4) uses fixed defaults, or (5) modifies the validation methodology should be reviewed against these five categories.
 
-### 5. Recent Advances (v2.24.0 -> v2.24.0)
+### 5. Recent Advances (v2.24.0 -> v2.40.0)
 
 #### 5.1 Observability Layer (Phase 54)
 Production deployments require visibility into system behavior without halting the server for inspection. Phase 54 introduces a structured observability layer:
