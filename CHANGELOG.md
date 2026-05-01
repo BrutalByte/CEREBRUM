@@ -5,6 +5,32 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.40.0] - 2026-04-30
+### Added
+- **Phase 156: Penultimate Relation Boost (r3→r2 template map)**
+  - **Root cause**: The existing penultimate cascade fires `sqrt(TRB)` at hop N-1 only for the
+    SAME relation as r3. In MetaQA 3-hop, hop-2 edges are almost always `starred_actors` regardless
+    of what r3 is — the cascade was effectively dead (e.g., TRB=`directed_by`, penultimate checks
+    for `directed_by` at hop 2, but hop-2 is `starred_actors`).
+  - **Fix**: Added `penultimate_relation_boost: Dict[str, float]` parameter to `BeamTraversal`,
+    `HopExpandedTraversal`, and `CerebrumGraph.query()`. When set, replaces the old same-relation
+    cascade at hop N-1 with a dedicated per-relation boost.
+  - **r3→r2 map**: Built from MetaQA 3-hop training data by walking all correct (seed, answer)
+    KB paths and counting r2 frequencies per r3. Applied as `{most_common_r2: sqrt(r3_boost_factor)}`.
+    Printed at run time; requires no manual hard-coding.
+  - **Backward compatible**: When `penultimate_relation_boost={}`, falls back to old sqrt cascade.
+  - **Result (full 14,274-question run)**: H@1 0.4572→**0.4595** (+0.23pp), H@10 0.7092→**0.7123**
+    (+0.31pp), MRR 0.5499→**0.5519** (+0.20pp). Runtime: 401.4s.
+
+### Changed (experimental, negative result)
+- **Phase 155: Sentence Embeddings (abandoned)**
+  - Tested `--embeddings sentence` (BAAI/bge-small-en-v1.5, 384-dim) vs random 64-dim.
+  - **Result (500-sample)**: H@1 0.496→0.480 (−1.6pp regression). Root cause: CSA `alpha`
+    (semantic similarity, weight=0.4) penalizes hops between semantically dissimilar entity types
+    (movie→actor, actor→genre) which are exactly the cross-type hops required for 3-hop traversal.
+    Community structure (`beta`) already handles inter-type navigation; adding a semantic penalty
+    on top degrades coverage. Full run skipped.
+
 ## [2.39.0] - 2026-04-30
 ### Added
 - **Phase 154: Distinct-Branch Convergence (DBC) Scoring for 3-hop reranking**

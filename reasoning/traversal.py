@@ -384,6 +384,8 @@ class BeamTraversal:
         self.causal_bonus: float = float(kwargs.get("causal_bonus", 0.3))
         # Phase 146: Terminal Relation Boost - applied only at the final hop
         self.terminal_relation_boost: Dict[str, float] = dict(kwargs.get("terminal_relation_boost", {}) or {})
+        # Phase 156: Penultimate Relation Boost - separate relation(s) to boost at hop N-1
+        self.penultimate_relation_boost: Dict[str, float] = dict(kwargs.get("penultimate_relation_boost", {}) or {})
         # Phase 99: Thalamic Gating - WM priming map
         self.node_priming: Dict[str, float] = {}
         self.priming_boost: float = 0.3
@@ -679,9 +681,15 @@ class BeamTraversal:
                                 boost = self.terminal_relation_boost.get(rel_eff, 0.01)
                                 w *= boost
                             elif hop == self.max_hop - 1:
-                                tb = self.terminal_relation_boost.get(rel_eff, 1.0)
-                                if tb > 1.0:
-                                    w *= tb ** 0.5  # penultimate cascade: 3.0 -> ~1.73x
+                                if self.penultimate_relation_boost:
+                                    # Phase 156: dedicated r2 boost (different relation from r3)
+                                    pb = self.penultimate_relation_boost.get(rel_eff, 1.0)
+                                    if pb > 1.0:
+                                        w *= pb
+                                else:
+                                    tb = self.terminal_relation_boost.get(rel_eff, 1.0)
+                                    if tb > 1.0:
+                                        w *= tb ** 0.5  # penultimate cascade: 3.0 -> ~1.73x
 
                         if v_eff not in comm_cache:
                             comm_cache[v_eff] = _get_comm(v_eff)
@@ -762,9 +770,15 @@ class BeamTraversal:
                                 boost = self.terminal_relation_boost.get(rel_eff, 0.01)
                                 w *= boost
                             elif hop == self.max_hop - 1:
-                                tb = self.terminal_relation_boost.get(rel_eff, 1.0)
-                                if tb > 1.0:
-                                    w *= tb ** 0.5  # penultimate cascade: 3.0 -> ~1.73x
+                                if self.penultimate_relation_boost:
+                                    # Phase 156: dedicated r2 boost (different relation from r3)
+                                    pb = self.penultimate_relation_boost.get(rel_eff, 1.0)
+                                    if pb > 1.0:
+                                        w *= pb
+                                else:
+                                    tb = self.terminal_relation_boost.get(rel_eff, 1.0)
+                                    if tb > 1.0:
+                                        w *= tb ** 0.5  # penultimate cascade: 3.0 -> ~1.73x
 
                         v_emb = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
                         coh = community_coherence(path.community_sequence + [v_cid])

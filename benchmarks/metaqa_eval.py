@@ -329,6 +329,7 @@ def evaluate_hop(
     relation_prior=None,
     relation_answer_set: Optional[Dict] = None,
     branch_bonus_weight: float       = 0.0,
+    r2_map:           Optional[Dict[str, str]] = None,
 ) -> Dict:
     """
     Evaluate one hop level using the unified CerebrumGraph.query() interface.
@@ -414,17 +415,27 @@ def evaluate_hop(
         # degree_penalty NOT used — MetaQA correct answers are high-degree hubs.
         _is_3hop = (hop == 3)
         _raw_top_k = 100 if _is_3hop else top_k
+
+        # Phase 156: Penultimate Relation Boost — boost expected r2 at hop N-1
+        _prb: Dict[str, float] = {}
+        if _is_3hop and _trb and r2_map:
+            _detected_r3 = next(iter(_trb))
+            _r2 = r2_map.get(_detected_r3)
+            if _r2:
+                _prb = {_r2: _trb[_detected_r3] ** 0.5}
+
         answers_obj = graph.query(
-            seeds                   = [seed],
-            top_k                   = _raw_top_k,
-            min_hop                 = eval_min_hop,
-            max_hop                 = hop,
-            hop_expand              = (hop >= 2),
-            query_embedding         = query_emb,
-            relation_prior          = relation_prior,
-            terminal_relation_boost = _trb,
-            vote_weight             = 0.70 if _is_3hop else 0.45,
-            branch_bonus_weight     = branch_bonus_weight if _is_3hop else 0.0,
+            seeds                      = [seed],
+            top_k                      = _raw_top_k,
+            min_hop                    = eval_min_hop,
+            max_hop                    = hop,
+            hop_expand                 = (hop >= 2),
+            query_embedding            = query_emb,
+            relation_prior             = relation_prior,
+            terminal_relation_boost    = _trb,
+            penultimate_relation_boost = _prb,
+            vote_weight                = 0.70 if _is_3hop else 0.45,
+            branch_bonus_weight        = branch_bonus_weight if _is_3hop else 0.0,
         )
         pred = [a.entity_id for a in answers_obj]
 
@@ -570,20 +581,58 @@ def main():
                 priors[hop] = prior
 
     # ------------------------------------------------------------------
-    # Phase 152: Build answer-type constraint index from KB triples.
-    # Only KB objects (not subjects) are valid answer candidates for each relation.
-    # Built once and passed to all evaluate_hop() calls.
+    # Phase 152: Build answer-type constraint index + KB forward index.
+    # Both are built from KB triples once and shared across all hop evals.
     # ------------------------------------------------------------------
-    from collections import defaultdict as _dd
+    from collections import defaultdict as _dd, Counter as _Counter
     _relation_answer_set: Dict[str, set] = _dd(set)
+    _kb_index: Dict[str, Dict[str, List[str]]] = {}   # entity -> {rel: [targets]}
     try:
         with open(KB_FILE, encoding="utf-8", errors="replace") as _kbf:
             for _line in _kbf:
                 _p = _line.strip().split("|")
                 if len(_p) >= 3:
-                    _relation_answer_set[_p[1].strip()].add(_p[2].strip())
+                    _s, _r, _o = _p[0].strip(), _p[1].strip(), _p[2].strip()
+                    _relation_answer_set[_r].add(_o)
+                    _kb_index.setdefault(_s, {}).setdefault(_r, []).append(_o)
     except Exception:
         _relation_answer_set = {}
+
+    # ------------------------------------------------------------------
+    # Phase 156: Build r3 → most-common-r2 map from 3-hop training data.
+    # Walks all correct (seed, answer) paths in the KB to count r2 frequencies
+    # per terminal relation r3.
+    # ------------------------------------------------------------------
+    _r2_for_r3: Dict[str, str] = {}
+    if 3 in hops and _kb_index and TRAIN_FILES[3].exists():
+        _r2_counts: Dict[str, Any] = _dd(_Counter)
+        try:
+            with open(TRAIN_FILES[3], encoding="utf-8", errors="replace") as _tf:
+                for _line in _tf:
+                    _parts = _line.strip().split("\t", 1)
+                    if len(_parts) < 2:
+                        continue
+                    _qtext = _parts[0]
+                    _m = re.search(r"\[(.+?)\]", _qtext)
+                    if not _m:
+                        continue
+                    _seed3 = _m.group(1).strip()
+                    _targets3 = {a.strip() for a in _parts[1].split("|") if a.strip()}
+                    for _r1, _h1s in _kb_index.get(_seed3, {}).items():
+                        for _h1 in _h1s:
+                            for _r2, _h2s in _kb_index.get(_h1, {}).items():
+                                for _h2 in _h2s:
+                                    for _r3, _h3s in _kb_index.get(_h2, {}).items():
+                                        if any(t in _targets3 for t in _h3s):
+                                            _r2_counts[_r3][_r2] += 1
+        except Exception:
+            pass
+        _r2_for_r3 = {
+            r3: ctr.most_common(1)[0][0]
+            for r3, ctr in _r2_counts.items() if ctr
+        }
+        if _r2_for_r3:
+            print(f"  r3->r2 template map: {_r2_for_r3}")
 
     # ------------------------------------------------------------------
     # Evaluate each hop level
@@ -608,7 +657,8 @@ def main():
                                embedding_engine=query_engine,
                                relation_prior=priors.get(hop),
                                relation_answer_set=_relation_answer_set,
-                               branch_bonus_weight=args.branch_bonus)
+                               branch_bonus_weight=args.branch_bonus,
+                               r2_map=_r2_for_r3)
         results.append(metrics)
 
         print(f"  Hits@1  : {metrics['hits_1']:.4f}  ({metrics['hits_1']*100:.1f}%)")

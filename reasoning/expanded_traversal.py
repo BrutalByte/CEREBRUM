@@ -190,6 +190,7 @@ class HopExpandedTraversal:
         clean_kwargs.pop('beam_widths', None)
         # relation boost is explicitly handled below if not in clean_kwargs
         trb = clean_kwargs.pop('terminal_relation_boost', None)
+        prb = clean_kwargs.pop('penultimate_relation_boost', None)  # Phase 156
 
         t = BeamTraversal(
             adapter=self.adapter,
@@ -203,6 +204,7 @@ class HopExpandedTraversal:
             warm_start_strength=self.warm_start_strength,
             beam_widths=beam_widths or {},
             terminal_relation_boost=trb,
+            penultimate_relation_boost=prb,  # Phase 156
             **clean_kwargs,
         )
         t._causal_edge_index = self._causal_edge_index

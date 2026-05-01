@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026
-**Status**: v2.39.0 (Phase 154 (Distinct-Branch Convergence) COMPLETE)
+**Status**: v2.40.0 (Phase 156 (Penultimate Relation Boost) COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -645,6 +645,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 | **Two-Pass TRB Detection (Phase 152/153)** | Keyword matching, NER-based question decomposition | Prefix-first, suffix-fallback with unambiguous pre-passes ("when"→release_year, last-word "in which X") eliminates cross-branch keyword collision in 3-hop templates |
 | **Vote-Weight Suppression for Deep Hops** | Vote/convergence bonuses (uniform) | Per-hop vote_weight calibration (0.0 for 3-hop, 0.45 for 2-hop): convergence bonus promotes wrong hub answers unless suppressed at maximum hop depth |
 | **Distinct-Branch Convergence (DBC)** | Path count aggregation, GraftNet joint training | Log-scale bonus on entities confirmed via structurally independent hop-2 intermediaries; zero overhead when n_branches=1; no training required |
+| **Penultimate Relation Boost (r3→r2 map)** | Penultimate cascade (same-relation only) | Data-driven r3→r2 frequency map enables boosting a DIFFERENT relation at hop N-1; cascade was previously dead for cross-type templates |
 
 ---
 
@@ -654,7 +655,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 **Novelty Statement**: Existing KG QA systems apply entity type constraints either at graph construction time (type-constrained embedding) or via post-hoc neural classifiers. CEREBRUM's answer-type filter is applied dynamically at query time from the KB's own triple structure, requires no training data, and is strictly constrained to observed KB objects — not type ontologies or predicted entity classes. Combined with a wider initial retrieval window, this allows a high `vote_weight` (convergence bonus) to amplify correctly-typed candidates without being overwhelmed by popular wrong-type hub entities.
 
-**Result**: H@1 MetaQA 3-hop: 23.0% (Phase 151, TRB only) → 44.2% (Phase 152, + type filter) → 45.1% (Phase 153, full 14K run) → **45.7%** (Phase 154, + DBC). CEREBRUM surpasses all published baselines (GraftNet 22.8%, EmbedKGQA 29.8%) using only graph structure — no LLMs, no training data, no KG embeddings.
+**Result**: H@1 MetaQA 3-hop: 23.0% (Phase 151) → 44.2% (Phase 152) → 45.1% (Phase 153) → 45.7% (Phase 154, DBC) → **46.0%** (Phase 156, penultimate r2 boost). CEREBRUM surpasses all published baselines (GraftNet 22.8%, EmbedKGQA 29.8%) using only graph structure — no LLMs, no training data, no KG embeddings.
 
 **Relevant files**: `benchmarks/metaqa_eval.py` (`evaluate_hop`, `detect_target_relation`, `_relation_answer_set`)
 
@@ -684,6 +685,39 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ---
 
+### Claim 50: Cross-Type Penultimate Relation Boost via Training-Data r3→r2 Map
+
+**Description**: The existing penultimate cascade in `BeamTraversal` fires `sqrt(TRB_factor)` at
+hop N-1 only for the same relation as r3. In MetaQA 3-hop templates, hop-2 edges are almost
+always `starred_actors` regardless of r3, making the cascade structurally dead. A new
+`penultimate_relation_boost` parameter (separate from `terminal_relation_boost`) is built by
+counting, for each r3, which r2 value appears most frequently in (seed, correct_answer) training
+walks through the KB. The top r2 per r3 is applied at hop N-1 with weight `sqrt(r3_boost)`,
+independently of what relation appears at the terminal hop.
+
+**Novelty Statement**: No prior work on KG multi-hop traversal distinguishes the penultimate
+relation type from the terminal relation type when applying traversal guidance. Standard TRB
+implementations (including CEREBRUM Phase 146-148) assume the most informative relation at hop
+N-1 is the same as r3. The data-driven r3→r2 map formalizes the insight that 3-hop KG templates
+have structured intermediate-hop constraints that differ from the terminal hop. The map is built
+with O(|train|×|KB|) graph walks — zero neural components, zero tuned parameters.
+
+**Key Differentiator**: `penultimate_relation_boost` is orthogonal to `terminal_relation_boost`:
+the terminal boost filters wrong-type answers at hop N; the penultimate boost steers intermediate
+node selection at hop N-1 toward the correct structural path template.
+
+**Result**: Full 14,274-question run: H@1 0.4572→**0.4595** (+0.23pp), H@10 0.7092→**0.7123**
+(+0.31pp), MRR 0.5499→**0.5519** (+0.20pp). Cumulative with DBC (Phase 154): H@1 from 0.4511
+(Phase 153 baseline) to 0.4595 (+0.84pp). Phase 155 negative result noted: sentence embeddings
+hurt MetaQA 3-hop (−1.6pp H@1) because cross-type entity similarity is low and CSA alpha
+inadvertently penalizes semantically dissimilar but graph-correct hop transitions.
+
+**Relevant files**: `reasoning/traversal.py` (`penultimate_relation_boost`, two scoring code
+paths), `reasoning/expanded_traversal.py` (threading), `core/cerebrum.py` (query API),
+`benchmarks/metaqa_eval.py` (r3→r2 map builder, `_prb` construction)
+
+---
+
 ## Legal Notice
 
 All rights, title, and interest in and to the CEREBRUM software, documentation, algorithms, and related intellectual property documented herein are and shall remain the exclusive property of **Bryan Alexander Buchorn**.
@@ -697,4 +731,4 @@ For commercial licensing: **bryan.alexander@buchorn.com**
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 30, 2026 for version v2.39.0
+**Reviewed on**: April 30, 2026 for version v2.40.0

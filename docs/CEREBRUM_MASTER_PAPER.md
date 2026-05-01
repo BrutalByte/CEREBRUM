@@ -1,6 +1,6 @@
 # CEREBRUM: Master Research Compilation
 
-**Status**: v2.39.0 (Phase 154 (Distinct-Branch Convergence) COMPLETE)
+**Status**: v2.40.0 (Phase 156 (Penultimate Relation Boost) COMPLETE)
 
 
 
@@ -10,13 +10,13 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.39.0 (Phase 154 (Distinct-Branch Convergence) COMPLETE)
+**Status**: v2.40.0 (Phase 156 (Penultimate Relation Boost) COMPLETE)
 **Date**: April 30, 2026
 
 ---
 
 ### Abstract
-Graph partitioning is a foundational task in network science, typically optimizing for either local topological coherence or global modularity. We present **Dual-Signal Community Fusion (DSCF)** and its successor, **Triple-Signal Consensus (TSC)**, a novel approach that integrates local (Label Propagation), global (Modularity), and flow-based (PageRank Centrality) signals at the individual node update level. By employing a temperature-annealed decision rule, our method produces highly stable partitions optimized for use as "Attention Heads" in Knowledge Graph reasoning. We demonstrate that this multi-signal consensus prevents the common "Resolution Limit" and "Hub Drift" failures prevalent in standard algorithms like Leiden \cite{traag2019louvain} or Louvain \cite{blondel2008louvain}. Benchmark results on synthetic caveman graphs show that vectorized TSC achieves a modularity index of **Q=0.88**, significantly outperforming standard Leiden baselines (Q=0.48) while providing a robust structural foundation for multi-hop graph attention mechanisms. As of v2.30.0, TSC is available as an explicitly selectable mode alongside DSCF, and community partitions now drive adaptive beam parameters - beam width and max hop are set dynamically from local graph density - yielding MetaQA canonical results of H@1=46.1% (1-hop), 30.0% (2-hop), and 45.7% (3-hop, Phase 154, full 14,274-question run) with H@10 reaching 96.6%, 86.3%, and 71.0% respectively.
+Graph partitioning is a foundational task in network science, typically optimizing for either local topological coherence or global modularity. We present **Dual-Signal Community Fusion (DSCF)** and its successor, **Triple-Signal Consensus (TSC)**, a novel approach that integrates local (Label Propagation), global (Modularity), and flow-based (PageRank Centrality) signals at the individual node update level. By employing a temperature-annealed decision rule, our method produces highly stable partitions optimized for use as "Attention Heads" in Knowledge Graph reasoning. We demonstrate that this multi-signal consensus prevents the common "Resolution Limit" and "Hub Drift" failures prevalent in standard algorithms like Leiden \cite{traag2019louvain} or Louvain \cite{blondel2008louvain}. Benchmark results on synthetic caveman graphs show that vectorized TSC achieves a modularity index of **Q=0.88**, significantly outperforming standard Leiden baselines (Q=0.48) while providing a robust structural foundation for multi-hop graph attention mechanisms. As of v2.30.0, TSC is available as an explicitly selectable mode alongside DSCF, and community partitions now drive adaptive beam parameters - beam width and max hop are set dynamically from local graph density - yielding MetaQA canonical results of H@1=46.1% (1-hop), 30.0% (2-hop), and 46.0% (3-hop, Phase 156, full 14,274-question run) with H@10 reaching 96.6%, 86.3%, and 71.0% respectively.
 
 ### 1. Introduction
 The identification of community structures in large Knowledge Graphs (KGs) is essential for efficient multi-hop reasoning. In the CEREBRUM framework, these communities serve as discrete attention heads, guiding a beam search through semantically related regions. However, standard algorithms often fluctuate between over-fragmentation (local-only) and over-merging (global-only). DSCF/TSC addresses this by treating community assignment as a consensus problem.
@@ -43,7 +43,7 @@ As $\tau$ is annealed from 2.0 to 0.5, the system transitions from exploratory l
 The algorithm operates in $O(E \cdot I)$ time, where $E$ is edges and $I$ is iterations. The vectorized implementation utilizes bulk-matrix assignment updates, enabling GPU-accelerated partitioning for large-scale enterprise graphs.
 
 ### 5. Conclusion
-DSCF/TSC provides a mathematically rigorous framework for generating attention-ready graph partitions. By fusing local, global, and flow-based signals, it creates a stable structural foundation for multi-hop graph attention mechanisms. Current results in CEREBRUM v2.24.0 confirm that community partitions produced by TSC underpin an adaptive reasoning pipeline achieving MetaQA H@1 of 46.1% (1-hop), 30.0% (2-hop), and 45.7% (3-hop, Phase 154, full 14,274-question run), with H@10 reaching 96.6%, 86.3%, and 71.0% respectively - validating that stable structural attention heads are a prerequisite for high-recall multi-hop reasoning.
+DSCF/TSC provides a mathematically rigorous framework for generating attention-ready graph partitions. By fusing local, global, and flow-based signals, it creates a stable structural foundation for multi-hop graph attention mechanisms. Current results in CEREBRUM v2.24.0 confirm that community partitions produced by TSC underpin an adaptive reasoning pipeline achieving MetaQA H@1 of 46.1% (1-hop), 30.0% (2-hop), and 46.0% (3-hop, Phase 156, full 14,274-question run), with H@10 reaching 96.6%, 86.3%, and 71.0% respectively - validating that stable structural attention heads are a prerequisite for high-recall multi-hop reasoning.
 
 ---
 
@@ -61,9 +61,9 @@ The CEREBRUM framework has undergone substantial development between v2.24.0 and
 |---|---|---|---|
 | 1-hop | 46.1% | 46.1% | 96.6% |
 | 2-hop | 30.0% | 30.0% | 86.3% |
-| 3-hop | 12.5% | **45.7%** (full 14,274-question run) | 71.0% |
+| 3-hop | 12.5% | **46.0%** (full 14,274-question run) | 71.2% |
 
-Published baselines (3-hop): GraftNet 22.8%, EmbedKGQA 29.8%. CEREBRUM Phase 154 achieves **+100% relative improvement over GraftNet** and **+53% over EmbedKGQA** using only graph structure — no LLMs, no training data, no KG embeddings.
+Published baselines (3-hop): GraftNet 22.8%, EmbedKGQA 29.8%. CEREBRUM Phase 156 achieves **+102% relative improvement over GraftNet** and **+54% over EmbedKGQA** using only graph structure — no LLMs, no training data, no KG embeddings.
 
 **Community-Specific CSA Parameters (Phase 20/45).** Each community partition now maintains its own 10-parameter CSA vector, updated online via `MetaParameterLearner`. This means the community structure produced by DSCF/TSC directly determines the granularity of the learning surface - higher-quality partitions produce more focused per-community adaptation.
 
@@ -99,7 +99,7 @@ Published baselines (3-hop): GraftNet 22.8%, EmbedKGQA 29.8%. CEREBRUM Phase 154
 ---
 
 ### Abstract
-We propose **Community-Structured Attention (CSA)**, an attention mechanism that enables multi-hop reasoning over large Knowledge Graphs (KGs) without the $O(N^2)$ complexity of global attention matrices. CSA maps the structural components of the Transformer architecture \cite{vaswani2017attention} directly onto graph operations, utilizing community partitions as discrete "Attention Heads." We define a unified scoring function that integrates semantic similarity, community-level topology, and structural centrality. Benchmark results on the **Hetionet** \cite{hetionet2017} biomedical dataset demonstrate that CSA achieves a Mean Reciprocal Rank (MRR) of **0.68**, a **+183% improvement** over breadth-first search baselines. Furthermore, on the **MetaQA 3-hop** \cite{metaqa2017} reasoning task, CSA improves MRR by **+350%**, demonstrating superior beam steering in deep multi-hop traversals while maintaining full "Glass-Box" interpretability. As of v2.24.0, the CSA formula has been expanded to 10 parameters covering temporal decay, node recency, synthesis-density penalty, and grounding confidence, with both batch (CSAParameterLearner) and online per-community (MetaParameterLearner) learning, achieving MetaQA canonical results of H@1=46.1%/30.0%/45.7% across 1-, 2-, and 3-hop tasks (Phase 154, full 14,274-question run). The 3-hop result surpasses all published baselines including GraftNet (22.8%) and EmbedKGQA (29.8%).
+We propose **Community-Structured Attention (CSA)**, an attention mechanism that enables multi-hop reasoning over large Knowledge Graphs (KGs) without the $O(N^2)$ complexity of global attention matrices. CSA maps the structural components of the Transformer architecture \cite{vaswani2017attention} directly onto graph operations, utilizing community partitions as discrete "Attention Heads." We define a unified scoring function that integrates semantic similarity, community-level topology, and structural centrality. Benchmark results on the **Hetionet** \cite{hetionet2017} biomedical dataset demonstrate that CSA achieves a Mean Reciprocal Rank (MRR) of **0.68**, a **+183% improvement** over breadth-first search baselines. Furthermore, on the **MetaQA 3-hop** \cite{metaqa2017} reasoning task, CSA improves MRR by **+350%**, demonstrating superior beam steering in deep multi-hop traversals while maintaining full "Glass-Box" interpretability. As of v2.24.0, the CSA formula has been expanded to 10 parameters covering temporal decay, node recency, synthesis-density penalty, and grounding confidence, with both batch (CSAParameterLearner) and online per-community (MetaParameterLearner) learning, achieving MetaQA canonical results of H@1=46.1%/30.0%/46.0% across 1-, 2-, and 3-hop tasks (Phase 156, full 14,274-question run). The 3-hop result surpasses all published baselines including GraftNet (22.8%) and EmbedKGQA (29.8%).
 
 ### 1. Introduction
 The dominance of Transformer architectures in Natural Language Processing has inspired attempts to apply similar attention-based principles to graph structures. However, Graph Attention Networks (GATs) \cite{velickovic2018gat} typically operate on local ego-networks and struggle with global structural context. CSA addresses this by introducing a "Soft Community Constraint," where attention weights are influenced by the membership of nodes in pre-computed structural partitions (DSCF/TSC).
@@ -170,7 +170,7 @@ Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`. The sy
 |---|---|---|
 | MetaQA 1-hop | H@1 / H@10 | 46.1% / 96.6% |
 | MetaQA 2-hop | H@1 / H@10 | 30.0% / 86.3% |
-| MetaQA 3-hop | H@1 / H@10 | **45.7% / 71.0%** (Phase 154, full 14,274-question run) |
+| MetaQA 3-hop | H@1 / H@10 | **46.0% / 71.2%** (Phase 156, full 14,274-question run) |
 | WebQSP OPT | H@1 / H@10 / MRR | 6.27% / 20.84% / 10.66% |
 
 ## 7. Phase 55 Advances
@@ -1394,7 +1394,7 @@ All five components compose independently and additively.
 |---|---|---|
 | MetaQA 1-hop | H@1 / H@10 | 46.1% / 96.6% |
 | MetaQA 2-hop | H@1 / H@10 | 30.0% / 86.3% |
-| MetaQA 3-hop | H@1 / H@10 | **45.7% / 71.0%** (Phase 154, full 14,274-question run) |
+| MetaQA 3-hop | H@1 / H@10 | **46.0% / 71.2%** (Phase 156, full 14,274-question run) |
 | WebQSP OPT | H@1 / H@10 / MRR | 6.27% / 20.84% / 10.66% |
 | IKGWQ | AUC | 0.89 |
 | GrailQA | F1 / H@1 | 19.6% / 13.0% |

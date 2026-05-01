@@ -845,10 +845,11 @@ class CerebrumGraph:
         branch_bonus_weight: float         = 0.0,
         residual_k:        int             = 10,
         min_diversity_target: int          = 15,
-        terminal_relation_boost: Optional[Dict[str, float]] = None,
-        beam_widths:             Optional[Dict[int, int]] = None,
-        degree_penalty_weight:   float = 0.0,
-        penultimate_decay:       float = 0.0,
+        terminal_relation_boost:     Optional[Dict[str, float]] = None,
+        penultimate_relation_boost:  Optional[Dict[str, float]] = None,
+        beam_widths:                 Optional[Dict[int, int]] = None,
+        degree_penalty_weight:       float = 0.0,
+        penultimate_decay:           float = 0.0,
     ) -> List[Answer]:
         """
         Traverse the graph from ``seeds`` and return ranked answers.
@@ -932,6 +933,7 @@ class CerebrumGraph:
         _prev_widths: Dict[int, int] = {}  # only meaningful when not needs_custom
 
         _trb = terminal_relation_boost or {}
+        _prb = penultimate_relation_boost or {}
         if needs_custom:
             from core.resource_governor import ResourceGovernor
             traversal = BeamTraversal(
@@ -944,8 +946,9 @@ class CerebrumGraph:
                 warm_start_strength = self._warm_start_strength,
                 governor            = ResourceGovernor(memory_threshold_pct=memory_threshold_pct),
                 beam_widths         = _auto_beam_widths,  # Phase 136
-                terminal_relation_boost = _trb,
-                penultimate_decay   = penultimate_decay,   # Phase 151
+                terminal_relation_boost    = _trb,
+                penultimate_relation_boost = _prb,  # Phase 156
+                penultimate_decay          = penultimate_decay,
                 **csa_overrides # Inject hormonal overrides
             )
             traversal.global_workspace = self.global_workspace
@@ -983,9 +986,10 @@ class CerebrumGraph:
                 use_adaptive_expansion = _uae,
                 min_diversity_target  = min_diversity_target,
                 residual_k            = residual_k,
-                terminal_relation_boost = _trb,
-                beam_widths           = _auto_beam_widths,
-                penultimate_decay     = penultimate_decay,   # Phase 151: flows via traversal_kwargs
+                terminal_relation_boost    = _trb,
+                penultimate_relation_boost = _prb,  # Phase 156
+                beam_widths                = _auto_beam_widths,
+                penultimate_decay          = penultimate_decay,
                 **csa_overrides,
             )
             traversal._causal_edge_index = getattr(
