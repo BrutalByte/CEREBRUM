@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026
-**Status**: v2.42.0 (Phase 158 (r2 Path-Consistency Boost) COMPLETE)
+**Status**: v2.44.0 (Phase 160 (TRB Detection Fix) COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -647,6 +647,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 | **Distinct-Branch Convergence (DBC)** | Path count aggregation, GraftNet joint training | Log-scale bonus on entities confirmed via structurally independent hop-2 intermediaries; zero overhead when n_branches=1; no training required |
 | **Penultimate Relation Boost (r3→r2 map)** | Penultimate cascade (same-relation only) | Data-driven r3→r2 frequency map enables boosting a DIFFERENT relation at hop N-1; cascade was previously dead for cross-type templates |
 | **r2 Path-Consistency Boost (Phase 158)** | Path re-ranking, relation sequence scoring | Post-hoc score boost for answers whose best path uses training-verified r2 (nodes[1] check); pure multiplicative boost (no penalty); uses existing TraversalPath.nodes structure |
+| **Pre-pass 4 TRB Detection Fix (Phase 160)** | Keyword matching, question classification | Catches "who is listed as {relation_type} ..." templates where the answer keyword is at word[4], preventing suffix contamination from intermediate entity descriptors |
 
 ---
 
@@ -656,7 +657,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 **Novelty Statement**: Existing KG QA systems apply entity type constraints either at graph construction time (type-constrained embedding) or via post-hoc neural classifiers. CEREBRUM's answer-type filter is applied dynamically at query time from the KB's own triple structure, requires no training data, and is strictly constrained to observed KB objects — not type ontologies or predicted entity classes. Combined with a wider initial retrieval window, this allows a high `vote_weight` (convergence bonus) to amplify correctly-typed candidates without being overwhelmed by popular wrong-type hub entities.
 
-**Result**: H@1 MetaQA 3-hop: 23.0% (Phase 151) → 44.2% (Phase 152) → 45.1% (Phase 153) → 45.7% (Phase 154, DBC) → 46.0% (Phase 156, penultimate r2 boost) → 46.1% (Phase 157, vote_weight=0.85) → **46.4%** (Phase 158, r2 path-consistency boost). CEREBRUM surpasses all published baselines (GraftNet 22.8%, EmbedKGQA 29.8%) using only graph structure — no LLMs, no training data, no KG embeddings.
+**Result**: H@1 MetaQA 3-hop: 23.0% (Phase 151) → 44.2% (Phase 152) → 45.1% (Phase 153) → 45.7% (Phase 154, DBC) → 46.0% (Phase 156, penultimate r2 boost) → 46.1% (Phase 157, vote_weight=0.85) → 46.4% (Phase 158, r2 path-consistency boost) → **46.6%** (Phase 160, TRB detection fix). CEREBRUM surpasses all published baselines (GraftNet 22.8%, EmbedKGQA 29.8%) using only graph structure — no LLMs, no training data, no KG embeddings.
 
 **Relevant files**: `benchmarks/metaqa_eval.py` (`evaluate_hop`, `detect_target_relation`, `_relation_answer_set`)
 
@@ -664,9 +665,9 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 48: Multi-Pass TRB Detection with Structural Pre-Passes
 
-**Description**: `detect_target_relation()` uses three targeted pre-passes before a two-pass keyword scan to avoid cross-branch keyword collisions in 3-hop question templates: (1) `"when ..."` unambiguously maps to `release_year` regardless of intermediate relation keywords in the prefix; (2) terminal `"in which TERM"` patterns are detected by checking only the last word before suffix contamination from entity names; (3) `"what are/is..."` questions use an extended 6-word prefix to catch answer types at position 5 (e.g., `"what are the primary languages"`).
+**Description**: `detect_target_relation()` uses four targeted pre-passes before a two-pass keyword scan to avoid cross-branch keyword collisions in 3-hop question templates: (1) `"when ..."` unambiguously maps to `release_year` regardless of intermediate relation keywords in the prefix; (2) terminal `"in which TERM"` patterns are detected by checking only the last word before suffix contamination from entity names; (3) `"what are/is..."` questions use an extended 6-word prefix to catch answer types at position 5 (e.g., `"what are the primary languages"`); (4) `"who is listed as RELATION_TYPE ..."` templates check `words[4]` directly — without this pass, the suffix matches intermediate entity descriptors (e.g., "starred by X actors") and misclassifies `directed_by`/`written_by` questions as `starred_actors`.
 
-**Novelty Statement**: Standard NLP question classification assumes a fixed-length prefix is sufficient for intent detection. In multi-hop KG templates, intermediate relation keywords (actors, directors, writers) appear in the first 5-8 words, causing false positives that corrupt downstream type filtering. The pre-pass structure specifically targets the structural invariants of MetaQA-style 3-hop templates, reducing wrong detection from 16.8% to ~5.8% without expanding the prefix window globally.
+**Novelty Statement**: Standard NLP question classification assumes a fixed-length prefix is sufficient for intent detection. In multi-hop KG templates, intermediate relation keywords (actors, directors, writers) appear in the first 5-8 words, causing false positives that corrupt downstream type filtering. The pre-pass structure specifically targets the structural invariants of MetaQA-style 3-hop templates, reducing wrong detection from 16.8% to ~5.8% without expanding the prefix window globally. Phase 160 extended this with a fourth pre-pass that recovers 32+ previously misclassified questions whose answer type appears at word position 4 (one beyond the default prefix window).
 
 **Relevant files**: `benchmarks/metaqa_eval.py` (`detect_target_relation`)
 
@@ -746,4 +747,4 @@ For commercial licensing: **bryan.alexander@buchorn.com**
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 30, 2026 for version v2.42.0
+**Reviewed on**: May 1, 2026 for version v2.44.0

@@ -304,6 +304,17 @@ def detect_target_relation(
 
     # Pre-pass 3: "what are the primary TERM" — extend prefix only for "what
     # are/is" starters (safe because "share actors" never follows "what are").
+    # Pre-pass 4: "who is listed as RELATION_TYPE of films ..." — the answer-type
+    # keyword is at word[4] (index 4), just outside the default prefix_words=4 window.
+    # Without this pass, the suffix catches "starred/actors" from the path description
+    # and misidentifies directed_by/written_by questions as starred_actors.
+    if len(words) >= 5 and words[0] == "who" and words[1] == "is" and words[2] == "listed" and words[3] == "as":
+        for relation, keywords in _RELATION_KEYWORDS:
+            if relation not in kb_relations:
+                continue
+            if any(kw in words[4] for kw in keywords):
+                return relation
+
     effective_prefix = 6 if (len(words) >= 2 and words[0] == "what" and words[1] in ("are", "is")) else prefix_words
     prefix = " ".join(words[:effective_prefix])
     suffix = " ".join(words[-suffix_words:])
@@ -341,6 +352,8 @@ def evaluate_hop(
     diagnose_path:    Optional[str]  = None,
     min_filter_size:  int            = 1,
     expansion_k:      Optional[int]  = None,
+    eval_min_hop_3hop: Optional[int] = None,
+    r2_boost_map:     Optional[Dict[str, float]] = None,
 ) -> Dict:
     """
     Evaluate one hop level using the unified CerebrumGraph.query() interface.
@@ -362,8 +375,13 @@ def evaluate_hop(
     has_question = qa_pairs and len(qa_pairs[0]) == 3
 
     # For 2-hop: exclude depth-1 paths (direct neighbors are never the right answer).
-    # For 1-hop and 3-hop: allow min_hop=1 (shortcuts are valid).
-    eval_min_hop = 2 if hop == 2 else 1
+    # For 1-hop: allow min_hop=1. For 3-hop: default min_hop=1 but allow override.
+    if hop == 2:
+        eval_min_hop = 2
+    elif hop == 3 and eval_min_hop_3hop is not None:
+        eval_min_hop = eval_min_hop_3hop
+    else:
+        eval_min_hop = 1
 
     # Phase 146: discover KB relation vocabulary once for TRB detection
     _kb_relations: List[str] = []
@@ -474,13 +492,15 @@ def evaluate_hop(
                     _ans.score *= 1.0 / (1.0 + idf_weight * math.log1p(_freq))
                 answers_obj.sort(key=lambda a: a.score, reverse=True)
 
-        # Phase 158: r2 path-consistency boost — answers whose best path reached
+        # Phase 158/160: r2 path-consistency boost — answers whose best path reached
         # hop-2 via the expected r2 (from the r3→r2 training map) are boosted.
-        # For H1SE sub-paths, nodes[1] is the first edge relation (= original r2).
-        # Pure boost (no penalty) avoids hurting alternate-path correct answers.
-        if _is_3hop and _trb and r2_boost > 0.0 and r2_map:
+        # Phase 160: r2_boost_map allows per-relation tuning (e.g., higher boost for
+        # starred_actors where hub-entity dominance is worst).
+        if _is_3hop and _trb and r2_map:
             _detected_r3_pc = next(iter(_trb))
-            _expected_r2_pc = r2_map.get(_detected_r3_pc)
+            _eff_r2_boost = (r2_boost_map.get(_detected_r3_pc, r2_boost)
+                             if r2_boost_map else r2_boost)
+            _expected_r2_pc = r2_map.get(_detected_r3_pc) if _eff_r2_boost > 0.0 else None
             if _expected_r2_pc:
                 _changed = False
                 for _ans in answers_obj:
@@ -488,7 +508,7 @@ def evaluate_hop(
                     if _bp is not None and len(_bp.nodes) >= 2:
                         _path_r2 = _bp.nodes[1]  # odd index 1 = first edge relation
                         if _path_r2 == _expected_r2_pc:
-                            _ans.score *= (1.0 + r2_boost)
+                            _ans.score *= (1.0 + _eff_r2_boost)
                             _changed = True
                 if _changed:
                     answers_obj.sort(key=lambda a: a.score, reverse=True)
@@ -615,6 +635,18 @@ def main():
                         help="Phase 158: path-consistency r2 boost. Answers whose best "
                              "path has r2 == expected r2 (from training r3->r2 map) get "
                              "score *= (1 + r2-boost). Default 0.40 (tuned Phase 158).")
+    parser.add_argument("--sa-r2-boost", type=float, default=None,
+                        help="Phase 160: r2-boost override for starred_actors questions. "
+                             "Default None uses --r2-boost for all relations. "
+                             "starred_actors has worst H@1 (27%%) due to hub-entity "
+                             "dominance; a higher boost (e.g. 0.70) may close the gap. "
+                             "Other relations keep --r2-boost value.")
+    parser.add_argument("--eval-min-hop", type=int, default=None,
+                        help="Phase 160: minimum hop depth for 3-hop answer extraction. "
+                             "Default None=1 (current: allows 1-hop and 2-hop paths). "
+                             "Set to 2 to exclude 1-hop paths (seed's own direct relations "
+                             "like directed_by/has_genre). Set to 3 for strict 3-hop only. "
+                             "May reduce ranking miss from short-path contamination.")
     parser.add_argument("--expansion-k", type=int, default=None,
                         help="Phase 159: number of hop-1 entities given deep sub-traversals "
                              "in HopExpandedTraversal (default: graph default of 20). "
@@ -797,7 +829,10 @@ def main():
                                r2_boost=args.r2_boost,
                                diagnose_path=args.diagnose if hop == 3 else None,
                                min_filter_size=args.min_filter_size,
-                               expansion_k=args.expansion_k)
+                               expansion_k=args.expansion_k,
+                               eval_min_hop_3hop=args.eval_min_hop,
+                               r2_boost_map=({"starred_actors": args.sa_r2_boost}
+                                             if args.sa_r2_boost is not None else None))
         results.append(metrics)
 
         print(f"  Hits@1  : {metrics['hits_1']:.4f}  ({metrics['hits_1']*100:.1f}%)")

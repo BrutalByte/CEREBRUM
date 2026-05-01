@@ -5,6 +5,27 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.44.0] - 2026-05-01
+### Added
+- **Phase 160: TRB Detection Fix for "who is listed as X" Templates**
+  - **Root cause**: `detect_target_relation()` with `prefix_words=4` produces the prefix
+    "who is listed as" (4 words), which contains no relation keyword. The suffix then
+    matches "starred by [X] actors" in the path description → wrong `starred_actors`
+    detection for `directed_by` and `written_by` questions.
+  - **Pre-pass 4**: Explicitly handles the "who is listed as {relation_keyword} ..." template
+    by checking `words[4]` (the first word after "as") against `_RELATION_KEYWORDS`. Returns
+    the correct relation before falling through to the general prefix/suffix logic.
+  - **Impact**: 32+ questions previously misclassified as `starred_actors` (directors and
+    screenwriters filtered out) now get correct TRB detection.
+  - **Per-relation r2-boost** (`--sa-r2-boost FLOAT`): Exposes a per-relation override for
+    the `starred_actors` r2-boost, independent of the global `--r2-boost`. Ablated at
+    0.40/0.50/0.60/0.70 on 2000-sample; 0.40 optimal (flat vs global r2-boost=0.40 for
+    `starred_actors` specifically).
+  - **eval-min-hop** (`--eval-min-hop INT`): Exposes minimum hop count for 3-hop eval;
+    ablated min_hop=2 → catastrophic (−5.1pp H@1). Default remains 1.
+  - **Full 14K result**: H@1 0.4636→**0.4661** (+0.25pp), H@10 0.7135→**0.7212** (+0.77pp),
+    MRR 0.5557→**0.5614** (+0.57pp). Cumulative from Phase 151: H@1 23.0% → **46.6%**.
+
 ## [2.43.0] - 2026-05-01
 ### Added
 - **Phase 159: Coverage Miss Diagnostic + H1SE Expansion-K Investigation**
