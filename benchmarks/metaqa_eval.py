@@ -57,6 +57,7 @@ import argparse
 import csv
 import math
 import pickle
+import csv
 import re
 import random
 import sys
@@ -337,6 +338,9 @@ def evaluate_hop(
     idf_weight:       float          = 0.0,
     hop2_beam_width:  Optional[int]  = None,
     r2_boost:         float          = 0.0,
+    diagnose_path:    Optional[str]  = None,
+    min_filter_size:  int            = 1,
+    expansion_k:      Optional[int]  = None,
 ) -> Dict:
     """
     Evaluate one hop level using the unified CerebrumGraph.query() interface.
@@ -375,6 +379,8 @@ def evaluate_hop(
     # Phase 152: Answer-type constraint index — passed in from main() where it
     # is built directly from KB triples (objects only — not reversed edges).
     _relation_answer_set: Dict[str, set] = relation_answer_set or {}
+
+    _diag_rows: List[Dict] = []
 
     t0 = time.time()
     for i, qa in enumerate(qa_pairs):
@@ -451,6 +457,7 @@ def evaluate_hop(
             vote_weight                = vote_weight_3hop if _is_3hop else 0.45,
             branch_bonus_weight        = branch_bonus_weight if _is_3hop else 0.0,
             beam_widths                = _beam_widths,
+            expansion_k                = expansion_k if _is_3hop else None,
         )
         # Phase 157: IDF hub-entity penalty — applied before answer-type filter.
         # Penalizes entities that appear very frequently as objects of the target
@@ -488,17 +495,41 @@ def evaluate_hop(
 
         pred = [a.entity_id for a in answers_obj]
 
+        # Phase 159: diagnostic — capture pre-filter beam state
+        _diag: Optional[Dict] = None
+        if diagnose_path and _is_3hop:
+            _correct_in_beam = any(e in correct_answers for e in pred)
+            _beam_rank = next((i + 1 for i, e in enumerate(pred) if e in correct_answers), 0)
+            _diag = {
+                "q_idx": i,
+                "seed": seed,
+                "correct_answer": next(iter(correct_answers), ""),
+                "in_beam_top100": _correct_in_beam,
+                "beam_rank": _beam_rank,
+                "detected_rel": next(iter(_trb), "") if _trb else "",
+                "n_filtered": -1,
+                "correct_in_filtered": False,
+                "final_rank": 0,
+            }
+
         if not pred:
             skipped += 1
+            if _diag is not None:
+                _diag_rows.append(_diag)
             continue
 
-        # Phase 152: apply answer-type filter for 3-hop when TRB detected a relation
+        # Phase 152: apply answer-type filter for 3-hop when TRB detected a relation.
+        # Phase 159: soft fallback — only apply hard filter when len(filtered) >= min_filter_size.
+        # Prevents wrong TRB detection from locking out correct answers via thin filter results.
         if _is_3hop and _trb:
             detected_rel = next(iter(_trb))
             valid_answers = _relation_answer_set.get(detected_rel)
             if valid_answers:
                 filtered = [p for p in pred if p in valid_answers]
-                if filtered:
+                if _diag is not None:
+                    _diag["n_filtered"] = len(filtered)
+                    _diag["correct_in_filtered"] = any(e in correct_answers for e in filtered)
+                if len(filtered) >= min_filter_size:
                     pred = filtered[:top_k]
                 else:
                     pred = pred[:top_k]
@@ -506,6 +537,10 @@ def evaluate_hop(
                 pred = pred[:top_k]
         else:
             pred = pred[:top_k]
+
+        if _diag is not None:
+            _diag["final_rank"] = next((i + 1 for i, e in enumerate(pred) if e in correct_answers), 0)
+            _diag_rows.append(_diag)
 
         found   += 1
         h1      += hits_at_k(pred, correct_answers, k=1)
@@ -515,6 +550,15 @@ def evaluate_hop(
     elapsed = time.time() - t0
     print()
     n = len(qa_pairs)
+
+    if diagnose_path and _diag_rows:
+        _fields = ["q_idx", "seed", "correct_answer", "in_beam_top100", "beam_rank",
+                   "detected_rel", "n_filtered", "correct_in_filtered", "final_rank"]
+        with open(diagnose_path, "w", newline="", encoding="utf-8") as _csvf:
+            _w = csv.DictWriter(_csvf, fieldnames=_fields)
+            _w.writeheader()
+            _w.writerows(_diag_rows)
+        print(f"  Diagnostic CSV written: {diagnose_path} ({len(_diag_rows):,} rows)")
 
     return {
         "hop":        hop,
@@ -567,10 +611,26 @@ def main():
     parser.add_argument("--hop2-beam-width", type=int, default=None,
                         help="Per-hop beam width override at hop-2 for 3-hop traversal. "
                              "Default: same as --beam-width.")
-    parser.add_argument("--r2-boost", type=float, default=0.0,
+    parser.add_argument("--r2-boost", type=float, default=0.40,
                         help="Phase 158: path-consistency r2 boost. Answers whose best "
                              "path has r2 == expected r2 (from training r3->r2 map) get "
-                             "score *= (1 + r2-boost). Default 0.0 (disabled).")
+                             "score *= (1 + r2-boost). Default 0.40 (tuned Phase 158).")
+    parser.add_argument("--expansion-k", type=int, default=None,
+                        help="Phase 159: number of hop-1 entities given deep sub-traversals "
+                             "in HopExpandedTraversal (default: graph default of 20). "
+                             "Increasing to 50-100 covers more actors/directors at hop-1 "
+                             "for 3-hop queries, reducing coverage miss at the cost of "
+                             "higher compute per query.")
+    parser.add_argument("--diagnose", type=str, default=None, metavar="PATH",
+                        help="Phase 159: write per-question diagnostic CSV to PATH. "
+                             "Columns: in_beam_top100, beam_rank, n_filtered, "
+                             "correct_in_filtered, final_rank. 3-hop only.")
+    parser.add_argument("--min-filter-size", type=int, default=1,
+                        help="Phase 159: minimum number of type-filtered answers required "
+                             "to apply the hard answer-type filter. If fewer than this many "
+                             "answers pass the filter, fall back to unfiltered top-k. "
+                             "Default 1 (current behaviour). Try 3 or 5 to reduce filter "
+                             "false negatives from wrong TRB detection.")
     parser.add_argument("--seed",       type=int,   default=42)
     args = parser.parse_args()
 
@@ -734,7 +794,10 @@ def main():
                                answer_freq_map=_answer_freq,
                                idf_weight=args.idf_weight,
                                hop2_beam_width=args.hop2_beam_width,
-                               r2_boost=args.r2_boost)
+                               r2_boost=args.r2_boost,
+                               diagnose_path=args.diagnose if hop == 3 else None,
+                               min_filter_size=args.min_filter_size,
+                               expansion_k=args.expansion_k)
         results.append(metrics)
 
         print(f"  Hits@1  : {metrics['hits_1']:.4f}  ({metrics['hits_1']*100:.1f}%)")

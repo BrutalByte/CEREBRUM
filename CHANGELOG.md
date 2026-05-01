@@ -5,6 +5,48 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.43.0] - 2026-05-01
+### Added
+- **Phase 159: Coverage Miss Diagnostic + H1SE Expansion-K Investigation**
+  - **Diagnostic mode** (`--diagnose PATH`): `evaluate_hop()` now writes a per-question CSV
+    for 3-hop queries with columns: `in_beam_top100`, `beam_rank`, `detected_rel`,
+    `n_filtered`, `correct_in_filtered`, `final_rank`. Classifies each question as true
+    beam miss, filter-induced miss, or ranking miss without changing any scores.
+  - **Soft filter fallback** (`--min-filter-size INT`, default 1): Answer-type filter now
+    requires at least `min_filter_size` type-matched results before applying the hard
+    exclusion. Protects against wrong-TRB-detection locking out correct answers via thin
+    filter results. Default=1 preserves exact Phase 158 behavior.
+  - **Expansion-K tuning** (`--expansion-k INT`): Exposes `HopExpandedTraversal.expansion_k`
+    (number of hop-1 entities given deep sub-traversals) as a CLI parameter. Default None
+    uses the graph default of 20.
+  - **r2-boost default updated**: `--r2-boost` default changed from 0.0 to 0.40 to lock in
+    Phase 158's best-known configuration as the eval baseline.
+  - **Coverage miss audit** (2000-sample diagnostic results):
+    | Category | Count | % of questions |
+    |----------|-------|----------------|
+    | True beam miss (not in beam top-100) | 456 | 22.8% |
+    | Filter-induced miss (in beam, excluded by type filter) | 57 | 2.9% |
+    | Ranking miss (in top-10, wrong rank) | ~29% | ~29% |
+    | H@1 hit | 918 | 45.9% |
+  - **Expansion-K ablation** (2000-sample, r2-boost=0.40):
+    | expansion_k | H@1   | H@10  | MRR   |
+    |-------------|-------|-------|-------|
+    | 20 (default)| 0.459 | 0.716 | 0.553 |
+    | 50          | 0.459 | 0.717 | 0.553 |
+    | 100         | 0.463 | 0.716 | 0.555 |
+  - **Finding**: True beam miss (22.8%) is the dominant gap. Coverage bottleneck is
+    `expansion_k=20` cap in H1SE — only top-20 hop-1 entities get deep sub-traversals.
+    `release_year` questions hit hardest (36.7% beam miss) because movies with 30+ actors
+    have the correct actor below position 20. `has_genre` questions barely miss (2.3%)
+    because genre coverage saturates at 20 hop-1 entities.
+  - **Full 14K result with expansion_k=100**: H@1 0.4636→**0.4630** (~flat, within noise),
+    H@10 0.7135→**0.7154** (+0.19pp), MRR 0.5557→**0.5562** (+0.05pp). Runtime: 362s.
+    Coverage improves (H@10) but newly-covered correct answers don't reach rank-1 —
+    they come from lower-CSA-scored hop-1 branches and are outranked by hub entities.
+  - **Conclusion**: expansion_k=100 is a useful coverage tool but does not improve H@1.
+    The next phase should target the ranking miss for newly-covered candidates, or attack
+    the true beam miss from a structural angle (seed entity reachability, alternative paths).
+
 ## [2.42.0] - 2026-04-30
 ### Added
 - **Phase 158: r2 Path-Consistency Boost**
