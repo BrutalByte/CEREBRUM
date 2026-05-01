@@ -354,6 +354,7 @@ def evaluate_hop(
     expansion_k:      Optional[int]  = None,
     eval_min_hop_3hop: Optional[int] = None,
     r2_boost_map:     Optional[Dict[str, float]] = None,
+    structural_trb:   bool                        = False,
 ) -> Dict:
     """
     Evaluate one hop level using the unified CerebrumGraph.query() interface.
@@ -428,8 +429,10 @@ def evaluate_hop(
         # question prefix (first 5 words).  Applied at all hops: prefix-only
         # scanning avoids false hits from intermediate-hop keywords in multi-hop
         # questions.  Penultimate cascade fires automatically inside traversal.
+        # Phase 161: --structural-trb skips keyword detection entirely and lets
+        # CerebrumGraph.query() infer TRB from graph topology (SRI).
         _trb: Dict[str, float] = {}
-        if question_text and _kb_relations:
+        if not structural_trb and question_text and _kb_relations:
             detected = detect_target_relation(question_text, _kb_relations)
             if detected:
                 # Phase 151: TRB factor — 5.0 is sufficient with vote_weight=0.0;
@@ -463,19 +466,20 @@ def evaluate_hop(
             _beam_widths = {1: hop2_beam_width}
 
         answers_obj = graph.query(
-            seeds                      = [seed],
-            top_k                      = _raw_top_k,
-            min_hop                    = eval_min_hop,
-            max_hop                    = hop,
-            hop_expand                 = (hop >= 2),
-            query_embedding            = query_emb,
-            relation_prior             = relation_prior,
-            terminal_relation_boost    = _trb,
-            penultimate_relation_boost = _prb,
-            vote_weight                = vote_weight_3hop if _is_3hop else 0.45,
-            branch_bonus_weight        = branch_bonus_weight if _is_3hop else 0.0,
-            beam_widths                = _beam_widths,
-            expansion_k                = expansion_k if _is_3hop else None,
+            seeds                         = [seed],
+            top_k                         = _raw_top_k,
+            min_hop                       = eval_min_hop,
+            max_hop                       = hop,
+            hop_expand                    = (hop >= 2),
+            query_embedding               = query_emb,
+            relation_prior                = relation_prior,
+            terminal_relation_boost       = _trb,
+            penultimate_relation_boost    = _prb,
+            vote_weight                   = vote_weight_3hop if _is_3hop else 0.45,
+            branch_bonus_weight           = branch_bonus_weight if _is_3hop else 0.0,
+            beam_widths                   = _beam_widths,
+            expansion_k                   = expansion_k if _is_3hop else None,
+            auto_infer_terminal_relation  = structural_trb and _is_3hop,
         )
         # Phase 157: IDF hub-entity penalty — applied before answer-type filter.
         # Penalizes entities that appear very frequently as objects of the target
@@ -663,6 +667,12 @@ def main():
                              "answers pass the filter, fall back to unfiltered top-k. "
                              "Default 1 (current behaviour). Try 3 or 5 to reduce filter "
                              "false negatives from wrong TRB detection.")
+    parser.add_argument("--structural-trb", action="store_true",
+                        help="Phase 161: use StructuralRelationInferrer (SRI) for terminal "
+                             "relation boost instead of keyword detection. Fully agnostic — "
+                             "no question text, no domain keywords. Skips the answer-type "
+                             "hard filter (which requires KB relation names). Measures the "
+                             "gap between graph-structural inference and domain-assisted TRB.")
     parser.add_argument("--seed",       type=int,   default=42)
     args = parser.parse_args()
 
@@ -832,7 +842,8 @@ def main():
                                expansion_k=args.expansion_k,
                                eval_min_hop_3hop=args.eval_min_hop,
                                r2_boost_map=({"starred_actors": args.sa_r2_boost}
-                                             if args.sa_r2_boost is not None else None))
+                                             if args.sa_r2_boost is not None else None),
+                               structural_trb=args.structural_trb)
         results.append(metrics)
 
         print(f"  Hits@1  : {metrics['hits_1']:.4f}  ({metrics['hits_1']*100:.1f}%)")

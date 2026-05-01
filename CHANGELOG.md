@@ -5,6 +5,52 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.45.0] - 2026-05-01
+### Added
+- **Phase 161: StructuralRelationInferrer (SRI) — Agnostic Terminal Relation Boost**
+  - **New component** `core/structural_relation_inferrer.py`: pure graph-topology inference
+    of candidate terminal relations. No domain keywords, no LLM, no question text.
+  - **Structural insight**: Relations whose target entities are low-degree and high-diversity
+    are more likely to be terminal (answer-type) relations. `specificity(r) = target_diversity /
+    (1 + log1p(mean_target_degree))`. Built in one O(E) pass at `build()` time.
+  - **`GraphAdapter.get_relation_statistics()`** (new base method): returns per-relation
+    {freq, n_unique_targets, n_unique_sources, target_degree_sum} via `to_networkx()`.
+    Override in adapters for efficiency.
+  - **`CerebrumGraph.build()`**: attaches `self._sri` after CSA engine step.
+  - **`CerebrumGraph.query()`**: new `auto_infer_terminal_relation: bool = False` parameter.
+    Uses SRI hard-select mode (ratio ≥ 3.0) when True and no explicit TRB supplied.
+    Returns {} when confidence insufficient — safe fallback, never applies wrong boost.
+  - **`benchmarks/metaqa_eval.py`**: new `--structural-trb` flag. Skips keyword detection,
+    passes `auto_infer_terminal_relation=True` to `graph.query()`. Measures pure structural
+    performance as an honest agnosticism baseline.
+  - **MetaQA SRI summary** (from build-time scan):
+    | Relation | Specificity | Mean target degree |
+    |----------|-------------|-------------------|
+    | written_by | 0.200 | 4.9 (specific writers) |
+    | directed_by | 0.106 | 10.3 (some hubs) |
+    | starred_actors | 0.085 | 12.4 (moderate hubs) |
+    | has_tags | 0.032 | 74.7 |
+    | in_language | 0.004 | 364.9 (language hubs) |
+    | release_year | 0.001 | 291.8 (year hubs) |
+    | has_genre | 0.0002 | 2427.5 (extreme hubs) |
+  - **Agnostic mode result** (2000-sample, --structural-trb):
+    | Mode | H@1 | H@10 | MRR |
+    |------|-----|------|-----|
+    | Keyword TRB (domain-assisted) | 46.6% | 72.1% | 56.1% |
+    | SRI structural hard-select (agnostic) | 14.6% | 50.0% | 23.6% |
+    | Gap | −32pp | −22pp | −32pp |
+  - **Finding**: SRI correctly identifies `written_by` as the most structurally specific
+    relation (mean_deg=4.9; writers appear in few films). However, MetaQA 3-hop has 6
+    distinct terminal relation types per movie seed — without query intent, structural
+    inference cannot reliably distinguish which type a given question targets.
+    The H@1 gap (46.6% → 14.6%) is the honest, measurable cost of domain-agnosticism
+    on a multi-answer-type benchmark. Crucially, `vote_weight=0.85` was co-tuned with
+    TRB in mind; without type filtering, hub entities dominate and H@1 degrades further.
+  - **Architecture note**: SRI is most effective on graphs with structurally distinct
+    answer entity types (e.g., protein-drug graphs, legal KGs with typed entities).
+    For arbitrary multi-type graphs, SRI provides a structural baseline; domain-aware
+    callers can supply explicit TRB for higher precision.
+
 ## [2.44.0] - 2026-05-01
 ### Added
 - **Phase 160: TRB Detection Fix for "who is listed as X" Templates**

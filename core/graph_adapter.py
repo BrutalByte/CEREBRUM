@@ -242,6 +242,46 @@ class GraphAdapter(ABC):
                         break
         return edges
 
+    def get_relation_statistics(self) -> Dict[str, Dict]:
+        """
+        Return per-relation structural statistics over the full graph.
+
+        Result: {
+            relation_type: {
+                "freq":             int,    # total edge count for this relation
+                "n_unique_targets": int,    # distinct target entities
+                "n_unique_sources": int,    # distinct source entities
+                "target_degree_sum": float, # sum of degrees of all target entities
+            }
+        }
+
+        Default: O(E) pass via to_networkx(). Override in adapters that can
+        compute this more efficiently (e.g., from a pre-built index).
+        Used by StructuralRelationInferrer to build agnostic TRB hints.
+        """
+        from collections import defaultdict
+        G = self.to_networkx()
+        freq: Dict[str, int] = defaultdict(int)
+        unique_targets: Dict[str, set] = defaultdict(set)
+        unique_sources: Dict[str, set] = defaultdict(set)
+        target_degree_sum: Dict[str, float] = defaultdict(float)
+        degree = dict(G.degree())
+        for src, tgt, data in G.edges(data=True):
+            rel = data.get("relation", "RELATED_TO")
+            freq[rel] += 1
+            unique_targets[rel].add(tgt)
+            unique_sources[rel].add(src)
+            target_degree_sum[rel] += float(degree.get(tgt, 1))
+        return {
+            rel: {
+                "freq": freq[rel],
+                "n_unique_targets": len(unique_targets[rel]),
+                "n_unique_sources": len(unique_sources[rel]),
+                "target_degree_sum": target_degree_sum[rel],
+            }
+            for rel in freq
+        }
+
     def node_count(self) -> int:
         """Convenience: number of nodes (used for adaptive resolution)."""
         try:

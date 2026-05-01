@@ -786,7 +786,16 @@ class CerebrumGraph:
         self._csa.set_pagerank(pr_map)
 
         # ----------------------------------------------------------
-        # 5. BeamTraversal
+        # 5. StructuralRelationInferrer (Phase 161)
+        # ----------------------------------------------------------
+        if callback: callback(0.88, "Step 5/6: Building Structural Relation Inferrer...")
+        from core.structural_relation_inferrer import StructuralRelationInferrer
+        self._sri = StructuralRelationInferrer()
+        self._sri.build(self.adapter)
+        logger.info("SRI built: %d relation types indexed", len(self._sri._rel_freq))
+
+        # ----------------------------------------------------------
+        # 6. BeamTraversal
         # ----------------------------------------------------------
         self._traversal = BeamTraversal(
             adapter             = self.adapter,
@@ -850,6 +859,7 @@ class CerebrumGraph:
         beam_widths:                 Optional[Dict[int, int]] = None,
         degree_penalty_weight:       float = 0.0,
         penultimate_decay:           float = 0.0,
+        auto_infer_terminal_relation: bool = False,
     ) -> List[Answer]:
         """
         Traverse the graph from ``seeds`` and return ranked answers.
@@ -931,6 +941,22 @@ class CerebrumGraph:
 
         needs_custom = (mh != self._max_hop or bw != self._beam_width or memory_threshold_pct != 95.0 or bool(csa_overrides) or hop_expand or (beam_widths is not None))
         _prev_widths: Dict[int, int] = {}  # only meaningful when not needs_custom
+
+        # Phase 161: Structural auto-inference of terminal relation boost.
+        # Uses hard-select mode: only fires when top-1 relation is confidently
+        # more specific than top-2 (ratio >= 3.0). Returns {} when ambiguous
+        # so the traversal proceeds without TRB — safer than a wrong boost.
+        if auto_infer_terminal_relation and not terminal_relation_boost:
+            _sri = getattr(self, "_sri", None)
+            if _sri is not None and seeds:
+                terminal_relation_boost = _sri.to_boost_dict(
+                    seed_id=seeds[0],
+                    n_hops=max_hop or self._max_hop,
+                    adapter=self.adapter,
+                    hard_select=True,
+                    hard_select_factor=5.0,
+                    min_confidence_ratio=3.0,
+                )
 
         _trb = terminal_relation_boost or {}
         _prb = penultimate_relation_boost or {}

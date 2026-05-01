@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026
-**Status**: v2.44.0 (Phase 160 (TRB Detection Fix) COMPLETE)
+**Status**: v2.45.0 (Phase 161 (StructuralRelationInferrer) COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -747,4 +747,39 @@ For commercial licensing: **bryan.alexander@buchorn.com**
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 1, 2026 for version v2.44.0
+---
+
+### Claim 52: StructuralRelationInferrer (SRI) — Graph-Topology Terminal Relation Boost
+
+**Description**: A build-time component that computes per-relation structural statistics
+from the graph in one O(E) pass — no domain keywords, no LLM, no question text. For
+each relation type, SRI computes `specificity(r) = target_diversity(r) / (1 + log1p(mean_target_degree(r)))`,
+where `target_diversity = unique_targets / freq`. At query time, `to_boost_dict()` ranks
+candidate terminal relations by specificity and produces a `Dict[str, float]` in the same
+format as `terminal_relation_boost`. Hard-select mode (default) applies a boost only when
+the top-1 specificity exceeds the top-2 by a configurable confidence ratio; otherwise
+returns `{}` (no boost — safe fallback). Soft mode normalises all relations into
+`[min_boost, max_boost]` for graphs where all relation types are plausible terminal candidates.
+Exposed via `CerebrumGraph.query(auto_infer_terminal_relation=True)`.
+
+**Novelty Statement**: Existing KG QA systems infer answer types from question text (keyword
+matching, NER, or LLM prompting) or from entity-type ontologies baked into the graph schema.
+SRI is the first purely structural, training-free approach to terminal relation inference from
+graph topology alone. The specificity metric — target diversity penalised by mean target degree —
+formalises the structural insight that answer entities in well-structured KGs tend to be less
+central than intermediate hub entities. SRI is graph-agnostic: it requires no knowledge of
+relation names, domain vocabulary, or answer type ontologies.
+
+**Honest performance characterisation**: On MetaQA 3-hop, keyword-assisted TRB (46.6% H@1)
+outperforms SRI agnostic mode (14.6% H@1) by 32pp. This gap IS the measurable contribution
+of domain knowledge to multi-hop QA accuracy. SRI performs best on graphs with structurally
+distinct answer entity types; the MetaQA limitation arises because 6 terminal relation types
+(written_by, directed_by, starred_actors, has_genre, release_year, in_language) share the
+same movie-entity seed, making single-relation structural inference unreliable without query intent.
+
+**Relevant files**: `core/structural_relation_inferrer.py`, `core/graph_adapter.py`
+(`get_relation_statistics`), `core/cerebrum.py` (`_sri`, `auto_infer_terminal_relation`)
+
+---
+
+**Reviewed on**: May 1, 2026 for version v2.45.0
