@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026
-**Status**: v2.48.0 (Phase 164 (Terminal-Anchor Beam) COMPLETE)
+**Status**: v2.49.0 (Phase 165 (Hetionet CerebrumGraph Benchmark) COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -925,4 +925,39 @@ wiring), `benchmarks/metaqa_eval.py` (`--anchor-bonus` flag)
 
 ---
 
-**Reviewed on**: May 2, 2026 for version v2.48.0
+### Claim 56: CerebrumGraph-Based Heterogeneous KG Benchmark (Hetionet Phase 165)
+
+**Description**: A systematic benchmark framework that measures the independent contribution
+of each CEREBRUM architectural component on a typed heterogeneous biomedical knowledge graph
+(Hetionet: 47,031 nodes, 11 entity types, 24 metaedge types), using `CerebrumGraph.build()` +
+`CerebrumGraph.query()` rather than raw BeamTraversal.
+
+The framework introduces three methodological contributions over prior KG benchmarks:
+
+1. **Answer-type filtering via entity ID prefixes**: Candidate answers are filtered by
+   `entity_id.startswith(f"{answer_type}::")` using the "Kind::identifier" node ID scheme
+   inherent in Hetionet. This eliminates type-incompatible false positives without requiring
+   a separate type oracle or type-constraint propagation layer.
+
+2. **Per-template TRB mappings**: Each QA template has a biologically motivated terminal
+   relation (`{"Compound-treats-Disease": 3.0}` for drug-disease queries, etc.). TRB is
+   semantically grounded here — unlike MetaQA where all answers are movies, Hetionet answers
+   are biologically typed, making relation-specific boosting precise.
+
+3. **TAB anchor discrimination measurement**: Reports `|_anchor_sources[R]| / |all_nodes|`
+   for each template's terminal relation. For "Compound-treats-Disease":
+   `1,145 / 47,031 = 2.4%` — a strict subset that enables genuine intermediate hop
+   discrimination. Provides the first empirical measurement of TAB's discrimination capacity
+   across different KG types.
+
+**Scientific value of the DSCF type alignment score**: After `build()`, reports the purity of
+DSCF communities with respect to Hetionet's 11 known biological entity types. This purity is
+computed WITHOUT providing any type labels to DSCF — it is a post-hoc measurement of how well
+structure-only community detection recovers biological taxonomy. High purity (>0.8) would
+constitute evidence that graph topology encodes type information without explicit supervision.
+
+**Relevant files**: `benchmarks/hetionet_cerebrum_eval.py`
+
+---
+
+**Reviewed on**: May 1, 2026 for version v2.49.0

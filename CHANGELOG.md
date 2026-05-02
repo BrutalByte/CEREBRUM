@@ -5,6 +5,40 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.49.0] - 2026-05-01
+### Added
+- **Phase 165: CerebrumGraph-based Hetionet Biomedical KG Benchmark**
+  - **`benchmarks/hetionet_cerebrum_eval.py`** (new): Full CEREBRUM stack demonstration on
+    Hetionet — a 47,031-node heterogeneous biomedical KG with 11 entity types and 24 metaedge
+    types (Disease, Gene, Compound, Pathway, Anatomy, etc.).
+  - Uses `CerebrumGraph.build()` + `CerebrumGraph.query()` — replacing the raw BeamTraversal
+    of the original `hetionet_eval.py`. Enables the complete feature stack: DSCF communities,
+    CSA 10-parameter attention, SRI/TRB, H1SE, and TAB per query.
+  - **Template TRB mappings**: per-template `terminal_relation_boost` dicts targeting the
+    biologically specific terminal relation (e.g., `{"Compound-treats-Disease": 3.0}` for
+    compound_treats_disease). TRB is precision-meaningful here — the terminal relation is
+    biologically typed, unlike MetaQA's homogeneous entity types.
+  - **Answer-type filtering**: predictions filtered by entity type prefix
+    (`a.entity_id.startswith(f"{answer_type}::")`) before scoring. Eliminates false positives
+    from type-incompatible traversal paths without requiring a type oracle.
+  - **Fixed 3-hop template**: old `hetionet_eval.py` used "Disease-treated_by-Compound" which
+    does not exist as a metaedge label in Hetionet. Fixed chain uses "Compound-treats-Disease"
+    (stored edge label, traversable in either direction since graph is undirected):
+    `Disease → Gene → Disease → Compound` via
+    `["Disease-associates-Gene", "Disease-associates-Gene", "Compound-treats-Disease"]`.
+  - **Ablation ladder** (per template):
+    `BFS → DSCF+CSA → +TRB → +H1SE → +H1SE+TAB`
+  - **Type alignment score**: after build, reports DSCF community purity vs. the 11 known
+    Hetionet biological types without using any type labels during community detection.
+    High purity proves DSCF recovered biologically meaningful clusters purely from graph
+    structure.
+  - **TAB anchor diagnostic**: reports `anchor_sources["Compound-treats-Disease"]` set size
+    (≈1,145/47,031 = 2.4% of nodes) — a strict subset enabling genuine discrimination,
+    unlike MetaQA where all hop-2 entities qualify. This is the core architectural advantage
+    of typed heterogeneous KGs for TAB.
+  - **CLI**: `--n-questions`, `--beam-width`, `--top-k`, `--max-edges`, `--embeddings`,
+    `--template`, `--no-bfs`, `--trb-factor`, `--anchor-bonus`, `--expansion-k`
+
 ## [2.48.0] - 2026-05-02
 ### Added
 - **Phase 164: Terminal-Anchor Beam (TAB)**
