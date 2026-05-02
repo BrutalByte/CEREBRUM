@@ -5,6 +5,53 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.47.0] - 2026-05-01
+### Added
+- **Phase 163: Semantic Embeddings + Asymmetric Beam Search (SABS)**
+  - **Sentence-transformer integration**: `--embeddings sentence` now uses BGE-small-en-v1.5
+    (384 dims) with correct asymmetric encoding: `encode_query()` with BGE instruction prefix
+    for question text; `encode_entities()` for entity labels. Previous code used
+    `encode_entities()` for query text, losing the instruction-tuning benefit.
+  - **`benchmarks/metaqa_eval.py`**: Fixed `encode_query` path — check for `encode_query_fn`
+    attribute first; fall back to `encode_entities` for engines without asymmetric encoding.
+    Added `--graphsage`, `--kge`, `--kge-blend`, `--kge-epochs` flags.
+  - **`StructuralRelationInferrer.build_semantic_index(adapter, embedding_engine)`** (new):
+    Precomputes phrase embeddings for all relation types at build time.
+    `_rel_to_phrase()` converts snake_case relation labels to readable phrases
+    ("directed_by" → "directed by"). Activated at build when non-random engine detected.
+  - **`StructuralRelationInferrer.semantic_trb(query_embedding, ...)`** (new):
+    Cosine similarity between query embedding and relation phrase embeddings → TRB dict.
+    Soft mode: all relations boosted proportional to similarity. Hard mode: single winner
+    only when cosine gap > `hard_select_gap=0.03`.
+  - **Semantic TRB finding**: In agnostic mode, soft semantic TRB yields H@1=12.2% (worse
+    than CTRI 14.73%). Root cause: "starred_actors" semantically covers diverse question
+    types, receiving spurious top similarity. Hard mode fires too rarely (< 0.03 gap). The
+    semantic signal is useful for non-movie-homogeneous graphs but not MetaQA 3-hop.
+  - **Asymmetric Beam Search (SABS)**: Discovery that widening `hop2_beam_width` independently
+    of the outer beam width improves 3-hop precision:
+    - `hop2_beam_width=20` expands coverage at the middle traversal step (hop-2)
+    - Hop-1 and hop-3 remain at `beam_width=10` — tight entry point + tight final selection
+    - Combined with `trb_factor=8.0` (recalibrated from 5.0 for wider intermediate beam)
+    - **Mechanism**: At hop-2, a wider beam explores more intermediate entities (actors,
+      directors, movies) without contaminating final-hop ranking. TRB=8.0 then confidently
+      selects the correct terminal entity from the richer candidate pool.
+  - **MetaQA 3-hop results** (full 14,274):
+    | Config | H@1 | H@10 | MRR |
+    |--------|-----|------|-----|
+    | Phase 162 baseline (random emb) | 46.6% | 72.1% | 56.1% |
+    | + sentence embeddings | 46.9% | 73.15% | 56.4% |
+    | + asymmetric beam (hop2-bw=20, TRB=8.0) | **47.31%** | **73.20%** | **56.87%** |
+  - **Parameter ablation** (2000-sample):
+    | hop2-bw | TRB | H@1 |
+    |---------|-----|-----|
+    | 10 (flat) | 5.0 | 46.9% |
+    | 15 (flat) | 8.0 | 47.05% |
+    | 20 | 8.0 | **47.5%** |
+    | 25 | 8.0 | 47.25% |
+    | 30 | 8.0 | 46.95% |
+    | 20 | 6.0 | 47.15% |
+    | 20 | 10.0 | 46.6% |
+
 ## [2.46.0] - 2026-05-01
 ### Added
 - **Phase 162: Community-Based Terminal Relation Inference (CTRI)**

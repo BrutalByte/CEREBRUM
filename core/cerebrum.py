@@ -793,10 +793,15 @@ class CerebrumGraph:
         self._sri = StructuralRelationInferrer()
         self._sri.build(self.adapter)
         self._sri.build_community_fingerprints(self.adapter)  # Phase 162
+        # Phase 163: build semantic TRB index when a non-random embedding engine is available
+        _is_random_engine = type(self._embedding_engine).__name__.lower() == "randomengine"
+        if not _is_random_engine:
+            self._sri.build_semantic_index(self.adapter, self._embedding_engine)
         logger.info(
-            "SRI built: %d relation types, %d communities fingerprinted",
+            "SRI built: %d relation types, %d communities fingerprinted, semantic_index=%s",
             len(self._sri._rel_freq),
             len(self._sri._community_dominant_rel),
+            self._sri._semantic_index_built,
         )
 
         # ----------------------------------------------------------
@@ -947,21 +952,30 @@ class CerebrumGraph:
         needs_custom = (mh != self._max_hop or bw != self._beam_width or memory_threshold_pct != 95.0 or bool(csa_overrides) or hop_expand or (beam_widths is not None))
         _prev_widths: Dict[int, int] = {}  # only meaningful when not needs_custom
 
-        # Phase 161: Structural auto-inference of terminal relation boost.
-        # Uses hard-select mode: only fires when top-1 relation is confidently
-        # more specific than top-2 (ratio >= 3.0). Returns {} when ambiguous
-        # so the traversal proceeds without TRB — safer than a wrong boost.
+        # Phase 161/163: Structural / semantic auto-inference of terminal relation boost.
+        # Phase 163: when query_embedding is available and a semantic index was built,
+        # use query-relation cosine similarity (STRB) — more accurate than structural SRI.
+        # Phase 161: structural hard-select fallback when no embedding is available.
         if auto_infer_terminal_relation and not terminal_relation_boost:
             _sri = getattr(self, "_sri", None)
-            if _sri is not None and seeds:
-                terminal_relation_boost = _sri.to_boost_dict(
-                    seed_id=seeds[0],
-                    n_hops=max_hop or self._max_hop,
-                    adapter=self.adapter,
-                    hard_select=True,
-                    hard_select_factor=5.0,
-                    min_confidence_ratio=3.0,
-                )
+            if _sri is not None:
+                if query_embedding is not None and _sri._semantic_index_built:
+                    # Phase 163: semantic TRB via embedding similarity
+                    terminal_relation_boost = _sri.semantic_trb(
+                        query_embedding=query_embedding,
+                        boost_factor=5.0,
+                        soft_mode=True,
+                    )
+                elif seeds:
+                    # Phase 161: structural hard-select fallback
+                    terminal_relation_boost = _sri.to_boost_dict(
+                        seed_id=seeds[0],
+                        n_hops=max_hop or self._max_hop,
+                        adapter=self.adapter,
+                        hard_select=True,
+                        hard_select_factor=5.0,
+                        min_confidence_ratio=3.0,
+                    )
 
         _trb = terminal_relation_boost or {}
         _prb = penultimate_relation_boost or {}

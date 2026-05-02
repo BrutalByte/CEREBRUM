@@ -44,6 +44,9 @@ class StructuralRelationInferrer:
         self._community_dominant_rel: Dict[int, str] = {}
         self._community_purity: Dict[int, float] = {}
         self._community_rel_counts: Dict[int, Dict[str, int]] = {}
+        # Phase 163: semantic TRB — relation phrase embeddings
+        self._rel_phrase_embs: Dict[str, "np.ndarray"] = {}
+        self._semantic_index_built: bool = False
 
     # ------------------------------------------------------------------
     # Build-time: one O(E) pass via adapter.get_relation_statistics()
@@ -319,6 +322,98 @@ class StructuralRelationInferrer:
         if changed:
             answers_obj.sort(key=lambda a: a.score, reverse=True)
         return changed
+
+    # ------------------------------------------------------------------
+    # Phase 163: semantic TRB — query-embedding × relation-phrase similarity
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _rel_to_phrase(rel: str) -> str:
+        """Convert a snake_case relation name to a natural-language phrase."""
+        return rel.replace("_", " ")
+
+    def build_semantic_index(self, adapter: "GraphAdapter", embedding_engine) -> None:
+        """
+        Precompute relation phrase embeddings for query-time semantic TRB.
+
+        For each relation type in the graph, encode its natural-language phrase
+        (e.g. "directed_by" → "directed by") using the provided embedding engine.
+        Called at build() time when a non-random embedding engine is available.
+        """
+        try:
+            rel_types = list(self._rel_freq.keys())
+            if not rel_types:
+                rel_types = adapter.get_edge_types()
+            phrases = [self._rel_to_phrase(r) for r in rel_types]
+            vecs = embedding_engine.encode(phrases)
+            import numpy as _np
+            for r, v in zip(rel_types, vecs):
+                self._rel_phrase_embs[r] = _np.array(v, dtype=_np.float32).flatten()
+            self._semantic_index_built = True
+        except Exception:
+            pass  # fall back silently — structural SRI still available
+
+    def semantic_trb(
+        self,
+        query_embedding: "np.ndarray",
+        boost_factor: float = 5.0,
+        soft_mode: bool = True,
+        min_sim: float = 0.0,
+        hard_select_gap: float = 0.03,
+    ) -> Dict[str, float]:
+        """
+        Embedding-based terminal relation boost.
+
+        Computes cosine similarity between the query embedding and each relation's
+        natural-language phrase embedding. Returns a TRB dict in the same format
+        as terminal_relation_boost.
+
+        soft_mode=True (default): all relations receive a boost proportional to
+          their similarity score, scaled to [1.0, boost_factor]. Gentler — never
+          fully suppresses any relation type.
+
+        soft_mode=False (hard select): top-1 relation receives boost_factor; others
+          absent from dict. Only fires when top-1 exceeds top-2 by >= hard_select_gap.
+
+        Returns {} when the semantic index is not built or query_embedding is None.
+        """
+        if not self._semantic_index_built or not self._rel_phrase_embs:
+            return {}
+        import numpy as _np
+        q = _np.array(query_embedding, dtype=_np.float32).flatten()
+        q_norm = _np.linalg.norm(q)
+        if q_norm < 1e-9:
+            return {}
+        q = q / q_norm
+
+        sims: Dict[str, float] = {}
+        for r, v in self._rel_phrase_embs.items():
+            v_f = v.flatten().astype(_np.float32)
+            v_norm = _np.linalg.norm(v_f)
+            if v_norm < 1e-9:
+                continue
+            sims[r] = float(_np.dot(q, v_f / v_norm))
+
+        if not sims:
+            return {}
+
+        ranked = sorted(sims.items(), key=lambda x: x[1], reverse=True)
+
+        if not soft_mode:
+            # Hard select: fire only when top-1 and top-2 are sufficiently separated
+            if len(ranked) >= 2 and (ranked[0][1] - ranked[1][1]) < hard_select_gap:
+                return {}
+            return {ranked[0][0]: boost_factor}
+
+        # Soft mode: normalise similarities to [1.0, boost_factor]
+        lo = min(s for _, s in ranked if s >= min_sim)
+        hi = ranked[0][1]
+        rng = hi - lo if hi > lo else 1.0
+        return {
+            r: 1.0 + (boost_factor - 1.0) * (s - lo) / rng
+            for r, s in ranked
+            if s >= min_sim
+        }
 
     # ------------------------------------------------------------------
     # Introspection helpers

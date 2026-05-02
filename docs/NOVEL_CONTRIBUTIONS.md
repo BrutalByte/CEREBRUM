@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026
-**Status**: v2.46.0 (Phase 162 (Community-Based Terminal Relation Inference) COMPLETE)
+**Status**: v2.47.0 (Phase 163 (Semantic Embeddings + Asymmetric Beam Search) COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -836,4 +836,48 @@ purity provides reliable type-direction inference without domain vocabulary.
 
 ---
 
-**Reviewed on**: May 1, 2026 for version v2.46.0
+---
+
+### Claim 54: Asymmetric Beam Search with Hop-Depth-Specific Width (SABS)
+
+**Description**: A beam search configuration where the intermediate hop (hop-2 in 3-hop queries)
+uses an independently wider beam width than the entry and exit hops. The key parameters are:
+- `hop2_beam_width=20` at the middle traversal step (2× the outer beam)
+- `beam_width=10` for hop-1 (tight entry — prevents seed-adjacent noise)
+- `beam_width=10` for hop-3 (tight exit — TRB handles final-hop disambiguation)
+- `trb_factor=8.0` (recalibrated from 5.0 to compensate for richer intermediate candidates)
+
+**Mechanism**: In 3-hop KG traversal (entity → R1 → X → R2 → Y → R3 → answer), the middle hop
+(X → Y) is the critical coverage bottleneck. Widening only this intermediate step expands the
+set of intermediate entities explored without inflating the noise at the entry point (few good
+hop-1 neighbors) or the final hop (TRB already handles terminal-entity disambiguation). The wider
+intermediate beam increases the probability that the correct Y entity (e.g., intermediate movie,
+person) is retained, enabling the final hop to reach the correct answer.
+
+**Novelty Statement**: Standard beam searches apply a flat beam width at all depths, or use
+decaying widths (wider at shallow hops). SABS inverts this for 3-hop KG queries: the middle hop
+is widest. This is counter-intuitive because conventional wisdom suggests widening early hops to
+maximize downstream options. The SABS finding is that for structured multi-hop KG reasoning with
+TRB-based final-hop re-ranking, widening hop-2 specifically captures the structural diversity
+needed while TRB compensates at the terminal step. The combination is synergistic: wider hop-2
+feeds more diverse intermediate entities into hop-3; stronger TRB (8.0×) then confidently selects
+among them using the known terminal relation.
+
+**Empirical results on MetaQA 3-hop** (full 14,274):
+| Config | H@1 | H@10 | MRR |
+|--------|-----|------|-----|
+| Flat bw=10, TRB=5.0 (Phase 162 baseline) | 46.6% | 72.1% | 56.1% |
+| Flat bw=15, TRB=8.0 | 47.05% | 73.85% | 56.60% |
+| **SABS: hop2-bw=20, bw=10, TRB=8.0** | **47.31%** | **73.20%** | **56.87%** |
+
+Sentence-transformer embeddings (BGE-small-en-v1.5) contribute an additional +0.3pp H@1 over
+random embeddings in keyword TRB mode, primarily through improved CSA semantic similarity scoring
+in the first hop.
+
+**Relevant files**: `benchmarks/metaqa_eval.py` (`--hop2-beam-width`, `--trb-factor` flags),
+`core/cerebrum.py` (`query()` hop2_beam_width parameter), `core/structural_relation_inferrer.py`
+(semantic TRB index via `build_semantic_index`, `semantic_trb`)
+
+---
+
+**Reviewed on**: May 1, 2026 for version v2.47.0

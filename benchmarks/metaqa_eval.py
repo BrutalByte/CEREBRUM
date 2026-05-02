@@ -416,12 +416,18 @@ def evaluate_hop(
                 end="\r",
             )
 
-        # Encode question text as query_embedding when engine is available
+        # Encode question text as query_embedding when engine is available.
+        # Use encode_query() when available (BGE instruction prefix for asymmetric
+        # retrieval), falling back to encode_entities() for symmetric models.
         query_emb = None
         if question_text and embedding_engine is not None:
             try:
-                q_vecs    = embedding_engine.encode_entities({"__q__": question_text})
-                query_emb = q_vecs.get("__q__")
+                encode_query_fn = getattr(embedding_engine, "encode_query", None)
+                if encode_query_fn is not None:
+                    query_emb = encode_query_fn([question_text])[0]
+                else:
+                    q_vecs    = embedding_engine.encode_entities({"__q__": question_text})
+                    query_emb = q_vecs.get("__q__")
             except Exception:
                 pass
 
@@ -612,6 +618,17 @@ def main():
     parser.add_argument("--no-cache",   action="store_true",
                         help="Recompute DSCF and embeddings even if cached.")
     parser.add_argument("--embeddings", choices=["random", "sentence"], default="random")
+    parser.add_argument("--graphsage", action="store_true", default=False,
+                        help="Apply GraphSAGE neighborhood smoothing to entity embeddings "
+                             "after encoding. Enriches embeddings with 2-hop context. "
+                             "Most useful with --embeddings sentence.")
+    parser.add_argument("--kge", action="store_true", default=False,
+                        help="Train TransE/RotatE on graph triples and blend with base "
+                             "embeddings (Phase 135). Topology-aware enrichment.")
+    parser.add_argument("--kge-blend", type=float, default=0.5,
+                        help="KGE blend weight: final = (1-blend)*base + blend*kge (default 0.5).")
+    parser.add_argument("--kge-epochs", type=int, default=100,
+                        help="KGE training epochs (default 100; cached after first run).")
     parser.add_argument("--min-community-size", type=int, default=0,
                         help="Merge communities smaller than this. "
                              "Recommended: 20 for MetaQA.")
@@ -720,6 +737,10 @@ def main():
         min_community_size  = args.min_community_size,
         force_rebuild       = not args.use_cache,
         seed                = args.seed,
+        use_graphsage       = args.graphsage,
+        use_kge             = args.kge,
+        kge_blend           = args.kge_blend,
+        kge_epochs          = args.kge_epochs,
     )
     print(f"  {graph.community_count} communities")
 
