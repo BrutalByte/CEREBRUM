@@ -804,6 +804,23 @@ class CerebrumGraph:
             self._sri._semantic_index_built,
         )
 
+        # Phase 164: Terminal-Anchor Source Index — O(E) pass
+        # _anchor_sources[rel] = set of entity IDs with at least one outgoing rel edge.
+        # Used at query time to bias the penultimate-hop beam toward entities that can
+        # directly produce answers of the correct type.
+        self._anchor_sources: Dict[str, Any] = {}
+        try:
+            _G = self.adapter.to_networkx()
+            for _u, _v, _edata in _G.edges(data=True):
+                _rel = _edata.get("relation", "")
+                if _rel:
+                    if _rel not in self._anchor_sources:
+                        self._anchor_sources[_rel] = set()
+                    self._anchor_sources[_rel].add(_u)
+            logger.info("Phase 164: anchor source index built (%d relation types)", len(self._anchor_sources))
+        except Exception as _exc:
+            logger.warning("Phase 164: anchor source index build failed: %s", _exc)
+
         # ----------------------------------------------------------
         # 6. BeamTraversal
         # ----------------------------------------------------------
@@ -870,6 +887,7 @@ class CerebrumGraph:
         degree_penalty_weight:       float = 0.0,
         penultimate_decay:           float = 0.0,
         auto_infer_terminal_relation: bool = False,
+        anchor_bonus:                Optional[float] = None,
     ) -> List[Answer]:
         """
         Traverse the graph from ``seeds`` and return ranked answers.
@@ -979,6 +997,25 @@ class CerebrumGraph:
 
         _trb = terminal_relation_boost or {}
         _prb = penultimate_relation_boost or {}
+
+        # Phase 164: Terminal-Anchor hints — bias penultimate-hop beam toward entities
+        # that are sources of the terminal relation (can directly produce answer-type entities).
+        # anchor_hints uses sub-traversal hop indices: for 3-hop, hop-1 of sub-traversal
+        # (= hop-2 of full query) is the critical penultimate selection point.
+        _anchor_hints: Optional[Dict[int, Any]] = None
+        _stage1_anchor: Optional[Any] = None
+        if _trb and mh >= 3:
+            _best_rel = max(_trb, key=_trb.get)
+            _anchor_set = getattr(self, "_anchor_sources", {}).get(_best_rel)
+            if _anchor_set:
+                _sub_penultimate = mh - 2  # e.g. 3-hop → 1, 4-hop → 2
+                _anchor_bonus = anchor_bonus if anchor_bonus is not None else 2.0
+                _anchor_hints = {_sub_penultimate: (_anchor_set, _anchor_bonus)}
+                # Stage-1 anchor: prefer hop-1 entities that have outgoing edges to R3-source type
+                # (entities in anchor_set are sources of R3; their reverse-neighbors are good hop-1 entities)
+                # For simplicity use the anchor_set itself for stage-1 when seeds are OF that type
+                # (conservative: only activate when hop-1 entities are likely in anchor_set)
+                _stage1_anchor = None  # Disabled: too broad for most graphs, enable per-domain
         if needs_custom:
             from core.resource_governor import ResourceGovernor
             traversal = BeamTraversal(
@@ -1035,6 +1072,8 @@ class CerebrumGraph:
                 penultimate_relation_boost = _prb,  # Phase 156
                 beam_widths                = _auto_beam_widths,
                 penultimate_decay          = penultimate_decay,
+                anchor_hints               = _anchor_hints,       # Phase 164
+                stage1_anchor_hint         = _stage1_anchor,      # Phase 164
                 **csa_overrides,
             )
             traversal._causal_edge_index = getattr(

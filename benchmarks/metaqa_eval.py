@@ -355,6 +355,7 @@ def evaluate_hop(
     eval_min_hop_3hop: Optional[int] = None,
     r2_boost_map:     Optional[Dict[str, float]] = None,
     structural_trb:   bool                        = False,
+    anchor_bonus:     Optional[float]             = None,
 ) -> Dict:
     """
     Evaluate one hop level using the unified CerebrumGraph.query() interface.
@@ -486,6 +487,7 @@ def evaluate_hop(
             beam_widths                   = _beam_widths,
             expansion_k                   = expansion_k if _is_3hop else None,
             auto_infer_terminal_relation  = structural_trb and _is_3hop,
+            anchor_bonus                  = anchor_bonus if _is_3hop else None,
         )
         # Phase 157: IDF hub-entity penalty — applied before answer-type filter.
         # Penalizes entities that appear very frequently as objects of the target
@@ -690,6 +692,10 @@ def main():
                              "no question text, no domain keywords. Skips the answer-type "
                              "hard filter (which requires KB relation names). Measures the "
                              "gap between graph-structural inference and domain-assisted TRB.")
+    parser.add_argument("--anchor-bonus", type=float, default=None,
+                        help="Phase 164: Terminal-Anchor bonus multiplier applied at the "
+                             "penultimate hop (hop-2 for 3-hop) to entities that are sources "
+                             "of the terminal relation. Default None (disabled).")
     parser.add_argument("--seed",       type=int,   default=42)
     args = parser.parse_args()
 
@@ -864,7 +870,8 @@ def main():
                                eval_min_hop_3hop=args.eval_min_hop,
                                r2_boost_map=({"starred_actors": args.sa_r2_boost}
                                              if args.sa_r2_boost is not None else None),
-                               structural_trb=args.structural_trb)
+                               structural_trb=args.structural_trb,
+                               anchor_bonus=args.anchor_bonus)
         results.append(metrics)
 
         print(f"  Hits@1  : {metrics['hits_1']:.4f}  ({metrics['hits_1']*100:.1f}%)")

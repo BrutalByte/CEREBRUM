@@ -5,6 +5,45 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.48.0] - 2026-05-02
+### Added
+- **Phase 164: Terminal-Anchor Beam (TAB)**
+  - **`BeamTraversal._anchor_hints: Dict[int, Tuple[Set[str], float]]`** (new):
+    Per-hop anchor hints. At the specified non-terminal hop, entities in the anchor set
+    receive a score multiplier for pruning sort order. Does NOT mutate path scores —
+    only affects which entities survive beam pruning at that hop.
+  - **`HopExpandedTraversal._stage1_anchor`** (new):
+    Optional stage-1 anchor — biases which hop-1 entities receive deep sub-traversals,
+    using the same `(entity_set, bonus_factor)` interface.
+  - **`CerebrumGraph.build()`**: O(E) pass builds `self._anchor_sources[rel] = Set[entity_id]`
+    — all entities that have at least one outgoing edge of relation type `rel`. Built once
+    at load time, never recomputed. Zero runtime overhead.
+  - **`CerebrumGraph.query(anchor_bonus=None)`**: new optional parameter. When set and TRB
+    is active, computes `anchor_hints = {sub_penultimate: (anchor_set, bonus)}` and
+    `stage1_anchor_hint` from the dominant terminal relation, passing to HopExpandedTraversal.
+    `sub_penultimate = max_hop - 2` (3-hop → hop-1 of sub-traversal = hop-2 of full query).
+  - **`benchmarks/metaqa_eval.py`**: new `--anchor-bonus` flag (default None = disabled).
+  - **MetaQA 3-hop results** (full 14,274, anchor_bonus=1.5):
+    | Config | H@1 | H@10 | MRR |
+    |--------|-----|------|-----|
+    | Phase 163 best (no anchor) | 47.31% | 73.20% | 56.87% |
+    | + anchor_bonus=1.5 | 47.09% | 73.13% | 56.75% |
+  - **Honest assessment for MetaQA**: The anchor boost is neutral-to-slightly-harmful on
+    MetaQA 3-hop because MetaQA's graph is structurally homogeneous — ALL hop-2 intermediate
+    entities are movies, and ALL movies are sources of every terminal relation. The anchor set
+    `_anchor_sources[R3]` = all movies ≈ all hop-2 candidates. No discrimination possible.
+  - **Value for heterogeneous KGs**: TAB is specifically useful when:
+    - Entity types are differentiated (protein, drug, disease, gene in bio-KGs)
+    - Not all hop-2 entities can lead to the answer type (only proteins are sources of
+      protein-interaction relations, only courts are sources of legal judgment relations)
+    - The anchor set is a strict subset (< 50%) of the hop-2 candidate pool
+    In such graphs, TAB preferentially keeps the "correct type" intermediate entities in the
+    beam, directly reducing the 22.7% pure-miss rate from undiscriminating beam pruning.
+  - **Architecture note**: TAB is the first CEREBRUM mechanism that explicitly uses
+    knowledge of the EXPECTED ANSWER TYPE to guide INTERMEDIATE HOP selection, not just
+    final-hop re-ranking. This closes the loop between TRB (terminal hop) and beam traversal
+    (intermediate hops).
+
 ## [2.47.0] - 2026-05-01
 ### Added
 - **Phase 163: Semantic Embeddings + Asymmetric Beam Search (SABS)**

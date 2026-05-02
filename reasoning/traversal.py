@@ -386,6 +386,11 @@ class BeamTraversal:
         self.terminal_relation_boost: Dict[str, float] = dict(kwargs.get("terminal_relation_boost", {}) or {})
         # Phase 156: Penultimate Relation Boost - separate relation(s) to boost at hop N-1
         self.penultimate_relation_boost: Dict[str, float] = dict(kwargs.get("penultimate_relation_boost", {}) or {})
+        # Phase 164: Terminal-Anchor hints — {hop: (entity_set, bonus_factor)}
+        # At the specified hop, entities in the set get their sort key multiplied by bonus_factor.
+        # Does not mutate path scores; only affects pruning order. Safe to apply at any non-terminal hop.
+        raw_ah = kwargs.get("anchor_hints", None)
+        self._anchor_hints: Dict[int, Tuple[Set[str], float]] = dict(raw_ah) if raw_ah else {}
         # Phase 99: Thalamic Gating - WM priming map
         self.node_priming: Dict[str, float] = {}
         self.priming_boost: float = 0.3
@@ -1052,9 +1057,19 @@ class BeamTraversal:
                     return heapq.nlargest(hop_bw, candidates, key=lambda p: p.q_score)
                 return sorted(candidates, key=lambda p: p.q_score, reverse=True)
             else:
+                # Phase 164: Terminal-Anchor sort key — applies bonus to anchored entities
+                # at the specified non-terminal hop without mutating path scores.
+                _ah = self._anchor_hints.get(hop) if (hop < self.max_hop and self._anchor_hints) else None
+                if _ah:
+                    _a_set, _a_bonus = _ah
+                    def _sort_key(p: TraversalPath) -> float:
+                        return p.score * (_a_bonus if p.tail in _a_set else 1.0)
+                else:
+                    def _sort_key(p: TraversalPath) -> float:  # type: ignore[misc]
+                        return p.score
                 if hop < self.max_hop and len(candidates) > hop_bw:
-                    return heapq.nlargest(hop_bw, candidates, key=lambda p: p.score)
-                return sorted(candidates, key=lambda p: p.score, reverse=True)
+                    return heapq.nlargest(hop_bw, candidates, key=_sort_key)
+                return sorted(candidates, key=_sort_key, reverse=True)
 
     def _infer_dim(self) -> int:
         """Infer embedding dimension from the adapter."""

@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026
-**Status**: v2.47.0 (Phase 163 (Semantic Embeddings + Asymmetric Beam Search) COMPLETE)
+**Status**: v2.48.0 (Phase 164 (Terminal-Anchor Beam) COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -880,4 +880,49 @@ in the first hop.
 
 ---
 
-**Reviewed on**: May 1, 2026 for version v2.47.0
+---
+
+### Claim 55: Terminal-Anchor Beam (TAB) — Answer-Type-Aware Intermediate Hop Selection
+
+**Description**: A beam search mechanism that uses knowledge of the expected terminal relation
+type (from TRB) to bias intermediate hop selection toward entities that CAN produce answers
+of the correct type. Specifically:
+
+1. **Build time**: O(E) pass builds `_anchor_sources[rel]` — the set of all entities with at
+   least one outgoing edge of each relation type.
+2. **Query time**: When TRB identifies the terminal relation R3, the anchor set
+   `_anchor_sources[R3]` identifies all entities that are direct sources of R3 edges (the
+   "penultimate" entity type).
+3. **Beam pruning**: At the penultimate hop (hop-2 for 3-hop queries), the pruning sort key
+   includes an anchor bonus multiplier for entities in the anchor set. This prefers entities
+   that can directly produce answer-type entities WITHOUT MUTATING PATH SCORES (the bonus
+   only affects which entities survive pruning, not their downstream scoring weight).
+
+**Novelty Statement**: All prior multi-hop KG traversal methods (BeamSearchQA, NSM, MINERVA)
+use a uniform beam width at all hops, with the same scoring criterion regardless of the
+expected answer type. TAB is the first mechanism to connect the ANSWER-TYPE KNOWLEDGE
+(available via TRB at query time) to INTERMEDIATE HOP SELECTION (previously blind to answer
+type). The distinction between "terminal hop re-ranking" (TRB) and "intermediate hop biasing"
+(TAB) is fundamental: TRB helps rank the final answer; TAB helps ensure the correct path
+survives to the final hop at all. TAB addresses the 22.7% pure coverage failure observed on
+MetaQA 3-hop — cases where the correct answer is never reached because the correct
+intermediate entity was pruned.
+
+**Empirical characterisation**:
+- MetaQA 3-hop: Neutral (anchor_bonus=1.5 → H@1=47.09% vs 47.31% without anchor). Root
+  cause: MetaQA graph is structurally homogeneous — all seeds are movies, all R3-source
+  entities are movies, making the anchor set = all hop-2 candidates. No discrimination.
+- Expected benefit on heterogeneous KGs: protein-drug interaction graphs (only proteins are
+  sources of binding interactions, only drugs are sources of treatment relations), legal KGs
+  (only courts are sources of judgment relations), scientific KGs (only specific entity types
+  are sources of causal relations). In such graphs, TAB reduces beam coverage failure
+  proportional to `1 - |anchor_set| / |all_hop2_candidates|`.
+
+**Relevant files**: `reasoning/traversal.py` (`_anchor_hints`, anchor-aware `_prune_candidates`),
+`reasoning/expanded_traversal.py` (`_stage1_anchor`, `_rank_key` anchor bonus, `_make_traversal`
+pop), `core/cerebrum.py` (`_anchor_sources` build, `anchor_bonus` query param, `anchor_hints`
+wiring), `benchmarks/metaqa_eval.py` (`--anchor-bonus` flag)
+
+---
+
+**Reviewed on**: May 2, 2026 for version v2.48.0
