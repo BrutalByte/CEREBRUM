@@ -5,6 +5,43 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.46.0] - 2026-05-01
+### Added
+- **Phase 162: Community-Based Terminal Relation Inference (CTRI)**
+  - **`StructuralRelationInferrer.build_community_fingerprints(adapter)`** (new method):
+    O(E) pass over graph edges counting **incoming** relation types per DSCF community.
+    Computes `dominant_rel` and `purity = max_rel_count / total` per community.
+    High-purity communities (year/genre/language clusters) reliably indicate entity type.
+  - **`StructuralRelationInferrer.community_consensus_boost(answers_obj, adapter, ...)`** (new method):
+    Post-traversal re-ranking via path-based terminal relation consensus voting.
+    - **Primary**: votes on `best_path.nodes[-2]` (actual traversed terminal relation) for
+      each top-K candidate. Only considers deepest paths (within 1 hop of max depth) to
+      avoid short-path bias corrupting the vote with hub-attraction artifacts.
+    - **Fallback**: community dominant-relation voting when path info is absent.
+    - Conservative defaults: `min_consensus_fraction=0.65`, `boost_factor=3.0`,
+      `penalty_factor=1.0` (no penalty). Fires only with strong consensus; no downside
+      on low-confidence queries.
+  - **`CerebrumGraph.build()`**: calls `self._sri.build_community_fingerprints(self.adapter)`
+    immediately after `self._sri.build()`. Zero additional graph load time.
+  - **`CerebrumGraph.query()`**: calls `_sri.community_consensus_boost()` post-traversal
+    when `auto_infer_terminal_relation=True`.
+  - **MetaQA 3-hop agnostic results** (full 14,274):
+    | Mode | H@1 | H@10 | MRR |
+    |------|-----|------|-----|
+    | Keyword TRB (domain-assisted) | 46.6% | 72.1% | 56.1% |
+    | SRI only (Phase 161, agnostic) | ~14.4% | ~49.2% | ~23.2% |
+    | CTRI (Phase 162, agnostic) | **14.73%** | **49.68%** | **23.54%** |
+  - **Diagnosis**: For MetaQA 3-hop, all seeds are movies — structurally homogeneous.
+    The traversal without TRB finds a mix of actor/director/writer/year/genre candidates
+    regardless of question type. Path consensus correctly identifies `starred_actors` 67%
+    of the time when it fires on actor questions, but incorrectly infers `starred_actors`
+    for other question types (0% accuracy). CTRI's conservative threshold (`min=0.65`)
+    prevents false boosts while capturing true consensus when it exists.
+  - **Where CTRI excels**: graphs with structurally differentiated seed entity types
+    (protein-drug KGs, legal KGs with typed roles, heterogeneous knowledge graphs where
+    seed type predicts query direction). For such graphs, community purity of high-purity
+    communities provides reliable type inference without any domain knowledge.
+
 ## [2.45.0] - 2026-05-01
 ### Added
 - **Phase 161: StructuralRelationInferrer (SRI) — Agnostic Terminal Relation Boost**

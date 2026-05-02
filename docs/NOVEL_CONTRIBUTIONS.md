@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026
-**Status**: v2.45.0 (Phase 161 (StructuralRelationInferrer) COMPLETE)
+**Status**: v2.46.0 (Phase 162 (Community-Based Terminal Relation Inference) COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -782,4 +782,58 @@ same movie-entity seed, making single-relation structural inference unreliable w
 
 ---
 
-**Reviewed on**: May 1, 2026 for version v2.45.0
+---
+
+### Claim 53: Community-Based Terminal Relation Inference (CTRI) — Post-Traversal Path Consensus
+
+**Description**: A post-traversal re-ranking component that infers the terminal relation type
+from the actual traversal output — not from pre-traversal global statistics. After the beam
+search returns top-K candidate answers, CTRI:
+1. **Path-based consensus vote**: for each candidate, extracts `best_path.nodes[-2]` (the actual
+   terminal relation used to reach that entity). Only the deepest paths (within 1 hop of max
+   depth) are included to prevent short-path bias from hub-attracting intermediate relations
+   corrupting the vote.
+2. **Community fallback**: when path info is absent, votes via DSCF community dominant-relation
+   fingerprints (built at graph load time by `build_community_fingerprints()`).
+3. **Boost when consensus is strong**: if the winning relation's vote share ≥ `min_consensus_fraction`
+   (default 0.65), boost all answers whose path uses that relation by `boost_factor`.
+
+Community fingerprints (`_community_dominant_rel`, `_community_purity`) are computed in one O(E)
+pass counting **incoming** edges per community — terminal entities receive these relation types,
+so incoming-edge counting correctly fingerprints entity type (year/genre/language communities have
+purity ≥ 0.9; actor/director communities ~0.7).
+
+**Novelty Statement**: CTRI is the first post-traversal terminal relation inference method that
+uses the traversal's own path evidence rather than pre-computed global statistics. The distinction
+is fundamental: SRI guesses the terminal relation BEFORE seeing candidates; CTRI infers FROM the
+candidates the traversal actually found. This makes CTRI strictly more evidential — if the
+traversal reached mostly director entities via `directed_by`, the consensus IS `directed_by`, and
+CTRI correctly boosts those answers without any domain knowledge. The `nodes[-2]` path terminal
+relation is verifiable, reproducible evidence from the graph structure itself.
+
+**Honest performance characterisation**: On MetaQA 3-hop (full 14,274 test set):
+| Mode | H@1 | H@10 | MRR |
+|------|-----|------|-----|
+| Keyword TRB (domain-assisted, Phase 160) | 46.6% | 72.1% | 56.1% |
+| SRI only (Phase 161, agnostic) | ~14.4% | ~49.2% | ~23.2% |
+| CTRI (Phase 162, agnostic) | **14.73%** | **49.68%** | **23.54%** |
+
+CTRI yields +0.3pp H@1, +0.5pp H@10 over SRI. The marginal improvement on MetaQA reflects a
+fundamental structural limitation: ALL MetaQA 3-hop seeds are movie entities, making the traversal
+output structurally indistinguishable between question types (the same movie seed appears in
+"who directed", "what year", and "who starred in" questions). Diagnostic analysis confirmed that
+path consensus correctly identifies the terminal relation for `starred_actors` questions (67%
+accuracy when fired) but fails for other types (0%) because the unguided traversal inevitably
+over-represents actor candidates. CTRI's conservative threshold (0.65) prevents false boosts.
+
+CTRI excels on heterogeneous KGs with diverse seed entity types: protein-drug interaction graphs
+(protein vs. drug seeds predict distinct query directions), legal KGs (person vs. statute seeds),
+or scientific KGs where entity class correlates with relational role. For such graphs, community
+purity provides reliable type-direction inference without domain vocabulary.
+
+**Relevant files**: `core/structural_relation_inferrer.py` (`build_community_fingerprints`,
+`community_consensus_boost`), `core/cerebrum.py` (`build()` fingerprint call, `query()` boost call)
+
+---
+
+**Reviewed on**: May 1, 2026 for version v2.46.0

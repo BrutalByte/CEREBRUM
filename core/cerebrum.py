@@ -792,7 +792,12 @@ class CerebrumGraph:
         from core.structural_relation_inferrer import StructuralRelationInferrer
         self._sri = StructuralRelationInferrer()
         self._sri.build(self.adapter)
-        logger.info("SRI built: %d relation types indexed", len(self._sri._rel_freq))
+        self._sri.build_community_fingerprints(self.adapter)  # Phase 162
+        logger.info(
+            "SRI built: %d relation types, %d communities fingerprinted",
+            len(self._sri._rel_freq),
+            len(self._sri._community_dominant_rel),
+        )
 
         # ----------------------------------------------------------
         # 6. BeamTraversal
@@ -1154,6 +1159,12 @@ class CerebrumGraph:
             degree_penalty_weight = degree_penalty_weight,  # Phase 151 bug fix
             adapter               = self.adapter,           # Phase 151 bug fix
         )
+
+        # Phase 162: community consensus post-traversal re-ranking
+        if auto_infer_terminal_relation and answers:
+            _sri = getattr(self, "_sri", None)
+            if _sri is not None:
+                _sri.community_consensus_boost(answers, self.adapter)
 
         # Phase 95: record query result into working memory buffer
         if self._working_memory is not None:

@@ -40,6 +40,10 @@ class StructuralRelationInferrer:
         self._rel_target_degree_sum: Dict[str, float] = {}
         self._specificity: Dict[str, float] = {}
         self._built: bool = False
+        # Phase 162: community fingerprints
+        self._community_dominant_rel: Dict[int, str] = {}
+        self._community_purity: Dict[int, float] = {}
+        self._community_rel_counts: Dict[int, Dict[str, int]] = {}
 
     # ------------------------------------------------------------------
     # Build-time: one O(E) pass via adapter.get_relation_statistics()
@@ -177,6 +181,144 @@ class StructuralRelationInferrer:
             rel: min_boost + ((s - lo) / rng) * (max_boost - min_boost)
             for rel, s in scores.items()
         }
+
+    # ------------------------------------------------------------------
+    # Phase 162: community fingerprinting (build-time)
+    # ------------------------------------------------------------------
+
+    def build_community_fingerprints(self, adapter: "GraphAdapter") -> None:
+        """
+        O(E) scan: for each edge (u→v, relation), tally relation type at the
+        target entity's community. Compute dominant relation and purity per
+        community.
+
+        Purity = max_rel_count / total_edge_count for that community.
+        High purity (>0.5): community is entity-type-pure — reliable inference.
+        Low purity (<0.3): mixed community — inference skipped.
+        """
+        community_map = getattr(adapter, "community_map", {})
+        if not community_map:
+            return
+        G = adapter.to_networkx()
+        cid_rels: Dict[int, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        for u, v, data in G.edges(data=True):
+            rel = data.get("relation", "RELATED_TO")
+            # Count only incoming edges for each community — terminal entities
+            # are the *targets* of the final-hop relation. Counting source-side
+            # would inflate movie communities with every relation type.
+            v_cid = community_map.get(v, -1)
+            if v_cid >= 0:
+                cid_rels[v_cid][rel] += 1
+        for cid, rel_counts in cid_rels.items():
+            total = sum(rel_counts.values())
+            dominant = max(rel_counts, key=rel_counts.__getitem__)
+            self._community_dominant_rel[cid] = dominant
+            self._community_purity[cid] = rel_counts[dominant] / total if total else 0.0
+            self._community_rel_counts[cid] = dict(rel_counts)
+
+    # ------------------------------------------------------------------
+    # Phase 162: post-traversal community consensus boost (query-time)
+    # ------------------------------------------------------------------
+
+    def community_consensus_boost(
+        self,
+        answers_obj: List,
+        adapter: "GraphAdapter",
+        boost_factor: float = 3.0,
+        penalty_factor: float = 1.0,
+        min_purity: float = 0.50,
+        min_consensus_fraction: float = 0.65,
+        top_k_candidates: int = 50,
+    ) -> bool:
+        """
+        Post-traversal re-ranking using path-based terminal relation consensus.
+
+        Primary: vote on the actual terminal relation in each answer's traversal
+        path (best_path.nodes[-2]). Confidence = winning_rel_weight / total.
+        When consensus is strong enough:
+          - boost_factor applied to answers matching consensus relation
+          - penalty_factor applied to answers NOT matching consensus relation
+        The combination of boost+penalty is more discriminative than boost alone.
+
+        Fallback (no path info): community-based voting using DSCF fingerprints.
+
+        Returns True if re-ranking was applied, False if confidence insufficient.
+        """
+        rel_weights: Dict[str, float] = defaultdict(float)
+        has_path_info: bool = False
+
+        # Determine max path depth in top-K candidates.
+        # Only vote from the deepest paths — short paths (2-hop when expecting 3-hop)
+        # would pollute the vote with 1-hop-away relation types (genres, tags, years)
+        # that happen to score well due to hop_decay favouring short paths.
+        max_len = 0
+        for ans in answers_obj[:top_k_candidates]:
+            path = getattr(ans, "best_path", None)
+            if path is not None and path.nodes:
+                max_len = max(max_len, len(path.nodes))
+        # Accept paths within 2 nodes of the maximum depth (one hop shorter)
+        min_len = max(3, max_len - 2)
+
+        # Primary: path-based vote (deep paths only)
+        for ans in answers_obj[:top_k_candidates]:
+            path = getattr(ans, "best_path", None)
+            if path is not None and path.nodes and len(path.nodes) >= min_len:
+                terminal_rel = path.nodes[-2]
+                if isinstance(terminal_rel, str):
+                    has_path_info = True
+                    rel_weights[terminal_rel] += ans.score
+
+        # Fallback: community-based vote when path info is absent
+        if not rel_weights and self._community_dominant_rel:
+            community_map = getattr(adapter, "community_map", {})
+            for ans in answers_obj[:top_k_candidates]:
+                cid = community_map.get(ans.entity_id, -1)
+                if cid < 0:
+                    continue
+                purity = self._community_purity.get(cid, 0.0)
+                if purity < min_purity:
+                    continue
+                dom_rel = self._community_dominant_rel.get(cid)
+                if dom_rel:
+                    rel_weights[dom_rel] += ans.score * purity
+
+        if not rel_weights:
+            return False
+        total = sum(rel_weights.values())
+        consensus_rel = max(rel_weights, key=rel_weights.__getitem__)
+        confidence = rel_weights[consensus_rel] / total
+        if confidence < min_consensus_fraction:
+            return False
+
+        # Scale boost/penalty by confidence: stronger consensus → sharper re-ranking
+        eff_boost = 1.0 + (boost_factor - 1.0) * confidence
+        eff_penalty = penalty_factor + (1.0 - penalty_factor) * (1.0 - confidence)
+
+        changed = False
+        for ans in answers_obj:
+            if has_path_info:
+                path = getattr(ans, "best_path", None)
+                if path is not None and path.nodes and len(path.nodes) >= min_len:
+                    if path.nodes[-2] == consensus_rel:
+                        ans.score *= eff_boost
+                    else:
+                        ans.score *= eff_penalty
+                    changed = True
+            else:
+                community_map = getattr(adapter, "community_map", {})
+                cid = community_map.get(ans.entity_id, -1)
+                if cid < 0:
+                    continue
+                if (self._community_dominant_rel.get(cid) == consensus_rel
+                        and self._community_purity.get(cid, 0.0) >= min_purity):
+                    ans.score *= eff_boost
+                else:
+                    ans.score *= eff_penalty
+                changed = True
+
+        if changed:
+            answers_obj.sort(key=lambda a: a.score, reverse=True)
+        return changed
 
     # ------------------------------------------------------------------
     # Introspection helpers
