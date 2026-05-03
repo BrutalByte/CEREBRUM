@@ -1,5 +1,5 @@
 """
-Phase 165: CerebrumGraph-based Hetionet Biomedical KG Benchmark.
+Phase 165/167: CerebrumGraph-based Hetionet Biomedical KG Benchmark.
 
 Demonstrates the full CEREBRUM stack on Hetionet -a 47,031-node heterogeneous
 biomedical knowledge graph with 11 entity types and 24 metaedge types.
@@ -12,13 +12,17 @@ benchmark uses CerebrumGraph.build() + CerebrumGraph.query(), enabling:
   - H1SE hop-1 expansion (independent per-branch sub-traversal)
   - Terminal-Anchor Beam (TAB, Phase 164) -strict anchor sets work here
     because "Compound-treats-Disease" sources are only ~2.4% of all nodes
+  - STRB (Phase 167) — semantic TRB via query-text × relation-phrase
+    cosine similarity, replacing structural SRI in Profile-Auto mode
 
 Ablation ladder (for each template):
-  BFS       -raw BeamTraversal, no community structure
-  DSCF+CSA  -CerebrumGraph baseline (build + query, no TRB/H1SE)
-  +TRB      -adds terminal_relation_boost per template
-  +H1SE     -adds hop_expand=True (independent per-branch expansion)
-  +TAB      -adds anchor_bonus=2.0 (answer-type-aware hop selection)
+  BFS              -raw BeamTraversal, no community structure
+  DSCF+CSA         -CerebrumGraph baseline (build + query, no TRB/H1SE)
+  +TRB             -adds terminal_relation_boost per template
+  +H1SE            -adds hop_expand=True (independent per-branch expansion)
+  +TAB             -adds anchor_bonus=2.0 (answer-type-aware hop selection)
+  Profile-Auto     -zero-config: all params from GraphProfiler (uses SRI)
+  Profile-Auto+STRB -zero-config with semantic query embedding (Phase 167)
 
 Type alignment: reports community purity vs. Hetionet's 11 biological types
 after build(). High purity (>0.8) proves DSCF recovered biologically meaningful
@@ -51,7 +55,7 @@ Usage
   python -m benchmarks.hetionet_cerebrum_eval \\
       --template disease_associates_gene --no-bfs
 
-  # With sentence embeddings (requires: pip install sentence-transformers):
+  # With sentence embeddings — enables STRB (Phase 167) for Profile-Auto+STRB variant:
   python -m benchmarks.hetionet_cerebrum_eval --embeddings sentence
 """
 
@@ -130,6 +134,23 @@ TEMPLATE_ANSWER_TYPE: Dict[str, str] = {
 TEMPLATE_HOP: Dict[str, int] = {
     name: cfg[0] for name, cfg in QA_TEMPLATES_FIXED.items()
 }
+
+# Phase 167: Natural-language question templates for STRB.
+# Each question is encoded at query time and compared to relation phrase embeddings
+# via cosine similarity, replacing structural SRI for terminal relation selection.
+TEMPLATE_QUESTION: Dict[str, str] = {
+    "compound_treats_disease":    "What compound treats {seed}?",
+    "disease_associates_gene":    "What gene is associated with {seed}?",
+    "gene_participates_pathway":  "What pathway does {seed} participate in?",
+    "disease_gene_pathway":       "What pathway involves genes associated with {seed}?",
+    "compound_gene_disease":      "What disease is linked through genes to {seed}?",
+    "disease_compound_via_gene":  "What compound treats a disease sharing genes with {seed}?",
+}
+
+
+def _seed_label(seed_id: str) -> str:
+    """Extract readable label from entity ID (e.g. 'Disease::lung cancer' -> 'lung cancer')."""
+    return seed_id.split("::", 1)[-1] if "::" in seed_id else seed_id
 
 CACHE_DIR = DATA_DIR / "cache"
 
@@ -240,16 +261,28 @@ def evaluate_template(
 ) -> List[Dict]:
     """
     Evaluate all variants for a single template.
-    Each variant dict has: name, query_kwargs.
+    Each variant dict has: name, query_kwargs, and optional use_strb flag.
+    When use_strb=True and the semantic index is available, the question text
+    is encoded per query and passed as query_embedding for STRB inference.
     Returns list of result dicts.
     """
     hop = TEMPLATE_HOP[template]
     answer_type = TEMPLATE_ANSWER_TYPE[template]
+    _q_template = TEMPLATE_QUESTION.get(template, "")
     results = []
+
+    # Determine STRB availability once per template evaluation.
+    _sri = getattr(graph, "_sri", None)
+    _strb_available = (
+        _sri is not None
+        and getattr(_sri, "_semantic_index_built", False)
+        and bool(_q_template)
+    )
 
     for variant in variants:
         vname = variant["name"]
         qkw = variant.get("query_kwargs", {})
+        use_strb = variant.get("use_strb", False) and _strb_available
         h1 = h10 = 0
         mrr_sum = 0.0
         n_answered = 0
@@ -261,12 +294,21 @@ def evaluate_template(
                 print(f"    [{vname}] {i+1:,}/{len(qa_pairs):,} "
                       f"({elapsed:.1f}s)", end="\r")
 
+            extra: Dict[str, Any] = {}
+            if use_strb:
+                question = _q_template.format(seed=_seed_label(seed))
+                extra["query_embedding"] = graph._embedding_engine.encode_one(question)
+                # ensure auto_infer fires (reads from profile or explicit True)
+                if "auto_infer_terminal_relation" not in qkw:
+                    extra["auto_infer_terminal_relation"] = True
+
             answers = graph.query(
                 seeds=[seed],
                 top_k=top_k * 3,  # over-fetch then filter by type
                 min_hop=hop,
                 max_hop=hop,
                 **qkw,
+                **extra,
             )
 
             # Filter predictions to correct answer entity type
@@ -393,7 +435,7 @@ def print_results_table(all_results: List[Dict]) -> None:
     grouped = groupby(all_results, key=lambda r: r["template"])
 
     print("\n" + "=" * 80)
-    print("  CEREBRUM Hetionet Benchmark -Phase 165 Results")
+    print("  CEREBRUM Hetionet Benchmark -Phase 167 Results")
     print("=" * 80)
 
     for template, rows in grouped:
@@ -493,7 +535,7 @@ def main():
 
     use_cache = args.use_cache
 
-    print("\n=== CEREBRUM -Phase 165: Hetionet Biomedical KG Benchmark ===")
+    print("\n=== CEREBRUM -Phase 167: Hetionet Biomedical KG Benchmark (STRB) ===")
     print(f"    CerebrumGraph.build() + CerebrumGraph.query()\n")
 
     # ------------------------------------------------------------------
@@ -661,6 +703,16 @@ def main():
             "query_kwargs": {},  # hop_expand=None, auto_infer_trb=None, anchor_bonus=None
         })
 
+        # Phase 167: Profile-Auto+STRB — same zero-config strategy selection as
+        # Profile-Auto, but replaces structural SRI with semantic query-embedding
+        # similarity for terminal relation inference. Requires --embeddings sentence.
+        # Falls back silently to structural SRI when RandomEngine is in use.
+        variants.append({
+            "name": "Profile-Auto+STRB",
+            "query_kwargs": {},
+            "use_strb": True,
+        })
+
         print(f"  Running {len(variants)} CerebrumGraph variants...")
         results = evaluate_template(
             graph=graph,
@@ -678,7 +730,7 @@ def main():
         print_results_table(all_results)
         print_summary(all_results, purity)
 
-    print("Phase 165 complete.\n")
+    print("Phase 167 complete.\n")
 
 
 if __name__ == "__main__":
