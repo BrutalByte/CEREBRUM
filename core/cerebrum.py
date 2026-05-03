@@ -821,6 +821,25 @@ class CerebrumGraph:
         except Exception as _exc:
             logger.warning("Phase 164: anchor source index build failed: %s", _exc)
 
+        # Phase 166: GraphProfiler — auto query strategy selection
+        try:
+            from core.graph_profiler import GraphProfiler
+            self._query_profile = GraphProfiler.profile(self.adapter, self._anchor_sources)
+            logger.info(
+                "Phase 166: graph profile computed — regime=%s "
+                "hub_score=%.3f mean_rel_coverage=%.3f "
+                "recommended: hop_expand=%s trb_auto=%s anchor_bonus=%s",
+                self._query_profile.regime,
+                self._query_profile.hub_score,
+                self._query_profile.mean_rel_coverage,
+                self._query_profile.recommended_hop_expand,
+                self._query_profile.recommended_trb_auto,
+                self._query_profile.recommended_anchor_bonus,
+            )
+        except Exception as _exc:
+            logger.warning("Phase 166: graph profiling failed: %s", _exc)
+            self._query_profile = None
+
         # ----------------------------------------------------------
         # 6. BeamTraversal
         # ----------------------------------------------------------
@@ -857,6 +876,15 @@ class CerebrumGraph:
         return self
 
     # ------------------------------------------------------------------
+    # Phase 166: Query profile access
+    # ------------------------------------------------------------------
+
+    @property
+    def query_profile(self):
+        """Return the QueryProfile computed during build(), or None if unavailable."""
+        return getattr(self, "_query_profile", None)
+
+    # ------------------------------------------------------------------
     # CORTEX query
     # ------------------------------------------------------------------
 
@@ -876,7 +904,7 @@ class CerebrumGraph:
         context_seeds:     Optional[List[str]] = None,
         beam_profile:      Optional[str]   = None,
         beam_profile_factor: Optional[float] = None,
-        hop_expand:        bool            = False,
+        hop_expand:        Optional[bool]  = None,
         expansion_k:       Optional[int]   = None,
         branch_bonus_weight: float         = 0.0,
         residual_k:        int             = 10,
@@ -886,7 +914,7 @@ class CerebrumGraph:
         beam_widths:                 Optional[Dict[int, int]] = None,
         degree_penalty_weight:       float = 0.0,
         penultimate_decay:           float = 0.0,
-        auto_infer_terminal_relation: bool = False,
+        auto_infer_terminal_relation: Optional[bool] = None,
         anchor_bonus:                Optional[float] = None,
     ) -> List[Answer]:
         """
@@ -922,6 +950,16 @@ class CerebrumGraph:
             raise RuntimeError(
                 "Graph has not been built. Call graph.build() first."
             )
+
+        # Phase 166: Resolve None params against QueryProfile defaults.
+        # Explicit True/False always wins; None = use profile recommendation.
+        _qp = getattr(self, "_query_profile", None)
+        if hop_expand is None:
+            hop_expand = _qp.recommended_hop_expand if _qp else False
+        if auto_infer_terminal_relation is None:
+            auto_infer_terminal_relation = _qp.recommended_trb_auto if _qp else False
+        if anchor_bonus is None and _qp is not None:
+            anchor_bonus = _qp.recommended_anchor_bonus  # may still be None
 
         # Phase 119: notify sleep orchestrator of query activity
         orc = getattr(self, "_sleep_orchestrator", None)

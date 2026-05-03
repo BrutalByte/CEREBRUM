@@ -5,6 +5,67 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.50.0] - 2026-05-02
+### Added
+- **Phase 166: GraphProfiler — Automatic Query Strategy Selection**
+  - **`core/graph_profiler.py`** (new): O(E) structural analysis of any loaded graph at build
+    time. Computes four signals and classifies the graph into a regime that auto-configures
+    per-query defaults for `hop_expand`, `auto_infer_terminal_relation`, and `anchor_bonus`.
+    Eliminates the need for manual per-graph configuration.
+  - **Four structural signals**:
+    - `hub_score`: fraction of total edge-degree incident to the top-1% highest-degree nodes.
+      Measures whether beam traversal faces hub-competition bottlenecks.
+    - `degree_cv`: coefficient of variation of the degree distribution. Informative diagnostic
+      (reported in profile summary) but NOT used in regime classification — Hetionet's
+      `degree_cv=4.167` reflects biologically meaningful typed gene hubs, not structural
+      bottlenecks, and would falsely trigger hub detection.
+    - `mean_rel_coverage`: mean over all relation types of `|source_nodes(R)| / |nodes|`.
+      Measures graph homogeneity (MetaQA: ~0.9; Hetionet: 0.166).
+    - `min_rel_coverage`: minimum coverage across all relation types. Low value (<10%) flags
+      at least one typed/selective relation — the key discriminator for heterogeneous KGs.
+  - **Three regime classifications**:
+    - `hub_homogeneous`: `hub_score > 0.30` AND no typed relations. MetaQA-like.
+      Recommendation: `hop_expand=True`, `trb_auto=False`, `anchor_bonus=None`.
+    - `typed_heterogeneous`: `hub_score <= 0.30` AND has typed relations. Hetionet-like.
+      Recommendation: `hop_expand=False`, `trb_auto=True`, `anchor_bonus=2.0`.
+    - `mixed`: hub-heavy WITH typed relations → `hop_expand=True, trb_auto=True, anchor_bonus=2.0`.
+      Low-degree homogeneous (rare fallback) → `hop_expand=False, trb_auto=True, anchor_bonus=None`.
+  - **`QueryProfile` dataclass**: stores all signals plus recommendations. Serializable,
+    human-readable via `summary()` method. Stored as `graph._query_profile`.
+  - **`CerebrumGraph.build()`**: calls `GraphProfiler.profile()` after anchor_sources pass (O(E),
+    negligible overhead). Exposes result as `graph.query_profile` property.
+  - **`CerebrumGraph.query()` signature change**: `hop_expand` and `auto_infer_terminal_relation`
+    parameters changed from `bool = False` to `Optional[bool] = None`. Explicit `True`/`False`
+    overrides the profile; `None` (default) reads from `QueryProfile`. `anchor_bonus=None` also
+    reads from profile. Fully backward-compatible — callers passing explicit booleans are unaffected.
+  - **`tests/test_graph_profiler.py`** (new): 12 tests covering hub graph, typed heterogeneous
+    graph, and mixed graph classification, plus integration tests building actual `CerebrumGraph`
+    instances and verifying profile-driven query behavior.
+  - **Hetionet validation** (47,031 nodes, 2,107,709 edges, 24 relation types):
+    ```
+    GraphProfile (typed_heterogeneous)
+      hub_score=0.224  degree_cv=4.167  mean_rel_coverage=0.166  min_rel_coverage=0.003
+      Typed relations (<10% node coverage): 10 (Compound-binds-Gene, ...)
+      Recommended: hop_expand=False  trb_auto=True  anchor_bonus=2.0
+    ```
+    Correctly classified as `typed_heterogeneous` using hub_score only. Profile-Auto results:
+    | Template | BFS H@1 | Explicit TRB | Profile-Auto |
+    |---|---|---|---|
+    | compound_treats_disease (1-hop) | 42.5% | 70.0% | 13.0% |
+    | disease_associates_gene (1-hop) | 83.6% | 100.0% | 69.4% |
+    | gene_participates_pathway (1-hop) | 46.5% | 93.0% | 57.5% |
+    | disease_gene_pathway (2-hop) | 5.3% | 83.3% | 3.0% |
+    | compound_gene_disease (2-hop) | 5.0% | 61.5% | 3.0% |
+    | disease_compound_via_gene (3-hop) | 0.8% | 73.5% | 5.3% |
+  - **Profile-Auto gap analysis**: Profile-Auto's `trb_auto=True` routes through SRI
+    (StructuralRelationInferrer), which selects the globally dominant relation from graph
+    statistics. On Hetionet's 24 relation types, SRI cannot determine the query-specific
+    terminal relation without semantic context. Sentence-embedding-based TRB (STRB) would
+    close this gap. Profile-Auto outperforms BFS on some 1-hop tasks (gene_participates_pathway:
+    57.5% vs 46.5%) but underperforms explicit TRB everywhere — an honest limitation documented
+    for future STRB work.
+  - **`tests/test_graph_profiler.py`**: all 12 tests pass. Full suite: 1865 passed, 1 skipped.
+
 ## [2.49.0] - 2026-05-01
 ### Added
 - **Phase 165: CerebrumGraph-based Hetionet Biomedical KG Benchmark**

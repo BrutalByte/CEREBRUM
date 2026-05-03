@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026
-**Status**: v2.49.0 (Phase 165 (Hetionet CerebrumGraph Benchmark) COMPLETE)
+**Status**: v2.50.0 (Phase 166 (GraphProfiler Auto-Strategy Selection) COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -989,4 +989,74 @@ DSCF type alignment purity: **0.6375** — 1,877/1,898 communities (98.9%) achie
 
 ---
 
-**Reviewed on**: May 2, 2026 for version v2.49.0
+---
+
+### Claim 57: GraphProfiler — Automatic Graph Regime Classification and Query Strategy Selection
+
+**Description**: A build-time structural analysis component that computes four O(E) signals
+from any loaded knowledge graph and classifies it into one of three regimes
+(`hub_homogeneous`, `typed_heterogeneous`, `mixed`), automatically configuring per-query
+defaults for `hop_expand`, `auto_infer_terminal_relation`, and `anchor_bonus`. Eliminates
+manual per-graph configuration and enables zero-shot strategy selection on unseen KGs.
+
+**Key signals**:
+- `hub_score`: fraction of total edge-degree incident to top-1% nodes. Direct proxy for
+  "will hub competition starve the beam?" — the triggering condition for H1SE.
+- `min_rel_coverage`: minimum `|source_nodes(R)| / |nodes|` across all relation types.
+  A value < 10% flags at least one typed/selective relation — the discriminator between
+  homogeneous (MetaQA) and heterogeneous (Hetionet) KGs.
+- `mean_rel_coverage`: mean coverage across all relations. Distinguishes uniform graphs
+  (MetaQA ~0.9) from typed graphs (Hetionet 0.166).
+- `degree_cv`: coefficient of variation of degree distribution. Reported in summary but
+  intentionally excluded from hub classification — high degree_cv in Hetionet reflects
+  biologically typed gene hubs (meaningful), not structural bottlenecks (harmful).
+
+**Regime recommendations**:
+- `hub_homogeneous` (MetaQA): H1SE enabled, structural TRB disabled. Hub expansion
+  solves movie-hub competition without typed-relation guidance.
+- `typed_heterogeneous` (Hetionet): H1SE disabled (causes regression), structural TRB
+  enabled with anchor_bonus=2.0. Typed community structure guides traversal without
+  explicit hop-expansion.
+- `mixed`: both enabled as safe fallback.
+
+**Empirical validation on Hetionet** (47,031 nodes, 2,107,709 edges, 24 relation types):
+```
+GraphProfile (typed_heterogeneous)
+  hub_score=0.224  degree_cv=4.167  mean_rel_coverage=0.166  min_rel_coverage=0.003
+  Typed relations (<10% coverage): 10  Recommended: hop_expand=False  trb_auto=True  anchor_bonus=2.0
+```
+Profile-Auto results vs explicit TRB:
+| Template | BFS H@1 | Explicit TRB | Profile-Auto |
+|---|---|---|---|
+| compound_treats_disease (1-hop) | 42.5% | 70.0% | 13.0% |
+| disease_associates_gene (1-hop) | 83.6% | 100.0% | 69.4% |
+| gene_participates_pathway (1-hop) | 46.5% | 93.0% | 57.5% |
+| disease_gene_pathway (2-hop) | 5.3% | 83.3% | 3.0% |
+| compound_gene_disease (2-hop) | 5.0% | 61.5% | 3.0% |
+| disease_compound_via_gene (3-hop) | 0.8% | 73.5% | 5.3% |
+
+Profile-Auto correctly avoids H1SE (which causes severe regression on typed KGs) and
+correctly enables TRB. The gap between Profile-Auto and explicit TRB reflects that
+SRI (StructuralRelationInferrer) selects the globally dominant relation from graph
+statistics, not the query-specific terminal relation. Closing this gap requires
+sentence-embedding-based terminal relation inference (STRB) — documented as future work.
+
+**Novelty Statement**: No prior KG reasoning system performs automatic graph regime
+classification or derives query strategy from structural signals at load time. Existing
+systems require manual configuration (e.g., specify beam width, hop count, and relation
+filter per graph). GraphProfiler is the first component that treats graph topology itself
+as a feature for strategy selection, enabling zero-shot adaptation to unseen KG schemas.
+
+**Closest Prior Art**:
+- AutoML for GNNs (You et al., NAS-GNN): searches architecture space via trial evaluations,
+  not structural signal computation. Requires labels and training.
+- Graph classification (Yanardag & Vishwanathan, 2015): classifies graph instances by
+  structure, not for strategy selection.
+- No prior work computes hub_score + relation coverage at build time to select inference
+  strategy (hop expansion, terminal relation boosting) per graph.
+
+**Relevant files**: `core/graph_profiler.py`, `core/cerebrum.py`, `tests/test_graph_profiler.py`
+
+---
+
+**Reviewed on**: May 2, 2026 for version v2.50.0

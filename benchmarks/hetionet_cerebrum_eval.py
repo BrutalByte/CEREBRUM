@@ -542,6 +542,15 @@ def main():
     print()
 
     # ------------------------------------------------------------------
+    # Phase 166: Query profile
+    # ------------------------------------------------------------------
+    qp = graph.query_profile
+    if qp:
+        print("Query profile (Phase 166 auto-strategy):")
+        print(qp.summary())
+        print()
+
+    # ------------------------------------------------------------------
     # Templates to evaluate
     # ------------------------------------------------------------------
     if args.template:
@@ -643,6 +652,14 @@ def main():
                     },
                 },
             ]
+
+        # Phase 166: Profile-Auto — zero configuration, profile decides everything.
+        # Passes only seeds, top_k, min_hop, max_hop. All strategy params are None
+        # so CerebrumGraph.query() resolves them from the QueryProfile.
+        variants.append({
+            "name": "Profile-Auto",
+            "query_kwargs": {},  # hop_expand=None, auto_infer_trb=None, anchor_bonus=None
+        })
 
         print(f"  Running {len(variants)} CerebrumGraph variants...")
         results = evaluate_template(
