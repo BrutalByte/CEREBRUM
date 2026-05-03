@@ -1,7 +1,7 @@
 """
 Phase 165: CerebrumGraph-based Hetionet Biomedical KG Benchmark.
 
-Demonstrates the full CEREBRUM stack on Hetionet — a 47,031-node heterogeneous
+Demonstrates the full CEREBRUM stack on Hetionet -a 47,031-node heterogeneous
 biomedical knowledge graph with 11 entity types and 24 metaedge types.
 
 Unlike the original hetionet_eval.py (which uses raw BeamTraversal), this
@@ -10,30 +10,30 @@ benchmark uses CerebrumGraph.build() + CerebrumGraph.query(), enabling:
   - CSA attention (10-parameter structural attention)
   - Terminal Relation Boost (TRB) per biological relation type
   - H1SE hop-1 expansion (independent per-branch sub-traversal)
-  - Terminal-Anchor Beam (TAB, Phase 164) — strict anchor sets work here
+  - Terminal-Anchor Beam (TAB, Phase 164) -strict anchor sets work here
     because "Compound-treats-Disease" sources are only ~2.4% of all nodes
 
 Ablation ladder (for each template):
-  BFS       — raw BeamTraversal, no community structure
-  DSCF+CSA  — CerebrumGraph baseline (build + query, no TRB/H1SE)
-  +TRB      — adds terminal_relation_boost per template
-  +H1SE     — adds hop_expand=True (independent per-branch expansion)
-  +TAB      — adds anchor_bonus=2.0 (answer-type-aware hop selection)
+  BFS       -raw BeamTraversal, no community structure
+  DSCF+CSA  -CerebrumGraph baseline (build + query, no TRB/H1SE)
+  +TRB      -adds terminal_relation_boost per template
+  +H1SE     -adds hop_expand=True (independent per-branch expansion)
+  +TAB      -adds anchor_bonus=2.0 (answer-type-aware hop selection)
 
 Type alignment: reports community purity vs. Hetionet's 11 biological types
 after build(). High purity (>0.8) proves DSCF recovered biologically meaningful
-communities without any type labels — a direct measurement of DSCF's value.
+communities without any type labels -a direct measurement of DSCF's value.
 
 QA Templates
 ------------
   1-hop:
-    compound_treats_disease  — "What diseases does [compound] treat?"
-    disease_associates_gene  — "What genes are associated with [disease]?"
+    compound_treats_disease  -"What diseases does [compound] treat?"
+    disease_associates_gene  -"What genes are associated with [disease]?"
     gene_participates_pathway— "What pathways involve [gene]?"
 
   2-hop:
-    disease_gene_pathway     — "What pathways involve genes linked to [disease]?"
-    compound_gene_disease    — "What diseases can [compound] reach via gene binding?"
+    disease_gene_pathway     -"What pathways involve genes linked to [disease]?"
+    compound_gene_disease    -"What diseases can [compound] reach via gene binding?"
 
   3-hop:
     disease_compound_via_gene— "What compounds treat diseases sharing genes with [disease]?"
@@ -88,11 +88,20 @@ from core.embedding_engine import RandomEngine, SentenceEngine
 # the graph. Since Hetionet is undirected, the metaedge label stored on the
 # edge is always "Compound-treats-Disease" regardless of traversal direction.
 QA_TEMPLATES_FIXED = dict(QA_TEMPLATES)
+# Fix compound_gene_disease: "Gene-associates-Disease" is not a valid metaedge label.
+# In Hetionet (undirected), the stored label is always "Disease-associates-Gene".
+# edge_index[(gene, "Disease-associates-Gene")] = [diseases] works bidirectionally.
+QA_TEMPLATES_FIXED["compound_gene_disease"] = (
+    2, "Compound", "Disease",
+    ["Compound-binds-Gene", "Disease-associates-Gene"],
+)
+# Fixed 3-hop: Disease->Gene->Disease->Compound
+# "Disease-treated_by-Compound" does not exist; use "Compound-treats-Disease" (bidirectional).
 QA_TEMPLATES_FIXED["disease_compound_via_gene"] = (
     3, "Disease", "Compound",
     ["Disease-associates-Gene", "Disease-associates-Gene", "Compound-treats-Disease"],
 )
-# Drop broken old template if present
+# Drop the broken old 3-hop template if present
 QA_TEMPLATES_FIXED.pop("disease_gene_compound", None)
 
 # Per-template terminal relation boost mappings.
@@ -147,7 +156,7 @@ def build_cerebrum_graph(
             engine = SentenceEngine()
             print(f"  Using SentenceEngine ({engine.dim}-dim)")
         except ImportError:
-            print("  sentence-transformers not installed — falling back to RandomEngine")
+            print("  sentence-transformers not installed -falling back to RandomEngine")
             engine = RandomEngine(dim=64)
     else:
         engine = RandomEngine(dim=64)
@@ -189,9 +198,9 @@ def report_type_alignment(graph: CerebrumGraph, node_type_map: Dict[str, str]) -
     high_purity = sum(1 for p in per_community.values() if p >= 0.80)
     print(f"  Communities: {n_communities:,}")
     print(f"  Mean weighted purity: {purity:.4f}  "
-          f"(high-purity ≥0.80: {high_purity}/{n_communities} communities)")
+          f"(high-purity >=0.80: {high_purity}/{n_communities} communities)")
     print(f"  Interpretation: purity=1.0 means every community contains only one "
-          f"biological type — DSCF perfectly recovered the known taxonomy.")
+          f"biological type -DSCF perfectly recovered the known taxonomy.")
     return purity
 
 
@@ -214,8 +223,8 @@ def report_anchor_stats(graph: CerebrumGraph, template: str) -> None:
     total_nodes = G.number_of_nodes()
     pct = 100.0 * len(anchor_set) / total_nodes if total_nodes else 0.0
     print(f"    TAB anchor: '{best_rel}' sources = "
-          f"{len(anchor_set):,}/{total_nodes:,} nodes ({pct:.1f}%) — "
-          f"{'strict subset ✓ (discriminative)' if pct < 20 else 'large set (low discrimination)'}")
+          f"{len(anchor_set):,}/{total_nodes:,} nodes ({pct:.1f}%) -"
+          f"{'strict subset [discriminative]' if pct < 20 else 'large set (low discrimination)'}")
 
 
 # ---------------------------------------------------------------------------
@@ -373,7 +382,7 @@ def evaluate_bfs_baseline(
 
 def _bar(value: float, width: int = 30) -> str:
     filled = int(round(value * width))
-    return "█" * filled + "░" * (width - filled)
+    return "#" * filled + "." * (width - filled)
 
 
 def print_results_table(all_results: List[Dict]) -> None:
@@ -384,7 +393,7 @@ def print_results_table(all_results: List[Dict]) -> None:
     grouped = groupby(all_results, key=lambda r: r["template"])
 
     print("\n" + "=" * 80)
-    print("  CEREBRUM Hetionet Benchmark — Phase 165 Results")
+    print("  CEREBRUM Hetionet Benchmark -Phase 165 Results")
     print("=" * 80)
 
     for template, rows in grouped:
@@ -438,7 +447,7 @@ def print_summary(all_results: List[Dict], purity: float) -> None:
         if bfs:
             delta = best["hits_1"] - bfs["hits_1"]
             print(f"  {template:<32}  "
-                  f"BFS H@1={bfs['hits_1']*100:.1f}%  →  "
+                  f"BFS H@1={bfs['hits_1']*100:.1f}%  ->"
                   f"Best ({best['variant']}) H@1={best['hits_1']*100:.1f}%  "
                   f"(+{delta*100:.1f}pp)")
         else:
@@ -484,7 +493,7 @@ def main():
 
     use_cache = args.use_cache
 
-    print("\n=== CEREBRUM — Phase 165: Hetionet Biomedical KG Benchmark ===")
+    print("\n=== CEREBRUM -Phase 165: Hetionet Biomedical KG Benchmark ===")
     print(f"    CerebrumGraph.build() + CerebrumGraph.query()\n")
 
     # ------------------------------------------------------------------
@@ -526,7 +535,7 @@ def main():
     )
 
     # ------------------------------------------------------------------
-    # Type alignment — key DSCF demonstration metric
+    # Type alignment -key DSCF demonstration metric
     # ------------------------------------------------------------------
     print("\nType alignment (DSCF community purity vs. biological entity types):")
     purity = report_type_alignment(graph, node_type_map)
@@ -556,19 +565,27 @@ def main():
 
         print(f"\n{'='*60}")
         print(f"  Template: {template}  ({hop_count}-hop)")
-        print(f"  Seed type: {seed_type}  →  Answer type: {answer_type}")
-        print(f"  Chain: {' → '.join(metaedge_chain)}")
+        print(f"  Seed type: {seed_type}  ->Answer type: {answer_type}")
+        print(f"  Chain: {' ->'.join(metaedge_chain)}")
         print(f"  TRB: {trb}")
         report_anchor_stats(graph, template)
         print()
 
-        # Generate QA pairs
-        qa_pairs = generate_hetionet_qa(
-            G=G,
-            template=template,
-            n_questions=args.n_questions,
-            seed=args.seed,
-        )
+        # Generate QA pairs.
+        # Monkey-patch the templates dict so generate_hetionet_qa finds
+        # our fixed/extended templates (compound_gene_disease fix + new 3-hop).
+        import benchmarks.hetionet_eval as _heval
+        _orig_templates = _heval.QA_TEMPLATES
+        _heval.QA_TEMPLATES = QA_TEMPLATES_FIXED
+        try:
+            qa_pairs = generate_hetionet_qa(
+                G=G,
+                template=template,
+                n_questions=args.n_questions,
+                seed=args.seed,
+            )
+        finally:
+            _heval.QA_TEMPLATES = _orig_templates
         if not qa_pairs:
             print(f"  Skipping {template}: no QA pairs generated.")
             continue
