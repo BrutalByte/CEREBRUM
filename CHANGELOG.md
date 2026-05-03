@@ -38,6 +38,31 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     of typed heterogeneous KGs for TAB.
   - **CLI**: `--n-questions`, `--beam-width`, `--top-k`, `--max-edges`, `--embeddings`,
     `--template`, `--no-bfs`, `--trb-factor`, `--anchor-bonus`, `--expansion-k`
+  - **Empirical results** (200 questions, beam_width=10, random embeddings):
+    | Template | Hop | BFS H@1 | DSCF+CSA | +TRB | +H1SE | +H1SE+TAB |
+    |---|---|---|---|---|---|---|
+    | disease_associates_gene | 1 | 81.3% | 69.4% | **100.0%** | — | — |
+    | compound_treats_disease | 1 | 42.5% | 13.0% | **70.0%** | — | — |
+    | gene_participates_pathway | 1 | 48.0% | 59.0% | **95.5%** | — | — |
+    | disease_gene_pathway | 2 | 4.5% | 1.5% | **85.6%** | 15.9% | 16.7% |
+    | compound_gene_disease | 2 | 6.0% | 1.0% | **61.0%** | 8.0% | 8.5% |
+    | disease_compound_via_gene | 3 | 0.8% | 5.3% | **72.0%** | 46.2% | **48.5%** |
+  - **DSCF type alignment purity: 0.6375** — 1,877/1,898 communities (98.9%) with purity
+    >=0.80. DSCF recovered biologically meaningful clusters purely from graph topology with
+    no type labels.
+  - **Key finding — TRB dominance**: TRB is the decisive feature on typed heterogeneous KGs.
+    For disease_gene_pathway: BFS=4.5% → +TRB=85.6% (+81.1pp). For the 3-hop task:
+    BFS=0.8% → +TRB=72.0% (90x improvement). Confirms that on biologically typed graphs,
+    knowing the terminal relation type is equivalent to knowing the answer entity type.
+  - **Key finding — H1SE regression on Hetionet**: TRB+H1SE (15.9%) is much worse than
+    TRB alone (85.6%) on disease_gene_pathway. H1SE's stage-1 selection (top-20 genes by
+    CSA score) discards the correct intermediate entities. On MetaQA, H1SE solves hub
+    competition between movies; on Hetionet, typed community structure already solves that
+    — regular beam+TRB is sufficient and H1SE's selection bottleneck hurts.
+  - **Key finding — DSCF+CSA without TRB is below BFS on cross-type paths**: community
+    score penalizes crossing entity-type communities (Disease->Gene->Pathway). TRB fully
+    compensates by rewarding the terminal relation. This is correct behavior: CSA's
+    cross-community penalty is appropriate for intra-type queries.
 
 ## [2.48.0] - 2026-05-02
 ### Added
