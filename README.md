@@ -2,7 +2,7 @@
 
 **Community-Structured Graph Attention for Knowledge Graph Reasoning**
 
-**Current Version:** v2.33.1 (Phase 143 COMPLETE)
+**Current Version:** v2.51.0 (Phase 167 COMPLETE)
 
 CEREBRUM enables Knowledge Graphs to perform multi-hop reasoning using the structural
 principles of Transformer attention — without an LLM, without training data, and with
@@ -28,7 +28,7 @@ See `PAPER.md` for the full white paper and architecture specification, and `doc
 
 ## Roadmap
 
-**Current Project Status: v2.24.0 — Phase 112 COMPLETE — 1978+ tests passing (1 skipped)**
+**Current Project Status: v2.51.0 — Phase 167 COMPLETE — 2175+ tests passing (1 skipped)**
 
 - [x] **Phase 112: Sleep-Phase Consolidation (REM Cycle)** — Unified engine for Hebbian Replay and Shortcut Synthesis.
 - [x] **Phase 111: Active Inference (Proactive Reasoning)** — prior path relation-pattern-steered beam pruning and daydreaming mode.
