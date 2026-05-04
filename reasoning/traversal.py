@@ -1261,7 +1261,7 @@ class AsyncBeamTraversal(BeamTraversal):
                             etw = self.edge_type_weights.get(rel_eff, 0.0)
                             nd  = 0.0
                             hd  = 1.0 / (1.0 + hop)
-                            pr_v = 0.0
+                            pr_v = 0.050
                             td = 0.0
                             nr_v = 0.0
                             grounding = 0.500

@@ -117,6 +117,7 @@ See `docs/PAPER.md` for the full white paper and architecture specification, and
 - [x] **Phase 161-163**: StructuralRelationInferrer (SRI), CTRI, SABS (Asymmetric Beam Search) (v2.47.0)
 - [x] **Phase 164-165**: Terminal-Anchor Beam (TAB) and Hetionet Biomedical KG Benchmark (v2.49.0)
 - [x] **Phase 166-167**: GraphProfiler (Auto Query Strategy) and STRB (Semantic Terminal Relation Boost) (v2.51.0)
+...
 
 ## Benchmark Results
 
@@ -131,7 +132,54 @@ CEREBRUM is validated across three benchmarks that together demonstrate: correct
 
 **CEREBRUM beats MINERVA at every hop with zero training data.** Recent optimizations (H1SE, TAB, STRB) have pushed 3-hop performance to SOTA levels for training-free systems.
 
-### Hetionet — Zero-Shot Biomedical Reasoning
+---
+
+## Installation
+
+### Prerequisites
+- Python >= 3.10
+- PyTorch (with CUDA for GPU acceleration)
+- NetworkX, NumPy, SciPy
+
+### Local Setup
+```bash
+# Clone the repository
+git clone https://github.com/BrutalByte/CEREBRUM.git
+cd CEREBRUM
+
+# Install with development dependencies
+pip install -e ".[all]"
+```
+
+---
+
+## Usage
+
+### 1. Starting the Server
+Start the CEREBRUM REST API server.
+
+```bash
+# Set your accepted keys (comma-separated)
+export CEREBRUM_API_KEYS=your-key-here
+
+# Start with a CSV graph
+python -m api.server --csv data/my_graph.csv --port 8200
+```
+
+### 2. Querying the Knowledge Graph
+CEREBRUM’s **GraphProfiler** (Phase 166) automatically detects your graph's structural regime, and **STRB** (Phase 167) inferentially boosts the correct terminal relation for your question.
+
+```bash
+curl -X POST http://localhost:8200/v1/query \
+  -H "X-API-Key: your-key-here" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "What compound treats Diabetes?",
+    "max_hop": 3
+  }'
+```
+
+---
 
 | Variant | Hits@1 | Hits@10 | MRR |
 |---------|--------|---------|-----|
