@@ -19,4 +19,8 @@ def convert_md_to_docx(md_path, docx_path):
     doc.save(docx_path)
     print(f"Created {docx_path}")
 
-convert_md_to_docx('docs/CEREBRUM_MASTER_SCIENTIFIC_MANUSCRIPT.md', 'docs/CEREBRUM_MASTER_SCIENTIFIC_MANUSCRIPT.docx')
+if __name__ == "__main__":
+    if len(sys.argv) == 3:
+        convert_md_to_docx(sys.argv[1], sys.argv[2])
+    else:
+        print("Usage: python convert_to_docx.py <md_path> <docx_path>")
