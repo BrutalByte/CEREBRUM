@@ -4,9 +4,9 @@
 **Affiliations**: Independent Researcher · Anthropic  
 **Series**: CEREBRUM Technical Report 035  
 **Phase**: 83  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **arXiv Category**: `cs.HC` + `cs.IR`  
-**Date**: April 2026
+**Date**: May 2, 2026
 
 ---
 
@@ -292,4 +292,4 @@ The current implementation loads all edges at startup. For graphs > 10 000 edges
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 2, 2026 for version v2.51.0

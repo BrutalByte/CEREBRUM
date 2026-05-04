@@ -1,6 +1,6 @@
 # CEREBRUM Reasoning Studio — User Guide
 
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Interface**: Gradio web UI + pyvis graph visualization
 **Business Logic Module**: `core/studio_engine.py` (`StudioEngine`)
 **UI Entry Point**: `ui/studio.py`
@@ -13,7 +13,10 @@ The Reasoning Studio is CEREBRUM's interactive visual interface. It lets you loa
 
 This is the "Glass-Box" in action: you can see exactly what the AI is doing at every reasoning step.
 
-As of **Phase 62**, the Studio now includes the **Explainable Reasoning Trace (ERT)**, providing a detailed hop-by-hop breakdown of the decision process, including the winners and pruned competitors at each step of the beam search.
+As of **Phase 167**, the Studio now supports **Zero-Config Reasoning**:
+- **GraphProfiler Integration**: The Studio automatically analyzes your graph upon loading and sets optimal default reasoning parameters.
+- **STRB (Semantic Terminal Relation Boost)**: The system uses its query embedding to automatically boost the most relevant terminal relation based on your question text.
+- **Vectorized Performance**: Thanks to NumPy-vectorized scoring, the "Reasoning" button now provides near-instant results (sub-30ms) even for complex 3-hop queries.
 
 ---
 
@@ -185,4 +188,4 @@ For very large graphs, reduce the **Beam Width** or **Max Hops**. The Studio is 
 If the UI hangs during community detection, check the console logs. DSCF can be computationally intensive on CPU for dense graphs. Ensure you have enough RAM available.
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 3, 2026 for version v2.51.0

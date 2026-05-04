@@ -2,8 +2,8 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Affiliations**: Independent Researcher · Anthropic
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
-**Date**: April 2026
+**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Date**: May 2, 2026
 
 ---
 
@@ -203,4 +203,4 @@ In v2.24.0 (Phases 56–57), the hardening scope expands from cross-feature inte
 5. Bi & Poo (1998). Synaptic Modifications in Cultured Hippocampal Neurons. Journal of Neuroscience.
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 2, 2026 for version v2.51.0

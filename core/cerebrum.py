@@ -56,6 +56,8 @@ import networkx as nx
 import numpy as np
 
 from adapters.networkx_adapter import NetworkXAdapter
+from adapters.mmap_adapter import MmapAdapter
+from core.hardware_governor import MemoryGovernor
 from core.attention_engine import CSAEngine, HomeostaticModulator
 from core.embedding_engine import EmbeddingEngine, RandomEngine
 from core.graph_adapter import GraphAdapter
@@ -128,8 +130,13 @@ class CerebrumGraph:
         beam_profile_factor:  float = 3.0,
         expansion_k:          int   = 20,
         use_adaptive_expansion: bool = True,
+        use_mmap:             bool = False,
+        auto_hybrid:          bool = False,
     ):
         self.adapter             = adapter
+        self.use_mmap            = use_mmap
+        self.auto_hybrid         = auto_hybrid
+        self.governor            = MemoryGovernor()
         self._embedding_engine   = embedding_engine or RandomEngine(dim=64)
         self._beam_width         = beam_width
         self._max_hop            = max_hop

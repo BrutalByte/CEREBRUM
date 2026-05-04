@@ -2,8 +2,8 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
-**Date**: April 2026
+**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Date**: May 2, 2026
 
 ---
 
@@ -87,4 +87,4 @@ The Engram pattern as a *soliton* [bengio2025soliton]: a relation-sequence patte
 5. Bengio, Y. et al. (2025). Consciousness as a Soliton, Not a Process. UCFT 2025 Preprint. [bengio2025soliton]
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 2, 2026 for version v2.51.0

@@ -238,12 +238,20 @@ async def _run_query_internal(
     max_loops: int = 1,
     causal_bonus: float = 0.3,
     terminal_relation_boost: Optional[Dict[str, float]] = None,
+    hop_expand: bool = False,
+    expansion_k: int = 20,
+    use_adaptive_expansion: bool = True,
+    branch_bonus_weight: float = 0.0,
+    residual_k: int = 10,
+    min_diversity_target: int = 15,
+    auto_infer_terminal_relation: bool = True,
+    anchor_bonus: float = 0.0,
+    query_embedding: Optional[List[float]] = None,
 ) -> Dict[str, Any]:
     """Core reasoning logic shared between REST and WebSocket (Phase 90)."""
     from core.attention_engine import CSAEngine
     from reasoning.traversal import BeamTraversal
     from reasoning.answer_extractor import extract
-    from llm_bridge.context_formatter import to_structured
     import numpy as np
 
     adapter = _state["adapter"]
@@ -256,6 +264,31 @@ async def _run_query_internal(
     
     if not seeds:
         return {"error": f"No entities found for query: {query}"}
+
+    # Phase 166: GraphProfiler - auto-select strategy if enabled
+    graph_obj = _state.get("graph_obj")
+    if graph_obj is not None:
+        q_emb_arr = np.array(query_embedding) if query_embedding else None
+        try:
+            answers = graph_obj.query(
+                seeds=seeds,
+                max_hop=max_hop,
+                beam_width=beam_width,
+                max_loops=max_loops,
+                hop_expand=hop_expand,
+                expansion_k=expansion_k,
+                branch_bonus_weight=branch_bonus_weight,
+                residual_k=residual_k,
+                min_diversity_target=min_diversity_target,
+                terminal_relation_boost=terminal_relation_boost,
+                auto_infer_terminal_relation=auto_infer_terminal_relation,
+                anchor_bonus=anchor_bonus,
+                query_embedding=q_emb_arr,
+            )
+            paths = [a.path for a in answers]
+            return {"paths": paths, "seeds": seeds}
+        except Exception as exc:
+            _api_log.error("CerebrumGraph.query failed: %s", exc)
 
     weights = edge_type_weights or default_weights
     csa = CSAEngine(
@@ -607,6 +640,15 @@ def create_app(
             max_loops=req.max_loops,
             causal_bonus=req.causal_bonus,
             terminal_relation_boost=req.terminal_relation_boost or None,
+            hop_expand=req.hop_expand,
+            expansion_k=req.expansion_k,
+            use_adaptive_expansion=req.use_adaptive_expansion,
+            branch_bonus_weight=req.branch_bonus_weight,
+            residual_k=req.residual_k,
+            min_diversity_target=req.min_diversity_target,
+            auto_infer_terminal_relation=req.auto_infer_terminal_relation,
+            anchor_bonus=req.anchor_bonus,
+            query_embedding=req.query_embedding,
         )
 
         if "error" in result and not result.get("partial"):

@@ -39,7 +39,7 @@ class HomeostaticModulator:
     Maintains target reasoning activity by scaling incoming weights 
     based on a rolling average of node activity.
     """
-    def __init__(self, target_activity=1.0, tau=0.95):
+    def __init__(self, target_activity=1.158, tau=0.95):
         self.target = target_activity
         self.tau = tau
         self.node_activity = {} # entity_id -> rolling_avg

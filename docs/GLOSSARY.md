@@ -140,6 +140,9 @@ The community detection algorithm at the heart of CEREBRUM. Combines local topol
 **DiscoveryCalibrator**
 The Phase 73 component that tracks per-community discovery rates via Exponential Moving Average (EMA). Computes an inverse-rate multiplier `weight = global_rate / (community_rate + ε)` for each community, boosting `_score_discovery_potential()` for understudied regions. Cold-start: unscanned communities receive `max_weight` (5.0). API: `record_scan(cid)`, `record_discovery(cid)`, `get_weight(cid)`, `stats()`. Also drives Adaptive Loop Tuning (Phase 92) when `LoopConfig.adaptive_tuning=True`.
 
+**Distinct-Branch Convergence (DBC)**
+A Phase 154 reranking innovation. Measures structural independence of reasoning paths by tracking which hop-2 intermediate nodes reach a candidate answer. Applies a log-scale bonus for answers reached via multiple independent branches, effectively penalizing hub-flooding where many paths converge through the same hub node.
+
 **DeltaDiscretizer**
 A streaming discretizer that emits a graph edge when the rate-of-change (|Δx/Δt|) of a continuous signal exceeds a threshold.
 
@@ -161,6 +164,9 @@ A `BeamTraversal` subclass that applies a multiplicative affinity boost to candi
 
 **Entity**
 A node in the Knowledge Graph. Represented by a unique string identifier. Carries metadata: embedding vector, structural features (PageRank, betweenness, degree), community membership.
+
+**Epistemic Gating**
+A Phase 122 feature that introduces a unified uncertainty model for path pruning. Traversal paths are evaluated for "epistemic surprise" relative to established engram patterns; high-surprise paths are gated unless they represent a significant discovery potential.
 
 **Explainable Reasoning Trace (ERT)**
 A "glass-box" telemetry framework (Phase 62) that captures the per-hop decision state of the beam search. ERT logs all winners and top rejected competitors at every step, including their 10-parameter ReasoningLogit feature radars, providing a complete audit trail of the reasoning process.
@@ -191,6 +197,9 @@ CEREBRUM's defining property: every answer is a verifiable path through graph ed
 **GlobalRebalancer**
 The background component that monitors modularity drift ($\Delta Q_{cum}$) across streaming ingest events. When drift exceeds a threshold, it spawns a background DSCF re-run, then performs an atomic swap of `adapter.community_map`. Notifies `BridgeTwinEngine` via `on_rebalance()` hook (Phase 19).
 
+**GraphProfiler**
+A Phase 166 component that performs automatic graph regime classification at build time. Analyzes topology signals (hub_score, rel_coverage, degree_cv) to classify the graph into one of three regimes: `hub_homogeneous`, `typed_heterogeneous`, or `mixed`. Automatically configures query strategies (H1SE, STRB, TAB) based on the detected regime.
+
 **GraphSnapshot**
 A portable JSON graph topology checkpoint (Phase 81) in `core/persistence.py`. `GraphSnapshot.save(adapter, path)` serializes all edges to a JSON file (not pickle — survives adapter class changes). `restore(path, adapter, skip_existing=True)` re-adds only new edges, safe to run repeatedly for incremental restoration after pod restart. `diff(path_a, path_b)` shows edge deltas between two snapshots for audit. See also: ProvenanceLedger.
 
@@ -202,7 +211,10 @@ A one-pass mean neighbourhood aggregation step applied after base entity encodin
 ## H
 
 **H@10 (Hits at 10)**
-The primary evaluation metric for CEREBRUM: the fraction of test queries where the correct answer appears in the top-10 ranked paths. CEREBRUM zero-shot benchmarks: MetaQA 1-hop=0.960, 2-hop=0.713, 3-hop=0.248 at <7ms.
+The primary evaluation metric for CEREBRUM: the fraction of test queries where the correct answer appears in the top-10 ranked paths. CEREBRUM zero-shot benchmarks: MetaQA 3-hop = 0.73+ (Phase 164).
+
+**H1SE (Hop-1 Intermediate Seed Expansion)**
+A Phase 137 innovation to solve hub competition. Instead of a single global beam, each hop-1 entity from the seed(s) receives its own independent deep traversal. This prevents popular hubs from crowding out alternative reasoning branches early in the search.
 
 **Holographic Index**
 A privacy-preserving federated discovery system using Bloom filters (probabilistic membership) and community centroids (structural fingerprints). Allows remote graphs to advertise their contents without revealing individual entities.
@@ -322,6 +334,9 @@ The Phase 76 audit chain for `ResearchAgent.approve()`. Records every materializ
 **PageRank (PR)**
 A graph centrality measure (part of StructuralEncoder) used as the sixth term in the CSA formula ($\zeta \cdot PR(v)$). High PageRank nodes receive a traversal bonus, reflecting their structural importance.
 
+**Penultimate Relation Boost (PRB)**
+A Phase 156 optimization that uses a training-data r3→r2 frequency map to boost specific relation types at the penultimate hop of 3-hop queries. Enables boosting a different relation type than the terminal one, crucial for heterogeneous path templates.
+
 **Persistence**
 The functional name for the "Vasopressin" scalar in the `ChemicalModulator` (Phase 68). Linked to long-term memory formation. High Persistence levels increase the multiplier for Engram pattern-steering and lower the threshold for promoting patterns to "Canonical Engrams" via the `EngramConsolidator`.
 
@@ -396,6 +411,12 @@ A KGE method modeling relations as rotations in complex embedding space. Support
 **soliton_index**
 A coherence metric computed by `PredictiveCodingEngine`: `soliton_index = 1 - mean(recent PEs)`. A value near 1.0 indicates that the Engram prior consistently predicts actual traversal paths — a self-reinforcing, self-localising pattern analogous to a soliton wave (UCFT 2025). Exposed in `ReasoningTrace.soliton_index`. Low soliton_index (high mean PE) suggests the graph is highly novel or the Engram has not yet converged.
 
+**SABS (Asymmetric Beam Search)**
+A Phase 163 optimization where intermediate hops use an independently wider beam width than entry and exit hops. For 3-hop queries, hop-2 is widened (e.g., 20) while hop-1 and hop-3 remain tight (e.g., 10), efficiently expanding coverage where it's needed most.
+
+**STRB (Semantic Terminal Relation Boost)**
+A Phase 167 zero-config innovation. Uses sentence-transformer embeddings to match query text against relation labels. Automatically identifies and boosts the correct terminal relation for a query (e.g., "treats" for "What treats X?") without manual configuration.
+
 **SignalEncoder**
 THALAMUS component for cross-modal alignment. `StatisticalSignalEncoder` (time-series statistics → embeddings) and `SpectralSignalEncoder` (waveform FFT features → embeddings). Projects sensor signals into entity embedding space via Procrustes SVD. Uses `namespace="signal"` by default.
 
@@ -447,6 +468,12 @@ The probabilistic path selection strategy in Bayesian Beam Search: for each cand
 
 **Temporal Decay**
 The time-dependent reduction in edge weight for edges with `valid_until` timestamps: $w_{temp}(t) = w_0 \cdot \exp(-\lambda \cdot \max(0, t - t_{until}))$. Decay rate $\lambda$ is configurable per relation type (Phase 17 feature).
+
+**TAB (Terminal-Anchor Boost)**
+Also known as "Terminal-Anchor Hints" (Phase 164). A reasoning optimization for 3+ hop queries in heterogeneous graphs. It applies a score bonus to the penultimate-hop entities that are known sources of the terminal relation (the "anchor set"). This biases the search toward paths that can directly reach the target entity type in the final hop, significantly improving 3-hop recall.
+
+**TAB Anchor Set**
+The set of entities in a KG that serve as sources for a specific relation type. For example, in a "Compound-treats-Disease" relation, the anchor set is all Compound entities that have a "treats" edge. TAB uses these sets to guide penultimate-hop expansion.
 
 **TemporalCalibrator**
 A grid-search utility that calibrates the CSA `eta` (temporal decay) and `iota` (node recency) parameters to maximise Recall@K against a labelled validation set. `calibrate()` iterates over a grid of (eta, iota) pairs, evaluating each via `measure_recall()`; `apply()` writes the best-found parameters back to `CSAEngine`. A `try/finally` guarantee restores the original parameters if calibration raises.
@@ -506,4 +533,4 @@ The mechanism for synchronizing community-map updates across a distributed CEREB
 An interface bridge that allows the CEREBRUM Brain Server to animate and communicate with Unreal Engine 5 (UE5) simulations in real-time, mapping neural telemetry events to 3D scene actions.
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 3, 2026 for version v2.51.0

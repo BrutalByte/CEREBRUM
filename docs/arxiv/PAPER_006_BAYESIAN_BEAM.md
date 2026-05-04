@@ -2,8 +2,8 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
-**Date**: April 2026
+**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Date**: May 2, 2026
 
 ---
 
@@ -73,4 +73,4 @@ The OPT configuration uses adaptive density-driven beam width selection with a m
 8. Zhu, R.-J., Wang, Z., Hua, K., et al. (2025). Scaling Latent Reasoning via Looped Language Models. arXiv:2510.25741. [zhu2025loooplm]
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 2, 2026 for version v2.51.0

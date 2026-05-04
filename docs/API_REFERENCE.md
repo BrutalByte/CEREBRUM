@@ -1,8 +1,8 @@
 # CEREBRUM REST API Reference
 
 **Base URL**: `http://localhost:8200`
-**API Version**: v2.24.0
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**API Version**: v2.51.0
+**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Authentication**: JWT Bearer token (all endpoints except `/health`)
 
 ---
@@ -14,32 +14,22 @@ While the REST API provides remote access, the primary programmatic entry point 
 ### `CerebrumGraph` Lifecycle
 
 1.  **Initialize**: `graph = CerebrumGraph.from_kb("path/to/kb.csv", embeddings="sentence")`
-2.  **Complete (Optional)**: `graph.complete([InverseRule(), CompositionRule()])`
-3.  **Enhance (Optional)**: `graph.enhance([GraphBridgeEngine()])`
-4.  **Build**: `graph.build(cache_dir="cache/", community_engine="dscf")`
-5.  **Query**: `answers = graph.query(["start_node"], top_k=10)`
+2.  **Build**: `graph.build(cache_dir="cache/", community_engine="tsc")`
+3.  **Query**: `answers = graph.query(["start_node"], top_k=10)`
 
 ---
 
-## Architecture Extensions (Phases 110 & 111)
+## Core Advancements (Phases 166 & 167)
 
-### Global Workspace (Phase 110)
-CEREBRUM now includes a **Global Workspace (GWS)** blackboard for competitive attention. 
-- **Mechanism**: Communities broadcast "surprise" signals to a shared `GlobalWorkspace`.
-- **Pre-emption**: The `ConsensusHierarchyEngine` monitors the blackboard and can "pre-empt" standard MACH escalation if a high-novelty signal provides immediate corroboration for a reasoning path.
-- **Cognitive Flexibility**: Allows the system to rapidly switch focus to surprising discoveries without waiting for linear validation stages.
+### GraphProfiler (Phase 166)
+Automatic Query Strategy Selection.
+- **Mechanism**: Profiles graph topology at build time to classify the "Regime" (Hub-Homogeneous, Typed-Heterogeneous, or Mixed).
+- **Auto-Config**: Automatically sets `hop_expand`, `trb_auto`, and `anchor_bonus` per-query based on the detected regime.
 
-### Active Inference (Phase 111)
-Reasoning has shifted from reactive to proactive.
-- **Predictive Priors**: The `PredictiveCoder` projects "Expected Path" relation sequences from Engram patterns before traversal starts.
-- **Proactive Bias**: Expansion and scoring are biased toward edges that align with the projected prior (`1.5x` boost).
-- **Prediction Error (PE)**: Divergence from the prior triggers metabolic arousal (via `ChemicalModulator`), automatically widening the beam to investigate unexpected structural changes.
-
-### Sleep-Phase Consolidation (Phase 112)
-The unified `ConsolidationEngine` manages background graph maintenance.
-- **Hebbian Replay**: Replays high-salience Working Memory paths to strengthen successful reasoning logic.
-- **Shortcut Synthesis**: Converts frequent multi-hop trajectories into direct "reflexive" shortcuts (`REM_SHORTCUT`).
-- **Method**: `await graph.run_rem_cycle()` triggers an asynchronous consolidation pass.
+### Semantic Terminal Relation Boost (STRB - Phase 167)
+Zero-config reasoning for question answering.
+- **Mechanism**: Computes cosine similarity between the query embedding and all relation labels.
+- **Benefit**: Automatically identifies and boosts the correct answer-type relation (e.g., "treats" for "What compound treats X?"), eliminating manual configuration.
 
 ---
 
@@ -64,45 +54,46 @@ Tokens are generated using HMAC-SHA256 with the `CEREBRUM_JWT_SECRET` environmen
 
 ### Core Reasoning
 
-#### `POST /query`
+#### `POST /v1/query`
 Execute a multi-hop reasoning query against the loaded graph.
 
-**Request body:**
+**Request body (`QueryRequest`):**
 ```json
 {
-    "entity": "Marie Curie",
-    "max_hops": 3,
-    "beam_width": 5,
-    "top_k": 10,
-    "probabilistic": false,
-    "warm_start_strength": 0.0,
-    "community_snapshot": true
+    "query": "What compound treats Diabetes?",
+    "seeds": ["Diabetes"],
+    "max_hop": 3,
+    "beam_width": 10,
+    "top_k": 5,
+    "hop_expand": false,
+    "auto_infer_terminal_relation": true,
+    "anchor_bonus": 0.0
 }
 ```
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `entity` | string | required | Starting entity for traversal |
-| `max_hops` | int | 3 | Maximum reasoning depth |
-| `beam_width` | int | 5 | Number of candidates per hop |
-| `top_k` | int | 10 | Number of answer paths to return |
-| `probabilistic` | bool | false | Enable Bayesian beam search |
-| `warm_start_strength` | float | 0.0 | First-hop Beta prior seeding (Phase 19) |
-| `community_snapshot` | bool | true | Enable query snapshot isolation (Phase 20) |
+| `query` | string | **Required** | Natural language query or seed entity ID. |
+| `seeds` | list[str] | `[]` | Explicit seed entity IDs. |
+| `top_k` | int | `5` | Number of answer paths to return. |
+| `max_hop` | int | `3` | Maximum reasoning depth. |
+| `beam_width` | int | `10` | Number of candidates per hop. |
+| `hop_expand` | bool | `false` | Enable Hop-1 Intermediate Seed Expansion (H1SE). |
+| `auto_infer_terminal_relation` | bool | `true` | **Phase 167 (STRB)**: Infer terminal relation from query text. |
+| `anchor_bonus` | float | `0.0` | **Phase 164 (TAB)**: Bonus for penultimate-hop entities. |
+| `query_embedding` | list[float] | `null` | Optional query vector for semantic alignment. |
 
 **Response (200 OK):**
 ```json
 {
-    "query_entity": "Marie Curie",
-    "answers": [
+    "query": "What compound treats Diabetes?",
+    "seeds_used": ["Diabetes"],
+    "paths": [
         {
-            "entity": "Radioactivity",
+            "rank": 1,
+            "answer_entity": "Metformin",
             "score": 0.847,
-            "path": ["Marie Curie", "discovered", "Polonium", "property_of", "Radioactivity"],
-            "path_confidence": 0.823,
-            "confidence_interval": [0.78, 0.87],
-            "communities": [2, 2, 5],
-            "hmac": "sha256:a3f4b2..."
+            "path": [...]
         }
     ],
     "traversal_ms": 6.3,
@@ -1120,4 +1111,4 @@ checkpoint = client.get("/params").json()
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 3, 2026 for version v2.51.0

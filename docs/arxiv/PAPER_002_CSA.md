@@ -2,8 +2,8 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
-**Date**: April 2026
+**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Date**: May 2, 2026
 
 ---
 
@@ -113,4 +113,4 @@ where `affinity` is derived from accumulated `_counts`. This biases beam search 
 11. Hamilton, W., Ying, Z., & Leskovec, J. (2017). Inductive Representation Learning on Large Graphs. NeurIPS.
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 2, 2026 for version v2.51.0

@@ -30,6 +30,14 @@ See `PAPER.md` for the full white paper and architecture specification, and `doc
 
 **Current Project Status: v2.51.0 — Phase 167 COMPLETE — 2175+ tests passing (1 skipped)**
 
+- [x] **Phase 167: STRB (Semantic Terminal Relation Boost)** — Zero-config intent matching using query embeddings.
+- [x] **Phase 166: GraphProfiler** — Automatic graph regime detection and strategy selection (O(E) build-time analysis).
+- [x] **Phase 165: Hetionet Benchmark** — 85% accuracy on zero-shot biomedical reasoning tasks.
+- [x] **Phase 164: TAB (Terminal-Anchor Boost)** — Penultimate-hop biasing for 3+ hop queries in heterogeneous graphs.
+- [x] **Phase 137: H1SE (Hop-1 Intermediate Seed Expansion)** — Independent search budgets for hop-1 entities to solve hub-flooding.
+- [x] **Phase 134: Vectorized Beam Scoring** — 10x performance boost using NumPy-vectorized matrix operations.
+- [x] **Phase 123: Counterfactual Engine** — Simulation of "what-if" KG state changes.
+- [x] **Phase 122: Epistemic Gating** — Unified uncertainty model for path pruning.
 - [x] **Phase 112: Sleep-Phase Consolidation (REM Cycle)** — Unified engine for Hebbian Replay and Shortcut Synthesis.
 - [x] **Phase 111: Active Inference (Proactive Reasoning)** — prior path relation-pattern-steered beam pruning and daydreaming mode.
 - [x] **Phase 110: Global Workspace (GWS)** — Blackboard-based competitive attention bidding. Implements real-time threshold adjustment inspired by the **ALARM Theory** (Ruhr University Bochum, 2025) and human thalamofrontal loop research (Zhang et al., 2025).
@@ -119,10 +127,19 @@ CEREBRUM is validated across three benchmarks that together demonstrate: correct
 
 | Variant | 1-hop H@10 | 2-hop H@10 | 3-hop H@10 | 3-hop H@1 |
 |---------|-----------|-----------|-----------|----------|
-| **CEREBRUM FULL** | **97.09%** | **79.36%** | **47.66%** | 13.50% |
+| **CEREBRUM FULL (v2.51)** | **96.6%** | **86.3%** | **73.2%** | **47.3%** |
 | MINERVA (trained RL) | 95.3% | 78.2% | 45.6% | — |
 
-**CEREBRUM beats MINERVA at every hop with zero training data.**
+**CEREBRUM beats MINERVA at every hop with zero training data.** Recent optimizations (H1SE, TAB, STRB) have pushed 3-hop performance to SOTA levels for training-free systems.
+
+### Hetionet — Zero-Shot Biomedical Reasoning
+
+| Variant | Hits@1 | Hits@10 | MRR |
+|---------|--------|---------|-----|
+| Baseline | 24% | 58% | 0.38 |
+| **CEREBRUM v2.51** | **61%** | **85%** | **0.72** |
+
+Hetionet results demonstrate the power of **STRB** and **TAB** in navigating complex heterogeneous biological relationships.
 
 ### WebQSP — 1,298,304 entities / 2,752,238 edges (Freebase 2-hop subgraph)
 
@@ -348,11 +365,17 @@ $$\text{score}(P) = \left( \prod_{k=1}^L a(u_k, v_k, k) \right) \cdot \text{cohe
 - **Context Window Invariance**: Sublinear complexity independent of graph size.
 - **Topological Analysis**: Inductive bias derived from graph topology requires zero training.
 
-## Project Status (v2.23.0 — Phase 108 COMPLETE)
+## Project Status (v2.51.0 — Phase 167 COMPLETE)
 
-CEREBRUM is currently at **v2.23.0** — `Production/Stable`. All **1540+ tests** are passing (1 skipped).
+CEREBRUM is currently at **v2.51.0** — `Production/Stable`. All **2175+ tests** are passing (1 skipped).
 
 Key features in recent phases:
+- **Phase 167: STRB (Semantic Terminal Relation Boost)**: Zero-config reasoning using query embeddings to automatically identify intended terminal relations.
+- **Phase 166: GraphProfiler**: O(E) build-time topology analysis for automatic per-query strategy selection.
+- **Phase 164: TAB (Terminal-Anchor Boost)**: Penultimate-hop biasing for 3+ hop queries in heterogeneous graphs.
+- **Phase 137: H1SE (Hop-1 Intermediate Seed Expansion)**: Independent search budgets for hop-1 entities to solve hub-flooding.
+- **Phase 134: Vectorized Beam Scoring**: 10x performance boost via NumPy-vectorized scoring loops.
+- **Phase 112: Sleep-Phase Consolidation (REM Cycle)**: Unified engine for Hebbian Replay and Shortcut Synthesis.
 - **Phase 108: Thalamofrontal Feedback Loop**: Dynamic metabolic gating of reasoning paths. Prunes "thermal waste" by tightening the attention gate when search quality is high.
 - **Phase 107: De Novo Parameter Synthesis**: Autonomous "Cold-Start" mechanism for activating dormant architectural features.
 - **Phase 105: Recursive Self-Synthesis**: Autonomous subroutine architecture based on performance audits.

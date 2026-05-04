@@ -3,8 +3,8 @@
 
 ![CEREBRUM Hero Image](file:///C:/Users/bryan/.gemini/antigravity/brain/77bb37a0-e733-41be-824d-b07e7cce5a6f/cerebrum_hero_v77bb37a0_e730_41be_824d_b07e7cce5a6f_png_1774651388694.png)
 
-**Status**: v2.33.1 (Phase 143 (H1SE / Homeostatic Scaling / Multi-Seed Interaction) COMPLETE)
-**Tests**: 2,540+ passing cases
+**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Tests**: 2,175+ passing cases
 
 ---
 
@@ -12,7 +12,9 @@
 
 ```mermaid
 graph TD
-    A["Your Question"] --> BP["Prior Projection (Predictive Prior)"]
+    A["Your Question"] --> GP["GraphProfiler (Auto-Config)"]
+    GP --> STRB["STRB (Intent Inference)"]
+    STRB --> BP["Prior Projection (Predictive Prior)"]
     BP --> B["Neighborhood Discovery (DSCF / H1SE)"]
     B --> C["The Flashlight (Attention / CSA / Homeostatic Scaling)"]
     C --> D["The Scouts (Adaptive Beam Search / Multi-Seed Interaction)"]
@@ -20,6 +22,8 @@ graph TD
     GWS --> E["A Verified Answer with a Traceable Path"]
 
     subgraph "The Knowledge Graph"
+    GP
+    STRB
     BP
     B
     C
@@ -34,20 +38,25 @@ graph TD
 
 ---
 
-### **4. Focus: The Global Workspace (Phase 140+)**
+### **1. Zero-Config Reasoning: GraphProfiler & STRB (Phase 166-167)**
+CEREBRUM has reached a new level of autonomy. It no longer requires a human to "tune" it for different types of data.
+- **GraphProfiler**: When you load a new graph, CEREBRUM automatically analyzes its structure. It detects if the graph is a "hub" (like Wikipedia) or "typed" (like a medical database) and configures its reasoning strategy accordingly.
+- **STRB (Semantic Terminal Relation Boost)**: When you ask a question, CEREBRUM uses its semantic "gut feeling" to guess what kind of answer you're looking for. If you ask "What drug treats X?", it automatically prioritizes "treats" relationships without being told.
+
+### **2. Focus: The Global Workspace (Phase 110+)**
 Just like your brain can suddenly switch focus when you hear your name across a crowded room, CEREBRUM now has a **Global Workspace**. 
 - **The Blackboard**: Communities broadcast "surprising" new facts to a shared blackboard.
 - **Priority**: If a discovery is important enough, the system stops what it's doing to investigate, allowing for true "cognitive flexibility."
 
-### **5. Anticipation: Active Inference & H1SE (Phase 143)**
+### **3. Anticipation: Active Inference & H1SE (Phase 137+)**
 CEREBRUM no longer just searches blindly. It **anticipates** and **encodes**.
-- **H1SE (High-Dimensional Semantic Encoding)**: Our latest leap in path discovery, allowing for more nuanced traversal across complex multi-hop chains.
+- **H1SE (Hop-1 Intermediate Seed Expansion)**: Eliminates competition between different reasoning branches. Every promising starting point gets its own dedicated "deep dive."
 - **Multi-Seed Interaction**: Dynamic branching enabling parallel hypothesis materialization without redundancy.
 - **Homeostatic Scaling**: Real-time metabolic regulation ensuring optimal resource allocation across the graph.
 
 ---
 
-### **6. Sleep: Sleep-Phase Consolidation (Phase 112)**
+### **4. Sleep: Sleep-Phase Consolidation (Phase 112)**
 Just like your brain consolidates memories while you sleep, CEREBRUM now has a **REM Cycle**.
 - **Hebbian Replay**: The system replays its best reasoning paths to "strengthen the synapses" (weights) of those connections.
 - **Shortcuts**: If the system finds itself taking the same multi-hop path repeatedly, it synthesizes a direct shortcut. This turns slow, multi-step reasoning into an instantaneous "reflex."
@@ -232,4 +241,4 @@ Most AIs need weeks of "training" on supercomputers. They cost millions of dolla
 *For the technical details, read the official [CEREBRUM ArXiv Manuscript](file:///e:/Development/Cerebrum/docs/latex/cerebrum_master.pdf).*
 
 ---
-**Reviewed on**: May 24, 2026 for version v2.33.1
+**Reviewed on**: May 2, 2026 for version v2.51.0

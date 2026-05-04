@@ -1,4 +1,6 @@
 # PAPER 031: Loop-Provenance Recovery — Automatic Rollback on Circuit Breaker Trip in Autonomous KG Discovery
+**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Date**: May 2, 2026
 
 **CEREBRUM Phase 79**
 
@@ -88,4 +90,4 @@ The Studio v2 cycle history panel (Phase 75) renders `edges_rolled_back` in the 
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 2, 2026 for version v2.51.0

@@ -136,6 +136,32 @@ class QueryRequest(BaseModel):
             "from query text in metaqa_eval; pass explicitly for other KGs."
         ),
     )
+    auto_infer_terminal_relation: bool = Field(
+        default=True,
+        description=(
+            "Phase 167 (STRB): automatically infer the terminal relation boost "
+            "from the query text using semantic embedding similarity (if STRB is "
+            "enabled) or structural prevalence (if SRI is enabled). Overrides "
+            "terminal_relation_boost if a strong match is found."
+        ),
+    )
+    anchor_bonus: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=5.0,
+        description=(
+            "Phase 164 (TAB): score bonus applied to penultimate-hop entities "
+            "that are known sources of the terminal relation. 0.0 = disabled."
+        ),
+    )
+    query_embedding: Optional[List[float]] = Field(
+        default=None,
+        description=(
+            "Phase 167: optional query embedding vector for semantic STRB. "
+            "If omitted, the server will compute it using its own EmbeddingEngine "
+            "if available."
+        ),
+    )
 
 
 class QueryConsensusRequest(QueryRequest):

@@ -17,23 +17,33 @@ python -c "import secrets; print(secrets.token_hex(32))"
 ### 2. Start the server
 
 ```bash
-CEREBRUM_API_KEYS=your-key-here docker compose up -d
+# Set your accepted keys (comma-separated)
+export CEREBRUM_API_KEYS=your-key-here
+
+# Start with a CSV graph
+python -m cli.cerebrum serve --csv my_graph.csv --port 8200
 ```
 
 The API is now available at `http://localhost:8200`.
-State (graph cache, query log, Engram) persists in a Docker volume across restarts.
+Authentication: Send `-H "X-API-Key: your-key-here"` or `-H "Authorization: Bearer <jwt>"`.
 
-### 3. Load a graph
+---
 
-Upload any edge-list CSV (`source,relation,target` columns):
+## Zero-Config Reasoning (Phase 167)
+
+CEREBRUM now automatically configures itself for your graph. Just load it and query:
 
 ```bash
-curl -X POST http://localhost:8200/v1/upload/csv \
+curl -X POST http://localhost:8200/v1/query \
   -H "X-API-Key: your-key-here" \
-  -F "file=@my_graph.csv"
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "What compound treats Diabetes?",
+    "max_hop": 3
+  }'
 ```
 
-Or mount a CSV and load it at startup by setting `CEREBRUM_CSV_PATH` in `docker-compose.yml`.
+The **GraphProfiler** (Phase 166) detects your graph type, and **STRB** (Phase 167) automatically boosts the "treats" relationship based on the question text.
 
 ---
 

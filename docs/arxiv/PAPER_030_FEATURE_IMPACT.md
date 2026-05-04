@@ -1,4 +1,6 @@
-# PAPER 030: Feature Impact Benchmark — Measuring Incremental Reasoning Gains in CEREBRUM v2.24.0
+# PAPER 030: Feature Impact Benchmark — Measuring Incremental Reasoning Gains in CEREBRUM v2.51.0
+**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Date**: May 2, 2026
 
 **CEREBRUM Phase 77**
 
@@ -45,7 +47,7 @@ Each configuration runs on the identical query set — all 21 entities as seeds 
 
 ---
 
-## 4. Results (toy_graph.csv, April 2026)
+## 4. Results (toy_graph.csv, May 2026)
 
 | Config | Hits@1 | Hits@5 | MRR | ΔMRR |
 |---|---|---|---|---|
@@ -83,4 +85,4 @@ The toy_graph.csv fixture (21 nodes, 30 edges) is too small for statistically me
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 2, 2026 for version v2.51.0

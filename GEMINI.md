@@ -6,18 +6,18 @@ This file provides essential context and instructions for Gemini CLI when workin
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph (KG) reasoning. It implements a multi-hop traversal mechanism inspired by Transformer architectures, allowing KGs to perform complex reasoning without an LLM or training data.
 
-**v2.33.0 (Phase 141 COMPLETE)** — 1560+ tests passing. Includes Autonomous H1SE Tuning, Multi-Seed Relational Interaction, Cross-Branch Path Pruning, Adaptive Expansion K, Hop-1 Intermediate Seed Expansion (H1SE), Funnel Beam Profile, KGE-Enriched Embeddings, Vectorized Beam Scoring, Causal Accuracy Benchmark, Counterfactual Reasoning, Epistemic Gating, Sleep Cycle, and a 10-parameter CSA formula.
+**v2.51.0 (Phase 167 COMPLETE)** — 2175+ tests passing. Includes STRB (Semantic Terminal Relation Boost), GraphProfiler (Auto Query Strategy), Terminal-Anchor Hints (TAB), Vectorized Beam Scoring, and all previous advancements.
 
 ### Core Innovations
-1.  **DSCF/TSC (Triple-Signal Consensus):** A novel community detection algorithm that fuses local (LPA), global (Modularity), and flow (Centrality) signals.
-2.  **CSA (Community-Structured Attention):** An attention mechanism influenced by community membership and semantic similarity.
-3.  **Cross-Branch Path Pruning (Phase 139):** Prevents computation waste by terminating weak H1SE branches mid-flight using a Global Beam Barrier.
-4.  **Multi-Seed Interaction (Phase 140):** Enables H1SE to handle relational intersection queries with an automated priority bonus for shared neighbors.
-5.  **Adaptive Expansion K (Phase 138):** Dynamically scales H1SE expansion budget based on metabolic `Arousal` and `Reinforcement`.
+1.  **STRB (Semantic Terminal Relation Boost - Phase 167)**: Zero-config reasoning using query embeddings to automatically identify intended terminal relations.
+2.  **GraphProfiler (Phase 166)**: O(E) build-time topology analysis for automatic per-query strategy selection (Regime-based auto-config).
+3.  **TAB (Terminal-Anchor Boost - Phase 164)**: Penultimate-hop biasing for 3+ hop queries in heterogeneous graphs.
+4.  **DSCF/TSC (Triple-Signal Consensus):** A novel community detection algorithm that fuses local (LPA), global (Modularity), and flow (Centrality) signals.
+5.  **CSA (Community-Structured Attention):** An attention mechanism influenced by community membership and semantic similarity.
 6.  **H1SE (Hop-1 Intermediate Seed Expansion - Phase 137):** Eliminates cross-branch beam competition by giving each hop-1 entity its own independent deep traversal.
 7.  **Thalamofrontal Feedback Loop (Phase 108):** Dynamic metabolic gating of reasoning paths. Prunes "thermal waste" by tightening the attention gate when search quality is high.
 8.  **Sleep Cycle (Phases 119-121):** Self-organizing idle cycles for Engram Consolidation, REM Shortcut Synthesis, and Synaptic Decay.
-9.  **Recursive Self-Synthesis (Phase 105)**: System architects its own subroutines based on DMN bottleneck audits.
+9.  **Global Workspace (GWS - Phase 110)**: Blackboard-based competitive attention layer for cognitive flexibility.
 10. **Metabolic Homeostasis**: Dynamic functional regulation using metabolic scalars: Reinforcement, Arousal, Novelty, Cohesion, and Persistence.
 
 ### Transformer ↔ KG Analogy
@@ -88,15 +88,17 @@ python core/autonomous_researcher.py --continuous --interval 60
 -   **Reproducibility:** Deterministic runs for DSCF/TSC.
 -   **Documentation:** Absolute precedence to `PARALLAX.md` and `README.md`.
 
-## Current Project Status (Phase 141 COMPLETE)
+## Current Project Status (Phase 167 COMPLETE)
 
-CEREBRUM is currently in **v2.33.0**. All phases through 141 shipped and verified.
+CEREBRUM is currently in **v2.51.0**. All phases through 167 shipped and verified.
 
 Key implementations (recent phases):
+-   **Phase 167 — STRB**: Semantic Terminal Relation Boost using query embeddings.
+-   **Phase 166 — GraphProfiler**: Automatic Query Strategy Selection via topology profiling.
+-   **Phase 165 — Hetionet Benchmark**: 85% accuracy on zero-shot biomedical reasoning.
+-   **Phase 164 — TAB**: Terminal-Anchor Hints for penultimate-hop biasing.
 -   **Phase 141 — Autonomous H1SE Tuning**: Parameter self-optimization against MetaQA.
 -   **Phase 140 — Multi-Seed Interaction**: Intersection queries with shared-neighbor bonus.
--   **Phase 139 — Cross-Branch Path Pruning**: Global Beam Barrier for mid-flight branch termination.
--   **Phase 138 — Adaptive Expansion K**: Metabolic scaling of H1SE branches.
 -   **Phase 137 — H1SE**: Hop-1 Intermediate Seed Expansion.
 -   **Phase 136 — Funnel Beam Profile**: Linearly ramped beam widths for deeper hop coverage.
 -   **Phase 135 — KGE-Enriched Embeddings**: TransE/RotatE signals integrated into semantic embeddings.

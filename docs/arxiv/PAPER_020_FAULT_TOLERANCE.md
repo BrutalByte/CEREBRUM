@@ -2,8 +2,8 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
-**Date**: April 2026
+**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Date**: May 2, 2026
 
 ---
 
@@ -151,4 +151,4 @@ Fault tolerance in production systems is not a single feature but a taxonomy of 
 3. Vaswani, A., et al. (2017). Attention is All You Need. NIPS.
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 2, 2026 for version v2.51.0

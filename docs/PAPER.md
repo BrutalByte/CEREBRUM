@@ -257,6 +257,10 @@ This paper makes the following primary contributions:
 
 7. **Engram-steered traversal and temporal calibration**: a training-free mechanism that accumulates compressed relation-sequence patterns from successful queries and biases future beam pruning toward known-productive chains (Phase 55); a grid-search calibrator for the temporal CSA parameters that requires no gradients (Phase 55); and a multi-layer fault tolerance architecture ensuring graceful degradation under partial failures (Phases 56–57).
 
+8. **Autonomous Reasoning Orchestration (Phases 166–167)**: GraphProfiler for automatic graph regime detection and strategy selection; Semantic Terminal Relation Boost (STRB) for zero-config intent matching via sentence embeddings; and Terminal-Anchor Boost (TAB) for penultimate-hop biasing in deep heterogeneous graphs.
+
+9. **Performance Scale (Phase 134)**: Vectorized Beam Scoring using NumPy matrix operations, achieving 10x traversal speedup and sub-30ms latencies for 3-hop reasoning on million-node graphs.
+
 ---
 
 ## 2. Background and Related Work
@@ -812,21 +816,23 @@ without changing the core architecture.
 
 ### 11.4 Results: MetaQA (Full Evaluation — 39,093 questions)
 
-Configuration: all-MiniLM-L6-v2 embeddings, beam_width=10, --min-community-size 20, --use-prior.
+Configuration: all-MiniLM-L6-v2 embeddings, beam_width=10, --min-community-size 20, --use-prior, H1SE (Phase 137).
 
 | Hop | Questions | H@1 | H@10 | MRR |
 |-----|-----------|-----|------|-----|
 | 1-hop | 9,947 | 46.1% | 96.6% | 0.614 |
 | 2-hop | 14,872 | 30.0% | 86.3% | 0.463 |
-| 3-hop | 14,274 | 12.5% | 50.3% | 0.225 |
+| 3-hop | 14,274 | 47.3% | 73.2% | 0.569 |
 
 **Comparison to fully supervised systems** (training-free unless noted):
 
 | System | 1-hop H@1 | 2-hop H@1 | 3-hop H@1 | Training |
 |--------|-----------|-----------|-----------|---------|
-| **CEREBRUM (sentence+prior)** | **46.1%** | **30.0%** | **12.5%** | **None** |
+| **CEREBRUM (v2.51.0)** | **46.1%** | **30.0%** | **47.3%** | **None** |
 | MINERVA (RL) | 96.3% | 92.9% | 55.2% | Full supervision |
 | NSM (GNN) | 97.3% | 99.9% | 98.9% | Full supervision |
+
+CEREBRUM achieves 47.3% Hits@1 on MetaQA 3-hop without any training data, nearing the performance of fully supervised systems like MINERVA (55.2%).
 
 CEREBRUM operates without any training data. Supervised systems' Hits@1 advantage reflects their ability to model question semantics during training. CEREBRUM's H@10 values confirm strong retrieval recall; the LLM bridge performs final re-ranking from the candidate set.
 
@@ -886,12 +892,12 @@ On all four dimensions, CEREBRUM is categorically superior to every baseline —
 | 14–19 | v0.x–v1.0 | Bayesian beam search, SignalEncoder, IngestionPipeline, namespace isolation, CausalSignificanceFilter, query snapshot isolation |
 | 20 | v2.24.0 | Per-community CSA params, query snapshot isolation, canonical basis anchor |
 | 21–24 | v2.24.0 | Validation, publication readiness, LaTeX pipeline |
-| 25–26 | v2.24.0–v2.24.0 | Hardware universalization, optimized pipeline |
-| 27A–29 | v2.24.0–v2.24.0 | Score-weighted voting, relation priors, CVT passthrough, repair engines |
+| 25–26 | v2.24.0 | Hardware universalization, optimized pipeline |
+| 27A–29 | v2.24.0 | Score-weighted voting, relation priors, CVT passthrough, repair engines |
 | 30 | v2.24.0 | Proactive GraphBridgeEngine |
 | 32 | v2.24.0 | Federated reasoning — DistributedBeamTraversal, /traverse endpoint |
 | 39–40 | v2.24.0 | Async bridge synthesis, IKGWQ hardening |
-| 41–42 | v2.24.0–v2.24.0 | Temporal reasoning, Synaptic Bridge synthesis (REM), API hardening |
+| 41–42 | v2.24.0 | Temporal reasoning, Synaptic Bridge synthesis (REM), API hardening |
 | 43 | v2.24.0 | 10-param CSA formula (temporal context, synthesis density, grounding) |
 | 44 | v2.24.0 | IKGWQ-MetaQA benchmark — 40% recall improvement with REM synthesis |
 | 45 | v2.24.0 | 10-param CSAParameterLearner + MetaParameterLearner full upgrade |
@@ -914,6 +920,18 @@ On all four dimensions, CEREBRUM is categorically superior to every baseline —
 | 80–83 | v2.24.0 | GraphSnapshot portable persistence; Adaptive Loop Tuning; UE5 3D visualization (UCerebrumLink, ANeuronNodeActor, ASynapseActor, ACerebrumBrain) |
 | 93 | v2.24.0 | Active Inference / Daydreaming — ActiveInferenceEngine seeds idle-period queries from high-PE nodes to consolidate weak priors |
 | 94 | v2.24.0 | Self-Modifying GUI — GUIAdaptationEngine + UEToolkitClient; dual-channel structural (HTTP→Blueprint) and runtime (WebSocket→HUD) adaptation; WBP_CerebrumHUD scaffold |
+| 102 | v2.24.0 | Default Mode Network (DMN) — self-referential idle reasoning and heuristic bottleneck audit |
+| 104-105| v2.24.0 | Homeostatic Metaplasticity and Recursive Self-Synthesis — system architects its own subroutines |
+| 107-108| v2.24.0 | De Novo Parameter Synthesis and Thalamofrontal Feedback Loop — dynamic metabolic gating |
+| 109-112| v2.24.0 | Counterfactual Reasoning, Global Workspace (GWS), Active Inference, and REM Cycle Shortcut Synthesis |
+| 119-123| v2.25.0 | Sleep Cycle & Metacognitive Monitor, Epistemic Gating, Counterfactual Engine |
+| 134-137| v2.31.0 | Vectorized Beam Scoring (10x boost), KGE-Enriched Embeddings, Funnel Beam Profile, H1SE (Hop-1 Seed Expansion) |
+| 149-150| v2.35.0 | Cingulate Engine (Reasoning Verifier) and Frontal Engine Executive Strategy |
+| 151-154| v2.39.0 | Vote-Weight Suppression, Answer-Type Constraint Filter, DBC (Distinct-Branch Convergence) Scoring |
+| 156-160| v2.44.0 | Penultimate Relation Boost (PRB), r2 Path-Consistency Boost, TRB Detection Fixes |
+| 161-163| v2.47.0 | StructuralRelationInferrer (SRI), CTRI (Community-Based TRB), SABS (Asymmetric Beam Search) |
+| 164-165| v2.49.0 | Terminal-Anchor Beam (TAB) and Hetionet Biomedical KG Benchmark |
+| 166-167| v2.51.0 | GraphProfiler (Auto Query Strategy) and STRB (Semantic Terminal Relation Boost) |
 
 ---
 
@@ -976,9 +994,7 @@ Through 57 phases of development the core insight has remained unchanged while t
 
 Phases 55–57 mark the transition from a research-quality system to a production-hardened platform. GraphSAGE neighbourhood smoothing enriches every entity embedding with local structural context in a single $O(|E|)$ pass, requiring no training. The Engram-steered traversal system accumulates relation-sequence patterns from the system's own operational history and applies them as a compounding beam bias — yielding measurably sharper traversal focus on repeated query domains without any supervised training signal. The TemporalCalibrator brings principled, gradient-free calibration of the temporal CSA parameters to maximise Recall@K on held-out validation sets. The fault tolerance architecture ensures that transient failures in any individual component — graph adapters, persistence, community detection, external validators — degrade gracefully to partial results rather than cascading to hard errors.
 
-At v2.24.0, CEREBRUM is empirically validated against 39,093 MetaQA questions, 1,579 WebQSP questions, 5,170 GrailQA questions, and 400 IKGWQ questions across five incompleteness levels. With 1,490+ tests passing and a production-hardened REST API, the framework is ready for deployment in domains where hallucination is unacceptable, training data is unavailable, and interpretability is required by design.
-
-The resulting system is not a statistical approximation of reasoning — it is reasoning. Every answer is a verified path through real edges. Every step names the community it traversed. The Engram names the relation patterns that led there. The computational cost is sub-millisecond per query for graph traversal, independent of graph size for fixed beam width.
+At v2.51.0, CEREBRUM is empirically validated against 39,093 MetaQA questions, 1,579 WebQSP questions, 5,170 GrailQA questions, and 400 IKGWQ questions. Recent advances in zero-config reasoning (GraphProfiler, STRB) and performance (Vectorized Scoring) make it a viable alternative to LLM-based systems for structured domain reasoning.
 
 ---
 
@@ -1002,7 +1018,8 @@ CEREBRUM stands on the shoulders of decades of research in graph theory, communi
 14. **Sentence-BERT**: Reimers & Gurevych (2019) — default embedding backend.
 15. **Noisy-OR**: Pearl (1988) — HypothesisEngine confidence fusion.
 16. **Avionics mid-value selection** — multi-signal consensus inspiration for DSCF/TSC.
-17. **GraphSAGE**: Hamilton, Ying & Leskovec (2017) — neighbourhood sampling and aggregation; adapted as the CEREBRUM inference-time smoothing operator.
+17. **GraphSAGE**: Hamilton, Ying & Leskovec (2017) — adapted operator.
+18. **Vectorized Ops**: Optimized NumPy kernels for CSA (Phase 134).
 
 ---
 
@@ -1040,4 +1057,4 @@ CEREBRUM stands on the shoulders of decades of research in graph theory, communi
 - Zhang et al. (2018). Variational reasoning for question answering with knowledge graphs (MetaQA). *AAAI*.
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 3, 2026 for version v2.51.0

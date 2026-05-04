@@ -1,6 +1,6 @@
 # CEREBRUM Deployment Guide
 
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Audience**: DevOps, Platform Engineers, System Administrators
 
 ---
@@ -11,7 +11,7 @@
 pip install -e ".[api]"
 export CEREBRUM_JWT_SECRET="dev-secret-change-in-production"
 uvicorn api.server:app --port 8200 --reload
-curl http://localhost:8200/health
+curl http://localhost:8200/v1/handshake
 ```
 
 ---
@@ -480,4 +480,4 @@ Key metrics to alert on:
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 2, 2026 for version v2.51.0

@@ -623,7 +623,7 @@ class BeamTraversal:
                             vv = ce.target_id
                             if vv not in path.seen_entities and not _is_cvt_node(vv):
                                 _rel = f"{edge.relation_type}|{ce.relation_type}"
-                                _pb = 1.5 if (expected_rel and _rel == expected_rel) else 1.0
+                                _pb = 1.575 if (expected_rel and _rel == expected_rel) else 1.0
                                 _batch_steps.append((
                                     vv, _rel,
                                     min(edge.confidence, ce.confidence) * CVT_HOP_PENALTY,

@@ -40,16 +40,32 @@ To find answers, CEREBRUM sends out "scouts" in a **Beam Search**.
 - **Beam Width**: The number of scouts sent out at each step (typically 10-50).
 - **Beam Depth**: How many "hops" (steps) the scouts are allowed to take.
 
-This search is **Bayesian**, meaning it uses Thompson Sampling and Beta distributions to handle uncertainty. Each scout maintains a "prior" belief about its path's quality, which is updated as it discovers new facts. 
+This search is **Bayesian**, meaning it uses Thompson Sampling and Beta distributions to handle uncertainty. Each scout maintains a "prior" belief about its path's quality, which is updated as it discovers new facts.
 
-In latest versions, this search is **Looped**. The system can run multiple passes of the search, using the answers from the first pass to refine its strategy for the second pass—much like a human re-reads a difficult sentence to understand it better.
+### Vectorized Beam Scoring (Phase 134)
+To handle the scale of billions of possible paths, CEREBRUM uses **Vectorized Beam Scoring**. By moving the core attention calculation into optimized NumPy operations, the system achieves a **10x speedup**, allowing complex multi-hop reasoning in sub-30ms latencies even on standard CPU hardware.
 
-### Active Inference (Phase 111)
-CEREBRUM now performs **Active Inference**, moving from a reactive searcher to a proactive prosector. Before the beam search starts, the **PredictiveCoder** uses historical Engram patterns to project the "Expected Path." This projection biases the search toward likely relation sequences, drastically reducing computational waste for standard queries while focusing energy on "surprising" discoveries.
+### H1SE: Solving the Hub Problem (Phase 137)
+In many Knowledge Graphs, "popular" nodes (hubs) like *United States* or *Action Movie* can dominate the beam search, preventing smaller, more specific paths from being explored. CEREBRUM uses **Hop-1 Intermediate Seed Expansion (H1SE)** to solve this. Instead of one global beam, each unique node reached at hop 1 receives its own independent search budget. This ensures that every promising direction gets a fair chance to reach the answer.
 
 ---
 
-## 4. The Decision: Multi-Agent Consensus & Global Workspace
+## 4. The Intelligence: Auto-Configuration and Zero-Shot Boosts
+
+In latest versions, CEREBRUM has moved from a "manual config" tool to an **Autonomous Reasoner**.
+
+### GraphProfiler: Automatic Strategy (Phase 166)
+Graphs come in many shapes. Some are "hub-heavy" (like Wikipedia), while others are "type-rich" (like medical databases). CEREBRUM's **GraphProfiler** analyzes the topology of your data at build time. It automatically detects the "Graph Regime" and configures the reasoning engine accordingly—turning on features like H1SE or STRB only when they are statistically likely to help.
+
+### STRB: Zero-Config Intent Matching (Phase 167)
+Traditionally, you had to tell a graph searcher which "relation type" mattered (e.g., "Look for *treats* edges"). With **Semantic Terminal Relation Boost (STRB)**, CEREBRUM does this automatically. It uses its embedding engine to compare your query text to the labels of every relation in the graph. If you ask "What treats X?", STRB automatically boosts paths ending in "treats" or "therapeutic_use," enabling high-accuracy reasoning with zero manual configuration.
+
+### TAB: Navigating Deep Heterogeneity (Phase 164)
+For complex questions (3+ hops), the search can get lost in the "middle" hops. **Terminal-Anchor Boost (TAB)** provides a navigational beacon. It identifies "anchor sets"—groups of entities that are known to be just one step away from the target type—and applies a bonus to paths that reach those anchors at the penultimate hop. This "look-ahead" biasing significantly improves recall for deep, heterogeneous queries.
+
+---
+
+## 5. The Decision: Multi-Agent Consensus & Global Workspace
 
 To ensure the highest accuracy, CEREBRUM uses **Multi-Agent Consensus Hierarchies (MACH)**. Instead of relying on a single path, it runs multiple reasoning strategies in parallel and requires them to reach a consensus.
 
@@ -99,4 +115,4 @@ CEREBRUM represents a shift from **Stochastic AI** (guessing) to **Structural AI
 **CEREBRUM is the first formal reasoning engine designed for the age of complex, high-stakes data.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 3, 2026 for version v2.51.0

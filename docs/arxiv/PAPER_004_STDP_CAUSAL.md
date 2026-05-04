@@ -2,8 +2,8 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
-**Date**: April 2026
+**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Date**: May 2, 2026
 
 ---
 
@@ -64,4 +64,4 @@ The STDP causal discovery pipeline has been hardened and extended since v2.24.0.
 7. Buchorn, B. A., & Sonnet, C. (2026). Lazy STDP Weight Decay in CEREBRUM. SPEC_004.md.
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 2, 2026 for version v2.51.0

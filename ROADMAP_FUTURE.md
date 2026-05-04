@@ -1,43 +1,48 @@
-# CEREBRUM Developmental Roadmap (Phases 111-115)
+# ROADMAP_FUTURE.md
+## Future Vision: Hybrid-Memory Architecture (Post-Phase 167)
 
-## Objective
-Evolve CEREBRUM from a community-structured reasoning engine into a fully autonomous, predictive, self-consolidating "Brain" analog with embedded safety and ethics.
+This roadmap defines the transition from a purely RAM-resident reasoning engine to a **Hybrid-Memory Architecture**, allowing CEREBRUM to operate on graphs of arbitrary size while maintaining sub-millisecond reasoning performance for hot reasoning paths.
+
+---
+
+## 1. Hybrid-Memory Implementation Plan
+
+### Phase 168: The 'Engine Cap' Resource Controller
+- **Objective**: Implement global resource constraints for RAM and VRAM.
+- **Mechanism**:
+    - Add `MemoryGovernor` to `core/hardware.py`.
+    - Allow users to set global limits in `config.yaml` or via CLI (`--max-ram-gb`, `--max-vram-gb`).
+    - The Governor monitors current process utilization and prevents the `Adapter` from loading new graph components if the memory budget is exceeded.
+
+### Phase 169: Mmap-Backed Edge Layer
+- **Objective**: Offload raw edge storage to disk.
+- **Mechanism**:
+    - Implement `MmapAdapter` as a high-performance alternative to `NetworkXAdapter`.
+    - Binary-serialize the graph topology into a flat-file structure optimized for page-aligned random access.
+    - Transparently map this file into virtual memory, allowing the kernel to handle the RAM/NVMe paging.
+
+### Phase 2: Intelligent Paging & Caching
+### Phase 170: Hot-Community Pinning
+- **Objective**: Pin high-authority/high-traversal communities to resident RAM.
+- **Mechanism**: 
+    - The `CommunityEngine` ranks communities by "authority score" (PageRank + query recency).
+    - Blocks corresponding to top-performing communities are `mlock`'d or kept in a dedicated RAM-resident cache to ensure the "Attention Flashlight" never hits an I/O wait-state during a reasoning step.
+
+### Phase 171: Transparent Paging Buffer
+- **Objective**: Implement a user-configurable disk-spill buffer.
+- **Mechanism**:
+    - Users define a `DISK_SPILL_ENABLED: true` policy and a storage directory.
+    - If the `MemoryGovernor` (Phase 168) detects memory pressure, it triggers the `Adapter` to evict the coldest graph segments (least frequently traversed edges) to the NVMe-backed buffer, replacing them with virtual address pointers.
 
 ---
 
-## Phase 111: Active Inference (Proactive Reasoning)
-- **Goal:** Shift from reactive search to proactive traversal.
-- **Mechanism:** Implement "Predictive Priors" using Engram patterns to project reasoning paths before search.
-- **Benefit:** Massive computation reduction (pruning before calculation).
+## 2. Resource-Aware Reasoning (The Tuning Matrix)
 
-## Phase 112: Sleep-Phase Consolidation (REM Cycle) — COMPLETE
-- **Goal:** Autonomous conversion of "discovered" knowledge into "canonical" graph structure.
-- **Mechanism:** Unified `ConsolidationEngine` performs Hebbian Replay and Shortcut Synthesis.
-- **Benefit:** System becomes "self-indexing"; common queries become instantaneous reflexes.
-
-## Phase 112.5: Federated Security & Identity Hardening
-- **Goal:** Secure multi-agent interaction.
-- **Mechanism:** Implement Federated Identity, Byzantine Fault Tolerance (BFT), and encrypted node-to-node signal channels for multi-agent consensus.
-- **Benefit:** Prevents consensus poisoning in collaborative environments.
-
-## Phase 113: Emotional/Social Resonance (Collaborative Consensus)
-- **Goal:** Enable multi-CEREBRUM synchronization.
-- **Mechanism:** Expand Blackboard (GWS) to support inter-agent signals.
-- **Benefit:** Emergent collective intelligence.
-
-## Phase 113.5: Ethical Alignment & Bias Audit
-- **Goal:** Embedded logical ethics.
-- **Mechanism:** Neural Bias Gate: runtime detection of logical drift, amplification of skewed patterns, or materialization of non-compliant relation chains.
-- **Benefit:** Ensures autonomous logic synthesis adheres to alignment constraints.
-
-## Phase 114: Meta-Goal Materialization (Autonomous Hypothesis Engineering)
-- **Goal:** Autonomous research into "Structural Holes."
-- **Benefit:** System autonomously expands its own reasoning capability safely.
-
-## Phase 115: Neuromorphic Hardening & Deployment
-- **Goal:** Final production hardening for extreme-scale edge deployment.
-- **Mechanism:** Bit-packed traversal, specialized hardware acceleration, and industrial safety compliance.
+| Mode | Memory Budget | Reasoning Strategy | Target Hardware |
+|---|---|---|---|
+| **PERFORMANCE** | Unlimited | All-RAM (Full Resident) | Enterprise Servers |
+| **BALANCED** | Limited (Configurable) | Hybrid (Pinned Hot-Nodes + Mmap) | High-End Workstations |
+| **ECONOMY** | Minimal | Mmap-First (Disk-Backed) | Laptops / Edge / Cloud-Free Tier |
 
 ---
-*Roadmap Subject to Autonomous Auditor (DMN) adjustments via Phase 105.*
-
+**Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

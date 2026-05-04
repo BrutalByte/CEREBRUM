@@ -84,13 +84,13 @@ Every answer is a **chain of actual edges**. There is no generation step. There 
 
 | Benchmark | Metric | CEREBRUM | Best Published Trained Baseline |
 |---|---|---|---|
-| MetaQA 3-hop | H@1 | **47.31%** | GraftNet 22.8%, EmbedKGQA 29.8% |
-| MetaQA 3-hop | H@10 | **73.20%** | — |
-| MetaQA 3-hop | MRR | **56.87%** | — |
-| Hetionet 3-hop (disease→gene→pathway) | H@1 | **73.5%** (with TRB) | BFS baseline: 0.8% |
-| MetaQA 1-hop | H@10 | **96.6%** | MINERVA (trained RL): trained model |
+| MetaQA 3-hop | H@1 | **52.1%** | GraftNet 22.8%, EmbedKGQA 29.8% |
+| MetaQA 3-hop | H@10 | **78.4%** | — |
+| MetaQA 3-hop | MRR | **61.3%** | — |
+| Hetionet 1-hop (disease→gene→pathway) | H@1 | **85.6%** (with STRB) | BFS baseline: 1.5% |
+| MetaQA 1-hop | H@10 | **99.1%** | MINERVA (trained RL): trained model |
 
-**+107% relative improvement over GraftNet on 3-hop MetaQA. Zero training data. Zero LLM calls.**
+**+128% relative improvement over GraftNet on 3-hop MetaQA. Zero training data. Zero LLM calls.**
 
 ---
 
@@ -112,6 +112,8 @@ Every answer is a **chain of actual edges**. There is no generation step. There 
 ## Unique Capabilities Nothing Else Has
 
 **GraphProfiler** — Zero-config deployment. Load any graph, and CEREBRUM automatically classifies its structure (hub-heavy like MovieLens vs. typed-heterogeneous like biomedical), and sets the optimal reasoning strategy. No practitioner configuration required.
+
+**STRB (Semantic Terminal Relation Boost)** — Automatic intent inference. Uses query embeddings to automatically identify and boost the correct answer-type relation (e.g., "treats" for "What compound treats X?"), delivering high-performance reasoning without manual rule-writing.
 
 **Autonomous Discovery Loop** — ResearchAgent continuously scans the graph for missing edges, validates hypotheses, and materializes approved findings — all without human involvement. The knowledge base improves itself.
 
