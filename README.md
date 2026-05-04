@@ -222,5 +222,16 @@ WebQSP over Freebase is specifically hard for zero-training structural systems d
 | Moderate | 15% | 2.75% | 14.25% | 5.80% |
 | Severe | 30% | 4.0% | 10.75% | 5.88% |
 | Extreme | 50% | 3.25% | 9.5% | 4.58% |
+## Autonomous Discovery & Automation
 
-**Graceful Degradation AUC = 0.89** — CEREBRUM retains 89% of reasoning capability under extreme 50% edge removal. LLM-augmented systems that use memorised facts to bypass missing edges cannot make this claim.
+CEREBRUM v2.51.0 includes a production-grade automation suite for "Daydreaming" (background knowledge discovery) during off-peak hours.
+
+- **`scripts/discovery_scheduler.py`**: A fully automated pipeline that triggers:
+    1. **Autonomous Research**: Mines the KG for latent connections.
+    2. **Synthesis**: Generates an audit-ready `discovery_verification_report.md` for human review.
+- **Verification**: All discoveries include full path-trace provenance for expert validation.
+
+For setup instructions, see `docs/AUTOMATION_GUIDE.md`.
+
+---
+
