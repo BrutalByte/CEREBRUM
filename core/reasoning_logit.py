@@ -63,16 +63,33 @@ class ReasoningLogit:
             )
         a, b, g, d, e, z, eta, iota, mu, theta = params
 
-        raw = (
-            a * self.sim
-            + b * self.cs
-            + g * self.etw
-            - d * self.nd
-            + e * self.hd
-            + z * self.pr_v
-            + eta * self.td
-            + iota * self.nr_v
-            - mu * self.sd
-            + theta * self.grounding
-        )
-        return 1.0 / (1.0 + np.exp(-raw))
+        # Use tensor operations if signals are tensors to avoid GPU-CPU sync bottlenecks
+        import torch
+        if isinstance(a, torch.Tensor):
+            raw = (
+                a * self.sim
+                + b * self.cs
+                + g * self.etw
+                - d * self.nd
+                + e * self.hd
+                + z * self.pr_v
+                + eta * self.td
+                + iota * self.nr_v
+                - mu * self.sd
+                + theta * self.grounding
+            )
+            return float(torch.sigmoid(raw).cpu())
+        else:
+            raw = (
+                a * self.sim
+                + b * self.cs
+                + g * self.etw
+                - d * self.nd
+                + e * self.hd
+                + z * self.pr_v
+                + eta * self.td
+                + iota * self.nr_v
+                - mu * self.sd
+                + theta * self.grounding
+            )
+            return 1.0 / (1.0 + np.exp(-raw))

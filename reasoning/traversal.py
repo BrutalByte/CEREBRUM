@@ -638,8 +638,7 @@ class BeamTraversal:
 
                 # Phase 134: vectorized batch scoring (one matrix multiply per path per hop)
                 # isinstance guard: MagicMock auto-creates any attr, causing silent failures
-                _cwb = (getattr(self.csa, "compute_weights_batch", None)
-                        if isinstance(self.csa, CSAEngine) else None)
+                _cwb = getattr(self.csa, "compute_weights_batch", None)
                 _prior_scale = (
                     1.0 + self.warm_start_strength
                     if (self.probabilistic and self.warm_start_strength > 0.0 and len(path.nodes) == 1)
@@ -647,7 +646,7 @@ class BeamTraversal:
                 )
                 _scored_steps: List[Tuple[Any, int, str]] = []  # (new_path, v_cid, rel_eff)
 
-                if _batch_steps and _cwb is not None:
+                if _batch_steps:
                     # --- Batch path: vectorized CSA scoring ---
                     _v_list   = [s[0] for s in _batch_steps]
                     _rel_list = [s[1] for s in _batch_steps]
@@ -682,110 +681,22 @@ class BeamTraversal:
                         if self.terminal_relation_boost:
                             if hop == self.max_hop:
                                 # Phase 148: Negative Terminal Boost (Penalty for non-target relations)
-                                # If a target is known, unmatched relations are crushed (0.1x).
                                 boost = self.terminal_relation_boost.get(rel_eff, 0.01)
                                 w *= boost
                             elif hop == self.max_hop - 1:
                                 if self.penultimate_relation_boost:
-                                    # Phase 156: dedicated r2 boost (different relation from r3)
                                     pb = self.penultimate_relation_boost.get(rel_eff, 1.0)
                                     if pb > 1.0:
                                         w *= pb
                                 else:
                                     tb = self.terminal_relation_boost.get(rel_eff, 1.0)
                                     if tb > 1.0:
-                                        w *= tb ** 0.5  # penultimate cascade: 3.0 -> ~1.73x
+                                        w *= tb ** 0.5  # penultimate cascade
 
                         if v_eff not in comm_cache:
                             comm_cache[v_eff] = _get_comm(v_eff)
                         v_cid = comm_cache[v_eff]
                         v_emb = _ev_list[_i] if _ev_list[_i] is not None else np.zeros(emb_dim, dtype=np.float32)
-                        coh = community_coherence(path.community_sequence + [v_cid])
-
-                        new_path = path.copy_with_extension(
-                            rel=rel_eff, v=v_eff, v_cid=v_cid, v_emb=v_emb,
-                            weight=w, coherence_score=coh,
-                            edge_confidence=conf_eff, edge_provenance=prov_eff,
-                            prior_scale=_prior_scale,
-                            features=tuple(features_vector) if features_vector is not None else None,
-                        )
-                        _scored_steps.append((new_path, v_cid, rel_eff))
-
-                elif _batch_steps:
-                    # --- Fallback: per-step scoring (test mocks, older CSAEngine) ---
-                    for (v_eff, rel_eff, conf_eff, prov_eff, vf_eff, vt_eff, prior_bias) in _batch_steps:
-                        if v_eff in emb_cache:
-                            ev = emb_cache[v_eff]
-                        else:
-                            ev = _get_emb(v_eff)
-                            emb_cache[v_eff] = ev
-
-                        if v_eff in comm_cache:
-                            v_cid = comm_cache[v_eff]
-                        else:
-                            v_cid = _get_comm(v_eff)
-                            comm_cache[v_eff] = v_cid
-
-                        _cwf_result = _cwf(
-                            u, v_eff, hop=hop,
-                            edge_type=rel_eff,
-                            edge_type_weights=self.edge_type_weights,
-                            normalized_distance=0.0,
-                            valid_from=vf_eff,
-                            valid_to=vt_eff,
-                            eu=eu, ev=ev,
-                        ) if _cwf is not None else None
-
-                        w: float
-                        features_vector: Optional[np.ndarray] = None
-
-                        if isinstance(_cwf_result, ReasoningLogit):
-                            logit_obj = _cwf_result
-                            w = logit_obj.score(csa_params)
-                            features_vector = logit_obj.to_vector()
-                        else:
-                            w = float(self.csa.compute_weight(
-                                u, v_eff, hop=hop,
-                                edge_type=rel_eff,
-                                edge_type_weights=self.edge_type_weights,
-                                normalized_distance=0.0,
-                                valid_from=vf_eff,
-                                valid_to=vt_eff,
-                            ))
-                            sim = _cosine_sim(eu, ev) if (eu is not None and ev is not None) else 0.0
-                            cs  = float(self.csa.community_score(u, v_eff)) if hasattr(self.csa, "community_score") else 0.5
-                            etw = self.edge_type_weights.get(rel_eff, 0.0)
-                            hd  = 1.0 / (1.0 + hop)
-                            features_vector = ReasoningLogit(sim, cs, etw, 0.0, hd, 0.0, 0.0, 0.0, 0.0, 1.0).to_vector()
-
-                        w = w * prior_bias
-
-                        if self._causal_edge_index and (u, v_eff) in self._causal_edge_index:
-                            w *= (1.0 + self.causal_bonus)
-                        if node_priming and v_eff in node_priming:
-                            w = w * (1.0 + self.priming_boost * node_priming[v_eff])
-                        if _get_valence:
-                            _val = _get_valence(u, v_eff, rel_eff)
-                            if _val < 0.0:
-                                w = w * (1.0 + _valence_eng.valence_weight * _val)
-                        if self.terminal_relation_boost:
-                            if hop == self.max_hop:
-                                # Phase 148: Negative Terminal Boost (Penalty for non-target relations)
-                                # If a target is known, unmatched relations are crushed (0.1x).
-                                boost = self.terminal_relation_boost.get(rel_eff, 0.01)
-                                w *= boost
-                            elif hop == self.max_hop - 1:
-                                if self.penultimate_relation_boost:
-                                    # Phase 156: dedicated r2 boost (different relation from r3)
-                                    pb = self.penultimate_relation_boost.get(rel_eff, 1.0)
-                                    if pb > 1.0:
-                                        w *= pb
-                                else:
-                                    tb = self.terminal_relation_boost.get(rel_eff, 1.0)
-                                    if tb > 1.0:
-                                        w *= tb ** 0.5  # penultimate cascade: 3.0 -> ~1.73x
-
-                        v_emb = ev if ev is not None else np.zeros(emb_dim, dtype=np.float32)
                         coh = community_coherence(path.community_sequence + [v_cid])
 
                         new_path = path.copy_with_extension(

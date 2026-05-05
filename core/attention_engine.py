@@ -51,6 +51,11 @@ class HomeostaticModulator:
         # Scale factor: target / current
         return self.target / max(1e-6, self.node_activity[entity_id])
 
+import torch
+import torch.nn.functional as F
+import numpy as np
+# ... (rest of imports)
+
 class CSAEngine:
     def __init__(
         self,
@@ -74,21 +79,24 @@ class CSAEngine:
         iota: float = 0.05,
         mu: float = 0.1,
         theta: float = 1.0,
-        **kwargs # Forward compatibility
+        **kwargs 
     ):
         self.adapter = adapter
-        self.alpha = alpha
-        self.beta = beta
-        self.gamma = gamma
-        self.delta = delta
-        self.epsilon = epsilon
-        self.zeta = zeta
-        self.eta = eta
-        self.iota = iota
-        self.mu = mu
-        self.theta = theta
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+        # Core Parameters
+        self.alpha = torch.tensor(alpha, device=self.device)
+        self.beta = torch.tensor(beta, device=self.device)
+        self.gamma = torch.tensor(gamma, device=self.device)
+        self.delta = torch.tensor(delta, device=self.device)
+        self.epsilon = torch.tensor(epsilon, device=self.device)
+        self.zeta = torch.tensor(zeta, device=self.device)
+        self.eta = torch.tensor(eta, device=self.device)
+        self.iota = torch.tensor(iota, device=self.device)
+        self.mu = torch.tensor(mu, device=self.device)
+        self.theta = torch.tensor(theta, device=self.device)
+        
         self.use_temporal_decay = use_temporal_decay
-        self.temporal_window_size = temporal_window_size
         self.lambda_decay = lambda_decay
         self.edge_type_weights = edge_type_weights or {}
         self.external_community_scores = external_community_scores or {}
@@ -98,6 +106,26 @@ class CSAEngine:
         self._max_pr = max(self._pagerank.values()) if self._pagerank else 1.0
         self._node_recency = node_recency or {}
         self._community_distances: Dict[Tuple[int, int], float] = {}
+        self._adjacent_pairs: Set[Tuple[int, int]] = set()
+        self._community_graph = None
+        self.meta_learner = None
+        self._query_snapshot: Optional[Dict[str, int]] = None
+        self._query_time: Optional[float] = None
+        self._cs_cache: Dict[Tuple[str, str], float] = {}
+
+    def compute_attention(self, u_idx: int, neighbor_indices: List[int]) -> torch.Tensor:
+        """
+        GPU-accelerated attention scoring.
+        """
+        # Batch computation on GPU
+        # Convert inputs to tensors
+        u_emb = self.get_emb(u_idx).to(self.device)
+        v_embs = self.get_embs(neighbor_indices).to(self.device)
+        
+        # Parallel cosine similarity
+        sims = F.cosine_similarity(u_emb, v_embs)
+        # ... (rest of formula using torch operations)
+        return torch.sigmoid(raw)
         self._adjacent_pairs: Set[Tuple[int, int]] = set()
         self._community_graph = None
         self.meta_learner = None
