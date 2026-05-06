@@ -1,7 +1,7 @@
 # SPEC_014: Verification and Metacognition
 ## InsightValidator, InsightEngine, and MetaInsightEngine
 
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Field**: Metacognition / Self-Verification / Second-Order Reasoning
 **Modules**: `core/insight_validator.py`, `core/meta_insight_engine.py`
@@ -129,13 +129,13 @@ meta.detect_pathologies() -> List[PathologyAlert]
 meta.query_second_order(start_event_id: str, max_hops: int = 2) -> List[InsightPath]
 ```
 
-### 5. Implementation Notes (v2.24.0)
+### 5. Implementation Notes (v2.51.0)
 
-- **Hallucination Pruning**: As of v2.24.0, the system autonomously identifies and prunes stale insights that fail independent triangulation, ensuring graph integrity over long operational windows.
+- **Hallucination Pruning**: As of v2.51.0, the system autonomously identifies and prunes stale insights that fail independent triangulation, ensuring graph integrity over long operational windows.
 - **Memory bound**: The InsightEvent graph is capped at 10,000 events; oldest events are pruned (FIFO) when capacity is exceeded.
 - **No self-reference loops**: The MetaInsightEngine's own traversals do not generate `InsightEvent` records (prevents infinite meta-recursion).
 - **Persistence**: `InsightEvent` nodes are stored in the `METADATA` table; the second-order graph is reconstructed on restart from this table.
-- **Verification**: 1,012+ tests passing as of v2.24.0 Hardened Enterprise.
+- **Verification**: 1,012+ tests passing as of v2.51.0 Hardened Enterprise.
 
 > **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 
@@ -143,4 +143,4 @@ meta.query_second_order(start_event_id: str, max_hops: int = 2) -> List[InsightP
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0

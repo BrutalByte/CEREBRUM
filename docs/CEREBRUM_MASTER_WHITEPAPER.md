@@ -6,13 +6,13 @@
 ## The DSCF/TSC Partitioning Engine
 
 **Date**: March 2026  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: CTOs, Data Architects, AI Researchers
 
 ---
 
 ### Executive Summary
-As enterprises move toward GraphRAG and Knowledge Graph-driven AI, the ability to partition massive datasets into meaningful semantic clusters becomes a critical bottleneck. Traditional algorithms often fail on scale-free "hub-and-spoke" networks, leading to unstable clusters that degrade AI reasoning. The **DSCF/TSC Engine** provides a production-hardened solution that uses a multi-signal consensus mechanism to ensure cluster stability, high precision, and extreme scalability. In v2.24.0, the engine achieves a modularity index of **Q=0.88**, providing the most structurally coherent "Attention Heads" for advanced multi-hop reasoning.
+As enterprises move toward GraphRAG and Knowledge Graph-driven AI, the ability to partition massive datasets into meaningful semantic clusters becomes a critical bottleneck. Traditional algorithms often fail on scale-free "hub-and-spoke" networks, leading to unstable clusters that degrade AI reasoning. The **DSCF/TSC Engine** provides a production-hardened solution that uses a multi-signal consensus mechanism to ensure cluster stability, high precision, and extreme scalability. In v2.51.0, the engine achieves a modularity index of **Q=0.88**, providing the most structurally coherent "Attention Heads" for advanced multi-hop reasoning.
 
 ### The Problem: The "Resolution Limit" in Enterprise Graphs
 Most community detection algorithms (like Louvain or Leiden) struggle with two extremes:
@@ -41,20 +41,20 @@ The DSCF/TSC Engine moves graph partitioning from a research experiment to an en
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # White Paper: Glass-Box AI Reasoning
 ## The CSA (Community-Structured Attention) Engine
 
 **Date**: March 2026  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: AI Product Managers, Compliance Officers, ML Engineers
 
 ---
 
 ### Executive Summary
-The "Black Box" nature of modern AI remains a primary barrier to enterprise adoption in regulated industries (Finance, Healthcare, Defense). When an AI provides an answer, stakeholders must know *why* it reached that conclusion. The **CSA Engine** provides a breakthrough in **Explainable AI (XAI)** by replacing opaque neural layers with a transparent, mathematically grounded attention mechanism that reasons directly on the structure of your data. In v2.24.0, CSA delivers a **+183% improvement** in Mean Reciprocal Rank (MRR) on biomedical benchmarks, proving that transparent reasoning can outperform black-box alternatives.
+The "Black Box" nature of modern AI remains a primary barrier to enterprise adoption in regulated industries (Finance, Healthcare, Defense). When an AI provides an answer, stakeholders must know *why* it reached that conclusion. The **CSA Engine** provides a breakthrough in **Explainable AI (XAI)** by replacing opaque neural layers with a transparent, mathematically grounded attention mechanism that reasons directly on the structure of your data. In v2.51.0, CSA delivers a **+183% improvement** in Mean Reciprocal Rank (MRR) on biomedical benchmarks, proving that transparent reasoning can outperform black-box alternatives.
 
 ### The Problem: The High Cost of Opaque Reasoning
 Standard Graph Neural Networks (GNNs) and Knowledge Graph Embeddings (KGEs) are powerful but "silent." They provide predictions without a traceable audit trail. In critical decision-making, a high-probability answer is useless without a verifiable reasoning path. Furthermore, global attention mechanisms are computationally expensive, often requiring massive GPU clusters to scale.
@@ -72,7 +72,7 @@ CSA adapts the power of Transformer attention to Knowledge Graphs, but with a cr
 ### Key Enterprise Benefits
 *   **100% Traceability**: Every reasoning step is returned with a `score_breakdown`, showing exactly which factors contributed to the result.
 *   **Regulatory Compliance**: Meets the requirements for "Right to Explanation" in automated decision-making.
-*   **Adaptive Meta-Learning (v2.24.0)**: The engine autonomously adapts its attention weights per-community based on user feedback, closing the performance gap between zero-shot and supervised reasoning.
+*   **Adaptive Meta-Learning (v2.51.0)**: The engine autonomously adapts its attention weights per-community based on user feedback, closing the performance gap between zero-shot and supervised reasoning.
 *   **Infrastructure Efficiency**: Optimized for standard hardware, eliminating the $O(N^2)$ memory explosion of traditional attention.
 
 ### Conclusion
@@ -84,20 +84,20 @@ The CSA Engine moves AI from "Predictive" to "Reasonable." It provides the mathe
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # White Paper: The Self-Optimizing Graph
 ## Experience-Dependent Plasticity via the Bridge Twin Engine
 
 **Date**: March 2026  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: CTOs, Cloud Architects, AI Platform Leads
 
 ---
 
 ### Executive Summary
-Most Knowledge Graphs are static: they store what they are told, but they do not learn from how they are used. As query volume grows, reasoning latency increases due to the fixed, often inefficient topology of the data. The **Bridge Twin Engine** introduces **Structural Plasticity** to the enterprise graph. It identifies high-traffic reasoning paths and automatically materializes "Relay Nodes" to short-circuit them. The result is a graph that gets physically faster and smarter the more it is used. In v2.24.0, the engine is fully synchronized with background community re-partitioning, ensuring relays remain valid even as the organizational map of your data evolves.
+Most Knowledge Graphs are static: they store what they are told, but they do not learn from how they are used. As query volume grows, reasoning latency increases due to the fixed, often inefficient topology of the data. The **Bridge Twin Engine** introduces **Structural Plasticity** to the enterprise graph. It identifies high-traffic reasoning paths and automatically materializes "Relay Nodes" to short-circuit them. The result is a graph that gets physically faster and smarter the more it is used. In v2.51.0, the engine is fully synchronized with background community re-partitioning, ensuring relays remain valid even as the organizational map of your data evolves.
 
 ### The Problem: Topological Rigidity
 In large-scale data environments, related concepts are often buried in different organizational silos (Communities). To connect them, an AI must navigate multiple "hops" across community boundaries. This creates:
@@ -115,7 +115,7 @@ The Bridge Twin Engine acts as an "Artificial Thalamus" for your graph. When the
 ### Key Enterprise Benefits
 *   **Automatic Performance Tuning**: Your graph optimizes its own physical layout based on your specific business queries.
 *   **Higher Accuracy**: Short-circuiting complex paths reduces the noise inherent in deep multi-hop reasoning.
-*   **Dynamic Adaptation**: The v2.24.0 release fixes the "Zombie Bridge" problem, ensuring that relays are automatically updated or pruned when communities are re-balanced.
+*   **Dynamic Adaptation**: The v2.51.0 release fixes the "Zombie Bridge" problem, ensuring that relays are automatically updated or pruned when communities are re-balanced.
 *   **Streaming Ready**: Works in real-time, adapting your topology as new data spikes arrive via the streaming engine.
 
 ### Conclusion
@@ -127,20 +127,20 @@ The Bridge Twin Engine moves Knowledge Graphs from "Digital Archives" to "Living
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # White Paper: Real-Time Causal Intelligence
 ## Autonomous Discovery via the STDP Causal Engine
 
 **Date**: March 2026  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: Data Scientists, IoT Architects, Cybersecurity Analysts, Fintech Leads
 
 ---
 
 ### Executive Summary
-In high-velocity data environments (IoT, Finance, Cyber), the ability to understand *why* something is happening is just as important as knowing *what* is happening. Most AI systems are good at correlation but fail at causation. The **STDP Causal Engine** introduces a breakthrough in unsupervised causal inference. By analyzing the temporal "spikes" of events, it autonomously discovers directional causal relationships in real-time, allowing your graph to "learn" the hidden logic of your data streams without human labeling. In v2.24.0, the engine implements **Lazy Decay**, enabling constant-time ($O(1)$) performance even on massive graphs tracking millions of simultaneous causal pairs.
+In high-velocity data environments (IoT, Finance, Cyber), the ability to understand *why* something is happening is just as important as knowing *what* is happening. Most AI systems are good at correlation but fail at causation. The **STDP Causal Engine** introduces a breakthrough in unsupervised causal inference. By analyzing the temporal "spikes" of events, it autonomously discovers directional causal relationships in real-time, allowing your graph to "learn" the hidden logic of your data streams without human labeling. In v2.51.0, the engine implements **Lazy Decay**, enabling constant-time ($O(1)$) performance even on massive graphs tracking millions of simultaneous causal pairs.
 
 ### The Problem: The Causality Gap in Big Data
 Modern enterprise data is a flood of events. Traditional analytics can tell you that "Event A" and "Event B" often happen together (Correlation), but they cannot tell you if A *causes* B. 
@@ -153,7 +153,7 @@ The STDP Engine adapts **Spike-Timing-Dependent Plasticity**—the same rule the
 **How it works:**
 *   **Temporal Analysis**: If "Source A" consistently fires just before "Target B," the system strengthens the `CAUSES` connection.
 *   **Error Correction**: If B fires before A, or if A fires without B following, the connection is weakened.
-*   **Lazy Decay ($O(1)$) (v2.24.0)**: A proprietary optimization ensures that the CPU cost of "forgetting" old data remains constant, even if you are tracking millions of causal pairs simultaneously.
+*   **Lazy Decay ($O(1)$) (v2.51.0)**: A proprietary optimization ensures that the CPU cost of "forgetting" old data remains constant, even if you are tracking millions of causal pairs simultaneously.
 
 ### Key Enterprise Benefits
 *   **Unsupervised Learning**: No need for expensive data labeling; the system learns causality purely from the timing of your events.
@@ -170,20 +170,20 @@ The STDP Causal Engine transforms raw event streams into a structured, causal Kn
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # White Paper: Blind Semantic Discovery
 ## Privacy-Preserving Federated Reasoning via Holographic Indexing
 
 **Date**: March 2026  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: CTOs, Data Security Officers, Privacy Engineers, Supply Chain Leads
 
 ---
 
 ### Executive Summary
-In the modern enterprise, data is rarely stored in a single place. Successful AI reasoning often requires connecting dots across different departments, partners, or even rival organizations. However, privacy regulations (GDPR, HIPAA) and trade secrets make direct data sharing impossible. **Holographic Indexing** provides a "Middle Path." It allows organizations to discover relevant information in each other's Knowledge Graphs without actually sharing the raw data. It enables **Blind Semantic Search**—the ability to find what you need across organizational boundaries while maintaining 100% data sovereignty. In v2.24.0, the protocol is hardened with **HMAC-SHA256 Path Provenance**, ensuring that discovery probes cannot be spoofed.
+In the modern enterprise, data is rarely stored in a single place. Successful AI reasoning often requires connecting dots across different departments, partners, or even rival organizations. However, privacy regulations (GDPR, HIPAA) and trade secrets make direct data sharing impossible. **Holographic Indexing** provides a "Middle Path." It allows organizations to discover relevant information in each other's Knowledge Graphs without actually sharing the raw data. It enables **Blind Semantic Search**—the ability to find what you need across organizational boundaries while maintaining 100% data sovereignty. In v2.51.0, the protocol is hardened with **HMAC-SHA256 Path Provenance**, ensuring that discovery probes cannot be spoofed.
 
 ### The Problem: The Data Sharing Paradox
 Enterprise AI needs cross-silo data to be effective, but sharing that data is legally and strategically dangerous.
@@ -197,12 +197,12 @@ Holographic Indexing allows each node in a federation to publish a "Hologram"—
 **How it works:**
 *   **Exact Matching**: Using Bloom Filters, nodes can instantly verify if a specific entity exists in a peer's graph without the peer ever revealing its full list of nodes.
 *   **Semantic Matching**: Nodes exchange "Community Centroids"—mathematical summaries of their semantic clusters. This allows a reasoning engine to say: *"I am looking for a concept related to 'Carbon Emissions'; Partner A's hologram indicates they have a high density of knowledge in that semantic region."*
-*   **Synaptic Bridge Traversal (v2.24.0)**: Once a match is found, the query "tunnels" to the peer using secure, cryptographically signed requests.
+*   **Synaptic Bridge Traversal (v2.51.0)**: Once a match is found, the query "tunnels" to the peer using secure, cryptographically signed requests.
 
 ### Key Enterprise Benefits
 *   **Zero-Trust Collaboration**: Collaborate with partners or vendors without ever sharing your raw Knowledge Graph.
 *   **Regulatory Compliance**: Specifically designed to meet the privacy requirements of GDPR and HIPAA by ensuring raw data never leaves its original jurisdiction.
-*   **Verified Provenance (v2.24.0)**: Every federated hop is protected by **HMAC-SHA256 signatures**, ensuring that reasoning paths cannot be spoofed or hallucinated by malicious actors.
+*   **Verified Provenance (v2.51.0)**: Every federated hop is protected by **HMAC-SHA256 signatures**, ensuring that reasoning paths cannot be spoofed or hallucinated by malicious actors.
 *   **Scalable Discovery**: Nodes only communicate with peers who have a high "Holographic Match" score, reducing network traffic by up to 90%.
 
 ### Conclusion
@@ -214,20 +214,20 @@ Holographic Indexing turns decentralized data into a unified, secure intelligenc
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # White Paper: Reasoning under Uncertainty
 ## The Bayesian Beam Search Engine
 
 **Date**: March 2026  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: AI Strategists, Risk Managers, Data Scientists, Decision Support Leads
 
 ---
 
 ### Executive Summary
-In the real world, data is rarely perfect. It is noisy, incomplete, and often contradictory. Traditional AI reasoning systems are "Narrow-Minded"—they pick the single best path and ignore everything else. This leads to a catastrophic loss of intelligence when the "best" path turns out to be a dead end. **Bayesian Beam Search** introduces "Curiosity" into the reasoning process. By treating every connection as a probability rather than a fact, the engine can explore multiple hypotheses simultaneously, ensuring that critical insights are never missed due to early-stage noise. In v2.24.0, the engine implements **Heuristic Warm-Starting**, reducing discovery variance in new, low-evidence graph regions.
+In the real world, data is rarely perfect. It is noisy, incomplete, and often contradictory. Traditional AI reasoning systems are "Narrow-Minded"—they pick the single best path and ignore everything else. This leads to a catastrophic loss of intelligence when the "best" path turns out to be a dead end. **Bayesian Beam Search** introduces "Curiosity" into the reasoning process. By treating every connection as a probability rather than a fact, the engine can explore multiple hypotheses simultaneously, ensuring that critical insights are never missed due to early-stage noise. In v2.51.0, the engine implements **Heuristic Warm-Starting**, reducing discovery variance in new, low-evidence graph regions.
 
 ### The Problem: The "Greedy Search" Trap
 Most graph reasoning systems (Breadth-First Search, greedy beam search) make deterministic decisions at every step.
@@ -241,13 +241,13 @@ Bayesian Beam Search replaces deterministic scoring with **Thompson Sampling**�
 **How it works:**
 *   **Probabilistic Scoring**: Instead of a fixed score (e.g., 0.8), every connection has a "Confidence Distribution."
 *   **Sampling**: At every hop, the engine "imagines" a score based on that distribution. High-uncertainty paths occasionally produce high scores, allowing them to stay in the beam "just in case."
-*   **Warm-Starting (v2.24.0)**: The system seeds its curiosity with graph topology, ensuring it doesn't wander into nonsense but remains open to unexpected connections.
+*   **Warm-Starting (v2.51.0)**: The system seeds its curiosity with graph topology, ensuring it doesn't wander into nonsense but remains open to unexpected connections.
 
 ### Key Enterprise Benefits
 *   **Higher Discovery Recall**: Finds complex connections that deterministic systems miss, increasing accuracy on sparse or noisy datasets by up to 45%.
 *   **Calibrated Confidence**: Every answer includes an `Uncertainty Score`, telling the user exactly how confident the AI is in the reasoning path.
 *   **Robustness to Data Drifts**: Naturally adapts to new, unverified data streams by treating them with appropriate skepticism until evidence builds.
-*   **Snapshot Isolation (v2.24.0)**: Ensures that reasoning paths remain mathematically consistent even if the graph's community structure is re-balanced during a query.
+*   **Snapshot Isolation (v2.51.0)**: Ensures that reasoning paths remain mathematically consistent even if the graph's community structure is re-balanced during a query.
 
 ### Conclusion
 Bayesian Beam Search moves AI from "Rigid Logic" to "Statistical Intuition." It provides the resilience and discovery power required for mission-critical enterprise intelligence.
@@ -258,20 +258,20 @@ Bayesian Beam Search moves AI from "Rigid Logic" to "Statistical Intuition." It 
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # White Paper: Autonomous Graph Health
 ## Self-Maintenance and Verification via the REM Cycle
 
 **Date**: March 2026  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: CIOs, AI Operations Leads, Data Stewards, Risk Officers
 
 ---
 
 ### Executive Summary
-Most enterprise AI systems suffer from "Informational Decay." As new data is ingested and new connections are made, the system slowly accumulates noise, leading to decreased accuracy over time. The **REM Cycle** (Rapid Edge Maintenance) is a proprietary background infrastructure that acts as the "Immune System" for your Knowledge Graph. It autonomously prunes stale data, verifies speculative insights, and re-balances the graph's internal structure while your business operates. In v2.24.0, the cycle is enhanced with **Skeptical Decay**, specifically designed to prevent recursive hallucination loops by requiring independent triangulation for all AI-generated insights.
+Most enterprise AI systems suffer from "Informational Decay." As new data is ingested and new connections are made, the system slowly accumulates noise, leading to decreased accuracy over time. The **REM Cycle** (Rapid Edge Maintenance) is a proprietary background infrastructure that acts as the "Immune System" for your Knowledge Graph. It autonomously prunes stale data, verifies speculative insights, and re-balances the graph's internal structure while your business operates. In v2.51.0, the cycle is enhanced with **Skeptical Decay**, specifically designed to prevent recursive hallucination loops by requiring independent triangulation for all AI-generated insights.
 
 ### The Problem: Data Drift and AI Hallucination
 In dynamic environments, graphs face three critical threats:
@@ -284,7 +284,7 @@ CEREBRUM mimics the biological REM cycle to perform maintenance without interrup
 
 **The three core functions of the REM Cycle:**
 *   **Bilateral Verification**: Every "Eureka moment" or speculative causal link is triple-checked using independent reasoning paths. If a connection cannot be "triangulated," it is flagged for pruning.
-*   **Skeptical Insight Decay (v2.24.0)**: Speculative insights are given an accelerated decay rate. Only insights that are explicitly validated by successful user queries or matched by new grounded data are promoted to long-term memory.
+*   **Skeptical Insight Decay (v2.51.0)**: Speculative insights are given an accelerated decay rate. Only insights that are explicitly validated by successful user queries or matched by new grounded data are promoted to long-term memory.
 *   **Background Rebalancing**: The system monitors the health of its "Attention Heads" (Communities). When the structure becomes inefficient, it launches a background task to re-partition the entire graph, swapping in the optimized version once it's ready.
 
 ### Key Enterprise Benefits
@@ -302,20 +302,20 @@ The REM Cycle moves AI from "Transient Tools" to "Stable Infrastructure." It pro
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # White Paper: Bridging Signals and Symbols
 ## Multi-Modal Reasoning via the Signal Encoder
 
 **Date**: March 2026  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: Industrial IoT Architects, Autonomous Systems Engineers, Smart City Strategists
 
 ---
 
 ### Executive Summary
-Knowledge Graphs have traditionally been "deaf and blind"—they can reason about text and databases, but they cannot "hear" a vibration sensor or "see" a waveform. To truly understand the physical world, AI must bridge the gap between unstructured physical signals and structured conceptual knowledge. The **Signal Encoder** provides the mathematical bridge. By projecting raw physical data (telemetry, spectra, waveforms) directly into your Knowledge Graph's embedding space, it enables **Blind Cross-Modal Reasoning**—the ability for an AI to connect a specific physical spike to its conceptual cause and impact in real-time. In v2.24.0, the encoder implements **Namespace Isolation**, ensuring that sensor signals never collide with unrelated textual entities.
+Knowledge Graphs have traditionally been "deaf and blind"—they can reason about text and databases, but they cannot "hear" a vibration sensor or "see" a waveform. To truly understand the physical world, AI must bridge the gap between unstructured physical signals and structured conceptual knowledge. The **Signal Encoder** provides the mathematical bridge. By projecting raw physical data (telemetry, spectra, waveforms) directly into your Knowledge Graph's embedding space, it enables **Blind Cross-Modal Reasoning**—the ability for an AI to connect a specific physical spike to its conceptual cause and impact in real-time. In v2.51.0, the encoder implements **Namespace Isolation**, ensuring that sensor signals never collide with unrelated textual entities.
 
 ### The Problem: The Representational Gap
 Current AI systems treat "Sensors" and "Knowledge" as two different worlds.
@@ -335,7 +335,7 @@ The Signal Encoder uses a proprietary implementation of **Orthogonal Procrustes 
 *   **Sub-Millisecond Multi-Modal AI**: Connect physical events to business logic with less than 1ms of overhead.
 *   **Nuanced Discovery**: Detect subtle patterns in physical data that are impossible to describe in text but are mathematically obvious in the latent space.
 *   **Geometric Stability**: Our **Canonical Anchor** protocol ensures that signals remain accurate even in complex federated networks involving multiple partners.
-*   **Identity Integrity (v2.24.0)**: Strict namespace separation prevents "Semantic Synaptic Bridges" between industrial telemetry and administrative project documents.
+*   **Identity Integrity (v2.51.0)**: Strict namespace separation prevents "Semantic Synaptic Bridges" between industrial telemetry and administrative project documents.
 
 ### Conclusion
 The Signal Encoder turns your Knowledge Graph into a "Physical Intelligence System." It provides the essential representational bridge required for the next generation of autonomous industrial and scientific AI.
@@ -346,20 +346,20 @@ The Signal Encoder turns your Knowledge Graph into a "Physical Intelligence Syst
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # White Paper: The Intelligent Data Gatekeeper
 ## Data Integrity and Scale via the THALAMUS Pipeline
 
 **Date**: March 2026  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: Data Engineers, AI Architects, Data Quality Officers
 
 ---
 
 ### Executive Summary
-In the enterprise, data is messy. It arrives from a thousand different sources—ERP systems, sensor feeds, PDF reports, and legacy databases—each using different names for the same thing. For an AI to reason effectively, this data must be cleaned and unified *before* it hits the graph. **THALAMUS** is CEREBRUM's proprietary ingestion pipeline. It acts as an "Intelligent Gatekeeper," autonomously deduplicating entities, isolating unrelated namespaces, and parallelizing the cleaning process. In v2.24.0, the pipeline achieves an **850% throughput improvement** (11,500 triples/sec) by unlocking preprocessing from the graph mutex, ensuring that high-velocity data never blocks your reasoning engine.
+In the enterprise, data is messy. It arrives from a thousand different sources—ERP systems, sensor feeds, PDF reports, and legacy databases—each using different names for the same thing. For an AI to reason effectively, this data must be cleaned and unified *before* it hits the graph. **THALAMUS** is CEREBRUM's proprietary ingestion pipeline. It acts as an "Intelligent Gatekeeper," autonomously deduplicating entities, isolating unrelated namespaces, and parallelizing the cleaning process. In v2.51.0, the pipeline achieves an **850% throughput improvement** (11,500 triples/sec) by unlocking preprocessing from the graph mutex, ensuring that high-velocity data never blocks your reasoning engine.
 
 ### The Problem: The "Identity Collapse" Crisis
 Most Knowledge Graphs suffer from two fatal data quality issues:
@@ -371,8 +371,8 @@ THALAMUS solves the "GIGO" (Garbage In, Garbage Out) problem at the front door.
 
 **Key features include:**
 *   **Bidirectional Deduplication**: Automatically maps aliases to a single canonical ID, ensuring that all data about an entity is consolidated.
-*   **Namespace Isolation (v2.24.0)**: Uses strict prefixing (e.g., `text:`, `signal:`, `remote:`) to keep different data modalities separate, preventing "semantic Synaptic Bridges" and accidental data leakage.
-*   **Unlocked Parallel Ingestion (v2.24.0)**: A proprietary two-stage architecture that cleans data across multiple CPU cores simultaneously *before* committing it to the graph. This unblocks query readers and enables unprecedented ingestion speeds.
+*   **Namespace Isolation (v2.51.0)**: Uses strict prefixing (e.g., `text:`, `signal:`, `remote:`) to keep different data modalities separate, preventing "semantic Synaptic Bridges" and accidental data leakage.
+*   **Unlocked Parallel Ingestion (v2.51.0)**: A proprietary two-stage architecture that cleans data across multiple CPU cores simultaneously *before* committing it to the graph. This unblocks query readers and enables unprecedented ingestion speeds.
 
 ### Key Enterprise Benefits
 *   **Superior Reasoning Accuracy**: By ensuring every entity is unique and correctly categorized, THALAMUS improves the precision of multi-hop reasoning by up to 60%.
@@ -389,20 +389,20 @@ THALAMUS moves data ingestion from a "Batch Job" to an "Intelligent Filter." It 
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # White Paper: Verifying Unsupervised Intelligence
 ## The Inference Validator and Path-Preserving Evaluation
 
 **Date**: March 2026  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: QA Engineers, Data Scientists, Compliance Officers, AI Product Leads
 
 ---
 
 ### Executive Summary
-Most AI systems require "Ground Truth"—massive sets of human-labeled data—to prove they are working. In complex, proprietary, or rapidly changing Knowledge Graphs, this data simply doesn't exist. **Inference Validator** is CEREBRUM's proprietary evaluation framework. It solves the "Verification Crisis" by allowing the system to test its own reasoning capabilities using its own structural integrity. In v2.24.0, we utilize this framework to prove that **Quantized Intelligence (float16)** delivers enterprise performance at half the memory cost, ensuring your AI remains both accurate and efficient.
+Most AI systems require "Ground Truth"—massive sets of human-labeled data—to prove they are working. In complex, proprietary, or rapidly changing Knowledge Graphs, this data simply doesn't exist. **Inference Validator** is CEREBRUM's proprietary evaluation framework. It solves the "Verification Crisis" by allowing the system to test its own reasoning capabilities using its own structural integrity. In v2.51.0, we utilize this framework to prove that **Quantized Intelligence (float16)** delivers enterprise performance at half the memory cost, ensuring your AI remains both accurate and efficient.
 
 ### The Problem: The Verification Crisis
 In enterprise data environments, external benchmarks are rarely applicable. 
@@ -416,7 +416,7 @@ Inference Validator uses a "Hold-out and Rediscover" methodology designed specif
 **Key features include:**
 *   **Intelligent Edge Pruning**: The system identifies key connections in your graph and "hides" them.
 *   **Path-Preserving Constraint**: Crucially, it only hides a connection if there is at least one *other* way for the AI to find the answer. This ensures that the test is fair and that the system is actually being tested on its reasoning (finding the alternative path), not just its memory.
-*   **Performance Verification (v2.24.0)**: Used to mathematically verify that architectural optimizations (like float16 quantization or lazy decay) do not degrade reasoning recall.
+*   **Performance Verification (v2.51.0)**: Used to mathematically verify that architectural optimizations (like float16 quantization or lazy decay) do not degrade reasoning recall.
 
 ### Key Enterprise Benefits
 *   **Zero-Label Benchmarking**: Get rigorous performance metrics on your proprietary data without the cost of manual labeling.
@@ -433,20 +433,20 @@ Inference Validator turns graph reasoning from a "guessing game" into a verifiab
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # White Paper: Reasoning through Conflict
 ## The Contradiction Materialization Engine
 
 **Date**: March 2026  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: Risk Officers, Compliance Leads, Intelligence Analysts, Research Directors
 
 ---
 
 ### Executive Summary
-In business and science, the truth is often messy. Different departments might have conflicting data on a customer, or different research papers might report opposing results for the same experiment. Most AI systems try to "force" a consensus, often hiding the very conflict that a human expert needs to see. **Contradiction Materialization** is a proprietary engine that treats conflict as a high-value signal. Instead of deleting "wrong" data, it materializes the conflict as a visible link in your graph, allowing your AI to reason *about* its own uncertainty and alerting human experts to unsettled debates. In v2.24.0, the engine is integrated with **Skeptical Decay**, ensuring that spurious artifacts are pruned while significant factual disputes are preserved for forensic audit.
+In business and science, the truth is often messy. Different departments might have conflicting data on a customer, or different research papers might report opposing results for the same experiment. Most AI systems try to "force" a consensus, often hiding the very conflict that a human expert needs to see. **Contradiction Materialization** is a proprietary engine that treats conflict as a high-value signal. Instead of deleting "wrong" data, it materializes the conflict as a visible link in your graph, allowing your AI to reason *about* its own uncertainty and alerting human experts to unsettled debates. In v2.51.0, the engine is integrated with **Skeptical Decay**, ensuring that spurious artifacts are pruned while significant factual disputes are preserved for forensic audit.
 
 ### The Problem: The Consensus Trap
 Forcing an AI to choose a single "correct" fact when the data is conflicting leads to two dangerous outcomes:
@@ -459,7 +459,7 @@ CEREBRUM's Contradiction Engine acts as a "Structural Skeptic." It identifies lo
 **Key features include:**
 *   **Conflict Typology**: Automatically detects 5 types of conflict, including logical contradictions (e.g., two different birth dates) and structural impossibilities (e.g., a manager reporting to their own subordinate).
 *   **CONTRADICTS Links**: When a conflict is found, the system creates a physical link between the two opposing facts. This link acts as a "Warning Flare" for any reasoning path that passes through that neighborhood.
-*   **Skeptical Pruning (v2.24.0)**: Integrated with the REM Cycle to apply a high decay rate to speculative contradictions. Only "Persistent Conflicts" are maintained, reducing noise while highlighting critical data quality issues.
+*   **Skeptical Pruning (v2.51.0)**: Integrated with the REM Cycle to apply a high decay rate to speculative contradictions. Only "Persistent Conflicts" are maintained, reducing noise while highlighting critical data quality issues.
 
 ### Key Enterprise Benefits
 *   **Risk Mitigation**: Identify data integrity issues and potential fraud by surfacing structural contradictions in your graph.
@@ -476,20 +476,20 @@ The Contradiction Materialization Engine turns factual conflict into a research 
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # White Paper: Seeing the AI Think
 ## Forensic Audit and Visibility via the Glass-Box Reasoning Studio
 
 **Date**: March 2026  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: Compliance Officers, Business Analysts, System Integrators, AI Ethicists
 
 ---
 
 ### Executive Summary
-One of the biggest risks in enterprise AI is the "Black Box" problem—the inability to see how a machine reached a specific conclusion. This lack of visibility leads to distrust, regulatory risk, and an inability to debug complex errors. The **Glass-Box Reasoning Studio** is CEREBRUM's proprietary visual interface. It turns the "Invisible Math" of graph attention into a tangible, interactive "Reasoning Trace." For the first time, human experts can watch the AI reason in real-time, audit every step of its logic, and understand the "Why" behind every answer. In v2.24.0, the studio includes adaptive clustering to visualize graphs with over 100,000 entities without visual clutter.
+One of the biggest risks in enterprise AI is the "Black Box" problem—the inability to see how a machine reached a specific conclusion. This lack of visibility leads to distrust, regulatory risk, and an inability to debug complex errors. The **Glass-Box Reasoning Studio** is CEREBRUM's proprietary visual interface. It turns the "Invisible Math" of graph attention into a tangible, interactive "Reasoning Trace." For the first time, human experts can watch the AI reason in real-time, audit every step of its logic, and understand the "Why" behind every answer. In v2.51.0, the studio includes adaptive clustering to visualize graphs with over 100,000 entities without visual clutter.
 
 ### The Problem: The Trust Gap in AI
 When an AI provides an answer in a mission-critical domain (e.g., Medical Diagnosis, Financial Risk, Intelligence), the human operator is left with a binary choice: trust the machine blindly or ignore the result.
@@ -504,7 +504,7 @@ The Reasoning Studio reifies the AI's internal process as a "Physical Trace."
 *   **The Reasoning Trace Viewer**: Visualizes the exact multi-hop path the AI followed. Edges are thicker if the AI focused more "attention" on them, allowing you to see the AI "thinking through" the problem.
 *   **Forensic Math Panel**: Click on any connection to see the raw math breakdown. See exactly how much weight was given to "Semantic Similarity" vs. "Community Consensus" vs. "Historical Strength."
 *   **Live Evolution Feed**: Watch your graph grow and learn in real-time. See "spikes" of activity as data arrives and watch as the system materializes new "Eureka" links (Insights) or causal connections.
-*   **Adaptive Visual Scaling (v2.24.0)**: Automatically clusters dense neighborhoods into "Community Hubs," allowing users to navigate massive graphs while maintaining structural context.
+*   **Adaptive Visual Scaling (v2.51.0)**: Automatically clusters dense neighborhoods into "Community Hubs," allowing users to navigate massive graphs while maintaining structural context.
 
 ### Key Enterprise Benefits
 *   **Rapid Verification**: Human experts can verify a complex reasoning path in seconds rather than hours by visually auditing the trace.
@@ -521,14 +521,14 @@ The Glass-Box Reasoning Studio moves AI from "Opaque Oracle" to "Transparent Par
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # White Paper: Always-On Intelligence
 ## Real-Time Knowledge Graph Reasoning via the Streaming Engine
 
 **Date**: March 2026
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: Engineering Leaders, Data Platform Architects, Operations Directors, CTOs
 
 ---
@@ -577,14 +577,14 @@ The Streaming Engine transforms CEREBRUM from a query-response tool into a conti
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # White Paper: AI That Checks Its Own Work
 ## Self-Verification and Metacognitive Bias Detection via the Insight Engine
 
 **Date**: March 2026
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: Risk Officers, Research Directors, Compliance Leads, AI Safety Teams
 
 ---
@@ -631,14 +631,14 @@ The Verification and Metacognition layer gives CEREBRUM a self-correcting intell
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # White Paper: Intelligence That Deepens Over Time
 ## Temporal Reasoning, Probabilistic Confidence, and Adaptive Learning in CEREBRUM
 
 **Date**: March 2026
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: Data Science Leaders, Analytics Architects, Enterprise AI Strategists
 
 ---
@@ -685,20 +685,20 @@ The Algorithmic Depth layer transforms CEREBRUM from a static reasoning engine i
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # White Paper: Eight Ways a Perfect System Can Break
 ## Production Hardening via Structural Hole Analysis
 
 **Date**: March 2026
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: CTOs, Platform Engineering Leads, Enterprise Risk Officers, Software Architects
 
 ---
 
 ### Executive Summary
-Every complex software system has a class of bugs that are nearly impossible to find with standard testing: the "structural hole." These are failure modes where every individual component works perfectly in isolation — all unit tests pass, all integration tests pass — but two or more components interact in a way that was never anticipated during design, producing incorrect or dangerous behavior in production. CEREBRUM's **Production Hardening** project (Phases 19 and 20) identified and closed eight such structural holes through a systematic cross-feature interaction audit. The result is CEREBRUM v2.24.0: a production-hardened system backed by 994 passing tests where every known interaction boundary has been explicitly validated.
+Every complex software system has a class of bugs that are nearly impossible to find with standard testing: the "structural hole." These are failure modes where every individual component works perfectly in isolation — all unit tests pass, all integration tests pass — but two or more components interact in a way that was never anticipated during design, producing incorrect or dangerous behavior in production. CEREBRUM's **Production Hardening** project (Phases 19 and 20) identified and closed eight such structural holes through a systematic cross-feature interaction audit. The result is CEREBRUM v2.51.0: a production-hardened system backed by 994 passing tests where every known interaction boundary has been explicitly validated.
 
 ### The Problem: The Invisible Class of Bugs
 Software testing typically verifies that components work correctly:
@@ -712,35 +712,35 @@ This is exactly the class of bug CEREBRUM's production hardening project was des
 
 ### Eight Structural Holes — Plain Language
 
-**Hole 1: Zombie Bridges (v2.24.0)**
+**Hole 1: Zombie Bridges (v2.51.0)**
 *What broke:* When the graph re-organized its internal "Attention Heads" (community structure), the Bridge Twin Engine kept pointing to community IDs that no longer existed. These "zombie bridges" silently inflated reasoning confidence scores for connections that had no actual structural support.
 *The fix:* The Bridge Twin Engine now automatically cleans up any bridge records that reference stale community IDs whenever a re-organization occurs.
 
-**Hole 2: The Burst Attack (v2.24.0)**
+**Hole 2: The Burst Attack (v2.51.0)**
 *What broke:* The STDP causal inference system materialized a new causal connection when two events co-occurred enough times with sufficient weight. An adversary — or simply a burst of noisy sensor data — could inject 1,000 rapid spikes in 1 millisecond and trick the system into creating a permanent causal relationship with no real supporting evidence.
 *The fix:* Two new safeguards: a minimum time span requirement (spikes must occur over at least N seconds to count), and an optional statistical uniformity check that detects and blocks unnatural burst patterns.
 
-**Hole 3: The Identity Thief (v2.24.0)**
+**Hole 3: The Identity Thief (v2.51.0)**
 *What broke:* When text data and sensor data were ingested simultaneously, any entity with the same name in both sources merged into a single graph node. A sensor called "Temperature_1" and a document entity called "Temperature_1" became the same object, producing corrupted embeddings for both.
 *The fix:* Namespace prefixes are now applied automatically: text entities are "text:Temperature_1" and sensor entities are "signal:Temperature_1." They remain isolated unless the operator explicitly bridges them.
 
-**Hole 4: The Cold Start Gamble (v2.24.0)**
+**Hole 4: The Cold Start Gamble (v2.51.0)**
 *What broke:* In probabilistic reasoning mode, the first hop of a traversal on a never-seen graph region was essentially random — the system had no prior knowledge to guide its initial beam selection. This introduced high variance that compounded across subsequent hops.
 *The fix:* The first hop now uses the edge's structural attention score to initialize a more informed probability distribution, reducing initial variance by 85% and improving 3-hop recall by 8.2%.
 
-**Hole 5: The Moving Target (v2.24.0)**
+**Hole 5: The Moving Target (v2.51.0)**
 *What broke:* A multi-hop reasoning query could start, process hop 1 using Community Map version A, and then — while processing hop 2 — find that the background re-optimizer had replaced the community map with version B. Hops 1 and 2 were scored against different structural contexts within the same query.
 *The fix:* Each query now takes a "snapshot" of the community map at the moment it starts. Background updates complete transparently; in-flight queries continue against their original snapshot and are never affected mid-execution.
 
-**Hole 6: The Attention Blind Spot (v2.24.0)**
+**Hole 6: The Attention Blind Spot (v2.51.0)**
 *What broke:* In tightly-clustered communities where all nodes share very similar properties (e.g., proteins all annotated with the same gene ontology terms), the community consensus component of the attention formula saturated at maximum value for every edge. This made it impossible for the system to distinguish between a highly-relevant connection and an irrelevant one within the same community.
 *The fix:* Per-community attention parameter overrides allow operators (or the adaptive learning system) to reduce the community consensus weight and increase other terms in tightly-clustered domains, restoring discrimination power.
 
-**Hole 7: The Drifting Compass (v2.24.0)**
+**Hole 7: The Drifting Compass (v2.51.0)**
 *What broke:* In a federated deployment spanning multiple graph sources, sensor data was aligned to the embedding space of the first graph adapter it encountered. When reasoning traversed to a second or third adapter, the alignment was no longer correct — the geometric "compass" had been calibrated for a different coordinate system.
 *The fix:* A single canonical embedding space serves as the fixed reference for all Procrustes alignments across the entire federation. Every adapter aligns to the same root, preventing geometric drift accumulation.
 
-**Hole 8: The False Failure Report (v2.24.0)**
+**Hole 8: The False Failure Report (v2.51.0)**
 *What broke:* The system's built-in accuracy evaluation would occasionally hold out the only connection between two entities, then run a traversal to check whether it could find the connection. It would fail — correctly, since the only path had been removed — but would record this as an accuracy miss. On sparse graphs, this could artificially deflate accuracy estimates by up to 40%.
 *The fix:* The evaluation now checks whether an alternative path exists before holding out any edge. If no alternative path exists, the edge is skipped in the evaluation entirely, ensuring the system is only tested on its reasoning ability, not its ability to navigate graphs with artificially-severed paths.
 
@@ -767,7 +767,7 @@ The eight structural holes documented in this white paper represent an honest ac
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # WP_017: Active Inference & Predictive Reasoning
@@ -792,7 +792,7 @@ The **Prediction Error (PE)** signal — the divergence between the projected pr
 Active Inference transforms CEREBRUM from a passive searcher into a proactive reasoner, aligning the system's architecture more closely with the predictive coding mechanisms of the human brain.
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0
 
 
 # WP_018: Epistemic Gating in Multi-Hop Reasoning

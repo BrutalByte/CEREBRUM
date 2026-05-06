@@ -1,6 +1,6 @@
 # CEREBRUM Integration Guide
 
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Audience**: Python developers integrating CEREBRUM into an application
 
 This guide covers the Python API directly. For the REST API, see `docs/API_REFERENCE.md`. For deployment, see `docs/DEPLOYMENT.md`.
@@ -496,4 +496,4 @@ edges = resp.json()["edges"]
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0

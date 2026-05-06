@@ -1,6 +1,6 @@
 # CEREBRUM: Academic Source Repository (Batch Index)
 
-This document provides a consolidated list of foundational papers, books, and datasets cited in the CEREBRUM framework development, plus the full index of CEREBRUM Technical Reports (PAPER_001–034). Each external entry is hyperlinked to its official digital record or Open Access PDF.
+This document provides a consolidated list of foundational papers, books, and datasets cited in the CEREBRUM framework development, plus the full index of CEREBRUM Technical Reports (PAPER_001–037). Each external entry is hyperlinked to its official digital record or Open Access PDF.
 
 - **hebb1949**: Hebb, D. (1949). The organization of behavior. [View Source](https://archive.org/details/organizationofbe00hebb)
 - **vaswani2017attention**: Vaswani et al. (2017). Attention is all you need. [Download PDF](https://arxiv.org/pdf/1706.03762.pdf)
@@ -61,7 +61,7 @@ This document provides a consolidated list of foundational papers, books, and da
 
 ---
 
-## CEREBRUM Technical Reports (PAPER_001–034)
+## CEREBRUM Technical Reports (PAPER_001–037)
 
 | Paper | Phase | Topic | File |
 |---|---|---|---|
@@ -90,7 +90,7 @@ This document provides a consolidated list of foundational papers, books, and da
 | PAPER_023 | 69 | PredictiveCodingEngine | `PAPER_023_PREDICTIVE_CODING.md` |
 | PAPER_024 | 71 | AutoApprover | `PAPER_024_AUTOAPPROVER.md` |
 | PAPER_025 | 72 | TriangulationEngine | `PAPER_025_TRIANGULATION.md` |
-| PAPER_026 | 73 | DiscoveryCalibrator + ContradictionResolver + CandidateRegistry | `PAPER_026_DISCOVERY_CALIBRATION.md` |
+| PAPER_026 | 73 | DiscoveryCalibrator + ContradictionResolver | `PAPER_026_DISCOVERY_CALIBRATION.md` |
 | PAPER_027 | 74 | AutonomousDiscoveryLoop | `PAPER_027_AUTONOMOUS_LOOP.md` |
 | PAPER_028 | 75+78 | Studio v2 Dashboard + Provenance Panel | `PAPER_028_STUDIO_V2.md` |
 | PAPER_029 | 76 | ProvenanceLedger | `PAPER_029_PROVENANCE_LEDGER.md` |
@@ -100,9 +100,9 @@ This document provides a consolidated list of foundational papers, books, and da
 | PAPER_033 | 81 | GraphSnapshot Persistence | `PAPER_033_GRAPH_SNAPSHOT.md` |
 | PAPER_034 | 82 | Adaptive Loop Tuning | `PAPER_034_ADAPTIVE_LOOP_TUNING.md` |
 | PAPER_035 | 83 | UE5 Neural Visualization Bridge | `PAPER_035_UE5_NEURAL_VISUALIZATION.md` |
-| PAPER_036 | 93 | Active Inference / Daydreaming — ActiveInferenceEngine | `PAPER_036_ACTIVE_INFERENCE.md` |
-| PAPER_037 | 94 | Self-Modifying GUI — GUIAdaptationEngine + UEToolkitClient | `PAPER_037_GUI_ADAPTATION.md` |
+| PAPER_036 | 150 | The Cingulate Engine: Reasoning Verification | `PAPER_036_CINGULATE_ENGINE.md` |
+| PAPER_037 | 167 | GraphProfiler and STRB: Autonomous Strategy | `PAPER_037_GRAPHPROFILER_STRB.md` |
 | PAPER_100 | — | Conclusion: The CEREBRUM Paradigm | `PAPER_100_CONCLUSION.md` |
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: May 5, 2026 for version v2.51.0

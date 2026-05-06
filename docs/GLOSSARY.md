@@ -272,7 +272,7 @@ The Phase 79 integration between `AutonomousDiscoveryLoop` and `ProvenanceLedger
 An optimization in `STDPDiscretizer` that applies weight decay lazily (only when a pair is accessed) rather than on every clock tick, reducing time complexity from $O(N)$ to $O(1)$ per event. See also: STDP.
 
 **Leiden Algorithm (Native)**
-CEREBRUM's GPL-free native reimplementation of the Leiden community detection algorithm in `core/leiden_native.py`. Replaces the `igraph`/`leidenalg` external dependencies removed in v2.24.0.
+CEREBRUM's GPL-free native reimplementation of the Leiden community detection algorithm in `core/leiden_native.py`. Replaces the `igraph`/`leidenalg` external dependencies removed in v2.51.0.
 
 **LPA (Label Propagation Algorithm)**
 A local community detection method where each node adopts the most common community label among its neighbors. Represents the "local topology signal" in DSCF. Fast ($O(E)$) but can produce poor modularity. Combined with modularity gain in DSCF to achieve both speed and quality.
@@ -380,16 +380,16 @@ An append-only NDJSON file (`data/cerebrum/query_log.ndjson` by default) that re
 The functional name for the "Dopamine" scalar in the `ChemicalModulator` (Phase 68). Tracks "Reward Prediction Error" (RPE) derived from user feedback (`POST /feedback`). Reinforcement surges amplify the semantic ($\alpha$) and edge-type ($\gamma$) weights, reinforcing successful relation sequences in the reasoner's attention formula.
 
 **REM Cycle (Rapid Edge Maintenance)**
-Background metacognitive maintenance loop (Phase 112). Runs on three schedules: Hot Path (10 min, TTL edge pruning), Cold Path (1 hour, insight validation + decay), REM Path (daily/triggered, full DSCF re-optimization + Shortcut Synthesis). Merges Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 112) into a unified maintenance cycle.
+Background metacognitive maintenance loop (Phase 167). Runs on three schedules: Hot Path (10 min, TTL edge pruning), Cold Path (1 hour, insight validation + decay), REM Path (daily/triggered, full DSCF re-optimization + Shortcut Synthesis). Merges Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 167) into a unified maintenance cycle.
 
 **Hebbian Replay (Phase 96)**
 A component of the REM Cycle. During idle cycles, the system replays high-quality reasoning traces from `WorkingMemory`. It identifies successful reasoning paths and applies **Hebbian weight boosts** to the edges on those paths, strengthening the "synapses" of successful logic.
 
-**Shortcut Synthesis (Phase 112)**
+**Shortcut Synthesis (Phase 167)**
 A component of the REM Cycle. Analyzes the `QueryLog` to identify patterns of frequent multi-hop reasoning. If the system frequently follows a path A → B → C, it materializes a direct "reflexive" shortcut A → C (tagged as `REM_SHORTCUT`), reducing hop count and reasoning latency for frequently-asked questions.
 
 **ConsolidationEngine**
-The system component (Phase 112) that manages the unified REM Cycle, coordinating both Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 112). Triggered by the `AutonomousDiscoveryLoop` or manually via `/rem/run`.
+The system component (Phase 167) that manages the unified REM Cycle, coordinating both Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 167). Triggered by the `AutonomousDiscoveryLoop` or manually via `/rem/run`.
  Inspired by biological sleep-cycle memory consolidation.
 
 **REM Engine**

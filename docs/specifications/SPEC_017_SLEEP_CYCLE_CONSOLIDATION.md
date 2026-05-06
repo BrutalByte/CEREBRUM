@@ -9,7 +9,7 @@
 ---
 
 ### 1. Introduction
-The **ConsolidationEngine** (Phase 112) manages the unified REM Cycle, coordinating Hebbian Replay and Shortcut Synthesis during system idle time. This mimics the biological sleep cycle's role in memory consolidation.
+The **ConsolidationEngine** (Phase 167) manages the unified REM Cycle, coordinating Hebbian Replay and Shortcut Synthesis during system idle time. This mimics the biological sleep cycle's role in memory consolidation.
 
 ### 2. The REM Cycle Paths
 The REM Cycle operates on three distinct schedules:
@@ -23,7 +23,7 @@ During idle periods, the system replays high-quality reasoning traces stored in 
 - **Mechanism**: Successful reasoning paths are identified.
 - **Action**: Synaptic weights of edges on these paths receive a Hebbian boost, strengthening the "logic" of successful reasoning.
 
-### 4. Shortcut Synthesis (Phase 112)
+### 4. Shortcut Synthesis (Phase 167)
 Analyzes the `QueryLog` to identify frequent multi-hop reasoning patterns.
 - **Pattern Detection**: Frequent sequences like A → B → C.
 - **Materialization**: A direct "reflexive" shortcut edge A → C (tagged as `REM_SHORTCUT`) is created.

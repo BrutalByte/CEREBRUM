@@ -1,7 +1,7 @@
 # SPEC_001: The DSCF/TSC Engine
 ## Multi-Signal Consensus in Graph Partitioning
 
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Graph Theory / Data Mining / Community Detection  
 **Module**: `core/community_engine.py`
@@ -145,4 +145,4 @@ For t in 0 to T_max:
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0

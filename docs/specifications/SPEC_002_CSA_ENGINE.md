@@ -1,7 +1,7 @@
 # SPEC_002: Community-Structured Attention (CSA)
 ## Glass-Box Reasoning without Matrix Multiplications
 
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Field**: Natural Language Processing / Knowledge Representation / Transformer Architectures  
 **Module**: `core/attention_engine.py`
@@ -72,7 +72,7 @@ To ensure mathematical consistency during high-velocity streaming, CSA employs *
 2.  All $k$-hops of $Q$ use this static snapshot.
 3.  If a background `GlobalRebalancer` update completes, it does not affect active queries, preventing "Mid-Flight Community Swaps" (Hole Fix 1.1.0).
 
-### 6. Implementation Notes (v2.24.0)
+### 6. Implementation Notes (v2.51.0)
 *   **Complexity**: $O(B \cdot D)$ per hop ($B$=beam width, $D$=degree).
 *   **Explainability**: Every result returned via the API includes a `score_breakdown` mapping the exact contribution of all five terms.
 *   **Precision**: Uses `float16` for embeddings and `float32` for attention weights to optimize memory throughput.
@@ -83,4 +83,4 @@ To ensure mathematical consistency during high-velocity streaming, CSA employs *
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0

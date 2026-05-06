@@ -165,7 +165,7 @@ Four-card summary row (total batches, edges recorded, rollback count, cycles see
 
 ---
 
-## New in v2.24.0 (Phase 62)
+## New in v2.51.0 (Phase 62)
 
 ### Explainable Reasoning Trace (ERT)
 The "Glass-Box" is now fully transparent. In the Results panel, each query result now includes an **Explainable Reasoning Trace** block. This trace records:

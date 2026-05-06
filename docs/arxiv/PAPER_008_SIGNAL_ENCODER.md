@@ -8,7 +8,7 @@
 ---
 
 ### Abstract
-Knowledge Graphs (KGs) have historically been limited to symbolic data, creating a representational gap between unstructured physical signals (e.g., sensor telemetry, waveforms) and conceptual entities. We propose the **Signal Encoder**, a framework for projecting high-dimensional signal features into a symbolic entity embedding space $\mathcal{E}$. By utilizing **Orthogonal Procrustes Analysis (OPA)** \cite{schonemann1966procrustes, gower2004procrustes} and Singular Value Decomposition (SVD), we learn an optimal rotation matrix $R$ that maps encoded signals to their symbolic counterparts while preserving geometric topology. We define two encoding modalities: **Statistical Encoding** for low-frequency telemetry and **Spectral Encoding** (Log-FFT) for high-frequency waveforms. Furthermore, we introduce the **Canonical Basis Anchor** protocol to prevent geometric drift in multi-hop federated reasoning. The v2.24.0 implementation utilizes **Namespace Isolation** to prevent semantic collisions between signal and text entities. Our results demonstrate that this alignment enables "Blind Cross-Modal Reasoning" with sub-millisecond latency, providing a critical representational bridge for autonomous industrial and scientific AI. As of v2.24.0, namespace isolation with the `signal:` prefix has been confirmed in production deployments, and the Procrustes cross-modal alignment principle has been extended to the federated context — `FederatedAdapter` uses the same SVD rotation to align embeddings across heterogeneous remote nodes, validating the generality of the approach.
+Knowledge Graphs (KGs) have historically been limited to symbolic data, creating a representational gap between unstructured physical signals (e.g., sensor telemetry, waveforms) and conceptual entities. We propose the **Signal Encoder**, a framework for projecting high-dimensional signal features into a symbolic entity embedding space $\mathcal{E}$. By utilizing **Orthogonal Procrustes Analysis (OPA)** \cite{schonemann1966procrustes, gower2004procrustes} and Singular Value Decomposition (SVD), we learn an optimal rotation matrix $R$ that maps encoded signals to their symbolic counterparts while preserving geometric topology. We define two encoding modalities: **Statistical Encoding** for low-frequency telemetry and **Spectral Encoding** (Log-FFT) for high-frequency waveforms. Furthermore, we introduce the **Canonical Basis Anchor** protocol to prevent geometric drift in multi-hop federated reasoning. The v2.51.0 implementation utilizes **Namespace Isolation** to prevent semantic collisions between signal and text entities. Our results demonstrate that this alignment enables "Blind Cross-Modal Reasoning" with sub-millisecond latency, providing a critical representational bridge for autonomous industrial and scientific AI. As of v2.51.0, namespace isolation with the `signal:` prefix has been confirmed in production deployments, and the Procrustes cross-modal alignment principle has been extended to the federated context — `FederatedAdapter` uses the same SVD rotation to align embeddings across heterogeneous remote nodes, validating the generality of the approach.
 
 ### 1. Introduction
 The integration of physical signals into symbolic reasoning systems is a prerequisite for advanced autonomous systems. Current approaches often rely on intermediate text descriptions, which introduce significant latency and semantic loss. We demonstrate that direct latent space alignment via Procrustes rotation provides a more efficient and mathematically stable alternative.
@@ -29,15 +29,15 @@ $$M = U \Sigma V^T \implies R = U V^T$$
 ### 3. Stability: The Canonical Anchor
 To ensure consistency across federated hops (SPEC_005), we enforce a protocol where all Signal Encoders align to a designated **Root Space** $\mathcal{E}_{root}$. This prevents the accumulation of projection noise inherent in nested SVD transformations.
 
-### 4. Implementation (v2.24.0)
+### 4. Implementation (v2.51.0)
 The Signal Encoder is implemented as an extension of the **THALAMUS** pipeline, utilizing **Namespace Isolation** (`signal:`) to prevent entity collisions. The projection is a constant-time matrix-vector multiplication, suitable for high-velocity streaming environments.
 
 ### 5. Conclusion
-Latent space alignment via Orthogonal Procrustes provides a mathematically robust bridge between physical signals and symbolic knowledge. By treating signals as first-class entities, CEREBRUM enables a new class of multi-modal reasoning applications. In CEREBRUM v2.24.0, the `signal:` namespace isolation protocol has been confirmed in production deployments, and the Procrustes alignment method has been generalized to federated cross-node embedding alignment — validating the mathematical approach across both the cross-modal and cross-graph dimensions.
+Latent space alignment via Orthogonal Procrustes provides a mathematically robust bridge between physical signals and symbolic knowledge. By treating signals as first-class entities, CEREBRUM enables a new class of multi-modal reasoning applications. In CEREBRUM v2.51.0, the `signal:` namespace isolation protocol has been confirmed in production deployments, and the Procrustes alignment method has been generalized to federated cross-node embedding alignment — validating the mathematical approach across both the cross-modal and cross-graph dimensions.
 
 ---
 
-## 6. Recent Advances (v2.24.0 → v2.24.0)
+## 6. Recent Advances (v2.24.0 -> v2.51.0)
 
 The Signal Encoder has been validated in production and its core alignment methodology has been generalized to new problem domains since v2.24.0. The following describes the key advances.
 
@@ -47,7 +47,7 @@ The Signal Encoder has been validated in production and its core alignment metho
 
 **Canonical Basis Anchor in Federated Context.** The Canonical Basis Anchor protocol — where all Signal Encoders align to a designated Root Space $\mathcal{E}_{root}$ — has been extended to the federated case. In a multi-node CEREBRUM deployment, one node is designated the root space anchor. All other nodes, whether ingesting signal data or text data, align their embedding spaces to the anchor before participating in federated traversal. This prevents the accumulation of projection noise across multi-hop federated chains.
 
-**Integration with THALAMUS Pipeline.** The Signal Encoder is now a first-class optional stage in the THALAMUS `IngestionPipeline`. Signal entities are processed through `StatisticalSignalEncoder` or `SpectralSignalEncoder`, projected into the entity embedding space, prefixed with `signal:`, and then passed to the standard normalization and deduplication pipeline. The pipeline is covered in the 1,357-test v2.24.0 suite, including multi-modal namespace collision regression tests.
+**Integration with THALAMUS Pipeline.** The Signal Encoder is now a first-class optional stage in the THALAMUS `IngestionPipeline`. Signal entities are processed through `StatisticalSignalEncoder` or `SpectralSignalEncoder`, projected into the entity embedding space, prefixed with `signal:`, and then passed to the standard normalization and deduplication pipeline. The pipeline is covered in the 1,357-test v2.51.0 suite, including multi-modal namespace collision regression tests.
 
 ---
 **References**

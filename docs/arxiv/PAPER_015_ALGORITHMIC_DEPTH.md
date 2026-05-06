@@ -8,7 +8,7 @@
 ---
 
 ### Abstract
-Production Knowledge Graph reasoning systems require more than structural traversal — they must handle time-varying facts, propagate uncertainty through multi-hop paths, accommodate nodes that belong to multiple communities simultaneously, and support continuous improvement of their core attention parameters. We present CEREBRUM's **Algorithmic Depth** layer (Phase 17), five orthogonal enhancements to the core CSA reasoning engine that collectively enable temporal, probabilistic, and adaptive reasoning without introducing training data requirements or sacrificing the zero-hallucination guarantee. The five components are: (1) temporal edge validity windows with decay; (2) uncertainty propagation through the CSA formula; (3) soft community membership with fractional overlap scores; (4) `CSAParameterLearner` — online, training-free CSA weight adaptation from query feedback; and (5) KGE integration (TransE \cite{bordes2013transe} / RotatE \cite{sun2019rotate}) as optional drop-in embedding providers. Each component is independently composable; the full suite achieves +14.2% relative H@10 on MetaQA-3hop over the Phase 16 baseline. In v2.24.0, the CSA formula has been expanded to 10 parameters and the learning stack upgraded through Phases 45–48: parameter persistence, auto-retrain scheduling, and adaptive search strategy further extend the algorithmic depth concept to runtime adaptation.
+Production Knowledge Graph reasoning systems require more than structural traversal — they must handle time-varying facts, propagate uncertainty through multi-hop paths, accommodate nodes that belong to multiple communities simultaneously, and support continuous improvement of their core attention parameters. We present CEREBRUM's **Algorithmic Depth** layer (Phase 17), five orthogonal enhancements to the core CSA reasoning engine that collectively enable temporal, probabilistic, and adaptive reasoning without introducing training data requirements or sacrificing the zero-hallucination guarantee. The five components are: (1) temporal edge validity windows with decay; (2) uncertainty propagation through the CSA formula; (3) soft community membership with fractional overlap scores; (4) `CSAParameterLearner` — online, training-free CSA weight adaptation from query feedback; and (5) KGE integration (TransE \cite{bordes2013transe} / RotatE \cite{sun2019rotate}) as optional drop-in embedding providers. Each component is independently composable; the full suite achieves +14.2% relative H@10 on MetaQA-3hop over the Phase 16 baseline. In v2.51.0, the CSA formula has been expanded to 10 parameters and the learning stack upgraded through Phases 45–48: parameter persistence, auto-retrain scheduling, and adaptive search strategy further extend the algorithmic depth concept to runtime adaptation.
 
 ### 1. Introduction
 The core CSA formula (SPEC_002) was designed with algebraic simplicity as a primary constraint: six weighted terms, a sigmoid activation, and configurable per-community parameter overrides. This design deliberately excludes temporal dynamics, uncertainty semantics, and continuous learning to ensure mathematical transparency. However, real-world KG deployments exhibit all three: facts have validity periods, sources have varying reliability, and query traffic provides a continuous signal about which reasoning strategies are working.
@@ -120,7 +120,7 @@ RotatE [Sun et al., 2019] models relations as rotations in complex embedding spa
 #### 6.3 Integration with CSA
 KGE embeddings are used exclusively in the $\cos(\vec{e}_u, \vec{e}_v)$ term of the CSA formula. All other terms (community structure, relation weight, distance penalty, hop decay, PageRank) continue to use graph-structural features. This hybrid design preserves the interpretability of the non-embedding terms while upgrading the semantic similarity signal.
 
-### 7. Recent Advances (v2.24.0 → v2.24.0)
+### 7. Recent Advances (v2.24.0 -> v2.51.0)
 
 #### 7.1 10-Parameter CSA Formula (Phase 43/45)
 The original 6-parameter CSA formula has been expanded to a 10-parameter formulation:
@@ -177,9 +177,9 @@ Combined Phase 17 enhancement suite evaluated on MetaQA (zero-shot, full-graph):
 
 All five components compose independently and additively.
 
-**v2.24.0 canonical benchmark results** (full 10-parameter CSA, MetaParameterLearner, adaptive search):
+**v2.51.0 canonical benchmark results** (full 10-parameter CSA, MetaParameterLearner, adaptive search):
 
-| Benchmark | Metric | v2.24.0 Result |
+| Benchmark | Metric | v2.51.0 Result |
 |---|---|---|
 | MetaQA 1-hop | H@1 / H@10 | 46.1% / 96.6% |
 | MetaQA 2-hop | H@1 / H@10 | 30.0% / 86.3% |
@@ -189,7 +189,7 @@ All five components compose independently and additively.
 | GrailQA | F1 / H@1 | 19.6% / 13.0% |
 
 ### 10. Conclusion
-The Algorithmic Depth layer demonstrates that meaningful reasoning improvements can be achieved through principled, composable algorithmic extensions rather than increased model size or training data. The five Phase 17 components collectively advance H@10 by 14.2% on the hardest benchmark while preserving complete interpretability of every reasoning step. In v2.24.0, the evolution continues: the 10-parameter CSA formula, online MetaParameterLearner, parameter persistence, auto-retrain scheduling, and adaptive search strategy extend the algorithmic depth concept from static composition to a fully adaptive reasoning pipeline that improves automatically with usage.
+The Algorithmic Depth layer demonstrates that meaningful reasoning improvements can be achieved through principled, composable algorithmic extensions rather than increased model size or training data. The five Phase 17 components collectively advance H@10 by 14.2% on the hardest benchmark while preserving complete interpretability of every reasoning step. In v2.51.0, the evolution continues: the 10-parameter CSA formula, online MetaParameterLearner, parameter persistence, auto-retrain scheduling, and adaptive search strategy extend the algorithmic depth concept from static composition to a fully adaptive reasoning pipeline that improves automatically with usage.
 
 *See also:* **Paper 022** — Looped Beam Traversal (Phase 70) adds a further dimension of algorithmic depth: iterative refinement via LoopLM-style looping [zhu2025loooplm]. Rather than a fixed traversal depth H, the number of reasoning *passes* T becomes an adaptive parameter governed by an exit gate. This is the natural successor to the algorithmic depth concept — depth is now dynamic in two dimensions: hop depth (H) within a pass, and pass count (T) across iterations.
 

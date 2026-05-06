@@ -2,13 +2,13 @@
 ## Autonomous Discovery via the STDP Causal Engine
 
 **Date**: March 2026  
-**Status**: v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: Data Scientists, IoT Architects, Cybersecurity Analysts, Fintech Leads
 
 ---
 
 ### Executive Summary
-In high-velocity data environments (IoT, Finance, Cyber), the ability to understand *why* something is happening is just as important as knowing *what* is happening. Most AI systems are good at correlation but fail at causation. The **STDP Causal Engine** introduces a breakthrough in unsupervised causal inference. By analyzing the temporal "spikes" of events, it autonomously discovers directional causal relationships in real-time, allowing your graph to "learn" the hidden logic of your data streams without human labeling. In v2.24.0, the engine implements **Lazy Decay**, enabling constant-time ($O(1)$) performance even on massive graphs tracking millions of simultaneous causal pairs.
+In high-velocity data environments (IoT, Finance, Cyber), the ability to understand *why* something is happening is just as important as knowing *what* is happening. Most AI systems are good at correlation but fail at causation. The **STDP Causal Engine** introduces a breakthrough in unsupervised causal inference. By analyzing the temporal "spikes" of events, it autonomously discovers directional causal relationships in real-time, allowing your graph to "learn" the hidden logic of your data streams without human labeling. In v2.51.0, the engine implements **Lazy Decay**, enabling constant-time ($O(1)$) performance even on massive graphs tracking millions of simultaneous causal pairs.
 
 ### The Problem: The Causality Gap in Big Data
 Modern enterprise data is a flood of events. Traditional analytics can tell you that "Event A" and "Event B" often happen together (Correlation), but they cannot tell you if A *causes* B. 
@@ -21,7 +21,7 @@ The STDP Engine adapts **Spike-Timing-Dependent Plasticity**—the same rule the
 **How it works:**
 *   **Temporal Analysis**: If "Source A" consistently fires just before "Target B," the system strengthens the `CAUSES` connection.
 *   **Error Correction**: If B fires before A, or if A fires without B following, the connection is weakened.
-*   **Lazy Decay ($O(1)$) (v2.24.0)**: A proprietary optimization ensures that the CPU cost of "forgetting" old data remains constant, even if you are tracking millions of causal pairs simultaneously.
+*   **Lazy Decay ($O(1)$) (v2.51.0)**: A proprietary optimization ensures that the CPU cost of "forgetting" old data remains constant, even if you are tracking millions of causal pairs simultaneously.
 
 ### Key Enterprise Benefits
 *   **Unsupervised Learning**: No need for expensive data labeling; the system learns causality purely from the timing of your events.
@@ -38,4 +38,4 @@ The STDP Causal Engine transforms raw event streams into a structured, causal Kn
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0

@@ -71,7 +71,7 @@ Each submission requires the following metadata fields on arXiv:
 Title:        [From paper header]
 Authors:      Bryan Alexander Buchorn; Claude Sonnet 4.6 (Research Collaborator, Anthropic)
 Abstract:     [From paper Abstract section — max 1,920 characters]
-Comments:     16 pages. Part of the CEREBRUM framework series (v2.24.0).
+Comments:     16 pages. Part of the CEREBRUM framework series (v2.51.0).
               Code: https://github.com/[repo]
 MSC-class:    68T30 (Knowledge representation)
 ACM-class:    I.2.4; H.3.3
@@ -166,4 +166,4 @@ This paper should cite all subsystem papers (PAPER_001 through PAPER_035) by the
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.24.0
+**Reviewed on**: April 21, 2026 for version v2.51.0

@@ -158,7 +158,7 @@ BeamTraversal(
 ```
 
 **warm_start_strength** guidance:
-- `0.0` — standard uniform Beta(1,1) prior (v2.24.0 behavior)
+- `0.0` — standard uniform Beta(1,1) prior (v2.51.0 behavior)
 - `2.0` — mild warm-start (reduces first-hop variance ~40%)
 - `5.0` — strong warm-start (reduces first-hop variance ~85%, recommended for sparse graphs)
 - `10.0` — aggressive seeding (can reduce diversity; use only on very sparse graphs)
