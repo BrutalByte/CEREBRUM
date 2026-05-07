@@ -6,6 +6,48 @@ retroactively; failures are recorded as faithfully as passes.
 
 ---
 
+## Run 168 â€” v2.51.0 Regression Fix: 27 â†’ 0 Failures
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-05-07 |
+| **Phase**         | Post-Phase 167 (v2.51.0) |
+| **Purpose**       | Full quality audit; fix all pre-existing test failures |
+| **Operator**      | Claude Sonnet 4.6 |
+
+### Root Causes Fixed
+
+**Bug 1: `temporal_window_size` attribute missing from `CSAEngine`**
+- `core/attention_engine.py` `__init__` accepted `temporal_window_size` as a parameter but never assigned `self.temporal_window_size`. Added assignment.
+- Affected: `test_temporal_scoring.py` (2), `test_temporal_window.py` (2).
+
+**Bug 2: MagicMock guard missing for batch CSA scorer**
+- `reasoning/traversal.py` used `getattr(self.csa, "compute_weights_batch", None)` without checking if the method is genuinely defined in the class hierarchy. `MagicMock` auto-creates attributes on the instance, not the class, causing the guard to silently fail.
+- Fix: check `any("compute_weights_batch" in cls.__dict__ for cls in type(self.csa).__mro__)`. Applied same guard to `get_current_params`.
+- Affected: `test_cvt_traversal.py` (7), `test_loop_wiring.py` (3), `test_multi_seed_h1se.py` (1).
+
+**Bug 3: No per-step fallback when batch scorer unavailable**
+- When `_cwb` is `None` (explicitly set or after guard), the traversal had no fallback and crashed.
+- Fix: added per-step fallback using `compute_weight_with_features` â†’ `compute_weight`. Main loop updated to call `compute_weight` directly when logit is not a `ReasoningLogit`.
+- Affected: `test_traversal.py::test_traversal_batch_path` (1), enabled pruning tests.
+
+**Bug 4: CUDA tensors returned from `get_current_params`**
+- `CSAEngine.__init__` stored parameters as `torch.tensor(alpha, device=cuda)`. `get_current_params` returned these raw tensors, which NumPy rejected.
+- Fix: wrap return in `_to_float(v) = v.item() if hasattr(v, "item") else float(v)`.
+- Affected: `test_community_params.py` (4).
+
+**Bug 5: H1SE pruning callback not propagating weight from mock**
+- With the batch-path guard (Bug 2), the per-step fallback constructed its own ReasoningLogit from cosine similarity, bypassing `csa.compute_weight`. This broke pruning tests that rely on `mock_weight` side effects.
+- Fix: when logit is not a `ReasoningLogit`, fall back to `self.csa.compute_weight(...)` directly in the scoring loop.
+- Affected: `test_cross_branch_pruning.py::test_h1se_passes_callback_and_prunes` (1).
+
+### Results
+- **Before**: 27 failed, 2150 passed, 1 skipped, 3 errors
+- **After**: **2177 passed, 1 skipped, 3 errors** (UI errors require live server â€” pre-existing)
+- **Net gain**: 27 failures â†’ 0 failures
+
+---
+
 ## Run 105 â€” Phase 105 Final: Recursive Self-Synthesis
 
 | Field             | Value |
@@ -3406,12 +3448,12 @@ python -m pytest tests/ -v
 - **Ablation Study**: Verified `baseline_comparison.py` on MetaQA; DSCF+CSA continues to outperform BFS and LPA baselines (Hits@10 +10% on 3-hop).
 - **Hardening**: Resolved syntax and type errors in `extraction_engine.py` and `community_engine.py`.
 
-## Run 142 — Phases 137–142 Final: H1SE Stack
+## Run 142 ï¿½ Phases 137ï¿½142 Final: H1SE Stack
 
 | Field             | Value |
 |---|---|
 | **Date**          | 2026-04-25 |
-| **Phase**         | Phases 137–142 (H1SE Optimization Stack) |
+| **Phase**         | Phases 137ï¿½142 (H1SE Optimization Stack) |
 | **Purpose**       | Optimize deep-hop reasoning accuracy and latency via H1SE, Adaptive K, and cross-branch pruning |
 | **Operator**      | Gemini CLI |
 
@@ -3429,7 +3471,7 @@ python -m pytest tests/ -v
 - **Anomaly Fix**: 2-hop Hits@1 restored to 0.2100 (+2.0pp vs FULL baseline).
 - **Regression**: 1560+ tests passing (v2.33.1).
 
-## Run 143 — Phase 143: Homeostatic Scaling Integration
+## Run 143 ï¿½ Phase 143: Homeostatic Scaling Integration
 | Field             | Value |
 |---|---|
 | **Date**          | 2026-04-26 |

@@ -2,7 +2,7 @@
 
 **Community-Structured Graph Attention for Knowledge Graph Reasoning**
 
-**Current Version:** v2.51.0 (Phase 167 COMPLETE)
+**Current Version:** v2.51.1 (Phase 167 COMPLETE)
 
 CEREBRUM is the first reasoning engine that treats the Knowledge Graph not as a static data dump, but as a living, self-optimizing neural substrate. By embedding the intelligence of Transformer-style attention directly into the graph's topology, it delivers hyper-accurate, verifiable reasoning at sub-millisecond speeds—completely eliminating the hallucinations of LLMs and the bottleneck of expensive, manual model training.
 
@@ -12,7 +12,15 @@ CEREBRUM is the first reasoning engine that treats the Knowledge Graph not as a 
   membership as a soft global constraint on graph traversal
 - **Graph-Grounded**: every answer is a path through verified graph edges
 
-See `docs/PAPER.md` for the full white paper and architecture specification, and `docs/HOW_IT_WORKS.md` for a plain-language architecture essay.
+## Mathematical Foundations
+
+CEREBRUM is built on a formal equivalence between Transformer operations and graph topology:
+
+*   **Attention Heads $\approx$ DSCF Communities**: Graph partitioning serves as a discrete, structural mechanism for parallel attention, where each community specializes on a conceptual domain.
+*   **Layer Depth $\approx$ BFS Hop Count**: Multi-hop traversal replaces the composition of transformer layers, where each hop represents a discrete step of logical inference.
+*   **Positional Encoding $\approx$ Structural Features**: Node-level metrics (PageRank, Betweenness) provide the necessary global context for the attention mechanism.
+
+The core **Community-Structured Attention (CSA)** score for an edge $u \to v$ at hop $k$ is defined by a 10-parameter homeostatic formula that balances semantic similarity, community coherence, and metabolic signals.
 
 ## Why CEREBRUM?
 
@@ -30,7 +38,7 @@ You don't need a machine learning team to train, fine-tune, or maintain CEREBRUM
 With **GraphProfiler** (Phase 166) and **STRB** (Phase 167), you no longer need to be a graph theory expert to get production-grade results. The system automatically profiles your graph at build time, identifies its structural regime (Hub-heavy vs. Typed-Heterogeneous), and dynamically orchestrates the reasoning engine (H1SE, TAB, STRB) to optimize for your specific dataset.
 
 ### 4. Memory-Efficient Scalability
-Legacy Knowledge Graphs require massive RAM overhead for index redundancy and path materialization. CEREBRUM’s **Hybrid-Memory Architecture** (Phase 169) autonomously balances performance between RAM/VRAM and NVMe-backed storage, providing "live" reasoning performance on graphs that exceed your total system memory.
+Legacy Knowledge Graphs require massive RAM overhead for index redundancy and path materialization. CEREBRUM’s **Hybrid-Memory Architecture** autonomously balances performance between RAM/VRAM and NVMe-backed storage, providing "live" reasoning performance on graphs that exceed your total system memory.
 
 ### 5. Verified Superiority
 CEREBRUM has been empirically validated against world-class RL-trained baselines (like MINERVA) on standardized benchmarks:
@@ -43,7 +51,7 @@ CEREBRUM has been empirically validated against world-class RL-trained baselines
 
 ## Roadmap
 
-**Current Project Status: v2.51.0 — Phase 167 COMPLETE — 2175+ tests passing (1 skipped)**
+**Current Project Status: v2.51.1 — Phase 167 COMPLETE — 2177 passed, 1 skipped**
 
 ### The Core Pillars
 - [x] **Phase 1**: Core Engine (GraphAdapter, TSC Engine, CSA Attention)
@@ -118,12 +126,12 @@ CEREBRUM has been empirically validated against world-class RL-trained baselines
 - [x] **Phase 81**: Graph Snapshot Persistence (v2.19.0) — JSON topology save/restore/diff
 - [x] **Phase 82**: Adaptive Loop Tuning (v2.20.0) — Autonomous resource scaling
 - [x] **Phase 83**: UE5 3D Neural Visualization (v2.21.0) — Unreal Engine C++ Plugin
-- [x] **Phase 93**: Active Inference / Daydreaming (v2.24.0) — Idle-period consolidation
-- [x] **Phase 94**: Self-Modifying GUI (v2.24.0) — UEToolkit integration
-- [x] **Phase 102**: Default Mode Network (v2.24.0) — Idle bottleneck audit
-- [x] **Phase 104-105**: Homeostatic Metaplasticity and Recursive Self-Synthesis (v2.24.0)
-- [x] **Phase 107-108**: De Novo Parameter Synthesis and Thalamofrontal Feedback Loop (v2.24.0)
-- [x] **Phase 109-112**: Counterfactual Reasoning, Global Workspace (GWS), Active Inference, and REM Cycle Shortcut Synthesis (v2.24.0)
+- [x] **Phase 93**: Active Inference / Daydreaming (v2.51.0) — Idle-period consolidation
+- [x] **Phase 94**: Self-Modifying GUI (v2.51.0) — UEToolkit integration
+- [x] **Phase 102**: Default Mode Network (v2.51.0) — Idle bottleneck audit
+- [x] **Phase 104-105**: Homeostatic Metaplasticity and Recursive Self-Synthesis (v2.51.0)
+- [x] **Phase 107-108**: De Novo Parameter Synthesis and Thalamofrontal Feedback Loop (v2.51.0)
+- [x] **Phase 109-112**: Counterfactual Reasoning, Global Workspace (GWS), Active Inference, and REM Cycle Shortcut Synthesis (v2.51.0)
 - [x] **Phase 119-123**: Sleep Cycle & Metacognitive Monitor, Epistemic Gating, Counterfactual Engine (v2.25.0)
 - [x] **Phase 134-137**: Vectorized Beam Scoring, KGE-Enriched Embeddings, Funnel Beam Profile, H1SE (Hop-1 Seed Expansion) (v2.31.0)
 - [x] **Phase 149-150**: Cingulate Engine (Reasoning Verifier) and Frontal Engine Executive Strategy (v2.35.0)

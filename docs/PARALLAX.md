@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: March 2026
-**Status**: Version 2.51.0 · Phase 167 COMPLETE — 2175+ tests passing
+**Status**: Version 2.51.1 · Phase 167 COMPLETE — 2177 tests passing
 **License**: Proprietary — all rights reserved
 
 ---
@@ -80,7 +80,7 @@ parallax/
 └── PAPER.md       (this file)
 ```
 
-**Current phase**: Phase 167 complete (v2.51.0). CEREBRUM now features **STRB (Semantic Terminal Relation Boost)** for zero-shot query intent recognition, **GraphProfiler** for automatic regime-based strategy selection, **Terminal-Anchor Hints (TAB)** for deep multi-hop steering, and **Vectorized Beam Scoring** (NumPy-accelerated). The system also incorporates previous milestones: **H1SE (Hop-1 Seed Expansion)**, **Active Inference** via the Thalamofrontal Feedback Loop, **Sleep-Phase Consolidation** (REM Cycle), **Global Workspace (GWS)** coordination, **Metabolic Homeostasis** (Reinforcement, Arousal, Novelty, Cohesion, Persistence), **Epistemic Gating**, and **Counterfactual Reasoning**. 2175+ tests passing.
+**Current phase**: Phase 167 complete (v2.51.0). CEREBRUM now features **STRB (Semantic Terminal Relation Boost)** for zero-shot query intent recognition, **GraphProfiler** for automatic regime-based strategy selection, **Terminal-Anchor Hints (TAB)** for deep multi-hop steering, and **Vectorized Beam Scoring** (NumPy-accelerated). The system also incorporates previous milestones: **H1SE (Hop-1 Seed Expansion)**, **Active Inference** via the Thalamofrontal Feedback Loop, **Sleep-Phase Consolidation** (REM Cycle), **Global Workspace (GWS)** coordination, **Metabolic Homeostasis** (Reinforcement, Arousal, Novelty, Cohesion, Persistence), **Epistemic Gating**, and **Counterfactual Reasoning**. 2177 tests passing.
 
 ---
 

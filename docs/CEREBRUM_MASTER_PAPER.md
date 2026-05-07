@@ -1,6 +1,6 @@
 # CEREBRUM: Master Research Compilation
 
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 
 
 
@@ -10,7 +10,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 30, 2026
 
 ---
@@ -67,7 +67,7 @@ Published baselines (3-hop): GraftNet 22.8%, EmbedKGQA 29.8%. CEREBRUM Phase 167
 
 **Community-Specific CSA Parameters (Phase 20/45).** Each community partition now maintains its own 10-parameter CSA vector, updated online via `MetaParameterLearner`. This means the community structure produced by DSCF/TSC directly determines the granularity of the learning surface - higher-quality partitions produce more focused per-community adaptation.
 
-**Test Coverage.** The full CEREBRUM test suite now comprises 2175 passing tests (up from 994 at v2.24.0), with dedicated regression suites covering TSC stability, community swap atomicity, and modularity drift detection.
+**Test Coverage.** The full CEREBRUM test suite now comprises 2177 passing tests (up from 994 at v2.24.0), with dedicated regression suites covering TSC stability, community swap atomicity, and modularity drift detection.
 
 ## 7. Phase 159–167 Advances
 
@@ -101,7 +101,7 @@ Published baselines (3-hop): GraftNet 22.8%, EmbedKGQA 29.8%. CEREBRUM Phase 167
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: May 2026
 
 ---
@@ -222,7 +222,7 @@ where `affinity` is derived from accumulated `_counts`. This biases beam search 
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -297,7 +297,7 @@ The Bridge Twin Engine has been substantially extended since v2.24.0. The follow
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -346,7 +346,7 @@ The STDP causal discovery pipeline has been hardened and extended since v2.24.0.
 
 **Integration with THALAMUS (Phase 18).** The STDP discretizer is now an optional stage within the `IngestionPipeline`. Discretized causal edges are assigned a confidence score derived from the causal weight $w_{uv}$ and are tagged with `source="stdp"` provenance, enabling downstream components (REM, CSA) to apply appropriate skepticism to STDP-inferred edges.
 
-**Test Coverage.** The STDP subsystem is covered by dedicated adversarial and throughput regression tests within the 2175-test v2.51.0 suite, including constant-latency verification across accumulated pair counts of up to 10^6 pairs.
+**Test Coverage.** The STDP subsystem is covered by dedicated adversarial and throughput regression tests within the 2177-test v2.51.0 suite, including constant-latency verification across accumulated pair counts of up to 10^6 pairs.
 
 ---
 **References**
@@ -369,7 +369,7 @@ The STDP causal discovery pipeline has been hardened and extended since v2.24.0.
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -434,7 +434,7 @@ Federated reasoning has been one of the most actively developed areas of the CER
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -489,7 +489,7 @@ The OPT configuration uses adaptive density-driven beam width selection with a m
 
 **Query Snapshot Isolation (Phase 20).** `BeamTraversal.traverse()` snapshots `adapter.community_map` at query start via `CSAEngine.set_query_snapshot()`. This prevents mid-flight community swaps - triggered by background DSCF re-runs - from corrupting the community membership lookups used during Thompson sampling. The snapshot is released at traversal end, ensuring community map updates are not blocked by long-running queries.
 
-**Test Coverage.** The Bayesian traversal subsystem is covered by 2175 passing tests in v2.51.0, including probabilistic recall regression tests that verify the +45% recall improvement is maintained across graph density levels.
+**Test Coverage.** The Bayesian traversal subsystem is covered by 2177 passing tests in v2.51.0, including probabilistic recall regression tests that verify the +45% recall improvement is maintained across graph density levels.
 
 *See also:* **Paper 022** - Looped Beam Traversal (Phase 70) extends adaptive depth with LoopLM-style iterative refinement [zhu2025loooplm]. `LoopedBeamTraversal` applies `BeamTraversal` (including Bayesian mode) T times with seed expansion between loops. The adaptive exit gate uses PE convergence as its primary signal, making iterative depth adaptation a first-class reasoning primitive. When `BeamTraversal(probabilistic=True)` is used as the inner traversal, Thompson sampling operates independently within each loop, compounding the recall gains across passes.
 
@@ -515,7 +515,7 @@ The OPT configuration uses adaptive density-driven beam width selection with a m
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -591,7 +591,7 @@ Graceful Degradation AUC across all five levels: **0.89** (1.0 = perfect; 0.5 = 
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -636,7 +636,7 @@ The Signal Encoder has been validated in production and its core alignment metho
 
 **Canonical Basis Anchor in Federated Context.** The Canonical Basis Anchor protocol - where all Signal Encoders align to a designated Root Space $\mathcal{E}_{root}$ - has been extended to the federated case. In a multi-node CEREBRUM deployment, one node is designated the root space anchor. All other nodes, whether ingesting signal data or text data, align their embedding spaces to the anchor before participating in federated traversal. This prevents the accumulation of projection noise across multi-hop federated chains.
 
-**Integration with THALAMUS Pipeline.** The Signal Encoder is now a first-class optional stage in the THALAMUS `IngestionPipeline`. Signal entities are processed through `StatisticalSignalEncoder` or `SpectralSignalEncoder`, projected into the entity embedding space, prefixed with `signal:`, and then passed to the standard normalization and deduplication pipeline. The pipeline is covered in the 2175-test v2.51.0 suite, including multi-modal namespace collision regression tests.
+**Integration with THALAMUS Pipeline.** The Signal Encoder is now a first-class optional stage in the THALAMUS `IngestionPipeline`. Signal entities are processed through `StatisticalSignalEncoder` or `SpectralSignalEncoder`, projected into the entity embedding space, prefixed with `signal:`, and then passed to the standard normalization and deduplication pipeline. The pipeline is covered in the 2177-test v2.51.0 suite, including multi-modal namespace collision regression tests.
 
 ---
 **References**
@@ -659,13 +659,13 @@ The Signal Encoder has been validated in production and its core alignment metho
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
 
 ### Abstract
-We present **THALAMUS**, an intelligent ingestion preprocessing pipeline designed to address the structural and semantic inconsistencies inherent in high-velocity, heterogeneous Knowledge Graph (KG) streams. THALAMUS implements a composable architecture for entity normalization, bidirectional deduplication, and ontology mapping. Crucially, we introduce a **Namespace Isolation** protocol that prevents "identity collapse" across data modalities (e.g., text vs. sensors) by enforcing strict prefixing and domain-specific validation. To handle the computational demands of real-time streaming, the v2.51.0 release introduces a **Parallel Ingestion Optimization** that decouples CPU-bound normalization tasks from the graph's global write-lock. Benchmark results show an **850% throughput improvement** (from 1,200 to 11,500 triples/sec) while enabling linear throughput scaling across multi-core architectures without degrading reasoning latency. As of v2.51.0, THALAMUS has been extended with a `/build` hot-reload endpoint enabling runtime CSV ingestion without server restart, and a `ResearchAgent` (Phase 51) feeds proposed edges back into the pipeline after human approval, closing the loop between autonomous hypothesis generation and structured knowledge ingestion; 2175 tests now cover the full THALAMUS pipeline including streaming, namespace isolation, and STDP discretization.
+We present **THALAMUS**, an intelligent ingestion preprocessing pipeline designed to address the structural and semantic inconsistencies inherent in high-velocity, heterogeneous Knowledge Graph (KG) streams. THALAMUS implements a composable architecture for entity normalization, bidirectional deduplication, and ontology mapping. Crucially, we introduce a **Namespace Isolation** protocol that prevents "identity collapse" across data modalities (e.g., text vs. sensors) by enforcing strict prefixing and domain-specific validation. To handle the computational demands of real-time streaming, the v2.51.0 release introduces a **Parallel Ingestion Optimization** that decouples CPU-bound normalization tasks from the graph's global write-lock. Benchmark results show an **850% throughput improvement** (from 1,200 to 11,500 triples/sec) while enabling linear throughput scaling across multi-core architectures without degrading reasoning latency. As of v2.51.0, THALAMUS has been extended with a `/build` hot-reload endpoint enabling runtime CSV ingestion without server restart, and a `ResearchAgent` (Phase 51) feeds proposed edges back into the pipeline after human approval, closing the loop between autonomous hypothesis generation and structured knowledge ingestion; 2177 tests now cover the full THALAMUS pipeline including streaming, namespace isolation, and STDP discretization.
 
 ### 1. Introduction
 The "GIGO" (Garbage In, Garbage Out) principle is the primary failure mode for autonomous reasoning engines. When unrelated concepts share an ID, or when a single entity appears under multiple aliases, the graph's structural consensus (DSCF) and attention mechanisms (CSA) fail. THALAMUS acts as the "Intelligent Gatekeeper," ensuring all data is pre-aligned to a canonical representation.
@@ -687,7 +687,7 @@ We define a two-stage ingestion protocol:
 This removes the $O(N)$ string-processing bottleneck from the critical path, unblocking query readers during high-velocity bursts.
 
 ### 4. Conclusion
-THALAMUS provides the necessary structural foundation for stable, enterprise-scale reasoning. By integrating normalization, isolation, and parallelization, it ensures that the Knowledge Graph remains a coherent and high-integrity substrate for autonomous intelligence. In CEREBRUM v2.51.0, THALAMUS has been extended with a hot-reload `/build` endpoint, a `ResearchAgent` feedback loop for human-approved edge ingestion, and a 2175-test suite covering the full pipeline - confirming that high-throughput intelligent ingestion remains the stable foundation on which all reasoning capabilities depend.
+THALAMUS provides the necessary structural foundation for stable, enterprise-scale reasoning. By integrating normalization, isolation, and parallelization, it ensures that the Knowledge Graph remains a coherent and high-integrity substrate for autonomous intelligence. In CEREBRUM v2.51.0, THALAMUS has been extended with a hot-reload `/build` endpoint, a `ResearchAgent` feedback loop for human-approved edge ingestion, and a 2177-test suite covering the full pipeline - confirming that high-throughput intelligent ingestion remains the stable foundation on which all reasoning capabilities depend.
 
 ---
 
@@ -699,7 +699,7 @@ THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectional
 
 **ResearchAgent Feedback Loop (Phase 51).** The `ResearchAgent` is an autonomous agent that generates proposed KG triples by analyzing existing graph structure and querying external sources. Its proposals are surfaced to a human operator via a review queue. Upon approval, the approved triples are submitted to THALAMUS's `IngestionPipeline` as standard ingestion events - receiving full normalization, deduplication, namespace isolation, and confidence assignment. This closes the loop between autonomous reasoning (CORTEX) and structured knowledge ingestion (THALAMUS), enabling the graph to grow from its own reasoning activity.
 
-**Full Pipeline Test Coverage.** The THALAMUS pipeline is now covered by 2175 passing tests (up from 994 at v2.24.0). New test categories include:
+**Full Pipeline Test Coverage.** The THALAMUS pipeline is now covered by 2177 passing tests (up from 994 at v2.24.0). New test categories include:
 - Streaming ingestion under high-velocity burst conditions
 - Namespace isolation regression tests (signal: vs text: collision prevention)
 - STDP discretizer integration tests within the pipeline
@@ -731,13 +731,13 @@ THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectional
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
 
 ### Abstract
-We present **Inference Validator**, a methodology for evaluating the performance of unsupervised graph reasoning engines without external ground-truth labels. The framework operates by treating the Knowledge Graph's (KG) own topology as a proxy for truth through a specialized hold-out strategy. We introduce the **Path-Preserving Hold-out** constraint, which ensures that held-out edges are only selected if an alternative multi-hop path exists, thereby guaranteeing that the reasoning task is solvable from the remaining structure. We define metrics for **Unsupervised Recall ($R@K$)** and **Confidence Calibration Error**, providing a rigorous benchmark for assessing attention-steered traversals (CSA). In v2.51.0, we utilize this harness to validate that **quantized float16 embeddings** maintain an MRR loss of $< 0.002$ while reducing memory footprint by **48%**. We benchmark performance using the **MetaQA** \cite{metaqa2017} dataset. In v2.51.0, the **ExternalValidator** (Phase 52) extends validation to scientific literature databases, and the IKGWQ benchmark demonstrates graceful degradation with AUC=0.89 under 50% edge incompleteness. Our results demonstrate that this self-contained harness allows for autonomous parameter tuning and stability monitoring in production Knowledge Graphs, now validated across 2175 passing tests.
+We present **Inference Validator**, a methodology for evaluating the performance of unsupervised graph reasoning engines without external ground-truth labels. The framework operates by treating the Knowledge Graph's (KG) own topology as a proxy for truth through a specialized hold-out strategy. We introduce the **Path-Preserving Hold-out** constraint, which ensures that held-out edges are only selected if an alternative multi-hop path exists, thereby guaranteeing that the reasoning task is solvable from the remaining structure. We define metrics for **Unsupervised Recall ($R@K$)** and **Confidence Calibration Error**, providing a rigorous benchmark for assessing attention-steered traversals (CSA). In v2.51.0, we utilize this harness to validate that **quantized float16 embeddings** maintain an MRR loss of $< 0.002$ while reducing memory footprint by **48%**. We benchmark performance using the **MetaQA** \cite{metaqa2017} dataset. In v2.51.0, the **ExternalValidator** (Phase 52) extends validation to scientific literature databases, and the IKGWQ benchmark demonstrates graceful degradation with AUC=0.89 under 50% edge incompleteness. Our results demonstrate that this self-contained harness allows for autonomous parameter tuning and stability monitoring in production Knowledge Graphs, now validated across 2177 passing tests.
 
 ### 1. Introduction
 The evaluation of reasoning in KGs is typically constrained by the scarcity of gold-standard datasets. In autonomous or proprietary environments, external validation is often unavailable. We propose that a reasoning engine's quality can be measured by its ability to rediscover "hidden" facts that are structurally supported by the surrounding network topology.
@@ -775,10 +775,10 @@ The **Incomplete Knowledge Graph With Questions (IKGWQ)** benchmark (Phase 44) e
 The AUC=0.89 demonstrates that CEREBRUM degrades gracefully rather than catastrophically - a critical property for production KGs where incompleteness is the norm, not the exception.
 
 #### 3.4 Test Suite Expansion
-The validation harness is now exercised across **2175 passing tests** (up from 994 at Phase 20), including dedicated test suites for ExternalValidator integration, IKGWQ edge-removal scenarios, and path-preserving hold-out correctness across sparse, dense, and federated graph configurations.
+The validation harness is now exercised across **2177 passing tests** (up from 994 at Phase 20), including dedicated test suites for ExternalValidator integration, IKGWQ edge-removal scenarios, and path-preserving hold-out correctness across sparse, dense, and federated graph configurations.
 
 ### 4. Conclusion
-The Inference Validator provides a mathematically sound and self-contained framework for KG reasoning evaluation. By grounding performance metrics in the graph's own structural integrity - and now in external scientific literature via ExternalValidator - it enables the development of reliable, self-optimizing autonomous agents. In v2.51.0, with 2175 tests passing and IKGWQ AUC=0.89, the framework demonstrates production-grade robustness under real-world knowledge incompleteness conditions.
+The Inference Validator provides a mathematically sound and self-contained framework for KG reasoning evaluation. By grounding performance metrics in the graph's own structural integrity - and now in external scientific literature via ExternalValidator - it enables the development of reliable, self-optimizing autonomous agents. In v2.51.0, with 2177 tests passing and IKGWQ AUC=0.89, the framework demonstrates production-grade robustness under real-world knowledge incompleteness conditions.
 
 ---
 **References**
@@ -801,7 +801,7 @@ The Inference Validator provides a mathematically sound and self-contained frame
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -869,7 +869,7 @@ Contradiction Materialization transforms Knowledge Graphs from static fact store
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -956,7 +956,7 @@ The Glass-Box Reasoning Studio transforms graph attention from an abstract mathe
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -1024,7 +1024,7 @@ Two middleware layers are now applied to all API endpoints:
 Together with the `/logs` endpoint and dashboard.html (Paper 12), these middleware layers provide end-to-end production observability without requiring external infrastructure.
 
 ### 6. Conclusion
-The CEREBRUM Streaming Engine in v2.51.0 has matured from a laboratory prototype into a production-grade continuous ingestion and reasoning pipeline. The adaptive search strategy (Phase 53) brings intelligent runtime adaptation to beam traversal, the `/build` endpoint (Phase 54) enables zero-downtime graph evolution, and the production middleware stack provides the observability required for enterprise deployment. Combined with the 2175-test suite and CORS/timing instrumentation, the streaming engine is now a first-class production component of the CEREBRUM framework.
+The CEREBRUM Streaming Engine in v2.51.0 has matured from a laboratory prototype into a production-grade continuous ingestion and reasoning pipeline. The adaptive search strategy (Phase 53) brings intelligent runtime adaptation to beam traversal, the `/build` endpoint (Phase 54) enables zero-downtime graph evolution, and the production middleware stack provides the observability required for enterprise deployment. Combined with the 2177-test suite and CORS/timing instrumentation, the streaming engine is now a first-class production component of the CEREBRUM framework.
 
 ---
 **References**
@@ -1045,7 +1045,7 @@ The CEREBRUM Streaming Engine in v2.51.0 has matured from a laboratory prototype
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Affiliations**: Independent Researcher · Anthropic
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -1206,7 +1206,7 @@ The InsightValidator, MetaInsightEngine, ResearchAgent, and ExternalValidator co
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Affiliations**: Independent Researcher · Anthropic
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -1418,7 +1418,7 @@ The Algorithmic Depth layer demonstrates that meaningful reasoning improvements 
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
 **Affiliations**: Independent Researcher · Anthropic
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -1630,7 +1630,7 @@ In v2.51.0 (Phases 56-57), the hardening scope expands from cross-feature intera
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -1714,7 +1714,7 @@ Inference-time GraphSAGE neighbourhood smoothing is a zero-cost structural enric
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -1809,7 +1809,7 @@ The Engram pattern as a *soliton* [bengio2025soliton]: a relation-sequence patte
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -1883,7 +1883,7 @@ The temporal stability achieved by TemporalCalibrator - where `eta` and `iota` c
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: April 2026
 
 ---
@@ -4012,7 +4012,7 @@ curl -X POST http://localhost:8200/research/loop/configure \
 **Affiliations**: Independent Researcher · Anthropic  
 **Series**: CEREBRUM Technical Report 035  
 **Phase**: 83  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **arXiv Category**: `cs.HC` + `cs.IR`  
 **Date**: April 2026
 
@@ -4319,7 +4319,7 @@ The current implementation loads all edges at startup. For graphs > 10 000 edges
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: May 2026
 
 ---
@@ -4390,13 +4390,13 @@ GraphProfiler and STRB together deliver a complete zero-config pipeline: load an
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: May 2026
 
 ---
 
 ### Abstract
-This final synthesis section articulates the strategic significance of the **CEREBRUM** framework across its 37-paper arc. We categorize its advantages over contemporary Large Language Models (LLMs) and traditional Graph Neural Networks (GNNs) across the structural pillars developed through 167 phases of engineering. We conclude by outlining the roadmap for "Collective Intelligence" - a multi-agent, federated graph reasoning architecture that operates without central coordination or massive parameter counts. With 2175 tests passing and a complete autonomous discovery-validate-approve-materialize loop, a production Unreal Engine 5 visualization layer, an active inference daydreaming engine (Phase 93), a self-modifying GUI adaptation system (Phase 94), a **Global Workspace** for competitive attention (Phase 110), proactive **Active Inference** traversal (Phase 111), automatic query strategy selection via **GraphProfiler** (Phase 166), and **Semantic Terminal Relation Boost** (Phase 167) implemented, CEREBRUM v2.51.0 represents a production-ready foundation for deterministic, interpretable, self-healing, and autonomously-improving Knowledge Graph reasoning.
+This final synthesis section articulates the strategic significance of the **CEREBRUM** framework across its 37-paper arc. We categorize its advantages over contemporary Large Language Models (LLMs) and traditional Graph Neural Networks (GNNs) across the structural pillars developed through 167 phases of engineering. We conclude by outlining the roadmap for "Collective Intelligence" - a multi-agent, federated graph reasoning architecture that operates without central coordination or massive parameter counts. With 2177 tests passing and a complete autonomous discovery-validate-approve-materialize loop, a production Unreal Engine 5 visualization layer, an active inference daydreaming engine (Phase 93), a self-modifying GUI adaptation system (Phase 94), a **Global Workspace** for competitive attention (Phase 110), proactive **Active Inference** traversal (Phase 111), automatic query strategy selection via **GraphProfiler** (Phase 166), and **Semantic Terminal Relation Boost** (Phase 167) implemented, CEREBRUM v2.51.0 represents a production-ready foundation for deterministic, interpretable, self-healing, and autonomously-improving Knowledge Graph reasoning.
 
 ### 1. Beyond the LLM Monopoly: The Case for Determinism
 Modern Artificial Intelligence has been dominated by the brute-force scaling of Transformer-based Large Language Models (LLMs). While effective at generating human-like text, LLMs suffer from three terminal defects in enterprise and scientific domains: **Identity Collapse**, **Factual Hallucination**, and **Black-Box Opacity**.
@@ -4461,7 +4461,7 @@ STRB replaces structural SRI in zero-config mode by computing cosine similarity 
 In v2.35.0, CEREBRUM moves beyond simple traversal toward executive orchestration. The **Frontal Engine** (Phase 150) implements a meta-reasoning layer that analyzes candidate paths and dynamically selects between FAST (traversal only), HYBRID (async research), and DEEP (suspend for research) strategies. This is coupled with the **Cingulate Engine** (Phase 149), which monitors reasoning entropy and detects "hub-flooding" signatures—situations where a few high-degree nodes overwhelm the beam. When such flooding is detected, the Cingulate Engine triggers a recursive refinement loop, retrying the query with stricter pruning constraints to recover signal from the noise.
 
 ### 4. Conclusion: The Collective Hypothesis
-The development arc - spanning 37 papers, 2175 passing tests, and 167 phases of engineering - demonstrates that intelligence is not a function of data volume, but of **structural efficiency and self-correction**. CEREBRUM proves that by respecting the community structure of knowledge, utilizing causal time-signals, closing the autonomous discovery loop, and implementing predictive global workspaces, we can build agents that reason as deeply as humans while remaining as auditable as a calculator.
+The development arc - spanning 37 papers, 2177 passing tests, and 167 phases of engineering - demonstrates that intelligence is not a function of data volume, but of **structural efficiency and self-correction**. CEREBRUM proves that by respecting the community structure of knowledge, utilizing causal time-signals, closing the autonomous discovery loop, and implementing predictive global workspaces, we can build agents that reason as deeply as humans while remaining as auditable as a calculator.
 
 As we move toward the next decade of AGI development, CEREBRUM provides the blueprint for a **Collective Intelligence** - a decentralized, self-healing, and perfectly transparent network of knowledge that grows not by adding more GPUs, but by forging more meaningful and provenance-tracked connections.
 

@@ -97,6 +97,7 @@ class CSAEngine:
         self.theta = torch.tensor(theta, device=self.device)
         
         self.use_temporal_decay = use_temporal_decay
+        self.temporal_window_size = temporal_window_size
         self.lambda_decay = lambda_decay
         self.edge_type_weights = edge_type_weights or {}
         self.external_community_scores = external_community_scores or {}
@@ -347,7 +348,9 @@ class CSAEngine:
                 self.zeta, self.eta, self.iota, self.mu, self.theta
             )
 
-        return (a, b, g, d, e, zeta, eta, iota, mu, theta)
+        def _to_float(v):
+            return v.item() if hasattr(v, "item") else float(v)
+        return tuple(_to_float(x) for x in (a, b, g, d, e, zeta, eta, iota, mu, theta))
 
 def _cosine_sim(a, b):
     na, nb = np.linalg.norm(a), np.linalg.norm(b)

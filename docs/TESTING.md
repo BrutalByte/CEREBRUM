@@ -1,7 +1,7 @@
 # CEREBRUM — Testing Methodology
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6
-**Last updated**: 2026-04-07
+**Last updated**: 2026-05-07
 **Status**: Living document — updated each time the test strategy evolves.
 
 ---
@@ -44,8 +44,8 @@ Every run must be reproducible from scratch by anyone who reads this document.
 ### 2. Install
 
 ```bash
-git clone <repo>
-cd parallax
+git clone https://github.com/BrutalByte/CEREBRUM.git
+cd CEREBRUM
 pip install -e ".[dev]"          # installs networkx, numpy, scipy, igraph, leidenalg, pytest
 ```
 
@@ -61,7 +61,7 @@ pip install -e ".[dev]"          # installs networkx, numpy, scipy, igraph, leid
 python -m pytest tests/ -v
 ```
 
-Expected output: **1841+ passed, 1 skipped** (v2.21.0 / Phase 94)
+Expected output: **2177 passed, 1 skipped** (v2.51.0 / Phase 167; 3 studio UI errors require a running server)
 
 ### 4. Run a single test layer
 

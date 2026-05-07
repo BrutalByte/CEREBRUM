@@ -1,6 +1,6 @@
 # CEREBRUM System Architecture
 
-**Status**: v2.51.0 (Phase 167 (STRB — Semantic Terminal Relation Boost) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB — Semantic Terminal Relation Boost) COMPLETE — 2177 tests passing)
 
 Complete data-flow from ingestion to result, including all options, pathways, and decision nodes.
 
@@ -117,4 +117,4 @@ The `ConsolidationEngine` merges Hebbian Replay (Phase 96) and Shortcut Synthesi
 | GUI Adaptation | on / off | metabolic-driven UI structural adaptation |
 
 ---
-**Reviewed on**: May 3, 2026 for version v2.51.0
+**Reviewed on**: May 7, 2026 for version v2.51.1

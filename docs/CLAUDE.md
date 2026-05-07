@@ -51,7 +51,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v2.28.0 (Phase 133 COMPLETE)** — 2108+ tests passing.
+**v2.51.0 (Phase 167 COMPLETE)** — 2177 passed, 1 skipped.
 
 ### System Architecture Names
 | Name | Role |
@@ -146,6 +146,18 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 - **Causal Constraints Wired (Phase 131)**: `SymbolicValidator.validate_step()` `CAUSAL_ORDERING` branch reads dynamic path timestamps from `path.nodes` when path is available; falls back to static `params["last_timestamp"]` when `path=None`. `register_confounders(nodes)` adds/updates `NO_BACKDOOR` constraint. Beam hook at `traversal.py` was already live — no traversal changes needed.
 - **Deductive-Beam Consensus Scoring (Phase 132)**: `deductive_consensus_rerank()` in `reasoning/answer_extractor.py` runs `DeductiveTraversal.traverse(seed, target, causal_only=True)` for each top-K answer. Non-empty proof → `score *= 1.3`; empty → `score *= 0.9`. Opt-in via `use_deductive_consensus=False` in `QueryRequest`.
 - **Full Benchmark Suite (Phase 133)**: `benchmarks/causal_accuracy_comparison.py` runs baseline/+causal/+adaptive/+counterfactual/+full configs against MetaQA (if available) or toy graph edge-rediscovery. Prints CEREBRUM MRR vs TransE/RotatE/KGBERT published baselines. CEREBRUM baseline MRR=0.741 on toy graph vs TransE=0.310/RotatE=0.340/KGBERT=0.420. Fixed `benchmarks/feature_impact_benchmark.py` adapter mismatch (now shows MRR=0.786).
+- **Vectorized Beam Scoring (Phase 134)**: `compute_weights_batch()` replaces per-edge Python loops with NumPy-vectorized matrix scoring. 10x latency improvement. Guarded against MagicMock auto-creation via class `__dict__` check; falls back to per-step `compute_weight_with_features` → `compute_weight` chain when batch scorer is unavailable.
+- **KGE Embeddings (Phase 135)**: TransE/RotatE trained embeddings optionally replace random embeddings via `--kge-model` flag.
+- **Funnel Beam Profile (Phase 136)**: Per-hop beam width schedule — wide early hops, narrow final hops. `beam_widths={1:20, 2:10, 3:5}`.
+- **H1SE — Hop-1 Seed Expansion (Phase 137)**: `HopExpandedTraversal` runs each first-hop branch as an independent sub-traversal, eliminating cross-branch competition at Hop 1. `hop_expand=True` in `QueryRequest` or auto-set by `GraphProfiler`. `GlobalBeamBarrier` prunes sub-branches below `max_score * threshold_ratio`.
+- **Cingulate Engine — Reasoning Verifier (Phase 149)**: `CingulateEngine` re-scores top-K answers via bilateral path verification. Boosts answers confirmed by reverse traversal.
+- **Frontal Engine — Executive Strategy (Phase 150)**: `FrontalEngine` selects between reasoning strategies (H1SE / TAB / standard) based on query structure and graph profile. Exposes `/strategy` endpoint.
+- **Vote-Weight Suppression, Answer-Type Constraint, DBC Scoring (Phases 151-154)**: `vote_weight_suppression` penalizes answer entities whose community rarely produces correct answers. Answer-type constraint filters candidates by expected semantic type. DBC (Distribution-Based Confidence) calibrates path score distributions.
+- **PRB / r2 / TRB Detection Fixes (Phases 156-160)**: Penultimate Relation Boost (PRB) biases the hop-N−1 toward the relation preceding the target. Path-Consistency Boost (r2) rewards multi-path corroboration. TRB detection fix corrects false-positive terminal relation boosts on intermediate hops.
+- **StructuralRelationInferrer (SRI), CTRI, SABS (Phases 161-163)**: SRI infers likely terminal relations from structural patterns. CTRI cross-validates via community topology. SABS (Asymmetric Beam Search) expands the final hop's beam preferentially. `build_semantic_index()` + `semantic_trb()` enable embedding-based terminal relation selection.
+- **Terminal-Anchor Beam (TAB) and Hetionet Benchmark (Phases 164-165)**: TAB identifies anchor entities (source nodes for the target relation) and biases the beam toward them at hop N−1. Hetionet biomedical KG benchmark added: BFS 0.8% → TRB 73.5% 3-hop Hits@1 on `disease_gene_pathway` template.
+- **GraphProfiler — Auto Query Strategy (Phase 166)**: O(E) structural analysis at build time. Classifies graph into `hub_homogeneous` / `typed_heterogeneous` / `mixed`. Auto-configures `hop_expand`, `trb_auto`, `anchor_bonus`. `CerebrumGraph.query()` parameters default to profile values when `None`.
+- **STRB — Semantic Terminal Relation Boost (Phase 167)**: Closes the zero-config gap on 1-hop tasks. Encodes query text as `query_embedding` and calls `semantic_trb()` to identify the correct terminal relation from cosine similarity between question and relation labels. gene_participates_pathway: Profile-Auto+STRB (93.0%) = Explicit TRB (93.0%). Requires sentence-transformers; falls back to structural SRI with RandomEngine.
 
 ## Install & Development Commands
 
@@ -307,5 +319,5 @@ Implement the abstract `GraphAdapter` interface in `core/graph_adapter.py`, foll
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)
 - Synthetic graph helpers (`make_two_cliques()`, etc.) live in `tests/` for unit tests that don't need the CSV fixture
-- **2108+ tests passing as of v2.28.0 / Phase 133** (1 skipped)
+- **2177 passed, 1 skipped as of v2.51.0 / Phase 167** (3 studio UI errors require running server)
 - Type checker: no mypy/ruff configured as hard gate; run `python -m pytest tests/` as verification

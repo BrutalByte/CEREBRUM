@@ -525,7 +525,11 @@ class BeamTraversal:
 
         # Hoist method lookups out of all loops
         _cwf = getattr(self.csa, "compute_weight_with_features", None)
-        _get_params = getattr(self.csa, "get_current_params", None)
+        _get_params_candidate = getattr(self.csa, "get_current_params", None)
+        _get_params = _get_params_candidate if (
+            _get_params_candidate is not None
+            and any("get_current_params" in cls.__dict__ for cls in type(self.csa).__mro__)
+        ) else None
         _valence_eng = getattr(self, "_valence_engine", None)
         _get_valence = getattr(_valence_eng, "get_valence", None) if _valence_eng else None
 
@@ -637,8 +641,14 @@ class BeamTraversal:
                         ))
 
                 # Phase 134: vectorized batch scoring (one matrix multiply per path per hop)
-                # isinstance guard: MagicMock auto-creates any attr, causing silent failures
-                _cwb = getattr(self.csa, "compute_weights_batch", None)
+                # isinstance guard: MagicMock auto-creates any attr on the instance,
+                # but not in the class __dict__. Only use batch scorer if the method is
+                # genuinely defined in the class hierarchy.
+                _cwb_candidate = getattr(self.csa, "compute_weights_batch", None)
+                _cwb = _cwb_candidate if (
+                    _cwb_candidate is not None
+                    and any("compute_weights_batch" in cls.__dict__ for cls in type(self.csa).__mro__)
+                ) else None
                 _prior_scale = (
                     1.0 + self.warm_start_strength
                     if (self.probabilistic and self.warm_start_strength > 0.0 and len(path.nodes) == 1)
@@ -647,10 +657,11 @@ class BeamTraversal:
                 _scored_steps: List[Tuple[Any, int, str]] = []  # (new_path, v_cid, rel_eff)
 
                 if _batch_steps:
-                    # --- Batch path: vectorized CSA scoring ---
+                    # --- Prepare neighbor embeddings for both scoring paths ---
                     _v_list   = [s[0] for s in _batch_steps]
                     _rel_list = [s[1] for s in _batch_steps]
                     _vt_list  = [s[5] for s in _batch_steps]
+                    _vf_list  = [s[4] for s in _batch_steps]
 
                     _ev_list: List[Optional[np.ndarray]] = []
                     for _v in _v_list:
@@ -658,17 +669,47 @@ class BeamTraversal:
                             emb_cache[_v] = _get_emb(_v)
                         _ev_list.append(emb_cache[_v])
 
-                    _logits = _cwb(
-                        u=u, v_list=_v_list, hop=hop,
-                        edge_types=_rel_list, valid_tos=_vt_list,
-                        eu=eu, ev_list=_ev_list,
-                        edge_type_weights=self.edge_type_weights,
-                    )
+                    if _cwb is not None:
+                        _logits = _cwb(
+                            u=u, v_list=_v_list, hop=hop,
+                            edge_types=_rel_list, valid_tos=_vt_list,
+                            eu=eu, ev_list=_ev_list,
+                            edge_type_weights=self.edge_type_weights,
+                        )
+                    else:
+                        # Per-step fallback when batch scorer is unavailable
+                        _logits = []
+                        for _fi, (_fv, _fr, _fvf, _fvt) in enumerate(zip(_v_list, _rel_list, _vf_list, _vt_list)):
+                            _fev = _ev_list[_fi]
+                            _fr_result = _cwf(
+                                u, _fv, hop=hop, edge_type=_fr,
+                                edge_type_weights=self.edge_type_weights,
+                                normalized_distance=0.0,
+                                valid_from=_fvf, valid_to=_fvt,
+                                eu=eu, ev=_fev,
+                            ) if _cwf else None
+                            _logits.append(_fr_result)
 
                     for _i, (v_eff, rel_eff, conf_eff, prov_eff, vf_eff, vt_eff, prior_bias) in enumerate(_batch_steps):
                         _logit = _logits[_i]
-                        w = _logit.score(csa_params) * prior_bias
-                        features_vector = _logit.to_vector()
+                        if isinstance(_logit, ReasoningLogit):
+                            w = _logit.score(csa_params) * prior_bias
+                            features_vector = _logit.to_vector()
+                        else:
+                            # Fallback for mocks / older CSAEngine without batch scorer
+                            w = float(self.csa.compute_weight(
+                                u, v_eff, hop=hop, edge_type=rel_eff,
+                                edge_type_weights=self.edge_type_weights,
+                                normalized_distance=0.0,
+                                valid_from=vf_eff, valid_to=vt_eff,
+                            )) * prior_bias
+                            _ev_fb = _ev_list[_i]
+                            _s_fb = _cosine_sim(eu, _ev_fb) if (eu is not None and _ev_fb is not None) else 0.0
+                            _c_fb = float(self.csa.community_score(u, v_eff)) if hasattr(self.csa, "community_score") else 0.5
+                            features_vector = ReasoningLogit(
+                                _s_fb, _c_fb, self.edge_type_weights.get(rel_eff, 0.0),
+                                0.0, 1.0 / (1.0 + hop), 0.05, 0.0, 0.0, 0.0, 0.5,
+                            ).to_vector()
 
                         if self._causal_edge_index and (u, v_eff) in self._causal_edge_index:
                             w *= (1.0 + self.causal_bonus)

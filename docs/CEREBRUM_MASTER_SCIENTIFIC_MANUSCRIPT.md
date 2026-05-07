@@ -2,7 +2,7 @@
 
 **Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
 **Affiliations**: Independent Researcher · Anthropic  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: May 2, 2026
 
 ---
@@ -57,7 +57,7 @@ The CEREBRUM framework has undergone substantial development between v2.24.0 and
 
 **Community-Specific CSA Parameters (Phase 20/45).** Each community partition now maintains its own 10-parameter CSA vector, updated online via `MetaParameterLearner`. This means the community structure produced by DSCF/TSC directly determines the granularity of the learning surface — higher-quality partitions produce more focused per-community adaptation.
 
-**Test Coverage.** The full CEREBRUM test suite now comprises 2175+ tests (up from 994 at v2.24.0), with dedicated regression suites covering TSC stability, community swap atomicity, and modularity drift detection.
+**Test Coverage.** The full CEREBRUM test suite now comprises 2177 tests (up from 994 at v2.24.0), with dedicated regression suites covering TSC stability, community swap atomicity, and modularity drift detection.
 
 ---
 **References**
@@ -456,7 +456,7 @@ The OPT configuration uses adaptive density-driven beam width selection with a m
 
 **Query Snapshot Isolation (Phase 20).** `BeamTraversal.traverse()` snapshots `adapter.community_map` at query start via `CSAEngine.set_query_snapshot()`. This prevents mid-flight community swaps — triggered by background DSCF re-runs — from corrupting the community membership lookups used during Thompson sampling. The snapshot is released at traversal end, ensuring community map updates are not blocked by long-running queries.
 
-**Test Coverage.** The Bayesian traversal subsystem is covered by 2175+ tests in v2.51.0, including probabilistic recall regression tests that verify the +45% recall improvement is maintained across graph density levels.
+**Test Coverage.** The Bayesian traversal subsystem is covered by 2177 tests in v2.51.0, including probabilistic recall regression tests that verify the +45% recall improvement is maintained across graph density levels.
 
 *See also:* **Paper 022** — Looped Beam Traversal (Phase 70) extends adaptive depth with LoopLM-style iterative refinement [zhu2025loooplm]. `LoopedBeamTraversal` applies `BeamTraversal` (including Bayesian mode) T times with seed expansion between loops. The adaptive exit gate uses PE convergence as its primary signal, making iterative depth adaptation a first-class reasoning primitive. When `BeamTraversal(probabilistic=True)` is used as the inner traversal, Thompson sampling operates independently within each loop, compounding the recall gains across passes.
 
@@ -657,7 +657,7 @@ THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectional
 
 **ResearchAgent Feedback Loop (Phase 51).** The `ResearchAgent` is an autonomous agent that generates proposed KG triples by analyzing existing graph structure and querying external sources. Its proposals are surfaced to a human operator via a review queue. Upon approval, the approved triples are submitted to THALAMUS's `IngestionPipeline` as standard ingestion events — receiving full normalization, deduplication, namespace isolation, and confidence assignment. This closes the loop between autonomous reasoning (CORTEX) and structured knowledge ingestion (THALAMUS), enabling the graph to grow from its own reasoning activity.
 
-**Full Pipeline Test Coverage.** The THALAMUS pipeline is now covered by 2175+ tests (up from 994 at v2.24.0). New test categories include:
+**Full Pipeline Test Coverage.** The THALAMUS pipeline is now covered by 2177 tests (up from 994 at v2.24.0). New test categories include:
 - Streaming ingestion under high-velocity burst conditions
 - Namespace isolation regression tests (signal: vs text: collision prevention)
 - STDP discretizer integration tests within the pipeline
@@ -692,7 +692,7 @@ THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectional
 ---
 
 ### Abstract
-We present **Inference Validator**, a methodology for evaluating the performance of unsupervised graph reasoning engines without external ground-truth labels. The framework operates by treating the Knowledge Graph's (KG) own topology as a proxy for truth through a specialized hold-out strategy. We introduce the **Path-Preserving Hold-out** constraint, which ensures that held-out edges are only selected if an alternative multi-hop path exists, thereby guaranteeing that the reasoning task is solvable from the remaining structure. We define metrics for **Unsupervised Recall ($R@K$)** and **Confidence Calibration Error**, providing a rigorous benchmark for assessing attention-steered traversals (CSA). In v2.51.0, we utilize this harness to validate that **quantized float16 embeddings** maintain an MRR loss of $< 0.002$ while reducing memory footprint by **48%**. We benchmark performance using the **MetaQA** \cite{metaqa2017} dataset. In v2.51.0, the **ExternalValidator** (Phase 52) extends validation to scientific literature databases, and the IKGWQ benchmark demonstrates graceful degradation with AUC=0.89 under 50% edge incompleteness. Our results demonstrate that this self-contained harness allows for autonomous parameter tuning and stability monitoring in production Knowledge Graphs, now validated across 2175+ tests.
+We present **Inference Validator**, a methodology for evaluating the performance of unsupervised graph reasoning engines without external ground-truth labels. The framework operates by treating the Knowledge Graph's (KG) own topology as a proxy for truth through a specialized hold-out strategy. We introduce the **Path-Preserving Hold-out** constraint, which ensures that held-out edges are only selected if an alternative multi-hop path exists, thereby guaranteeing that the reasoning task is solvable from the remaining structure. We define metrics for **Unsupervised Recall ($R@K$)** and **Confidence Calibration Error**, providing a rigorous benchmark for assessing attention-steered traversals (CSA). In v2.51.0, we utilize this harness to validate that **quantized float16 embeddings** maintain an MRR loss of $< 0.002$ while reducing memory footprint by **48%**. We benchmark performance using the **MetaQA** \cite{metaqa2017} dataset. In v2.51.0, the **ExternalValidator** (Phase 52) extends validation to scientific literature databases, and the IKGWQ benchmark demonstrates graceful degradation with AUC=0.89 under 50% edge incompleteness. Our results demonstrate that this self-contained harness allows for autonomous parameter tuning and stability monitoring in production Knowledge Graphs, now validated across 2177 tests.
 
 ### 1. Introduction
 The evaluation of reasoning in KGs is typically constrained by the scarcity of gold-standard datasets. In autonomous or proprietary environments, external validation is often unavailable. We propose that a reasoning engine's quality can be measured by its ability to rediscover "hidden" facts that are structurally supported by the surrounding network topology.
@@ -730,7 +730,7 @@ The **Incomplete Knowledge Graph With Questions (IKGWQ)** benchmark (Phase 44) e
 The AUC=0.89 demonstrates that CEREBRUM degrades gracefully rather than catastrophically — a critical property for production KGs where incompleteness is the norm, not the exception.
 
 #### 3.4 Test Suite Expansion
-The validation harness is now exercised across **2175+ tests** (up from 994 at Phase 20), including dedicated test suites for ExternalValidator integration, IKGWQ edge-removal scenarios, and path-preserving hold-out correctness across sparse, dense, and federated graph configurations.
+The validation harness is now exercised across **2177 tests** (up from 994 at Phase 20), including dedicated test suites for ExternalValidator integration, IKGWQ edge-removal scenarios, and path-preserving hold-out correctness across sparse, dense, and federated graph configurations.
 
 ### 4. Conclusion
 The Inference Validator provides a mathematically sound and self-contained framework for KG reasoning evaluation. By grounding performance metrics in the graph's own structural integrity — and now in external scientific literature via ExternalValidator — it enables the development of reliable, self-optimizing autonomous agents. In v2.51.0, with 1,357 tests passing and IKGWQ AUC=0.89, the framework demonstrates production-grade robustness under real-world knowledge incompleteness conditions.
