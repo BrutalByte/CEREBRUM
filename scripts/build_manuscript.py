@@ -97,6 +97,15 @@ LATEX_SUBS = [
     (r'\\land\b',' ∧ '), (r'\\lor\b',' ∨ '), (r'\\lnot\b','¬'),
     (r'\\neg\b','¬'), (r'\\top\b','⊤'), (r'\\bot\b','⊥'),
     (r'\\propto\b',' ∝ '), (r'\\sim\b',' ~ '),
+    (r'\\setminus\b',' \\ '), (r'\\gg\b',' ≫ '), (r'\\ll\b',' ≪ '),
+    (r'\\mathbin\\[|]',' ‖ '), (r'\\mathbin\|',' ‖ '), (r'\\mathbin\\|',' ‖ '),
+    (r'\\dots\b','…'), (r'\\vdash\b',' ⊢ '), (r'\\models\b',' ⊨ '),
+    (r'\\perp\b','⊥'), (r'\\parallel\b','∥'),
+    (r'\\mid\b',' | '), (r'\\vert\b','|'), (r'\\Vert\b','‖'),
+    (r'\\left\|','|'), (r'\\right\|','|'),
+    (r'\\langle\b','⟨'), (r'\\rangle\b','⟩'),
+    (r'\\lceil\b','⌈'), (r'\\rceil\b','⌉'),
+    (r'\\lfloor\b','⌊'), (r'\\rfloor\b','⌋'),
     (r'\\text\{sigmoid\}','σ'),
     # Citations
     (r'\\cite\{([^}]+)\}', r'[\1]'),
@@ -307,20 +316,30 @@ def add_run(para, text, bold=False, italic=False, size=None,
     run.font.bold   = bold
     run.font.italic = italic
 
-_PLAIN_LATEX = [
-    (re.compile(r'\\cite\{([^}]+)\}'),        r'[\1]'),
-    (re.compile(r'\\mathcal\{([A-Z])\}'),     r'\1'),
-    (re.compile(r'\\mathbb\{([A-Z])\}'),      r'\1'),
-    (re.compile(r'\\text\{([^}]+)\}'),        r'\1'),
-    (re.compile(r'\\textbf\{([^}]+)\}'),      r'\1'),
-    (re.compile(r'\\emph\{([^}]+)\}'),        r'\1'),
-    (re.compile(r'\\ref\{([^}]+)\}'),         r'[\1]'),
-]
-
 def preprocess(text):
-    """Clean LaTeX commands that appear in plain text (outside $ markers)."""
-    for pat, repl in _PLAIN_LATEX:
-        text = pat.sub(repl, text)
+    """Clean LaTeX commands that appear in plain text (outside $ markers).
+    Applies full clean_math() conversion to any backslash-command sequences,
+    and also converts _{...} / ^{...} subscript/superscript notation."""
+    # Always convert _{...} and ^{...} subscript/superscript even without backslash
+    text = re.sub(r'_\{([^}]+)\}', lambda m: _to_sub(m.group(1)), text)
+    text = re.sub(r'\^\{([^}]+)\}', lambda m: _to_sup(m.group(1)), text)
+    if '\\' not in text:
+        return text
+    # Run the same multi-pass conversion used for display math
+    text = text.replace(r'\{', '\u27E8').replace(r'\}', '\u27E9')
+    text = re.sub(r'\\begin\{[^}]+\}', '', text)
+    text = re.sub(r'\\end\{[^}]+\}', '', text)
+    for _ in range(3):
+        text = _expand_wrappers(text)
+        text = _expand_fracs(text)
+        for pat, repl in LATEX_SUBS:
+            text = re.sub(pat, repl, text)
+        text = re.sub(r'\^\{([^}]+)\}', lambda m: _to_sup(m.group(1)), text)
+        text = re.sub(r'\^([a-zA-Z0-9*])', lambda m: _to_sup(m.group(1)), text)
+        text = re.sub(r'_\{([^}]+)\}', lambda m: _to_sub(m.group(1)), text)
+        text = re.sub(r'_([a-zA-Z0-9])', lambda m: _to_sub(m.group(1)), text)
+    text = re.sub(r'[{}]', '', text)
+    text = text.replace('\u27E8', '(').replace('\u27E9', ')')
     return text
 
 def add_inline(para, text, base_size=11, base_font='Cambria', base_color=BLACK, base_bold=False):
@@ -568,17 +587,24 @@ def build(src_path, out_path):
             continue
 
         # ── Display math block ─────────────────────────────────────────────
-        if stripped == '$$' or stripped.startswith('$$') and stripped.endswith('$$') and len(stripped) > 4:
+        if stripped.startswith('$$') or (in_math and stripped.endswith('$$')):
             if in_table: flush_table()
-            if stripped.startswith('$$') and stripped.endswith('$$') and len(stripped) > 4:
-                # single-line $$...$$
-                math_block(doc, stripped[2:-2])
-                continue
             if in_math:
+                # Closing marker: either bare $$ or content$$
+                tail = stripped[:-2].strip() if stripped.endswith('$$') and stripped != '$$' else ''
+                if tail:
+                    math_buf.append(tail)
                 math_block(doc, '\n'.join(math_buf))
                 math_buf = []; in_math = False
             else:
-                in_math = True; math_buf = []
+                # Single-line $$...$$ on one line
+                if stripped.startswith('$$') and stripped.endswith('$$') and len(stripped) > 4:
+                    math_block(doc, stripped[2:-2])
+                else:
+                    # Start of multi-line block: $$  or  $$\begin{aligned}
+                    in_math = True
+                    head = stripped[2:].strip()
+                    math_buf = [head] if head else []
             continue
 
         if in_math:
