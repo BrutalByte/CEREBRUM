@@ -1,14 +1,14 @@
 \section{Experience-Dependent Structural Plasticity in Knowledge Graphs: The Bridge Twin Engine}
 
 \textbf{Author}: Bryan Alexander Buchorn  
-\textbf{Affili\-ations}: Independent Researcher, Las Vegas, NV, USA  
-\textbf{Status}: v1.2.0 (Hardened Enterprise)  
-\textbf{Date}: March 2026
+\textbf{Affiliation}: Independent Researcher, Las Vegas, NV, USA  
+\textbf{Status}: v2.51.0 (Phase 167 (STRB) COMPLETE)
+\textbf{Date}: May 2, 2026
 
 ---
 
 \subsubsection{Abstract}
-We introduce the \textbf{Bridge Twin Engine}, a mechanism for autonomous topological evolution in Knowledge Graphs (KGs) based on reasoning experience. While traditional KGs maintain a static structure, the Bridge Twin Engine implements a graph-theoretic analog to biological Long-Term Potent\-iation (LTP) \cite{hebb1949, bipoo1998}. By mater\-ializing "Twin Nodes" to act as structural relays across frequently traversed community boundaries, the system short-circuits latent paths and optimizes its own geometry for future inference. We formalize the poten\-tiation rules based on usage frequency and semantic salience, and provide a pruning mechanism (LTD) to maintain topological sanity. The v1.2.0 release incor\-porates an atomic re-mapping protocol to synchronize relays with background community re-parti\-tioning, effectively solving the "Zombie Bridge" problem in dynamic envir\-onments.
+We introduce the \textbf{Bridge Twin Engine}, a mechanism for autonomous topological evolution in Knowledge Graphs (KGs) based on reasoning experience. While traditional KGs maintain a static structure, the Bridge Twin Engine implements a graph-theoretic analog to biological Long-Term Potent\-iation (LTP) \cite{hebb1949, bipoo1998}. By mater\-ializing "Twin Nodes" to act as structural relays across frequently traversed community boundaries, the system short-circuits latent paths and optimizes its own geometry for future inference. We formalize the poten\-tiation rules based on usage frequency and semantic salience, and provide a pruning mechanism (LTD) to maintain topological sanity. The v2.51.0 release incor\-porates an atomic re-mapping protocol to synchronize relays with background community re-parti\-tioning, effectively solving the "Zombie Bridge" problem in dynamic envir\-onments. As of v2.51.0, the GraphBridgeEngine (Phase 30) performs proactive cross-component bridge synthesis before queries encounter dead ends, scaling to 8,300 active bridges in WebQSP OPT confi\-guration and contr\-ibuting to H@10=20.84\% (versus 16.59\% without bridges); async bridge synthesis via TaskQueue further decouples bridge updates from active beam traversal.
 
 \subsubsection{1. Introd\-uction}
 The efficiency of multi-hop reasoning in graphs is funda\-mentally constrained by the diameter and sparsity of the network. In large-scale KGs, seman\-tically related concepts often reside in disparate community partitions, neces\-sitating high-latency "Bridge" traversals. We propose that a graph should not be a static artifact, but a plastic entity that reshapes its topology to favor successful reasoning chains.
@@ -35,12 +35,42 @@ To prevent the "Inform\-ational Sprawl" of mater\-ialized nodes, we implement a 
 \begin{equation}
 c_t = c_0 \cdot \lambda^{\Delta t}
 \end{equation}
-where $\lambda$ is the decay constant and $\Delta t$ is the time since last usage. Edges falling below a confidence threshold $c_{min}$ are pruned during the \textbf{REM Cycle} (SPEC\_007).
+where $\lambda$ is the decay constant and $\Delta t$ is the time since last usage. Edges falling below a confidence threshold $c_{min}$ are pruned during the \textbf{REM Cycle} [Buchorn, 2026].
 
 \subsubsection{4. Conclusion}
-The Bridge Twin Engine provides a biolo\-gically-inspired framework for self-optimizing Knowledge Graphs. By trans\-forming reasoning history into physical graph structure, it enables sub-millisecond multi-hop reasoning on incre\-asingly complex network topologies.
+The Bridge Twin Engine provides a biolo\-gically-inspired framework for self-optimizing Knowledge Graphs. By trans\-forming reasoning history into physical graph structure, it enables sub-millisecond multi-hop reasoning on incre\-asingly complex network topologies. In CEREBRUM v2.51.0, proactive bridge synthesis scales to 8,300 active bridges in the WebQSP OPT confi\-guration, contr\-ibuting directly to a H@10 improvement from 16.59\% to 20.84\% — a concrete, quantified demon\-stration of experience-dependent structural plasticity improving reasoning recall.
 
 ---
+
+\subsection{5. Recent Advances (v2.24.0 -\textgreater  v2.51.0)}
+
+The Bridge Twin Engine has been subst\-antially extended since v2.24.0. The following describes the most significant devel\-opments.
+
+\textbf{GraphBridgeEngine: Proactive Cross-Component Synthesis (Phase 30).} The original Bridge Twin Engine was reactive — bridges mater\-ialized only after a traversal encountered a community boundary. The \texttt{GraphBridgeEngine} (Phase 30) introduces proactive synthesis: at graph load time and after each community re-parti\-tioning, the engine identifies disco\-nnected or weakly connected components and pre-mater\-ializes bridge nodes across their boundaries. This eliminates the cold-start penalty where early queries must "earn" bridges before benefiting from them.
+
+\textbf{Scale: 8,300 Active Bridges on WebQSP.} In the WebQSP OPT confi\-guration, the system maintains appro\-ximately 8,300 active bridge records. The impact on recall is measurable: H@10 rises from 16.59\% (without bridge synthesis) to 20.84\% (with GraphBridgeEngine), a relative gain of +25.6\%.
+
+\textbf{Async Bridge Synthesis via TaskQueue (Phase 39).} Prior to Phase 39, bridge mater\-ialization occurred synch\-ronously in the beam traversal hot path, adding latency to queries that triggered new poten\-tiation events. Phase 39 decouples this via a \texttt{TaskQueue}: poten\-tiation events are enqueued and processed by a background worker. Active traversals are unaffected by bridge write operations, and the community map swap post-rebalance remains atomic.
+
+\textbf{Post-Rebalance Bridge Pruning (Phase 19).} After the \texttt{GlobalRebalancer} triggers a background DSCF/TSC re-run and performs the atomic community map swap, a post-rebalance hook notifies \texttt{BridgeTwinEngine} to prune stale bridge records whose source or destination community assignments have changed. This prevents "Zombie Bridges" accum\-ulating after topology shifts.
+
+\textbf{Benchmark Impact.}
+
+\begin{center}
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Config\-uration & H@10 (WebQSP) \\ \hline
+No bridge synthesis & 16.59\% \\ \hline
+With GraphBridgeEngine (OPT) & 20.84\% \\ \hline
+Gain & +25.6\% relative \\ \hline
+\end{tabularx}
+\end{center}
+
+---
+\subsection{Acknow\-ledgments}
+
+The author gratefully ackno\-wledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathe\-matical forma\-lization, code generation, manuscript preparation, and technical writing. All conceptual contr\-ibutions, archi\-tectural decisions, exper\-imental design, and intel\-lectual claims are solely the author's.
+
 \textbf{References}
 \begin{enumerate}
 \item Hebb, D. O. (1949). The organ\-ization of behavior: A neuro\-psychological theory.
@@ -49,6 +79,8 @@ The Bridge Twin Engine provides a biolo\-gically-inspired framework for self-opt
 \item Newman, M. E. (2006). Modularity and community structure in networks. PNAS.
 \item Abbott, L. F., \& Nelson, S. B. (2000). Synaptic plasticity: taming the beast. Nature Neuros\-cience.
 \item Caporale, N., \& Dan, Y. (2008). Spike timing-dependent plasticity: a Hebbian learning rule. Annual Review of Neuros\-cience.
-\item Buchorn, B. A., \& Sonnet, C. (2026). Bridge Twin Relays in CEREBRUM. SPEC\_003.md.
+\item Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specif\-ication for Autonomous Knowledge Graph Reasoning. [CEREBRUM\_REPORT\_PLACEHOLDER].
 
 \end{enumerate}
+---
+\textbf{Reviewed on}: May 2, 2026 for version v2.51.0

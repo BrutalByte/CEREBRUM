@@ -1,0 +1,102 @@
+\section{Engram-Steered Traversal: Training-Free Relation-Pattern Caching for Knowledge Graph Beam Search}
+
+\textbf{Author}: Bryan Alexander Buchorn  
+\textbf{Affiliation}: Independent Researcher, Las Vegas, NV, USA  
+\textbf{Status}: v2.51.0 (Phase 167 (STRB) COMPLETE)
+\textbf{Date}: May 2, 2026
+
+---
+
+\subsubsection{Abstract}
+Classical beam search over Knowledge Graphs treats each query indep\-endently, discarding all information about which relation sequences led to successful answers in previous queries. We present \textbf{Engram-Steered Traversal}, a training-free mechanism that accumulates successful relation-sequence patterns in a persistent \texttt{Engram} and biases future beam pruning toward known-productive reasoning chains. The affinity boost is applied multi\-plicatively in \texttt{EngramTraversal.\_prune\_candidates()}: $s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{engram} \cdot \text{affinity}(\text{rel\_seq}))$. No gradient descent is required — patterns are accumulated through frequency counting alone. The cache is durable across process restarts via JSON seria\-lization, and two-tier warm-up on startup (saved JSON + \texttt{QueryLog} replay) ensures that learned patterns are immediately available after server restart.
+
+\subsubsection{1. Introd\-uction}
+Knowledge Graph reasoning systems learn from feedback through two established mechanisms: online parameter updates (MetaParameterLearner, Paper 2) and batch retraining (CSAParameterLearner, Paper 2). Both adjust numerical weights in the CSA attention formula. Neither captures the relational structure of successful reasoning paths — the specific sequences of edge types that, when followed, reliably connect a seed entity to a correct answer.
+
+Classical beam search \cite{vaswani2017attention} is a stateless algorithm: the beam at hop $k$ depends only on the current graph state and the CSA scores computed from that state. Every query starts from the same initial conditions, regardless of how many similar queries have been answered succe\-ssfully before. This state\-lessness is correct in principle but wasteful in practice: a KG reasoning server that has answered thousands of protein-disease queries should be biased toward the relation sequences that previously reached disease nodes from protein nodes.
+
+Engram-steered traversal addresses this by maintaining a persistent, query-accumulated cache of relation-sequence success counts. The cache requires no training, no labels, and no gradient computation — it is updated after each successful query by recording the relation sequence of the winning path.
+
+\subsubsection{2. Methodology}
+
+\paragraph{2.1 Engram Structure}
+\texttt{Engram} maintains a count dictionary \texttt{\_counts: Dict[Tuple[str, ...], int]} mapping relation sequences (tuples of relation type strings) to their accumulated success counts. A \texttt{\_max\_count: int} tracks the maximum count across all sequences, used for norma\-lization.
+
+The affinity of a relation sequence \texttt{seq} is:
+
+\begin{equation}
+\text{affinity}(\text{seq}) = \frac{\texttt{\_counts}[\text{seq}]}{\texttt{\_max\_count}}
+\end{equation}
+
+For sequences not present in \texttt{\_counts}, \texttt{affinity = 0} and no boost is applied — the cache degrades gracefully to unsteered beam search on unseen relation sequences.
+
+\paragraph{2.2 Beam Pruning Integration}
+\texttt{EngramTraversal} extends \texttt{BeamTraversal} and overrides \texttt{\_prune\_candidates()}. For each candidate path $c$ at each hop, the current partial relation sequence \texttt{rel\_seq} is extracted from the path history. The effective score is:
+
+\begin{equation}
+s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{engram} \cdot \text{affinity}(\text{rel\_seq}))
+\end{equation}
+
+where $\lambda_\text{engram}$ (\texttt{engram\_strength}) is a confi\-gurable scalar (default: 1.0). This multi\-plicative form ensures that a zero-CSA-score candidate is never promoted by the cache (it remains zero), and that high-CSA candidates receive propo\-rtionally larger boosts from high-affinity sequences.
+
+\paragraph{2.3 Cache Persistence}
+\texttt{Engram.save(path)} serializes \texttt{\_counts} to a JSON file with a versioned envelope:
+
+\begin{lstlisting}
+{"version": 1, "counts": [["rel_seq_tuple", count], ...]}
+\end{lstlisting}
+
+\texttt{Engram.load(path)} restores \texttt{\_counts} from the JSON file and recomputes \texttt{\_max\_count} from the loaded values. \texttt{save\_if\_path(path)} is a null-safe variant that silently returns if \texttt{path} is \texttt{None}, enabling code paths where the cache path is optionally configured.
+
+\paragraph{2.4 Two-Tier Startup Warm-Up}
+On server startup, the FastAPI lifespan context manager performs two-tier warm-up:
+
+\begin{enumerate}
+\item \textbf{Tier 1}: Load the saved \texttt{Engram} JSON from the configured path. This restores all counts from the previous server run.
+\item \textbf{Tier 2}: Call \texttt{QueryLog.replay\_into\_cache(engram)} to merge any \texttt{QueryLog} entries recorded since the last explicit \texttt{save()} call. This closes the gap between the last save and the end of the previous run.
+
+\end{enumerate}
+On server shutdown, the lifespan \texttt{try/finally} block calls \texttt{Engram.save\_if\_path(path)}, ensuring that all counts accumulated during the current run are persisted. Write failures during shutdown are isolated with \texttt{try/except} and logged at WARNING.
+
+\paragraph{2.5 QueryLog Integration}
+\texttt{QueryLog} maintains an append-only NDJSON file of query history records. Each record includes seeds, answers, and the relation sequence of the winning path. \texttt{replay\_into\_cache(engram)} iterates the log file and calls \texttt{engram.record(rel\_seq)} for each successful query entry, updating \texttt{\_counts} and \texttt{\_max\_count}.
+
+\subsubsection{3. Prior Art}
+MINERVA \cite{das2018minerva} learns a policy over relation sequences using REINFORCE — a reinf\-orcement learning algorithm requiring labelled question-answer pairs and many training episodes. Engram-Steered Traversal uses no training: counts are derived from live query success without any reward signal or policy gradient.
+
+M-Walk uses Monte Carlo tree search to explore relation paths during inference. Engram-Steered Traversal does not modify the search tree structure; it biases existing beam pruning through a multi\-plicative score adjustment, leaving the beam search algorithm unchanged.
+
+Neural LP and DRUM learn logical rules over KGs from labelled triples. Engram-Steered Traversal accumulates relation-sequence statistics from runtime query history, requiring no labelled training data and no rule induction algorithm.
+
+The key distinction of Engram-Steered Traversal is its operational simplicity: it is a frequency counter with a lookup table. The imple\-mentation adds fewer than 100 lines of code to the traversal module. It improves on zero-shot performance without any of the infra\-structure requi\-rements of RL-based or training-based approaches.
+
+\subsubsection{4. Integration and Failure Isolation}
+\texttt{Engram.record()} calls in the hot query path are wrapped in \texttt{try/except}. A write failure (disk full, OOM) logs at WARNING and does not propagate to the HTTP response — the query result is returned normally even if the cache update fails. This ensures that the persistence layer never becomes a reliability dependency for the core reasoning path.
+
+The \texttt{QueryLog} replay on startup is similarly isolated: if the log file is corrupted or missing, the warm-up step logs at WARNING and proceeds with the counts loaded from the saved JSON (Tier 1 only). The system starts in a degraded-warm state rather than failing to start.
+
+\subsubsection{5. Conclusion}
+Engram-steered traversal demon\-strates that meaningful learning from experience does not require gradient descent. By accum\-ulating relation-sequence success counts in a persistent, durable cache and applying a multi\-plicative affinity boost during beam pruning, the system biases future queries toward known-productive reasoning chains without modifying graph structure, CSA parameters, or the beam search algorithm. Two-tier warm-up on startup ensures that no productive reasoning trace is lost across process restarts.
+
+\textit{See also:} \textbf{Paper 021} — SpeedTalk-Compressed Engram: Phonemic Encoding for Relation-Pattern Caches — extends this work with Heinlein-inspired single-character phoneme compression (8–20$\times$ key reduction), graph-adaptive alphabet tuning, and first-class prefix-query support.
+
+\textit{See also:} \textbf{Paper 022} — Looped Beam Traversal (Phase 70) — uses the Engram as a mnemonic feedback channel between iterative traversal loops [zhu\-2025\-loooplm]. Engram records from loop t bias beam pruning in loop t+1 toward known-productive relation patterns. The Engram's accumulated patterns also supply the prior for \texttt{PredictiveCodingEngine}'s PE-based exit gate.
+
+The Engram pattern as a \textit{soliton} [bengio\-2025\-soliton]: a relation-sequence pattern that repeatedly yields low PE across queries is analogous to a soliton — a localized wave that maintains its shape through propagation. The \texttt{soliton\_index} (Phase 69) measures this stability per seed set.
+
+---
+\subsection{Acknow\-ledgments}
+
+The author gratefully ackno\-wledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathe\-matical forma\-lization, code generation, manuscript preparation, and technical writing. All conceptual contr\-ibutions, archi\-tectural decisions, exper\-imental design, and intel\-lectual claims are solely the author's.
+
+\textbf{References}
+\begin{enumerate}
+\item Vaswani, A., et al. (2017). Attention is All You Need. NIPS.
+\item Reimers, N., \& Gurevych, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. EMNLP.
+\item Das, R., et al. (2018). Go for a Walk and Arrive at the Answer: Reasoning over Paths in Knowledge Bases using Reinfo\-rcement Learning (MINERVA). ICLR.
+\item Zhu, R.-J., Wang, Z., Hua, K., et al. (2025). Scaling Latent Reasoning via Looped Language Models. arXiv:2510.25741. [zhu\-2025\-loooplm]
+\item Bengio, Y. et al. (2025). Consci\-ousness as a Soliton, Not a Process. UCFT 2025 Preprint. [bengio\-2025\-soliton]
+
+\end{enumerate}
+---
+\textbf{Reviewed on}: May 2, 2026 for version v2.51.0

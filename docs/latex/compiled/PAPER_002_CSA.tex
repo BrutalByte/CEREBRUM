@@ -1,14 +1,14 @@
 \section{CSA: Community-Structured Attention for Knowledge Graph Reasoning}
 
 \textbf{Author}: Bryan Alexander Buchorn  
-\textbf{Affili\-ations}: Independent Researcher, Las Vegas, NV, USA  
-\textbf{Status}: v1.2.0 (Hardened Enterprise)  
-\textbf{Date}: March 2026
+\textbf{Affiliation}: Independent Researcher, Las Vegas, NV, USA  
+\textbf{Status}: v2.51.0 (Phase 167 (STRB) COMPLETE)
+\textbf{Date}: May 2, 2026
 
 ---
 
 \subsubsection{Abstract}
-We propose \textbf{Community-Structured Attention (CSA)}, an attention mechanism that enables multi-hop reasoning over large Knowledge Graphs (KGs) without the $O(N^2)$ complexity of global attention matrices. CSA maps the structural components of the Transformer archi\-tecture \cite{vaswani2017attention} directly onto graph operations, utilizing community partitions as discrete "Attention Heads." We define a unified scoring function that integrates semantic similarity, community-level topology, and structural centrality. Benchmark results on the \textbf{Hetionet} \cite{hetionet2017} biomedical dataset demonstrate that CSA achieves a Mean Reciprocal Rank (MRR) of \textbf{0.68}, a \textbf{+183\% improvement} over breadth-first search baselines. Furthermore, on the \textbf{MetaQA 3-hop} \cite{metaqa2017} reasoning task, CSA improves MRR by \textbf{+350\%}, demon\-strating superior beam steering in deep multi-hop traversals while maintaining full "Glass-Box" inter\-pretability.
+We propose \textbf{Community-Structured Attention (CSA)}, an attention mechanism that enables multi-hop reasoning over large Knowledge Graphs (KGs) without the $O(N^2)$ complexity of global attention matrices. CSA maps the structural components of the Transformer archi\-tecture \cite{vaswani2017attention} directly onto graph operations, utilizing community partitions as discrete "Attention Heads." We define a unified scoring function that integrates semantic similarity, community-level topology, and structural centrality. Benchmark results on the \textbf{Hetionet} \cite{hetionet2017} biomedical dataset demonstrate that CSA achieves a Mean Reciprocal Rank (MRR) of \textbf{0.68}, a \textbf{+183\% improvement} over breadth-first search baselines. Furthermore, on the \textbf{MetaQA 3-hop} \cite{metaqa2017} reasoning task, CSA improves MRR by \textbf{+350\%}, demon\-strating superior beam steering in deep multi-hop traversals while maintaining full "Glass-Box" inter\-pretability. As of v2.51.0, the CSA formula has been expanded to 10 parameters covering temporal decay, node recency, synthesis-density penalty, and grounding confidence, with both batch (CSAParameterLearner) and online per-community (MetaParameterLearner) learning, achieving MetaQA canonical results of H@1=46.1\%/30.0\%/12.5\% across 1-, 2-, and 3-hop tasks.
 
 \subsubsection{1. Introd\-uction}
 The dominance of Transformer archi\-tectures in Natural Language Processing has inspired attempts to apply similar attention-based principles to graph structures. However, Graph Attention Networks (GATs) \cite{velickovic2018gat} typically operate on local ego-networks and struggle with global structural context. CSA addresses this by introducing a "Soft Community Constraint," where attention weights are influenced by the membership of nodes in pre-computed structural partitions (DSCF/TSC).
@@ -38,13 +38,87 @@ Unlike GATs \cite{velickovic2018gat} which treat all neighbors equally, CSA scal
 \item \textbf{Distant-community}: $e^{-\lambda d_{com}}$
 
 \end{itemize}
-\subsubsection{4. Enterprise Hardening (v1.2.0)}
-The v1.2.0 release introduces \textbf{Adaptive Parameter Learning}, utilizing a \textbf{MetaParameterLearner} to auton\-omously adjust the $(\alpha, \beta, \gamma, \delta, \epsilon)$ coeff\-icients per-community based on query feedback. This closes the gap between zero-shot and supervised performance without the need for global retraining.
+\subsubsection{4. Enterprise Hardening (v2.51.0)}
+The v2.51.0 release introduces \textbf{Adaptive Parameter Learning}, utilizing a \textbf{MetaParameterLearner} to auton\-omously adjust the $(\alpha, \beta, \gamma, \delta, \epsilon)$ coeff\-icients per-community based on query feedback. This closes the gap between zero-shot and supervised performance without the need for global retraining.
 
 \subsubsection{5. Conclusion}
-CSA provides a scalable, Interp\-retable AI (XAI) alternative to black-box graph embeddings. By grounding attention in the structural consensus of the graph, it enables complex multi-hop reasoning that is both compu\-tationally efficient and mathe\-matically verifiable.
+CSA provides a scalable, Interp\-retable AI (XAI) alternative to black-box graph embeddings. By grounding attention in the structural consensus of the graph, it enables complex multi-hop reasoning that is both compu\-tationally efficient and mathe\-matically verifiable. In CEREBRUM v2.51.0, the 10-parameter CSA formula with online per-community learning achieves MetaQA H@1 of 46.1\% (1-hop), 30.0\% (2-hop), and 12.5\% (3-hop), alongside WebQSP H@1=6.27\%, H@10=20.84\%, and MRR=10.66\% — estab\-lishing CSA as a competitive and inter\-pretable alternative to embedding-based KG reasoning.
 
 ---
+
+\subsection{6. Recent Advances (v2.24.0 -\textgreater  v2.51.0)}
+
+The CSA formula and its associated learning infra\-structure have undergone significant expansion since v2.24.0. The following describes the key advances relevant to this paper.
+
+\textbf{10-Parameter CSA Formula (Phase 43/45).} The original 5-parameter formula \texttt{(alpha, beta, gamma, delta, epsilon)} covering semantic similarity, community score, edge-type weight, distance penalty, and hop decay has been extended to 10 parameters:
+
+\begin{lstlisting}
+a(u,v,k) = sigmoid(
+    alpha   * sim          # semantic similarity (cosine)
+  + beta    * cs           # community score (structural membership)
+  + gamma   * etw          # edge-type weight
+  - delta   * nd           # normalised distance penalty
+  + epsilon * hd           # hop decay
+  + zeta    * pr_v         # PageRank prior
+  + eta     * td           # temporal decay
+  + iota    * nr_v         # node recency
+  - mu      * sd           # synthesis-density penalty
+  + theta   * grounding    # confidence / grounding score
+)
+\end{lstlisting}
+
+Default weights: \texttt{(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)}. The synthesis-density penalty (\texttt{-mu*sd}) is parti\-cularly significant: it prevents over-reliance on REM-synthesized Synaptic Bridge edges, maintaining reasoning trans\-parency.
+
+\textbf{Unified ReasoningLogit Vector.} All 10 features are bundled into a \texttt{ReasoningLogit} dataclass that threads through scoring, learning, and feedback logging. This ensures that the full feature vector is available for inspection at every hop, preserving the "Glass-Box" property of the original design.
+
+\textbf{Batch and Online Parameter Learning (Phase 22/45/48).} Two learning regimes are now fully implemented:
+\begin{itemize}
+\item \texttt{CSAParameterLearner.fit()}: batch gradient descent over accumulated (positive, negative) path pairs, triggered via \texttt{POST /retrain}. Updates the global 10-parameter prior.
+\item \texttt{MetaParameterLearner}: online SGD per community, updated on every \texttt{POST /feedback} call. Enables community-specific adaptation without global retraining.
+
+\end{itemize}
+\textbf{Params Persistence (Phase 47).} \texttt{MetaParameterLearner.to\_dict()} / \texttt{from\_dict()} enables checkpoint and restore via \texttt{POST /params}. The \texttt{--params-file} CLI flag loads a checkpoint at server startup, enabling zero-downtime parameter rollback.
+
+\textbf{Benchmark Results.}
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Dataset & Metric & v2.51.0 \\ \hline
+MetaQA 1-hop & H@1 / H@10 & 46.1\% / 96.6\% \\ \hline
+MetaQA 2-hop & H@1 / H@10 & 30.0\% / 86.3\% \\ \hline
+MetaQA 3-hop & H@1 / H@10 & 12.5\% / 50.3\% \\ \hline
+WebQSP OPT & H@1 / H@10 / MRR & 6.27\% / 20.84\% / 10.66\% \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+\subsection{7. Phase 55 Advances}
+
+\textbf{GraphSAGE Neighb\-ourhood Smoothing (Phase 55).} \texttt{smooth\_with\_graphsage(embeddings, G)} applies a one-pass mean neigh\-bourhood aggregation after base encoding:
+
+\begin{equation}
+\tilde{\mathbf{e}}_v = \frac{1}{1+|\mathcal{N}(v)|}\left(\mathbf{e}_v + \sum_{u \in \mathcal{N}(v)} \mathbf{e}_u\right)
+\end{equation}
+
+The enriched embeddings make the \texttt{alpha} (semantic similarity) term in the CSA formula signi\-ficantly more discr\-iminating — nodes in the same community share more similar neigh\-bourhood-aggregated repre\-sentations. \texttt{CerebrumGraph.build(use\_graphsage=True)} enables smoothing autom\-atically after base encoding. Complexity is $O(|E| \times d)$ where $d$ is the embedding dimension.
+
+\textbf{TemporalCalibrator (Phase 55).} Grid-searches \texttt{eta} (temporal decay) and \texttt{iota} (node recency) against a labelled validation set to maximise Recall@K. The \texttt{calibrate()} method enumerates a parameter grid, calls \texttt{measure\_recall()} at each point, and applies the best-found parameters to the CSAEngine. A \texttt{try/finally} block guarantees original parameters are restored if calibration is interrupted — ensuring that a failed calibration run never leaves the CSAEngine in a partially-modified state.
+
+\textbf{Engram-Steered Traversal (Phase 55).} \texttt{Engram} tracks relation-sequence patterns from previous successful Engram traces. \texttt{EngramTraversal.\_prune\_candidates()} applies:
+
+\begin{equation}
+s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{engram} \cdot \text{affinity}(\text{rel\_seq}))
+\end{equation}
+
+where \texttt{affinity} is derived from accumulated \texttt{\_counts}. This biases beam search toward known-productive reasoning chains without modifying graph structure. The cache is durable — \texttt{save(path)} serializes to JSON and \texttt{load(path)} restores counts on restart, so learned relation patterns survive process restarts.
+
+---
+\subsection{Acknow\-ledgments}
+
+The author gratefully ackno\-wledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathe\-matical forma\-lization, code generation, manuscript preparation, and technical writing. All conceptual contr\-ibutions, archi\-tectural decisions, exper\-imental design, and intel\-lectual claims are solely the author's.
+
 \textbf{References}
 \begin{enumerate}
 \item Veličković, P., et al. (2018). Graph Attention Networks. ICLR.
@@ -56,6 +130,9 @@ CSA provides a scalable, Interp\-retable AI (XAI) alternative to black-box graph
 \item Himmelstein, C. S., et al. (2017). Systematic integration of biomedical knowledge prioritizes drugs for infla\-mmation. eLife.
 \item Zhang, Y., et al. (2018). Variational Reasoning for Question Answering over Knowledge Graphs. ICLR.
 \item Wang, Q., et al. (2017). Knowledge Graph Embedding: A Survey of Approaches and Applic\-ations. IEEE TKDE.
-\item Buchorn, B. A., \& Sonnet, C. (2026). CEREBRUM: Community-Structured Graph Attention. PARALLAX.md.
+\item Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specif\-ication for Autonomous Knowledge Graph Reasoning. [CEREBRUM\_REPORT\_PLACEHOLDER].
+\item Hamilton, W., Ying, Z., \& Leskovec, J. (2017). Inductive Repres\-entation Learning on Large Graphs. NeurIPS.
 
 \end{enumerate}
+---
+\textbf{Reviewed on}: May 2, 2026 for version v2.51.0

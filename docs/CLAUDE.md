@@ -315,6 +315,15 @@ Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`
 ### Adding a New Graph Backend
 Implement the abstract `GraphAdapter` interface in `core/graph_adapter.py`, following the pattern in `adapters/networkx_adapter.py`.
 
+## Documentation Navigation
+
+See [`docs/DOC_INDEX.md`](docs/DOC_INDEX.md) for the full documentation index:
+- `docs/arxiv/PAPER_001–037` — individual research paper manuscripts
+- `docs/latex/` — LaTeX pipeline (`cerebrum_master.tex` inputs all 38 compiled papers)
+- `research/papers/` — arXiv-ready publication workspace (6 deliverables)
+- `docs/CEREBRUM_PUBLICATION_GAMEPLAN.md` — publication strategy
+- `docs/BENCHMARK_CANONICAL.md` — locked canonical benchmark numbers
+
 ## Testing
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)

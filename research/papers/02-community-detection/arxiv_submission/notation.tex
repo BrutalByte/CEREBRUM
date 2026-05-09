@@ -1,0 +1,28 @@
+% Unified notation table for CEREBRUM papers
+% Resolve naming conflicts: TSC uses \eta_T for temporal weight; CSA uses \eta for the same concept.
+% All papers should import this file and use the macros below for consistency.
+
+\newcommand{\etaT}{\eta_T}        % TSC temporal weight (renamed from generic \eta to avoid conflict)
+\newcommand{\etaCSA}{\eta}        % CSA temporal decay weight (10-param formula, position 7)
+\newcommand{\alphaCSA}{\alpha}    % CSA semantic similarity weight
+\newcommand{\betaCSA}{\beta}      % CSA community score weight
+\newcommand{\gammaCSA}{\gamma}    % CSA edge-type weight
+\newcommand{\deltaCSA}{\delta}    % CSA distance penalty
+\newcommand{\epsilonCSA}{\epsilon}% CSA hop decay
+\newcommand{\zetaCSA}{\zeta}      % CSA PageRank prior weight
+\newcommand{\iotaCSA}{\iota}      % CSA node recency weight
+\newcommand{\muCSA}{\mu}          % CSA synthesis-density penalty
+\newcommand{\thetaCSA}{\theta}    % CSA grounding confidence weight
+
+% Graph notation
+\newcommand{\KG}{\mathcal{G}}     % Knowledge graph
+\newcommand{\Eset}{\mathcal{E}}   % Edge set
+\newcommand{\Vset}{\mathcal{V}}   % Vertex/node set
+\newcommand{\Cset}{\mathcal{C}}   % Community set
+\newcommand{\csascore}{a(u,v,k)}  % CSA attention score
+
+% Traversal notation
+\newcommand{\beam}{B}             % Beam width
+\newcommand{\hops}{H}             % Number of hops
+\newcommand{\mrr}{\text{MRR}}     % Mean Reciprocal Rank
+\newcommand{\hitatk}[1]{\text{H@#1}} % Hits@k

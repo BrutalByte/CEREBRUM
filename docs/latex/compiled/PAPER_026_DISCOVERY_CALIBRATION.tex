@@ -1,0 +1,147 @@
+\section{PAPER 026: Discovery Calibration — EMA-Based Community Rate Tracking and Contra\-diction Resolution for Autonomous KG Research}
+
+\textbf{Author}: Bryan Alexander Buchorn  
+\textbf{Affiliation}: Independent Researcher, Las Vegas, NV, USA  
+\textbf{Status}: v2.51.0 (Phase 167 (STRB) COMPLETE)
+\textbf{Date}: May 2, 2026
+
+\textbf{CEREBRUM Phase 73}
+
+---
+
+\subsection{Abstract}
+
+We present three Phase 73 components that address systematic biases in CEREBRUM's autonomous knowledge graph discovery pipeline. \textbf{DiscoveryCalibrator} tracks per-community scan and discovery rates via Exponential Moving Average (EMA) and applies an inverse-rate sampling multiplier to steer \texttt{ResearchAgent} toward under\-represented graph regions. \textbf{Contra\-dictionResolver} classifies candidate findings into four evidence classes (clean / revision\_candidate / contested / discardable) using a deter\-ministic Noisy-OR evidence model, filtering the most conflicted proposals before they reach \texttt{AutoApprover}. \textbf{CandidateRegistry} replaces the flat evaluated-pairs set with a TTL-aware registry that applies nomination-count boosts and enforces memory bounds via LRU eviction. Together, these components reduce redundant computation, prevent community saturation, and improve the precision of the discovery pipeline by pre-filtering struc\-turally contr\-adicted proposals.
+
+---
+
+\subsection{1. Motivation: Systematic Bias in Autonomous Discovery}
+
+An uncal\-ibrated \texttt{ResearchAgent} exhibits two systematic failure modes:
+
+\begin{enumerate}
+\item \textbf{Community saturation}: The agent repeatedly scans the same densely-connected communities (high community weight) because they yield frequent high-confidence candidates. Underr\-epresented sparse communities receive no coverage, leaving genuine missing links undis\-covered.
+
+\item \textbf{Contra\-diction blindness}: Proposals with strong contr\-adicting evidence in the existing graph (high \texttt{contradiction\_score}) are forwarded to \texttt{AutoApprover} and consume classifier compute, even when deter\-ministic evidence-weight analysis would immediately classify them as discardable.
+
+\end{enumerate}
+---
+
+\subsection{2. DiscoveryCalibrator}
+
+\subsubsection{2.1 Per-Community EMA Tracking}
+
+For each community \texttt{c}, the calibrator maintains:
+\begin{itemize}
+\item \texttt{scan\_rate(c)}: EMA of scans per unit time
+\item \texttt{discovery\_rate(c)}: EMA of approved discoveries per scan
+
+\begin{lstlisting}
+calibrator.record_scan(community_id)
+calibrator.record_discovery(community_id)
+\end{lstlisting}
+
+\end{itemize}
+EMA update: \texttt{rate\_t = α × event + (1 - α) × rate\_{t-1}} where \texttt{α = 0.1} (default).
+
+\subsubsection{2.2 Inverse-Rate Sampling Multiplier}
+
+The community weight \texttt{w(c)} used in \texttt{\_score\_discovery\_potential()}:
+
+\begin{lstlisting}
+w(c) = global_discovery_rate / (discovery_rate(c) + ε)
+\end{lstlisting}
+
+Cold-start communities (never scanned) receive \texttt{max\_weight = 5.0}. Communities with higher-than-global discovery rates receive \texttt{w \textless  1.0} (suppressed). Communities with lower rates receive \texttt{w \textgreater  1.0} (boosted).
+
+\subsubsection{2.3 Temporal Recency Scoring}
+
+\texttt{ValidationReport.recency\_score} is computed via exponential decay from the publication year:
+
+\begin{lstlisting}
+recency_score = exp(-λ × max(0, current_year - pub_year))
+\end{lstlisting}
+
+Default \texttt{λ} corresponds to a 7-year half-life. Recent literature (\textless  2 years old) scores $\ge$ 0.9.
+
+---
+
+\subsection{3. Contra\-dictionResolver}
+
+\subsubsection{3.1 Evidence Model}
+
+For a given finding with \texttt{proposed\_confidences = [c\_1, ..., c\_k]} and \texttt{contradiction\_score}:
+
+\begin{lstlisting}
+net_evidence_score = Noisy-OR(c_1, ..., c_k) - contradiction_score
+\end{lstlisting}
+
+Noisy-OR: \texttt{1 - ∏(1 - c\_i)} — the probability of at least one path being correct.
+
+\subsubsection{3.2 Resolution Classes}
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+net\_evidence\_score & Class & Action \\ \hline
+$\ge$ 0.6 & \texttt{"clean"} & Forward to AutoApprover \\ \hline
+0.3 – 0.6 & \texttt{"revision\_candidate"} & Queue in \texttt{\_revision\_candidates} \\ \hline
+0.1 – 0.3 & \texttt{"contested"} & Forward to AutoApprover with penalty \\ \hline
+\textless  0.1 & \texttt{"discardable"} & Auto-reject; never reaches AutoApprover \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+Revision candidates accumulate in \texttt{ResearchAgent.\_revision\_candidates} for periodic batch review.
+
+---
+
+\subsection{4. CandidateRegistry}
+
+\subsubsection{4.1 TTL-Aware Registry}
+
+Replaces the flat \texttt{\_evaluated\_pairs: Set[Tuple[str, str]]} with a dict-based registry:
+
+\begin{lstlisting}
+registry[pair] = CandidateRecord(
+    nomination_count=N,
+    first_seen=t_0,
+    last_seen=t_N,
+    ttl=timedelta(hours=24),
+)
+\end{lstlisting}
+
+\texttt{is\_registered(pair)} returns True and blocks re-evaluation if within TTL.
+
+\subsubsection{4.2 Nomination Boost}
+
+When a pair is nominated multiple times (by different scan cycles or reasoning strategies), its \texttt{discovery\_potential} receives a log-scale boost:
+
+\begin{lstlisting}
+boosted_potential = raw_potential × min(log(N + 1) + 1, max_boost)
+\end{lstlisting}
+
+Default \texttt{max\_boost = 3.0}. This rewards repeatedly-surfaced candidates without linearly amplifying noise.
+
+\subsubsection{4.3 Memory Bound}
+
+\texttt{max\_entries} (default 10,000) triggers LRU eviction: the registry evicts the least-recently-seen entry when capacity is reached, ensuring bounded memory usage in long-running deployments.
+
+---
+
+\subsection{5. References}
+
+\begin{itemize}
+\item [pearl\-2000\-causality] Pearl, J. (2000). \textit{Causality: Models, reasoning, and inference.} Cambridge University Press.
+
+\end{itemize}
+---
+\textbf{Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.}
+
+---
+\subsection{Acknow\-ledgments}
+
+The author gratefully ackno\-wledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathe\-matical forma\-lization, code generation, manuscript preparation, and technical writing. All conceptual contr\-ibutions, archi\-tectural decisions, exper\-imental design, and intel\-lectual claims are solely the author's.
+
+\textbf{Reviewed on}: May 2, 2026 for version v2.51.0
