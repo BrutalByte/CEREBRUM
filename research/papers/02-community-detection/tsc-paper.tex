@@ -57,7 +57,7 @@ Existing algorithms fail in two characteristic ways when applied to this role:
   \item \textbf{Resolution limit}~\cite{fortunato2007resolution}: algorithms that optimize
         global modularity cannot detect communities smaller than a scale set by the total
         number of edges, fragmenting semantically coherent groups in large graphs.
-  \item \textbf{Hub drift}~\cite{blondel2008}: high-degree hub nodes destabilize LPA-based
+  \item \textbf{Hub drift}~\cite{blondel2008louvain}: high-degree hub nodes destabilize LPA-based
         algorithms, oscillating between communities across iterations and producing
         inconsistent partitions.
 \end{enumerate}
@@ -89,7 +89,7 @@ hub nodes act as bottlenecks, repeatedly changing labels and preventing converge
 \paragraph{Modularity Optimization.}
 Newman-Girvan modularity~\cite{newman2004modularity} $Q = \frac{1}{2m}\sum_{ij}[A_{ij} -
 \frac{k_i k_j}{2m}]\delta(c_i, c_j)$ measures the density of connections within
-communities relative to a random null model. Leiden~\cite{traag2019leiden} optimizes
+communities relative to a random null model. Leiden~\cite{traag2019louvain} optimizes
 $Q$ via local moves. Its weakness: the resolution limit prevents detecting small communities.
 
 \paragraph{PageRank-based flow.}
@@ -150,7 +150,7 @@ $\epsilon > 0$ exists, provided the graph has no degenerate hub components.
 \textit{Proof sketch.} At $\tau_t = 0.5$, the assignment is dominated by
 $(2-0.5)\widehat{\mathcal{G}} = 1.5\widehat{\mathcal{G}}$. Convergence then follows from
 the convergence guarantee of modularity-maximizing greedy algorithms
-\cite{blondel2008}. The flow term $\gamma\mathcal{F}$ is bounded by $\gamma$ and acts as a
+\cite{blondel2008louvain}. The flow term $\gamma\mathcal{F}$ is bounded by $\gamma$ and acts as a
 stabilizing perturbation that does not change the argmax direction at optimality
 (since high-PR neighbors are already in the dominant community). $\square$
 
@@ -188,8 +188,8 @@ $m \in \{5, 10, 20\}$ nodes per clique.
 \toprule
 \textbf{Algorithm} & \textbf{Q} \\
 \midrule
-Leiden~\cite{traag2019leiden}     & 0.48 \\
-Louvain~\cite{blondel2008}        & 0.51 \\
+Leiden~\cite{traag2019louvain}     & 0.48 \\
+Louvain~\cite{blondel2008louvain}        & 0.51 \\
 \textbf{TSC (ours)}               & \textbf{0.88} \\
 \bottomrule
 \end{tabular}
@@ -299,12 +299,12 @@ Newman, M.E.J., \& Girvan, M. (2004).
 Finding and evaluating community structure in networks.
 \emph{Physical Review E}, 69(2).
 
-\bibitem{traag2019leiden}
+\bibitem{traag2019louvain}
 Traag, V.A., Waltman, L., \& van Eck, N.J. (2019).
 From Louvain to Leiden: guaranteeing well-connected communities.
 \emph{Scientific Reports}, 9(1).
 
-\bibitem{blondel2008}
+\bibitem{blondel2008louvain}
 Blondel, V.D., et al. (2008).
 Fast unfolding of communities in large networks.
 \emph{Journal of Statistical Mechanics}.

@@ -47,7 +47,7 @@ benchmark harnesses at \url{https://github.com/BrutalByte/CEREBRUM}.
 \label{sec:intro}
 
 Knowledge Graph question answering requires traversing multi-hop relational chains to
-connect a seed entity to an answer. Dominant approaches — EmbedKGQA~\cite{saxena2020},
+connect a seed entity to an answer. Dominant approaches — EmbedKGQA~\cite{saxena2020improve},
 NSM~\cite{he2021}, UniKGQA~\cite{jiang2023} — achieve high H@1 by learning
 task-specific embeddings over labeled QA pairs. This creates a fundamental dependency:
 they cannot reason over a new graph until a training corpus exists for it.
@@ -58,7 +58,7 @@ statistics. The key insight is that community structure encodes semantic proximi
 in the same community are more likely to be on the same reasoning path than nodes in
 distant communities. We operationalize this insight through the \CSA{} formula, which
 treats detected communities as discrete attention heads analogous to those in the
-Transformer architecture~\cite{vaswani2017}.
+Transformer architecture~\cite{vaswani2017attention}.
 
 \paragraph{Contributions.}
 \begin{enumerate}
@@ -80,7 +80,7 @@ Transformer architecture~\cite{vaswani2017}.
 \label{sec:related}
 
 \paragraph{Embedding-based KGQA.}
-EmbedKGQA~\cite{saxena2020} embeds both questions and entities in a shared space and
+EmbedKGQA~\cite{saxena2020improve} embeds both questions and entities in a shared space and
 scores answers via inner product. NSM~\cite{he2021} adds a teacher-student reasoning
 mechanism. UniKGQA~\cite{jiang2023} unifies retrieval and reasoning with a single
 pre-trained model. These systems achieve near-perfect H@1 on MetaQA (97--99\%) but
@@ -105,7 +105,7 @@ baseline random connectivity. \CEREBRUM{} is the first system to demonstrate sys
 structural reasoning can achieve 46.1\% H@1 without any training.
 
 \paragraph{Community detection.}
-Leiden~\cite{traag2019leiden} and Louvain~\cite{blondel2008} optimize modularity but
+Leiden~\cite{traag2019louvain} and Louvain~\cite{blondel2008louvain} optimize modularity but
 suffer from resolution limits and hub drift. Our TSC algorithm (Section~\ref{sec:tsc})
 fuses three complementary signals with temperature annealing to overcome these
 limitations.
@@ -211,11 +211,11 @@ bridges at graph load time, eliminating cold-start penalties.
 
 \subsection{Datasets and Setup}
 
-\textbf{MetaQA}~\cite{zhang2018metaqa}: 400K+ questions over a movie KG.
+\textbf{MetaQA}~\cite{metaqa2017}: 400K+ questions over a movie KG.
 We use the canonical 12,500-question subset (matching SOTA evaluation protocols) across
 1-, 2-, and 3-hop chains.
 
-\textbf{WebQSP}~\cite{yih2016webqsp}: 4,737 questions over Freebase subgraphs.
+\textbf{WebQSP}~\cite{webqsp2016}: 4,737 questions over Freebase subgraphs.
 We use the OPT configuration (beam\_width=20).
 
 \textbf{Hetionet}~\cite{hetionet2017}: Biomedical KG (47K nodes, 2.25M edges).
@@ -236,7 +236,7 @@ The training-free column marks systems that require no labeled QA pairs.
 \textbf{Method} & \textbf{Train} & \textbf{1-hop} & \textbf{2-hop} & \textbf{3-hop} \\
                 &                & \textbf{H@1}   & \textbf{H@1}   & \textbf{H@1} \\
 \midrule
-EmbedKGQA~\cite{saxena2020}   & Yes & 97.5 & 98.8 & 94.8 \\
+EmbedKGQA~\cite{saxena2020improve}   & Yes & 97.5 & 98.8 & 94.8 \\
 NSM~\cite{he2021}             & Yes & 97.1 & 99.9 & 98.9 \\
 UniKGQA~\cite{jiang2023}      & Yes & 97.5 & 99.0 & 99.1 \\
 GNN-QE~\cite{zhu2022gnnqe}   & Yes & 96.7 & 98.5 & 92.7 \\
@@ -356,7 +356,7 @@ claims are solely the author's.
 \bibliographystyle{plain}
 \begin{thebibliography}{99}
 
-\bibitem{saxena2020}
+\bibitem{saxena2020improve}
 Saxena, A., Tripathi, A., \& Talukdar, P. (2020).
 Improving Multi-hop Question Answering over Knowledge Graphs using Knowledge Base Embeddings.
 \emph{ACL}.
@@ -396,27 +396,27 @@ Sun, H., et al. (2019).
 PullNet: Open Domain Question Answering with Iterative Retrieval on Knowledge Bases and Text.
 \emph{EMNLP}.
 
-\bibitem{vaswani2017}
+\bibitem{vaswani2017attention}
 Vaswani, A., et al. (2017).
 Attention is All You Need.
 \emph{NeurIPS}.
 
-\bibitem{traag2019leiden}
+\bibitem{traag2019louvain}
 Traag, V.A., Waltman, L., \& van Eck, N.J. (2019).
 From Louvain to Leiden: guaranteeing well-connected communities.
 \emph{Scientific Reports}.
 
-\bibitem{blondel2008}
+\bibitem{blondel2008louvain}
 Blondel, V.D., et al. (2008).
 Fast unfolding of communities in large networks.
 \emph{Journal of Statistical Mechanics}.
 
-\bibitem{zhang2018metaqa}
+\bibitem{metaqa2017}
 Zhang, Y., et al. (2018).
 Variational Reasoning for Question Answering with Knowledge Graphs.
 \emph{AAAI}.
 
-\bibitem{yih2016webqsp}
+\bibitem{webqsp2016}
 Yih, W., et al. (2016).
 The Value of Semantic Parse Labeling for Knowledge Base Question Answering.
 \emph{ACL}.
