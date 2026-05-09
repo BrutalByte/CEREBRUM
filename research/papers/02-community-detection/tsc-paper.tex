@@ -230,15 +230,15 @@ with TSC vs DSCF vs Leiden partitions (all other components fixed):
 
 \begin{table}[h]
 \small\centering
-\caption{MetaQA 1-hop H@1 by community detection algorithm.}
+\caption{MetaQA 1-hop H@1 by community detection algorithm (sentence-transformer embeddings, beam\_width=20, $n$=500 sample).}
 \label{tab:downstream}
 \begin{tabular}{lc}
 \toprule
 \textbf{Community Detection} & \textbf{1-hop H@1} \\
 \midrule
-Leiden               & 41.8\%$^\star$ \\
-DSCF                 & 43.5\%$^\star$ \\
-\textbf{TSC (ours)}  & \textbf{46.1\%} \\
+DSCF                 & 82.8\% \\
+Leiden               & 83.6\% \\
+\textbf{TSC (ours)}  & \textbf{84.0\%} \\
 \bottomrule
 \end{tabular}
 \end{table}

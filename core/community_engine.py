@@ -20,6 +20,90 @@ import numpy as np
 # TSC — Triple-Signal Consensus (Vectorized/GPU-Ready)
 # ---------------------------------------------------------------------------
 
+_TSC_DENSE_NODE_LIMIT = 5_000  # above this, use sparse path to avoid N×N alloc
+
+
+def _tsc_sparse(
+    G: nx.Graph,
+    resolution: float = 1.0,
+    max_iter: int = 50,
+    temp_start: float = 1.0,
+    cooling: float = 0.95,
+    centrality_weights: Optional[dict] = None,
+) -> List[frozenset]:
+    """TSC for large graphs: O(M·K) per iteration, no N×N dense matrices.
+
+    Uses scipy.sparse for the adjacency matrix and a high-degree-neighbor
+    warm-start to collapse K from N to ~N/avg_degree before TSC iterations.
+    """
+    import scipy.sparse as sp
+    from collections import defaultdict
+
+    nodes = list(G.nodes())
+    n = len(nodes)
+
+    A = nx.to_scipy_sparse_array(G, nodelist=nodes, dtype=np.float32, format="csr")
+    k_deg = np.asarray(A.sum(axis=1)).ravel()
+    m = float(k_deg.sum()) / 2.0
+    if m == 0:
+        return [frozenset([v]) for v in nodes]
+
+    cent = np.array([centrality_weights.get(v, 1.0) for v in nodes], dtype=np.float32)
+
+    # Warm-start: each node takes the label of its highest-degree neighbour.
+    # Reduces K from N to ≤ N/avg_degree (≈7–8K for MetaQA) without any
+    # matrix allocation — just a single CSR pointer scan.
+    labels_c = np.arange(n, dtype=np.int32)
+    for i in range(n):
+        s, e = A.indptr[i], A.indptr[i + 1]
+        if s < e:
+            best = A.indices[s:e][k_deg[A.indices[s:e]].argmax()]
+            labels_c[i] = best
+    _, labels_c = np.unique(labels_c, return_inverse=True)
+    labels_c = labels_c.astype(np.int32)
+
+    temperature = float(temp_start)
+
+    def _norm_rows(X: np.ndarray) -> np.ndarray:
+        mn = X.min(axis=1, keepdims=True)
+        mx = X.max(axis=1, keepdims=True)
+        return (X - mn) / (mx - mn + 1e-9)
+
+    for _ in range(max_iter):
+        K = int(labels_c.max()) + 1
+
+        # N×K sparse one-hot community assignment
+        S = sp.csr_matrix(
+            (np.ones(n, np.float32), (np.arange(n, dtype=np.int32), labels_c)),
+            shape=(n, K),
+        )
+
+        lpa = A.dot(S).toarray()                            # N×K
+
+        sum_k_c = np.asarray(S.T.dot(k_deg)).ravel()        # K,
+        mod = lpa / m - resolution * np.outer(k_deg, sum_k_c) / (2.0 * m * m)
+
+        flow = A.multiply(cent[:, np.newaxis]).dot(S).toarray()  # N×K
+
+        combined = (
+            temperature * _norm_rows(lpa)
+            + (2.0 - temperature) * _norm_rows(mod)
+            + 0.2 * _norm_rows(flow)
+        )
+
+        new_c = combined.argmax(axis=1).astype(np.int32)
+        if np.all(new_c == labels_c):
+            break
+        _, labels_c = np.unique(new_c, return_inverse=True)
+        labels_c = labels_c.astype(np.int32)
+        temperature = max(temperature * cooling, 0.05)
+
+    comm_members: Dict[int, list] = defaultdict(list)
+    for i, c in enumerate(labels_c):
+        comm_members[int(c)].append(nodes[i])
+    return [frozenset(m) for m in comm_members.values()]
+
+
 def vectorized_tsc(
     G: nx.Graph,
     resolution: float = 1.0,
@@ -31,13 +115,22 @@ def vectorized_tsc(
     """
     High-performance vectorized implementation of TSC.
     Uses matrix operations (NumPy/CuPy) for O(1) node updates via bulk-multiplication.
-    
-    This is Milestone 2: GPU Acceleration.
+    Falls back to scipy-sparse path for graphs above _TSC_DENSE_NODE_LIMIT nodes.
     """
-    xp = get_xp()
-    
     nodes = list(G.nodes())
     n = len(nodes)
+
+    if n > _TSC_DENSE_NODE_LIMIT:
+        return _tsc_sparse(
+            G,
+            resolution=resolution,
+            max_iter=max_iter,
+            temp_start=temp_start,
+            cooling=cooling,
+            centrality_weights=centrality_weights,
+        )
+
+    xp = get_xp()
     node_to_idx = {v: i for i, v in enumerate(nodes)}
     
     # 1. Adjacency Matrix (Sparse if possible, but dense for small/medium)
