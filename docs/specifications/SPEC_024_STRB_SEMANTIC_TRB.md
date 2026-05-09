@@ -1,8 +1,8 @@
-# SPEC_024: STRB (Semantic Terminal Relation Boost)
+# [Buchorn, 2026]: STRB (Semantic Terminal Relation Boost)
 ## Zero-Config Intent Matching via Query Embeddings
 
 **Status**: v2.51.0 (Phase 167 COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
+**Author**: Bryan Alexander Buchorn  
 **Field**: NLP / Reasoning / Zero-Shot
 **Modules**: `core/structural_relation_inferrer.py`, `core/cerebrum.py`
 

@@ -1,7 +1,7 @@
 # THALAMUS: Intelligent Ingestion and Namespace Isolation for Heterogeneous Knowledge Graphs
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -21,7 +21,7 @@ THALAMUS maintains a stateful mapping $\mathcal{M}: \{a_1, a_2, \dots, a_n\} \to
 #### 2.2 Modal Isolation
 In multi-modal graphs, "Identity Collapse" occurs when a symbolic entity (text) and a physical signal (sensor) share a label. We formalize the isolation rule $\mathcal{I}$:
 $$\mathcal{I}(id, mode) = \text{prefix}(mode) \mathbin{\|} id$$
-This ensures topological separation between disparate data layers while allowing explicit cross-modal edges (SPEC_008) to bridge them.
+This ensures topological separation between disparate data layers while allowing explicit cross-modal edges [Buchorn, 2026] to bridge them.
 
 ### 3. Scalability: Parallel Preprocessing (v2.51.0)
 We define a two-stage ingestion protocol:
@@ -61,7 +61,7 @@ THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectional
 4. Rahm, E., & Bernstein, P. A. (2001). A survey of approaches to automatic schema matching. The VLDB Journal.
 5. Getoor, L., & Machanavajjhala, A. (2012). Entity resolution: Theory, practice & open challenges. VLDB.
 6. Christen, P. (2012). Data Matching: Concepts and Techniques for Record Linkage, Entity Resolution, and Duplicate Detection. Springer.
-7. Buchorn, B. A., & Sonnet, C. (2026). Unlocked Ingestion Throughput in CEREBRUM. SPEC_009.md.
+7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0

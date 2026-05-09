@@ -1,7 +1,7 @@
 # CSA: Community-Structured Attention for Knowledge Graph Reasoning
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -109,7 +109,7 @@ where `affinity` is derived from accumulated `_counts`. This biases beam search 
 7. Himmelstein, C. S., et al. (2017). Systematic integration of biomedical knowledge prioritizes drugs for inflammation. eLife.
 8. Zhang, Y., et al. (2018). Variational Reasoning for Question Answering over Knowledge Graphs. ICLR.
 9. Wang, Q., et al. (2017). Knowledge Graph Embedding: A Survey of Approaches and Applications. IEEE TKDE.
-10. Buchorn, B. A., & Sonnet, C. (2026). CEREBRUM: Community-Structured Graph Attention. PARALLAX.md.
+10. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 11. Hamilton, W., Ying, Z., & Leskovec, J. (2017). Inductive Representation Learning on Large Graphs. NeurIPS.
 
 ---

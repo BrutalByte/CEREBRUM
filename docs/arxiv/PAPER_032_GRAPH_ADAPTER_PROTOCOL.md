@@ -1,4 +1,7 @@
 # PAPER 032: GraphAdapter remove_edge Protocol — A Formal Edge-Removal Contract for Knowledge Graph Adapters
+
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 

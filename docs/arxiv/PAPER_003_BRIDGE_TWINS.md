@@ -1,7 +1,7 @@
 # Experience-Dependent Structural Plasticity in Knowledge Graphs: The Bridge Twin Engine
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -29,7 +29,7 @@ Upon potentiation, the engine performs a "Reflection" operation:
 ### 3. Structural Maintenance: The LTD Analog
 To prevent the "Informational Sprawl" of materialized nodes, we implement a temporal decay function:
 $$c_t = c_0 \cdot \lambda^{\Delta t}$$
-where $\lambda$ is the decay constant and $\Delta t$ is the time since last usage. Edges falling below a confidence threshold $c_{min}$ are pruned during the **REM Cycle** (SPEC_007).
+where $\lambda$ is the decay constant and $\Delta t$ is the time since last usage. Edges falling below a confidence threshold $c_{min}$ are pruned during the **REM Cycle** [Buchorn, 2026].
 
 ### 4. Conclusion
 The Bridge Twin Engine provides a biologically-inspired framework for self-optimizing Knowledge Graphs. By transforming reasoning history into physical graph structure, it enables sub-millisecond multi-hop reasoning on increasingly complex network topologies. In CEREBRUM v2.51.0, proactive bridge synthesis scales to 8,300 active bridges in the WebQSP OPT configuration, contributing directly to a H@10 improvement from 16.59% to 20.84% — a concrete, quantified demonstration of experience-dependent structural plasticity improving reasoning recall.
@@ -64,7 +64,7 @@ The Bridge Twin Engine has been substantially extended since v2.24.0. The follow
 4. Newman, M. E. (2006). Modularity and community structure in networks. PNAS.
 5. Abbott, L. F., & Nelson, S. B. (2000). Synaptic plasticity: taming the beast. Nature Neuroscience.
 6. Caporale, N., & Dan, Y. (2008). Spike timing-dependent plasticity: a Hebbian learning rule. Annual Review of Neuroscience.
-7. Buchorn, B. A., & Sonnet, C. (2026). Bridge Twin Relays in CEREBRUM. SPEC_003.md.
+7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0

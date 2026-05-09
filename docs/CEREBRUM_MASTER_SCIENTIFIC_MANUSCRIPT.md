@@ -1,7 +1,7 @@
 # DSCF/TSC: A Consensus-Based Approach to Community Detection for Graph Attention
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
 **Date**: May 2, 2026
 
@@ -78,8 +78,8 @@ The CEREBRUM framework has undergone substantial development between v2.24.0 and
 
 # CSA: Community-Structured Attention for Knowledge Graph Reasoning
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -187,7 +187,7 @@ where `affinity` is derived from accumulated `_counts`. This biases beam search 
 7. Himmelstein, C. S., et al. (2017). Systematic integration of biomedical knowledge prioritizes drugs for inflammation. eLife.
 8. Zhang, Y., et al. (2018). Variational Reasoning for Question Answering over Knowledge Graphs. ICLR.
 9. Wang, Q., et al. (2017). Knowledge Graph Embedding: A Survey of Approaches and Applications. IEEE TKDE.
-10. Buchorn, B. A., & Sonnet, C. (2026). CEREBRUM: Community-Structured Graph Attention. PARALLAX.md.
+10. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 11. Hamilton, W., Ying, Z., & Leskovec, J. (2017). Inductive Representation Learning on Large Graphs. NeurIPS.
 
 ---
@@ -196,8 +196,8 @@ where `affinity` is derived from accumulated `_counts`. This biases beam search 
 
 # Experience-Dependent Structural Plasticity in Knowledge Graphs: The Bridge Twin Engine
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -225,7 +225,7 @@ Upon potentiation, the engine performs a "Reflection" operation:
 ### 3. Structural Maintenance: The LTD Analog
 To prevent the "Informational Sprawl" of materialized nodes, we implement a temporal decay function:
 $$c_t = c_0 \cdot \lambda^{\Delta t}$$
-where $\lambda$ is the decay constant and $\Delta t$ is the time since last usage. Edges falling below a confidence threshold $c_{min}$ are pruned during the **REM Cycle** (SPEC_007).
+where $\lambda$ is the decay constant and $\Delta t$ is the time since last usage. Edges falling below a confidence threshold $c_{min}$ are pruned during the **REM Cycle** [Buchorn, 2026].
 
 ### 4. Conclusion
 The Bridge Twin Engine provides a biologically-inspired framework for self-optimizing Knowledge Graphs. By transforming reasoning history into physical graph structure, it enables sub-millisecond multi-hop reasoning on increasingly complex network topologies. In CEREBRUM v2.51.0, proactive bridge synthesis scales to 8,300 active bridges in the WebQSP OPT configuration, contributing directly to a H@10 improvement from 16.59% to 20.84% — a concrete, quantified demonstration of experience-dependent structural plasticity improving reasoning recall.
@@ -260,7 +260,7 @@ The Bridge Twin Engine has been substantially extended since v2.24.0. The follow
 4. Newman, M. E. (2006). Modularity and community structure in networks. PNAS.
 5. Abbott, L. F., & Nelson, S. B. (2000). Synaptic plasticity: taming the beast. Nature Neuroscience.
 6. Caporale, N., & Dan, Y. (2008). Spike timing-dependent plasticity: a Hebbian learning rule. Annual Review of Neuroscience.
-7. Buchorn, B. A., & Sonnet, C. (2026). Bridge Twin Relays in CEREBRUM. SPEC_003.md.
+7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0
@@ -268,8 +268,8 @@ The Bridge Twin Engine has been substantially extended since v2.24.0. The follow
 
 # Autonomous Causal Discovery via Spike-Timing-Dependent Plasticity in Knowledge Streams
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -329,7 +329,7 @@ The STDP causal discovery pipeline has been hardened and extended since v2.24.0.
 4. Spirtes, P., Glymour, C. N., & Scheines, R. (2000). Causation, Prediction, and Search. MIT Press.
 5. Sjöström, J., & Gerstner, W. (2010). Spike-timing dependent plasticity. Scholarpedia.
 6. Song, S., Miller, K. D., & Abbott, L. F. (2000). Competitive Hebbian learning through spike-timing-dependent synaptic plasticity. Nature Neuroscience.
-7. Buchorn, B. A., & Sonnet, C. (2026). Lazy STDP Weight Decay in CEREBRUM. SPEC_004.md.
+7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0
@@ -337,8 +337,8 @@ The STDP causal discovery pipeline has been hardened and extended since v2.24.0.
 
 # Holographic Indexing: Privacy-Preserving Discovery in Federated Knowledge Networks
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -391,7 +391,7 @@ Federated reasoning has been one of the most actively developed areas of the CER
 3. Kairouz, P., et al. (2021). Advances and open problems in federated learning. Foundations and Trends in Machine Learning.
 4. Broder, A., & Mitzenmacher, M. (2004). Network applications of Bloom filters: A survey. Internet Mathematics.
 5. Tarkoma, S., Rothenberg, C. E., & Lagerspetz, E. (2011). Theory and practice of Bloom filters for distributed systems. IEEE Communications Surveys & Tutorials.
-6. Buchorn, B. A., & Sonnet, C. (2026). Federated HMAC Security in CEREBRUM. SPEC_005.md.
+6. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0
@@ -399,8 +399,8 @@ Federated reasoning has been one of the most actively developed areas of the CER
 
 # Bayesian Beam Search: Probabilistic Graph Traversal under Topological Uncertainty
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -468,7 +468,7 @@ The OPT configuration uses adaptive density-driven beam width selection with a m
 4. Russo, D. J., et al. (2018). A Tutorial on Thompson Sampling. Foundations and Trends in Machine Learning.
 5. Chapelle, O., & Li, L. (2011). An empirical evaluation of Thompson sampling. NIPS.
 6. Scott, S. L. (2010). A modern Bayesian look at the multi-armed bandit. Applied Stochastic Models in Business and Industry.
-7. Buchorn, B. A., & Sonnet, C. (2026). Bayesian Warm-Starting in CEREBRUM. SPEC_006.md.
+7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 8. Zhu, R.-J., Wang, Z., Hua, K., et al. (2025). Scaling Latent Reasoning via Looped Language Models. arXiv:2510.25741. [zhu2025loooplm]
 
 ---
@@ -477,8 +477,8 @@ The OPT configuration uses adaptive density-driven beam width selection with a m
 
 # The REM Cycle: Metacognitive Maintenance and Insight Synthesis in Autonomous Knowledge Graphs
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -503,7 +503,7 @@ $$c_{t+1} = c_t \cdot (\lambda \cdot \rho)^{\Delta t}$$
 where $\rho < 1.0$ for all edges with the `INSIGHT_LINK` relation. Edges only transition to a "Grounded" state if they are validated by independent user queries.
 
 #### 2.3 Global Re-optimization
-The REM cycle monitors the **Modularity Drift** $\Delta Q_{total}$. When the partition stability falls below a threshold, it spawns a background DSCF/TSC task (SPEC_001) and performs an atomic swap of the community map, ensuring the graph's "Attention Heads" remain aligned with the latest data.
+The REM cycle monitors the **Modularity Drift** $\Delta Q_{total}$. When the partition stability falls below a threshold, it spawns a background DSCF/TSC task [Buchorn, 2026] and performs an atomic swap of the community map, ensuring the graph's "Attention Heads" remain aligned with the latest data.
 
 ### 3. Conclusion
 The REM Cycle provides a robust architectural solution for the "Entropy Problem" in self-optimizing graphs. By integrating verification, pruning, and re-balancing into a unified background loop, it ensures that CEREBRUM remains a stable and reliable foundation for long-term autonomous intelligence. In CEREBRUM v2.51.0, the IKGWQ benchmark quantifies REM's contribution at a 40% recall improvement at Level 4 (50% edge removal) with a Graceful Degradation AUC of 0.89, while the HypothesisEngine extends REM's role from maintenance to active knowledge construction via abductive reasoning.
@@ -542,7 +542,7 @@ Graceful Degradation AUC across all five levels: **0.89** (1.0 = perfect; 0.5 = 
 4. Walker, M. P. (2009). The role of sleep in cognition and emotion. Annals of the New York Academy of Sciences.
 5. Tononi, G., & Cirelli, C. (2014). Sleep and the price of plasticity: from synaptic and cellular homeostasis to memory consolidation and integration. Neuron.
 6. Rasch, B., & Born, J. (2013). About sleep's role in memory. Physiological Reviews.
-7. Buchorn, B. A., & Sonnet, C. (2026). Hallucination Pruning in CEREBRUM. SPEC_007.md.
+7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0
@@ -550,8 +550,8 @@ Graceful Degradation AUC across all five levels: **0.89** (1.0 = perfect; 0.5 = 
 
 # Cross-Modal Alignment via Orthogonal Procrustes: Bridging Signals and Symbols in Knowledge Graphs
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -577,7 +577,7 @@ The solution is derived via SVD of the covariance matrix $M = Y X^T$:
 $$M = U \Sigma V^T \implies R = U V^T$$
 
 ### 3. Stability: The Canonical Anchor
-To ensure consistency across federated hops (SPEC_005), we enforce a protocol where all Signal Encoders align to a designated **Root Space** $\mathcal{E}_{root}$. This prevents the accumulation of projection noise inherent in nested SVD transformations.
+To ensure consistency across federated hops [Buchorn, 2026], we enforce a protocol where all Signal Encoders align to a designated **Root Space** $\mathcal{E}_{root}$. This prevents the accumulation of projection noise inherent in nested SVD transformations.
 
 ### 4. Implementation (v2.51.0)
 The Signal Encoder is implemented as an extension of the **THALAMUS** pipeline, utilizing **Namespace Isolation** (`signal:`) to prevent entity collisions. The projection is a constant-time matrix-vector multiplication, suitable for high-velocity streaming environments.
@@ -607,7 +607,7 @@ The Signal Encoder has been validated in production and its core alignment metho
 4. Smith, S. L., et al. (2017). Offline bilingual word vectors, orthogonal transformations and the inverted softmax. ICLR.
 5. Conneau, A., et al. (2017). Word Translation without Parallel Data. ICLR.
 6. Artetxe, M., et al. (2018). A robust self-learning method for fully unsupervised cross-lingual mappings of word embeddings. ACL.
-7. Buchorn, B. A., & Sonnet, C. (2026). Cross-Modal Signal Projections in CEREBRUM. SPEC_008.md.
+7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0
@@ -615,8 +615,8 @@ The Signal Encoder has been validated in production and its core alignment metho
 
 # THALAMUS: Intelligent Ingestion and Namespace Isolation for Heterogeneous Knowledge Graphs
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -636,7 +636,7 @@ THALAMUS maintains a stateful mapping $\mathcal{M}: \{a_1, a_2, \dots, a_n\} \to
 #### 2.2 Modal Isolation
 In multi-modal graphs, "Identity Collapse" occurs when a symbolic entity (text) and a physical signal (sensor) share a label. We formalize the isolation rule $\mathcal{I}$:
 $$\mathcal{I}(id, mode) = \text{prefix}(mode) \mathbin{\|} id$$
-This ensures topological separation between disparate data layers while allowing explicit cross-modal edges (SPEC_008) to bridge them.
+This ensures topological separation between disparate data layers while allowing explicit cross-modal edges [Buchorn, 2026] to bridge them.
 
 ### 3. Scalability: Parallel Preprocessing (v2.51.0)
 We define a two-stage ingestion protocol:
@@ -676,7 +676,7 @@ THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectional
 4. Rahm, E., & Bernstein, P. A. (2001). A survey of approaches to automatic schema matching. The VLDB Journal.
 5. Getoor, L., & Machanavajjhala, A. (2012). Entity resolution: Theory, practice & open challenges. VLDB.
 6. Christen, P. (2012). Data Matching: Concepts and Techniques for Record Linkage, Entity Resolution, and Duplicate Detection. Springer.
-7. Buchorn, B. A., & Sonnet, C. (2026). Unlocked Ingestion Throughput in CEREBRUM. SPEC_009.md.
+7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0
@@ -684,8 +684,8 @@ THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectional
 
 # Inference Validator: A Self-Contained Precision/Recall Harness for Unsupervised Graph Reasoning
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -743,7 +743,7 @@ The Inference Validator provides a mathematically sound and self-contained frame
 4. Schlichtkrull, M., et al. (2018). Modeling Relational Data with Graph Convolutional Networks. ESWC.
 5. Wang, Z., et al. (2014). Knowledge Graph Embedding by Translating on Hyperplanes. AAAI.
 6. Lin, Y., et al. (2015). Learning Entity and Relation Embeddings for Knowledge Graph Completion. AAAI.
-7. Buchorn, B. A., & Sonnet, C. (2026). Unsupervised Recall Benchmarks in CEREBRUM. SPEC_010.md.
+7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0
@@ -751,8 +751,8 @@ The Inference Validator provides a mathematically sound and self-contained frame
 
 # Contradiction Materialization: Factual Conflict as a First-Class Signal in Knowledge Graphs
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -808,7 +808,7 @@ Contradiction Materialization transforms Knowledge Graphs from static fact store
 4. Martinez, M. V., et al. (2013). Reasoning Over Inconsistent Knowledge Bases. Springer.
 5. Hunter, A. (2004). A logical framework for measuring inconsistency in inconsistent knowledge bases. Annals of Mathematics and Artificial Intelligence.
 6. Grant, J., & Hunter, A. (2011). Distance-based measures of inconsistency. ACM Transactions on Computational Logic.
-7. Buchorn, B. A., & Sonnet, C. (2026). Materialized Conflict in CEREBRUM. SPEC_011.md.
+7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0
@@ -816,8 +816,8 @@ Contradiction Materialization transforms Knowledge Graphs from static fact store
 
 # Glass-Box Reasoning Studio: Visualizing Graph Attention and Latent Multi-Hop Inference
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -836,8 +836,8 @@ The Studio implements a path-centric rendering algorithm that isolates the sub-g
 
 #### 2.2 Modal Animations
 For temporal and streaming data, the Studio utilizes high-frequency state updates:
--   **Potentiation**: Edges being strengthened by LTP (SPEC_003) increase in saturation.
--   **Drift**: Community boundaries shift smoothly using force-directed layouts to reflect modularity updates (SPEC_007).
+-   **Potentiation**: Edges being strengthened by LTP [Buchorn, 2026] increase in saturation.
+-   **Drift**: Community boundaries shift smoothly using force-directed layouts to reflect modularity updates [Buchorn, 2026].
 
 ### 3. Interactive Debugging (v2.51.0)
 The Studio provides a "Dialectical reasoning" mode where users can manually adjust CSA parameters ($\alpha, \beta, \gamma$) via sliders and observe the immediate physical shift in the reasoning beam, providing a "Human-in-the-Loop" (HITL) interface for hyperparameter tuning. In v2.51.0, this includes real-time feedback submission to the **MetaParameterLearner**.
@@ -892,7 +892,7 @@ The Glass-Box Reasoning Studio transforms graph attention from an abstract mathe
 4. Miller, T. (2019). Explanation in artificial intelligence: Insights from the social sciences. Artificial Intelligence.
 5. Samek, W., et al. (2017). Explainable AI: Interpreting, Explaining and Visualizing Deep Learning. Springer.
 6. Lundberg, S. M., & Lee, S. I. (2017). A Unified Approach to Interpreting Model Predictions. NIPS.
-7. Buchorn, B. A., & Sonnet, C. (2026). Interactive Graph Attention in CEREBRUM. SPEC_012.md.
+7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0
@@ -900,8 +900,8 @@ The Glass-Box Reasoning Studio transforms graph attention from an abstract mathe
 
 # Streaming Knowledge Graph Engine: Real-Time Edge Ingestion, Discretization, and Adaptive Beam Search
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -978,7 +978,7 @@ The CEREBRUM Streaming Engine in v2.51.0 has matured from a laboratory prototype
 2. Leskovec, J., et al. (2007). Graph Evolution: Densification and Shrinking Diameters. ACM TKDD.
 3. Aggarwal, C. C., et al. (2010). On Classification of Graph Streams. SIAM Data Mining.
 4. Seber, G. A. F. (1984). Multivariate Observations. Wiley.
-5. Buchorn, B. A., & Sonnet, C. (2026). Streaming Discretization in CEREBRUM. SPEC_013.md.
+5. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0
@@ -986,8 +986,8 @@ The CEREBRUM Streaming Engine in v2.51.0 has matured from a laboratory prototype
 
 # Metacognitive Verification in Knowledge Graph Reasoning: InsightValidator, MetaInsightEngine, and Second-Order Structural Reasoning
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
-**Affiliations**: Independent Researcher · Anthropic
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -1042,7 +1042,7 @@ Every reasoning event — a query execution, a new edge validation, a community 
 - `CO_OCCURRED`: Two events fired within a configurable time window
 
 #### 3.2 Second-Order CSA Traversal
-The MetaInsightEngine runs the standard CSA traversal (SPEC_002) on $G_{meta}$ using `InsightEvent` attributes as embeddings. Specifically, each event node is embedded with:
+The MetaInsightEngine runs the standard CSA traversal [Buchorn, 2026] on $G_{meta}$ using `InsightEvent` attributes as embeddings. Specifically, each event node is embedded with:
 - Relation-type distribution of edges in the primary reasoning path
 - Community IDs traversed
 - Confidence scores at each hop
@@ -1144,8 +1144,8 @@ The InsightValidator, MetaInsightEngine, ResearchAgent, and ExternalValidator co
 
 # Algorithmic Depth in Knowledge Graph Reasoning: Temporal Edges, Uncertainty Propagation, Soft Community Membership, Learned CSA Parameters, and Graph Embedding Integration
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
-**Affiliations**: Independent Researcher · Anthropic
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -1155,7 +1155,7 @@ The InsightValidator, MetaInsightEngine, ResearchAgent, and ExternalValidator co
 Production Knowledge Graph reasoning systems require more than structural traversal — they must handle time-varying facts, propagate uncertainty through multi-hop paths, accommodate nodes that belong to multiple communities simultaneously, and support continuous improvement of their core attention parameters. We present CEREBRUM's **Algorithmic Depth** layer (Phase 17), five orthogonal enhancements to the core CSA reasoning engine that collectively enable temporal, probabilistic, and adaptive reasoning without introducing training data requirements or sacrificing the zero-hallucination guarantee. The five components are: (1) temporal edge validity windows with decay; (2) uncertainty propagation through the CSA formula; (3) soft community membership with fractional overlap scores; (4) `CSAParameterLearner` — online, training-free CSA weight adaptation from query feedback; and (5) KGE integration (TransE \cite{bordes2013transe} / RotatE \cite{sun2019rotate}) as optional drop-in embedding providers. Each component is independently composable; the full suite achieves +14.2% relative H@10 on MetaQA-3hop over the Phase 16 baseline. In v2.51.0, the CSA formula has been expanded to 10 parameters and the learning stack upgraded through Phases 45–48: parameter persistence, auto-retrain scheduling, and adaptive search strategy further extend the algorithmic depth concept to runtime adaptation.
 
 ### 1. Introduction
-The core CSA formula (SPEC_002) was designed with algebraic simplicity as a primary constraint: six weighted terms, a sigmoid activation, and configurable per-community parameter overrides. This design deliberately excludes temporal dynamics, uncertainty semantics, and continuous learning to ensure mathematical transparency. However, real-world KG deployments exhibit all three: facts have validity periods, sources have varying reliability, and query traffic provides a continuous signal about which reasoning strategies are working.
+The core CSA formula [Buchorn, 2026] was designed with algebraic simplicity as a primary constraint: six weighted terms, a sigmoid activation, and configurable per-community parameter overrides. This design deliberately excludes temporal dynamics, uncertainty semantics, and continuous learning to ensure mathematical transparency. However, real-world KG deployments exhibit all three: facts have validity periods, sources have varying reliability, and query traffic provides a continuous signal about which reasoning strategies are working.
 
 Phase 17 adds five capabilities as composable layers that augment the core without modifying it, preserving backward compatibility and the mathematical interpretability of every reasoning step.
 
@@ -1181,7 +1181,7 @@ The temporal weight multiplicatively modulates the CSA attention weight:
 
 $$a_{temp}(u,v,k) = a(u,v,k) \cdot w_{temp}(t_{query})$$
 
-where $t_{query}$ is the snapshot time at query start (consistent with Query Snapshot Isolation, SPEC_016).
+where $t_{query}$ is the snapshot time at query start (consistent with Query Snapshot Isolation, [Buchorn, 2026]).
 
 ### 3. Uncertainty Propagation
 
@@ -1245,7 +1245,7 @@ where $r_t \in \{+1, -1\}$ is the feedback signal, $a_i^{(t)}$ is the contributi
 **Constraints**: All weights are projected back to the simplex $\sum_i \theta_i = 1, \theta_i \geq 0.01$ after each update, ensuring no term is completely suppressed.
 
 #### 5.3 Per-Community Parameters
-The `CSAParameterLearner` maintains separate parameter sets per community (consistent with Community-Specific CSA Parameters, SPEC_016), enabling different communities to learn different optimal weightings from the same query traffic.
+The `CSAParameterLearner` maintains separate parameter sets per community (consistent with Community-Specific CSA Parameters, [Buchorn, 2026]), enabling different communities to learn different optimal weightings from the same query traffic.
 
 ### 6. KGE Embedding Integration
 
@@ -1353,8 +1353,8 @@ The Algorithmic Depth layer demonstrates that meaningful reasoning improvements 
 
 # Structural Hole Patching in Production Knowledge Graph Systems: Eight Cross-Feature Interaction Bugs and Their Fixes
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
-**Affiliations**: Independent Researcher · Anthropic
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -1561,8 +1561,8 @@ In v2.51.0 (Phases 56–57), the hardening scope expands from cross-feature inte
 
 # Inference-Time GraphSAGE Neighbourhood Smoothing for Knowledge Graph Entity Embeddings
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -1642,8 +1642,8 @@ Inference-time GraphSAGE neighbourhood smoothing is a zero-cost structural enric
 
 # Engram-Steered Traversal: Training-Free Relation-Pattern Caching for Knowledge Graph Beam Search
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -1734,8 +1734,8 @@ The Engram pattern as a *soliton* [bengio2025soliton]: a relation-sequence patte
 
 # TemporalCalibrator: Non-Differentiable Grid-Search Calibration of Temporal CSA Parameters
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -1805,8 +1805,8 @@ The temporal stability achieved by TemporalCalibrator — where `eta` and `iota`
 
 # Five Fault-Tolerance Patterns for Production Knowledge Graph Reasoning Servers
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -3122,7 +3122,7 @@ We present **Studio v2**, an extension of CEREBRUM's Glass-Box Reasoning Studio 
 
 ## 1. Motivation: Observability for Autonomous Systems
 
-The original Reasoning Studio (SPEC_012) was designed for human-in-the-loop query forensics: a user submits a query, inspects the reasoning path, and adjusts parameters. Studio v2 addresses a different use case: **long-running autonomous discovery operations** where an operator needs continuous visibility into the health of the full discovery pipeline without requiring per-query interaction.
+The original Reasoning Studio [Buchorn, 2026] was designed for human-in-the-loop query forensics: a user submits a query, inspects the reasoning path, and adjusts parameters. Studio v2 addresses a different use case: **long-running autonomous discovery operations** where an operator needs continuous visibility into the health of the full discovery pipeline without requiring per-query interaction.
 
 Key observability requirements:
 - **Decision transparency**: What is AutoApprover deciding, and why?
@@ -3913,8 +3913,8 @@ curl -X POST http://localhost:8200/research/loop/configure \
 
 # Neural Visualization Bridge: 3D Interactive Knowledge Graph Exploration via Unreal Engine 5
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Series**: CEREBRUM Technical Report 035  
 **Phase**: 83  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
@@ -4214,8 +4214,8 @@ The current implementation loads all edges at startup. For graphs > 10 000 edges
 
 # Conclusion: The CEREBRUM Paradigm and the Future of Autonomous Reasoning
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2026
 

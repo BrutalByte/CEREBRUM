@@ -1,4 +1,7 @@
 # PAPER 026: Discovery Calibration — EMA-Based Community Rate Tracking and Contradiction Resolution for Autonomous KG Research
+
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 

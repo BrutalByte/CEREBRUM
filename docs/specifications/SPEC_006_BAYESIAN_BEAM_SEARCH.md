@@ -1,8 +1,8 @@
-# SPEC_006: Bayesian Beam Search
+# [Buchorn, 2026]: Bayesian Beam Search
 ## Probabilistic Graph Traversal under Topological Uncertainty
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
+**Author**: Bryan Alexander Buchorn  
 **Field**: Decision Theory / Probabilistic Robotics / Graph Reasoning  
 **Module**: `reasoning/traversal.py`
 
@@ -31,7 +31,7 @@ $$
 During each hop $k$ of the beam search, the engine selects the next set of paths using Thompson Sampling:
 
 1.  **Candidate Expansion**: Fetch all neighbors $\mathcal{N}(u)$ for each path in the current beam.
-2.  **CSA Scoring**: Compute the deterministic attention weight $w_{uv}$ using the CSA formula (SPEC_002).
+2.  **CSA Scoring**: Compute the deterministic attention weight $w_{uv}$ using the CSA formula [Buchorn, 2026].
 3.  **Probabilistic Sampling**: For each candidate neighbor $v$, draw a random sample $x$ from its specific Beta distribution:
     $$x_v \sim \text{Beta}(\alpha_v, \beta_v)$$
 4.  **Ranking & Pruning**: Rank neighbors by their sampled scores $x_v$ and retain the top-$B$ candidates.
@@ -55,7 +55,7 @@ The final answers returned to the user include a **Confidence Calibration**:
 *   **Score**: The posterior mean $\mu$ of the path.
 *   **Uncertainty**: The path variance $\sigma^2$.
 
-If an answer has a high score but high uncertainty, the system flags it for **Metacognitive Verification** (SPEC_007), triggering a second-order "triangulation" pass to confirm the reasoning chain.
+If an answer has a high score but high uncertainty, the system flags it for **Metacognitive Verification** [Buchorn, 2026], triggering a second-order "triangulation" pass to confirm the reasoning chain.
 
 ### 6. Implementation Notes (v2.51.0)
 *   **Reproducibility**: Supports a fixed `RandomState` seed for deterministic debugging of probabilistic runs.

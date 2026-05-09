@@ -1,0 +1,1829 @@
+\documentclass[10pt,journal,compsoc]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{array}
+
+\lstset{
+  basicstyle=\small\ttfamily,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible
+}
+
+\begin{document}
+
+\title{White Paper}
+\author{Bryan Alexander Buchorn \\ Independent Researcher \\ bryan.alexander@buchorn.com}
+\markboth{CEREBRUM v1.2.4 Hardened Edition · March 2026}{}
+
+\maketitle
+
+\begin{abstract}
+This module forms a critical component of the CEREBRUM framework, a community-structured graph attention engine for Knowledge Graph reasoning. It focuses on Framework Implementation Guide.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Knowledge Graph, Graph Attention, DSCF, CSA, Hierarchical Reasoning.
+\end{IEEEkeywords}
+
+CEREBRUM: Community-Structured Graph Attention for Knowledge Graph Reasoning
+
+A White Paper
+
+Authors: Bryan Alexander Buchorn $\cdot$ Claude Sonnet 4.6 (Research Collab\-orator)
+
+Date: March 2026
+
+Status: \textbf{Version 1.1.0 $\cdot$ Phase 20 COMPLETE — 994 tests passing}
+
+License: Proprietary — all rights reserved
+
+Abstract
+
+We propose CEREBRUM, a novel framework that enables Knowledge Graphs (KGs)
+
+to perform multi-hop reasoning using the same structural principles that make
+
+Transformer-based Large Language Models powerful — without requiring an LLM,
+
+without training data, and with full inter\-pretability of every inference step.
+
+The central contr\-ibution is Community-Structured Attention (CSA): a
+
+mechanism in which graph communities serve as attention heads, graph traversal
+
+replaces matrix multi\-plication, and hop depth replaces layer depth. Unlike
+
+Graph Attention Networks (GATs), which apply learned attention within hard
+
+adjacency constraints, CSA uses community membership as a soft global
+
+constraint that captures both local topological cohesion and global structural
+
+signi\-ficance simul\-taneously.
+
+This is made possible by a second contr\-ibution: the \textit{}Dual-Signal Community
+
+Fusion (DSCF)\textit{} algorithm, which produces communities that encode both LPA
+
+majority-vote structure (local) and modularity gain (global) in a single
+
+partition. We show that DSCF communities possess a structural duality that
+
+maps naturally to the dual character of multi-head attention in Transf\-ormers.
+
+Together, CSA and DSCF form an archi\-tecture where a KG can answer multi-hop
+
+questions by traversing itself, with every reasoning step grounded in explicit
+
+graph edges, every conclusion traceable to a path, and no LLM required for
+
+inference — though one may optionally be used for natural language generation.
+
+Version 0.3.x extends the core archi\-tecture with production hardening (JWT
+authe\-ntication, ResourceGovernor, async\-hronous streaming traversal), a
+full real-time streaming subsystem (five signal discretizer classes, sliding-
+window buffer with reference-counted edge eviction, incremental ego-network
+community updates, SSE streaming API), experience-dependent structural relay
+formation via Bridge Twin Nodes (Phase 12), and directional causal edge
+inference via Spike-Timing Dependent Plasticity (Phase 13). The core CSA and
+DSCF algorithms are unchanged; all extensions sit above them.
+
+---
+
+\subsection{Acknow\-ledgments: Intell\-ectual Debt and Credits}
+
+CEREBRUM stands on the shoulders of decades of research in graph theory, community detection, and neural networks. We explicitly acknowledge the found\-ational work of the following researchers and the algorithms that form the bedrock of our framework:
+
+\begin{enumerate}
+\item \textbf{LPA (Label Propagation Algorithm)}: Usha Nandini Raghavan, Réka Albert, and Shailesh Kumara (2007). Their work on near-linear time community detection via local neighbor voting provided the "Local Signal" for our DSCF engine.
+\item \textbf{Louvain Algorithm}: Vincent Blondel, Jean-Loup Guillaume, Renaud Lambiotte, and Etienne Lefebvre (2008). Their greedy modularity optim\-ization method established the global structural baseline for community detection.
+\item \textbf{Leiden Algorithm}: Vincent Traag, Ludo Waltman, and Nees Jan van Eck (2019). Their refinement of Louvain, ensuring internal conne\-ctivity, provides the "Global Signal" and conne\-ctivity post-pass for DSCF.
+\item \textbf{Graph Attention Networks (GATs)}: Petar Veličković, Guillem Cucurull, Arantxa Casanova, Adriana Romero, Pietro Liò, and Yoshua Bengio (2018). Their intro\-duction of learned attention on graphs served as the primary foil and inspiration for our Community-Structured Attention (CSA).
+\item \textbf{KG Embeddings (TransE / RotatE)}: Antoine Bordes et al. (2013) and Zhiqing Sun et al. (2019). Their work on repre\-senting relational knowledge in vector spaces provides the semantic grounding layer for CSA.
+\item \textbf{GraphRAG}: Microsoft Research / Edge et al. (2024). Their pioneering work in combining community summaries with LLM retrieval provided the immediate context and competitive baseline for CEREBRUM's grounded reasoning approach.
+\item \textbf{Avionics Engineering}: The concept of \textbf{mid-level voting} (or mid-value selection) in triplex-redundant aircraft navigation. This engineering principle of multi-sensor consensus served as the found\-ational inspiration for the multi-signal logic of DSCF and TSC.
+\item \textbf{PageRank}: Page, L., Brin, S., Motwani, R., \& Winograd, T. (1999). The PageRank Citation Ranking: Bringing Order to the Web. Stanford InfoLab. Used as the global authority prior in CSA and as a THALAMUS structural encoding feature.
+\item \textbf{Betweenness Centrality}: Freeman, L.C. (1977). A set of measures of centrality based on betweenness. \textit{Sociometry}, 40(1), 35–41. Used as a THALAMUS positional encoding feature.
+\item \textbf{Simulated Annealing}: Kirkpatrick, S., Gelatt, C.D., \& Vecchi, M.P. (1983). Optimi\-zation by simulated annealing. \textit{Science}, 220(4598), 671–680. The DSCF temperature decay schedule is a direct application.
+\item \textbf{Bloom Filters}: Bloom, B.H. (1970). Space/time trade-offs in hash coding with allowable errors. \textit{Commun\-ications of the ACM}, 13(7), 422–426. Used in Hologr\-aphicIndex for federated blind graph discovery.
+\item \textbf{Spike-Timing Dependent Plasticity (STDP)}: Bi, G.Q. \& Poo, M.M. (1998). \textit{Journal of Neuros\-cience}, 18(24), 10464–10472. Markram, H. et al. (1997). \textit{Science}, 275(5297), 213–215. The STDPDiscre\-tizer and Bridge Twin formation are direct compu\-tational analogs.
+\item \textbf{Hebbian Learning}: Hebb, D.O. (1949). \textit{The Organi\-zation of Behavior}. Wiley. The Bridge Twin LTP/LTD analog and InsightEngine reward propagation are grounded in this principle.
+\item \textbf{Beam Search}: Lowerre, B.T. (1976). The HARPY Speech Recognition System. PhD thesis, Carnegie Mellon University. BeamTraversal is a direct application to graph path expansion.
+\item \textbf{Sentence-BERT}: Reimers, N. \& Gurevych, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. \textit{EMNLP 2019}. Default embedding backend when \texttt{[embeddings]} extra is installed.
+
+
+\end{enumerate}
+---
+
+\begin{enumerate}
+\item Introd\-uction
+
+\end{enumerate}
+1.1 The Gap Between Knowledge Graphs and Language Models
+
+Knowledge Graphs and Large Language Models represent two funda\-mentally
+
+different approaches to knowledge repre\-sentation and reasoning.
+
+Knowledge Graphs store knowledge explicitly: entities as nodes, relat\-ionships
+
+as typed edges, facts as (subject, predicate, object) triples. This makes
+
+them precise, verifiable, and updatable without retraining. However, they
+
+cannot reason beyond what is explicitly stored. Multi-hop inference — "Marie
+
+Curie discovered Polonium, Polonium is radioactive, therefore Marie Curie
+
+discovered a radioactive element" — requires either hardcoded graph traversal
+
+queries or external reasoning systems.
+
+Large Language Models store knowledge implicitly in billions of weight
+
+parameters. They can reason, generalize, and synthesize across domains. But
+
+this implicit repre\-sentation is opaque, cannot be updated without expensive
+
+fine-tuning, and is prone to hallu\-cination — generating plausible-sounding
+
+but incorrect facts with no mechanism for ground-truth verif\-ication.
+
+The field has responded with hybrid approaches: Retrieval-Augmented Generation
+
+(RAG), Knowledge-Graph-augmented LLMs, and GraphRAG. In all of these, the KG
+
+is a retrieval store and the LLM does the reasoning. The KG remains passive.
+
+CEREBRUM inverts this relat\-ionship. The KG reasons. The LLM, if present,
+
+only generates natural language from the KG's output. Every inference step is
+
+a graph traversal, every conclusion is a path, and every path can be verified.
+
+1.2 The Core Observation
+
+A Transformer's power comes from three mechanisms working together:
+
+Multi-head attention: different heads specialize on different
+
+relational aspects of the input (syntactic, semantic, long-range, etc.)
+
+Deep composition: each layer builds on the previous, allowing complex
+
+multi-step reasoning
+
+Positional awareness: the model knows where each token sits relative
+
+to others
+
+We observe that Knowledge Graphs have natural analogs for all three:
+
+Community structure serves the role of attention heads: nodes within
+
+a community have strong mutual relevance; communities specialize on
+
+different conceptual domains.
+
+BFS hop depth serves the role of layer depth: each hop is one step of
+
+composed reasoning.
+
+Graph-structural features (PageRank, betweenness, degree) serve the
+
+role of positional encoding: they tell the model where each entity sits in
+
+the global information landscape.
+
+The question is: can these analogs be made operational — not merely
+
+metap\-horical? We argue yes, and demonstrate the archi\-tecture to do so.
+
+1.3 System Component Names
+
+The CEREBRUM stack uses the following named layers, reflecting both compu\-tational role and biological analogy:
+
+CEREBRUM — the overarching product/framework name.
+
+THALAMUS — the ingestion engine: pluggable adapters, EmbeddingEngine, StructuralEncoder, and STDPDiscre\-tizer. Named for the thalamus, which receives and prepr\-ocesses all sensory input before routing it to the cortex.
+
+CORTEX — the reasoning engine: DSCF community detection, CSA attention formula, BeamTraversal, and AnswerExtractor. Named for the cortex, where structured reasoning occurs.
+
+REM Engine — graph self-reorg\-anization: pruning low-confidence edges, re-running community detection, and synth\-esizing new hypothesis edges. Analogous to REM sleep and hippocampal memory conso\-lidation.
+
+Bridge Twin Engine — experience-dependent structural relay node formation. Analogous to thalamic relay nuclei and LTP/LTD synaptic plasticity.
+
+1.4 Contri\-butions
+
+This paper makes the following primary contr\-ibutions:
+
+The CEREBRUM archi\-tecture: a complete mapping of Transformer components
+
+to KG operations, organized into THALAMUS (ingestion) and CORTEX (reasoning) layers, enabling multi-hop reasoning via graph traversal alone.
+
+Community-Structured Attention (CSA): a novel attention mechanism using
+
+community membership as a soft global constraint on graph traversal,
+
+bridging the gap between local GAT-style attention and global Transformer-
+
+style attention.
+
+Dual-Signal Community Fusion (DSCF): a novel community detection
+
+algorithm combining LPA majority-vote and modularity gain simul\-taneously
+
+at each node update, producing communities with dual short-range/long-range
+
+character that maps to multi-head attention's dual speci\-alization.
+
+\begin{enumerate}
+\item Background and Related Work
+
+\end{enumerate}
+2.1 Graph Neural Networks
+
+Graph Neural Networks (GNNs) [Scarselli et al., 2009] generalize neural
+
+networks to graph-structured data. The message-passing paradigm [Gilmer et
+
+al., 2017] defines node updates as aggre\-gations of neighbor repre\-sentations.
+
+Graph Attention Networks (GATs) [Velickovic et al., 2018] introduce learned
+
+attention weights between connected nodes. Key limitations for our purposes:
+
+(a) attention is restricted to direct neighbors — no global context;
+
+(b) communities are not considered; (c) training labels required.
+
+GraphSAGE [Hamilton et al., 2017] samples and aggregates local neigh\-borhoods
+
+but similarly lacks global structural awareness.
+
+None of these use community structure as an organ\-izational principle for
+
+attention.
+
+2.2 Knowledge Graph Reasoning
+
+Early KG reasoning systems used rule-based approaches (AMIE [Galarraga et al.,
+
+2013]) or embedding-based methods (TransE [Bordes et al., 2013], RotatE [Sun
+
+et al., 2019]). These methods produce entity embeddings but do not perform
+
+multi-hop traversal in the attention-mechanism sense.
+
+Path-based reasoning approaches (DeepPath [Xiong et al., 2017], MINERVA [Das
+
+et al., 2018]) use reinf\-orcement learning to find paths. These are closer to
+
+our goal but require training data and do not use community structure.
+
+2.3 LLM + KG Hybrid Systems
+
+KG-GPT [Yao et al., 2023], KGPT [Chen et al., 2020], and related systems
+
+connect KGs to LLMs as retrieval stores. The LLM always performs the
+
+reasoning step; the KG is passive.
+
+GraphRAG [Edge et al., 2024] uses community detection (Leiden)
+
+to summarize graph clusters as text, which is then passed to an LLM for
+
+RAG. This is the closest existing work. However:
+
+Communities are summarized as static text chunks, not used as attention heads
+
+The LLM performs all reasoning
+
+Paths are not returned or made inter\-pretable
+
+The system is not graph-agnostic (designed for Microsoft's pipeline)
+
+RAPTOR [Sarthi et al., 2024] builds hiera\-rchical text clusters for RAG but
+
+operates on documents, not graphs, and uses tree structure rather than
+
+community structure.
+
+2.4 Community Detection
+
+The Louvain algorithm [Blondel et al., 2008] optimizes modularity greedily
+
+but can produce internally disco\-nnected communities. Leiden [Traag et al.,
+
+2019] fixes this with a refinement phase promoting internal conne\-ctivity.
+
+Label Propagation [Raghavan et al., 2007] is fast and unsup\-ervised but
+
+non-deter\-ministic and produces variable quality.
+
+DSCF (this work) combines LPA and Leiden signals simul\-taneously at each
+
+node update, using a temperature-annealing schedule. See Section 4.2.
+
+DSCF is non-deter\-ministic (inherits LPA's shuffle-order sensitivity).
+
+For repro\-ducible results: run 3-5 trials and select the partition with
+
+highest modularity score. For production: seed the RNG and document the seed.
+
+\begin{enumerate}
+\item The Structural Equivalence
+
+\end{enumerate}
+We establish a complete operational mapping between Transformer components
+
+and KG operations. This is not analogy — each mapping is functional.
+
+Transformer Component
+
+CEREBRUM (KG) Equivalent
+
+Notes
+
+Token
+
+Entity or Relation
+
+Atomic unit of information
+
+Vocabulary
+
+Entity type taxonomy
+
+Closed set of possible types
+
+Token embedding
+
+Entity embedding (TransE/RotatE)
+
+Dense vector per entity
+
+Positional encoding
+
+Structural encoding (PR, BW, deg)
+
+Where entity sits globally
+
+Attention head
+
+Community cluster (DSCF)
+
+Specialized relational context
+
+Attention weight
+
+CSA weight formula
+
+Sim + community + edge + distance
+
+Context window
+
+Ego-network radius R
+
+How far to traverse
+
+Layer depth L
+
+BFS hop count
+
+Reasoning step count
+
+Feed-forward sublayer
+
+Entity-type projection
+
+Type-specific trans\-formation
+
+Residual connection
+
+Previous-hop embedding
+
+Prevents information loss
+
+Layer norma\-lization
+
+Embedding norma\-lization
+
+Prevents value explosion
+
+Output projection
+
+Path decoder / ranker
+
+Maps traversal to answer
+
+KV cache
+
+Materi\-alized path store
+
+Reuse traversal across queries
+
+This equivalence has a critical implication: \textit{}the number of attention heads is
+
+not a hyper\-parameter in CEREBRUM — it is determined by the graph's own community
+
+structure.\textit{} A graph with 12 natural communities has 12 attention heads. A graph
+
+with 200 communities has 200. The archi\-tecture adapts to the data.
+
+\begin{enumerate}
+\item The CEREBRUM Archit\-ecture
+
+\end{enumerate}
+4.1 Community-Structured Attention (CSA)
+
+CSA computes attention weights for graph traversal that incorporate both local
+
+graph topology and global community structure.
+
+\textbf{Attention weight formula.} For entity $u$ attending to entity $v$ at traversal hop $k$:
+
+\begin{equation}
+\boxed{a(u,v,k) = \sigma\!\left(\alpha \cdot \cos\!\left(\mathbf{e}_u, \mathbf{e}_v\right) + \beta \cdot S_{\mathcal{C}}(u,v) + \gamma \cdot w_{\mathrm{rel}} - \delta \cdot d_{\mathrm{norm}}(u,v) + \varepsilon \cdot \phi(k)\right)}
+\end{equation}
+
+where $\sigma(x) = \frac{1}{1 + e^{-x}}$ is the sigmoid activation, $\cos(\mathbf{e}_u, \mathbf{e}_v) = \frac{\mathbf{e}_u \cdot \mathbf{e}_v}{\|\mathbf{e}_u\|\|\mathbf{e}_v\|}$ is the cosine similarity of entity embeddings, $d_{\mathrm{norm}}(u,v) = d_G(u,v) / \mathrm{diam}(G)$ is the normalized graph distance, and $\phi(k) = \frac{1}{1+k}$ is the hop-depth decay.
+
+\textbf{Default zero-shot parameters:} $\alpha = 0.4$ (embedding similarity), $\beta = 0.4$ (community membership), $\gamma = 0.1$ (edge type), $\delta = 0.05$ (distance penalty), $\varepsilon = 0.05$ (hop decay). All parameters can be learned from $(q, a)$ pairs in supervised settings.
+
+\textbf{Community membership score.} Let $c: V \to \mathbb{Z}_{\geq 0}$ be the community assignment and $\mathcal{A}$ the set of adjacent community pairs (connected by $\geq 1$ cross-community edge):
+
+\begin{equation}
+S_{\mathcal{C}}(u,v) = \begin{cases} 1.0 & \text{if } c(u) = c(v) \quad \text{[same attention head]} \\ 0.5 & \text{if } (c(u), c(v)) \in \mathcal{A} \quad \text{[adjacent heads]} \\ e^{-\lambda \cdot d_{\mathcal{C}}(c(u),\, c(v))} & \text{otherwise} \quad \text{[distance decay, } \lambda = 0.5\text{]} \end{cases}
+\end{equation}
+
+where $d_{\mathcal{C}}$ is the shortest path (in hops) between communities in the community-level graph, precomputed once after DSCF converges.
+
+\textbf{Bridge Bonus} $w_{\mathrm{rel}} \in [0, 1]$: an optional per-relation-type weight that explicitly rewards cross-domain edges when the domain structure requires them (default $0.0$; recommended $0.4$ for inter-type reasoning tasks such as Movie $\to$ Actor $\to$ Director).
+
+\textbf{Why CSA is not a GAT.} GATs compute $a(u,v) = f(\mathbf{W}\mathbf{e}_u,\, \mathbf{W}\mathbf{e}_v)$ from learned weights on adjacent pairs only, with no global context. CSA introduces the term $\beta \cdot S_{\mathcal{C}}(u,v)$ which provides global structural awareness at $O(n \cdot \bar{k} \cdot C)$ — far cheaper than Transformer self-attention's $O(n^2)$.
+
+4.2 Dual-Signal Community Fusion (DSCF)
+
+DSCF is the community detection algorithm that produces the attention head
+
+structure. It is a key contr\-ibution in its own right.
+
+The core innovation: at each individual node update, both the LPA
+
+majority-vote signal (local topology) and the modularity gain signal (global
+
+structure) are computed. The decision incor\-porates both simul\-taneously,
+
+governed by a temperature parameter:
+
+\textbf{LPA signal} (local majority vote):
+
+\begin{equation}
+\mathrm{lpa\_cid}(v) = \underset{c}{\arg\max}\sum_{u \in \mathcal{N}(v)} \mathbf{1}[c(u) = c], \qquad \mathrm{lpa\_conf}(v) = \frac{\max_c \sum_{u \in \mathcal{N}(v)} \mathbf{1}[c(u)=c]}{|\mathcal{N}(v)|} \in [0,1]
+\end{equation}
+
+\textbf{Modularity gain signal} (global structure). For each candidate community $\mathcal{C}$ adjacent to $v$:
+
+\begin{equation}
+\Delta Q(v \to \mathcal{C}) = \frac{k_{v,\mathcal{C}}}{m} - \rho \cdot \frac{k_v \cdot \sum_{u \in \mathcal{C}} k_u}{2m^2}
+\end{equation}
+
+\begin{equation}
+\mathrm{mod\_cid}(v) = \underset{\mathcal{C}}{\arg\max}\;\Delta Q(v \to \mathcal{C}), \qquad \mathrm{mod\_conf}(v) = \min\!\left(\Delta Q_{\max} \cdot m,\; 1.0\right)
+\end{equation}
+
+where $k_{v,\mathcal{C}}$ is the number of edges from $v$ to $\mathcal{C}$, $k_v = \deg(v)$, $m$ is the total edge count, and $\rho$ is the resolution parameter.
+
+\textbf{Decision rule} (temperature $\tau \in [0.01, 1.0]$):
+
+\begin{center}
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Condition & Action \\ \hline
+$\mathrm{lpa\_cid} = \mathrm{mod\_cid} \neq c(v)$ & \textbf{MOVE} (consensus anchor) \\ \hline
+Both signals say STAY & STAY \\ \hline
+LPA says MOVE, Mod says STAY & MOVE with probability $\mathrm{lpa\_conf} \cdot \tau$ \\ \hline
+Mod says MOVE, LPA says STAY & MOVE with probability $\mathrm{mod\_conf} \cdot (2 - \tau)$ \\ \hline
+Both say MOVE to different targets & Move to $\mathrm{lpa\_cid}$ with weight $\mathrm{lpa\_conf} \cdot \tau$; to $\mathrm{mod\_cid}$ with weight $\mathrm{mod\_conf} \cdot (2 - \tau)$ \\ \hline
+\end{tabularx}
+\end{center}
+
+\textbf{Temperature schedule} (anneals from local-dominant to global-dominant):
+
+\begin{equation}
+\tau_{t+1} = \max\!\left(\tau_t \cdot \alpha_{\mathrm{cool}},\; \tau_{\min}\right), \qquad \alpha_{\mathrm{cool}} = 0.92, \quad \tau_{\min} = 0.01
+\end{equation}
+
+\textbf{Post-convergence conne\-ctivity check.} Any community $\mathcal{C}$ whose induced subgraph $G[\mathcal{C}]$ is disco\-nnected is split into its connected components:
+
+\begin{equation}
+\text{If } G[\mathcal{C}] \text{ is disconnected: } \mathcal{C} \to \mathcal{C}_1, \mathcal{C}_2, \ldots, \mathcal{C}_r
+\end{equation}
+
+Why DSCF communities are the right attention heads:
+
+In a trained Transformer:
+
+Some heads specialize on local structure (syntactic patterns, adjacent tokens)
+
+Other heads specialize on long-range structure (coreference, semantic themes)
+
+The combination allows both local and global reasoning simul\-taneously
+
+DSCF communities exhibit exactly this dual character. The LPA component supports
+
+communities are locally coherent (nodes in the same community are topol\-ogically
+
+close). The modularity component supports communities are globally significant
+
+(they represent struc\-turally distinct regions of the graph). A node that is in
+
+a DSCF community is there because both local and global signals agreed.
+
+This dual property has not previously been used as a basis for attention
+
+mechanisms in any published graph learning system.
+
+Comparison to Leiden-only communities:
+
+Leiden optimizes purely for modularity. On sparse regions of a graph, Leiden
+
+may split locally coherent neigh\-borhoods across multiple communities because
+
+the global modularity gain favors a different partition. DSCF resists this —
+
+the LPA component holds locally coherent groups together even when modularity
+
+would split them.
+
+Comparison to LPA-only communities:
+
+LPA can merge struc\-turally distinct regions if they happen to be locally
+
+connected (the "resolution limit" problem). DSCF resists this — the
+
+modularity signal penalizes over-merging.
+
+\begin{enumerate}
+\item The Forward Pass: Graph Reasoning
+
+\end{enumerate}
+5.1 Algorithm
+
+INPUT:  Query Q (text string or entity list)
+
+        Graph G (any backend)
+
+        Community assignments C (from DSCF)
+
+        Entity embeddings E (from any KGE method)
+
+        Hop depth L, beam width B, top-K
+
+OUTPUT: Ranked list of reasoning paths P = [(path, score, explanation)]
+
+\textbf{Step 1 — Entity Grounding.} Extract seed entities $S = \{e_1, \ldots, e_n\}$ from query $Q$ (via NER or n-gram fuzzy match).
+
+\textbf{Step 2 — Structural Encoding.} For each seed entity $e_i$ with positional vector $\mathbf{p}_i = [\mathrm{PR}(e_i),\, \mathrm{BW}(e_i),\, \deg(e_i)]^\top$:
+
+\begin{equation}
+\mathbf{h}_i^{(0)} = \mathrm{LayerNorm}\!\left(\mathbf{e}_i + \mathbf{W}_{\mathrm{pos}} \cdot \mathbf{p}_i\right)
+\end{equation}
+
+\textbf{Step 3 — Attention Traversal} ($k = 1, \ldots, L$). Initialize beam $\mathcal{B}^{(0)} = \{(e_i, \mathbf{h}_i^{(0)}, 1.0)\}$. At each hop:
+
+\textit{Embedding aggregation} when extending to neighbor $v$ with attention weight $w = a(u, v, k)$:
+
+\begin{equation}
+\mathbf{h}^{(k)} = \mathrm{LayerNorm}\!\left(\mathbf{h}^{(k-1)} + \mathrm{ReLU}\!\left(w \cdot \mathbf{e}_v + \mathbf{h}^{(k-1)}\right)\right)
+\end{equation}
+
+($\mathbf{W}_k = \mathbf{I}$ in zero-shot deployment; learned per-hop in supervised settings)
+
+\textit{Path score update:}
+
+\begin{equation}
+s(\mathcal{P} \oplus v) = s(\mathcal{P}) \cdot a(u,v,k) \cdot \gamma_{\mathcal{C}}(\mathrm{cseq}(\mathcal{P}) \cup \{c(v)\})
+\end{equation}
+
+\textit{Beam pruning:}
+
+\begin{equation}
+\mathcal{B}^{(k)} = \mathrm{top}_B\!\left(\mathrm{candidates}^{(k)},\; \text{key} = s\right)
+\end{equation}
+
+STEP 4 — Path Scoring
+
+  Final score for path P = (e₁ $\to$ r₁ $\to$ e₂ $\to$ r₂ $\to$ ... $\to$ eₗ):
+
+    score(P) = Π attention\_weights
+
+             $\times$ community\_coherence(P)
+
+             $\times$ semantic\_alignment(h\_final, query\_embedding)
+
+STEP 5 — Output
+
+  Return top-K paths ranked by score
+
+  Each path includes:
+
+\begin{itemize}
+\item Ordered entity/relation sequence
+
+\item Score breakdown (attention, community, semantic)
+
+\item Community sequence (which "heads" were traversed)
+
+\item Natural language explanation template
+
+\end{itemize}
+5.2 Community Coherence
+
+The community\_coherence term rewards paths that traverse communities in a
+
+principled way:
+
+community\_coherence(path) =
+
+    (intra-community steps $\times$ 1.0 + cross-community steps $\times$ 0.5)
+
+    / total steps
+
+A path that stays within one community scores 1.0 (tight local reasoning).
+
+A path that makes one community transition scores ~0.75 (one conceptual leap).
+
+This prevents paths that jump incoh\-erently across unrelated domains.
+
+\textbf{Step 4 — Path Scoring.} Final score for path $P = (v_0, r_1, v_1, \ldots, r_L, v_L)$:
+
+\begin{equation}
+\mathrm{score}(P) = \left(\prod_{k=1}^{L} a(u_k, v_k, k)\right) \cdot \gamma_{\mathcal{C}}(P) \cdot \cos\!\left(\mathbf{h}_L,\, \mathbf{q}\right)
+\end{equation}
+
+\textbf{Community coherence} (Step 3 and 4 shared function):
+
+\begin{equation}
+\gamma_{\mathcal{C}}(P) = \frac{1}{L}\sum_{k=1}^{L} \begin{cases} 1.0 & c(v_k) = c(v_{k-1}) \\ 0.5 & c(v_k) \neq c(v_{k-1}) \end{cases}
+\end{equation}
+
+A fully intra-community path scores $\gamma_{\mathcal{C}} = 1.0$. One community transition: $\gamma_{\mathcal{C}} \approx 0.75$. Incoherent zigzags compound the penalty expon\-entially across hops.
+
+5.3 Interp\-retability
+
+The output of CEREBRUM is always a path through the KG. This is funda\-mentally
+
+different from LLM reasoning in two ways:
+
+Verifiable: every step is an explicit (entity, relation, entity) triple
+
+that exists in the graph. The system cannot hallucinate a connection that
+
+isn't there.
+
+Auditable: the community sequence tells you which conceptual domains
+
+were traversed. A path that crosses from community "Clinical Trials" to
+
+community "Drug Mechanisms" to community "Side Effects" is immediately
+
+under\-standable.
+
+This property makes CEREBRUM speci\-fically valuable in high-stakes domains
+
+(medical, legal, financial) where hallu\-cination is unacc\-eptable.
+
+\begin{enumerate}
+\item Implem\-entation Archit\-ecture
+
+\end{enumerate}
+6.1 Design Principles
+
+Framework agnostic: CEREBRUM must work with any graph database, any
+
+embedding method, and any LLM (or no LLM). No vendor lock-in.
+
+No training required by default: The zero-shot confi\-guration uses fixed
+
+parameters ($\alpha$, $\beta$, $\gamma$, $\delta$, $\epsilon$) and any entity embedding. Communities are
+
+computed unsup\-ervised via DSCF.
+
+Progressive enhancement: Users can improve performance by providing
+
+training pairs (for learning parameters) or domain-specific edge type weights
+
+without changing the core archi\-tecture.
+
+Minimal depen\-dencies:
+
+Core: networkx, numpy, leidenalg (for DSCF), scipy
+
+Adapters: optional graph DB drivers
+
+Embeddings: optional sentence-trans\-formers or pykeen (for TransE/RotatE)
+
+API: optional FastAPI
+
+6.2 Repository Structure
+
+parallax/
+
+│
+
+├── core/
+
+│   ├── \_\_init\_\_.py
+
+│   ├── graph\_adapter.py        \# Abstract base class for graph backends
+
+│   ├── embedding\_engine.py     \# Entity embedding interface
+
+│   ├── community\_engine.py     \# Community detection (DSCF + others)
+
+│   ├── attention\_engine.py     \# Community-Structured Attention
+
+│   └── structural\_encoder.py   \# Graph positional encoding
+
+│
+
+├── reasoning/
+
+│   ├── traversal.py            \# Beam-search attention traversal
+
+│   ├── path\_scorer.py          \# Multi-signal path ranking
+
+│   └── answer\_extractor.py     \# Extract top-K answers
+
+│
+
+├── adapters/
+
+│   ├── networkx\_adapter.py     \# In-memory (default, no external deps)
+
+│   ├── neo4j\_adapter.py        \# Neo4j via bolt
+
+│   ├── rdf\_adapter.py          \# SPARQL endpoint (Wikidata, DBpedia)
+
+│   └── csv\_adapter.py          \# Bootstrap from edge-list CSV
+
+│
+
+├── llm\_bridge/
+
+│   └── context\_formatter.py    \# Optional: format paths as LLM context
+
+│
+
+├── api/
+
+│   ├── server.py               \# FastAPI REST server
+
+│   └── schemas.py              \# Pydantic models
+
+│
+
+├── cli/
+
+│   └── parallax.py             \# Command-line interface
+
+│
+
+├── tests/
+
+│   ├── test\_dscf.py
+
+│   ├── test\_csa.py
+
+│   ├── test\_traversal.py
+
+│   └── fixtures/
+
+│       └── toy\_graph.csv       \# Small graph for unit tests
+
+│
+
+├── benchmarks/
+
+│   ├── webqsp\_eval.py          \# WebQSP KG Q\&A benchmark
+
+│   ├── metaqa\_eval.py          \# MetaQA multi-hop benchmark
+
+│   └── baseline\_comparison.py  \# CSA vs GAT vs GraphRAG
+
+│
+
+├── examples/
+
+│   ├── Validation\_Walkthrough.ipynb \# Interactive visual proof
+
+│   ├── wikidata\_quickstart.py
+
+│   ├── neo4j\_quickstart.py
+
+│   └── csv\_quickstart.py
+
+│
+
+├── pyproject.toml
+
+├── README.md
+
+└── PAPER.md                    \# Living research document
+
+6.3 The Abstract Graph Adapter
+
+The adapter pattern is what makes CEREBRUM truly agnostic:
+
+from abc import ABC, abstr\-actmethod
+
+from dataclasses import dataclass
+
+from typing import List, Optional
+
+@dataclass
+
+class Entity:
+
+    id: str
+
+    label: str
+
+    type: str
+
+    properties: dict
+
+@dataclass
+
+class Edge:
+
+    source\_id: str
+
+    target\_id: str
+
+    relation\_type: str
+
+    weight: float = 1.0
+
+class GraphAdapter(ABC):
+
+    @abstr\-actmethod
+
+    def get\_entity(self, entity\_id: str) -\textgreater  Optional[Entity]: ...
+
+    @abstr\-actmethod
+
+    def get\_neighbors(self, entity\_id: str,
+
+                      edge\_types: List[str] = None,
+
+                      max\_neighbors: int = 50) -\textgreater  List[Edge]: ...
+
+    @abstr\-actmethod
+
+    def find\_entities(self, query: str, top\_k: int = 10) -\textgreater  List[Entity]: ...
+
+    @abstr\-actmethod
+
+    def to\_networkx(self) -\textgreater  "nx.Graph": ...  \# for community detection
+
+Any graph system that implements these four methods works with the full
+
+CEREBRUM stack. NetworkX, Neo4j, RDF SPARQL, property graph CSV — all handled
+
+by their respective adapter.
+
+6.4 What Comes From Home Assistant
+
+The following components are directly portable from Home Assistant with minor
+
+gener\-alization:
+
+dscf\_communities() — pure Python, depends only on networkx
+
+leiden\_communities() / lpa\_communities() / hybrid\_communities()
+
+Neo4j connection patterns and Cypher templates
+
+The community broadcast WebSocket pattern (for live appli\-cations)
+
+No other Home Assistant-specific depen\-dencies are carried over.
+
+6.5 Phased Build Plan
+
+Phase 0 — Theory (complete)
+
+Formalize CSA and DSCF; write white paper
+
+Prototype DSCF in Python (done: lives in Home Assistant knowledge\_service)
+
+Validate DSCF produces stable communities on Home Assistant's Neo4j graph
+
+Phase 1 — Core Engine
+
+core/graph\_adapter.py — abstract base + NetworkX adapter
+
+core/community\_engine.py — DSCF, Leiden, LPA, hybrid (ported from Home Assistant)
+
+core/embedding\_engine.py — SentenceEngine (zero-training default)
+
+core/attention\_engine.py — CSA weight formula
+
+core/structural\_encoder.py — PageRank, betweenness, degree encoding
+
+Unit tests on fixtures/toy\_graph.csv for all of the above
+
+Phase 2 — Reasoning Engine
+
+reasoning/traversal.py — beam-search traversal with CSA weights
+
+reasoning/path\_scorer.py — multi-signal scoring + community coherence
+
+reasoning/answer\_extractor.py — top-K ranked answers
+
+Integration test: end-to-end query on toy graph produces grounded paths
+
+Phase 3 — Adapters + API
+
+adapters/neo4j\_adapter.py (port Home Assistant patterns)
+
+adapters/rdf\_adapter.py (SPARQL, for Wikidata/DBpedia)
+
+adapters/csv\_adapter.py (bootstrap from edge-list)
+
+api/server.py — FastAPI REST: /query, /communities, /health
+
+cli/parallax.py — command-line interface
+
+Phase 4 — LLM Bridge + Benchmarks
+
+llm\_bridge/context\_formatter.py — format paths as LLM prompts
+
+benchmarks/webqsp\_eval.py and metaqa\_eval.py
+
+Ablation study: DSCF vs Leiden vs LPA as attention heads
+
+Baseline comparisons: BFS, GAT, GraphRAG, vanilla RAG
+
+Phase 5 — Release
+
+Write formal paper from white paper foundation
+
+Submit to venue (e.g., EMNLP, ICLR, NeurIPS Graphs Track)
+
+Open-source repository under chosen license
+
+6.6 Comput\-ational Complexity
+
+DSCF community detection: O(E $\cdot$ I) where E = edges, I = iterations
+
+(typically I \textless  50 before convergence). Comparable to Louvain.
+
+Community graph const\-ruction: O(E) post-DSCF; precomputed once.
+
+CSA weight per edge: O(d) where d = embedding dimension. Precompute
+
+structural encodings once; community lookups are O(1) with a hash table.
+
+Beam traversal (one query): O(B $\cdot$ L $\cdot$ k̄ $\cdot$ d) where:
+
+B = beam width (default 10)
+
+L = hop depth (default 3)
+
+k̄ = average degree
+
+d = embedding dimension
+
+For a graph with k̄=20, L=3, B=10, d=384: ~230,000 floating-point operations
+
+per query — milli\-seconds on CPU, no GPU required.
+
+Comparison to Transformer: Full attention is O(n² $\cdot$ d) per layer.
+
+CEREBRUM traversal is O(B $\cdot$ L $\cdot$ k̄ $\cdot$ d) — independent of graph size n.
+
+This makes CEREBRUM sublinear in graph size for fixed-width beam search.
+
+6.7 Known Failure Modes
+
+Dense hub nodes: Nodes with very high degree (k \textgreater \textgreater  k̄) cause beam
+
+explosion at that hop. Mitigation: cap max\_neighbors per node (default 50).
+
+Homogeneous graphs: If all nodes share the same community, CSA degenerates
+
+to pure embedding similarity (community\_score terms cancel). This occurs in
+
+highly regular graphs (grids, complete bipartite). Mitigation: check community
+
+count post-DSCF; if count \textless  3, fall back to BFS with embedding similarity only.
+
+Discon\-nected graphs: Multiple connected components each get their own
+
+communities; cross-component traversal is impossible by definition. Queries
+
+spanning components will return no paths. Mitigation: surface component
+
+boundaries to callers; allow separate per-component queries.
+
+Sparse embedding coverage: Entities with generic or missing labels get
+
+near-random sentence embeddings. The $\alpha$ term (embedding similarity) becomes
+
+noise; DSCF community structure ($\beta$ term) carries the full weight. Still
+
+functions; inter\-pretability of similarity scores is reduced.
+
+Adversarial community injection: A malicious actor who can insert edges
+
+into the graph can manipulate community structure and thus attention weights.
+
+Relevant for appli\-cations where the KG is user-writable. Mitigation: sign trusted edges; treat unsigned-edge-induced communities with lower $\beta$ weight.
+
+6.8 Horizontal Scalability
+
+\textbf{BLUF: CEREBRUM query serving scales horiz\-ontally without archi\-tectural limit. Queries are stateless reads from a sharded graph database; throughput grows linearly with workers. LLM inference cannot do this.}
+
+CEREBRUM's scalability is bounded by the scalability of graph databases — a solved problem at web scale — not by neural network inference constraints.
+
+\textbf{Within a single query}: at each beam hop, all B$\times$k̄ candidate edge scores are computed indep\-endently. The only synch\-ronization point is the top-B selection (~200 items). GPU threads handle all scoring simul\-taneously with no data dependency between candidates.
+
+\textbf{Across concurrent queries}: traversal workers are stateless during inference (graph and embeddings are read-only). Throughput scales linearly with worker count; zero inter-query synch\-ronization is required.
+
+\textbf{Across machines}: CSA's community preference (score = 1.0 intra-community vs. exponential decay inter-community) makes communities the natural shard key. Most queries never cross a shard boundary. Cross-shard traversal is a sparse network call, implemented in the FederatedAdapter (Phase 6–9). The holographic index identifies remote entity ownership without loading remote data.
+
+Amdahl's Law comparison:
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+ & LLM inference & CEREBRUM query \\ \hline
+Sequential fraction & ~100\% (layer N waits for layer N-1) & ~0.01\% (top-B select per hop) \\ \hline
+Cross-machine sync & All-reduce at every layer & Zero within a shard \\ \hline
+GPU speedup ceiling & ~8–16 per inference call & Linear with workers \\ \hline
+Knowledge touched per call & 100\% of parameters & ~0.001\% of graph \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+Community detection (DSCF) is the only component requiring a global graph view. It runs offline and perio\-dically — never on the query critical path. Queries run against the last known partition while the next detection pass executes in the background.
+
+\textbf{The one-line summary: a KG query touches ~0.001\% of the graph per call using embar\-rassingly parallel operations. An LLM touches 100\% of its parameters every time, seque\-ntially. That gap defines the scalability story.}
+
+\begin{enumerate}
+\item Experi\-mental Results
+
+\end{enumerate}
+7.0 Experi\-mental Environment
+
+All benchmarks were executed on the following hardware and software confi\-guration to support repro\-ducibility:
+\begin{itemize}
+\item CPU: AMD Ryzen 9 9950X3D 16-Core Processor (32 Logical Processors)
+\item RAM: 64 GB DDR5
+\item OS: Windows 11 Pro (Build 10.0.26220)
+\item Python: 3.14.0
+\item Graph Backends: NetworkX 3.4.2, igraph 0.11.6
+\item Embeddings: RandomEngine (64-dim) for structural validation; SentenceEngine (384-dim) for semantic tasks.
+
+\end{itemize}
+7.1 MetaQA: The Baseline Lower Bound
+
+MetaQA evaluation revealed a Structural Mismatch (EF-004). Because MetaQA answer paths always cross entity-type boundaries (Movie $\to$ Actor), and community detection naturally separates these types, the default CSA formula (favoring intra-community edges) penalized the correct paths.
+Outcome: BFS outpe\-rformed CSA variants on Hits@1.
+Signif\-icance: Established the "lower bound" of performance on topologies where community signal is anti-informative.
+
+7.2 The Bridge Bonus Innovation (EF-005)
+
+To solve the "Type Alignment Trap" identified in MetaQA and Hetionet, we introduced the Metaedge Bridge Bonus (w\_rel in the CSA formula). By assigning a positive bonus (e.g., 0.4) to inter-type metaedges like treats or associates, we offset the cross-community penalty while retaining structural guidance.
+
+7.3 Hetionet: Biomedical Reasoning at Scale
+
+On a 500,000-edge subset of Hetionet, CEREBRUM with LPA attention heads and the Bridge Bonus signi\-ficantly outpe\-rformed the BFS baseline.
+\begin{itemize}
+\item disease\_associates\_gene: LPA+CSA H@1 0.6560 vs BFS 0.4320 (+51.8\%)
+\item gene\_participates\_pathway: LPA+CSA H@1 0.2600 vs BFS 0.0950 (+173.6\%)
+
+\end{itemize}
+7.4 WebQSP: Real-world Entity Lookup
+
+On the WebQSP benchmark (FB15k-237), CEREBRUM demon\-strated superior recall and ranking quality.
+\begin{itemize}
+\item CEREBRUM (LPA+CSA): Hits@10 0.3360, MRR 0.1203
+\item BFS Baseline: Hits@10 0.3000, MRR 0.1081
+
+\end{itemize}
+7.5 Key Findings
+
+\begin{enumerate}
+\item Recall Advantage: CSA variants consi\-stently achieve higher recall (Hits@10) than BFS, validating the system's ability to steer the beam toward correct graph regions.
+\item Signal Duality: DSCF provides finer-grained precision, while LPA provides coarser, more robust recall.
+\item Zero-Shot Viability: All results were achieved using random embeddings and manual weights, proving CEREBRUM works without any training data.
+
+\item The DSCF-as-Attention-Head Hypothesis
+
+\end{enumerate}
+The central theoretical claim of CEREBRUM is that DSCF communities are better attention heads than Leiden-only or LPA-only communities. We state this as a
+
+falsifiable hypothesis:
+
+H1 (DSCF Attention Hypothesis): For multi-hop reasoning tasks on KGs, CEREBRUM with DSCF attention heads achieves higher answer accuracy than CEREBRUM with Leiden-only or LPA-only attention heads.
+
+H2 (CSA vs GAT Hypothesis): CSA-guided traversal achieves higher accuracy on multi-hop questions than GAT-based traversal on the same graph and same entity embeddings.
+
+H3 (Interp\-retability Hypothesis): CEREBRUM paths receive higher human coherence ratings than equivalent LLM-generated reasoning chains on the same questions, because every step is a grounded graph edge.
+
+H3 Evaluation Protocol: Present matched pairs — one CEREBRUM path and one LLM reasoning chain — to N$\ge$30 annotators blind to their source. Ask:
+
+"Which reasoning chain is more coherent and trustworthy? (A / B / Equal)".
+
+Primary metric: proportion preferring CEREBRUM path. Secondary: Cohen's kappa for inter-annotator agreement (target $\kappa$ \textgreater  0.6).
+
+These hypotheses are testable on standard benchmarks (WebQSP, MetaQA-3hop) and define the empirical work for Phase 2.
+
+\subsection{9. Benchmarks and Results}
+
+\subsubsection{9.1 Datasets}
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|l|>{\raggedright\arraybackslash}X|}
+\hline
+Dataset & Task & Hops & Size \\ \hline
+WebQSP & Single + multi-hop QA & 1-2 & 4,737 questions \\ \hline
+MetaQA-2hop & Multi-hop QA & 2 & 118,980 questions \\ \hline
+MetaQA-3hop & Multi-hop QA & 3 & 114,196 questions \\ \hline
+FB15k-237 & Link prediction & - & 310,116 triples \\ \hline
+Toy graph (internal) & Unit testing & 1-4 & ~200 nodes \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+\subsubsection{9.2 Baselines}
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+System & Type & Notes \\ \hline
+BFS (no attention) & Graph traversal & Traversal without CSA weighting \\ \hline
+GAT & Graph neural network & 2-layer, trained \\ \hline
+GraphRAG & LLM-based & Community summaries $\to$ GPT-4 \\ \hline
+RAG (vanilla) & LLM-based & FAISS retrieval $\to$ GPT-4 \\ \hline
+\textbf{CEREBRUM (TSC)} & Graph attention & Ours, Triple-Signal Consensus heads \\ \hline
+\textbf{CEREBRUM (LPA)} & Graph attention & Ablation: LPA-only heads \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+\subsubsection{9.3 Metrics}
+
+\begin{itemize}
+\item \textbf{Hits@1, Hits@3, Hits@10}: answer in top-K paths
+\item \textbf{Mean Reciprocal Rank (MRR)}: ranked answer quality
+\item \textbf{Path coherence} (human eval): are the reasoning paths under\-standable?
+\item \textbf{Grounding rate}: what fraction of returned paths are fully grounded
+\end{itemize}
+  (all edges verified in the KG)?
+
+\subsubsection{9.4 Phase 4 Results (Ablation Study)}
+
+A rigorous ablation study on MetaQA (Run 019) yielded the following key engineering findings:
+
+\begin{enumerate}
+\item \textbf{Structural Mismatch (EF-004)}: Breadth-First Search (BFS) consi\-stently outperforms CSA variants on MetaQA. This confirms that MetaQA's question structure (cross-type entity lookup) is penalized by community-based attention, which favors intra-community coherence. This is a dataset-specific chara\-cteristic, not an algorithmic defect.
+\item \textbf{TSC Stability}: The Triple-Signal Consensus (TSC) engine demon\-strated superior stability in community detection compared to earlier DSCF iterations, producing consistent partition counts across runs.
+\item \textbf{The Mesoscale Gap}: TSC produces fine-grained communities (~14k on MetaQA) compared to LPA (~1.6k). This granularity provides high precision for local queries but neces\-sitates the "Metaedge Bridge Bonus" or Federated Reasoning strategies to bridge large topological distances in multi-hop tasks.
+
+\end{enumerate}
+---
+
+\subsection{10. Open Research Questions}
+
+9.1 Embedding Strategy
+
+Two options exist:
+
+Option A — Pre-trained structural embeddings (TransE/RotatE): trained on the graph structure itself. More precise but requires a training step. Suitable for static KGs or when training compute is available.
+
+Option B — On-the-fly label embeddings (sentence-trans\-formers): encode entity labels and descr\-iptions using a pre-trained language model. No graph-specific training needed. More agnostic. Less precise for entities with ambiguous labels.
+
+Recommended default: Option B for zero-shot deployment; Option A when the graph has been stable and training is feasible. CEREBRUM should support both inter\-changeably via the Embedding Engine interface.
+
+9.2 Adaptive Community Granularity
+
+The DSCF resolution parameter controls how many communities are formed. Too few communities = coarse attention heads that miss structure. Too many = noisy heads that don't generalize.
+
+Proposed adaptive rule: target K $\approx$ √N communities, where N = node count.
+
+This is consistent with theoretical results on optimal modularity resolution and supports attention head count scales sensibly with graph size.
+
+For Home Assistant's KG (N $\approx$ 5,000): target ~70 communities.
+
+For Wikidata subset (N $\approx$ 100,000): target ~316 communities.
+
+9.3 Soft vs Hard Community Membership
+
+DSCF produces hard assignments (each node belongs to exactly one community).
+
+Real-world entities often span multiple communities — a person can be both a scientist and a politician.
+
+Extension: weight-based soft membership, where each node has a probability distr\-ibution over communities. The community score function becomes a dot product of membership vectors. This would require modifying DSCF to track confidence scores at convergence.
+
+9.4 Learnable Parameters
+
+In zero-shot mode, $\alpha$, $\beta$, $\gamma$, $\delta$, $\epsilon$ are fixed. For supervised settings, they can be learned from (query, ground-truth-answer) pairs via gradient descent on a path-ranking loss. This is an optional enhancement that does not affect the core archi\-tecture.
+
+9.5 Temporal Knowledge Graphs
+
+Time-stamped KGs (events, evolving relat\-ionships) introduce a temporal dimension. The positional encoding would need to incorporate temporal distance alongside graph-structural distance. Left for future work.
+
+9.6 Triple-Signal Consensus (TSC): Closing the Mesoscale Gap
+
+A significant extension for Phase 2 research is the transition from the dual-signal DSCF to a Triple-Signal Consensus (TSC) framework. This addresses the "Mesoscale Gap"—the structural region between immediate local topology (LPA) and global modularity (Leiden).
+
+By introducing a third methodology, such as Infomap (Map Equation), we can weed out "structural hallu\-cinations"—paths that exist in the graph but lack conceptual coherence. While modularity captures static edge density, Infomap captures the flow of information (random walks), identifying bottlenecks and sub-clusters that static methods often miss.
+
+In this framework, a node move or a traversal edge must pass a Consensus Filter:
+\begin{enumerate}
+\item LPA (Local): Immediate neighbor recognition.
+\item Modularity (Global): Global archi\-tecture optim\-ization.
+\item Infomap (Mid-Level): Natural information flow transit.
+
+\end{enumerate}
+The resulting decision logic for community fusion evolves into a tri-signal fused probability:
+P(move) = f(LPA \textit{ $\tau$\_local, Mod } $\tau$\_global, Infomap * $\tau$\_mid)
+
+This "mid-level voting" helps confirm that only the most struc\-turally robust reasoning chains survive the beam-search pruning process.
+
+\begin{enumerate}
+\item Broader Impact and Applic\-ations
+
+\end{enumerate}
+10.1 Domain Applic\-ations
+
+Biomedical: Drug-gene-disease-pathway graphs. Multi-hop reasoning for drug repurposing ("Drug X inhibits enzyme Y which is overe\-xpressed in disease Z").
+Grounded inference is critical — no LLM should hallucinate drug inter\-actions.
+
+Legal: Case law citation and statutory reference networks. Multi-hop precedent tracing. Every step in a legal argument must be citable; CEREBRUM's grounded paths match this requirement exactly.
+
+Cybers\-ecurity: Attack graphs, CVE dependency networks. "What path leads from this exposed service to root access?" — a life-safety question that benefits from verified, traceable reasoning chains.
+
+Software engineering: Code dependency and call graphs. Impact analysis:
+"What does changing function X affect?" traversed as a multi-hop attention path with community context (same module = high attention).
+
+Finance: Entity relat\-ionship graphs for regulatory compliance. Traceable reasoning chains for auditors: "Why did this transaction trigger a flag?"
+
+10.2 The LLM Bridge
+
+CEREBRUM is designed to augment LLMs, not replace them. The llm\_bridge module formats traversal output as structured context:
+
+You are reasoning about: [query]
+
+The knowledge graph traversal found these paths:
+
+Path 1 (score: 0.94):
+  Marie Curie [COMMUNITY: Scientific Discoveries]
+  $\to$ [discovered] $\to$
+  Polonium [COMMUNITY: Scientific Discoveries]
+  $\to$ [exhibits] $\to$
+  Radioa\-ctivity [COMMUNITY: Physics Phenomena]
+
+Please summarize what this tells us about [query] in natural language.
+
+This gives any LLM a grounded, structured context that minimizes the risk of hallu\-cination because the facts are provided explicitly. The LLM's role is purely natural language generation, not reasoning.
+
+10.3 The Agnosticism Property
+
+CEREBRUM is agnostic across five dimensions:
+
+Graph database: implement GraphAdapter for any system
+Embedding method: implement embeddingEngine for any model
+LLM: any model or none — CEREBRUM works without one
+Domain: the algorithm is domain-blind; community structure emerges from the graph's own topology
+Query language: entities can be identified from text, IDs, or direct lookup — the entry point is flexible
+
+10.4 National Security and Multi-Source Applic\-ations
+
+\textgreater  \textbf{Note}: The following appli\-cations are \textbf{potential and unverified}. They represent the theoretical utility of the CEREBRUM archi\-tecture for national security but require empirical validation on repre\-sentative datasets.
+
+CEREBRUM's \textbf{Glass-Box} archi\-tecture and \textbf{Zero-Halluc\-ination} capability make it a primary candidate for complex reasoning tasks.
+
+\textbf{Potential Application: Signal Analysis}: Mapping emitter-relat\-ionship networks. By treating signal emitters as nodes and temporal or spatial co-occurrence as edges, CEREBRUM could identify command-and-control hierarchies through TSC community detection and trace information flow through CSA traversal.
+
+\textbf{Potential Application: Open Source Analysis}: Tracking information operations. Tracing the propagation of narratives across social graphs with verifiable provenance. Identifying "source communities" of disin\-formation campaigns without Black-Box speculation.
+
+\textbf{Potential Application: Social Network Analysis}: Social Network Analysis (SNA). Identifying "gatekeeper" entities between clandestine communities using betweenness centrality. Validating informant claims by checking for path consistency across a grounded knowledge base.
+
+\textbf{Potential Application: Logistical Analysis}: Logistical reasoning. Connecting facilities, equipment, and transit routes extracted from imagery into a reasoning graph. Tracing movement patterns to identify supply chain anomalies or facility purpose.
+
+\textbf{Potential Application: Signature Correlation}: Signature correlation. Reasoning over networks of technical signatures (acoustic, seismic, chemical). Identifying anomalous clusters that correspond to specific industrial or techn\-ological processes.
+
+\begin{enumerate}
+\item Production Hardening (Phase 10)
+
+\end{enumerate}
+Phase 10 hardened the research prototype into a production-grade service deployable in real envir\-onments. Three components were introduced: authe\-ntication, resource governance, and async\-hronous streaming traversal.
+
+11.1 JWT Authen\-tication
+
+All API endpoints are protected by JSON Web Token (JWT) bearer authe\-ntication. Tokens carry an expiry claim and are validated on every request by the FastAPI dependency injection layer. Unauth\-enticated requests receive HTTP 401; expired tokens receive HTTP 403. Token issuance is inten\-tionally decoupled from CEREBRUM itself, enabling integration with any OAuth2 or OIDC identity provider.
+
+11.2 Resource Governor
+
+Unbounded queries over large graphs risk exhausting system memory or monop\-olizing CPU. The ResourceGovernor enforces per-request ceilings:
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Parameter & Default & Description \\ \hline
+\texttt{max\_nodes} & 50,000 & Node count above which traversal is refused \\ \hline
+\texttt{max\_edges} & 200,000 & Edge count ceiling \\ \hline
+\texttt{max\_beam\_size} & 50 & Beam width cap \\ \hline
+\texttt{max\_hops} & 6 & Depth ceiling per query \\ \hline
+\texttt{query\_timeout\_s} & 30.0 & Wall-clock timeout in seconds \\ \hline
+\texttt{max\_concurrent} & 10 & Concurrent query limit \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+Queries that exceed any ceiling receive HTTP 429 with a structured JSON error explaining which limit was breached.
+
+11.3 Asynch\-ronous Beam Traversal
+
+The \texttt{AsyncBeamTraversal} class wraps \texttt{BeamTraversal} in Python's \texttt{asyncio} event loop and adds a \texttt{/query/stream} SSE endpoint. Instead of blocking until the full beam completes, the server emits one Server-Sent Event per beam step:
+
+\begin{lstlisting}
+event: step
+data: {"hop": 1, "candidates": [...], "scores": [...]}
+
+event: result
+data: {"paths": [...], "top_score": 0.94, "hops": 2}
+\end{lstlisting}
+
+This allows front-ends and downstream agents to render partial results as the traversal progresses — important for user-facing appli\-cations where a 3-hop traversal over a large graph may take several seconds.
+
+The \texttt{/query/stream} endpoint accepts the same request schema as \texttt{/query} and is protected by the same JWT authe\-ntication. The \texttt{ResourceGovernor} timeout applies per stream: if traversal does not complete within \texttt{query\_timeout\_s} seconds, the stream emits a final \texttt{event: timeout} and closes.
+
+---
+
+\begin{enumerate}
+\item Real-Time Streaming (Phase 11)
+
+\end{enumerate}
+Phase 11 extended CEREBRUM from static knowledge graph reasoning to live, streaming data. The motivation is direct: many of CEREBRUM's highest-value appli\-cations — industrial sensors, network telemetry, signal analysis, video feeds — produce continuous data that must be reasoned over without batch processing delays.
+
+12.1 The Streaming Archit\-ecture
+
+The streaming subsystem has four interacting layers:
+
+\begin{enumerate}
+\item \textbf{Sources} — pluggable data ingestion adapters (file tail, HTTP polling, WebSocket, MQTT, Python callbacks)
+\item \textbf{Discretizer} — converts continuous signal values into discrete graph nodes and typed edges
+\item \textbf{SlidingWindowBuffer} — maintains a time-bounded, count-bounded live edge set with reference counting
+\item \textbf{StreamAdapter} — a thread-safe, live-mutating \texttt{NetworkXAdapter} that integrates all layers
+
+\end{enumerate}
+12.2 Sliding Window Buffer
+
+The buffer maintains the set of currently-active edges using two eviction policies applied together:
+
+\begin{equation}
+\mathcal{W}(t) = \{e \in \mathcal{E} \mid t - t_e \leq \Delta t\} \cap \{|\mathcal{E}| \leq N_{max}\}
+\end{equation}
+
+where $\Delta t$ is the time window in seconds, $t_e$ is the most recent timestamp for edge $e$, and $N_{max}$ is the maximum edge count. When both policies would evict different edges, the buffer evicts the oldest-first until both constraints are satisfied.
+
+Reference counting tracks how many live \texttt{StreamEvent} objects reference each edge key $(\text{src}, \text{rel}, \text{tgt})$. An edge is only removed from the graph when its reference count drops to zero, preventing premature eviction of frequently-repeated signals.
+
+12.3 Signal Discre\-tization
+
+Continuous sensor values are converted to discrete graph edges through one of five discretizer classes:
+
+\textbf{ThresholdDiscre\-tizer} maps a scalar reading to a categorical state node with hysteresis:
+
+\begin{equation}
+\text{state}(x) = \begin{cases} \text{SPIKE} & x > \mu + 3\sigma \\ \text{HIGH} & x > \mu + \sigma \\ \text{LOW} & x < \mu - \sigma \\ \text{NORMAL} & \text{otherwise} \end{cases}
+\end{equation}
+
+where $\mu$ is a confi\-gurable nominal value and $\sigma$ is the threshold scale. The hysteresis margin $h$ requires the signal to exceed $\theta \pm h$ before trans\-itioning, preventing rapid edge oscillation at threshold boundaries.
+
+\textbf{BinningDiscre\-tizer} quantizes $x$ into $N$ equal-width bins over $[\text{min}, \text{max}]$:
+
+\begin{equation}
+\text{bin}(x) = \left\lfloor \frac{x - x_{min}}{x_{max} - x_{min}} \cdot N \right\rfloor
+\end{equation}
+
+Each bin maps to a node label (e.g., \texttt{sensor\_A\_bin\_3}) and emits a \texttt{READS} edge from the sensor node to the bin node.
+
+\textbf{ObjectDetectionDiscre\-tizer} converts a detection event (label, confidence, bounding box) into \texttt{DETECTS} edges and \texttt{CO\_OCCURS\_WITH} edges between co-detected objects within the same frame.
+
+\textbf{TemporalSequenceDiscre\-tizer} emits \texttt{PRECEDES} edges between consecutive events, building an ordered chain of obser\-vations:
+
+\begin{equation}
+v_1 \xrightarrow{\text{PRECEDES}} v_2 \xrightarrow{\text{PRECEDES}} v_3 \xrightarrow{\text{PRECEDES}} \cdots
+\end{equation}
+
+\textbf{CoActivationDiscre\-tizer} emits \texttt{CO\_ACTIVATES} edges between sensor pairs that fire within a confi\-gurable time window $\delta_t$ of each other and have co-activated at least $n_{min}$ times:
+
+\begin{equation}
+\text{emit}(A, B) \iff |t_A - t_B| \leq \delta_t \;\wedge\; \text{count}(A, B) \geq n_{min}
+\end{equation}
+
+12.4 Incremental Community Updates
+
+Running full DSCF after every ingested event would be prohi\-bitively expensive. \texttt{IncrementalCommunityUpdater} maintains a set of \textit{affected nodes} $\mathcal{A}$ — nodes that gained or lost edges since the last community computation — and re-runs DSCF only over the ego-network of radius $r$ around those nodes:
+
+\begin{equation}
+G_{\text{local}} = \{v \mid d_G(v, u) \leq r, \; u \in \mathcal{A}\}
+\end{equation}
+
+where $d_G$ is shortest-path distance. The default radius is $r = 2$. Updates are triggered when $|\mathcal{A}| \geq n_{min}$ (default 10), batching small mutations to amortize overhead. The subgraph is converted to undirected before DSCF runs (since directed sensor graphs use DiGraph internally but DSCF requires an undirected view for connected-components computation).
+
+Community assignments outside $G_{\text{local}}$ are preserved from the previous full run, producing a hybrid partition that is locally fresh and globally stable.
+
+12.5 Streaming API Endpoints
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Endpoint & Method & Description \\ \hline
+\texttt{/stream/ingest} & POST & Ingest a batch of \texttt{StreamEvent} objects into the live graph \\ \hline
+\texttt{/stream/status} & GET & Live stats: nodes, edges, communities, events/s, buffer utilization \\ \hline
+\texttt{/stream/events} & GET (SSE) & Subscribe to graph mutation events in real time \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+The \texttt{/stream/ingest} endpoint accepts:
+
+\begin{lstlisting}
+{
+  "events": [
+    {
+      "source": "sensor_A",
+      "relation": "READS",
+      "target": "temperature_HIGH",
+      "timestamp": 1711051234.5,
+      "ttl": 60.0,
+      "metadata": {"unit": "celsius", "value": 87.3}
+    }
+  ]
+}
+\end{lstlisting}
+
+The \texttt{/stream/events} SSE stream emits one JSON line per graph mutation (edge add, edge evict, community update), enabling downstream subscribers to maintain a synch\-ronized view of the live graph.
+
+12.6 Application: Sensor Co-Activation Reasoning
+
+Consider a factory with 50 sensors feeding CEREBRUM via MQTT. The \texttt{CoActivationDiscretizer} builds a graph of sensors that reliably activate together. Within minutes of startup, CEREBRUM has formed communities of co-activating sensors — physically meaningful clusters corre\-sponding to cooling loops, power rails, and conveyor stages — without any domain confi\-guration.
+
+A query of the form "which sensors are struc\-turally related to Sensor\_A?" returns a verified path:
+
+\textgreater  Sensor\_A $\xrightarrow{\text{CO\_ACTIVATES}}$ Sensor\_B $\xrightarrow{\text{CO\_ACTIVATES}}$ Sensor\_C $\xrightarrow{\text{MONITORS}}$ Cooling\\_Loop\\_2
+
+Every edge in this path is a real co-activation event captured in the sliding window. No fact was inferred from a model; every fact was observed.
+
+---
+
+12.7 Bridge Twin Nodes (Phase 12)
+
+The exponential community distance penalty in the CSA formula correctly discounts speculative cross-domain hops. However, when a specific crossing is used repeatedly — not specu\-latively but because it is the struc\-turally correct reasoning step — the persistent penalty is a performance cost rather than a correctness signal.
+
+\textbf{Bridge Twin Formation.} When a cross-community traversal of node $v$ into community $\mathcal{C}_d$ occurs $\geq n_{min}$ times and the node's embedding is seman\-tically close to the destination community centroid:
+
+\begin{equation}
+\text{fit}(v, \mathcal{C}_d) = \cos\!\left(\mathbf{e}_v,\; \frac{1}{|\mathcal{C}_d|}\sum_{u \in \mathcal{C}_d} \mathbf{e}_u\right) \geq \theta_{bridge}
+\end{equation}
+
+a bridge twin node $v'$ is mater\-ialised with:
+\begin{itemize}
+\item $\mathbf{e}_{v'} = \mathbf{e}_v$ (identical embedding at birth)
+\item $c(v') = \mathcal{C}_d$ (assigned to destination community)
+\item Bidire\-ctional \texttt{BRIDGE\_TWIN} edges: $v \leftrightarrow v'$ with $w_{rel} = 1.0$
+
+\end{itemize}
+The twin can subse\-quently accumulate community-specific edges, diverging from the original to represent the same underlying concept through the lens of its adopted community.
+
+\textbf{CSA short-circuit for bridge edges.} A \texttt{BRIDGE\_TWIN} edge has $\cos(\mathbf{e}_v, \mathbf{e}_{v'}) = 1.0$ and $S_\mathcal{C}(v, v') = 1.0$ by const\-ruction. The formula reduces to:
+
+\begin{equation}
+a(v, v', k) = \sigma\!\left(\alpha + \beta + \gamma + \varepsilon\phi(k)\right) = \sigma(0.925 + \varepsilon\phi(k)) \approx 0.716
+\end{equation}
+
+This is implemented as a direct short-circuit in \texttt{CSAEngine.compute\_weight()}, bypassing the general formula for efficiency and numerical stability.
+
+\textbf{LTD-analog pruning.} Bridge twins idle for $\geq \tau_{prune}$ days are removed from both the engine registry and the adapter graph — exactly as synapses that fall out of use weaken and prune under long-term depression.
+
+\textbf{Biological corre\-spondence.} Bridge twins are the algorithmic equivalent of thalamic relay nuclei: faithful copies of source signals re-expressed in an inter\-mediate structural location, completing bidir\-ectional circuits between otherwise-distant brain regions. The lateral geniculate nucleus holds the same retinotopic map as the retina but lives inside the thalamus, positioned close to the visual cortex it serves. Formation requires repeated use ($n_{min}$, like the stimulus repetition threshold for LTP), and pruning occurs with disuse ($\tau_{prune}$, like LTD).
+
+---
+
+12.8 Spike-Timing Dependent Plasticity (Phase 13)
+
+The \texttt{CoActivationDiscretizer} (Phase 11) detects \textit{symmetric} corre\-lations: sensors A and B that co-activate are linked with equal weight regardless of which fired first. In real causal systems this symmetry is incorrect — causation has a direction and a time ordering.
+
+Biological STDP resolves this: if neuron A fires \textbf{before} neuron B within a short window, the synapse $A \to B$ is potentiated (LTP). If A fires \textbf{after} B, $A \to B$ is depressed (LTD). The magnitude depends expon\-entially on the time difference $\Delta t = t_{post} - t_{pre}$:
+
+$$\Delta w(A \to B) = \begin{cases}
+A\_+ \exp\!\left(-\dfrac{\Delta t}{\tau\_+}\right) \& \text{if } \Delta t \textgreater  0 \quad (\text{LTP: A precedes B}) \\[6pt]
+-A\_- \exp\!\left(\dfrac{\Delta t}{\tau\_-}\right) \& \text{if } \Delta t \leq 0 \quad (\text{LTD: A follows B})
+\end{cases}$$
+
+\textbf{CEREBRUM STDPDiscre\-tizer.} Each call to \texttt{process(source\_id, timestamp)} is a "spike". For every prior spike within \texttt{window\_seconds}:
+
+\begin{enumerate}
+\item \textbf{LTP pass} — compute $\Delta t = t_{post} - t_{pre} > 0$ and increment $w_{pre \to post}$ by $A_+ \exp(-\Delta t / \tau_+)$.
+\item \textbf{LTD pass} — simul\-taneously decrement the \textit{anti-causal} direction $w_{post \to pre}$ by $A_- \exp(-\Delta t / \tau_-)$, clamped to 0.
+\item \textbf{Forgetting} — after each spike, all weights are multiplied by $\lambda \in (0,1]$ (\texttt{weight\_decay}), providing exponential forgetting of old assoc\-iations.
+
+\end{enumerate}
+A directional \texttt{CAUSES(A→B)} edge is emitted when:
+\begin{equation}
+w(A \to B) \geq w_{threshold} \quad \text{AND} \quad n(A \to B) \geq n_{min}
+\end{equation}
+
+Default parameters ($A_+ = 0.1$, $A_- = 0.105$, $\tau_+ = \tau_- = 0.2\,\text{s}$) give slight LTD dominance — matching biological asymmetry measu\-rements where depression is marginally stronger than poten\-tiation to prevent runaway weight growth (Bi \& Poo, 1998).
+
+\textbf{Biological corre\-spondence.}
+
+\begin{center}
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+STDP Biology & CEREBRUM STDPDiscre\-tizer \\ \hline
+Pre fires before post $\to$ LTP & pre-spike within window\\_seconds $\to$ $w$ increment \\ \hline
+Post fires before pre $\to$ LTD & reverse direction decremented, clamped at 0 \\ \hline
+Exponential decay with $|\Delta t|$ & $A_\pm \exp(-|\Delta t|/\tau_\pm)$ \\ \hline
+Multip\-licative weight decay (forgetting) & \texttt{weight\_decay} per spike \\ \hline
+Synapse $\to$ "stren\-gthened causal pathway" & CAUSES edge in graph \\ \hline
+Threshold for synaptic conso\-lidation & $w \geq w_{threshold}$, $n \geq n_{min}$ \\ \hline
+\end{tabularx}
+\end{center}
+
+\textbf{Integration with the reasoning graph.} \texttt{CAUSES} edges participate in beam traversal identically to any other relation. In a manuf\-acturing sensor graph, after hours of operation, CEREBRUM will have auton\-omously inferred directed causal chains — e.g., \texttt{Pump\_A --[CAUSES]--\textgreater  Pressure\_Spike\_B --[CAUSES]--\textgreater  Relief\_Valve\_C} — from timing alone, without any domain-specific confi\-guration or labeled training data.
+
+---
+
+12.9 REM Cycle — Graph Memory Consol\-idation (Phase 14)
+
+Continuous operation accumulates speculative edges from stream discr\-etization, STDP poten\-tiation, and beam traversal. Without periodic conso\-lidation, low-confidence edges degrade community structure and inflate beam noise. The REM Cycle (\texttt{core/rem\_engine.py}) addresses this through three ordered phases.
+
+\textbf{Prune.} Edges with \texttt{confidence \textless  0.2} are candidates for removal. \texttt{BRIDGE\_TWIN} edges are uncon\-ditionally immune — they represent struc\-turally validated cross-community relays. All pruned edges are recorded in a rollback buffer.
+
+\textbf{Consolidate.} DSCF community detection is re-run on the surviving graph, refreshing community assignments for subsequent CSA weight computation.
+
+\textbf{Synthesize.} Entity pairs $(u, v)$ not yet connected by an edge but satisfying:
+
+\begin{equation}
+\cos(\mathbf{e}_u, \mathbf{e}_v) \geq 0.8 \quad \text{and} \quad d_G(u, v) \leq 4
+\end{equation}
+
+receive a new \texttt{rem\_synthesized} edge at \texttt{confidence = 0.3}. These edges make latent structural proximity explicit.
+
+\texttt{dry\_run=True} mode computes the proposed changes without modifying the graph. \texttt{rollback()} reverses the last committed cycle (one-level undo), restoring pruned edges and removing synthesized ones.
+
+\textbf{API Endpoints}
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Method & Endpoint & Description \\ \hline
+\texttt{POST} & \texttt{/rem/run} & Execute REM cycle (accepts \texttt{dry\_run} param) \\ \hline
+\texttt{POST} & \texttt{/rem/rollback} & Undo last REM cycle \\ \hline
+\texttt{GET} & \texttt{/rem/status} & Last REMReport and rollback avail\-ability \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+\textbf{Biological analog.} The REM Cycle corresponds to NREM slow-wave sleep: the brain suppresses sensory input, prunes weakly-potentiated synapses (synaptic homeostasis), and conso\-lidates frequently-activated pathways. CEREBRUM's Prune phase mirrors synaptic downscaling; Synthesize mirrors new associative link formation during conso\-lidation.
+
+---
+
+12.10 InsightEngine — Eureka Moment Detection (Phase 15)
+
+Not all reasoning paths carry equal infor\-mational value. A path that drama\-tically exceeds the historical score baseline for its community pair represents a structural discovery — an unexpected high-value connection the graph has not previously surfaced. The InsightEngine (\texttt{core/insight\_engine.py}) detects, records, reinforces, and cements these events.
+
+\textbf{Surprise Signal.} For a path $P$ connecting community pair $(c_i, c_j)$:
+
+\begin{equation}
+\text{surprise}(P) = \text{score}(P) - \mu_{c_i, c_j}
+\end{equation}
+
+where $\mu_{c_i, c_j}$ is the rolling mean score maintained in an $O(1)$ ring buffer. An \texttt{InsightEvent} is fired when $\text{surprise}(P) > \theta_{\text{salience}}$ (default $0.35$). The composite score is:
+
+\begin{equation}
+\text{insight\_score}(P) = \min\!\left(1,\; \frac{\text{surprise}(P) + \text{explanatory\_power}(P)}{2}\right)
+\end{equation}
+
+\textbf{Three-Tier Archit\-ecture.}
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Tier & Mechanism & CPU Cost \\ \hline
+Hot path & O(1) ring buffer baseline update; immediate surprise check & ~0\% \\ \hline
+Warm path & Background daemon aggregating and ranking recent InsightEvents & ~0.01\% \\ \hline
+Cold path & Periodic full community boundary scan & ~50 ms/hr \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+The hot path runs synch\-ronously in the traversal loop with no appreciable overhead. The warm daemon runs async\-hronously and does not block reasoning. The cold scan runs hourly by default and is available on-demand via \texttt{POST /insight/scan}.
+
+\textbf{INSIGHT\\_LINK Edges.} When an InsightEvent fires, the engine mater\-ializes an \texttt{INSIGHT\_LINK} edge between the terminal entities of the path:
+
+\begin{itemize}
+\item \texttt{confidence = 0.85} — well above the REM prune threshold, making \texttt{INSIGHT\_LINK} edges immune to REM pruning
+\item \texttt{weight = 2.0} — double the default, strongly boosting CSA attention for future traversals
+
+\end{itemize}
+\textbf{Hebbian Reward Propagation.} Every edge traversed by an insight path receives a weight increment:
+
+\begin{equation}
+\Delta w(u, v) = \delta_{\text{hebbian}} \times \text{insight\_score}(P), \quad \text{capped at } 1.0
+\end{equation}
+
+This strengthens the entire chain of reasoning that produced the insight, not only the terminal connection.
+
+\textbf{REM + Insight Consol\-idation Loop.}
+
+\begin{enumerate}
+\item \textbf{REM proposes} — Synthesize creates \texttt{rem\_synthesized} edges at \texttt{confidence = 0.3}
+\item \textbf{Traversal validates} — beam search uses synthesized edges; high-scoring paths generate surprise signals
+\item \textbf{Insight cements} — InsightEvent mater\-ializes \texttt{INSIGHT\_LINK} at \texttt{confidence = 0.85}, permanently above the REM prune threshold
+
+\end{enumerate}
+Connections that never generate insight remain at \texttt{0.3} and are pruned in the next REM cycle. This implements a use-it-or-lose-it conso\-lidation policy at the graph level.
+
+\textbf{API Endpoints}
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Method & Endpoint & Description \\ \hline
+\texttt{GET} & \texttt{/insight/status} & InsightEngine status and recent events \\ \hline
+\texttt{GET} & \texttt{/insight/events} & Recent InsightEvents (last $n$) \\ \hline
+\texttt{POST} & \texttt{/insight/scan} & On-demand community boundary insight scan \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+\textbf{Biological analogs.}
+
+\begin{center}
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Biological Mechanism & CEREBRUM InsightEngine \\ \hline
+Dopamine prediction-error signal & Surprise = path\\_score $-$ rolling\\_baseline \\ \hline
+Neurop\-lasticity (LTP at insight synapses) & Hebbian reward propagation along insight path \\ \hline
+Insight learning (aha moment) & InsightEvent fired when surprise \textgreater  salience\\_threshold \\ \hline
+Long-term memory conso\-lidation & INSIGHT\\_LINK at confidence=0.85, resisting REM pruning \\ \hline
+Sleep-dependent memory integration & REM proposes $\to$ Traversal validates $\to$ Insight cements \\ \hline
+\end{tabularx}
+\end{center}
+
+---
+
+12.11 Insight Validation and Metaco\-gnition (Phase 16)
+
+\textbf{InsightValidator} (\texttt{core/insight\_validator.py}) applies two independent structural tests to each \texttt{InsightEvent} before its confidence is promoted.
+
+\textit{Bilateral reverse traversal} — the original graph (excluding the INSIGHT\_LINK edge and the direct source↔target pair, to prevent circular self-validation) is searched for a return path from target to source within max\_hop steps. A return path found through independent structure constitutes genuine confi\-rmation:
+
+\begin{equation}
+\text{bilateral}(s, t) = \exists\; \text{path}_{G \setminus \{\text{INSIGHT\_LINK},\,(s,t)\}}(t \to s,\; |P| \leq h_{max})
+\end{equation}
+
+\textit{Multi-path corro\-boration} — other nodes in the source community are tested as independent entry points to the same target. The source node is removed from the test graph so corro\-borating paths cannot simply route through the source's existing edges:
+
+\begin{equation}
+\text{corroboration}(t) = \left|\left\{ u \in \mathcal{C}_s \setminus \{s,\,t\} \;\middle|\; \exists\; \text{path}_{G \setminus \{s\}}(u \to t,\; |P| \leq h_{max}) \right\}\right|
+\end{equation}
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Status & Condition & Confidence \\ \hline
+\texttt{corroborated} & bilateral ∧ corro\-boration $\ge$ 2 & \textbf{0.95} \\ \hline
+\texttt{bilateral} & bilateral ∧ corro\-boration \textless  2 & \textbf{0.92} \\ \hline
+\texttt{unilateral} & ¬bilateral ∧ corro\-boration $\ge$ 1 & 0.85 \\ \hline
+\texttt{isolated} & ¬bilateral ∧ corro\-boration = 0 & 0.85 (flagged) \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+\textbf{MetaInsightEngine} (\texttt{core/meta\_insight\_engine.py}) maintains an \textbf{InsightGraph} — a directed graph where nodes are InsightEvent IDs and edges are structural relat\-ionships between pairs of insights. Four relat\-ionship types are scored for each new arrival relative to all prior events:
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Relati\-onship & Trigger & Score \\ \hline
+\texttt{chain} & $A.\text{target} = B.\text{source}$ (or reverse) & $\frac{s_A + s_B}{2}$ \\ \hline
+\texttt{shared\_entity} & Common node in entity sets & $\times$ 0.8 \\ \hline
+\texttt{community\_overlap} & Same community\_leap $\ge$ 1 & $\times$ 0.6 \\ \hline
+\texttt{temporal\_cluster} & $|T_A - T_B| \leq \Delta t_{window}$ & $\times$ 0.4 \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+When a relat\-ionship score exceeds the threshold, a \texttt{MetaInsightEvent} fires. When three insights form a chain $A \to B \to C$ in the InsightGraph, a depth-2 event fires:
+
+\begin{equation}
+A \xrightarrow{\text{meta}} B \xrightarrow{\text{meta}} C \;\Rightarrow\; \text{MetaInsightEvent}(\text{depth}=2,\; \text{chain}=[A, B, C])
+\end{equation}
+
+This is second-order reasoning: the system observing a pattern in its own discovery history. The biological analog is \textbf{episodic schema formation} — the hippocampus binding related memories into abstract schemata during conso\-lidation, and recognizing when two schemata are themselves related (the cognitive substrate of analogical reasoning).
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Endpoint & Method & Description \\ \hline
+\texttt{POST} & \texttt{/insight/validate/all} & Validate all pending InsightEvents \\ \hline
+\texttt{POST} & \texttt{/insight/validate/{event\_id}} & Validate one InsightEvent by ID \\ \hline
+\texttt{GET} & \texttt{/meta-insight/status} & Engine state and InsightGraph size \\ \hline
+\texttt{GET} & \texttt{/meta-insight/events} & Recent MetaInsightEvent list \\ \hline
+\texttt{GET} & \texttt{/meta-insight/graph} & Full InsightGraph as JSON \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+---
+
+\begin{enumerate}
+\item Conclusion
+
+\end{enumerate}
+We have presented CEREBRUM: a framework that enables Knowledge Graphs to reason using the structural principles of Transformer attention without training data, without an LLM, and with full inter\-pretability.
+
+The two core contr\-ibutions — Community-Structured Attention (CSA) and Dual-Signal Community Fusion (DSCF) — work together to give a KG the dual character of multi-head attention: local cohesion (from DSCF's LPA component) combined with global structural signi\-ficance (from DSCF's modularity component).
+
+The resulting system produces reasoning paths, not \textbf{Black-Box} embeddings. Every
+answer is traceable to a sequence of verified graph edges. This archi\-tectural shift 
+moves AI from proba\-bilistic hidden-layer weights to a \textbf{Glass-Box} of deter\-ministic 
+paths — a vital transition in the modern AI/ML landscape. Every reasoning step names the community it traversed. This inter\-pretability property, combined with the graph-grounded capability of graph-grounded inference, positions CEREBRUM as a meaningful complement to — and in certain domains, replacement for — LLM-based reasoning over structured knowledge.
+
+The open questions identified in Section 10 define the ongoing research program. The benchmarks in Section 9 define the empirical standard. The archi\-tecture in Section 6 defines the core build. Phases 10–16 (Sections 11–12) demonstrate that the archi\-tecture scales to production, real-time streaming, experience-dependent structural plasticity, autonomous causal discovery, graph memory conso\-lidation, structural insight detection, bilateral verif\-ication, and second-order metac\-ognitive reasoning — all without modif\-ication to the core CSA or DSCF algorithms.
+
+Phase 14's REM Cycle implements a biolo\-gically-grounded conso\-lidation loop: pruning noise, refreshing community structure, and synth\-esizing latent connections — the graph equivalent of NREM slow-wave sleep. Phase 15's InsightEngine closes the loop: detecting when the graph discovers something genuinely unexpected, cementing those discoveries as high-confidence structural edges, and propagating Hebbian rewards along the reasoning chains that produced them. Together they give CEREBRUM a memory lifecycle — not just the ability to reason, but the ability to learn which reasoning mattered.
+
+Phase 16 completes the cognitive archi\-tecture. InsightValidator ensures that discoveries are struc\-turally verified before being trusted — requiring both a bilateral return path and independent corro\-boration from community peers, preventing any single speculative connection from being self-certified. MetaInsightEngine adds second-order awareness: it watches the stream of verified discoveries and recognizes when multiple insights are themselves struc\-turally related, firing depth-2 MetaInsightEvents for three-insight chains. The system now reasons, discovers, verifies its discoveries, and reasons about the pattern of its discoveries. This recursive self-awareness is the structural analog of analogical reasoning — the capacity to recognize that a new insight resembles a prior one, and that the resemblance itself is informative.
+
+The name CEREBRUM refers to the optical phenomenon where two viewpoints on the same object yield depth perception that neither viewpoint alone provides.
+LPA and modularity are two viewpoints on the same graph. Their combination yields structural depth — attention heads with both short-range and long-range character — that neither produces alone. This multi-signal consensus is inspired 
+by \textbf{mid-level voting} systems in triplex-redundant aircraft navigation, where 
+the median value is selected to correct navigation errors. CEREBRUM applies this 
+principle to "right the navigation errors" (hallu\-cinations) of current language 
+models by requiring structural consensus for every reasoning step.
+
+That depth is what makes the KG reason.
+
+References
+
+[1] Bi \& Poo, "Synaptic Modifi\-cations in Cultured Hippocampal Neurons," Journal of Neuros\-cience, 1998.
+[2] Scarselli et al., "The Graph Neural Network Model," IEEE TNNLS, 2009.
+[2] Gilmer et al., "Neural Message Passing for Quantum Chemistry," ICML, 2017.
+[3] Velickovic et al., "Graph Attention Networks," ICLR, 2018.
+[4] Hamilton et al., "Inductive Repres\-entation Learning on Large Graphs," NeurIPS, 2017.
+[5] Bordes et al., "Translating Embeddings for Modeling Multi-relational Data (TransE)," NeurIPS, 2013.
+[6] Sun et al., "RotatE: Knowledge Graph Embedding by Relational Rotation in Complex Space," ICLR, 2019.
+[7] Xiong et al., "DeepPath: A Reinfo\-rcement Learning Method for Knowledge Graph Reasoning," EMNLP, 2017.
+[8] Das et al., "Go for a Walk and Arrive at the Answer (MINERVA)," ICLR, 2018.
+[9] Yao et al., "KG-GPT: A General Framework for Reasoning on Knowledge Graphs Using LLMs," 2023.
+[10] Chen et al., "KGPT: Knowledge-Grounded Pre-Training for Data-to-Text Generation," EMNLP, 2020.
+[11] Edge et al., "From Local to Global: A Graph RAG Approach to Query-Focused Summar\-ization," Microsoft Research, 2024.
+[12] Sarthi et al., "RAPTOR: Recursive Abstractive Processing for Tree-Organized Retrieval," ICLR, 2024.
+[13] Blondel et al., "Fast Unfolding of Communities in Large Networks (Louvain)," JSTAT, 2008.
+[14] Traag et al., "From Louvain to Leiden: promoting Well-Connected Communities," Scientific Reports, 2019.
+[15] Raghavan et al., "Near Linear Time Algorithm to Detect Community Structures in Large-Scale Networks (LPA)," Physical Review E, 2007.
+[16] Galarraga et al., "AMIE: Association Rule Mining under Incomplete Evidence in Ontological Knowledge Bases," WWW, 2013.
+
+
+
+
+
+\bibliographystyle{IEEEtran}
+\bibliography{../../docs/latex/references}
+
+\end{document}

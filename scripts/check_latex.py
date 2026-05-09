@@ -29,11 +29,25 @@ categories = {
     'raw_braces':    [],
 }
 
+def para_non_code_text(p):
+    """Return paragraph text with Courier New run content replaced by spaces."""
+    parts = []
+    for r in p.runs:
+        if r.font.name == 'Courier New':
+            parts.append(' ' * len(r.text))
+        else:
+            parts.append(r.text)
+    return ''.join(parts)
+
 for i, p in enumerate(doc.paragraphs):
     t = p.text
     if not t.strip():
         continue
     if is_code_para(p):
+        continue
+    # Use only non-code-span text for pattern matching
+    t = para_non_code_text(p)
+    if not t.strip():
         continue
 
     if backslash_cmd.search(t):

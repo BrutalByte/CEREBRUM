@@ -1,8 +1,8 @@
-# SPEC_020: Vectorized Beam Scoring
+# [Buchorn, 2026]: Vectorized Beam Scoring
 ## NumPy-Vectorized Matrix Operations for High-Speed Traversal
 
 **Status**: v2.51.0 (Phase 167 COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
+**Author**: Bryan Alexander Buchorn  
 **Field**: Performance / Optimization
 **Modules**: `core/attention_engine.py`, `reasoning/traversal.py`
 

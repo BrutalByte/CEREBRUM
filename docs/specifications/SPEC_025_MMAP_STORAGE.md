@@ -1,8 +1,8 @@
-# SPEC_025: Memory-Mapped (Mmap) Graph Storage
+# [Buchorn, 2026]: Memory-Mapped (Mmap) Graph Storage
 ## Scaling to Massive Knowledge Graphs via NVMe
 
 **Status**: PROPOSED (Post-Phase 167)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
+**Author**: Bryan Alexander Buchorn  
 **Field**: Storage / Performance / Memory-Management
 **Target Modules**: `adapters/mmap_adapter.py`, `core/hardware.py`
 

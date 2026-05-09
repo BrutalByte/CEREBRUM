@@ -1,6 +1,6 @@
 # CEREBRUM — Testing Methodology
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6
+**Author**: Bryan Alexander Buchorn
 **Last updated**: 2026-05-07
 **Status**: Living document — updated each time the test strategy evolves.
 

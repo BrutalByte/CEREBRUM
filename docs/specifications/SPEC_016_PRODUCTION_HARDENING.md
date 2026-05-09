@@ -1,8 +1,8 @@
-# SPEC_016: Production Hardening
+# [Buchorn, 2026]: Production Hardening
 ## Twelve Structural Holes: Root Causes, Fixes, and Validation
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
+**Author**: Bryan Alexander Buchorn  
 **Field**: Production Systems / Correctness / Adversarial Hardening
 **Modules**: `core/bridge_engine.py`, `core/rebalancer.py`, `core/discretizer.py`, `core/thalamus.py`, `core/signal_encoder.py`, `core/attention_engine.py`, `reasoning/traversal.py`, `core/insight_validator.py`, `core/insight_engine.py`, `adapters/stream_adapter.py`, `adapters/remote_adapter.py`
 

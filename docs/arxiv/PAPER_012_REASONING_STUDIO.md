@@ -1,7 +1,7 @@
 # Glass-Box Reasoning Studio: Visualizing Graph Attention and Latent Multi-Hop Inference
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -20,8 +20,8 @@ The Studio implements a path-centric rendering algorithm that isolates the sub-g
 
 #### 2.2 Modal Animations
 For temporal and streaming data, the Studio utilizes high-frequency state updates:
--   **Potentiation**: Edges being strengthened by LTP (SPEC_003) increase in saturation.
--   **Drift**: Community boundaries shift smoothly using force-directed layouts to reflect modularity updates (SPEC_007).
+-   **Potentiation**: Edges being strengthened by LTP [Buchorn, 2026] increase in saturation.
+-   **Drift**: Community boundaries shift smoothly using force-directed layouts to reflect modularity updates [Buchorn, 2026].
 
 ### 3. Interactive Debugging (v2.51.0)
 The Studio provides a "Dialectical reasoning" mode where users can manually adjust CSA parameters ($\alpha, \beta, \gamma$) via sliders and observe the immediate physical shift in the reasoning beam, providing a "Human-in-the-Loop" (HITL) interface for hyperparameter tuning. In v2.51.0, this includes real-time feedback submission to the **MetaParameterLearner**.
@@ -76,7 +76,7 @@ The Glass-Box Reasoning Studio transforms graph attention from an abstract mathe
 4. Miller, T. (2019). Explanation in artificial intelligence: Insights from the social sciences. Artificial Intelligence.
 5. Samek, W., et al. (2017). Explainable AI: Interpreting, Explaining and Visualizing Deep Learning. Springer.
 6. Lundberg, S. M., & Lee, S. I. (2017). A Unified Approach to Interpreting Model Predictions. NIPS.
-7. Buchorn, B. A., & Sonnet, C. (2026). Interactive Graph Attention in CEREBRUM. SPEC_012.md.
+7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0

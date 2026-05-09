@@ -1,8 +1,8 @@
-# SPEC_023: GraphProfiler
+# [Buchorn, 2026]: GraphProfiler
 ## Automatic Graph Regime Classification
 
 **Status**: v2.51.0 (Phase 167 COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
+**Author**: Bryan Alexander Buchorn  
 **Field**: Topology / Auto-Config
 **Module**: `core/graph_profiler.py`
 

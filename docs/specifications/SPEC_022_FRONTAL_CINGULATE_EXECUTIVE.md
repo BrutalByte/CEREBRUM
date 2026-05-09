@@ -1,8 +1,8 @@
-# SPEC_022: Frontal and Cingulate Executive Engines
+# [Buchorn, 2026]: Frontal and Cingulate Executive Engines
 ## Meta-Reasoning and Adaptive Strategy Selection
 
 **Status**: v2.51.0 (Phase 167 COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
+**Author**: Bryan Alexander Buchorn  
 **Field**: Metacognition / Executive Function
 **Modules**: `core/frontal_engine.py`, `core/cingulate_engine.py`
 

@@ -1,8 +1,8 @@
-# SPEC_019: Counterfactual Engine
+# [Buchorn, 2026]: Counterfactual Engine
 ## Simulation of Hypothetical Graph States
 
 **Status**: v2.51.0 (Phase 167 COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
+**Author**: Bryan Alexander Buchorn  
 **Field**: Causal Inference / Simulation
 **Modules**: `core/counterfactual_engine.py`, `core/causal_engine.py`
 

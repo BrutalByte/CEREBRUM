@@ -69,7 +69,7 @@ Each submission requires the following metadata fields on arXiv:
 
 ```
 Title:        [From paper header]
-Authors:      Bryan Alexander Buchorn; Claude Sonnet 4.6 (Research Collaborator, Anthropic)
+Authors:      Bryan Alexander Buchorn
 Abstract:     [From paper Abstract section — max 1,920 characters]
 Comments:     16 pages. Part of the CEREBRUM framework series (v2.51.0).
               Code: https://github.com/[repo]
@@ -130,7 +130,7 @@ done
 - [ ] All equations render correctly in LaTeX
 - [ ] All tables have `\toprule/\midrule/\bottomrule` (booktabs style)
 - [ ] All citations in `refs.bib` with correct BibTeX keys
-- [ ] Author affiliations: "Independent Researcher" + "Anthropic"
+- [ ] Author affiliation: "Independent Researcher, Las Vegas, NV, USA"
 - [ ] Prior art section explicitly differentiates from closest prior work
 - [ ] Benchmark numbers match `release/BENCHMARKS.md`
 - [ ] GitHub/code link included in Comments field
@@ -146,7 +146,7 @@ Papers cite each other. Use consistent arXiv IDs once papers 1–4 are submitted
 ```bibtex
 @article{buchorn2026dscf,
   title   = {Dual-Signal Community Fusion for Knowledge Graph Attention},
-  author  = {Buchorn, Bryan Alexander and {Claude Sonnet 4.6}},
+  author  = {Buchorn, Bryan Alexander},
   journal = {arXiv preprint arXiv:2026.XXXXX},
   year    = {2026}
 }

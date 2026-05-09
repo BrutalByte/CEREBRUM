@@ -1,8 +1,8 @@
-# SPEC_011: Contradiction Materialization Engine
+# [Buchorn, 2026]: Contradiction Materialization Engine
 ## Reasoning about Factual Conflict and Uncertainty
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
+**Author**: Bryan Alexander Buchorn  
 **Field**: Formal Logic / Knowledge Integrity / Evidence-Based Reasoning  
 **Module**: `core/contradiction_engine.py`
 
@@ -38,12 +38,12 @@ Instead of deleting the "weaker" fact, the engine expands the graph:
 
 ### 4. Reasoning through Conflict
 
-The **CSA Engine** (SPEC_002) recognizes `CONTRADICTS` edges as "High-Surprise" signals. 
+The **CSA Engine** [Buchorn, 2026] recognizes `CONTRADICTS` edges as "High-Surprise" signals. 
 -   **Exploratory Mode**: The reasoning beam can follow a contradiction link to explore alternative hypotheses.
 -   **Skeptical Mode**: The presence of a contradiction link reduces the attention weight of both associated facts, forcing the beam to seek a third "triangulating" source.
 
 ### 5. Implementation Notes
-*   **Background Scanning**: Contradiction detection is scheduled during the **REM Cycle** (SPEC_007) to prevent overhead during active ingestion.
+*   **Background Scanning**: Contradiction detection is scheduled during the **REM Cycle** [Buchorn, 2026] to prevent overhead during active ingestion.
 *   **Resolution Hooks**: Provides an API for human-in-the-loop (HITL) resolution, where a human expert can "Verify" one side of a conflict, causing the engine to prune the `CONTRADICTS` edge and its opposing fact.
 
 > **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.

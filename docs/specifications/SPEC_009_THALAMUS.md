@@ -1,8 +1,8 @@
-# SPEC_009: THALAMUS
+# [Buchorn, 2026]: THALAMUS
 ## Intelligent Ingestion Preprocessing and Normalization
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
+**Author**: Bryan Alexander Buchorn  
 **Field**: Data Engineering / Ontology Mapping / Parallel Systems  
 **Module**: `core/thalamus.py`
 
@@ -27,7 +27,7 @@ To prevent "Identity Collapse" across modalities, THALAMUS enforces strict names
 This ensures that a reasoning path cannot jump from a "Pressure" sensor directly to a "Pressure" project document unless an explicit cross-modal edge exists.
 
 #### 2.3 Provenance Tracking
-Every triple processed by THALAMUS is decorated with a `provenance_id` and a `trust_score`. This enables the **CSA Engine** (SPEC_002) to weight edges based on the reliability of the source.
+Every triple processed by THALAMUS is decorated with a `provenance_id` and a `trust_score`. This enables the **CSA Engine** [Buchorn, 2026] to weight edges based on the reliability of the source.
 
 ### 3. Enterprise Optimization: Parallel Ingestion (Hole Fix 1.2.0)
 

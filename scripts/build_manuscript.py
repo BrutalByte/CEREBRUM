@@ -41,21 +41,21 @@ LATEX_SUBS = [
     # Blackboard bold
     (r'\\mathbb\{R\}', 'ℝ'), (r'\\mathbb\{N\}', 'ℕ'),
     (r'\\mathbb\{Z\}', 'ℤ'), (r'\\mathbb\{([A-Z])\}', r'\1'),
-    # Greek lowercase (must be before \sigma etc. matching)
-    (r'\\alpha\b',   'α'), (r'\\beta\b',    'β'), (r'\\gamma\b',   'γ'),
-    (r'\\delta\b',   'δ'), (r'\\varepsilon','ε'), (r'\\epsilon\b', 'ε'),
-    (r'\\zeta\b',    'ζ'), (r'\\eta\b',     'η'), (r'\\theta\b',   'θ'),
-    (r'\\iota\b',    'ι'), (r'\\kappa\b',   'κ'), (r'\\lambda\b',  'λ'),
-    (r'\\mu\b',      'μ'), (r'\\nu\b',      'ν'), (r'\\xi\b',      'ξ'),
-    (r'\\pi\b',      'π'), (r'\\rho\b',     'ρ'), (r'\\sigma\b',   'σ'),
-    (r'\\tau\b',     'τ'), (r'\\upsilon\b', 'υ'), (r'\\varphi\b',  'φ'),
-    (r'\\phi\b',     'φ'), (r'\\chi\b',     'χ'), (r'\\psi\b',     'ψ'),
-    (r'\\omega\b',   'ω'),
+    # Greek lowercase — use (?![a-zA-Z]) not \b; \b fails before _ (word char)
+    (r'\\alpha(?![a-zA-Z])',   'α'), (r'\\beta(?![a-zA-Z])',    'β'), (r'\\gamma(?![a-zA-Z])',   'γ'),
+    (r'\\delta(?![a-zA-Z])',   'δ'), (r'\\varepsilon(?![a-zA-Z])','ε'), (r'\\epsilon(?![a-zA-Z])', 'ε'),
+    (r'\\zeta(?![a-zA-Z])',    'ζ'), (r'\\eta(?![a-zA-Z])',     'η'), (r'\\theta(?![a-zA-Z])',   'θ'),
+    (r'\\iota(?![a-zA-Z])',    'ι'), (r'\\kappa(?![a-zA-Z])',   'κ'), (r'\\lambda(?![a-zA-Z])',  'λ'),
+    (r'\\mu(?![a-zA-Z])',      'μ'), (r'\\nu(?![a-zA-Z])',      'ν'), (r'\\xi(?![a-zA-Z])',      'ξ'),
+    (r'\\pi(?![a-zA-Z])',      'π'), (r'\\rho(?![a-zA-Z])',     'ρ'), (r'\\sigma(?![a-zA-Z])',   'σ'),
+    (r'\\tau(?![a-zA-Z])',     'τ'), (r'\\upsilon(?![a-zA-Z])', 'υ'), (r'\\varphi(?![a-zA-Z])',  'φ'),
+    (r'\\phi(?![a-zA-Z])',     'φ'), (r'\\chi(?![a-zA-Z])',     'χ'), (r'\\psi(?![a-zA-Z])',     'ψ'),
+    (r'\\omega(?![a-zA-Z])',   'ω'),
     # Greek uppercase
-    (r'\\Gamma\b',   'Γ'), (r'\\Delta\b',   'Δ'), (r'\\Theta\b',   'Θ'),
-    (r'\\Lambda\b',  'Λ'), (r'\\Xi\b',      'Ξ'), (r'\\Pi\b',      'Π'),
-    (r'\\Sigma\b',   'Σ'), (r'\\Upsilon\b', 'Υ'), (r'\\Phi\b',     'Φ'),
-    (r'\\Psi\b',     'Ψ'), (r'\\Omega\b',   'Ω'),
+    (r'\\Gamma(?![a-zA-Z])',   'Γ'), (r'\\Delta(?![a-zA-Z])',   'Δ'), (r'\\Theta(?![a-zA-Z])',   'Θ'),
+    (r'\\Lambda(?![a-zA-Z])',  'Λ'), (r'\\Xi(?![a-zA-Z])',      'Ξ'), (r'\\Pi(?![a-zA-Z])',      'Π'),
+    (r'\\Sigma(?![a-zA-Z])',   'Σ'), (r'\\Upsilon(?![a-zA-Z])', 'Υ'), (r'\\Phi(?![a-zA-Z])',     'Φ'),
+    (r'\\Psi(?![a-zA-Z])',     'Ψ'), (r'\\Omega(?![a-zA-Z])',   'Ω'),
     # Math envs (strip wrappers)
     (r'\\begin\{aligned\}', ''), (r'\\end\{aligned\}', ''),
     (r'\\begin\{cases\}',   '{ '), (r'\\end\{cases\}', ''),
@@ -81,7 +81,7 @@ LATEX_SUBS = [
     (r'\\to(?![a-zA-Z])',' → '),(r'\\gets(?![a-zA-Z])',' ← '),
     (r'\\Rightarrow(?![a-zA-Z])',' ⇒ '),(r'\\Leftarrow(?![a-zA-Z])',' ⇐ '),
     (r'\\implies(?![a-zA-Z])',' ⇒ '),(r'\\iff(?![a-zA-Z])',' ⟺ '),
-    (r'\\Leftrightarrow(?![a-zA-Z])',' ⟺ '),
+    (r'\\leftrightarrow(?![a-zA-Z])',' ↔ '),(r'\\Leftrightarrow(?![a-zA-Z])',' ⟺ '),
     (r'\\forall\b','∀'),  (r'\\exists\b','∃'),
     (r'\\sum(?![a-zA-Z])','Σ'),(r'\\prod(?![a-zA-Z])','Π'),(r'\\int(?![a-zA-Z])','∫'),
     (r'\\partial\b','∂'), (r'\\nabla\b', '∇'),
@@ -98,7 +98,7 @@ LATEX_SUBS = [
     (r'\\neg\b','¬'), (r'\\top\b','⊤'), (r'\\bot\b','⊥'),
     (r'\\propto\b',' ∝ '), (r'\\sim\b',' ~ '),
     (r'\\setminus\b',' \\ '), (r'\\gg\b',' ≫ '), (r'\\ll\b',' ≪ '),
-    (r'\\mathbin\\[|]',' ‖ '), (r'\\mathbin\|',' ‖ '), (r'\\mathbin\\|',' ‖ '),
+    (r'\\mathbin\s*\{\\\|\}', ' ‖ '), (r'\\mathbin\s*\\\|',' ‖ '), (r'\\mathbin\s*\|',' | '),
     (r'\\dots\b','…'), (r'\\vdash\b',' ⊢ '), (r'\\models\b',' ⊨ '),
     (r'\\perp\b','⊥'), (r'\\parallel\b','∥'),
     (r'\\mid\b',' | '), (r'\\vert\b','|'), (r'\\Vert\b','‖'),
@@ -320,6 +320,8 @@ def preprocess(text):
     """Clean LaTeX commands that appear in plain text (outside $ markers).
     Applies full clean_math() conversion to any backslash-command sequences,
     and also converts _{...} / ^{...} subscript/superscript notation."""
+    # Strip null bytes from source
+    text = text.replace('\x00', '')
     # Always convert _{...} and ^{...} subscript/superscript even without backslash
     text = re.sub(r'_\{([^}]+)\}', lambda m: _to_sub(m.group(1)), text)
     text = re.sub(r'\^\{([^}]+)\}', lambda m: _to_sup(m.group(1)), text)
@@ -342,16 +344,22 @@ def preprocess(text):
     text = text.replace('\u27E8', '(').replace('\u27E9', ')')
     return text
 
-def add_inline(para, text, base_size=11, base_font='Cambria', base_color=BLACK, base_bold=False):
-    """Parse inline Markdown/math tokens and add runs to paragraph."""
-    text = preprocess(text)
-    for kind, content in tokenize(text):
+def _add_inline_tokens(para, tokens, base_size, base_font, base_color, base_bold,
+                        outer_bold=False, outer_italic=False):
+    """Add tokenized runs to paragraph, handling nested math in bold/italic spans."""
+    for kind, content in tokens:
         if kind == 'text':
-            add_run(para, content, bold=base_bold, size=base_size, font=base_font, color=base_color)
+            add_run(para, content, bold=base_bold or outer_bold, italic=outer_italic,
+                    size=base_size, font=base_font, color=base_color)
         elif kind == 'bold':
-            add_run(para, content, bold=True, size=base_size, font=base_font, color=base_color)
+            # Recursively tokenize bold content so $math$ inside **bold** is handled
+            inner = list(tokenize(preprocess(content)))
+            _add_inline_tokens(para, inner, base_size, base_font, base_color, base_bold,
+                                outer_bold=True, outer_italic=outer_italic)
         elif kind == 'italic':
-            add_run(para, content, italic=True, size=base_size, font=base_font, color=base_color)
+            inner = list(tokenize(preprocess(content)))
+            _add_inline_tokens(para, inner, base_size, base_font, base_color, base_bold,
+                                outer_bold=outer_bold, outer_italic=True)
         elif kind == 'code':
             r = para.add_run(content)
             r.font.name = 'Courier New'
@@ -359,8 +367,14 @@ def add_inline(para, text, base_size=11, base_font='Cambria', base_color=BLACK, 
             r.font.color.rgb = rgb(CODEFG)
         elif kind == 'math':
             cleaned = clean_math(content)
-            add_run(para, cleaned, bold=base_bold, italic=True, size=base_size,
-                    font=base_font, color=BLUE)
+            add_run(para, cleaned, bold=base_bold or outer_bold, italic=True,
+                    size=base_size, font=base_font, color=BLUE)
+
+def add_inline(para, text, base_size=11, base_font='Cambria', base_color=BLACK, base_bold=False):
+    """Parse inline Markdown/math tokens and add runs to paragraph."""
+    text = preprocess(text)
+    tokens = list(tokenize(text))
+    _add_inline_tokens(para, tokens, base_size, base_font, base_color, base_bold)
 
 def heading(doc, text, level):
     """Add a styled heading paragraph."""

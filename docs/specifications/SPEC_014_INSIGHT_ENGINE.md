@@ -1,8 +1,8 @@
-# SPEC_014: Verification and Metacognition
+# [Buchorn, 2026]: Verification and Metacognition
 ## InsightValidator, InsightEngine, and MetaInsightEngine
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
+**Author**: Bryan Alexander Buchorn  
 **Field**: Metacognition / Self-Verification / Second-Order Reasoning
 **Modules**: `core/insight_validator.py`, `core/meta_insight_engine.py`
 
@@ -67,7 +67,7 @@ VERIFIED ──(probes fail × 2 cycles)──► REFUTED (deleted)
 ```
 
 #### 2.4 Batch Validation
-The REM Cycle (SPEC_007) calls `InsightValidator.validate_batch(edges, max_workers=4)` during the Cold Path (hourly). Validation is parallelized via thread pool; each probe uses a separate traversal context to avoid contention.
+The REM Cycle [Buchorn, 2026] calls `InsightValidator.validate_batch(edges, max_workers=4)` during the Cold Path (hourly). Validation is parallelized via thread pool; each probe uses a separate traversal context to avoid contention.
 
 ### 3. InsightEngine
 

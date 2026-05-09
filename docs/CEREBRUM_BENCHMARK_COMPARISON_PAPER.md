@@ -1,7 +1,7 @@
 # CEREBRUM Benchmark Comparison Paper
 ## Zero-Shot Knowledge Graph Reasoning vs. Trained Baselines: A Comprehensive Analysis
 
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)  
+**Author**: Bryan Alexander Buchorn
 **Version**: v2.51.1 · Phase 167 COMPLETE — 2177 tests passing  
 **Date**: May 2026  
 **Status**: Proprietary — all rights reserved

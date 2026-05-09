@@ -13,7 +13,7 @@ retroactively; failures are recorded as faithfully as passes.
 | **Date**          | 2026-05-07 |
 | **Phase**         | Post-Phase 167 (v2.51.0) |
 | **Purpose**       | Full quality audit; fix all pre-existing test failures |
-| **Operator**      | Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Root Causes Fixed
 
@@ -105,7 +105,7 @@ retroactively; failures are recorded as faithfully as passes.
 | **Date**          | 2026-03-18 |
 | **Phase**         | Phase 1 / Phase 2 (Core Engine + Reasoning Engine) |
 | **Purpose**       | Establish baseline before any new test development |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 | **Repo commit**   | d973075 |
 
 ### Environment
@@ -216,7 +216,7 @@ with verifiable, human-inspectable expected output.
 | **Date**          | 2026-03-18 |
 | **Phase**         | Phase 1 / Phase 2 — coverage expansion |
 | **Purpose**       | First run with new test files (test_csv_aadapter, test_structural_encoder, test_end_to_end) |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 | **Repo commit**   | *(pre-commit)* |
 
 ### Environment
@@ -268,7 +268,7 @@ documentation. This is the correct behavior.
 | **Date**          | 2026-03-18 |
 | **Phase**         | Phase 1 / Phase 2 — coverage complete |
 | **Purpose**       | Confirm fix for Run 002a failure; verify all new tests pass |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 | **Repo commit**   | *(to be filled after commit)* |
 
 ### Environment
@@ -400,7 +400,7 @@ Phase 4: Benchmarking (WebQSP, MetaQA-3hop)
 | **Date**          | 2026-03-18 |
 | **Phase**         | Phase 3 — Aadapters & API |
 | **Purpose**       | First run with ttest_api.py and test_llm_bridge.py |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 | **Repo commit**   | d96d93c |
 
 ### Results
@@ -450,7 +450,7 @@ All 27 `test_llm_bridge.py` tests passed immediately. `to_prompt()` and
 | **Date**          | 2026-03-18 |
 | **Phase**         | Phase 3 — Aadapters & API — COMPLETE |
 | **Purpose**       | Confirm fixes from Run 003a; full suite regression check |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 | **Repo commit**   | *(to be filled after commit)* |
 
 ### Environment
@@ -505,7 +505,7 @@ Phase 4: Benchmarking (WebQSP, MetaQA-3hop)
 | **Date**          | 2026-03-19 |
 | **Phase**         | Phase 4 — Benchmarking Setup |
 | **Type**          | Engineering finding (not a test run) |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Context
 
@@ -589,7 +589,7 @@ All subsequent benchmark runs use this cache (via `--use-cache`), avoiding the
 | **Date**          | 2026-03-19 |
 | **Phase**         | Phase 4 — Benchmarking |
 | **Purpose**       | Validate benchmark pipeline correctness on small sample before full run |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Environment
 
@@ -634,7 +634,7 @@ No traversal output was produced. See EF-002 for root cause diagnosis.
 | **Date**          | 2026-03-19 |
 | **Phase**         | Phase 4 — Benchmarking Setup |
 | **Type**          | Engineering failure (blocking) |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 | **Discovered via**| Run 004a — process ran >25 minutes with no output |
 
 ### Symptom
@@ -724,7 +724,7 @@ Re-run after fix as Run 004b.
 | **Date**          | 2026-03-19 |
 | **Phase**         | Phase 4 — Benchmarking |
 | **Purpose**       | Re-run sample benchmark after capping BFS depth in distance matrix |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Fix applied to `core/structural_encoder.py`
 
@@ -846,7 +846,7 @@ Building CSA engine...
 | **Date**          | 2026-03-19 |
 | **Phase**         | Phase 4 — Benchmarking |
 | **Purpose**       | Full-scale evaluation on all MetaQA test questions (no sampling) |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Environment
 
@@ -999,7 +999,7 @@ evaluation is internally consistent.
 | **Date**          | 2026-03-19 |
 | **Phase**         | Phase 4 — Benchmarking |
 | **Purpose**       | Isolate contribution of DSCF community detection vs LPA vs no attention |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Variants
 
@@ -1118,7 +1118,7 @@ This is flagged as the next experimental step.
 | **Date**          | 2026-03-19 |
 | **Phase**         | Phase 4 — Benchmarking |
 | **Purpose**       | Evaluate whether real semantic embeddings (sentence-transformers) allow CSA to outperform BFS |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Rationale
 
@@ -1282,7 +1282,7 @@ is DSCF resolution tuning for MetaQA's star topology.
 | **Date**          | 2026-03-19 |
 | **Phase**         | Phase 4 — Post-benchmark analysis |
 | **Type**          | Engineering finding (parameter behavior) |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Context
 
@@ -1364,7 +1364,7 @@ re-run full benchmark + ablation. Record as Run 008.
 | **Date**          | 2026-03-19 |
 | **Phase**         | Phase 4 — Post-benchmark analysis |
 | **Purpose**       | Test whether post-processing community merger improves CSA performance |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Results (500 questions/hop, RandomEngine)
 
@@ -1390,7 +1390,7 @@ root cause is identified in EF-004 below.
 | **Date**          | 2026-03-19 |
 | **Phase**         | Phase 4 — Root cause analysis |
 | **Type**          | Engineering finding (fundamental dataset incompatibility) |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### The discovery
 
@@ -1463,7 +1463,7 @@ core contribution.
 | **Phase**         | Phase 4 — New benchmarks |
 | **Purpose**       | Directly test CSA advantage on controlled intra-community questions |
 | **File**          | `benchmarks/synthetic_eval.py` |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Graph configuration
 
@@ -2174,7 +2174,7 @@ The CSAEngine refactor modified the constructor to require an explicit adapter 
 | **Date**          | 2026-03-24 |
 | **Phase**         | v1.2.0 — Phase 22 |
 | **Result**        | 1,024 passed (all research milestones operational) |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Summary of Actions
 
@@ -2217,7 +2217,7 @@ The CSAEngine refactor modified the constructor to require an explicit adapter 
 | **Date**          | 2026-03-24 |
 | **Phase**         | v1.2.0 — Phase 21 |
 | **Result**        | 1,024 passed, 1 skipped, 0 failures |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Summary of Actions
 
@@ -2258,7 +2258,7 @@ The CSAEngine refactor modified the constructor to require an explicit adapter 
 | **Date**          | 2026-03-24 |
 | **Phase**         | v1.1.0 — Phase 20 |
 | **Result**        | 994 passed, 1 skipped, 0 failures |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Command
 
@@ -2302,7 +2302,7 @@ pytest tests/ -x -q
 | **Date**          | 2026-03-24 |
 | **Phase**         | v1.0.0 — Post-Phase 19 accuracy verification |
 | **Purpose**       | Measure accuracy impact of all four v1.0 structural-hole fixes on controlled synthetic scenarios |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Command
 
@@ -2382,7 +2382,7 @@ python -m benchmarks.v1_accuracy_eval
 | **Date**          | 2026-03-24 |
 | **Phase**         | Phase 19 — v1.0 Production Hardening (four structural holes) |
 | **Purpose**       | Fix cross-feature interaction bugs identified in v0.4.0 architecture analysis |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Summary of Actions
 
@@ -2428,7 +2428,7 @@ python -m benchmarks.v1_accuracy_eval
 | **Date**          | 2026-03-23 |
 | **Phase**         | v0.4.0 — Post-Phase 18 benchmark verification |
 | **Purpose**       | Re-run synthetic benchmarks with corrected ResourceGovernor threshold; refresh BENCHMARKS.md with live numbers |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 | **Repo commit**   | 53aa274 |
 
 ### Commands
@@ -2480,7 +2480,7 @@ python -m benchmarks.graph_algo_comparison --mode synthetic
 | **Date**          | 2026-03-23 |
 | **Phase**         | Phase 18 — v0.4 Horizon (three engineering gaps) |
 | **Purpose**       | Close structural gaps in THALAMUS, CORTEX, and LLM bridge |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Summary of Actions
 
@@ -2552,7 +2552,7 @@ python -m benchmarks.graph_algo_comparison --mode synthetic
 | **Date**          | 2026-03-21 |
 | **Phase**         | Phase 13 — Spike-Timing Dependent Plasticity |
 | **Purpose**       | Add directional causal edge inference to streaming pipeline |
-| **Operator**      | Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Summary of Actions
 - **STDPDiscretizer** added to `core/discretizer.py`: LTP/LTD from spike timing, CAUSES edges at threshold
@@ -2621,7 +2621,7 @@ python -m benchmarks.graph_algo_comparison --mode synthetic
 ## Run 033 — v1.5.0: Phase 25 Universal Hardware Support + Benchmarks
 | **Date**          | 2026-03-28 |
 | **Phase**         | Phase 25 — Universal Hardware Support |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Summary of Actions
 - **`core/hardware.py`** — full HAL rewrite: added `HAS_ROCM` (AMD ROCm via `torch.version.hip`), `HAS_HPU` (Intel Gaudi via `habana_frameworks` / `torch.hpu`), `HAS_XLA` (Google TPU / AWS Trainium via `torch_xla`), `IS_ARM64`, `IS_JETSON` platform flags. Added `get_best_cuda_device()` (multi-GPU VRAM-aware selection), `get_gpu_vram_mb()`, and `resolve_torch_device()` (unified priority chain: CUDA best-card → MPS → HPU → XLA → CPU).
@@ -2654,7 +2654,7 @@ python -m benchmarks.graph_algo_comparison --mode synthetic
 ## Run 034 — v1.5.0: Full-System Benchmark (Raw vs THALAMUS Pipeline)
 | **Date**          | 2026-03-28 |
 | **Phase**         | Phase 25 — Full-System Validation |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 
 ### Summary
 Definitive benchmark comparing raw graph load (no pipeline, random embeddings, 15,146 degenerate communities) against full THALAMUS ingestion (IngestionPipeline entity/relation normalization, SentenceEngine 384-dim embeddings, coarsen_communities to 300 meaningful attention heads, Bayesian beam warm_start=3).
@@ -2685,7 +2685,7 @@ The 3-hop result (+10.7pp) proves that deep multi-hop reasoning depends critical
 | **Date**          | 2026-03-29 |
 | **Phase**         | Phase 26 — Optimized Reasoning Pipeline |
 | **Purpose**       | Implement and benchmark VARIANT C (OPTIMIZED): all accuracy improvements stacked |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 | **Version**       | v1.6.0 |
 
 ### Changes implemented
@@ -2737,7 +2737,7 @@ The 3-hop result (+10.7pp) proves that deep multi-hop reasoning depends critical
 | **Date**          | 2026-03-29 |
 | **Phase**         | Phase 26 — Performance Hardening |
 | **Purpose**       | Fix 247x latency regression in OPTIMIZED variant caused by redundant per-edge computation |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 | **Version**       | v1.6.0 |
 
 ### Root Causes Identified
@@ -2790,7 +2790,7 @@ Full benchmark now completes in ~25 min vs estimated 8+ hours before.
 | **Date**          | 2026-03-29 |
 | **Phase**         | Phase 26 — Answer Extraction Fix |
 | **Purpose**       | Path convergence voting + query embedding + KGE weight fix → beat MINERVA |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 | **Version**       | v1.6.1 |
 
 ### Root Cause of Deep-Hop Gap
@@ -3307,7 +3307,7 @@ collected 1249 items
 | **Date**          | 2026-04-07 |
 | **Phase**         | Phase 57 (Engram Persistence + Stream Guard + ProcessPool Fallback) |
 | **Purpose**       | Verify Phase 56-57 fault tolerance hardening, new tests, and no regressions |
-| **Operator**      | Bryan Alexander Buchorn / Claude Sonnet 4.6 |
+| **Operator**      | Bryan Alexander Buchorn |
 | **Repo commit**   | 81031f2 |
 
 ### Environment

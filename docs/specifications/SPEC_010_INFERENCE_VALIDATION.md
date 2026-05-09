@@ -1,8 +1,8 @@
-# SPEC_010: Inference Validator
+# [Buchorn, 2026]: Inference Validator
 ## Self-Contained Precision/Recall Methodology for Unsupervised Graph Reasoning
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
+**Author**: Bryan Alexander Buchorn  
 **Field**: Model Evaluation / Information Retrieval / Graph Algorithms  
 **Module**: `core/inference_validator.py`
 
@@ -31,7 +31,7 @@ This ensures that the "Reasoning Task" is valid—the answer *is* discoverable f
 For each hold-out trial, the reasoning engine is queried for $u \to ?$ or $? \to v$.
 
 #### 3.1 Unsupervised Recall
-Recall is the fraction of trials where the held-out target $v$ is present in the top-$K$ answers returned by the **BeamTraversal** (SPEC_006):
+Recall is the fraction of trials where the held-out target $v$ is present in the top-$K$ answers returned by the **BeamTraversal** [Buchorn, 2026]:
 $$R@K = \frac{|\text{Rediscovered Edges}|}{|\text{Total Hold-outs}|}$$
 
 #### 3.2 Unsupervised Precision
@@ -47,8 +47,8 @@ The `InferenceValidator` class executes the following workflow:
 5.  **Restore**: Return the metrics and release the transient graph.
 
 ### 5. Use Cases
-*   **A/B Testing**: Compare different CSA parameters (SPEC_002) to see which configuration yields higher recall.
-*   **Confidence Hardening**: Use validation scores to adjust the `warm_start_strength` in **Bayesian Beam Search** (SPEC_006).
+*   **A/B Testing**: Compare different CSA parameters [Buchorn, 2026] to see which configuration yields higher recall.
+*   **Confidence Hardening**: Use validation scores to adjust the `warm_start_strength` in **Bayesian Beam Search** [Buchorn, 2026].
 *   **Infrastructure Health**: Periodically run validation on a production graph to detect "Reasoning Decay" as data drift occurs.
 
 > **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.

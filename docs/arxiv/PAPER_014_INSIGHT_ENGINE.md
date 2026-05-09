@@ -1,7 +1,7 @@
 # Metacognitive Verification in Knowledge Graph Reasoning: InsightValidator, MetaInsightEngine, and Second-Order Structural Reasoning
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
-**Affiliations**: Independent Researcher · Anthropic
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -56,7 +56,7 @@ Every reasoning event — a query execution, a new edge validation, a community 
 - `CO_OCCURRED`: Two events fired within a configurable time window
 
 #### 3.2 Second-Order CSA Traversal
-The MetaInsightEngine runs the standard CSA traversal (SPEC_002) on $G_{meta}$ using `InsightEvent` attributes as embeddings. Specifically, each event node is embedded with:
+The MetaInsightEngine runs the standard CSA traversal [Buchorn, 2026] on $G_{meta}$ using `InsightEvent` attributes as embeddings. Specifically, each event node is embedded with:
 - Relation-type distribution of edges in the primary reasoning path
 - Community IDs traversed
 - Confidence scores at each hop

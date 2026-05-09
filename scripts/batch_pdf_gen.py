@@ -5,12 +5,13 @@ import subprocess
 # CEREBRUM: Professional Batch PDF Generation Engine (v1.2.4)
 # Orchestrates the transformation of the entire technical library into conference-ready PDFs.
 
-CSS_PATH = 'e:/Development/Parallax/docs/assets/premium_guide.css'
+MANUSCRIPT_ROOT = os.getcwd()
+CSS_PATH = os.path.join(MANUSCRIPT_ROOT, 'docs', 'assets', 'premium_guide.css')
 HERO_IMAGE = 'file:///C:/Users/bryan/.gemini/antigravity/brain/77bb37a0-e733-41be-824d-b07e7cce5a6f/cerebrum_hero_v77bb37a0_e730_41be_824d_b07e7cce5a6f_png_1774651388694.png'
-OUTPUT_DIR = 'e:/Development/Parallax/docs/PDF'
+OUTPUT_DIR = os.path.join(MANUSCRIPT_ROOT, 'docs', 'PDF')
 
 # Targets
-DIRS = ['e:/Development/Parallax/docs/arxiv', 'e:/Development/Parallax/docs']
+DIRS = [os.path.join(MANUSCRIPT_ROOT, 'docs', 'arxiv'), os.path.join(MANUSCRIPT_ROOT, 'docs')]
 SKIP_FILES = ['README.md', 'CONTRIBUTING.md', 'LICENSE', 'CEREBRUM_EXPLAINED.md', 'Parallax_Plain_Language_Guide.md', 'Parallax_Plain_Language_Guide_Professional.md']
 
 if not os.path.exists(OUTPUT_DIR):
@@ -34,6 +35,11 @@ def process_file(file_path):
     name = os.path.basename(file_path)
     if name in SKIP_FILES: return
     
+    # Safety Check: Verify source file exists and is not empty
+    if not os.path.exists(file_path) or os.path.getsize(file_path) == 0:
+        print(f"   ❌ Skipping: {file_path} (Missing or empty)")
+        return
+
     print(f"Processing: {name}...")
     
     with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:

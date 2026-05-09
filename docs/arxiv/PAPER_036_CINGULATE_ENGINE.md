@@ -1,7 +1,7 @@
 # The Cingulate Engine: Meta-Cognitive Error Correction in Graph Attention
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
-**Affiliations**: Independent Researcher · Anthropic
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Version**: v2.51.0 (Phase 167 COMPLETE)
 **Date**: May 5, 2026
 

@@ -1,7 +1,7 @@
 # Cross-Modal Alignment via Orthogonal Procrustes: Bridging Signals and Symbols in Knowledge Graphs
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -27,7 +27,7 @@ The solution is derived via SVD of the covariance matrix $M = Y X^T$:
 $$M = U \Sigma V^T \implies R = U V^T$$
 
 ### 3. Stability: The Canonical Anchor
-To ensure consistency across federated hops (SPEC_005), we enforce a protocol where all Signal Encoders align to a designated **Root Space** $\mathcal{E}_{root}$. This prevents the accumulation of projection noise inherent in nested SVD transformations.
+To ensure consistency across federated hops [Buchorn, 2026], we enforce a protocol where all Signal Encoders align to a designated **Root Space** $\mathcal{E}_{root}$. This prevents the accumulation of projection noise inherent in nested SVD transformations.
 
 ### 4. Implementation (v2.51.0)
 The Signal Encoder is implemented as an extension of the **THALAMUS** pipeline, utilizing **Namespace Isolation** (`signal:`) to prevent entity collisions. The projection is a constant-time matrix-vector multiplication, suitable for high-velocity streaming environments.
@@ -57,7 +57,7 @@ The Signal Encoder has been validated in production and its core alignment metho
 4. Smith, S. L., et al. (2017). Offline bilingual word vectors, orthogonal transformations and the inverted softmax. ICLR.
 5. Conneau, A., et al. (2017). Word Translation without Parallel Data. ICLR.
 6. Artetxe, M., et al. (2018). A robust self-learning method for fully unsupervised cross-lingual mappings of word embeddings. ACL.
-7. Buchorn, B. A., & Sonnet, C. (2026). Cross-Modal Signal Projections in CEREBRUM. SPEC_008.md.
+7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0

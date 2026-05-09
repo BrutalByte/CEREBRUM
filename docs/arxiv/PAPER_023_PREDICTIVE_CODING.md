@@ -1,4 +1,7 @@
 # PAPER 023: Predictive Coding for Knowledge Graph Traversal — Prior Paths, Prediction Error, and the Soliton Index
+
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 

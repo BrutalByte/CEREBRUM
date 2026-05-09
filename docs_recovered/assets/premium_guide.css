@@ -1,0 +1,122 @@
+/* CEREBRUM: Premium White Paper Styling (v1.2.4 Professional) */
+
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Outfit:wght@300;400;600;800&display=swap');
+
+:root {
+    --primary: #0f172a;
+    --accent: #3b82f6;
+    --text: #334155;
+    --heading: #1e293b;
+    --border: #e2e8f0;
+}
+
+body {
+    font-family: 'Merriweather', serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: var(--text);
+    margin: 0;
+    padding: 0;
+}
+
+h1, h2, h3, h4, .title {
+    font-family: 'Outfit', sans-serif;
+    color: var(--heading);
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    letter-spacing: -0.02em;
+}
+
+h1 { font-size: 2.5em; font-weight: 800; border-bottom: 2px solid var(--border); padding-bottom: 0.2em; }
+h2 { font-size: 1.8em; font-weight: 600; color: var(--accent); }
+h3 { font-size: 1.4em; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Cover Page */
+.cover {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 95vh;
+    text-align: center;
+    page-break-after: always;
+}
+
+.cover img {
+    max-width: 80%;
+    margin-bottom: 2em;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.cover .title {
+    font-size: 3.5em;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.1;
+}
+
+.cover .subtitle {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.5em;
+    color: var(--accent);
+    margin-top: 0.5em;
+}
+
+.cover .meta {
+    margin-top: 3em;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.1em;
+    color: var(--text);
+}
+
+/* Page Rules */
+@page {
+    margin: 25mm 20mm;
+    @bottom-center {
+        content: counter(page);
+        font-family: 'Outfit', sans-serif;
+        font-size: 9pt;
+        color: #94a3b8;
+    }
+}
+
+/* Table of Contents */
+.toc {
+    page-break-after: always;
+    border: 1px solid var(--border);
+    padding: 2em;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+/* Chapter Decoration */
+hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 2em 0;
+    page-break-before: always;
+}
+
+blockquote {
+    border-left: 4px solid var(--accent);
+    padding-left: 1.5em;
+    margin-left: 0;
+    font-style: italic;
+    color: var(--heading);
+}
+
+code {
+    background: #f1f5f9;
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+/* Mermaid Chart Optimization */
+.mermaid {
+    display: flex;
+    justify-content: center;
+    margin: 2em 0;
+}

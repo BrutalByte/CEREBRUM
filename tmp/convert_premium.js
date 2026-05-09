@@ -2,12 +2,18 @@ const { mdToPdf } = require('md-to-pdf');
 const fs = require('fs');
 const path = require('path');
 
-const mdPath = 'e:/Development/Parallax/docs/Parallax_Plain_Language_Guide_Professional.md';
-const cssPath = 'e:/Development/Parallax/docs/assets/premium_guide.css';
-const outputPath = 'e:/Development/Parallax/docs/Parallax_Plain_Language_Guide_Professional.pdf';
+const MANUSCRIPT_ROOT = process.cwd();
+const mdPath = path.join(MANUSCRIPT_ROOT, 'docs', 'Parallax_Plain_Language_Guide_Professional.md');
+const cssPath = path.join(MANUSCRIPT_ROOT, 'docs', 'assets', 'premium_guide.css');
+const outputPath = path.join(MANUSCRIPT_ROOT, 'docs', 'Parallax_Plain_Language_Guide_Professional.pdf');
 
 (async () => {
     try {
+        if (!fs.existsSync(mdPath)) {
+            console.error(`Source file missing: ${mdPath}`);
+            return;
+        }
+
         console.log("Generating Professional PDF via Node engine...");
         const pdf = await mdToPdf({ path: mdPath }, {
             stylesheet: cssPath,

@@ -1,8 +1,8 @@
-# SPEC_012: Glass-Box Reasoning Studio
+# [Buchorn, 2026]: Glass-Box Reasoning Studio
 ## Interactive Visualization and Forensic Audit of Graph Attention
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
+**Author**: Bryan Alexander Buchorn  
 **Field**: Human-Computer Interaction / Explainable AI (XAI) / Data Visualization  
 **Module**: `ui/studio.py`
 
@@ -15,8 +15,8 @@ Modern AI reasoning is often opaque, providing answers without explaining the un
 The Studio's primary feature is the **Reasoning Trace Viewer**. Unlike a static graph plot, the Trace Viewer renders the specific multi-hop path chosen by the **BeamTraversal** engine.
 
 #### 2.1 Dynamic Path Highlighting
--   **Edges**: Scaled by their **CSA Attention Weight** (SPEC_002).
--   **Nodes**: Color-coded by their **DSCF Community** (SPEC_001).
+-   **Edges**: Scaled by their **CSA Attention Weight** [Buchorn, 2026].
+-   **Nodes**: Color-coded by their **DSCF Community** [Buchorn, 2026].
 -   **Heatmaps**: Nodes are shaded by their contribution to the final answer's confidence score.
 
 #### 2.2 Forensic Score Breakdown
@@ -36,7 +36,7 @@ For streaming environments, the Studio provides a **Live Feed** tab that visuali
 The Studio allows users to "drill down" into the community hierarchy:
 -   **Centroid Visualization**: View the "Semantic North Star" of any cluster.
 -   **Boundary Scanning**: Manually trigger an `InsightEngine` scan between two specific communities to discover hidden relationships.
--   **Bridge Management**: Visual interface for promoting or pruning **Bridge Twin** relays (SPEC_003).
+-   **Bridge Management**: Visual interface for promoting or pruning **Bridge Twin** relays [Buchorn, 2026].
 
 ### 5. Implementation Notes
 *   **Architecture**: Built using a reactive Python/Gradio framework with a `vis-network` JavaScript backend for high-performance rendering.

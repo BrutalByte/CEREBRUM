@@ -8,50 +8,31 @@ import sys
 # Orchestrates the high-precision transition of the entire library using the MiKTeX engine.
 # Final PDFs are moved to the docs/ directory, overwriting existing ones.
 
-MANUSCRIPT_ROOT = 'e:/Development/Parallax'
-ACADEMIC_TEMPLATE = f'{MANUSCRIPT_ROOT}/templates/academic_v1.tex'
-BROCHURE_TEMPLATE = f'{MANUSCRIPT_ROOT}/templates/brochure_v1.tex'
-LATEX_BUILD_DIR = f'{MANUSCRIPT_ROOT}/docs/latex/batch_build'
-DOCS_DIR = f'{MANUSCRIPT_ROOT}/docs'
-ARXIV_DIR = f'{DOCS_DIR}/arxiv'
-PDF_STORAGE_DIR = f'{DOCS_DIR}/PDF'
+# MANUSCRIPT_ROOT = 'e:/Development/Parallax'
+MANUSCRIPT_ROOT = os.getcwd()
+ACADEMIC_TEMPLATE = os.path.join(MANUSCRIPT_ROOT, 'templates', 'academic_v1.tex')
+BROCHURE_TEMPLATE = os.path.join(MANUSCRIPT_ROOT, 'templates', 'brochure_v1.tex')
+LATEX_BUILD_DIR = os.path.join(MANUSCRIPT_ROOT, 'docs', 'latex', 'batch_build')
+DOCS_DIR = os.path.join(MANUSCRIPT_ROOT, 'docs')
+ARXIV_DIR = os.path.join(DOCS_DIR, 'arxiv')
+PDF_STORAGE_DIR = os.path.join(DOCS_DIR, 'PDF')
 
-# MiKTeX Binary Paths
-PDFLATEX_BIN = r"C:\Program Files\MiKTeX\miktex\bin\x64\pdflatex.exe"
-BIBTEX_BIN = r"C:\Program Files\MiKTeX\miktex\bin\x64\bibtex.exe"
-
-# Import conversion logic from build_arxiv
-sys.path.append(f'{MANUSCRIPT_ROOT}/scripts')
-import build_arxiv
-
-# Ensure directories exist
-os.makedirs(LATEX_BUILD_DIR, exist_ok=True)
-os.makedirs(PDF_STORAGE_DIR, exist_ok=True)
-
-ACADEMIC_DOCS = [
-    'PAPER.md',
-    'NOVEL_CONTRIBUTIONS.md',
-    'Parallax_White_Paper.md',
-    'ARXIV_SUBMISSION_GUIDE.md',
-    'CEREBRUM_EXPLAINED.md'
-]
-
-SKIP_FILES = [
-    'README.md',
-    'CONTRIBUTING.md',
-    'LICENSE',
-    'SECURITY.md',
-    'TESTING.md',
-    'CLAUDE.md',
-    'GEMINI.md'
-]
+# ... (rest of imports)
 
 def generate_pdf(name, md_path, template_path, title, subtitle):
     print(f"--- Processing: {name} ---")
     
     try:
+        if not os.path.exists(md_path):
+            print(f"   ❌ Error: {md_path} does not exist. Skipping.")
+            return
+
         with open(md_path, 'r', encoding='utf-8', errors='ignore') as f:
             md_content = f.read()
+
+        if not md_content.strip():
+            print(f"   ❌ Error: {md_path} is empty. Skipping to prevent zeroing out results.")
+            return
 
         # 1. Convert Markdown -> LaTeX Snippet
         tex_snippet = build_arxiv.convert_markdown_to_tex(md_content)

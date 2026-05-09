@@ -1,7 +1,7 @@
 # Streaming Knowledge Graph Engine: Real-Time Edge Ingestion, Discretization, and Adaptive Beam Search
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -78,7 +78,7 @@ The CEREBRUM Streaming Engine in v2.51.0 has matured from a laboratory prototype
 2. Leskovec, J., et al. (2007). Graph Evolution: Densification and Shrinking Diameters. ACM TKDD.
 3. Aggarwal, C. C., et al. (2010). On Classification of Graph Streams. SIAM Data Mining.
 4. Seber, G. A. F. (1984). Multivariate Observations. Wiley.
-5. Buchorn, B. A., & Sonnet, C. (2026). Streaming Discretization in CEREBRUM. SPEC_013.md.
+5. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0

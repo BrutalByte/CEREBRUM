@@ -1,4 +1,7 @@
 # PAPER 028: Studio v2 — A Six-Panel Live Dashboard for Autonomous Knowledge Graph Operations
+
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -14,7 +17,7 @@ We present **Studio v2**, an extension of CEREBRUM's Glass-Box Reasoning Studio 
 
 ## 1. Motivation: Observability for Autonomous Systems
 
-The original Reasoning Studio (SPEC_012) was designed for human-in-the-loop query forensics: a user submits a query, inspects the reasoning path, and adjusts parameters. Studio v2 addresses a different use case: **long-running autonomous discovery operations** where an operator needs continuous visibility into the health of the full discovery pipeline without requiring per-query interaction.
+The original Reasoning Studio [Buchorn, 2026] was designed for human-in-the-loop query forensics: a user submits a query, inspects the reasoning path, and adjusts parameters. Studio v2 addresses a different use case: **long-running autonomous discovery operations** where an operator needs continuous visibility into the health of the full discovery pipeline without requiring per-query interaction.
 
 Key observability requirements:
 - **Decision transparency**: What is AutoApprover deciding, and why?

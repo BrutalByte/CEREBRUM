@@ -1,4 +1,7 @@
 # PAPER 022: Looped Beam Traversal — Iterative Refinement for Knowledge Graph Reasoning
+
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 

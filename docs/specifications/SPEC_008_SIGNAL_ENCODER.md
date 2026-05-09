@@ -1,8 +1,8 @@
-# SPEC_008: Signal Encoder
+# [Buchorn, 2026]: Signal Encoder
 ## Cross-Modal Alignment via Orthogonal Procrustes
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
+**Author**: Bryan Alexander Buchorn  
 **Field**: Signal Processing / Latent Space Alignment / Multi-Modal AI  
 **Module**: `core/signal_encoder.py`
 
@@ -50,7 +50,7 @@ The solution is obtained by performing Singular Value Decomposition on the covar
 
 ### 4. Enterprise Stability: The Canonical Anchor
 
-In federated reasoning (SPEC_005), multiple graphs may have different local embedding spaces. Chaining SVD projections ($A \to B \to C$) introduces "Geometric Drift," where semantic fidelity is lost.
+In federated reasoning [Buchorn, 2026], multiple graphs may have different local embedding spaces. Chaining SVD projections ($A \to B \to C$) introduces "Geometric Drift," where semantic fidelity is lost.
 
 To prevent this, CEREBRUM enforces a **Canonical Basis Anchor**:
 *   A single "Root Space" (e.g., from the primary Sentence-Transformer) is designated as the anchor.

@@ -1,7 +1,7 @@
 # Neural Visualization Bridge: 3D Interactive Knowledge Graph Exploration via Unreal Engine 5
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Series**: CEREBRUM Technical Report 035  
 **Phase**: 83  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)

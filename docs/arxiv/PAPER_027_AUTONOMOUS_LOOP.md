@@ -1,4 +1,7 @@
 # PAPER 027: AutonomousDiscoveryLoop — Closing the Discover-Validate-Approve-Materialize Loop for Knowledge Graph Self-Improvement
+
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 

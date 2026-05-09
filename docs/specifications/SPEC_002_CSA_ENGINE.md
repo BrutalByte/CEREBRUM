@@ -1,8 +1,8 @@
-# SPEC_002: Community-Structured Attention (CSA)
+# [Buchorn, 2026]: Community-Structured Attention (CSA)
 ## Glass-Box Reasoning without Matrix Multiplications
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
+**Author**: Bryan Alexander Buchorn  
 **Field**: Natural Language Processing / Knowledge Representation / Transformer Architectures  
 **Module**: `core/attention_engine.py`
 
@@ -11,7 +11,7 @@
 ### 1. Introduction
 Knowledge Graph (KG) reasoning has historically faced a trade-off between the interpretability of heuristic search (BFS) and the predictive power of dense Knowledge Graph Embeddings (KGEs). Global attention mechanisms, such as those in Graph Attention Networks (GATs), scale poorly ($O(N^2)$) and often lack structural grounding.
 
-**Community-Structured Attention (CSA)** solves this by adapting the attention mechanism from Transformer architectures to graph traversals. It treats community partitions (from SPEC_001) as "Attention Heads," allowing the system to steer a beam search using structural and semantic signals without global matrix operations.
+**Community-Structured Attention (CSA)** solves this by adapting the attention mechanism from Transformer architectures to graph traversals. It treats community partitions (from [Buchorn, 2026]) as "Attention Heads," allowing the system to steer a beam search using structural and semantic signals without global matrix operations.
 
 ### 2. The Functional Mapping (Cerebrum Analogy)
 

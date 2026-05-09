@@ -1,8 +1,8 @@
-# SPEC_017: Sleep Cycle and Consolidation Engine
+# [Buchorn, 2026]: Sleep Cycle and Consolidation Engine
 ## Rapid Edge Maintenance (REM) and mnemonic maintenance
 
 **Status**: v2.51.0 (Phase 167 COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
+**Author**: Bryan Alexander Buchorn  
 **Field**: Metacognition / Graph Optimization / Biological Analogs
 **Modules**: `core/sleep_cycle.py`, `core/consolidation_engine.py`, `core/rem_engine.py`
 

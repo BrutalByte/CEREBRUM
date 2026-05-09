@@ -1,7 +1,7 @@
 # Contradiction Materialization: Factual Conflict as a First-Class Signal in Knowledge Graphs
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -57,7 +57,7 @@ Contradiction Materialization transforms Knowledge Graphs from static fact store
 4. Martinez, M. V., et al. (2013). Reasoning Over Inconsistent Knowledge Bases. Springer.
 5. Hunter, A. (2004). A logical framework for measuring inconsistency in inconsistent knowledge bases. Annals of Mathematics and Artificial Intelligence.
 6. Grant, J., & Hunter, A. (2011). Distance-based measures of inconsistency. ACM Transactions on Computational Logic.
-7. Buchorn, B. A., & Sonnet, C. (2026). Materialized Conflict in CEREBRUM. SPEC_011.md.
+7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.51.0

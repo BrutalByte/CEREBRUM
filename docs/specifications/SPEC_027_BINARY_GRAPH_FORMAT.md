@@ -1,8 +1,8 @@
-# SPEC_027: Binary Graph Topology Format (v1.0)
+# [Buchorn, 2026]: Binary Graph Topology Format (v1.0)
 ## Structure of A-File and E-Block for Mmap Storage
 
 **Status**: v2.51.0 (Phase 169 DRAFT)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
+**Author**: Bryan Alexander Buchorn  
 **Field**: Storage / Performance
 **Module**: `adapters/mmap_adapter.py`
 

@@ -1,8 +1,8 @@
-# SPEC_004: Autonomous Causal Discovery via STDP
+# [Buchorn, 2026]: Autonomous Causal Discovery via STDP
 ## Temporal Graph Plasticity in Knowledge Streams
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
+**Author**: Bryan Alexander Buchorn  
 **Field**: Causal Inference / Stream Processing / Neuro-Symbolic AI  
 **Module**: `core/discretizer.py`
 

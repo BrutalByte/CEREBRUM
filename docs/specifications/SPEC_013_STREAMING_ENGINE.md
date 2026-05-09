@@ -1,8 +1,8 @@
-# SPEC_013: The Streaming Engine
+# [Buchorn, 2026]: The Streaming Engine
 ## Real-Time Continuous Ingest, Incremental DSCF, and SSE Push
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
+**Author**: Bryan Alexander Buchorn  
 **Field**: Streaming Systems / Real-Time Reasoning / Event Processing
 **Modules**: `adapters/stream_adapter.py`, `core/discretizer.py`, `core/rebalancer.py`, `api/server.py`
 
@@ -38,7 +38,7 @@ StreamAdapter(
 - Producers call `adapter.ingest(event)`
 - Preprocessing (Stage 1) is thread-safe and non-blocking
 - Graph mutation (Stage 2) is protected by `self._lock` (RLock)
-- Reads never block: `BeamTraversal` snapshots the community map at query start (SPEC_016)
+- Reads never block: `BeamTraversal` snapshots the community map at query start [Buchorn, 2026]
 
 **Sliding-window buffer:**
 - Maintains the most recent `window_size` events in a `deque`
@@ -69,7 +69,7 @@ ThresholdDiscretizer(
 ```
 
 #### 3.2 STDPDiscretizer
-Materializes directional `CAUSES` edges from spike timing using Hebbian-inspired weight accumulation. See SPEC_004 for STDP algorithm details.
+Materializes directional `CAUSES` edges from spike timing using Hebbian-inspired weight accumulation. See [Buchorn, 2026] for STDP algorithm details.
 
 Additional streaming parameters:
 ```python
@@ -169,8 +169,8 @@ SSE connections are managed by an async multiplexer; each subscriber receives ev
 - **Back-pressure**: If the event queue exceeds `2 × window_size`, the `ingest()` call blocks until the consumer drains below `window_size`. This prevents unbounded memory growth under burst load.
 - **Thalamic Scalability**: By unlocking Stage 1 preprocessing, `StreamAdapter` can handle >10,000 events/sec on modern multi-core hardware without degrading query performance.
 - **Discretizer isolation**: Discretizer exceptions are caught and logged; they never propagate to the commit path or abort a batch.
-- **Integration with Query Snapshot Isolation (SPEC_016)**: The GlobalRebalancer's atomic swap triggers a broadcast to all active query contexts, which then upgrade to the new snapshot on their next hop. In-flight queries complete against the old snapshot.
-- **Persistence**: The `Persistence` module (SPEC_005) checkpoints the sliding-window buffer periodically for crash recovery.
+- **Integration with Query Snapshot Isolation [Buchorn, 2026]**: The GlobalRebalancer's atomic swap triggers a broadcast to all active query contexts, which then upgrade to the new snapshot on their next hop. In-flight queries complete against the old snapshot.
+- **Persistence**: The `Persistence` module [Buchorn, 2026] checkpoints the sliding-window buffer periodically for crash recovery.
 
 > **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.
 

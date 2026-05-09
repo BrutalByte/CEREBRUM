@@ -1,0 +1,209 @@
+\documentclass[10pt,journal,compsoc]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{array}
+
+\lstset{
+  basicstyle=\small\ttfamily,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible
+}
+
+\begin{document}
+
+\title{Arxiv Submission Guide}
+\author{Bryan Alexander Buchorn \\ Independent Researcher \\ bryan.alexander@buchorn.com}
+\markboth{CEREBRUM v1.2.4 Hardened Edition · March 2026}{}
+
+\maketitle
+
+\begin{abstract}
+This module forms a critical component of the CEREBRUM framework, a community-structured graph attention engine for Knowledge Graph reasoning. It focuses on Framework Implementation Guide.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Knowledge Graph, Graph Attention, DSCF, CSA, Hierarchical Reasoning.
+\end{IEEEkeywords}
+
+\section{arXiv Submission Guide}
+
+\textbf{CEREBRUM — 16 Papers Ready for Submission}
+
+This guide covers the submission process, per-paper metadata, and checklist for submitting all sixteen CEREBRUM papers to arXiv.
+
+---
+
+\subsection{arXiv Categories}
+
+All sixteen papers should be submitted to \textbf{primary category \texttt{cs.IR}} (Information Retrieval) with the following cross-list categories as appropriate:
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Primary & Cross-list & Use for \\ \hline
+\texttt{cs.IR} & \texttt{cs.AI}, \texttt{cs.LG} & All papers (default) \\ \hline
+\texttt{cs.AI} & \texttt{cs.IR}, \texttt{cs.NE} & Papers 3, 4, 7 (neuro\-morphic / biological analog) \\ \hline
+\texttt{cs.LG} & \texttt{cs.IR}, \texttt{cs.AI} & Papers 6, 15 (learning algorithms) \\ \hline
+\texttt{cs.DC} & \texttt{cs.IR}, \texttt{cs.AI} & Papers 5, 13 (distributed / streaming) \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+---
+
+\subsection{Submission Order (Recommended)}
+
+Submit found\-ational papers first so cross-references resolve correctly.
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Order & Paper & File & Category \\ \hline
+1 & DSCF/TSC Community Fusion & \texttt{PAPER\_001\_DSCF\_TSC.md} & \texttt{cs.IR} + \texttt{cs.AI} \\ \hline
+2 & Community-Structured Attention & \texttt{PAPER\_002\_CSA.md} & \texttt{cs.IR} + \texttt{cs.LG} \\ \hline
+3 & Bridge Twin Nodes & \texttt{PAPER\_003\_BRIDGE\_TWINS.md} & \texttt{cs.AI} + \texttt{cs.NE} \\ \hline
+4 & STDP Causal Edge Inference & \texttt{PAPER\_004\_STDP\_CAUSAL.md} & \texttt{cs.AI} + \texttt{cs.NE} \\ \hline
+5 & Holographic Federated Index & \texttt{PAPER\_005\_HOLOGRAPHIC\_INDEXING.md} & \texttt{cs.DC} + \texttt{cs.IR} \\ \hline
+6 & Bayesian Beam Search & \texttt{PAPER\_006\_BAYESIAN\_BEAM.md} & \texttt{cs.LG} + \texttt{cs.IR} \\ \hline
+7 & REM Cycle Maintenance & \texttt{PAPER\_007\_REM\_CYCLE.md} & \texttt{cs.AI} + \texttt{cs.IR} \\ \hline
+8 & Cross-Modal Signal Alignment & \texttt{PAPER\_008\_SIGNAL\_ENCODER.md} & \texttt{cs.IR} + \texttt{cs.LG} \\ \hline
+9 & THALAMUS Ingestion Pipeline & \texttt{PAPER\_009\_THALAMUS.md} & \texttt{cs.IR} + \texttt{cs.AI} \\ \hline
+10 & Inference Validation & \texttt{PAPER\_010\_INFERENCE\_VALIDATION.md} & \texttt{cs.IR} + \texttt{cs.AI} \\ \hline
+11 & Contra\-diction Materi\-alization & \texttt{PAPER\_011\_CONTRADICTION.md} & \texttt{cs.IR} + \texttt{cs.AI} \\ \hline
+12 & Glass-Box Reasoning Studio & \texttt{PAPER\_012\_REASONING\_STUDIO.md} & \texttt{cs.HC} + \texttt{cs.IR} \\ \hline
+13 & Streaming Engine & \texttt{PAPER\_013\_STREAMING\_ENGINE.md} & \texttt{cs.DC} + \texttt{cs.IR} \\ \hline
+14 & Metaco\-gnitive Verifi\-cation & \texttt{PAPER\_014\_INSIGHT\_ENGINE.md} & \texttt{cs.AI} + \texttt{cs.IR} \\ \hline
+15 & Algorithmic Depth & \texttt{PAPER\_015\_ALGORITHMIC\_DEPTH.md} & \texttt{cs.LG} + \texttt{cs.IR} \\ \hline
+16 & Production Hardening & \texttt{PAPER\_016\_PRODUCTION\_HARDENING.md} & \texttt{cs.SE} + \texttt{cs.IR} \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+---
+
+\subsection{Per-Paper Metadata Template}
+
+Each submission requires the following metadata fields on arXiv:
+
+\begin{lstlisting}
+Title:        [From paper header]
+Authors:      Bryan Alexander Buchorn; Claude Sonnet 4.6 (Research Collaborator, Anthropic)
+Abstract:     [From paper Abstract section — max 1,920 characters]
+Comments:     16 pages. Part of the CEREBRUM framework series.
+              Code: https://github.com/[repo]
+MSC-class:    68T30 (Knowledge representation)
+ACM-class:    I.2.4; H.3.3
+License:      CC BY 4.0 (arXiv default for non-commercial research)
+\end{lstlisting}
+
+---
+
+\subsection{Formatting Requir\-ements}
+
+arXiv accepts \texttt{.tex} (preferred) and \texttt{.pdf}. Our papers are in Markdown; conversion is required.
+
+\subsubsection{Markdown $\to$ LaTeX conversion}
+
+\begin{lstlisting}
+pip install pandoc
+pandoc docs/arxiv/PAPER_001_DSCF_TSC.md -o arxiv_submission/paper_001.tex \
+    --template arxiv_template.tex \
+    --bibliography refs.bib
+\end{lstlisting}
+
+A LaTeX template (\texttt{arxiv\_template.tex}) following arXiv's \texttt{article} document class should be prepared once and reused for all sixteen papers.
+
+\subsubsection{Required LaTeX elements}
+\begin{itemize}
+\item \texttt{\textbackslash usepackage{amsmath}} — for displayed equations
+\item \texttt{\textbackslash usepackage{booktabs}} — for benchmark tables
+\item \texttt{\textbackslash usepackage{hyperref}} — for cross-references and URLs
+\item All figures as \texttt{.pdf} or \texttt{.png} at 300 DPI minimum
+
+\end{itemize}
+\subsubsection{Figure requi\-rements}
+Each paper should include at minimum:
+\begin{enumerate}
+\item An archi\-tecture diagram (flowchart of the algorithm)
+\item A results table (benchmark comparison)
+
+\end{enumerate}
+Figures should be prepared in a vector format (PDF) for crisp rendering.
+
+---
+
+\subsection{Abstract Length Check}
+
+arXiv abstracts are capped at 1,920 characters. Check each abstract:
+
+\begin{lstlisting}
+for paper in docs/arxiv/PAPER_*.md; do
+    abstract=$(awk '/^### Abstract/{found=1; next} found && /^###/{exit} found{print}' "$paper")
+    count=$(echo "$abstract" | wc -c)
+    echo "$paper: $count chars"
+done
+\end{lstlisting}
+
+---
+
+\subsection{Pre-Submission Checklist (per paper)}
+
+\begin{itemize}
+\item [ ] Abstract $\le$ 1,920 characters
+\item [ ] All equations render correctly in LaTeX
+\item [ ] All tables have \texttt{\textbackslash toprule/\textbackslash midrule/\textbackslash bottomrule} (booktabs style)
+\item [ ] All citations in \texttt{refs.bib} with correct BibTeX keys
+\item [ ] Author affil\-iations: "Independent Researcher" + "Anthropic"
+\item [ ] Prior art section explicitly diffe\-rentiates from closest prior work
+\item [ ] Benchmark numbers match \texttt{release/BENCHMARKS.md}
+\item [ ] GitHub/code link included in Comments field
+\item [ ] License selected: CC BY 4.0
+\item [ ] Cross-list categories correct for paper topic
+
+\end{itemize}
+---
+
+\subsection{Citation Cross-Referencing}
+
+Papers cite each other. Use consistent arXiv IDs once papers 1–4 are submitted. Placeholder format until IDs are assigned:
+
+\begin{lstlisting}
+@article{buchorn2026dscf,
+  title   = {Dual-Signal Community Fusion for Knowledge Graph Attention},
+  author  = {Buchorn, Bryan Alexander and {Claude Sonnet 4.6}},
+  journal = {arXiv preprint arXiv:2026.XXXXX},
+  year    = {2026}
+}
+\end{lstlisting}
+
+---
+
+\subsection{Compre\-hensive Paper (Parallax\_White\_Paper\_arXiv.md)}
+
+The compr\-ehensive umbrella paper (\texttt{docs/Parallax\_White\_Paper\_arXiv.md}) covers all subsystems in one document and should be submitted to \texttt{cs.IR} as the primary reference after all sixteen individual papers are live. Title it:
+
+\textgreater  \textbf{CEREBRUM: Community-Structured Graph Attention for Zero-Shot Multi-Hop Knowledge Graph Reasoning}
+
+This paper should cite all sixteen subsystem papers by their arXiv IDs.
+
+---
+\textbf{Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.}
+
+
+\bibliographystyle{IEEEtran}
+\bibliography{../../docs/latex/references}
+
+\end{document}

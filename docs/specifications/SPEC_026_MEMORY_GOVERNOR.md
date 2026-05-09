@@ -1,8 +1,8 @@
-# SPEC_026: The MemoryGovernor
+# [Buchorn, 2026]: The MemoryGovernor
 ## Resource-Aware Constraint Enforcement
 
 **Status**: v2.51.0 (Phase 168 COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
+**Author**: Bryan Alexander Buchorn  
 **Field**: Performance / Hardware Management
 **Module**: `core/hardware_governor.py`
 

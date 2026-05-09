@@ -1,8 +1,8 @@
-# SPEC_005: Holographic Indexing
+# [Buchorn, 2026]: Holographic Indexing
 ## Privacy-Preserving Discovery in Federated Knowledge Networks
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
+**Author**: Bryan Alexander Buchorn  
 **Field**: Privacy & Security / Federated Learning / Distributed Systems  
 **Module**: `core/holographic_index.py`
 
@@ -65,7 +65,7 @@ In high-velocity streaming environments, remote nodes may be evicted before a mu
 ### 5. Geometric Stability: Canonical Basis Anchor
 
 To prevent "Semantic Drift" across federated hops, all holographic signatures are anchored to a fixed root embedding space $\mathcal{E}_{root}$.
-*   When a peer joins the federation, it performs a one-time **Orthogonal Procrustes Alignment** (SPEC_008) to map its local space to the root space.
+*   When a peer joins the federation, it performs a one-time **Orthogonal Procrustes Alignment** [Buchorn, 2026] to map its local space to the root space.
 *   This ensures that a "Synaptic Bridge Score" of 0.8 means the same thing in Graph A as it does in Graph B.
 
 > **Note**: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see `CHANGELOG.md` and `docs/ARCHITECTURE.md`.

@@ -1,8 +1,8 @@
-# SPEC_015: Algorithmic Depth
+# [Buchorn, 2026]: Algorithmic Depth
 ## Temporal Reasoning, Uncertainty Propagation, Soft Community Membership, CSAParameterLearner, and KGE Integration
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
+**Author**: Bryan Alexander Buchorn  
 **Field**: Temporal Reasoning / Probabilistic KG / Adaptive Attention
 **Modules**: `core/attention_engine.py`, `core/community_engine.py`, `core/kge_engine.py`, `reasoning/traversal.py`
 
@@ -54,7 +54,7 @@ def temporal_weight(edge: Edge, query_time: float) -> float:
 | `BORN_IN` | 0.0 | Never decays |
 
 #### 2.3 Pruning
-The REM Cycle (SPEC_007) removes edges whose `temporal_weight(now) < 0.01` during the Hot Path run.
+The REM Cycle [Buchorn, 2026] removes edges whose `temporal_weight(now) < 0.01` during the Hot Path run.
 
 ### 3. Uncertainty Propagation
 

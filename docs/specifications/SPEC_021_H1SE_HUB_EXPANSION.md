@@ -1,8 +1,8 @@
-# SPEC_021: H1SE (Hop-1 Intermediate Seed Expansion)
+# [Buchorn, 2026]: H1SE (Hop-1 Intermediate Seed Expansion)
 ## Solving Hub Crowding in Large-Scale Knowledge Graphs
 
 **Status**: v2.51.0 (Phase 167 COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
+**Author**: Bryan Alexander Buchorn  
 **Field**: Beam Search / Topology / Scalability
 **Modules**: `reasoning/traversal.py`
 

@@ -1,8 +1,8 @@
-# SPEC_007: The REM Cycle
+# [Buchorn, 2026]: The REM Cycle
 ## Metacognitive Maintenance and Insight Synthesis
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
+**Author**: Bryan Alexander Buchorn  
 **Field**: Metacognition / System 2 Reasoning / Autonomous Maintenance  
 **Module**: `core/rem_engine.py`
 
@@ -19,7 +19,7 @@ To distinguish between grounded facts and speculative noise, the REM cycle emplo
 
 1.  **Topological Density**: The edge exists in a locally dense neighborhood (clustering coefficient $C \geq 0.4$).
 2.  **Transitive Support**: The `InferenceEngine` identifies an alternative path $P = \{u \to w_1 \to \dots \to v\}$ with confidence $\geq 0.7$, where $P$ does not include $E_{uv}$.
-3.  **Community Consensus**: Both $u$ and $v$ reside in the same community or are bridged by a high-strength `BRIDGE_TWIN` node (SPEC_003).
+3.  **Community Consensus**: Both $u$ and $v$ reside in the same community or are bridged by a high-strength `BRIDGE_TWIN` node [Buchorn, 2026].
 
 If an edge fails bilateral verification over two consecutive REM cycles, its confidence is reduced to 0.0 and it is deleted.
 
@@ -35,7 +35,7 @@ The REM cycle implements **Insight Confidence Decay**:
 
 ### 4. Background Re-optimization
 
-The REM cycle acts as the scheduler for the **GlobalRebalancer** (SPEC_001). It monitors the graph for:
+The REM cycle acts as the scheduler for the **GlobalRebalancer** [Buchorn, 2026]. It monitors the graph for:
 1.  **Modularity Drift**: Cumulative change in node assignments vs. the original partition.
 2.  **Size Inbalance**: One community growing to $> 30\%$ of the total graph.
 

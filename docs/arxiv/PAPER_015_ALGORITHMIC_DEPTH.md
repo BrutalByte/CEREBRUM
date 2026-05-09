@@ -1,7 +1,7 @@
 # Algorithmic Depth in Knowledge Graph Reasoning: Temporal Edges, Uncertainty Propagation, Soft Community Membership, Learned CSA Parameters, and Graph Embedding Integration
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
-**Affiliations**: Independent Researcher · Anthropic
+**Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
@@ -11,7 +11,7 @@
 Production Knowledge Graph reasoning systems require more than structural traversal — they must handle time-varying facts, propagate uncertainty through multi-hop paths, accommodate nodes that belong to multiple communities simultaneously, and support continuous improvement of their core attention parameters. We present CEREBRUM's **Algorithmic Depth** layer (Phase 17), five orthogonal enhancements to the core CSA reasoning engine that collectively enable temporal, probabilistic, and adaptive reasoning without introducing training data requirements or sacrificing the zero-hallucination guarantee. The five components are: (1) temporal edge validity windows with decay; (2) uncertainty propagation through the CSA formula; (3) soft community membership with fractional overlap scores; (4) `CSAParameterLearner` — online, training-free CSA weight adaptation from query feedback; and (5) KGE integration (TransE \cite{bordes2013transe} / RotatE \cite{sun2019rotate}) as optional drop-in embedding providers. Each component is independently composable; the full suite achieves +14.2% relative H@10 on MetaQA-3hop over the Phase 16 baseline. In v2.51.0, the CSA formula has been expanded to 10 parameters and the learning stack upgraded through Phases 45–48: parameter persistence, auto-retrain scheduling, and adaptive search strategy further extend the algorithmic depth concept to runtime adaptation.
 
 ### 1. Introduction
-The core CSA formula (SPEC_002) was designed with algebraic simplicity as a primary constraint: six weighted terms, a sigmoid activation, and configurable per-community parameter overrides. This design deliberately excludes temporal dynamics, uncertainty semantics, and continuous learning to ensure mathematical transparency. However, real-world KG deployments exhibit all three: facts have validity periods, sources have varying reliability, and query traffic provides a continuous signal about which reasoning strategies are working.
+The core CSA formula [Buchorn, 2026] was designed with algebraic simplicity as a primary constraint: six weighted terms, a sigmoid activation, and configurable per-community parameter overrides. This design deliberately excludes temporal dynamics, uncertainty semantics, and continuous learning to ensure mathematical transparency. However, real-world KG deployments exhibit all three: facts have validity periods, sources have varying reliability, and query traffic provides a continuous signal about which reasoning strategies are working.
 
 Phase 17 adds five capabilities as composable layers that augment the core without modifying it, preserving backward compatibility and the mathematical interpretability of every reasoning step.
 
@@ -37,7 +37,7 @@ The temporal weight multiplicatively modulates the CSA attention weight:
 
 $$a_{temp}(u,v,k) = a(u,v,k) \cdot w_{temp}(t_{query})$$
 
-where $t_{query}$ is the snapshot time at query start (consistent with Query Snapshot Isolation, SPEC_016).
+where $t_{query}$ is the snapshot time at query start (consistent with Query Snapshot Isolation, [Buchorn, 2026]).
 
 ### 3. Uncertainty Propagation
 
@@ -101,7 +101,7 @@ where $r_t \in \{+1, -1\}$ is the feedback signal, $a_i^{(t)}$ is the contributi
 **Constraints**: All weights are projected back to the simplex $\sum_i \theta_i = 1, \theta_i \geq 0.01$ after each update, ensuring no term is completely suppressed.
 
 #### 5.3 Per-Community Parameters
-The `CSAParameterLearner` maintains separate parameter sets per community (consistent with Community-Specific CSA Parameters, SPEC_016), enabling different communities to learn different optimal weightings from the same query traffic.
+The `CSAParameterLearner` maintains separate parameter sets per community (consistent with Community-Specific CSA Parameters, [Buchorn, 2026]), enabling different communities to learn different optimal weightings from the same query traffic.
 
 ### 6. KGE Embedding Integration
 

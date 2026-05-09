@@ -1,8 +1,8 @@
-# SPEC_003: The Bridge Twin Engine
+# [Buchorn, 2026]: The Bridge Twin Engine
 ## Experience-Dependent Structural Plasticity in Knowledge Graphs
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
+**Author**: Bryan Alexander Buchorn  
 **Field**: Neuromorphic Computing / Autonomous Systems / Graph Topology  
 **Module**: `core/bridge_engine.py`
 
@@ -49,7 +49,7 @@ When potentiated, the engine performs an atomic graph expansion:
 
 ### 5. Depression: Pruning & "Zombie" Management
 
-To maintain graph sanity, the engine implements two maintenance loops during the **REM Cycle** (SPEC_007).
+To maintain graph sanity, the engine implements two maintenance loops during the **REM Cycle** [Buchorn, 2026].
 
 #### 5.1 Temporal Decay (LTD)
 Every `BRIDGE_TWIN` edge has a confidence $c$ that decays over time $t$:
@@ -61,7 +61,7 @@ $$
 If $c_t < c_{min}$ (default 0.2), the twin node and all its reflected edges are deleted.
 
 #### 5.2 The "Zombie Bridge" Patch
-When the `GlobalRebalancer` (SPEC_001) shuffles community IDs, existing bridge records become "Zombies" (pointing to stale IDs). The engine implements an `on_rebalance` hook:
+When the `GlobalRebalancer` [Buchorn, 2026] shuffles community IDs, existing bridge records become "Zombies" (pointing to stale IDs). The engine implements an `on_rebalance` hook:
 1.  Verify if $v$ and $v'_{twin}$ still reside in different communities.
 2.  If they are now in the same community, the bridge is redundant; **Delete**.
 3.  If the destination community ID has changed but the cluster is still semantically similar, **Update Record**.

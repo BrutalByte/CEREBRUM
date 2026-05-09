@@ -1,0 +1,15 @@
+{
+    "stylesheet": "docs/assets/premium_guide.css",
+    "pdf_options": {
+        "format": "A4",
+        "margin": "0mm",
+        "printBackground": true
+    },
+    "launch_options": {
+        "args": [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--allow-file-access-from-files"
+        ]
+    }
+}
