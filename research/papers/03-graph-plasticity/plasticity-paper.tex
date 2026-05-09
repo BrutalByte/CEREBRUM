@@ -1,0 +1,332 @@
+\documentclass[10pt,twocolumn]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=0.75in,top=1in,bottom=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{microtype}
+\hypersetup{colorlinks=true,linkcolor=blue!60!black,citecolor=green!50!black,urlcolor=blue!60!black}
+
+\usepackage{../shared/cerebrum-macros}
+\input{../shared/notation}
+
+\title{\textbf{Experience-Dependent Structural Plasticity in Knowledge Graphs:\\
+Bridge Twins and Causal Discovery via STDP}}
+
+\input{../shared/author-block}
+\date{May 2026}
+
+\begin{document}
+\maketitle
+
+% -----------------------------------------------------------------------
+\begin{abstract}
+Static Knowledge Graphs are a poor model of evolving knowledge: they cannot
+incorporate new information from query experience, and they cannot infer causal
+structure from temporal event streams. We present two complementary mechanisms for
+making KGs structurally plastic. First, the \textbf{Bridge Twin Engine} implements a
+graph-theoretic analog to Long-Term Potentiation (LTP): when a reasoning path
+repeatedly crosses a community boundary, a relay node is materialized in the
+destination community, short-circuiting the path for future queries. On WebQSP, bridge
+synthesis raises H@10 from 16.59\% to 20.84\% (+25.6\%). Second, the
+\textbf{STDP Causal Engine} adapts Spike-Timing-Dependent Plasticity to infer
+directional causal edges from temporal event streams in $O(1)$ amortized time per event
+via Lazy Decay. The two mechanisms are biologically parallel: Bridge Twins enact LTP
+(repeated co-activation strengthens structural connections) while the STDP engine enacts
+Hebbian temporal learning (co-occurrence timing determines causal direction).
+Together they form a self-improving KG that reshapes its topology from reasoning history
+while simultaneously discovering new causal structure from live data streams.
+\end{abstract}
+
+% -----------------------------------------------------------------------
+\section{Introduction}
+\label{sec:intro}
+
+The assumption that a Knowledge Graph is a fixed artifact is increasingly untenable.
+Production KGs receive continuous updates; reasoning systems accumulate experience;
+event streams carry temporal causal signals. Yet most KG reasoning systems treat the
+graph as a static substrate and discard all experience once a query is answered.
+
+Biological neural circuits exhibit a fundamentally different property: they are plastic.
+Long-Term Potentiation (LTP)~\cite{hebb1949,bipoo1998} strengthens synaptic connections
+that fire together, encoding experience into structure. Spike-Timing-Dependent
+Plasticity (STDP)~\cite{markram1997,sjostrom2010} refines the LTP rule with temporal
+precision: the direction of synaptic strengthening depends on the \emph{order} of
+pre- and post-synaptic spikes, enabling directional causal inference.
+
+We apply both principles to KG topology. The Bridge Twin Engine enacts LTP at the
+community level: frequently traversed inter-community paths become structurally
+reinforced via relay nodes. The STDP Causal Engine enacts Hebbian temporal learning
+at the edge level: entity co-occurrence timing determines causal edge direction.
+
+\paragraph{Contributions.}
+\begin{enumerate}
+  \item Bridge Twin materialization with the potentiation rule~(\ref{eq:potentiation})
+        and LTD decay, achieving +25.6\% WebQSP H@10.
+  \item Proactive bridge synthesis (GraphBridgeEngine) eliminating the cold-start penalty
+        at the cost of pre-load time.
+  \item The STDP causal weighting rule~(\ref{eq:stdp}) adapted for KG event streams,
+        with four-stage significance filtering.
+  \item Lazy Decay: an $O(1)$ optimization for continuous causal pair maintenance,
+        enabling enterprise-scale event throughput.
+  \item A characterization of the interaction effect: Bridge Twin relay paths
+        propagate STDP-inferred causal edges, enabling the two mechanisms to compound.
+\end{enumerate}
+
+% -----------------------------------------------------------------------
+\section{Background}
+\label{sec:background}
+
+\paragraph{Hebbian plasticity.}
+Hebb's postulate~\cite{hebb1949}: ``neurons that fire together, wire together.''
+Formalized by \citet{bipoo1998} as LTP: repeated co-activation of pre- and
+post-synaptic neurons increases synaptic weight. The converse — Long-Term Depression
+(LTD) — reduces weights for infrequently co-activated pairs.
+
+\paragraph{Spike-Timing-Dependent Plasticity.}
+\citet{markram1997} and \citet{bipoo1998} showed that the \emph{order} of spikes
+matters: if the pre-synaptic neuron fires before the post-synaptic neuron, the synapse
+is potentiated; if the order reverses, it is depressed. This temporal precision enables
+directional causal inference from co-occurrence alone.
+
+\paragraph{Graph plasticity in ML.}
+Dynamic graph methods~\cite{kazemi2020} model edge evolution over time but do not
+materialize structural shortcuts from reasoning experience. Differentiable graph
+structure learning~\cite{franceschi2019} optimizes graph topology via gradients but
+requires a training objective. The Bridge Twin Engine requires neither: it materializes
+shortcuts from query frequency alone.
+
+% -----------------------------------------------------------------------
+\section{Bridge Twin Engine: LTP for Knowledge Graphs}
+\label{sec:bridge}
+
+\subsection{The Plasticity Problem}
+
+In the \CEREBRUM{} framework~\cite{buchorn2026flagship}, community boundaries represent
+semantic discontinuities: an inter-community edge crosses from one attention head to
+another, typically at higher cognitive cost than an intra-community edge. When the beam
+search repeatedly crosses the same boundary, it is paying this cost on every query.
+LTP analogy: this is a synapse that fires repeatedly but has not yet been potentiated.
+
+\subsection{Potentiation Rule}
+
+A relay node $v'_{twin}$ is materialized for source node $v$ in destination community
+$C_{dest}$ when:
+\begin{equation}
+\mathrm{count}(v \to C_{dest}) \geq n_{min}
+\quad\text{and}\quad
+\cos(\vec{e}_v, \vec{c}_{dest}) \geq \sigma
+\label{eq:potentiation}
+\end{equation}
+where $\vec{c}_{dest}$ is the community centroid and $\sigma = 0.6$ (default).
+
+Upon potentiation:
+\begin{enumerate}
+  \item Assign $v'_{twin}$ to $C_{dest}$.
+  \item Create a \texttt{BRIDGE\_TWIN} edge $(v, v'_{twin})$ with weight
+        $w_{bridge} = \cos(\vec{e}_v, \vec{c}_{dest})$.
+  \item Mirror all edges of $v$ that terminate in $C_{dest}$ onto $v'_{twin}$.
+\end{enumerate}
+
+\subsection{LTD Decay and Pruning}
+
+Relay confidence decays via:
+\begin{equation}
+c_t = c_0 \cdot \lambda^{\Delta t}
+\label{eq:decay}
+\end{equation}
+where $\lambda \in (0,1)$ is the decay constant and $\Delta t$ is elapsed time since
+last traversal. When $c_t < c_{min}$, the relay is pruned during the REM Cycle,
+enforcing topological homeostasis.
+
+\subsection{Proactive Synthesis}
+
+The reactive variant of the engine only materializes bridges after they are traversed.
+The \textbf{GraphBridgeEngine} extends this with proactive synthesis: at graph load time,
+it identifies weakly connected components and pre-materializes bridges across them,
+eliminating cold-start latency for early queries.
+
+\subsection{Evaluation}
+
+\begin{table}[h]
+\small\centering
+\caption{WebQSP impact of bridge synthesis.}
+\label{tab:bridge}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Configuration} & \textbf{H@10} & \textbf{Active Bridges} \\
+\midrule
+No bridge synthesis         & 16.59\% & 0 \\
+GraphBridgeEngine (OPT)     & 20.84\% & 8,300 \\
+\midrule
+Relative gain & \textbf{+25.6\%} & — \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% -----------------------------------------------------------------------
+\section{STDP Causal Engine: Temporal Learning for KG Streams}
+\label{sec:stdp}
+
+\subsection{The Temporal Signal Problem}
+
+Entity co-occurrence in a temporal stream carries causal information. If entity $u$
+consistently appears before entity $v$ in event logs, $u$ likely causes or precedes $v$.
+Standard KG ingestion discards timestamp information, treating events as unordered.
+
+\subsection{The STDP Weighting Rule}
+
+For entity pair $(u, v)$ with spike times $t_{pre}$ and $t_{post}$:
+\begin{equation}
+\Delta w_{uv} = \begin{cases}
+  A_+ \cdot e^{-\Delta t / \tau_+} & \text{if } \Delta t = t_{post} - t_{pre} > 0 \\
+  -A_- \cdot e^{-|\Delta t| / \tau_-} & \text{if } \Delta t < 0 \text{ or reverse order}
+\end{cases}
+\label{eq:stdp}
+\end{equation}
+
+where $A_+, A_- > 0$ are potentiation/depression amplitudes and $\tau_+, \tau_-$ are time
+constants. Parameters $A_+ = 0.1, \tau_+ = 20$ms, $A_- = 0.12, \tau_- = 20$ms follow
+the Bi-Poo model~\cite{bipoo1998}.
+
+When $w_{uv}$ accumulates above a threshold $w_{thresh}$ with sufficient evidence, a
+causal edge $u \xrightarrow{\texttt{CAUSES}} v$ is materialized.
+
+\subsection{Four-Stage Significance Filter}
+
+To prevent spurious potentiation from adversarial or rhythmic event floods, four
+rejection criteria are applied in order:
+\begin{enumerate}
+  \item \textbf{Weight threshold}: $w_{uv} \geq w_{thresh}$.
+  \item \textbf{Pairing count}: $n_{pairs} \geq n_{min}$ (minimum evidence).
+  \item \textbf{Temporal span}: time between first and last pairing $\geq T_{span}$,
+        blocking burst floods.
+  \item \textbf{Uniformity}: $\chi^2$ test on inter-spike intervals; rejection if
+        distribution is too peaked (indicating rhythmic or adversarial artifact).
+\end{enumerate}
+
+In adversarial jitter benchmarks (10K events/second, uniform temporal noise), the filter
+maintains false-positive rate $\leq$2\%.
+
+\subsection{Lazy Decay}
+
+Na\"{i}ve periodic decay of $N$ causal pairs is $O(N)$. Lazy Decay defers computation
+to access time:
+\begin{equation}
+w'_{uv} = w_{uv} \cdot \lambda^{(T - t_{last})}
+\label{eq:lazy}
+\end{equation}
+where $T$ is the current global step and $t_{last}$ is the pair's last update timestamp.
+This reduces maintenance complexity from $O(N)$ per tick to $O(1)$ per event,
+enabling constant sub-millisecond latency regardless of accumulated pair count.
+
+\begin{table}[h]
+\small\centering
+\caption{STDP engine latency vs accumulated pair count.}
+\label{tab:stdp_latency}
+\begin{tabular}{lc}
+\toprule
+\textbf{Pair Count} & \textbf{Latency/event (ms)} \\
+\midrule
+$10^3$   & 0.08 \\
+$10^4$   & 0.08 \\
+$10^5$   & 0.09 \\
+$10^6$   & 0.09 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Constant latency is the key production property: the engine does not degrade
+as the causal pair table grows.
+
+% -----------------------------------------------------------------------
+\section{Interaction: Plasticity Compounds}
+\label{sec:interaction}
+
+Bridge Twin relay nodes propagate STDP-inferred causal edges. When the STDP engine
+materializes $u \xrightarrow{\texttt{CAUSES}} v$ and $v$ has a bridge twin $v'$ in a
+downstream community, the causal edge is automatically mirrored to $v'$. This means:
+\begin{itemize}
+  \item Causal chains that cross community boundaries benefit from relay short-circuits.
+  \item Bridge materialization accelerates causal discovery by expanding the effective
+        neighborhood where STDP events are recorded.
+\end{itemize}
+
+In practice, STDP-derived causal edges are tagged with \texttt{source="stdp"} provenance,
+allowing the \CSA{} synthesis-density penalty ($-\mu\sigma_d$) to apply appropriate
+skepticism without disabling them entirely.
+
+% -----------------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented two biologically-inspired mechanisms for KG structural plasticity. The
+Bridge Twin Engine enacts LTP-style reinforcement of frequently traversed paths,
+achieving a measurable +25.6\% recall improvement on WebQSP. The STDP Causal Engine
+discovers directional causal edges from event stream timing, maintaining constant
+per-event latency at production scale via Lazy Decay. Together, they create a
+self-improving KG that learns from reasoning experience (Bridge Twins) and from live
+data streams (STDP) — without gradient-based training or labeled supervision.
+
+\section*{Acknowledgments}
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant
+for mathematical formalization, code generation, and manuscript preparation. All
+conceptual contributions, architectural decisions, experimental design, and intellectual
+claims are solely the author's.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{99}
+
+\bibitem{hebb1949}
+Hebb, D.O. (1949).
+\emph{The Organization of Behavior: A Neuropsychological Theory.}
+Wiley.
+
+\bibitem{bipoo1998}
+Bi, G.Q., \& Poo, M.M. (1998).
+Synaptic modifications in cultured hippocampal neurons.
+\emph{Journal of Neuroscience}, 18(24).
+
+\bibitem{markram1997}
+Markram, H., et al. (1997).
+Regulation of synaptic efficacy by coincidence of postsynaptic APs and EPSPs.
+\emph{Science}, 275(5297).
+
+\bibitem{sjostrom2010}
+Sjöström, J., \& Gerstner, W. (2010).
+Spike-timing dependent plasticity.
+\emph{Scholarpedia}, 5(2).
+
+\bibitem{pearl2009}
+Pearl, J. (2009).
+\emph{Causality: Models, Reasoning, and Inference.}
+Cambridge University Press.
+
+\bibitem{kazemi2020}
+Kazemi, S.M., et al. (2020).
+Representation Learning for Dynamic Graphs: A Survey.
+\emph{JMLR}, 21.
+
+\bibitem{franceschi2019}
+Franceschi, L., et al. (2019).
+Learning Discrete Structures for Graph Neural Networks.
+\emph{ICML}.
+
+\bibitem{buchorn2026flagship}
+Buchorn, B.A. (2026).
+CEREBRUM: Training-Free Knowledge Graph Reasoning via Community-Structured Graph Attention.
+arXiv preprint.
+
+\bibitem{buchorn2026report}
+Buchorn, B.A. (2026).
+CEREBRUM v2.51: Complete Technical Specification.
+arXiv preprint [CEREBRUM\_REPORT\_ID].
+
+\end{thebibliography}
+
+\end{document}

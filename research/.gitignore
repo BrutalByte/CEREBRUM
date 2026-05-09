@@ -1,0 +1,7 @@
+# Ignore downloaded datasets and large binary files
+*.tar.gz
+*.zip
+*.npz
+*.crdownload
+*.json
+!papers/**
