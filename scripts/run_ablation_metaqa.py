@@ -262,10 +262,9 @@ def update_paper(results: List[Dict]) -> None:
             print(f"  SKIP {tex_path} (not found)")
             continue
         text = tex_path.read_text(encoding="utf-8")
-        new_text, n = pattern.subn(
-            r"\1" + new_body + r"\4",
-            text,
-        )
+        def _replacer(m, _body=new_body):
+            return m.group(1) + _body + m.group(4)
+        new_text, n = pattern.subn(_replacer, text)
         if n == 0:
             print(f"  WARN: pattern not matched in {tex_path.name} — manual update needed")
             print("  Expected table body:")

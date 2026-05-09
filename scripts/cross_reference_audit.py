@@ -64,7 +64,7 @@ def load_bib_keys(bib_path: Path) -> tuple[set[str], list[str]]:
     return seen, dupes
 
 
-# -- Citation → BibTeX resolution ---------------------------------------------
+# -- Citation -> BibTeX resolution ---------------------------------------------
 
 def check_citations(tex_path: Path, bib_keys: set[str]) -> list[str]:
     text = tex_path.read_text(encoding="utf-8")
@@ -162,7 +162,7 @@ def run_audit(paper_dirs: list[str], bib_only: bool = False) -> bool:
         print(f"BIB-ONLY mode: {fail_count} failure(s)")
         return fail_count == 0
 
-    print("\n-- Citations → references.bib --------------------------------------")
+    print("\n-- Citations -> references.bib --------------------------------------")
     for name in paper_dirs:
         tex_name = PAPER_TEX.get(name)
         if not tex_name:

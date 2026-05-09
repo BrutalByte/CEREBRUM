@@ -4,7 +4,7 @@
 Checks:
   1. Zero "Claude Sonnet" / "Research Collaborator" co-authorship references
   2. Zero SPEC_xxx.md / PARALLAX.md references (should be [CEREBRUM_REPORT_PLACEHOLDER])
-  3. All 6 paper abstracts ≤ 1,920 characters
+  3. All 6 paper abstracts <= 1,920 characters
   4. Canonical benchmark numbers match docs/BENCHMARK_CANONICAL.md
   5. All 6 arxiv_submission/ directories exist and contain required files
   6. All 6 flagship .tex files have exactly one \\author{} block
@@ -128,7 +128,7 @@ def check_spec_refs(targets: list[Path]) -> list[str]:
     return issues
 
 
-# -- Check 3: abstract length ≤ 1,920 chars -----------------------------------
+# -- Check 3: abstract length <= 1,920 chars -----------------------------------
 
 def check_abstract_length(paper_dirs: list[str]) -> list[str]:
     issues = []
@@ -295,7 +295,7 @@ def run_preflight(paper_dirs: list[str], show_placeholders: bool = False) -> boo
     if not r2:
         print("  OK    no bare SPEC refs in submission .tex files")
 
-    print("\n-- Check 3: Abstract length ≤ 1,920 characters --------------------")
+    print("\n-- Check 3: Abstract length <= 1,920 characters --------------------")
     r3 = check_abstract_length(paper_dirs)
     all_issues.extend(r3)
     for line in r3:
@@ -334,7 +334,7 @@ def run_preflight(paper_dirs: list[str], show_placeholders: bool = False) -> boo
     if fail_count == 0:
         print(f"PREFLIGHT PASSED  ({warn_count} warning(s))")
         print("\nSubmission order:")
-        print("  1. Submit 00-technical-report → get arXiv ID")
+        print("  1. Submit 00-technical-report -> get arXiv ID")
         print("  2. python scripts/update_arxiv_papers.py --report-id YYYY.NNNNN")
         print("  3. Submit 01-flagship")
         print("  4. Submit 02–05 in any order")

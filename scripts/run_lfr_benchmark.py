@@ -55,26 +55,36 @@ TSC_TEX_PATHS = [
 def make_lfr(
     n: int,
     mu: float,
-    average_degree: int = 10,
     tau1: float = 2.0,
     tau2: float = 1.5,
-    min_community: int = 20,
-    max_community: int = 50,
+    min_degree: int = 5,
+    max_degree: int = 50,
+    min_community: int = 30,
+    max_community: int = 150,
     seed: int = 42,
     max_attempts: int = 20,
+    max_iters: int = 5000,
 ) -> Optional[nx.Graph]:
-    """Generate an LFR benchmark graph, retrying with different seeds on failure."""
+    """Generate an LFR benchmark graph, retrying with different seeds on failure.
+
+    Uses min_degree/max_degree (not average_degree) — networkx's average_degree
+    path has stricter community-assignment constraints that fail reliably at n=1000.
+    min_degree=5, max_degree=50, min_community=30, max_community=150 gives
+    10/10 success rate for mu in {0.1, 0.3, 0.5} at n=1000.
+    """
     for attempt in range(max_attempts):
         try:
             G = nx.generators.community.LFR_benchmark_graph(
-                n              = n,
-                tau1           = tau1,
-                tau2           = tau2,
-                mu             = mu,
-                average_degree = average_degree,
-                min_community  = min_community,
-                max_community  = max_community,
-                seed           = seed + attempt,
+                n             = n,
+                tau1          = tau1,
+                tau2          = tau2,
+                mu            = mu,
+                min_degree    = min_degree,
+                max_degree    = max_degree,
+                min_community = min_community,
+                max_community = max_community,
+                max_iters     = max_iters,
+                seed          = seed + attempt,
             )
             return G
         except nx.ExceededMaxIterations:
@@ -182,7 +192,6 @@ def benchmark_one(
 def run_benchmark(
     n: int,
     mu_values: List[float],
-    average_degree: int,
     repeats: int,
 ) -> Dict:
     """
@@ -196,7 +205,7 @@ def run_benchmark(
         ari_lists: Dict[str, List[float]] = {alg: [] for alg in ALGORITHMS}
 
         for rep in range(repeats):
-            G = make_lfr(n=n, mu=mu, average_degree=average_degree, seed=42 + rep * 7)
+            G = make_lfr(n=n, mu=mu, seed=42 + rep * 7)
             if G is None:
                 continue
 
@@ -320,7 +329,6 @@ def main() -> None:
                         help="Number of nodes (default: 1000)")
     parser.add_argument("--mu", type=float, nargs="+", default=[0.1, 0.3, 0.5],
                         help="Mixing parameters (default: 0.1 0.3 0.5)")
-    parser.add_argument("--average-degree", type=int, default=10)
     parser.add_argument("--repeats", type=int, default=5,
                         help="Repetitions per (algorithm, mu) — averaged (default: 5)")
     parser.add_argument("--quick", action="store_true",
@@ -335,14 +343,13 @@ def main() -> None:
         args.mu = [0.1, 0.3]
 
     print(f"=== CEREBRUM LFR Benchmark ===\n")
-    print(f"  n={args.n}  average_degree={args.average_degree}")
+    print(f"  n={args.n}  min_degree=5  max_degree=50")
     print(f"  mu={args.mu}  repeats={args.repeats}")
 
     results = run_benchmark(
-        n              = args.n,
-        mu_values      = args.mu,
-        average_degree = args.average_degree,
-        repeats        = args.repeats,
+        n         = args.n,
+        mu_values = args.mu,
+        repeats   = args.repeats,
     )
     results["_n"] = args.n
 

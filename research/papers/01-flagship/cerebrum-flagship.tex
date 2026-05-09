@@ -260,26 +260,23 @@ Table~\ref{tab:ablation} measures the contribution of each component on MetaQA 3
 \begin{table}[h]
 \small
 \centering
-\caption{Ablation on MetaQA 3-hop H@1. \textnormal{\emph{Note: ablation runs require
-         re-executing benchmarks/feature\_impact\_benchmark.py with modified configs.
-         Values marked $\star$ are estimates pending experimental verification.}}}
+\caption{Ablation on MetaQA 3-hop H@1. Component contributions measured on 500-question sample; see \texttt{scripts/run\_ablation\_metaqa.py} for full evaluation.}
 \label{tab:ablation}
 \begin{tabular}{lcc}
 \toprule
 \textbf{Configuration} & \textbf{3-hop H@1} & \textbf{$\Delta$} \\
 \midrule
-Full \CEREBRUM{}        & 12.5\%   & — \\
-$-$ Bridge Twins       & $\sim$10.0\%$^\star$ & $-$2.5 \\
-$-$ Adaptive Beam      & $\sim$11.0\%$^\star$ & $-$1.5 \\
-DSCF instead of TSC    & $\sim$11.5\%$^\star$ & $-$1.0 \\
-$-$ GraphSAGE smoothing & $\sim$9.5\%$^\star$ & $-$3.0 \\
-BFS baseline            &  1.1\%   & $-$11.4 \\
+Full \CEREBRUM{}$^\ddagger$  & 16.6\%   & --- \\
+$-$ Bridge Twins            & 15.6\%   & $-1.0$ \\
+$-$ Adaptive Beam           & 16.0\%   & $-0.6$ \\
+DSCF instead of TSC         & 15.6\%   & $-1.0$ \\
+$-$ GraphSAGE smoothing     & 16.6\%   &  $0.0$ \\
+BFS baseline                &  1.1\%   & $-15.5$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\noindent\emph{Action for camera-ready: run \texttt{benchmarks/feature\_impact\_benchmark.py}
-extended with the four ablation configs to replace $\star$ values with measured results.}
+\noindent\emph{$^\ddagger$Full \CEREBRUM{} ablation baseline uses TSC + GraphSAGE + BridgeTwins + Bayesian beam (Phase~167). The 12.5\% in Table~\ref{tab:main} is the Phase~53 canonical training-free config without GraphSAGE or BridgeTwins. Ablation measured on 500-question sample of MetaQA 3-hop test set; run \texttt{scripts/run\_ablation\_metaqa.py} for full 14,274-question evaluation.}
 
 \subsection{WebQSP and Hetionet}
 
