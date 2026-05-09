@@ -73,6 +73,10 @@ Together with the `/logs` endpoint and dashboard.html (Paper 12), these middlewa
 The CEREBRUM Streaming Engine in v2.51.0 has matured from a laboratory prototype into a production-grade continuous ingestion and reasoning pipeline. The adaptive search strategy (Phase 53) brings intelligent runtime adaptation to beam traversal, the `/build` endpoint (Phase 54) enables zero-downtime graph evolution, and the production middleware stack provides the observability required for enterprise deployment. Combined with the 1,357-test suite and CORS/timing instrumentation, the streaming engine is now a first-class production component of the CEREBRUM framework.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Bi, G. Q., & Poo, M. M. (1998). Synaptic Modifications in Cultured Hippocampal Neurons. Journal of Neuroscience.
 2. Leskovec, J., et al. (2007). Graph Evolution: Densification and Shrinking Diameters. ACM TKDD.

@@ -3,6 +3,7 @@
 
 **Status**: v2.51.0 (Phase 167 COMPLETE)
 **Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Uncertainty / Pruning / Bayesian Inference
 **Modules**: `core/epistemic_gate.py`, `reasoning/traversal.py`
 

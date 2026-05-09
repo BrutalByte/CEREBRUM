@@ -3,6 +3,7 @@
 
 **Status**: PROPOSED (Post-Phase 167)
 **Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Storage / Performance / Memory-Management
 **Target Modules**: `adapters/mmap_adapter.py`, `core/hardware.py`
 

@@ -54,6 +54,10 @@ The STDP causal discovery pipeline has been hardened and extended since v2.24.0.
 **Test Coverage.** The STDP subsystem is covered by dedicated adversarial and throughput regression tests within the 1,357-test v2.51.0 suite, including constant-latency verification across accumulated pair counts of up to 10^6 pairs.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Bi, G. Q., & Poo, M. M. (1998). Synaptic modifications in cultured hippocampal neurons. Journal of Neuroscience.
 2. Markram, H., et al. (1997). Regulation of synaptic efficacy by predictions of spike timing. Science.

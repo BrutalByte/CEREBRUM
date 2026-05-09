@@ -69,6 +69,10 @@ The Studio and API server now expose a `/logs` GET endpoint backed by a `RingBuf
 The Glass-Box Reasoning Studio transforms graph attention from an abstract mathematical construct into a tangible, auditable artifact. In v2.51.0, the Phase 54 architectural refactor (StudioEngine extraction, 38 new unit tests), the corrected 10-parameter weight profiler, the `/build` hot-reload endpoint, and the dark-mode monitoring dashboard collectively advance the Studio from an interactive demo into a production-grade reasoning observatory. By bridging the gap between latent semantic operations and human-readable topologies, it enables the deployment of autonomous reasoning systems in high-stakes environments.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Ribeiro, M. T., et al. (2016). "Why Should I Trust You?": Explaining the Predictions of Any Classifier. KDD.
 2. Bastian, M., et al. (2009). Gephi: An Open Source Software for Exploring and Manipulating Networks. ICWSM.

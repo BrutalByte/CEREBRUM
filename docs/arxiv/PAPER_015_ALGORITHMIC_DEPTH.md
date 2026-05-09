@@ -194,6 +194,10 @@ The Algorithmic Depth layer demonstrates that meaningful reasoning improvements 
 *See also:* **Paper 022** — Looped Beam Traversal (Phase 70) adds a further dimension of algorithmic depth: iterative refinement via LoopLM-style looping [zhu2025loooplm]. Rather than a fixed traversal depth H, the number of reasoning *passes* T becomes an adaptive parameter governed by an exit gate. This is the natural successor to the algorithmic depth concept — depth is now dynamic in two dimensions: hop depth (H) within a pass, and pass count (T) across iterations.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Bordes, A., et al. (2013). Translating Embeddings for Modeling Multi-Relational Data (TransE). NeurIPS.
 2. Sun, Z., et al. (2019). RotatE: Knowledge Graph Embedding by Relational Rotation in Complex Space. ICLR.

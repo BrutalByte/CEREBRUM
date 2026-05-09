@@ -50,6 +50,10 @@ For example, a contradiction of the form `(Drug_A, APPROVED_BEFORE, Drug_B)` whe
 Contradiction Materialization transforms Knowledge Graphs from static fact stores into dynamic arenas of evidence. By treating conflict as a structural signal and integrating abductive hypothesis generation (HypothesisEngine), probabilistic confidence (Noisy-OR fusion), and external literature validation (ExternalValidator), v2.51.0 provides the necessary foundation for skepticism and dialectical reasoning in autonomous agents. The framework now operates as a closed loop: hypotheses are generated, contradictions are detected, external evidence is consulted, and the graph is updated accordingly — without human intervention.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Besnard, P., & Hunter, A. (2008). Elements of Argumentation. MIT Press.
 2. Bertossi, L. (2011). Database Inconsistency and Integrity Constraints. Morgan & Claypool.

@@ -57,6 +57,10 @@ The Bridge Twin Engine has been substantially extended since v2.24.0. The follow
 | Gain | +25.6% relative |
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Hebb, D. O. (1949). The organization of behavior: A neuropsychological theory.
 2. Bi, G. Q., & Poo, M. M. (1998). Synaptic modifications in cultured hippocampal neurons. Journal of Neuroscience.

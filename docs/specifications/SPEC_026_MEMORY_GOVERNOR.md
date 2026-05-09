@@ -3,6 +3,7 @@
 
 **Status**: v2.51.0 (Phase 168 COMPLETE)
 **Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Performance / Hardware Management
 **Module**: `core/hardware_governor.py`
 

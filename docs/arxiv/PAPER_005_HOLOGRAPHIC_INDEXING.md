@@ -48,6 +48,10 @@ Federated reasoning has been one of the most actively developed areas of the CER
 **Security Enhancements.** HMAC-SHA256 path provenance, introduced at v2.24.0, is now enforced on all `/traverse` responses. Federated leases include TTL-bounded tokens to prevent replay attacks in long-running distributed sessions.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Bloom, B. H. (1970). Space/time trade-offs in hash coding with allowable errors. Communications of the ACM.
 2. Gentry, C. (2009). Fully homomorphic encryption using ideal lattices. STOC.

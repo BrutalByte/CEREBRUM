@@ -99,6 +99,10 @@ $$s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{engram} \cdot \text{affinity}
 where `affinity` is derived from accumulated `_counts`. This biases beam search toward known-productive reasoning chains without modifying graph structure. The cache is durable — `save(path)` serializes to JSON and `load(path)` restores counts on restart, so learned relation patterns survive process restarts.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Veličković, P., et al. (2018). Graph Attention Networks. ICLR.
 2. Vaswani, A., et al. (2017). Attention is All You Need. NIPS.

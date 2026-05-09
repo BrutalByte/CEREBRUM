@@ -3,6 +3,7 @@
 
 **Status**: v2.51.0 (Phase 167 COMPLETE)
 **Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Performance / Optimization
 **Modules**: `core/attention_engine.py`, `reasoning/traversal.py`
 

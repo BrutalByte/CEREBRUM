@@ -124,4 +124,8 @@ On the toy_graph.csv fixture (21 nodes, 30 edges), the PredictiveCodingEngine pr
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **Reviewed on**: May 2, 2026 for version v2.51.0

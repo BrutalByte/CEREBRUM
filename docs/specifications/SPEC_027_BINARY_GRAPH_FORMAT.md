@@ -3,6 +3,7 @@
 
 **Status**: v2.51.0 (Phase 169 DRAFT)
 **Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Storage / Performance
 **Module**: `adapters/mmap_adapter.py`
 

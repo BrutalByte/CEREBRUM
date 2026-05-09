@@ -195,6 +195,10 @@ The eight structural holes documented in this paper demonstrate that production 
 In v2.51.0 (Phases 56–57), the hardening scope expands from cross-feature interaction bugs to server-level fault tolerance. The five patterns introduced — partial-result degradation, write-failure isolation, stream error signalling, ProcessPoolExecutor fallback, and durable Engram persistence — collectively ensure that no single failure class can crash a running CEREBRUM server. With **1,490+ passing tests**, dual license (AGPL + commercial), and patent provisionals filed, CEREBRUM v2.51.0 represents a production-hardened framework suitable for enterprise deployment in adversarial and resource-constrained environments.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Lamport, L. (1978). Time, Clocks, and the Ordering of Events in a Distributed System. Communications of the ACM.
 2. Bernstein, P. A., & Goodman, N. (1983). Multiversion Concurrency Control — Theory and Algorithms. ACM TODS.

@@ -50,6 +50,10 @@ The Signal Encoder has been validated in production and its core alignment metho
 **Integration with THALAMUS Pipeline.** The Signal Encoder is now a first-class optional stage in the THALAMUS `IngestionPipeline`. Signal entities are processed through `StatisticalSignalEncoder` or `SpectralSignalEncoder`, projected into the entity embedding space, prefixed with `signal:`, and then passed to the standard normalization and deduplication pipeline. The pipeline is covered in the 1,357-test v2.51.0 suite, including multi-modal namespace collision regression tests.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Schönemann, P. H. (1966). A generalized solution of the orthogonal Procrustes problem. Psychometrika.
 2. Gower, J. C., & Dijksterhuis, G. B. (2004). Procrustes problems. Oxford University Press.

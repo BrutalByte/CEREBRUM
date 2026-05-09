@@ -41,3 +41,8 @@ The Cingulate Engine provides the necessary "sanity check" for autonomous graph 
 
 ---
 **Manuscript Finalized: v2.51.0 (Phase 167 COMPLETE)**
+
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+

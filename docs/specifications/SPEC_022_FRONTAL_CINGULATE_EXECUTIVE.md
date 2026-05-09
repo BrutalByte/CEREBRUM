@@ -3,6 +3,7 @@
 
 **Status**: v2.51.0 (Phase 167 COMPLETE)
 **Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Metacognition / Executive Function
 **Modules**: `core/frontal_engine.py`, `core/cingulate_engine.py`
 

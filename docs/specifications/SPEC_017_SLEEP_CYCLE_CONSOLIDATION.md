@@ -3,6 +3,7 @@
 
 **Status**: v2.51.0 (Phase 167 COMPLETE)
 **Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Metacognition / Graph Optimization / Biological Analogs
 **Modules**: `core/sleep_cycle.py`, `core/consolidation_engine.py`, `core/rem_engine.py`
 

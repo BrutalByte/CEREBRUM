@@ -3,6 +3,7 @@
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Privacy & Security / Federated Learning / Distributed Systems  
 **Module**: `core/holographic_index.py`
 

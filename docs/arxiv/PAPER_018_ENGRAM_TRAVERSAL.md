@@ -79,6 +79,10 @@ Engram-steered traversal demonstrates that meaningful learning from experience d
 The Engram pattern as a *soliton* [bengio2025soliton]: a relation-sequence pattern that repeatedly yields low PE across queries is analogous to a soliton — a localized wave that maintains its shape through propagation. The `soliton_index` (Phase 69) measures this stability per seed set.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Vaswani, A., et al. (2017). Attention is All You Need. NIPS.
 2. Reimers, N., & Gurevych, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. EMNLP.

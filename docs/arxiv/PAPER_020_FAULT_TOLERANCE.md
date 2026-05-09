@@ -145,6 +145,10 @@ The five patterns are orthogonal: each addresses a distinct failure class and ca
 Fault tolerance in production systems is not a single feature but a taxonomy of patterns, each matched to a specific failure class and preserving a specific invariant. The five patterns documented here — partial-result degradation, write-failure isolation, stream error signalling, executor fallback, and durable cache persistence — together ensure that no single operational failure can crash a CEREBRUM server, corrupt an in-flight query, or silently discard accumulated reasoning experience. All five are backward-compatible with existing APIs and add no new required configuration. They represent the engineering discipline that distinguishes a research prototype from a production-ready system.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Lamport, L. (1978). Time, Clocks, and the Ordering of Events in a Distributed System. Communications of the ACM, 21(7), 558–565.
 2. Bernstein, P. A., & Goodman, N. (1983). Multiversion Concurrency Control — Theory and Algorithms. ACM Transactions on Database Systems, 8(4), 465–483.

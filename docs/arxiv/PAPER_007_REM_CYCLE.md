@@ -58,6 +58,10 @@ Graceful Degradation AUC across all five levels: **0.89** (1.0 = perfect; 0.5 = 
 **Consolidated Sleep-Phase Maintenance (Phase 167).** CEREBRUM v2.51.0 formalizes the unification of mnemonic maintenance via the `ConsolidationEngine`. This engine executes a dual-process cycle during system idle time: (1) **Hebbian Replay**, which boosts the synaptic weights of high-salience reasoning paths stored in Working Memory; and (2) **Shortcut Synthesis**, which identifies recurrent multi-hop trajectories in the `QueryLog` and materializes them as direct `REM_SHORTCUT` edges. This transformation effectively converts "computational reasoning" (System 2) into "structural reflexes" (System 1), increasing the system's reactive efficiency as a function of its operational experience.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Diekelmann, S., & Born, J. (2010). The memory function of sleep. Nature Reviews Neuroscience.
 2. Pearl, J. (2000). Causality: Models, Reasoning, and Inference. Cambridge University Press.

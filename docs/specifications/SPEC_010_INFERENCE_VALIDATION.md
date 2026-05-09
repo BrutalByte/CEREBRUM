@@ -3,6 +3,7 @@
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Model Evaluation / Information Retrieval / Graph Algorithms  
 **Module**: `core/inference_validator.py`
 

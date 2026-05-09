@@ -3,6 +3,7 @@
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Graph Theory / Data Mining / Community Detection  
 **Module**: `core/community_engine.py`
 

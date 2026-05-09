@@ -3,6 +3,7 @@
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Production Systems / Correctness / Adversarial Hardening
 **Modules**: `core/bridge_engine.py`, `core/rebalancer.py`, `core/discretizer.py`, `core/thalamus.py`, `core/signal_encoder.py`, `core/attention_engine.py`, `reasoning/traversal.py`, `core/insight_validator.py`, `core/insight_engine.py`, `adapters/stream_adapter.py`, `adapters/remote_adapter.py`
 

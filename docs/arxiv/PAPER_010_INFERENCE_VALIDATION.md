@@ -52,6 +52,10 @@ The validation harness is now exercised across **2175+ tests** (up from 994 at P
 The Inference Validator provides a mathematically sound and self-contained framework for KG reasoning evaluation. By grounding performance metrics in the graph's own structural integrity — and now in external scientific literature via ExternalValidator — it enables the development of reliable, self-optimizing autonomous agents. In v2.51.0, with 1,357 tests passing and IKGWQ AUC=0.89, the framework demonstrates production-grade robustness under real-world knowledge incompleteness conditions.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Bordes, A., et al. (2013). Translating embeddings for modeling multi-relational data. NIPS.
 2. Sun, Z., et al. (2019). RotatE: Knowledge Graph Embedding by Relational Rotation in Complex Space. ICLR.

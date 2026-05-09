@@ -3,6 +3,7 @@
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Temporal Reasoning / Probabilistic KG / Adaptive Attention
 **Modules**: `core/attention_engine.py`, `core/community_engine.py`, `core/kge_engine.py`, `reasoning/traversal.py`
 

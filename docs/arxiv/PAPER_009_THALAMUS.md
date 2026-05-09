@@ -54,6 +54,10 @@ THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectional
 **Throughput Baseline Confirmed.** The 850% throughput improvement (1,200 → 11,500 triples/sec) reported at v2.24.0 has been maintained through all pipeline additions. The hot-reload `/build` endpoint adds no steady-state latency to the ingestion path, as it operates on a separate execution context from the normal ingestion workers.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Doan, A., Halevy, A. Y., & Ives, Z. G. (2012). Principles of Data Integration. Morgan Kaufmann.
 2. Bizer, C., et al. (2009). Linked Data - The Story So Far. International Journal on Semantic Web and Information Systems.

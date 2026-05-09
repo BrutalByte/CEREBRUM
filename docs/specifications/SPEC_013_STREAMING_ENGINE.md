@@ -3,6 +3,7 @@
 
 **Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
 **Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Streaming Systems / Real-Time Reasoning / Event Processing
 **Modules**: `adapters/stream_adapter.py`, `core/discretizer.py`, `core/rebalancer.py`, `api/server.py`
 

@@ -60,6 +60,10 @@ The CEREBRUM framework has undergone substantial development between v2.24.0 and
 **Test Coverage.** The full CEREBRUM test suite now comprises 2175+ tests (up from 994 at v2.24.0), with dedicated regression suites covering TSC stability, community swap atomicity, and modularity drift detection.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Traag, V. A., Waltman, L., & van Eck, N. J. (2019). From Louvain to Leiden: guaranteeing connected communities. Scientific reports.
 2. Raghavan, U. N., Albert, R., & Kumara, S. (2007). Near linear time algorithm to detect community structures in large-scale networks. Physical review E.

@@ -3,6 +3,7 @@
 
 **Status**: v2.51.0 (Phase 167 COMPLETE)
 **Author**: Bryan Alexander Buchorn  
+**Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: NLP / Reasoning / Zero-Shot
 **Modules**: `core/structural_relation_inferrer.py`, `core/cerebrum.py`
 

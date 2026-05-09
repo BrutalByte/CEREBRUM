@@ -62,6 +62,10 @@ The OPT configuration uses adaptive density-driven beam width selection with a m
 *See also:* **Paper 022** — Looped Beam Traversal (Phase 70) extends adaptive depth with LoopLM-style iterative refinement [zhu2025loooplm]. `LoopedBeamTraversal` applies `BeamTraversal` (including Bayesian mode) T times with seed expansion between loops. The adaptive exit gate uses PE convergence as its primary signal, making iterative depth adaptation a first-class reasoning primitive. When `BeamTraversal(probabilistic=True)` is used as the inner traversal, Thompson sampling operates independently within each loop, compounding the recall gains across passes.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Thompson, W. R. (1933). On the likelihood that one unknown probability exceeds another in view of the evidence of two samples. Biometrika.
 2. Agrawal, S., & Goyal, N. (2012). Analysis of Thompson sampling for the multi-armed bandit problem. COLT.

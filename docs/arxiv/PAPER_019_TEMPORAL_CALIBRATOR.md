@@ -60,6 +60,10 @@ TemporalCalibrator closes the parameter optimization gap for temporal CSA featur
 The temporal stability achieved by TemporalCalibrator — where `eta` and `iota` converge to values that maintain consistent Recall@K across graph updates — is analogous to the soliton framing introduced in Phase 69 [bengio2025soliton]: a calibration state that consistently yields low prediction error can be considered soliton-like, a localized reasoning model that maintains its shape through propagation. TemporalCalibrator finds the parameter point that maximises this stability for the temporal dimension specifically.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Vaswani, A., et al. (2017). Attention is All You Need. NIPS.
 2. Traag, V., et al. (2019). From Louvain to Leiden: guaranteeing well-connected communities. Scientific Reports.

@@ -69,6 +69,10 @@ The primary beneficiary is the CSA `alpha` (semantic similarity) term, which bec
 Inference-time GraphSAGE neighbourhood smoothing is a zero-cost structural enrichment for KG entity embeddings. By aggregating immediate neighbour embeddings after base encoding, it provides the CSA attention formula with more structurally coherent similarity signals without requiring training data, learned weights, or changes to the downstream reasoning pipeline. The $O(|E| \times d)$ complexity and single-pass implementation make it practical for production graphs. `CerebrumGraph.build(use_graphsage=True)` enables it transparently.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Hamilton, W., Ying, Z., & Leskovec, J. (2017). Inductive Representation Learning on Large Graphs. NeurIPS.
 2. Vaswani, A., et al. (2017). Attention is All You Need. NIPS.

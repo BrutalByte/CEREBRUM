@@ -144,6 +144,10 @@ The second-order patterns were invisible to standard query-level monitoring; onl
 The InsightValidator, MetaInsightEngine, ResearchAgent, and ExternalValidator collectively constitute CEREBRUM's **autonomous reasoning lifecycle**: discover (ResearchAgent proposes), verify (InsightValidator validates topology), ground (ExternalValidator consults literature), and learn (MetaInsightEngine detects patterns in the full pipeline's behavior). In v2.51.0, this lifecycle operates end-to-end without human intervention for routine validation and proposal screening, with human review reserved for high-confidence proposals that clear all automated gates. The bilateral validation criterion and second-order event graph remain novel contributions without direct precedent in the KG literature.
 
 ---
+## Acknowledgments
+
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathematical formalization, code generation, manuscript preparation, and technical writing. All conceptual contributions, architectural decisions, experimental design, and intellectual claims are solely the author's.
+
 **References**
 1. Ying, R., et al. (2019). GNNExplainer: Generating Explanations for Graph Neural Networks. NeurIPS.
 2. Ribeiro, M. T., et al. (2016). "Why should I trust you?": Explaining the predictions of any classifier. KDD.
