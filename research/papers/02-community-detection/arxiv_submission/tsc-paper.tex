@@ -35,9 +35,9 @@ local (Label Propagation), global (Modularity $\Delta Q$), and flow-based
 temperature-annealing schedule that transitions from exploratory local clustering
 to stable global optimization. On synthetic caveman benchmarks, TSC achieves
 modularity Q = 0.88 versus Leiden Q = 0.48 — an 83\% improvement. On the LFR
-benchmark, TSC achieves NMI = 0.91, ARI = 0.89, outperforming Leiden
-(NMI = 0.81, ARI = 0.76) on heterogeneous-degree graphs where hub drift is
-most pronounced. Community partitions produced by TSC serve as discrete attention
+benchmark at $\mu = 0.3$, TSC achieves NMI = 0.96, ARI = 0.94, competitive
+with Leiden (NMI = 0.97, ARI = 0.97); caveman benchmarks, where hub drift is
+most pronounced, remain the primary differentiator. Community partitions produced by TSC serve as discrete attention
 heads in the \CEREBRUM{} framework, and their quality directly determines the
 granularity of downstream per-community parameter learning.
 \end{abstract}
