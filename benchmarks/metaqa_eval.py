@@ -620,6 +620,11 @@ def main():
     parser.add_argument("--no-cache",   action="store_true",
                         help="Recompute DSCF and embeddings even if cached.")
     parser.add_argument("--embeddings", choices=["random", "sentence"], default="random")
+    parser.add_argument("--community-engine",
+                        choices=["dscf", "tsc", "leiden", "lpa"],
+                        default="dscf",
+                        help="Community detection algorithm (default: dscf). "
+                             "Use 'tsc' to measure TSC vs DSCF downstream quality.")
     parser.add_argument("--graphsage", action="store_true", default=False,
                         help="Apply GraphSAGE neighborhood smoothing to entity embeddings "
                              "after encoding. Enriches embeddings with 2-hop context. "
@@ -747,6 +752,7 @@ def main():
         use_kge             = args.kge,
         kge_blend           = args.kge_blend,
         kge_epochs          = args.kge_epochs,
+        community_engine    = args.community_engine,
     )
     print(f"  {graph.community_count} communities")
 
