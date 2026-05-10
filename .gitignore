@@ -54,3 +54,20 @@ ue5_project/Content/UnrealClaude/
 
 .gemini/
 gha-creds-*.json
+
+# Session caches
+Gemini Logs/
+
+# Temp/pytest artifact directories
+tmp/
+tmp_pytest*/
+
+# Generated reports
+discovery_verification_report.*
+
+# Entire UE5 project (not just generated subdirs)
+ue5_project/
+
+# Old release/validation snapshots (superseded by docs/)
+release/
+validation/
