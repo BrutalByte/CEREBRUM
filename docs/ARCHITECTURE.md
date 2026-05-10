@@ -117,4 +117,4 @@ The `ConsolidationEngine` merges Hebbian Replay (Phase 96) and Shortcut Synthesi
 | GUI Adaptation | on / off | metabolic-driven UI structural adaptation |
 
 ---
-**Reviewed on**: May 7, 2026 for version v2.51.1
+**Reviewed on**: May 9, 2026 for version v2.51.1

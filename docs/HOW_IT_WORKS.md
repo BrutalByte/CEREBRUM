@@ -115,4 +115,4 @@ CEREBRUM represents a shift from **Stochastic AI** (guessing) to **Structural AI
 **CEREBRUM is the first formal reasoning engine designed for the age of complex, high-stakes data.**
 
 ---
-**Reviewed on**: May 3, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1

@@ -3,7 +3,7 @@
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.1 (Phase 167 (STRB) COMPLETE — 2177 tests passing)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -73,7 +73,7 @@ The CEREBRUM framework has undergone substantial development between v2.24.0 and
 10. Sun, X., et al. (2024). Hybrid Community Detection via Local and Global Signal Fusion. Journal of Graph Reasoning.
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # CSA: Community-Structured Attention for Knowledge Graph Reasoning
@@ -81,7 +81,7 @@ The CEREBRUM framework has undergone substantial development between v2.24.0 and
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -191,7 +191,7 @@ where `affinity` is derived from accumulated `_counts`. This biases beam search 
 11. Hamilton, W., Ying, Z., & Leskovec, J. (2017). Inductive Representation Learning on Large Graphs. NeurIPS.
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Experience-Dependent Structural Plasticity in Knowledge Graphs: The Bridge Twin Engine
@@ -199,7 +199,7 @@ where `affinity` is derived from accumulated `_counts`. This biases beam search 
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -263,7 +263,7 @@ The Bridge Twin Engine has been substantially extended since v2.24.0. The follow
 7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Autonomous Causal Discovery via Spike-Timing-Dependent Plasticity in Knowledge Streams
@@ -271,7 +271,7 @@ The Bridge Twin Engine has been substantially extended since v2.24.0. The follow
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -332,7 +332,7 @@ The STDP causal discovery pipeline has been hardened and extended since v2.24.0.
 7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Holographic Indexing: Privacy-Preserving Discovery in Federated Knowledge Networks
@@ -340,7 +340,7 @@ The STDP causal discovery pipeline has been hardened and extended since v2.24.0.
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -394,7 +394,7 @@ Federated reasoning has been one of the most actively developed areas of the CER
 6. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Bayesian Beam Search: Probabilistic Graph Traversal under Topological Uncertainty
@@ -402,7 +402,7 @@ Federated reasoning has been one of the most actively developed areas of the CER
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -472,7 +472,7 @@ The OPT configuration uses adaptive density-driven beam width selection with a m
 8. Zhu, R.-J., Wang, Z., Hua, K., et al. (2025). Scaling Latent Reasoning via Looped Language Models. arXiv:2510.25741. [zhu2025loooplm]
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # The REM Cycle: Metacognitive Maintenance and Insight Synthesis in Autonomous Knowledge Graphs
@@ -480,7 +480,7 @@ The OPT configuration uses adaptive density-driven beam width selection with a m
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -545,7 +545,7 @@ Graceful Degradation AUC across all five levels: **0.89** (1.0 = perfect; 0.5 = 
 7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Cross-Modal Alignment via Orthogonal Procrustes: Bridging Signals and Symbols in Knowledge Graphs
@@ -553,7 +553,7 @@ Graceful Degradation AUC across all five levels: **0.89** (1.0 = perfect; 0.5 = 
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -610,7 +610,7 @@ The Signal Encoder has been validated in production and its core alignment metho
 7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # THALAMUS: Intelligent Ingestion and Namespace Isolation for Heterogeneous Knowledge Graphs
@@ -618,7 +618,7 @@ The Signal Encoder has been validated in production and its core alignment metho
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -679,7 +679,7 @@ THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectional
 7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Inference Validator: A Self-Contained Precision/Recall Harness for Unsupervised Graph Reasoning
@@ -687,7 +687,7 @@ THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectional
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -746,7 +746,7 @@ The Inference Validator provides a mathematically sound and self-contained frame
 7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Contradiction Materialization: Factual Conflict as a First-Class Signal in Knowledge Graphs
@@ -754,7 +754,7 @@ The Inference Validator provides a mathematically sound and self-contained frame
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -811,7 +811,7 @@ Contradiction Materialization transforms Knowledge Graphs from static fact store
 7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Glass-Box Reasoning Studio: Visualizing Graph Attention and Latent Multi-Hop Inference
@@ -819,7 +819,7 @@ Contradiction Materialization transforms Knowledge Graphs from static fact store
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -895,7 +895,7 @@ The Glass-Box Reasoning Studio transforms graph attention from an abstract mathe
 7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Streaming Knowledge Graph Engine: Real-Time Edge Ingestion, Discretization, and Adaptive Beam Search
@@ -903,7 +903,7 @@ The Glass-Box Reasoning Studio transforms graph attention from an abstract mathe
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -981,7 +981,7 @@ The CEREBRUM Streaming Engine in v2.51.0 has matured from a laboratory prototype
 5. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Metacognitive Verification in Knowledge Graph Reasoning: InsightValidator, MetaInsightEngine, and Second-Order Structural Reasoning
@@ -989,7 +989,7 @@ The CEREBRUM Streaming Engine in v2.51.0 has matured from a laboratory prototype
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -1139,7 +1139,7 @@ The InsightValidator, MetaInsightEngine, ResearchAgent, and ExternalValidator co
 6. Swanson, D. R. (1986). Fish Oil, Raynaud's Syndrome, and Undiscovered Public Knowledge. Perspectives in Biology and Medicine.
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Algorithmic Depth in Knowledge Graph Reasoning: Temporal Edges, Uncertainty Propagation, Soft Community Membership, Learned CSA Parameters, and Graph Embedding Integration
@@ -1147,7 +1147,7 @@ The InsightValidator, MetaInsightEngine, ResearchAgent, and ExternalValidator co
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -1348,7 +1348,7 @@ The Algorithmic Depth layer demonstrates that meaningful reasoning improvements 
 7. Zhu, R.-J., Wang, Z., Hua, K., et al. (2025). Scaling Latent Reasoning via Looped Language Models. arXiv:2510.25741. [zhu2025loooplm]
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Structural Hole Patching in Production Knowledge Graph Systems: Eight Cross-Feature Interaction Bugs and Their Fixes
@@ -1356,7 +1356,7 @@ The Algorithmic Depth layer demonstrates that meaningful reasoning improvements 
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -1556,7 +1556,7 @@ In v2.51.0 (Phases 56–57), the hardening scope expands from cross-feature inte
 5. Bi & Poo (1998). Synaptic Modifications in Cultured Hippocampal Neurons. Journal of Neuroscience.
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Inference-Time GraphSAGE Neighbourhood Smoothing for Knowledge Graph Entity Embeddings
@@ -1564,7 +1564,7 @@ In v2.51.0 (Phases 56–57), the hardening scope expands from cross-feature inte
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -1637,7 +1637,7 @@ Inference-time GraphSAGE neighbourhood smoothing is a zero-cost structural enric
 4. Reimers, N., & Gurevych, I. (2019). Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. EMNLP.
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Engram-Steered Traversal: Training-Free Relation-Pattern Caching for Knowledge Graph Beam Search
@@ -1645,7 +1645,7 @@ Inference-time GraphSAGE neighbourhood smoothing is a zero-cost structural enric
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -1729,7 +1729,7 @@ The Engram pattern as a *soliton* [bengio2025soliton]: a relation-sequence patte
 5. Bengio, Y. et al. (2025). Consciousness as a Soliton, Not a Process. UCFT 2025 Preprint. [bengio2025soliton]
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # TemporalCalibrator: Non-Differentiable Grid-Search Calibration of Temporal CSA Parameters
@@ -1737,7 +1737,7 @@ The Engram pattern as a *soliton* [bengio2025soliton]: a relation-sequence patte
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -1800,7 +1800,7 @@ The temporal stability achieved by TemporalCalibrator — where `eta` and `iota`
 3. Bengio, Y. et al. (2025). Consciousness as a Soliton, Not a Process. UCFT 2025 Preprint. [bengio2025soliton]
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Five Fault-Tolerance Patterns for Production Knowledge Graph Reasoning Servers
@@ -1808,7 +1808,7 @@ The temporal stability achieved by TemporalCalibrator — where `eta` and `iota`
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -1956,7 +1956,7 @@ Fault tolerance in production systems is not a single feature but a taxonomy of 
 3. Vaswani, A., et al. (2017). Attention is All You Need. NIPS.
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # PAPER 021 — SpeedTalk-Compressed Engram: Phonemic Encoding for Relation-Pattern Caches
@@ -1964,7 +1964,7 @@ Fault tolerance in production systems is not a single feature but a taxonomy of 
 **Series:** CEREBRUM Technical Report Series  
 **Paper:** 021 of 100  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 **Author:** Bryan Alexander Buchorn, Independent Researcher
 
 ---
@@ -2280,12 +2280,12 @@ alongside the cache for cross-restart stability.
 *Part of the CEREBRUM Technical Report Series. See PAPER_001 for system overview.*
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # PAPER 022: Looped Beam Traversal — Iterative Refinement for Knowledge Graph Reasoning
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 **CEREBRUM Phase 70**  
 **Inspired by:** Zhu, R.-J. et al. (2025). *Scaling Latent Reasoning via Looped Language Models.* arXiv:2510.25741. ByteDance Seed / UC Santa Cruz et al. [zhu2025loooplm]
@@ -2490,12 +2490,12 @@ LoopLM passes the entire hidden state forward — all prior context is preserved
 - [Phase 55] CEREBRUM Phase 55: Engram — persistent relation-pattern cache; EngramTraversal.
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # PAPER 023: Predictive Coding for Knowledge Graph Traversal — Prior Paths, Prediction Error, and the Soliton Index
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 **CEREBRUM Phase 69**
 
@@ -2616,12 +2616,12 @@ On the toy_graph.csv fixture (21 nodes, 30 edges), the PredictiveCodingEngine pr
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # PAPER 024: AutoApprover — Tiered Automated Decision Making for Knowledge Graph Research Findings
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 **CEREBRUM Phase 71**
 
@@ -2731,12 +2731,12 @@ The rolling approval rate (APPROVE / (APPROVE + REJECT)) feeds the circuit break
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # PAPER 025: TriangulationEngine — Four-Perspective Candidate Validation for Knowledge Graph Discovery
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 **CEREBRUM Phase 72**
 
@@ -2845,12 +2845,12 @@ The four scores are automatically incorporated into `AutoApprover`'s 16-feature 
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # PAPER 026: Discovery Calibration — EMA-Based Community Rate Tracking and Contradiction Resolution for Autonomous KG Research
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 **CEREBRUM Phase 73**
 
@@ -2975,12 +2975,12 @@ Default `max_boost = 3.0`. This rewards repeatedly-surfaced candidates without l
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # PAPER 027: AutonomousDiscoveryLoop — Closing the Discover-Validate-Approve-Materialize Loop for Knowledge Graph Self-Improvement
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 **CEREBRUM Phase 74**
 
@@ -3103,12 +3103,12 @@ Combined with `adaptive_tuning` (Phase 82), the cap is dynamically scaled per cy
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # PAPER 028: Studio v2 — A Six-Panel Live Dashboard for Autonomous Knowledge Graph Operations
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 **CEREBRUM Phases 75 + 78**
 
@@ -3212,12 +3212,12 @@ This is enforced by the `@requires_attachment` decorator pattern, ensuring no `A
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # PAPER 029: ProvenanceLedger — Targeted Rollback and Audit for Autonomous Knowledge Graph Materialization
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 **CEREBRUM Phase 76**
 
@@ -3336,12 +3336,12 @@ All read and write operations on `_batches` and `_cycle_index` are protected by 
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # PAPER 030: Feature Impact Benchmark — Measuring Incremental Reasoning Gains in CEREBRUM v2.51.0
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 **CEREBRUM Phase 77**
 
@@ -3426,12 +3426,12 @@ The toy_graph.csv fixture (21 nodes, 30 edges) is too small for statistically me
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # PAPER 031: Loop-Provenance Recovery — Automatic Rollback on Circuit Breaker Trip in Autonomous KG Discovery
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 **CEREBRUM Phase 79**
 
@@ -3521,12 +3521,12 @@ The Studio v2 cycle history panel (Phase 75) renders `edges_rolled_back` in the 
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # PAPER 032: GraphAdapter remove_edge Protocol — A Formal Edge-Removal Contract for Knowledge Graph Adapters
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 **CEREBRUM Phase 80**
 
@@ -3634,12 +3634,12 @@ If `adapter.remove_edge()` raises, the exception propagates to the caller. `Prov
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # PAPER 033: GraphSnapshot — Portable JSON Topology Persistence for Knowledge Graph Recovery
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 **CEREBRUM Phase 81**
 
@@ -3769,12 +3769,12 @@ Pairs with `ProvenanceLedger.rollback_cycle()` for fine-grained recovery: if the
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # PAPER 034: Adaptive Loop Tuning — Calibrator-Driven Dynamic Pacing for Autonomous Knowledge Graph Discovery
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 **CEREBRUM Phase 82**
 
@@ -3908,7 +3908,7 @@ curl -X POST http://localhost:8200/research/loop/configure \
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 # Neural Visualization Bridge: 3D Interactive Knowledge Graph Exploration via Unreal Engine 5
@@ -3919,7 +3919,7 @@ curl -X POST http://localhost:8200/research/loop/configure \
 **Phase**: 83  
 **Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
 **arXiv Category**: `cs.HC` + `cs.IR`  
-**Date**: May 2, 2026
+**Date**: May 9, 2026
 
 ---
 
@@ -4205,7 +4205,7 @@ The current implementation loads all edges at startup. For graphs > 10 000 edges
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1
 
 
 
@@ -4283,4 +4283,4 @@ As we move toward the next decade of AGI development, CEREBRUM provides the blue
 **Manuscript Finalized: v2.51.0 (Phase 111 COMPLETE)**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1

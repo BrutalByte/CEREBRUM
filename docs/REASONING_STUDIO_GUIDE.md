@@ -188,4 +188,4 @@ For very large graphs, reduce the **Beam Width** or **Max Hops**. The Studio is 
 If the UI hangs during community detection, check the console logs. DSCF can be computationally intensive on CPU for dense graphs. Ensure you have enough RAM available.
 
 ---
-**Reviewed on**: May 3, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1

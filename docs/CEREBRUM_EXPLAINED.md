@@ -241,4 +241,4 @@ Most AIs need weeks of "training" on supercomputers. They cost millions of dolla
 *For the technical details, read the official [CEREBRUM ArXiv Manuscript](file:///e:/Development/Cerebrum/docs/latex/cerebrum_master.pdf).*
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 9, 2026 for version v2.51.1

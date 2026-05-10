@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.51.1 (Phase 167) — Locked May 8, 2026
+## Version: v2.51.1 (Phase 167) — Locked May 9, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -193,4 +193,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-05-08 | Locked for v2.51.1 publication cycle*
+*Last updated: 2026-05-09 | Locked for v2.51.1 publication cycle*
