@@ -5,6 +5,14 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.51.1] - 2026-05-07
+### Fixed
+- **`CSAEngine.temporal_window_size` missing attribute** (`core/attention_engine.py`): `__init__` accepted the parameter but never stored it as `self.temporal_window_size`. Fixed by adding the assignment. Resolves 4 failures in `test_temporal_scoring` and `test_temporal_window`.
+- **MagicMock guard for batch CSA scorer** (`reasoning/traversal.py`): `getattr(csa, "compute_weights_batch", None)` was not guarded against `MagicMock` auto-creating the attribute on instances. Added `any("compute_weights_batch" in cls.__dict__ for cls in type(self.csa).__mro__)` check. Applied same guard to `get_current_params`. Resolves 11 failures in CVT, loop-wiring, and multi-seed tests.
+- **Per-step fallback when batch scorer is `None`** (`reasoning/traversal.py`): Added fallback path using `compute_weight_with_features` → `compute_weight` when `_cwb` is `None`. Main scoring loop handles non-`ReasoningLogit` logits by calling `compute_weight` directly. Resolves `test_traversal_batch_path` and H1SE pruning test.
+- **CUDA tensor in `get_current_params`** (`core/attention_engine.py`): Parameters stored as `torch.tensor(..., device=cuda)` were returned raw, causing NumPy failures on GPU. Fixed by converting all returned values via `.item()` on tensors. Resolves 4 failures in `test_community_params`.
+- **Total: 27 pre-existing test failures → 0** (2177 passed, 1 skipped, 3 UI server errors expected).
+
 ## [2.51.0] - 2026-05-02
 ### Added
 - **Phase 167: STRB — Semantic Terminal Relation Boost**

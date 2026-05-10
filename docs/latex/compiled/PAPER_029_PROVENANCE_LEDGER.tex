@@ -1,0 +1,139 @@
+\section{PAPER 029: ProvenanceLedger — Targeted Rollback and Audit for Autonomous Knowledge Graph Materi\-alization}
+
+\textbf{Author}: Bryan Alexander Buchorn  
+\textbf{Affiliation}: Independent Researcher, Las Vegas, NV, USA  
+\textbf{Status}: v2.51.0 (Phase 167 (STRB) COMPLETE)
+\textbf{Date}: May 2, 2026
+
+\textbf{CEREBRUM Phase 76}
+
+---
+
+\subsection{Abstract}
+
+We present \textbf{ProvenanceLedger}, an audit chain component for CEREBRUM's autonomous knowledge graph discovery pipeline. ProvenanceLedger records every edge mater\-ialized by \texttt{ResearchAgent.approve()} in structured \texttt{EdgeRecord} / \texttt{BatchRecord} objects, enabling targeted rollback at two granu\-larities: per-approval-batch (\texttt{rollback\_batch}) and per-loop-cycle (\texttt{rollback\_cycle}). Unlike naive graph snapshots, which require full graph comparison to identify removed edges, ProvenanceLedger provides O(1) lookup of edges-to-remove by batch ID or cycle number. The ledger is thread-safe, LRU-capped at \texttt{max\_batches} to bound memory usage, and requires adapters to implement the Phase 80 \texttt{remove\_edge()} protocol. ProvenanceLedger is the prere\-quisite for Loop-Provenance Recovery (Phase 79), which wires circuit breaker trips to automatic cycle rollback.
+
+---
+
+\subsection{1. Motivation: Accoun\-tability in Autonomous Materi\-alization}
+
+Prior to Phase 76, \texttt{ResearchAgent.approve()} called \texttt{adapter.add\_edge()} with no record of which edges were added in which approval decision. If a batch of findings later proved incorrect (e.g., when the circuit breaker tripped, indicating poor discovery quality), there was no automated way to remove exactly those edges without manual graph inspection.
+
+Two rollback granu\-larities are needed:
+\begin{enumerate}
+\item \textbf{Batch rollback}: Remove edges from one specific \texttt{approve()} call. Useful when a single finding is later disproved.
+\item \textbf{Cycle rollback}: Remove all edges mater\-ialized in loop cycle N. Useful when the entire cycle is suspect (circuit breaker trip, external validation failure).
+
+\end{enumerate}
+---
+
+\subsection{2. Data Model}
+
+\subsubsection{EdgeRecord}
+\begin{lstlisting}
+@dataclass
+class EdgeRecord:
+    u: str           # source entity
+    v: str           # target entity
+    relation: str    # edge label
+    finding_id: str  # originating ResearchFinding ID
+\end{lstlisting}
+
+\subsubsection{BatchRecord}
+\begin{lstlisting}
+@dataclass
+class BatchRecord:
+    batch_id: str              # timestamp + finding hash
+    cycle_number: int          # loop cycle that produced this batch
+    edges: List[EdgeRecord]
+    rolled_back: bool = False
+    rolled_back_at: Optional[float] = None
+\end{lstlisting}
+
+\subsubsection{ProvenanceLedger}
+\begin{itemize}
+\item \texttt{\_batches: OrderedDict[str, BatchRecord]} — LRU-ordered dict
+\item \texttt{\_cycle\_index: Dict[int, List[str]]} — cycle $\to$ list of batch\_ids
+
+\end{itemize}
+---
+
+\subsection{3. Recording}
+
+\begin{lstlisting}
+# Called automatically by ResearchAgent.approve()
+ledger.record(batch_id, cycle_number, edges: List[Tuple[str, str, str]])
+\end{lstlisting}
+
+When \texttt{max\_batches} is reached, the oldest batch is evicted (LRU).
+
+---
+
+\subsection{4. Rollback}
+
+\subsubsection{Batch rollback}
+\begin{lstlisting}
+removed: int = ledger.rollback_batch("batch_20260414_001", adapter)
+# Calls adapter.remove_edge(u, v, relation) for each EdgeRecord
+# Marks batch as rolled_back=True
+\end{lstlisting}
+
+\subsubsection{Cycle rollback}
+\begin{lstlisting}
+removed: int = ledger.rollback_cycle(12, adapter)
+# Iterates all batches with cycle_number == 12
+# Calls rollback_batch for each
+\end{lstlisting}
+
+Both methods return the count of edges removed, which is recorded in \texttt{CycleRecord.edges\_rolled\_back} (Phase 79).
+
+---
+
+\subsection{5. Stats and Inspection}
+
+\begin{lstlisting}
+stats = ledger.stats()
+# {
+#   "total_batches": 42,
+#   "active_batches": 38,
+#   "rolled_back_batches": 4,
+#   "total_edges": 187,
+#   "rolled_back_edges": 19,
+# }
+
+batches = ledger.recent_batches(n=10)
+# List of BatchRecord dicts, newest first
+\end{lstlisting}
+
+---
+
+\subsection{6. REST API}
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Endpoint & Method & Description \\ \hline
+\texttt{/research/provenance/stats} & GET & Ledger totals \\ \hline
+\texttt{/research/provenance/batches} & GET & Recent batches list (\texttt{?n=20}) \\ \hline
+\texttt{/research/provenance/rollback/{batch\_id}} & POST & Rollback one batch \\ \hline
+\texttt{/research/provenance/rollback-cycle/{n}} & POST & Rollback all batches from cycle N \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+---
+
+\subsection{7. Thread Safety}
+
+All read and write operations on \texttt{\_batches} and \texttt{\_cycle\_index} are protected by a \texttt{threading.Lock}. Concurrent \texttt{approve()} calls from different threads produce distinct \texttt{batch\_id} values (based on \texttt{time.time\_ns()} + \texttt{uuid4} suffix) and never collide.
+
+---
+\textbf{Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.}
+
+---
+\subsection{Acknow\-ledgments}
+
+The author gratefully ackno\-wledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathe\-matical forma\-lization, code generation, manuscript preparation, and technical writing. All conceptual contr\-ibutions, archi\-tectural decisions, exper\-imental design, and intel\-lectual claims are solely the author's.
+
+\textbf{Reviewed on}: May 2, 2026 for version v2.51.0

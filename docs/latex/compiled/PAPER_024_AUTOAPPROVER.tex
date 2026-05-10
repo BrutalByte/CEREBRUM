@@ -1,0 +1,134 @@
+\section{PAPER 024: AutoApprover — Tiered Automated Decision Making for Knowledge Graph Research Findings}
+
+\textbf{Author}: Bryan Alexander Buchorn  
+\textbf{Affiliation}: Independent Researcher, Las Vegas, NV, USA  
+\textbf{Status}: v2.51.0 (Phase 167 (STRB) COMPLETE)
+\textbf{Date}: May 2, 2026
+
+\textbf{CEREBRUM Phase 71}
+
+---
+
+\subsection{Abstract}
+
+We present \textbf{AutoApprover}, a three-tier automated decision engine for \texttt{ResearchFinding} objects produced by CEREBRUM's \texttt{ResearchAgent}. AutoApprover replaces manual finding review in the Autonomous Discovery Loop (Phase 74) with a principled decision stack: (1) \textbf{hard gates} that reject struc\-turally invalid findings instantly; (2) an \textbf{online logistic SGD classifier} operating on a 16-dimensional feature vector; (3) an optional \textbf{LLM semantic fallback} for borderline cases. The 16-feature vector incor\-porates confidence, discovery potential, community topology, Triang\-ulationEngine scores (Phase 72), and novelty metrics. Online \texttt{fit()} from confirmed decisions enables continuous improvement without retraining cycles. AutoApprover checkpoints via \texttt{to\_dict()} / \texttt{from\_dict()}, enabling warm restart after pod restarts. In the Autonomous Discovery Loop, AutoApprover maintains a rolling approval rate that drives the circuit breaker, ensuring graph quality degrades gracefully under noise.
+
+---
+
+\subsection{1. Motivation: The Manual Approval Bottleneck}
+
+\texttt{ResearchAgent} (Phase 51) discovers candidate missing links in the Knowledge Graph by running \texttt{HypothesisEngine} across under\-represented community boundaries. In the original design, all findings were queued for human review. This creates a throughput bottleneck that prevents fully autonomous operation.
+
+A naive threshold on the raw \texttt{confidence} field is insuf\-ficient: high-confidence findings may duplicate existing edges, contradict strong existing evidence, or belong to over-saturated communities where further mater\-ialization adds noise rather than information. A decision engine must consider multiple dimensions simul\-taneously.
+
+---
+
+\subsection{2. Three-Tier Decision Stack}
+
+\subsubsection{2.1 Tier 1: Hard Gates}
+
+Hard gates fire before any ML computation. A finding is immediately \textbf{REJECTED} if:
+
+\begin{center}
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Gate & Condition \\ \hline
+Literature block & \texttt{finding.literature\_status} in \texttt{{"BLOCKED", "RETRACTED"}} \\ \hline
+Missing validation & \texttt{finding.validation\_report} is \texttt{None} \\ \hline
+Contra\-diction threshold & \texttt{finding.metadata["contradiction\_score"] \textgreater  HARD\_THRESHOLD} (default 0.9) \\ \hline
+\end{tabularx}
+\end{center}
+
+Hard gate rejections are cheap (O(1)) and prevent obviously-bad findings from consuming classifier compute.
+
+\subsubsection{2.2 Tier 2: Online SGD Classifier}
+
+A logistic regression classifier operating on a 16-dimensional feature vector:
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+\# & Feature & Source \\ \hline
+1 & \texttt{confidence} & HypothesisEngine output \\ \hline
+2 & \texttt{discovery\_potential} & DiscoveryCalibrator weight $\times$ raw potential \\ \hline
+3 & \texttt{gap\_score} & Community structural gap \\ \hline
+4 & \texttt{community\_distance} & Hop distance between source/target communities \\ \hline
+5 & \texttt{local\_density} & Edge density around proposal \\ \hline
+6 & \texttt{lit\_status\_ordinal} & literature\_status encoded as int \\ \hline
+7 & \texttt{novelty\_score} & 1 - similarity to existing graph edges \\ \hline
+8 & \texttt{engram\_affinity} & Engram pattern match strength \\ \hline
+9 & \texttt{path\_count} & Number of independent supporting paths \\ \hline
+10 & \texttt{contradiction\_score} & Contra\-dictionResolver net\_evidence\_score \\ \hline
+11–14 & \texttt{triangulation\_*} & Triang\-ulationEngine P1–P4 scores (Phase 72) \\ \hline
+15 & \texttt{seeded\_by\_research} & Boolean: finding originated from ResearchAgent scan \\ \hline
+16 & \texttt{seeded\_by\_external} & Boolean: finding triggered by external literature signal \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+SGD update rule on confirmed decisions:
+\begin{lstlisting}
+approver.fit(finding, label=True)   # confirmed approval
+approver.fit(finding, label=False)  # confirmed rejection
+\end{lstlisting}
+
+\subsubsection{2.3 Tier 3: LLM Semantic Fallback}
+
+When the classifier score is within \texttt{[threshold - margin, threshold + margin]} (borderline), an optional LLM call is made via \texttt{LLMFallback.evaluate(finding)}. The LLM receives a structured prompt with the entity pair, relation, confidence, and top supporting paths, and returns APPROVE / REJECT / REVIEW.
+
+LLM fallback is disabled by default and requires explicit wiring:
+\begin{lstlisting}
+approver = AutoApprover(llm_fallback=AnthropicFallback(model="claude-sonnet-4-6"))
+\end{lstlisting}
+
+---
+
+\subsection{3. Checkpoint and Restore}
+
+\begin{lstlisting}
+state = approver.to_dict()    # JSON-serializable checkpoint
+approver2 = AutoApprover.from_dict(state)   # restore on restart
+\end{lstlisting}
+
+The checkpoint persists the SGD weight vector, threshold, and decision history count.
+
+---
+
+\subsection{4. REST API}
+
+\begin{lstlisting}
+GET  /research/auto-approver          → current weights, threshold, decision counts
+POST /research/auto-approver          → partial update (threshold, fallback config)
+\end{lstlisting}
+
+---
+
+\subsection{5. Integration with Autonomous Discovery Loop}
+
+\texttt{AutonomousDiscoveryLoop} passes each finding through \texttt{approver.decide(finding)}:
+\begin{itemize}
+\item \textbf{APPROVE} $\to$ \texttt{research\_agent.approve(finding)} $\to$ edges mater\-ialized
+\item \textbf{REJECT} $\to$ \texttt{research\_agent.reject(finding)} $\to$ finding discarded
+\item \textbf{REVIEW} $\to$ added to review queue (no immediate action)
+
+\end{itemize}
+The rolling approval rate (APPROVE / (APPROVE + REJECT)) feeds the circuit breaker.
+
+---
+
+\subsection{6. References}
+
+\begin{itemize}
+\item [bottou\-2010\-large] Bottou, L. (2010). Large-scale machine learning with stochastic gradient descent. \textit{COMPSTAT}, 177–186.
+
+\end{itemize}
+---
+\textbf{Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.}
+
+---
+\subsection{Acknow\-ledgments}
+
+The author gratefully ackno\-wledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathe\-matical forma\-lization, code generation, manuscript preparation, and technical writing. All conceptual contr\-ibutions, archi\-tectural decisions, exper\-imental design, and intel\-lectual claims are solely the author's.
+
+\textbf{Reviewed on}: May 2, 2026 for version v2.51.0

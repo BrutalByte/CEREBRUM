@@ -711,7 +711,7 @@ class CerebrumGraph:
         # 3. Community detection
         # ----------------------------------------------------------
         if callback: callback(0.5, "Step 3/5: DSCF Community Detection (Attention Heads)...")
-        comm_cache = cache / "communities.pkl" if cache else None
+        comm_cache = cache / f"communities_{community_engine}.pkl" if cache else None
         
         # Use G_und consistently throughout this block
         G_und = G.to_undirected() if G.is_directed() else G

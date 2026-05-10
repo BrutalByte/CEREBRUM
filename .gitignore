@@ -28,7 +28,7 @@ env/
 
 # Benchmark data (large datasets — download separately)
 benchmarks/data/
-research/
+# research/ intentionally tracked — publication workspace
 tests/validation/
 
 # Runtime data (caches, query logs — generated at runtime)

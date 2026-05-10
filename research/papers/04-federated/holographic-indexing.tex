@@ -1,0 +1,319 @@
+\documentclass[10pt,twocolumn]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=0.75in,top=1in,bottom=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{microtype}
+\hypersetup{colorlinks=true,linkcolor=blue!60!black,citecolor=green!50!black,urlcolor=blue!60!black}
+
+\usepackage{../shared/cerebrum-macros}
+\input{../shared/notation}
+
+\title{\textbf{Holographic Indexing: Privacy-Preserving Discovery\\
+in Federated Knowledge Graph Networks}}
+
+\input{../shared/author-block}
+\date{May 2026}
+
+\begin{document}
+\maketitle
+
+% -----------------------------------------------------------------------
+\begin{abstract}
+Federated Knowledge Graph reasoning requires nodes to identify relevant peers without
+revealing the contents of their local graphs. We present \textbf{Holographic Indexing},
+a two-tier privacy-preserving discovery protocol combining (1) Bloom Filter membership
+probing for exact entity matching and (2) Community Centroid Signatures for semantic
+neighborhood approximation. The ``holographic'' representation allows a querying node
+to identify potential reasoning destinations in remote peers with bounded information
+leakage: exact entity membership cannot be enumerated from a Bloom filter, and centroid
+signatures reveal only community-level topology, not individual entities. We formalize
+the privacy properties (Theorem~\ref{thm:privacy}), analyze communication complexity
+($O(|C| \cdot d + m)$ bits per peer probe vs. $O(|\Vset|)$ for full entity exchange),
+and describe Orthogonal Procrustes alignment for cross-node embedding space
+normalization. The protocol is implemented in the \CEREBRUM{} framework via
+\texttt{DistributedBeamTraversal}, with HMAC-SHA256 path provenance ensuring integrity
+of federated reasoning paths. We further show that the same discovery layer generalizes
+to scientific literature federation via the \texttt{ExternalValidator} component.
+\end{abstract}
+
+% -----------------------------------------------------------------------
+\section{Introduction}
+\label{sec:intro}
+
+Federated Knowledge Graphs are increasingly common: healthcare systems partition patient
+data across hospital nodes; enterprise knowledge bases span business units; scientific
+knowledge is distributed across domain-specific repositories. Cross-node reasoning
+requires identifying which peers hold relevant information — but disclosing full entity
+lists violates data sovereignty constraints and creates enumeration attack surfaces.
+
+Traditional federated search approaches require either a central index (single point of
+failure, privacy violation) or full entity exchange (prohibitive bandwidth, privacy
+violation). We propose a middle path: a \emph{holographic} representation that enables
+semantic discovery without enabling entity enumeration.
+
+The term ``holographic'' captures the key property: like a holographic projection, the
+representation contains enough information to identify relevant regions, but destroying
+the projection does not recreate the full original. A Bloom filter over entity IDs
+cannot be inverted; a community centroid cannot recreate individual node embeddings.
+
+\paragraph{Contributions.}
+\begin{enumerate}
+  \item Tier-1 Bloom Filter probing: exact membership testing with configurable
+        false-positive rate $p$ and no enumeration leakage.
+  \item Tier-2 Community Centroid Signatures: semantic neighborhood approximation
+        via cosine similarity to centroid/radius pairs.
+  \item Formal privacy analysis (Theorem~\ref{thm:privacy}): bounded information
+        leakage for both tiers.
+  \item Communication complexity: $O(|C| \cdot d + m)$ vs $O(|\Vset|)$ per query.
+  \item Orthogonal Procrustes alignment for cross-node embedding normalization.
+  \item HMAC-SHA256 path provenance preventing adversarial path injection.
+\end{enumerate}
+
+% -----------------------------------------------------------------------
+\section{Background}
+\label{sec:background}
+
+\paragraph{Bloom filters.}
+A Bloom filter~\cite{bloom1970} is a space-efficient probabilistic data structure for
+set membership testing. An element is inserted by hashing it with $k$ hash functions
+and setting corresponding bits. Membership is tested by checking all $k$ bit positions.
+False positives occur with rate $p \approx (1-e^{-kn/m})^k$ for $n$ elements in $m$
+bits; false negatives are impossible. Crucially, the full set $\mathcal{E}$ cannot be
+enumerated from the filter.
+
+\paragraph{Federated learning and KG federation.}
+\citet{kairouz2021} survey open problems in federated learning; \citet{bonatti2019} address
+federated SPARQL query answering. Existing KG federation protocols (OWL-based,
+SPARQL endpoints) typically expose full query capability, not bounded-leakage discovery.
+
+\paragraph{Embedding alignment.}
+When two nodes train embeddings independently, their spaces are not comparable even for
+shared entities. The Orthogonal Procrustes problem~\cite{schonemann1966procrustes} finds the
+rotation $R^* = \arg\min_R \|XR - Y\|_F$ s.t. $R^TR = I$, solved analytically via SVD.
+
+% -----------------------------------------------------------------------
+\section{Holographic Indexing Protocol}
+\label{sec:protocol}
+
+\subsection{Tier 1: Entity Bloom Filter}
+
+Each node $\mathcal{G}_i$ constructs a Bloom filter $B_i$ over its entity set $\mathcal{E}_i$:
+\begin{equation}
+B_i = \mathrm{BloomFilter}(\mathcal{E}_i,\; m_i,\; k)
+\label{eq:bloom}
+\end{equation}
+
+A querying node $\mathcal{G}_j$ probes $B_i$ for a specific entity $e$:
+\begin{equation}
+\Pr[\mathrm{FP}] = \left(1 - e^{-k\,|\mathcal{E}_i|/m_i}\right)^k
+\label{eq:fpr}
+\end{equation}
+
+Default parameters: $m_i = 10 \cdot |\mathcal{E}_i|$ bits, $k = 7$ hash functions, yielding
+$\Pr[\mathrm{FP}] \approx 0.008$. Bloom filter size is $O(|\mathcal{E}_i|)$ bits,
+transmitted once per session and cached locally.
+
+\subsection{Tier 2: Community Centroid Signatures}
+
+For semantic discovery (find peers with \emph{similar} entities), entity-level probing
+is insufficient. We introduce Community Centroid Signatures: for each community
+$C_k \in \mathcal{G}_i$:
+\begin{equation}
+\text{sig}(C_k) = (\vec{c}_k,\; \rho_k) \quad\text{where}\quad
+\vec{c}_k = \mathrm{mean}\{\vec{e} : e \in C_k\},\;\;
+\rho_k = \max_{e \in C_k} \|\vec{e} - \vec{c}_k\|
+\label{eq:signature}
+\end{equation}
+
+A querying node with entity embedding $\vec{x}$ computes the \textbf{Synaptic Bridge Score}:
+\begin{equation}
+\mathrm{SBS}(C_k) = \cos(\vec{x}, \vec{c}_k)
+\label{eq:sbs}
+\end{equation}
+
+Peers with $\mathrm{SBS}(C_k) \geq \sigma_{thresh}$ (default 0.75) are flagged as
+relevant reasoning destinations. Only $|C_i| \cdot (d + 1)$ floats are transmitted,
+where $|C_i|$ is the number of communities and $d$ is the embedding dimension.
+
+\subsection{Communication Complexity}
+
+\begin{table}[h]
+\small\centering
+\caption{Communication cost per query per peer.}
+\label{tab:comm}
+\begin{tabular}{lc}
+\toprule
+\textbf{Method} & \textbf{Bits transmitted} \\
+\midrule
+Full entity list       & $O(|\Vset| \cdot \log|\Vset|)$ \\
+Full entity embeddings & $O(|\Vset| \cdot d)$ \\
+\midrule
+Tier 1 (Bloom)         & $O(|\Vset|)$ (one-time) \\
+Tier 2 (centroids)     & $O(|C| \cdot d)$ (one-time) \\
+Query (both tiers)     & $O(1)$ probe + $O(|C_{hit}|)$ path delegation \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+After the initial handshake, per-query communication is $O(1)$ for discovery and
+$O(|C_{hit}|)$ for reasoning — orders of magnitude less than full entity exchange.
+
+% -----------------------------------------------------------------------
+\section{Privacy Analysis}
+\label{sec:privacy}
+
+\begin{theorem}[Bounded Leakage]
+\label{thm:privacy}
+The Holographic Index $\mathcal{H}_i = (B_i, \{\mathrm{sig}(C_k)\}_k)$ satisfies:
+\begin{enumerate}
+  \item \textbf{Enumeration resistance}: $\mathcal{E}_i$ cannot be recovered from $B_i$
+        in polynomial time (follows from the pre-image resistance of the hash functions).
+  \item \textbf{Bounded semantic leakage}: An adversary can identify communities whose
+        centroid is within angle $\theta$ of a target vector, but cannot identify
+        individual entities within those communities.
+  \item \textbf{False positive cover}: Any entity $e \notin \mathcal{E}_i$ has probability
+        $p < 0.01$ of appearing to be present, providing plausible deniability for
+        boundary cases.
+\end{enumerate}
+\end{theorem}
+
+\textit{Proof.} (1) Inverting a Bloom filter requires $O(2^m)$ preimage queries;
+computationally infeasible for $m > 256$ bits. (2) Centroid signatures are one-way
+aggregations: a centroid $\vec{c}_k = \mathrm{mean}\{\vec{e}_j\}$ has entropy
+$H(\mathcal{E}_{C_k}) - H(\vec{c}_k) > 0$ for $|C_k| > 1$, i.e., individual
+embeddings cannot be recovered without additional information. (3) Follows directly
+from Bloom filter false-positive probability~(\ref{eq:fpr}). $\square$
+
+\paragraph{Practical limitations.}
+Centroids reveal approximate community topic. In a healthcare KG, a centroid near
+``cardiology'' reveals that the node holds cardiology entities, without revealing
+which patients. Whether this constitutes acceptable leakage is domain-specific.
+For higher-sensitivity deployments, differentially private noise can be added to
+centroids~\cite{dwork2014dp} at a cost to matching accuracy.
+
+% -----------------------------------------------------------------------
+\section{Cross-Node Embedding Alignment}
+\label{sec:procrustes}
+
+Community centroid similarity scores are only meaningful if the two nodes share a common
+embedding space. When nodes train embeddings independently (or use different models),
+a calibration step is required.
+
+Given shared ``anchor'' entities $\mathcal{A} = \mathcal{E}_i \cap \mathcal{E}_j$,
+we solve:
+\begin{equation}
+R^* = \arg\min_{R:\,R^TR=I} \|X_\mathcal{A} R - Y_\mathcal{A}\|_F
+\label{eq:procrustes}
+\end{equation}
+where $X_\mathcal{A}, Y_\mathcal{A}$ are the anchor embeddings in nodes $i$ and $j$
+respectively. The analytical solution is $R^* = VU^T$ where $X_\mathcal{A}^T Y_\mathcal{A}
+= U\Sigma V^T$ (SVD). Node $i$ rotates its embeddings by $R^*$ before computing SBS scores
+against node $j$'s centroids.
+
+If the anchor set is small ($|\mathcal{A}| < 10$), alignment is unreliable. In this
+case, the system falls back to Tier-1 only (exact Bloom probing) and skips semantic
+matching.
+
+% -----------------------------------------------------------------------
+\section{Security: HMAC Path Provenance}
+\label{sec:security}
+
+A compromised or malicious federated node could inject high-confidence fake paths.
+We prevent this with HMAC-SHA256 path provenance: each reasoning response from a
+remote adapter is signed with a pre-shared key $\mathcal{K}$:
+\begin{equation}
+\mathrm{sig}_{path} = \mathrm{HMAC\text{-}SHA256}(\mathcal{K},\; \mathrm{path\_data})
+\label{eq:hmac}
+\end{equation}
+
+The coordinator verifies the signature before merging the remote path into the beam.
+Federated leases include TTL-bounded tokens ($\mathrm{exp} = t + 3600s$) to prevent
+replay attacks. Paths without valid signatures are discarded — they do not degrade
+reasoning quality, only coverage.
+
+% -----------------------------------------------------------------------
+\section{Scientific Literature Federation}
+\label{sec:extvalidator}
+
+The same discovery layer generalizes beyond peer KG nodes. The \texttt{ExternalValidator}
+extends Holographic Indexing to open scientific literature: given a proposed hypothesis
+edge $(u, \texttt{CAUSES}, v)$ from the \texttt{HypothesisEngine}, \texttt{ExternalValidator}
+queries PubMed, arXiv, and OpenAlex for supporting or contradicting papers.
+
+This represents a qualitative extension of ``federated knowledge discovery'' from
+structured peer graphs to unstructured text corpora. The Bloom Filter tier is replaced
+by TF-IDF entity matching; the Centroid Signature tier is replaced by embedding
+similarity against paper abstract vectors. The protocol structure — two-tier probe
+followed by path delegation — is preserved.
+
+% -----------------------------------------------------------------------
+\section{Conclusion}
+\label{sec:conclusion}
+
+Holographic Indexing provides a privacy-preserving, communication-efficient protocol for
+federated KG discovery. The two-tier architecture (Bloom filter + community centroids)
+enables semantic reasoning across organizational boundaries without entity enumeration.
+Formal privacy guarantees, Procrustes embedding alignment, and HMAC path provenance make
+the protocol suitable for privacy-sensitive production deployments. The generalization to
+scientific literature federation demonstrates that the protocol extends naturally beyond
+structured peer graphs.
+
+\section*{Acknowledgments}
+The author gratefully acknowledges the use of Claude (Anthropic) as a research assistant
+for mathematical formalization, code generation, and manuscript preparation. All
+conceptual contributions, architectural decisions, experimental design, and intellectual
+claims are solely the author's.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{99}
+
+\bibitem{bloom1970}
+Bloom, B.H. (1970).
+Space/time trade-offs in hash coding with allowable errors.
+\emph{Communications of the ACM}, 13(7).
+
+\bibitem{kairouz2021}
+Kairouz, P., et al. (2021).
+Advances and open problems in federated learning.
+\emph{Foundations and Trends in Machine Learning}, 14(1-2).
+
+\bibitem{bonatti2019}
+Bonatti, P.A., et al. (2019).
+The SPECIAL-K personal data processing transparency and compliance system.
+\emph{ISWC}.
+
+\bibitem{schonemann1966procrustes}
+Schönemann, P.H. (1966).
+A generalized solution of the orthogonal Procrustes problem.
+\emph{Psychometrika}, 31(1).
+
+\bibitem{dwork2014dp}
+Dwork, C., \& Roth, A. (2014).
+The algorithmic foundations of differential privacy.
+\emph{Foundations and Trends in Theoretical Computer Science}, 9(3-4).
+
+\bibitem{broder2004}
+Broder, A., \& Mitzenmacher, M. (2004).
+Network applications of Bloom filters: A survey.
+\emph{Internet Mathematics}, 1(4).
+
+\bibitem{buchorn2026flagship}
+Buchorn, B.A. (2026).
+CEREBRUM: Training-Free Knowledge Graph Reasoning via Community-Structured Graph Attention.
+arXiv preprint.
+
+\bibitem{buchorn2026report}
+Buchorn, B.A. (2026).
+CEREBRUM v2.51: Complete Technical Specification.
+arXiv preprint [CEREBRUM\_REPORT\_ID].
+
+\end{thebibliography}
+
+\end{document}

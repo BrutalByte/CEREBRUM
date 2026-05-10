@@ -6,11 +6,11 @@ import shutil
 # CEREBRUM: Global LaTeX Publication Engine v2 (v1.2.4)
 # Orchestrates the high-precision transition of the entire library using the MiKTeX engine.
 
-MANUSCRIPT_ROOT = 'e:/Development/Parallax'
-ACADEMIC_TEMPLATE = f'{MANUSCRIPT_ROOT}/templates/academic_v1.tex'
-BROCHURE_TEMPLATE = f'{MANUSCRIPT_ROOT}/templates/brochure_v1.tex'
-LATEX_BUILD_DIR = f'{MANUSCRIPT_ROOT}/docs/latex/batch_build'
-OUTPUT_DIR = f'{MANUSCRIPT_ROOT}/docs/PDF'
+MANUSCRIPT_ROOT = os.getcwd()
+ACADEMIC_TEMPLATE = os.path.join(MANUSCRIPT_ROOT, 'templates', 'academic_v1.tex')
+BROCHURE_TEMPLATE = os.path.join(MANUSCRIPT_ROOT, 'templates', 'brochure_v1.tex')
+LATEX_BUILD_DIR = os.path.join(MANUSCRIPT_ROOT, 'docs', 'latex', 'batch_build')
+OUTPUT_DIR = os.path.join(MANUSCRIPT_ROOT, 'docs', 'PDF')
 
 # MiKTeX Binary Paths (Full paths for reliability)
 PDFLATEX_BIN = r"C:\Program Files\MiKTeX\miktex\bin\x64\pdflatex.exe"
@@ -18,11 +18,11 @@ BIBTEX_BIN = r"C:\Program Files\MiKTeX\miktex\bin\x64\bibtex.exe"
 
 # Import conversion logic from build_arxiv
 import sys
-sys.path.append(f'{MANUSCRIPT_ROOT}/scripts')
+sys.path.append(os.path.join(MANUSCRIPT_ROOT, 'scripts'))
 import build_arxiv
 
 # Targets
-ARXIV_DIR = f'{MANUSCRIPT_ROOT}/docs/arxiv'
+ARXIV_DIR = os.path.join(MANUSCRIPT_ROOT, 'docs', 'arxiv')
 ROOT_DOCS = [
     'PAPER.md',
     'CEREBRUM_EXPLAINED.md',
@@ -40,11 +40,24 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 def generate_pdf(name, md_path, template_path, title, subtitle):
     print(f"--- Processing: {name} ---")
     
+    # Safety Check: Verify source file exists and is not empty
+    if not os.path.exists(md_path) or os.path.getsize(md_path) == 0:
+        print(f"   ❌ Skipping: {md_path} (Missing or empty)")
+        return
+
+    if not os.path.exists(template_path) or os.path.getsize(template_path) == 0:
+        print(f"   ❌ Skipping: Template {template_path} (Missing or empty)")
+        return
+    
     with open(md_path, 'r', encoding='utf-8', errors='ignore') as f:
         md_content = f.read()
 
     # 1. Convert Markdown -> LaTeX Snippet
-    tex_snippet = build_arxiv.convert_markdown_to_tex(md_content)
+    try:
+        tex_snippet = build_arxiv.convert_markdown_to_tex(md_content)
+    except Exception as e:
+        print(f"   ❌ Conversion failed for {name}: {e}")
+        return
     
     # 2. Wrap in Template
     with open(template_path, 'r', encoding='utf-8') as f:

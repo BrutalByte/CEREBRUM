@@ -1,14 +1,14 @@
 \section{Contra\-diction Materi\-alization: Factual Conflict as a First-Class Signal in Knowledge Graphs}
 
-\textbf{Authors}: Bryan Alexander Buchorn $\cdot$ Claude Sonnet 4.6 (Research Collab\-orator)  
-\textbf{Affili\-ations}: Independent Researcher $\cdot$ Anthropic  
-\textbf{Status}: v1.2.0 (Hardened Enterprise)  
-\textbf{Date}: March 2026
+\textbf{Author}: Bryan Alexander Buchorn  
+\textbf{Affiliation}: Independent Researcher, Las Vegas, NV, USA  
+\textbf{Status}: v2.51.0 (Phase 167 (STRB) COMPLETE)
+\textbf{Date}: May 2, 2026
 
 ---
 
 \subsubsection{Abstract}
-Autonomous Knowledge Graphs often encounter conflicting information from heter\-ogeneous data sources. Traditional approaches attempt to resolve these conflicts via majority voting or source-trust weighting \cite{dong2014knowledgevault, bertossi2011database}, potentially discarding valuable signals of discovery or debate. We propose \textbf{Contra\-diction Materi\-alization}, a framework that identifies logical and structural incon\-sistencies and reifies them as queryable \texttt{CONTRADICTS} edges. We define five typologies of graph contr\-adiction, including predicate conflict, temporal anachronism, and structural cycle violation. We introduce the \textbf{Delta-Authority} metric to quantify the reliability gap between conflicting facts. In v1.2.0, we integrate this engine with the \textbf{REM Cycle} skeptical decay protocol, ensuring that false contr\-adictions are pruned while significant intel\-lectual debates are preserved. Our results demonstrate that mater\-ializing contr\-adictions improves reasoning robustness by allowing engines to follow exploratory paths across unsettled knowledge boundaries.
+Autonomous Knowledge Graphs often encounter conflicting information from heter\-ogeneous data sources. Traditional approaches attempt to resolve these conflicts via majority voting or source-trust weighting \cite{dong2014knowledgevault, bertossi2011database}, potentially discarding valuable signals of discovery or debate. We propose \textbf{Contra\-diction Materi\-alization}, a framework that identifies logical and structural incon\-sistencies and reifies them as queryable \texttt{CONTRADICTS} edges. We define five typologies of graph contr\-adiction, including predicate conflict, temporal anachronism, and structural cycle violation. We introduce the \textbf{Delta-Authority} metric to quantify the reliability gap between conflicting facts. In v2.51.0, we integrate this engine with the \textbf{REM Cycle} skeptical decay protocol, ensuring that false contr\-adictions are pruned while significant intel\-lectual debates are preserved. In v2.51.0, the \textbf{HypothesisEngine} (Phase 50) generates abductive hypotheses whose refutation feeds the contr\-adiction pipeline, and the \textbf{ExternalValidator} (Phase 52) resolves temporal anachronism contr\-adictions by cross-referencing publication dates against primary literature. Our results demonstrate that mater\-ializing contr\-adictions improves reasoning robustness by allowing engines to follow exploratory paths across unsettled knowledge boundaries.
 
 \subsubsection{1. Introd\-uction}
 Knowledge repre\-sentation has long prioritized consistency. However, in scientific research and intel\-ligence analysis, consistency is often an artifact of premature filtering. True intel\-ligence requires the ability to maintain multiple conflicting hypotheses. We demonstrate that reifying conflict as a topological feature—rather than a data quality error—enables more sophi\-sticated multi-hop reasoning.
@@ -30,10 +30,36 @@ When $\mathcal{C}(t_1, t_2) = \text{True}$, we materialize edge $E_{o1,o2}$ with
 \end{equation}
 where $\mathcal{T}$ is the trust function.
 
-\subsubsection{3. Conclusion}
-Contra\-diction Materi\-alization transforms Knowledge Graphs from static fact stores into dynamic arenas of evidence. By treating conflict as a structural signal, it provides the necessary foundation for skepticism and dialectical reasoning in autonomous agents.
+\subsubsection{3. Recent Advances (v2.24.0 -\textgreater  v2.51.0)}
+
+\paragraph{3.1 HypothesisEngine: Abductive Reasoning as Contra\-diction Precursor (Phase 50)}
+The \textbf{HypothesisEngine} (Phase 50) implements multi-path abductive reasoning: given an observed fact that cannot be reached via standard forward traversal, it generates a set of candidate hypotheses (latent explanatory edges or entity relat\-ionships) that, if true, would make the observation reachable. These hypotheses are then subjected to contr\-adiction detection as a first-order validation step. If a generated hypothesis is struc\-turally incon\-sistent with existing graph facts — producing a cycle violation, temporal anachronism, or functional conflict — the hypothesis is immediately classified as a \texttt{CONTRADICTS} edge rather than a candidate edge. This creates a tight integration loop where abductive creativity is bounded by contr\-adiction-aware skepticism.
+
+\paragraph{3.2 Noisy-OR Fusion Over Reverse Paths}
+Contra\-diction confidence was previously a binary signal (detected vs. not detected). In v2.51.0, the system uses \textbf{Noisy-OR fusion} over all reverse paths that could corroborate or refute a contr\-adiction:
+
+\begin{equation}
+P(\text{contradiction valid}) = 1 - \prod_{p \in \mathcal{P}_{rev}} (1 - P_p)
+\end{equation}
+
+where $\mathcal{P}_{rev}$ is the set of reverse traversal paths and $P_p$ is the path confidence. This provides a proba\-bilistic confidence score for each \texttt{CONTRADICTS} edge, enabling more nuanced downstream handling — high-confidence contr\-adictions trigger immediate review, while low-confidence ones are tagged for monitoring.
+
+\paragraph{3.3 ExternalValidator for Temporal Anachronism Resolution (Phase 52)}
+The \textbf{ExternalValidator} (Phase 52) connects the contr\-adiction engine to external literature databases (PubMed, arXiv, OpenAlex, ClinicalTrials). For temporal anachronism contr\-adictions — where the graph claims event A preceded event B but external evidence suggests the reverse — ExternalValidator queries publication dates and citation graphs from primary sources. This allows the system to resolve ambiguous temporal orderings that internal graph topology alone cannot adjudicate.
+
+For example, a contr\-adiction of the form \texttt{(Drug\_A, APPROVED\_BEFORE, Drug\_B)} where internal evidence suggests the reverse can be verified against ClinicalTrials trial start dates and FDA approval records via ExternalValidator's API connectors.
+
+\paragraph{3.4 REM Cycle Integration: Skeptical Decay for Contra\-diction Edges}
+\texttt{CONTRADICTS} edges are now subject to the same \textbf{skeptical decay} protocol used for speculative edges in the REM Cycle. A \texttt{CONTRADICTS} edge that receives no structural corro\-boration over a confi\-gurable window decays in weight, eventually being pruned. This prevents the graph from accum\-ulating stale contr\-adiction records as the underlying data evolves — contr\-adictions that were once valid may be resolved by new information.
+
+\subsubsection{4. Conclusion}
+Contra\-diction Materi\-alization transforms Knowledge Graphs from static fact stores into dynamic arenas of evidence. By treating conflict as a structural signal and integrating abductive hypothesis generation (HypothesisEngine), proba\-bilistic confidence (Noisy-OR fusion), and external literature validation (ExternalValidator), v2.51.0 provides the necessary foundation for skepticism and dialectical reasoning in autonomous agents. The framework now operates as a closed loop: hypotheses are generated, contr\-adictions are detected, external evidence is consulted, and the graph is updated accordingly — without human inter\-vention.
 
 ---
+\subsection{Acknow\-ledgments}
+
+The author gratefully ackno\-wledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathe\-matical forma\-lization, code generation, manuscript preparation, and technical writing. All conceptual contr\-ibutions, archi\-tectural decisions, exper\-imental design, and intel\-lectual claims are solely the author's.
+
 \textbf{References}
 \begin{enumerate}
 \item Besnard, P., \& Hunter, A. (2008). Elements of Argume\-ntation. MIT Press.
@@ -42,6 +68,8 @@ Contra\-diction Materi\-alization transforms Knowledge Graphs from static fact s
 \item Martinez, M. V., et al. (2013). Reasoning Over Incons\-istent Knowledge Bases. Springer.
 \item Hunter, A. (2004). A logical framework for measuring incon\-sistency in incon\-sistent knowledge bases. Annals of Mathematics and Artificial Intell\-igence.
 \item Grant, J., \& Hunter, A. (2011). Distance-based measures of incon\-sistency. ACM Transa\-ctions on Comput\-ational Logic.
-\item Buchorn, B. A., \& Sonnet, C. (2026). Materi\-alized Conflict in CEREBRUM. SPEC\_011.md.
+\item Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specif\-ication for Autonomous Knowledge Graph Reasoning. [CEREBRUM\_REPORT\_PLACEHOLDER].
 
 \end{enumerate}
+---
+\textbf{Reviewed on}: May 2, 2026 for version v2.51.0

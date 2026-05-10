@@ -3084,6 +3084,12 @@ def create_app(
     @router.get("/goals", response_model=GoalListResponse, tags=["goals"])
     async def list_goals(node: Dict = Depends(get_authenticated_node)):
         """List all goals (standing homeostasis rules + user goals) with live metric values."""
+        loop = _state.get("autonomous_loop")
+        if loop is None:
+            return GoalListResponse(goals=[], total=0, standing_count=0, user_count=0)
+        stack = loop.get_goal_stack()
+        if stack is None:
+            return GoalListResponse(goals=[], total=0, standing_count=0, user_count=0)
         loop, stack = _get_goal_stack_or_503()
         evaluator = getattr(loop, "_goal_evaluator", None)
         all_goals = stack.all_goals()
@@ -3530,6 +3536,23 @@ def create_app(
             "edge_count": G.number_of_edges(),
             "filename": file.filename,
         }
+
+    # ── Telemetry broadcast REST endpoint ───────────────────────────────────
+    @router.post("/telemetry/broadcast", tags=["telemetry"])
+    async def telemetry_broadcast(req: Dict, node: Dict = Depends(get_authenticated_node)):
+        """Broadcast a custom event through the telemetry bridge to all WS clients."""
+        bridge = _state.get("telemetry_bridge")
+        if bridge is not None:
+            try:
+                from core.telemetry import NeuralEvent, NeuralEventType
+                event_type = req.get("event_type", "")
+                payload = req.get("payload", {})
+                evt_type = NeuralEventType[event_type] if event_type in NeuralEventType.__members__ else None
+                if evt_type is not None:
+                    bridge.broadcast(NeuralEvent(event_type=evt_type, payload=payload))
+            except Exception:
+                pass
+        return {"status": "ok", "bridged": bridge is not None}
 
     # ── /v1 router ──────────────────────────────────────────────────────────
     app.include_router(router, prefix="/v1")
