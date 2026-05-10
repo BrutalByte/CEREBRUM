@@ -1,2 +1,0 @@
-{"source": "alice", "target": "bob", "relation": "KNOWS"}
-{"source": "bob", "target": "carol", "relation": "WORKS_WITH"}

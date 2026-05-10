@@ -1,5 +1,0 @@
-usage: metaqa_eval.py [-h] [--hop HOP] [--sample SAMPLE]
-                      [--beam-width BEAM_WIDTH] [--top-k TOP_K] [--use-cache]
-                      [--no-cache] [--embeddings {random,sentence}]
-                      [--min-community-size MIN_COMMUNITY_SIZE] [--seed SEED]
-metaqa_eval.py: error: unrecognized arguments: --hops 3
