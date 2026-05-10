@@ -91,6 +91,20 @@ def build_package(paper_dir_name: str) -> None:
     if BIB_FILE.exists():
         shutil.copy2(BIB_FILE, sub_dir / "references.bib")
 
+    # For the technical report, regenerate sections/ if source .md files are newer
+    md_sections_dir = paper_dir / "sections"
+    tex_sections_dir = sub_dir / "sections"
+    if md_sections_dir.exists():
+        md_files = list(md_sections_dir.glob("*.md"))
+        tex_files = list(tex_sections_dir.glob("*.tex")) if tex_sections_dir.exists() else []
+        if len(tex_files) < len(md_files):
+            print(f"  running section converter for {paper_dir_name}...")
+            import subprocess
+            subprocess.run(
+                ["python", str(REPO_ROOT / "scripts" / "convert_sections_to_tex.py")],
+                check=True,
+            )
+
     # Write README
     readme = sub_dir / "README_SUBMISSION.txt"
     readme.write_text(
