@@ -1,3 +1,0 @@
-{
-  "output": "Output:   TCP    127.0.0.1:7860         0.0.0.0:0              LISTENING       29148\n  TCP    127.0.0.1:7860         127.0.0.1:54510        ESTABLISHED     29148\n  TCP    127.0.0.1:7860         127.0.0.1:54610        ESTABLISHED     29148\n  TCP    127.0.0.1:7860         127.0.0.1:62545        ESTABLISHED     29148\n  TCP    127.0.0.1:54510        127.0.0.1:7860         ESTABLISHED     13916\n  TCP    127.0.0.1:54610        127.0.0.1:7860         ESTABLISHED     13916\n  TCP    127.0.0.1:62545        127.0.0.1:7860         ESTABLISHED     13916\nProcess Group PGID: 57652"
-}

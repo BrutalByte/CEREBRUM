@@ -1,3 +1,0 @@
-{
-  "output": "Output: Running detect_with_stats on a triangle...\nDEBUG:cerebrum.dscf_gpu:GPU DSCF reached max_iter=100 without convergence.\nCommunities: [frozenset({1}), frozenset({2, 3})]\nStats: GPURunStats(device_used='cuda:0', n_nodes=3, n_edges=3, n_communities=2, modularity_q=-0.2222222222222222, iterations=0, converged=False, wall_ms=222.858700028155, speedup_vs_cpu_est=1.0, tensor_build_ms=0.0, iteration_ms=0.0)\nFAILED: Expected 1 community, got 2\nProcess Group PGID: 52396"
-}

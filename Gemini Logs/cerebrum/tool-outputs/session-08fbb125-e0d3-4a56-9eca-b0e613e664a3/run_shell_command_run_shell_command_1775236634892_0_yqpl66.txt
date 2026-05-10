@@ -1,3 +1,0 @@
-{
-  "output": "Output: [main 5285e0a] feat(ui): implement visual and verbal transparency for REM wormhole edges\n 4 files changed, 45 insertions(+), 6 deletions(-)\nOn branch main\nYour branch is ahead of 'origin/main' by 3 commits.\n  (use \"git push\" to publish your local commits)\n\nnothing to commit, working tree clean\nProcess Group PGID: 47788"
-}

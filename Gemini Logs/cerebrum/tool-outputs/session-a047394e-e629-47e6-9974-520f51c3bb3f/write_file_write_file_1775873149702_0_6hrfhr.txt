@@ -1,3 +1,0 @@
-{
-  "error": "Path not in workspace: Attempted path \"E:\\Development\\Cerebrum_UE5\\CerebrumVisualizer.uproject\" resolves outside the allowed workspace directories: E:\\Development\\Cerebrum or the project temp directory: C:\\Users\\bryan\\.gemini\\tmp\\cerebrum"
-}

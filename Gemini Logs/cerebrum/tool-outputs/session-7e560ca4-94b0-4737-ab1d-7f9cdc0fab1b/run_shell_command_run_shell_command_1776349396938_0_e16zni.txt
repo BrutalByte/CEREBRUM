@@ -1,3 +1,0 @@
-{
-  "output": "Output: \ncore\\graph_adapter.py:172:    def get_all_edges(self, limit: int = 500) -> List[Edge]:\nadapters\\networkx_adapter.py:375:    def get_all_edges(self, limit: int = 500) -> List[Edge]:\nProcess Group PGID: 67204"
-}

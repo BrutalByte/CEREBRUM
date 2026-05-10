@@ -1,3 +1,0 @@
-{
-  "output": "Output: \nLength\n------\n150277\n      \nProcess Group PGID: 72036"
-}

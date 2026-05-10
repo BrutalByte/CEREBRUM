@@ -1,3 +1,0 @@
-{
-  "output": "Output: ======================================================================\n CEREBRUM: Reconstructing Missing Edges (Anti-Hallucination)\n======================================================================\nOriginal Graph: 5 nodes, 4 edges\nMissing Fact: Newton -> Einstein (INFLUENCED)\nTraceback (most recent call last):\n  File \"E:\\Development\\Cerebrum\\examples\\reconstruct_missing_edges.py\", line 106, in <module>\n    main()\n    ~~~~^^\n  File \"E:\\Development\\Cerebrum\\examples\\reconstruct_missing_edges.py\", line 54, in main\n    embedding_engine = RandomEngine(dim=32, seed=42)\nTypeError: RandomEngine.__init__() got an unexpected keyword argument 'seed'\nExit Code: 1\nProcess Group PGID: 100360"
-}

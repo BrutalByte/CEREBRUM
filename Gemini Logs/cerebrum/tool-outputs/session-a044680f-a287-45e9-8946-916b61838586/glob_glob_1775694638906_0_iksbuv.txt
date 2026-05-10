@@ -1,3 +1,0 @@
-{
-  "output": "Found 1 file(s) matching \"reasoning/consensus_scorer.py\" within E:\\Development\\Cerebrum, sorted by modification time (newest first):\nE:\\Development\\Cerebrum\\reasoning\\consensus_scorer.py"
-}

@@ -1,3 +1,0 @@
-{
-  "output": "Output: At line:1 char:12\n+ git status && type TEST_LOG.md\n+            ~~\nThe token '&&' is not a valid statement separator in this version.\n    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException\n    + FullyQualifiedErrorId : InvalidEndOfLine\n \nExit Code: 1\nProcess Group PGID: 82964"
-}

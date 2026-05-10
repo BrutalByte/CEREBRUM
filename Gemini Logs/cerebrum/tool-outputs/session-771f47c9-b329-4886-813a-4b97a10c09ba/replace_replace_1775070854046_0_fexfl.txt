@@ -1,3 +1,0 @@
-{
-  "output": "Successfully modified file: E:\\Development\\Cerebrum\\benchmarks\\cwq_eval.py (1 replacements). Here is the updated code:\n...\n)\nfrom core.thalamus import IngestionPipeline\nfrom reasoning.traversal import BeamTraversal\nfrom reasoning.answer_extractor import extract\nfrom reasoning.relation_path_prior import GraphRelationPrior, RelationPathPrior\nfrom core.graph_bridge import GraphBridgeEngine\nfrom core.resource_governor import ResourceGovernor\n\n_BENCH_GOVERNOR = ResourceGovernor(memory_threshold_pct=99.0)\n\n# ---------------------------------------------------------------------------\n..."
-}

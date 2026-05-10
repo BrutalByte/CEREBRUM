@@ -1,3 +1,0 @@
-{
-  "output": "Output: 2026-04-10 17:07:59 [    INFO] cerebrum — Logging configured — level=INFO  file=none  buffer_maxlen=5000\nTraceback (most recent call last):\n  File \"<frozen runpy>\", line 198, in _run_module_as_main\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"E:\\Development\\Cerebrum\\scripts\\start_cerebrum.py\", line 3, in <module>\n    from api.server import app as fastapi_app\nImportError: cannot import name 'app' from 'api.server' (E:\\Development\\Cerebrum\\api\\server.py)\nExit Code: 1\nProcess Group PGID: 81576"
-}

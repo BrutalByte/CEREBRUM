@@ -1,3 +1,0 @@
-{
-  "output": "Output: \n\n    Directory: E:\\Development\\Cerebrum\\ue5_project\\Source\n\n\nMode                 LastWriteTime         Length Name\n----                 -------------         ------ ----\nd-----         4/10/2026   7:07 PM                CerebrumVisualizer      \n\n\n    Directory: E:\\Development\\Cerebrum\\ue5_project\n\n\nMode                 LastWriteTime         Length Name\n----                 -------------         ------ ----\nd-----         4/10/2026   7:07 PM                Plugins\nProcess Group PGID: 30384"
-}

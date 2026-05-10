@@ -1,3 +1,0 @@
-{
-  "output": "Directory listing for C:\\Users\\bryan\\.claude\\projects\\E--Development-Cerebrum\\f9231f5e-a66a-41ad-9c82-a7e776e2d0c2\\subagents:\nagent-a0b9120820c757e74.jsonl (18097 bytes)\nagent-a0b9120820c757e74.meta.json (82 bytes)\nagent-a557fa28e94dc2be7.jsonl (29045 bytes)\nagent-a557fa28e94dc2be7.meta.json (74 bytes)\nagent-acompact-42432dbd09b88f9b.jsonl (2297698 bytes)\nagent-acompact-4fa7cee059543f0b.jsonl (1587551 bytes)\nagent-acompact-630725c64c299a71.jsonl (2475153 bytes)\nagent-acompact-690fabea10459181.jsonl (1652624 bytes)\nagent-acompact-83d47dd331608233.jsonl (1419109 bytes)"
-}

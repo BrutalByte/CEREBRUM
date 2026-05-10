@@ -1,3 +1,0 @@
-{
-  "output": "Output: Loaded as API: http://127.0.0.1:7860/\nUI Robustness Tests PASSED.\nProcess Group PGID: 74796"
-}

@@ -1,3 +1,0 @@
-{
-  "output": "Command moved to background (PID: 64984). Output hidden. Press Ctrl+B to view."
-}

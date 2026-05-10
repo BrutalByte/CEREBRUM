@@ -1,3 +1,0 @@
-{
-  "output": "No matches found for pattern \"Phase 31\" in path \".\"."
-}

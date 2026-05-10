@@ -1,3 +1,0 @@
-{
-  "output": "Output: 2026-04-03 15:19:23,254 - httpx - INFO - HTTP Request: GET https://api.gradio.app/pkg-version \"HTTP/1.1 200 OK\"\npython : Traceback (most recent call last):\nAt line:1 char:54\n+ ... rrorAction SilentlyContinue; python ui/studio.py > ui_server.log 2>&1\n+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n    + CategoryInfo          : NotSpecified: (Traceback (most recent call last)::String) [], \nRemoteException\n    + FullyQualifiedErrorId : NativeCommandError\n \n  File \"E:\\Development\\Cerebrum\\ui\\studio.py\", line 1208, in <module>\n    fn=commit_params,\n       ^^^^^^^^^^^^^\nNameError: name 'commit_params' is not defined\nProcess Group PGID: 52060"
-}

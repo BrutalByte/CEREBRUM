@@ -1,3 +1,0 @@
-{
-  "output": "Successfully overwrote file: E:\\Development\\Cerebrum\\tests\\test_bridge_bonus.py. Here is the updated code:\n...\n        self.embeddings = embeddings\n    def get_community(self, node: str) -> int:\n        return self.community_map.get(node, -1)\n    def get_embedding(self, node: str) -> Optional[np.ndarray]:\n        return self.embeddings.get(node)\n    def add_edge(self, u, v, relation, confidence=1.0, provenance=\"\", synthetic=False):\n        pass\n    def get_neighbors(self, *args, **kwargs) -> list: return []\n    def find_similar(self, *args, **kwargs) -> list: return []\n    def find_entities(self, *args, **kwargs) -> list: return []\n    def get_entity(self, entity_id: str): return None\n    def to_networkx(self): return None\n..."
-}

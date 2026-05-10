@@ -1,3 +1,0 @@
-{
-  "error": "Invalid regular expression pattern provided: def _load(. Error: Invalid regular expression: /def _load(/: Unterminated group"
-}

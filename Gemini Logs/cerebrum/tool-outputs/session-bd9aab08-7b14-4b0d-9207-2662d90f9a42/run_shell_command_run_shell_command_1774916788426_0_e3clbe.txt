@@ -1,3 +1,0 @@
-{
-  "output": "Output: \n\n    Directory: E:\\Development\\Cerebrum\\benchmarks\\data\\webqsp\\cache\n\n\nMode                 LastWriteTime         Length Name\n----                 -------------         ------ ----\n-a----         3/30/2026   6:46 AM            159 webqsp_results.csv\n-a----         3/30/2026   6:40 AM       32193603 wq_communities_full_raw.pkl\n-a----         3/30/2026   6:28 AM       32193541 wq_communities_raw.pkl\n-a----         3/30/2026   6:45 AM     1057050652 wq_embeddings_sentence.pkl\n-a----         3/30/2026   6:40 AM         166702 wq_question_embeddings.pkl\n-a----         3/30/2026   6:43 AM         556256 wq_relation_prior_full.pkl\nProcess Group PGID: 48608"
-}

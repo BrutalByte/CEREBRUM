@@ -1,3 +1,0 @@
-{
-  "error": "Path not in workspace: Attempted path \"C:\\Users\\bryan\\.claude\\projects\\E--Development-Cerebrum\" resolves outside the allowed workspace directories: E:\\Development\\Cerebrum, C:\\Users\\bryan\\.claude\\projects\\E--Development-Cerebrum\\f9231f5e-a66a-41ad-9c82-a7e776e2d0c2\\subagents or the project temp directory: C:\\Users\\bryan\\.gemini\\tmp\\cerebrum"
-}

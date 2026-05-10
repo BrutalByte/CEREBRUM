@@ -1,3 +1,0 @@
-{
-  "output": "Found 1 file(s) matching \"tests/test_extraction*.py\" within E:\\Development\\Cerebrum, sorted by modification time (newest first):\nE:\\Development\\Cerebrum\\tests\\test_extraction.py"
-}

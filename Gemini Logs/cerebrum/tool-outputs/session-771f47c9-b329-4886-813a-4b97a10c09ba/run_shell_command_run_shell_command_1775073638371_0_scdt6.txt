@@ -1,3 +1,0 @@
-{
-  "output": "Output: Remove-Item : A positional parameter cannot be found that accepts argument 'scripts/create_cwq_subset.py'.\nAt line:1 char:1\n+ rm tmp_test_bridge.py scripts/create_cwq_subset.py benchmarks/data/cw ...\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n    + CategoryInfo          : InvalidArgument: (:) [Remove-Item], ParameterBindingException\n    + FullyQualifiedErrorId : PositionalParameterNotFound,Microsoft.PowerShell.Commands.RemoveItemCommand\n \nExit Code: 1\nProcess Group PGID: 119040"
-}

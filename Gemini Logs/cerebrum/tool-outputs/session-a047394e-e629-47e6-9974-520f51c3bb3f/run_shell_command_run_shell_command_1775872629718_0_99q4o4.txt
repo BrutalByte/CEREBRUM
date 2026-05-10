@@ -1,4 +1,0 @@
-{
-  "output": "Command was cancelled by user before it could complete. Below is the output before it was cancelled:\n2026-04-10 18:57:12 [    INFO] cerebrum — Logging configured — level=INFO  file=none  buffer_maxlen=5000\nTelemetry Bridge started on port 8765",
-  "error": "[Operation Cancelled] User cancelled tool execution."
-}

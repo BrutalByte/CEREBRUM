@@ -1,3 +1,0 @@
-{
-  "output": "Output: \nName                                          LastWriteTime       \n----                                          -------------       \narxiv                                         4/6/2026 11:42:25 AM\nAPI_REFERENCE.md                              4/6/2026 11:40:53 AM\nCEREBRUM_EXPLAINED.md                         4/6/2026 11:34:21 AM\nNOVEL_CONTRIBUTIONS.md                        4/6/2026 11:38:41 AM\nPAPER.md                                      4/6/2026 11:41:02 AM\nParallax_Plain_Language_Guide_Professional.md 4/6/2026 11:36:16 AM\nParallax_Professional_Guide_v1.4.0.md         4/6/2026 11:38:05 AM\nREASONING_STUDIO_GUIDE.md                     4/6/2026 11:39:10 AM\nProcess Group PGID: 30268"
-}

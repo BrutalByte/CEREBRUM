@@ -1,3 +1,0 @@
-{
-  "output": "Successfully created and wrote to new file: C:\\Users\\bryan\\.gemini\\tmp\\cerebrum\\a047394e-e629-47e6-9974-520f51c3bb3f\\plans\\CerebrumVisualizer.uproject. Here is the updated code:\n{\r\n\t\"FileVersion\": 3,\r\n\t\"EngineAssociation\": \"5.4\",\r\n\t\"Category\": \"\",\r\n\t\"Description\": \"\",\r\n\t\"Modules\": [\r\n\t\t{\r\n\t\t\t\"Name\": \"CerebrumVisualizer\",\r\n\t\t\t\"Type\": \"Runtime\",\r\n\t\t\t\"LoadingPhase\": \"Default\"\r\n\t\t}\r\n\t],\r\n\t\"Plugins\": [\r\n\t\t{\r\n\t\t\t\"Name\": \"WebsocketBlueprint\",\r\n\t\t\t\"Enabled\": true\r\n\t\t},\r\n\t\t{\r\n\t\t\t\"Name\": \"PythonFoundationPackages\",\r\n\t\t\t\"Enabled\": true\r\n\t\t},\r\n\t\t{\r\n\t\t\t\"Name\": \"Niagara\",\r\n\t\t\t\"Enabled\": true\r\n\t\t}\r\n\t]\r\n}\r\n"
-}

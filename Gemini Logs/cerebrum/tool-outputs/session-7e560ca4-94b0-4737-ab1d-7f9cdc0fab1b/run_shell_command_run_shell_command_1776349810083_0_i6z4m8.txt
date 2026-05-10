@@ -1,3 +1,0 @@
-{
-  "output": "Output: \nadapters\\federated_adapter.py:308:    def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:\nadapters\\neo4j_adapter.py:206:    def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:\nadapters\\neptune_adapter.py:186:    def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:\nadapters\\networkx_adapter.py:234:    def get_embedding(self, entity_id: str) -> Optional[\"np.ndarray\"]:\nadapters\\rdf_adapter.py:158:    def get_embedding(self, entity_id: str) -> Optional[np.ndarray]:\nadapters\\remote_adapter.py:267:    def get_embedding(self, entity_id: str) -> Optional[\"np.ndarray\"]:\nProcess Group PGID: 61036"
-}

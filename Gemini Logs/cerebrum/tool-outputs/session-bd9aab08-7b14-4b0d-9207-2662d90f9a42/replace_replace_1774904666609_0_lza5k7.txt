@@ -1,3 +1,0 @@
-{
-  "output": "Successfully modified file: E:\\Development\\Cerebrum\\benchmarks\\ikgwq_eval.py (1 replacements). Here is the updated code:\n...\n    print(\"  Phase 27B — Graceful Degradation under Controlled Incompleteness\")\n    print(\"=\" * 72)\n    print()\n    print(f\"  Data source: {data_dir}\")\n    print(f\"  REM Engine:  {'enabled' if args.rem else 'disabled'}\")\n    print(f\"  Repair:      {'enabled' if args.repair else 'disabled'}\")\n    print(f\"  CVT Pass:    {'enabled' if args.cvt else 'disabled'}\")\n    print(f\"  Levels:      {[LEVEL_LABELS[l] for l in args.levels]}\")\n    print()\n\n    # ------------------------------------------------------------------\n    # 1. Load complete graph + QA pairs\n..."
-}

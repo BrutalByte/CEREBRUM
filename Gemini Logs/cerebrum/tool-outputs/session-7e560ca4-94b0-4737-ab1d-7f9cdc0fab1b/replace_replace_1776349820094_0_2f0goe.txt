@@ -1,3 +1,0 @@
-{
-  "output": "Successfully modified file: E:\\Development\\Cerebrum\\api\\main.py (1 replacements). Here is the updated code:\n...\nif _csv_path:\n    from adapters.csv_adapter import load_csv_adapter\n    from core.embedding_engine import RandomEngine\n\n    logger.info(\"Loading graph from %s\", _csv_path)\n    _adapter: Optional[GraphAdapter] = load_csv_adapter(_csv_path)\n    _embedding_engine: Optional[EmbeddingEngine] = RandomEngine(dim=64)\nelse:\n    logger.info(\n        \"No CEREBRUM_CSV_PATH set ΓÇö starting empty. \"\n        \"Upload a graph via POST /upload/csv.\"\n    )\n    _adapter          = None\n    _embedding_engine = None\n\n..."
-}

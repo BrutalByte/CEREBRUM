@@ -1,3 +1,0 @@
-{
-  "output": "Successfully created and wrote to new file: E:\\Development\\Cerebrum\\ue5_project\\Source\\CerebrumVisualizer\\CerebrumVisualizer.Build.cs. Here is the updated code:\nusing UnrealBuildTool;\r\n\r\npublic class CerebrumVisualizer : ModuleRules\r\n{\r\n\tpublic CerebrumVisualizer(ReadOnlyTargetRules Target) : base(Target)\r\n\t{\r\n\t\tPCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;\r\n\t\r\n\t\tPublicDependencyModuleNames.AddRange(new string[] { \r\n            \"Core\", \r\n            \"CoreUObject\", \r\n            \"Engine\", \r\n            \"InputCore\",\r\n            \"WebsocketBlueprint\"\r\n        });\r\n\t}\r\n}\r\n"
-}

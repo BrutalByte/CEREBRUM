@@ -1,3 +1,0 @@
-{
-  "error": "Invalid regular expression pattern provided: def query(. Error: Invalid regular expression: /def query(/: Unterminated group"
-}

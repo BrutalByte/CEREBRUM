@@ -1,3 +1,0 @@
-{
-  "output": "\nIMPORTANT: The file content has been truncated.\nStatus: Showing lines 695-694 of 694 total lines.\nAction: To read more of the file, you can use the 'start_line' and 'end_line' parameters in a subsequent 'read_file' call. For example, to read the next section of the file, use start_line: 695.\n\n--- FILE CONTENT (truncated) ---\n"
-}

@@ -1,3 +1,0 @@
-{
-  "output": "Output: === REM Synthesis Evaluation (IKGWQ-S) ===\nPre-REM Traversal (A -> F)...\nTraceback (most recent call last):\n  File \"E:\\Development\\Cerebrum\\benchmarks\\rem_synthesis_eval.py\", line 70, in <module>\n    run_rem_synthesis_benchmark()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"E:\\Development\\Cerebrum\\benchmarks\\rem_synthesis_eval.py\", line 43, in run_rem_synthesis_benchmark\n    results_pre = cerebrum.query(\"A\", target_entity=\"F\", beam_width=5, max_hops=10)\nTypeError: CerebrumGraph.query() got an unexpected keyword argument 'target_entity'\nExit Code: 1\nProcess Group PGID: 44724"
-}

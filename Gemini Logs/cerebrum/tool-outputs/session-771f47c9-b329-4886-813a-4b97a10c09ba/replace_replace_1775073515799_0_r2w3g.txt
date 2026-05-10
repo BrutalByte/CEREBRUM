@@ -1,3 +1,0 @@
-{
-  "output": "Successfully modified file: E:\\Development\\Cerebrum\\benchmarks\\cwq_eval.py (1 replacements). Here is the updated code:\n...\n\"\"\"\nfrom __future__ import annotations\n\nimport argparse\nimport json\nimport logging\nimport pickle\nimport sys\nimport time\nfrom pathlib import Path\nfrom typing import Any, Dict, List, Optional, Set, Tuple\n\nsys.path.insert(0, str(Path(__file__).parent.parent))\n\n# Configure logging\nlogging.basicConfig(\n    level=logging.INFO,\n    format=\"%(asctime)s [%(levelname)s] %(name)s: %(message)s\",\n    stream=sys.stdout,\n)\nlogger = logging.getLogger(\"cwq_eval\")\n\nimport networkx as nx\nimport numpy as np\n\nfrom core.cerebrum import CerebrumGraph\nfrom core.graph_bridge import GraphBridgeEngine\n..."
-}

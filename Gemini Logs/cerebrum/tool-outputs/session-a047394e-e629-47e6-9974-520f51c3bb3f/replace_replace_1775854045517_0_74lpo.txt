@@ -1,3 +1,0 @@
-{
-  "error": "File not found: C:\\Users\\bryan\\.gemini\\tmp\\cerebrum\\a047394e-e629-47e6-9974-520f51c3bb3f\\plans\\cerebrum.py"
-}

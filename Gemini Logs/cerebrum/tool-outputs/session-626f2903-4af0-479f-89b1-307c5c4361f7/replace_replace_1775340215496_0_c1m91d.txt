@@ -1,3 +1,0 @@
-{
-  "output": "Successfully modified file: E:\\Development\\Cerebrum\\tests\\test_dscf_gpu.py (1 replacements). Here is the updated code:\n...\n    # We should have exactly 2 communities if it works perfectly\n    assert len(parts) == 2\n\n\ndef test_detect_with_stats():\n    engine = GPUDSCFEngine(GPUDSCFConfig(temp_start=0.0))\n    G = nx.Graph()\n    G.add_edge(1, 2)\n    G.add_edge(2, 3)\n    G.add_edge(3, 1)\n\n..."
-}

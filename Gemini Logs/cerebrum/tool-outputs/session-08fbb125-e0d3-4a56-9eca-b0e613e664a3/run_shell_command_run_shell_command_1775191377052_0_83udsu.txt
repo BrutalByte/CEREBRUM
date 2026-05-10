@@ -1,3 +1,0 @@
-{
-  "output": "Output: warning: in the working copy of 'TEST_LOG.md', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'benchmarks/ikgwq_eval.py', LF will be replaced by CRLF the next time Git touches it\n[main 9cb8443] Phase 39 & 40: Async Bridge Synthesis, IKGWQ Hardening, and Temporal Reasoning Fix\n 9 files changed, 361 insertions(+), 71 deletions(-)\n create mode 100644 core/task_queue.py\n create mode 100644 tests/test_temporal_scoring.py\nOn branch main\nYour branch is ahead of 'origin/main' by 1 commit.\n  (use \"git push\" to publish your local commits)\n\nnothing to commit, working tree clean\nProcess Group PGID: 6284"
-}

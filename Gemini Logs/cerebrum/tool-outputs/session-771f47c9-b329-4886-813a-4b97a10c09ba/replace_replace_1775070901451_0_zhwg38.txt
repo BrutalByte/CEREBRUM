@@ -1,3 +1,0 @@
-{
-  "output": "Successfully modified file: E:\\Development\\Cerebrum\\benchmarks\\cwq_eval.py (1 replacements). Here is the updated code:\n...\n        cmap = raw_cmap\n        print(f\"  {n_raw} communities (no coarsening needed)\")\n    print()\n\n    # ------------------------------------------------------------------\n    # Question Embeddings\n    # ------------------------------------------------------------------\n    print(\"Encoding question texts for query embedding...\")\n    qemb_path        = CACHE_DIR / \"cwq_question_embeddings.pkl\"\n    question_embeddings = encode_questions(test_qa, engine, qemb_path, use_cache=use_cache)\n    print()\n\n..."
-}

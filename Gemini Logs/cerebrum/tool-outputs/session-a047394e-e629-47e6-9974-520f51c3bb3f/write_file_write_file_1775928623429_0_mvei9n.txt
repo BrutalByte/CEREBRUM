@@ -1,3 +1,0 @@
-{
-  "output": "Successfully overwrote file: E:\\Development\\Cerebrum\\tests\\test_csa.py. Here is the updated code:\n...\n    b = np.array([1.0, 0.0, 0.0], dtype=np.float32)\n    assert abs(_cosine_sim(a, b) - 1.0) < 1e-6\n\n\ndef test_cosine_sim_orthogonal():\n    a = np.array([1.0, 0.0], dtype=np.float32)\n    b = np.array([0.0, 1.0], dtype=np.float32)\n    assert abs(_cosine_sim(a, b)) < 1e-6\n\n\ndef test_cosine_sim_zero_vector():\n    a = np.array([0.0, 0.0], dtype=np.float32)\n    b = np.array([1.0, 0.0], dtype=np.float32)\n    assert _cosine_sim(a, b) == 0.0\n\n\ndef test_sigmoid_midpoint():\n    assert abs(_sigmoid(0.0) - 0.5) < 1e-6\n..."
-}

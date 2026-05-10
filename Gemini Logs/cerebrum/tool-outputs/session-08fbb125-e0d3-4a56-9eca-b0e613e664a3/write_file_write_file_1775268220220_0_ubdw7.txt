@@ -1,3 +1,0 @@
-{
-  "output": "Successfully created and wrote to new file: E:\\Development\\Cerebrum\\tmp_inspect_ui.py. Here is the updated code:\nfrom gradio_client import Client\r\nimport time\r\n\r\ndef inspect():\r\n    for _ in range(10):\r\n        try:\r\n            client = Client(\"http://127.0.0.1:7860/\")\r\n            print(\"Connected to UI.\")\r\n            client.view_api()\r\n            return\r\n        except Exception as e:\r\n            print(f\"Waiting for UI... {e}\")\r\n            time.sleep(2)\r\n\r\nif __name__ == \"__main__\":\r\n    inspect()\r\n"
-}

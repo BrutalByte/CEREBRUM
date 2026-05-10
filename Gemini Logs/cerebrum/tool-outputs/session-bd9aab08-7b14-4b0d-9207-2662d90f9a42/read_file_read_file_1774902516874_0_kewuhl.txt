@@ -1,3 +1,0 @@
-{
-  "output": "{\"agentType\":\"general-purpose\",\"description\":\"Track implementation tasks\"}"
-}

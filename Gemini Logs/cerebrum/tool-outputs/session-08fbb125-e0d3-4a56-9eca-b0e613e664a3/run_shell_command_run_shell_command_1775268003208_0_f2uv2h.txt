@@ -1,3 +1,0 @@
-{
-  "output": "Output: Name: gradio_client\nVersion: 2.0.3\nSummary: Python library for easily interacting with trained machine learning models\nHome-page: https://github.com/gradio-app/gradio\nAuthor: \nAuthor-email: Abubakar Abid <gradio-team@huggingface.co>, Ali Abid <gradio-team@huggingface.co>, Ali Abdalla <gradio-team@huggingface.co>, Dawood Khan <gradio-team@huggingface.co>, Ahsen Khaliq <gradio-team@huggingface.co>, Pete Allen <gradio-team@huggingface.co>, Freddy Boulton <gradio-team@huggingface.co>\nLicense-Expression: Apache-2.0\nLocation: C:\\Python314\\Lib\\site-packages\nRequires: fsspec, httpx, huggingface-hub, packaging, typing-extensions\nRequired-by: gradio\nProcess Group PGID: 43960"
-}

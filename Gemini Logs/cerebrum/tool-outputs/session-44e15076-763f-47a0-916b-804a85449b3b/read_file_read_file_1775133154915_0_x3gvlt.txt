@@ -1,3 +1,0 @@
-{
-  "output": "\nIMPORTANT: The file content has been truncated.\nStatus: Showing lines 115-120 of 799 total lines.\nAction: To read more of the file, you can use the 'start_line' and 'end_line' parameters in a subsequent 'read_file' call. For example, to read the next section of the file, use start_line: 121.\n\n--- FILE CONTENT (truncated) ---\n    beta_alpha: float = 1.0\n    \"\"\"Beta distribution α — accumulated effective successes (sum of edge weights).\"\"\"\n\n    beta_beta: float = 1.0\n    \"\"\"Beta distribution β — accumulated effective failures (sum of 1-weight per edge).\"\"\"\n"
-}

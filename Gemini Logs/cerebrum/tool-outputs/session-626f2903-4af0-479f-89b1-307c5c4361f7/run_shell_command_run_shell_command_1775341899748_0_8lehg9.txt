@@ -1,3 +1,0 @@
-{
-  "output": "Output: Enumerating objects: 110, done.\nCounting objects: 100% (110/110), done.\nDelta compression using up to 32 threads\nCompressing objects: 100% (81/81), done.\nWriting objects: 100% (81/81), 35.06 KiB | 3.19 MiB/s, done.\nTotal 81 (delta 65), reused 0 (delta 0), pack-reused 0 (from 0)\nremote: Resolving deltas: 100% (65/65), completed with 28 local objects.\nTo https://github.com/BrutalByte/Parallax\n   2723997..5d2f905  main -> main\nProcess Group PGID: 86488"
-}

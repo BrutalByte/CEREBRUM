@@ -1,3 +1,0 @@
-{
-  "output": "Directory listing for E:\\Development\\Cerebrum\\docs:\n[DIR] archive\n[DIR] arxiv\n[DIR] assets\n[DIR] business\n[DIR] latex\n[DIR] old docs\n[DIR] PDF\n[DIR] Secure Docs\n[DIR] sources\n[DIR] specifications\n[DIR] whitepapers\nAPI_REFERENCE.md (23596 bytes)\nARCHITECTURE.md (22555 bytes)\nARXIV_SUBMISSION_GUIDE.md (5754 bytes)\nCEREBRUM_EXPLAINED.md (10809 bytes)\nDEPLOYMENT.md (10483 bytes)\nGLOSSARY.md (25883 bytes)\nINTEGRATION_GUIDE.md (8985 bytes)\nMIGRATION_GUIDE.md (7268 bytes)\nNOVEL_CONTRIBUTIONS.md (33498 bytes)\nPAPER.md (67375 bytes)\nParallax_Plain_Language_Guide_Professional.md (11579 bytes)\nParallax_White_Paper.md (77592 bytes)\nPERFORMANCE_TUNING.md (8877 bytes)\nREASONING_STUDIO_GUIDE.md (11582 bytes)"
-}

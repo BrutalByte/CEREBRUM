@@ -1,3 +1,0 @@
-{
-  "output": "No matches found for pattern \"4/6/2026|April 6, 2026\" in path \"docs\"."
-}

@@ -1,3 +1,0 @@
-{
-  "output": "Found 2 file(s) matching \"tests/**/*robustness*\" within E:\\Development\\Cerebrum (2 additional files were ignored), sorted by modification time (newest first):\nE:\\Development\\Cerebrum\\tests\\test_studio_robustness.py\nE:\\Development\\Cerebrum\\tests\\test_api_robustness.py"
-}

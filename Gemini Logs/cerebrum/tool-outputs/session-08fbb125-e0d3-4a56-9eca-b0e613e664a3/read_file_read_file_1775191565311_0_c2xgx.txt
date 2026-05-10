@@ -1,3 +1,0 @@
-{
-  "output": "\nIMPORTANT: The file content has been truncated.\nStatus: Showing lines 2820-2827 of 2827 total lines.\nAction: To read more of the file, you can use the 'start_line' and 'end_line' parameters in a subsequent 'read_file' call. For example, to read the next section of the file, use start_line: 2828.\n\n--- FILE CONTENT (truncated) ---\n\n### Tests\n- `pytest tests/test_parameter_learner.py`: 17 passed\n- `pytest tests/test_uncertainty.py`: 12 passed\n- `pytest tests/test_csa.py`: 13 passed\n- **Total passing**: 1,168\n\n"
-}

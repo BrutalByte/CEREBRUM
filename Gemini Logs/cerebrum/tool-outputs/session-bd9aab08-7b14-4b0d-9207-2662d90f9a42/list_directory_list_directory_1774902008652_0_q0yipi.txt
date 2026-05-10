@@ -1,3 +1,0 @@
-{
-  "output": "Directory listing for E:\\Development\\Cerebrum\\reasoning:\n[DIR] __pycache__\n__init__.py (274 bytes)\nanswer_extractor.py (12853 bytes)\npath_scorer.py (4614 bytes)\nrelation_path_prior.py (10224 bytes)\ntraversal.py (32082 bytes)"
-}

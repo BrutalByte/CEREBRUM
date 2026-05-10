@@ -1,3 +1,0 @@
-{
-  "output": "Output: grep : The term 'grep' is not recognized as the name of a cmdlet, function, script file, or operable program. \nCheck the spelling of the name, or if a path was included, verify that the path is correct and try again.\nAt line:1 char:1\n+ grep -n \"\" core/extraction_engine.py | grep -A 5 -B 5 \":846:\"\n+ ~~~~\n    + CategoryInfo          : ObjectNotFound: (grep:String) [], CommandNotFoundException\n    + FullyQualifiedErrorId : CommandNotFoundException\n \nExit Code: 1\nProcess Group PGID: 85832"
-}

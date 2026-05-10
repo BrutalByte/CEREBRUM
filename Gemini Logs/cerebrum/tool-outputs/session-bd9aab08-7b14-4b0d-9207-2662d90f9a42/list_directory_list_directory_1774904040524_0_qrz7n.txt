@@ -1,3 +1,0 @@
-{
-  "output": "Directory listing for E:\\Development\\Cerebrum\\validation:\nexample-validate.md (2006 bytes)\nREADME.md (3288 bytes)\nultimate_validate_command.md (4810 bytes)\n\n(3 ignored)"
-}

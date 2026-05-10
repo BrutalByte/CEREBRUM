@@ -1,3 +1,0 @@
-{
-  "output": "Output: grep : The term 'grep' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.\nAt line:1 char:1\n+ grep -nC 20 \"if self.cvt_passthrough and _is_cvt_node(v):\" reasoning/ ...\n+ ~~~~\n    + CategoryInfo          : ObjectNotFound: (grep:String) [], CommandNotFoundException\n    + FullyQualifiedErrorId : CommandNotFoundException\n \nExit Code: 1\nProcess Group PGID: 73876"
-}

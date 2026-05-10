@@ -1,3 +1,0 @@
-{
-  "output": "Directory listing for E:\\Development\\Cerebrum\\ui:\n[DIR] lib\n3d_explorer.html (7416 bytes)\nindex.html (9286 bytes)\noutput.log (389 bytes)\nrequirements.txt (65 bytes)\nstudio.py (45140 bytes)"
-}

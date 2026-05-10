@@ -1,3 +1,0 @@
-{
-  "output": "Successfully modified file: E:\\Development\\Cerebrum\\core\\cerebrum.py (1 replacements). Here is the updated code:\n...\n        from core.structural_encoder import (\n            build_community_distance_matrix,\n            build_community_graph,\n            adjacent_community_pairs,\n            coarsen_communities,\n            compute_structural_features,\n            encode_structural_features,\n        )\n        import time\n\n        cache = Path(cache_dir) if cache_dir else None\n        if cache:\n            cache.mkdir(parents=True, exist_ok=True)\n\n..."
-}

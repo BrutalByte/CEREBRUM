@@ -1,3 +1,0 @@
-{
-  "output": "Successfully overwrote file: E:\\Development\\Cerebrum\\ue5_project\\Source\\CerebrumVisualizer\\CerebrumLink.h. Here is the updated code:\n...\n\n#include \"CoreMinimal.h\"\n#include \"Components/ActorComponent.h\"\n#include \"CerebrumLink.generated.h\"\n\n// Define the delegate for receiving neural events\nDECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNeuralEventReceived, FString, JsonData);\n\nUCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))\nclass CEREBRUMVISUALIZER_API UCerebrumLink : public UActorComponent\n{\n..."
-}

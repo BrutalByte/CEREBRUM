@@ -1,3 +1,0 @@
-{
-  "output": "Output: \n\n    Directory: E:\\Development\\Cerebrum\\core\n\n\nMode                 LastWriteTime         Length Name\n----                 -------------         ------ ----\n-a----          4/2/2026   1:15 PM           1856 reasoning_logit.py\nProcess Group PGID: 71464"
-}

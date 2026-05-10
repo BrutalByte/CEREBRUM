@@ -1,3 +1,0 @@
-{
-  "error": "File path 'E:\\Development\\Cerebrum\\benchmarks\\data\\metaqa\\kb.txt' is ignored by configured ignore patterns."
-}

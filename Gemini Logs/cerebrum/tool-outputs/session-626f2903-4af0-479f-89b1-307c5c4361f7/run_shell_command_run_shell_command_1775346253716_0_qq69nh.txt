@@ -1,3 +1,0 @@
-{
-  "output": "Output: === REM Synthesis Evaluation (IKGWQ-S) ===\nPre-REM Traversal (A -> F)...\nPre-REM Results: 2\nPath A->F found pre-REM: False\nRunning REM Synthesis...\nREMReport(pruned=0, synthesized=0, communities_updated=False, duration=0.000s)\nPost-REM Traversal (A -> F)...\nPost-REM Results: 2\nPath A->F found post-REM: False\nFAILURE: Bridge not found or already existed.\nProcess Group PGID: 59004"
-}

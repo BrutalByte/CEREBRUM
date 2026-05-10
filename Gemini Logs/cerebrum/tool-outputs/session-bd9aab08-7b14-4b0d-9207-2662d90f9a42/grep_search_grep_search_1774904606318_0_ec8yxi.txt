@@ -1,3 +1,0 @@
-{
-  "output": "No matches found for pattern \"if self.cvt_passthrough and _is_cvt_node(v):\" in path \".\"."
-}

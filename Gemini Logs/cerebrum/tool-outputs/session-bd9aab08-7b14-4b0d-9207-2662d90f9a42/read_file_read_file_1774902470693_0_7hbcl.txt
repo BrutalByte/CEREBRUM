@@ -1,3 +1,0 @@
-{
-  "output": "{\"agentType\":\"general-purpose\",\"description\":\"Find correct RoG-WebQSP file paths\"}"
-}

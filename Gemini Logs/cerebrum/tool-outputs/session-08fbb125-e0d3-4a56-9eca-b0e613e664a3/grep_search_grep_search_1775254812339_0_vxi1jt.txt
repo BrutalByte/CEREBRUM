@@ -1,3 +1,0 @@
-{
-  "output": "No matches found for pattern \"def commit_params\" in path \".\"."
-}

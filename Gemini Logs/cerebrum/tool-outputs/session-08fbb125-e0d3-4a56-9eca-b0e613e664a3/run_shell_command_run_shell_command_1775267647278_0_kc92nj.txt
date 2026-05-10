@@ -1,3 +1,0 @@
-{
-  "output": "Output: [main 2babddb] fix(ui): resolve InsightValidator error and restore missing UI tabs\n 2 files changed, 104 insertions(+)\nOn branch main\nYour branch is ahead of 'origin/main' by 6 commits.\n  (use \"git push\" to publish your local commits)\n\nnothing to commit, working tree clean\nProcess Group PGID: 80488"
-}

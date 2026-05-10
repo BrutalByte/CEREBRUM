@@ -1,3 +1,0 @@
-{
-  "output": "Successfully overwrote file: E:\\Development\\Cerebrum\\tests\\test_temporal_scoring.py. Here is the updated code:\n...\n    def find_entities(self, query, top_k=5): return []\n    def find_similar(self, node_id, top_k=5): return []\n    def get_entity(self, node_id): return None\n    def get_neighbors(self, node_id): return []\n    def to_networkx(self): return None\n    def add_edge(self, u, v, relation, confidence=1.0, provenance=\"\", synthetic=False): pass\n\ndef test_temporal_scoring_recency_bias():\n    adapter = MockAdapter()\n    csa = CSAEngine(adapter=adapter, use_temporal_decay=True, eta=1.0)\n    csa.set_query_time(1000.0)\n..."
-}

@@ -1,3 +1,0 @@
-{
-  "output": "Successfully modified file: E:\\Development\\Cerebrum\\ui\\studio.py (1 replacements). Here is the updated code:\n...\n    \"padding:15px;margin-bottom:10px;}\"\n    \".score-bar-bg{background:#30363d;height:8px;border-radius:4px;}\"\n    \".score-bar-fill{background:#58a6ff;height:100%;border-radius:4px;}\"\n)\n\nwith gr.Blocks(title=\"CEREBRUM Studio\") as demo:\n    gr.Markdown(\"# CEREBRUM STUDIO Pro\")\n    best_path_state = gr.State([])   # hidden state for 3D path highlighting\n\n    with gr.Row():\n        # ── Left panel: controls ──────────────────────────────────────\n..."
-}

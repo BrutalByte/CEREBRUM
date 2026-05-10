@@ -1,3 +1,0 @@
-{
-  "output": "Successfully modified file: E:\\Development\\Cerebrum\\ui\\studio.py (1 replacements). Here is the updated code:\n...\n        path = file_obj.name\n    elif csv_path_text and csv_path_text.strip():\n        path = csv_path_text.strip()\n    else:\n        return \"ERROR: No file provided.\", \"N/A\"\n    \n    # engine.load_graph is now a generator\n    res = (\"[Starting...]\", \"N/A\")\n    for status, comms in _engine.load_graph(path, embedding_type, progress=progress):\n        res = (status, comms)\n    return res\n\n\n# ---------------------------------------------------------------------------\n# UI Layout\n# ---------------------------------------------------------------------------\n..."
-}

@@ -1,3 +1,0 @@
-{
-  "output": "Successfully created and wrote to new file: C:\\Users\\bryan\\.gemini\\tmp\\cerebrum\\a047394e-e629-47e6-9974-520f51c3bb3f\\plans\\NeuralEventSchema.json. Here is the updated code:\n{\r\n  \"header\": {\r\n    \"timestamp\": 0.0,\r\n    \"version\": \"2.4.0\",\r\n    \"layer\": \"CORTEX\"\r\n  },\r\n  \"event_type\": \"SYNAPTIC_PULSE\",\r\n  \"payload\": {\r\n    \"source_node\": \"string\",\r\n    \"target_node\": \"string\",\r\n    \"relation\": \"string\",\r\n    \"weight\": 0.0,\r\n    \"hop_count\": 0,\r\n    \"features\": [0.0],\r\n    \"is_wormhole\": false\r\n  }\r\n}\r\n"
-}

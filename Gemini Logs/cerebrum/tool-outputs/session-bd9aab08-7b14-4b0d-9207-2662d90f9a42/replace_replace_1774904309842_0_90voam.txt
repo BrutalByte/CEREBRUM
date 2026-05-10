@@ -1,3 +1,0 @@
-{
-  "output": "Successfully modified file: E:\\Development\\Cerebrum\\benchmarks\\ikgwq_eval.py (1 replacements). Here is the updated code:\n...\n    # Note: REM synthesis is practical on small/medium graphs (<50K nodes).\n    # On large graphs (>500K nodes), synthesis phase is memory-intensive.\n    # ------------------------------------------------------------------\n    if use_rem and removal_fraction > 0:\n        n_nodes = G_incomplete.number_of_nodes()\n        if n_nodes > 2_000_000:\n            print(f\"      REM synthesis skipped ({n_nodes:,} nodes exceeds practical limit)\")\n        else:\n            rem = REMEngine(adapter=adapter)\n            report = rem.run()\n            n_synth = report.synthesized_edges\n..."
-}

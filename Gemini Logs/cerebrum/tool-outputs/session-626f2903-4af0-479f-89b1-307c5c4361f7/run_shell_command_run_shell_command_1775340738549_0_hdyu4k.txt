@@ -1,3 +1,0 @@
-{
-  "output": "Output: python :   File \"E:\\Development\\Cerebrum\\ui\\studio.py\", line 363\nAt line:1 char:1\n+ python ui/studio.py > studio_startup_3.log 2>&1 ; Start-Sleep -s 5 ;  ...\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n    + CategoryInfo          : NotSpecified: (  File \"E:\\Deve...o.py\", line 363:String) [], RemoteExcepti \n   on\n    + FullyQualifiedErrorId : NativeCommandError\n \n    return f\"<iframe srcdoc='{Path(f.name).read_text(encoding=\\\"utf-8\\\").replace(\\\"'\\\", \\\"&apos;\\\")}' \nstyle='width:100%;height:600px;border:none;'></iframe>\"\n                                                               ^\nSyntaxError: unexpected character after line continuation character\nProcess Group PGID: 62044"
-}

@@ -1,3 +1,0 @@
-{
-  "output": "No matches found for pattern \"TODO|FIXME\" in path \"core\"."
-}

@@ -1,3 +1,0 @@
-{
-  "output": "Output: Kismet|directed_by|William Dieterle\nKismet|written_by|Edward Knoblock\nKismet|starred_actors|Marlene Dietrich\nKismet|starred_actors|Edward Arnold\nKismet|starred_actors|Ronald Colman\nKismet|starred_actors|James Craig\nKismet|release_year|1944\nKismet|in_language|English\nKismet|has_tags|bd-r\nFlags of Our Fathers|directed_by|Clint Eastwood\nProcess Group PGID: 81612"
-}

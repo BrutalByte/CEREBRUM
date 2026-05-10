@@ -1,3 +1,0 @@
-{
-  "output": "Output: d19a94d (HEAD -> main) fix(grailqa): correct column-oriented dataset parsing + add GrailQA results\n9555871 feat: v1.6.6 — Accuracy audit: convergence voting + ResourceGovernor + GrailQA pipeline\nf18d0b9 fix(ranking): geometric-mean attention + hop-aware min_hop → v1.6.5\n5e8f171 (origin/main) feat: v1.6.4 — Phase 28 & 29: Structural Repair & Context Merging\nd3c3e19 feat: v1.2.0 Hardened Enterprise — Research Milestones & Hardening Suite\nProcess Group PGID: 64252"
-}

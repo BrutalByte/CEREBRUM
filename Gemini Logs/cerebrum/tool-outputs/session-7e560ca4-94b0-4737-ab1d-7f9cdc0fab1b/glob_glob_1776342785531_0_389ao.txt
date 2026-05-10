@@ -1,3 +1,0 @@
-{
-  "output": "Found 1 file(s) matching \"TEST_LOG*.md\" within E:\\Development\\Cerebrum, sorted by modification time (newest first):\nE:\\Development\\Cerebrum\\TEST_LOG.md"
-}

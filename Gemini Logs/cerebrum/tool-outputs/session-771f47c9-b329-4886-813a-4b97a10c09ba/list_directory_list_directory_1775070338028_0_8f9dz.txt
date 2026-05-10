@@ -1,3 +1,0 @@
-{
-  "output": "Directory listing for E:\\Development\\Cerebrum\\benchmarks\\data\\cwq:\n[DIR] cache\ncwq_scaffold.txt (477250996 bytes)\nCWQ.test.json (3426544 bytes)\nCWQ.train.json (28259930 bytes)\nentity_names.json (2 bytes)\nsetup_complete.txt (87 bytes)"
-}

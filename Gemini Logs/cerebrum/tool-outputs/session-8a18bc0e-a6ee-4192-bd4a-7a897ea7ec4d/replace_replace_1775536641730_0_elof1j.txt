@@ -1,3 +1,0 @@
-{
-  "output": "Successfully modified file: E:\\Development\\Cerebrum\\core\\studio_engine.py (1 replacements). Here is the updated code:\n...\n            }}, 1000);\n        }}\n    </script>\n</body>\n</html>\"\"\"\n        import base64\n        b64_content = base64.b64encode(html.encode('utf-8')).decode('utf-8')\n        return (\n            f\"<iframe src='data:text/html;base64,{b64_content}'\"\n            \" style='width:100%;height:750px;border:none;border-radius:8px;'></iframe>\"\n        )\n\n    # ------------------------------------------------------------------\n    # Private helpers\n..."
-}

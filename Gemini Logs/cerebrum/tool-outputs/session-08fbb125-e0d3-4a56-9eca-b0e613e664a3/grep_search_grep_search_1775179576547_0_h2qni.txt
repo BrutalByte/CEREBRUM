@@ -1,3 +1,0 @@
-{
-  "output": "Found 4 matches for pattern \"RELATION_DECAY_DEFAULTS\" in path \".\":\n---\nFile: docs\\specifications\\SPEC_015_ALGORITHMIC_DEPTH.md\nL44:     lam = edge.decay_rate or RELATION_DECAY_DEFAULTS.get(edge.relation, 0.01)\n---\nFile: core\\attention_engine.py\nL34: RELATION_DECAY_DEFAULTS = {\nL358:                 decay_rate = RELATION_DECAY_DEFAULTS.get(edge_type, self.lambda_decay)\nL419:                 decay_rate = RELATION_DECAY_DEFAULTS.get(edge_type, self.lambda_decay)\n---"
-}

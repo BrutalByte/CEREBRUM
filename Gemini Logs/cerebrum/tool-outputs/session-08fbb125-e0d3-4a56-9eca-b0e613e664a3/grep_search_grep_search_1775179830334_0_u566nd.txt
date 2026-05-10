@@ -1,3 +1,0 @@
-{
-  "output": "No matches found for pattern \"def get_current_params\" in path \".\"."
-}

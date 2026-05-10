@@ -1,3 +1,0 @@
-{
-  "output": "Successfully modified file: E:\\Development\\Cerebrum\\core\\research_agent.py (1 replacements). Here is the updated code:\n...\n        descending.\n        \"\"\"\n        candidates: List[ResearchCandidate] = []\n\n        try:\n            # --- Pushed candidates (High Priority) ---\n            with self._lock:\n                if hasattr(self, \"_pushed_candidates\") and self._pushed_candidates:\n                    candidates.extend(self._pushed_candidates)\n                    self._pushed_candidates = []\n\n            G = self._adapter.to_networkx()\n            nodes = list(G.nodes())\n            cmap: Dict[str, int] = getattr(self._adapter, \"community_map\", {}) or {}\n\n            # --- Build embedding cache ---\n..."
-}

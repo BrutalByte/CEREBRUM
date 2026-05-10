@@ -1,3 +1,0 @@
-{
-  "output": "No matches found for pattern \"def _get_centroid\" in path \".\"."
-}
