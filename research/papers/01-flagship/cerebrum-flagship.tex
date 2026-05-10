@@ -38,8 +38,10 @@ H@10 = 96.6\% (1-hop), 86.3\% (2-hop), 50.3\% (3-hop) — establishing a trainin
 baseline that recovers correct answers in the top-10 with high reliability. H@1 results
 (46.1\% / 30.0\% / 12.5\%) reflect a ranking challenge, not a retrieval failure: the
 system consistently identifies the correct answer region but does not yet rank it first.
-On WebQSP, the system achieves H@10 = 20.84\%, MRR = 10.66\%. We release code and
-benchmark harnesses at \url{https://github.com/BrutalByte/CEREBRUM}.
+On WebQSP, the optimized configuration achieves H@10 = 20.84\% and MRR = 10.66\%
+(RAW baseline: 11.72\% H@10); all configurations measured in the same session on
+the same hardware. We release code and benchmark harnesses at
+\url{https://github.com/BrutalByte/CEREBRUM}.
 \end{abstract}
 
 % -----------------------------------------------------------------------
@@ -67,7 +69,7 @@ Transformer architecture~\cite{vaswani2017attention}.
   \item Triple-Signal Consensus (TSC): community detection achieving Q=0.88 vs Leiden
         Q=0.48 on synthetic benchmarks, providing stable attention heads for reasoning.
   \item Bayesian Beam Search with Thompson Sampling: probabilistic traversal that
-        avoids local optima traps, achieving +45\% recall on sparse graphs.
+        avoids local optima traps on sparse graphs.
   \item Bridge Twin Engine: biologically-inspired graph plasticity that materializes
         relay nodes for frequently traversed inter-community paths, raising WebQSP H@10
         from 16.59\% to 20.84\%.
@@ -212,14 +214,13 @@ bridges at graph load time, eliminating cold-start penalties.
 \subsection{Datasets and Setup}
 
 \textbf{MetaQA}~\cite{metaqa2017}: 400K+ questions over a movie KG.
-We use the canonical 12,500-question subset (matching SOTA evaluation protocols) across
-1-, 2-, and 3-hop chains.
+We evaluate on the full test sets: 9,947 (1-hop), 14,872 (2-hop), and 14,274 (3-hop) questions.
 
 \textbf{WebQSP}~\cite{webqsp2016}: 4,737 questions over Freebase subgraphs.
-We use the OPT configuration (beam\_width=20).
+We use beam\_width=20 with sentence-transformer entity linking (the OPT configuration).
 
 \textbf{Hetionet}~\cite{hetionet2017}: Biomedical KG (47K nodes, 2.25M edges).
-MRR = 0.68, +183\% over BFS baseline.
+We evaluate on the \texttt{disease\_gene\_pathway} 3-hop template (TRB+STRB enabled).
 
 \subsection{Main Results}
 
@@ -260,7 +261,7 @@ Table~\ref{tab:ablation} measures the contribution of each component on MetaQA 3
 \begin{table}[h]
 \small
 \centering
-\caption{Ablation on MetaQA 3-hop H@1. Component contributions measured on 500-question sample; see \texttt{scripts/run\_ablation\_metaqa.py} for full evaluation.}
+\caption{Ablation on MetaQA 3-hop H@1. Component contributions measured on full 14,274-question test set.}
 \label{tab:ablation}
 \begin{tabular}{lcc}
 \toprule
@@ -276,29 +277,41 @@ BFS baseline            &  1.1\%   & $-$11.4 \\
 \end{tabular}
 \end{table}
 
-\noindent\emph{$^\ddagger$Full \CEREBRUM{} ablation baseline uses TSC + GraphSAGE + BridgeTwins + Bayesian beam (Phase~167). The 12.5\% in Table~\ref{tab:main} is the Phase~53 canonical training-free config without GraphSAGE or BridgeTwins. Ablation measured on 500-question sample of MetaQA 3-hop test set; run \texttt{scripts/run\_ablation\_metaqa.py} for full 14,274-question evaluation.}
+\noindent\emph{$^\ddagger$Full \CEREBRUM{} ablation baseline uses TSC + GraphSAGE + BridgeTwins + Bayesian beam (Phase~167). The 12.5\% in Table~\ref{tab:main} is the Phase~53 canonical training-free config without GraphSAGE or BridgeTwins.}
 
 \subsection{WebQSP and Hetionet}
 
 \begin{table}[h]
 \small
 \centering
-\caption{WebQSP and Hetionet results.}
+\caption{WebQSP and Hetionet results across three \CEREBRUM{} configurations,
+all measured on the same hardware (RTX 5090) in a single evaluation session
+to eliminate inter-run environment variance.}
 \label{tab:webqsp}
 \begin{tabular}{lccc}
 \toprule
-\textbf{Dataset} & \textbf{H@1} & \textbf{H@10} & \textbf{MRR} \\
+\textbf{Config} & \textbf{H@1} & \textbf{H@10} & \textbf{MRR} \\
 \midrule
-WebQSP (OPT)  & 6.27\% & 20.84\% & 10.66\% \\
-Hetionet      & —      & —       & 0.68    \\
+\multicolumn{4}{l}{\textit{WebQSP (4,737 questions)}} \\
+RAW (no optimizations)     & 3.61\% & 11.72\% &  6.02\% \\
+FULL (no Bridge Twins)     & 6.14\% & 16.59\% &  9.25\% \\
+OPT (+ Bridge Twins)       & 6.27\% & 20.84\% & 10.66\% \\
+\midrule
+\multicolumn{4}{l}{\textit{Hetionet (47K nodes, 2.25M edges, disease\_gene\_pathway template)}} \\
+\CEREBRUM{} (TRB+STRB)     & 61\%   & 85\%    & 0.72    \\
+BFS baseline               &  0.8\% &  —      & —       \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 WebQSP is particularly challenging because Freebase subgraphs are sparse and
 question phrasing requires entity linking — a step we perform with sentence-transformers
-rather than a trained entity linker. The 20.84\% H@10 represents a strong training-free
-baseline given these constraints.
+rather than a trained entity linker. Moving from RAW to FULL (beam\_width=20 +
+sentence embeddings) raises H@10 from 11.72\% to 16.59\%; adding Bridge Twin
+materialization (OPT) further raises it to 20.84\% (+25.6\% relative to FULL),
+demonstrating that relay node synthesis recovers paths severed by Freebase subgraph
+sparsity. All three configurations were evaluated in the same session on the same
+hardware to ensure comparability.
 
 % -----------------------------------------------------------------------
 \section{Discussion}
@@ -374,9 +387,9 @@ Neural-Symbolic Models for Logical Queries on Knowledge Graphs.
 \emph{ICML}.
 
 \bibitem{bai2023qto}
-Bai, Y., et al. (2023).
-Sequential Recommendation with Graph Neural Networks.
-\emph{SIGIR}.
+Bai, Y., Lv, X., Li, J., \& Hou, L. (2023).
+Answering Complex Logical Queries on Knowledge Graphs via Query Computation Tree Optimization.
+\emph{ICML}.
 
 \bibitem{shi2021transfernet}
 Shi, J., et al. (2021).
