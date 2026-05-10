@@ -1,0 +1,60 @@
+
+\subsection*{Abstract}
+Graph partitioning is a foundational task in network science, typically optimizing for either local topological coherence or global modularity. We present \textbf{Dual-Signal Community Fusion (DSCF)} and its successor, \textbf{Triple-Signal Consensus (TSC)}, a novel approach that integrates local (Label Propagation), global (Modularity), and flow-based (PageRank Centrality) signals at the individual node update level. By employing a temperature-annealed decision rule, our method produces highly stable partitions optimized for use as "Attention Heads" in Knowledge Graph reasoning. We demonstrate that this multi-signal consensus prevents the common "Resolution Limit" and "Hub Drift" failures prevalent in standard algorithms like Leiden \cite{traag2019louvain} or Louvain \cite{blondel2008louvain}. Benchmark results on synthetic caveman graphs show that vectorized TSC achieves a modularity index of \textbf{Q=0.88}, significantly outperforming standard Leiden baselines (Q=0.48) while providing a robust structural foundation for multi-hop graph attention mechanisms. As of v2.51.0, TSC is available as an explicitly selectable mode alongside DSCF, and community partitions now drive adaptive beam parameters --- beam width and max hop are set dynamically from local graph density --- yielding MetaQA canonical results of H@1=46.1\% (1-hop), 30.0\% (2-hop), and 12.5\% (3-hop) with H@10 reaching 96.6\%, 86.3\%, and 50.3\% respectively.
+
+\subsection*{1. Introduction}
+The identification of community structures in large Knowledge Graphs (KGs) is essential for efficient multi-hop reasoning. In the CEREBRUM framework, these communities serve as discrete attention heads, guiding a beam search through semantically related regions. However, standard algorithms often fluctuate between over-fragmentation (local-only) and over-merging (global-only). DSCF/TSC addresses this by treating community assignment as a consensus problem.
+
+\subsection*{2. Methodology}
+
+\subsubsection*{2.1 The Local Signal ($\mathcal{L}$)}
+We utilize a modified Label Propagation (LPA) \cite{raghavan2007lpa} signal to capture immediate topological consensus:
+$$\mathcal{L}(v, C) = \frac{|\{u \in \mathcal{N}(v) : \text{label}(u) = C\}|}{|\mathcal{N}(v)|}$$
+
+\subsubsection*{2.2 The Global Signal ($\mathcal{G}$)}
+We define the global signal as the modularity gain $\Delta Q$ resulting from node $v$'s movement to community $C$. This ensures the partition maximizes the Newman-Girvan modularity index.
+
+\subsubsection*{2.3 The Centrality Signal ($\mathcal{F}$)}
+To address "Hub Drift," TSC introduces a flow-based signal weighted by PageRank ($PR$) \cite{page1999pagerank}:
+$$\mathcal{F}(v, C) = \frac{\sum_{u \in \mathcal{N}(v), \text{label}(u)=C} PR(u)}{\sum_{u \in \mathcal{N}(v)} PR(u)}$$
+
+\subsection*{3. Temperature-Annealed Consensus}
+The primary contribution of this work is the fusion equation governed by temperature $\tau$:
+$$C^* = \arg\max_{C} ( \tau \mathcal{L}(v, C) + (2 - \tau) \widehat{\mathcal{G}}(v, C) + \gamma \mathcal{F}(v, C) )$$
+As $\tau$ is annealed from 2.0 to 0.5, the system transitions from exploratory local clustering to stable global optimization.
+
+\subsection*{4. Convergence and Complexity}
+The algorithm operates in $O(E \cdot I)$ time, where $E$ is edges and $I$ is iterations. The vectorized implementation utilizes bulk-matrix assignment updates, enabling GPU-accelerated partitioning for large-scale enterprise graphs.
+
+\subsection*{5. Conclusion}
+DSCF/TSC provides a mathematically rigorous framework for generating attention-ready graph partitions. By fusing local, global, and flow-based signals, it creates a stable structural foundation for multi-hop graph attention mechanisms. Current results in CEREBRUM v2.51.0 confirm that community partitions produced by TSC underpin an adaptive reasoning pipeline achieving MetaQA H@1 of 46.1\% (1-hop), 30.0\% (2-hop), and 12.5\% (3-hop), with H@10 reaching 96.6\%, 86.3\%, and 50.3\% respectively --- validating that stable structural attention heads are a prerequisite for high-recall multi-hop reasoning.
+
+\medskip\noindent\rule{\linewidth}{0.4pt}\medskip
+
+\section*{6. Recent Advances (v2.24.0 -> v2.51.0)}
+
+The CEREBRUM framework has undergone substantial development between v2.24.0 and v2.51.0. The following advances are directly relevant to the DSCF/TSC community detection methodology described in this paper.
+
+\textbf{TSC as an Explicit Mode (Phase 49).} Prior to v2.24.0, DSCF and TSC were treated as a combined pipeline with TSC as a refinement pass. From v2.51.0, TSC is an explicitly selectable community detection mode (\texttt{CommunityEngine(mode="tsc")}), allowing practitioners to benchmark it cleanly against DSCF and Leiden baselines. Vectorized TSC retains its Q=0.88 advantage on caveman graphs while adding configurable temperature schedules.
+
+\textbf{Adaptive Search Strategy from Local Graph Density (Phase 53).} Community partitions now drive downstream search parameters. \texttt{BeamTraversal} queries the local edge density within the detected community before each hop and selects \texttt{beam\_width} and \texttt{max\_hop} accordingly. Dense communities narrow the beam (precision mode); sparse communities widen it (recall mode). This eliminates the need for global hyperparameter tuning and produces consistent performance across heterogeneous graph regions.
+
+\textbf{MetaQA Canonical Benchmark Results.} With adaptive community-driven beam parameters, CEREBRUM v2.51.0 achieves the following canonical results on MetaQA:
+
+\begin{table}[h]
+\small\centering
+\begin{tabular}{lll}
+\toprule
+Hop & H@1 & H@10 \\
+\midrule
+1-hop & 46.1% & 96.6% \\
+2-hop & 30.0% & 86.3% \\
+3-hop & 12.5% & 50.3% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\textbf{Community-Specific CSA Parameters (Phase 20/45).} Each community partition now maintains its own 10-parameter CSA vector, updated online via \texttt{MetaParameterLearner}. This means the community structure produced by DSCF/TSC directly determines the granularity of the learning surface --- higher-quality partitions produce more focused per-community adaptation.
+
+\textbf{Test Coverage.} The full CEREBRUM test suite now comprises 2177 tests (up from 994 at v2.24.0), with dedicated regression suites covering TSC stability, community swap atomicity, and modularity drift detection.

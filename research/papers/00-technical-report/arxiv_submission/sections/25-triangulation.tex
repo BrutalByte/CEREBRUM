@@ -1,0 +1,107 @@
+
+\section*{Abstract}
+
+We present \textbf{TriangulationEngine}, a four-perspective validation framework for \texttt{ResearchCandidate} objects in CEREBRUM's knowledge graph discovery pipeline. Inspired by triangulation in navigation and qualitative research methodology [denzin1978research], the engine validates each candidate edge from four independent perspectives: (P1) \textbf{reverse traversal confidence} --- does the graph support the inverse relation?; (P2) \textbf{multi-strategy agreement} --- do different reasoning configurations agree?; (P3) \textbf{path independence} --- are the supporting paths structurally independent?; (P4) \textbf{semantic type consistency} --- is the relation type compatible with the entity class profile? The four perspective scores extend the \texttt{AutoApprover} feature vector from 12 to 16 dimensions, providing richer signal for the downstream logistic classifier. A diagnostic \texttt{is\_Synaptic Bridge\_candidate} flag identifies cross-community bridge proposals warranting special handling.
+
+\medskip\noindent\rule{\linewidth}{0.4pt}\medskip
+
+\section*{1. Motivation: Single-Path Validation is Insufficient}
+
+Prior to Phase 72, \texttt{ResearchAgent} validated candidates by running \texttt{HypothesisEngine} once in the forward direction (A$\to$B) and checking whether supporting paths exceeded a confidence threshold. This single-perspective approach has three failure modes:
+
+\begin{enumerate}
+  \item \textbf{Directionality bias}: A$\to$B may traverse well even when B$\to$A has no support, producing spurious asymmetric edges.
+  \item \textbf{Reasoning monoculture}: A single reasoning configuration may over-weight community structure ($\beta$) and consistently produce high-confidence paths for topologically close but semantically unrelated entities.
+  \item \textbf{Dependent paths}: Multiple "independent" paths through the same bottleneck node provide weaker evidence than truly parallel routes.
+\end{enumerate}
+
+
+Triangulation addresses all three by requiring convergent evidence across structurally independent perspectives.
+
+\medskip\noindent\rule{\linewidth}{0.4pt}\medskip
+
+\section*{2. The Four Perspectives}
+
+\subsection*{P1: Reverse Traversal Confidence}
+
+Run \texttt{HypothesisEngine} from target B to source A (inverse direction):
+
+\begin{lstlisting}[language=Python]
+reverse_result = hypothesis_engine.evaluate(target, source)
+p1 = reverse_result.confidence
+\end{lstlisting}
+
+A genuine causal or associative relationship should exhibit non-trivial reverse traversal confidence. Spurious forward-only paths yield near-zero reverse confidence.
+
+\subsection*{P2: Multi-Strategy Agreement}
+
+Run the candidate through three different \texttt{BeamTraversal} configurations (varying \texttt{beam\_width}, \texttt{probabilistic}, \texttt{max\_hop}) and compute the agreement fraction:
+
+\begin{lstlisting}[language=Python]
+scores = [config_A.score(A, B), config_B.score(A, B), config_C.score(A, B)]
+p2 = len([s for s in scores if s > threshold]) / len(scores)
+\end{lstlisting}
+
+High agreement across configurations indicates a robust signal, not a configuration-specific artifact.
+
+\subsection*{P3: Mean Path Independence}
+
+Given the primary supporting paths \texttt{\{P\_1, ..., P\_k\}}, compute pairwise Jaccard distance between path node sets and average:
+
+\begin{lstlisting}[language=Python]
+independence_scores = [
+    1 - jaccard(set(P_i.nodes), set(P_j.nodes))
+    for i, j in combinations(range(len(paths)), 2)
+]
+p3 = mean(independence_scores) if independence_scores else 0.5
+\end{lstlisting}
+
+High independence (p3 $\to$ 1.0) means paths traverse different graph regions --- stronger evidence. Low independence (p3 $\to$ 0.0) means all paths share the same bottleneck node --- single point of failure.
+
+\subsection*{P4: Semantic Type Score}
+
+Check relation-type and entity-class consistency using a type profile derived from existing graph edges:
+
+\begin{lstlisting}[language=Python]
+p4 = type_consistency(source_entity_class, target_entity_class, relation_type)
+\end{lstlisting}
+
+\begin{itemize}
+  \item Known-compatible type combination $\to$ p4 = 1.0
+  \item Known-incompatible $\to$ p4 = 0.0
+  \item Novel / unseen relation type $\to$ p4 = 0.5 (neutral, no penalty for discovery)
+\end{itemize}
+
+
+\subsection*{Synaptic Bridge Candidate Flag}
+
+\texttt{is\_Synaptic Bridge\_candidate = True} when source and target belong to communities with large structural distance (> 2 hops) and P1 $\times$ P2 $\times$ P3 product > 0.3. Synaptic Bridge candidates are high-value cross-community bridge proposals.
+
+\medskip\noindent\rule{\linewidth}{0.4pt}\medskip
+
+\section*{3. Integration}
+
+\begin{lstlisting}[language=Python]
+from core.triangulation_engine import TriangulationEngine
+
+engine = TriangulationEngine(hypothesis_engine, traversal, adapter)
+report = engine.validate(candidate)
+
+# report.reverse_confidence  → P1
+# report.strategy_agreement  → P2
+# report.mean_path_independence → P3
+# report.semantic_type_score → P4
+# report.is_Synaptic Bridge_candidate → bool
+
+finding.metadata["triangulation"] = report
+\end{lstlisting}
+
+The four scores are automatically incorporated into \texttt{AutoApprover}'s 16-feature vector when \texttt{triangulation} metadata is present.
+
+\medskip\noindent\rule{\linewidth}{0.4pt}\medskip
+
+\section*{4. References}
+
+\begin{itemize}
+  \item [denzin1978research] Denzin, N.K. (1978). \textit{The research act: A theoretical introduction to sociological methods.} McGraw-Hill.
+\end{itemize}

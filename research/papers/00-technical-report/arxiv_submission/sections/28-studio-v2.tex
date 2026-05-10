@@ -1,0 +1,103 @@
+
+\section*{Abstract}
+
+We present \textbf{Studio v2}, an extension of CEREBRUM's Glass-Box Reasoning Studio (Phase 20) with six live monitoring panels designed for autonomous discovery operations. Studio v2 introduces an attachment API (\texttt{attach\_research\_agent}, \texttt{attach\_modulator}, \texttt{attach\_loop}, \texttt{attach\_provenance\_ledger}) that wires optional engines to the dashboard without hard dependencies. The six panels cover: (1) AutoApprover audit log, (2) ContradictionResolver revision queue, (3) DiscoveryCalibrator community heatmap, (4) ChemicalModulator blood panel, (5) Autonomous Loop cycle history, and (6) Provenance Panel (Phase 78) --- a three-part graph provenance view showing batch bar chart and cycle timeline. All panels degrade gracefully when the corresponding engine is not attached, returning placeholder output rather than raising exceptions. This design allows progressive adoption: operators attach only the engines relevant to their deployment.
+
+\medskip\noindent\rule{\linewidth}{0.4pt}\medskip
+
+\section*{1. Motivation: Observability for Autonomous Systems}
+
+The original Reasoning Studio [Buchorn, 2026] was designed for human-in-the-loop query forensics: a user submits a query, inspects the reasoning path, and adjusts parameters. Studio v2 addresses a different use case: \textbf{long-running autonomous discovery operations} where an operator needs continuous visibility into the health of the full discovery pipeline without requiring per-query interaction.
+
+Key observability requirements:
+\begin{itemize}
+  \item \textbf{Decision transparency}: What is AutoApprover deciding, and why?
+  \item \textbf{Quality monitoring}: Is the circuit breaker at risk of tripping?
+  \item \textbf{Coverage monitoring}: Which communities are being over- / under-explored?
+  \item \textbf{Physiological state}: Is ChemicalModulator operating near homeostatic baseline?
+  \item \textbf{Audit trail}: What was materialized, when, and has anything been rolled back?
+\end{itemize}
+
+
+\medskip\noindent\rule{\linewidth}{0.4pt}\medskip
+
+\section*{2. Attachment API}
+
+\begin{lstlisting}[language=Python]
+studio = StudioEngine(graph)
+
+studio.attach_research_agent(agent)
+studio.attach_modulator(modulator)
+studio.attach_loop(loop)
+studio.attach_provenance_ledger(ledger)
+\end{lstlisting}
+
+Each attachment is independent. A \texttt{StudioEngine} with no attachments still renders the original Phase 20 reasoning trace panels.
+
+\medskip\noindent\rule{\linewidth}{0.4pt}\medskip
+
+\section*{3. Panel Specifications}
+
+\subsection*{Panel 1: AutoApprover Audit Log}
+\begin{lstlisting}[language=Python]
+html = studio.get_autoapprover_panel(n=50)
+\end{lstlisting}
+Scrollable table: finding ID, entity pair, decision, confidence, tier reached (hard gate / SGD / LLM), timestamp. Color-coded by decision (green=APPROVE, red=REJECT, yellow=REVIEW).
+
+\subsection*{Panel 2: ContradictionResolver Revision Queue}
+\begin{lstlisting}[language=Python]
+html = studio.get_revision_queue_panel()
+\end{lstlisting}
+Table of pending revision candidates: entity pair, net_evidence_score, resolution class, time in queue, nomination count.
+
+\subsection*{Panel 3: DiscoveryCalibrator Community Heatmap}
+\begin{lstlisting}[language=Python]
+fig = studio.get_calibrator_heatmap()
+\end{lstlisting}
+Horizontal bar chart: one bar per community, length = inverse-rate weight. Communities with weight > 2.0 highlighted in yellow (underexplored). Communities with weight < 0.5 highlighted in grey (saturated). Cold-start communities (never scanned) shown in blue.
+
+\subsection*{Panel 4: ChemicalModulator Blood Panel}
+\begin{lstlisting}[language=Python]
+fig = studio.get_modulator_panel()
+\end{lstlisting}
+Five-scalar visualization comparing current levels to homeostatic baselines:
+\begin{itemize}
+  \item Horizontal bars: current value vs. baseline
+  \item Overdriven (> 1.5$\times$ baseline) $\to$ orange
+  \item Depleted (< 0.5$\times$ baseline) $\to$ blue
+  \item Normal $\to$ green
+\end{itemize}
+
+
+\subsection*{Panel 5: Autonomous Loop Cycle History}
+\begin{lstlisting}[language=Python]
+html = studio.get_loop_panel()
+\end{lstlisting}
+Table of \texttt{CycleRecord} objects: cycle #, timestamp, scan count, materializations, approvals, rejections, reviews, circuit breaker status, effective_cap (Phase 82), edges_rolled_back (Phase 79). Status badge: RUNNING / STOPPED / TRIPPED.
+
+\subsection*{Panel 6: Provenance Panel (Phase 78)}
+\begin{lstlisting}[language=Python]
+stats_html, batch_fig, timeline_fig = studio.get_provenance_panel(n=20)
+\end{lstlisting}
+
+Three components:
+\begin{enumerate}
+  \item \textbf{Summary row} (4 HTML cards): total batches, total edges materialized, total edges rolled back, active batch count.
+  \item \textbf{Batch bar chart}: horizontal bars per batch sorted newest-first. Green = active; red = rolled back. Truncated to \texttt{n} most recent.
+  \item \textbf{Cycle timeline}: dual-series chart. Per-cycle materialization count (bars, left axis) + cumulative edges materialized (dashed line, right axis). Rolled-back batches reduce the cumulative line.
+\end{enumerate}
+
+
+\medskip\noindent\rule{\linewidth}{0.4pt}\medskip
+
+\section*{4. Graceful Degradation}
+
+Every panel method returns a safe placeholder when the required engine is not attached:
+
+\begin{lstlisting}[language=Python]
+# Panel 3 without calibrator attached:
+fig = studio.get_calibrator_heatmap()
+# → empty Figure with annotation "DiscoveryCalibrator not configured"
+\end{lstlisting}
+
+This is enforced by the \texttt{@requires\_attachment} decorator pattern, ensuring no \texttt{AttributeError} propagates to the Gradio UI even in minimal deployments.

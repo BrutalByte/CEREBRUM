@@ -1,0 +1,109 @@
+
+\section*{Abstract}
+
+We present the \textbf{GraphAdapter \texttt{remove\_edge()} Protocol}, a Phase 80 change that promotes edge removal from an ad-hoc capability to a formally defined method in the \texttt{GraphAdapter} base class. Prior to Phase 80, \texttt{ProvenanceLedger.rollback\_batch()} checked for edge-removal capability via \texttt{hasattr(adapter, "remove\_edge")} and silently skipped rollback if the method was absent. This silent-skip pattern allowed custom adapter subclasses to silently fail rollback without any error signal. Phase 80 removes the guard and defines \texttt{remove\_edge(u, v, relation)} as a protocol method on \texttt{GraphAdapter} --- non-abstract, raising \texttt{NotImplementedError} by default, overridden in all six built-in adapters. Custom adapters must explicitly override the method or accept that rollback will raise \texttt{NotImplementedError}, making the failure visible. This is a breaking change for custom adapters that previously relied on the silent-skip behavior.
+
+\medskip\noindent\rule{\linewidth}{0.4pt}\medskip
+
+\section*{1. Motivation: Silent Failure in Rollback}
+
+The ProvenanceLedger (Phase 76) enables targeted rollback of materialized edges. Rollback is only useful if the underlying adapter can actually remove edges. The original implementation used a defensive \texttt{hasattr()} check:
+
+\begin{lstlisting}[language=Python]
+# Pre-Phase 80 (fragile)
+if hasattr(adapter, "remove_edge"):
+    adapter.remove_edge(u, v, relation)
+else:
+    logger.warning("Adapter does not support remove_edge; skipping rollback")
+\end{lstlisting}
+
+This pattern has two failure modes:
+\begin{enumerate}
+  \item \textbf{Silent no-op}: A custom adapter implementing a different interface (e.g., \texttt{delete\_edge}) would fail the \texttt{hasattr} check, silently skip rollback, and report success.
+  \item \textbf{Untestable absence}: Tests that mock \texttt{adapter} without adding \texttt{remove\_edge} would pass, masking the missing implementation.
+\end{enumerate}
+
+
+\medskip\noindent\rule{\linewidth}{0.4pt}\medskip
+
+\section*{2. Protocol Definition}
+
+The Phase 80 change to \texttt{core/graph\_adapter.py}:
+
+\begin{lstlisting}[language=Python]
+class GraphAdapter(ABC):
+    # ... existing abstract methods ...
+
+    def remove_edge(self, u: str, v: str, relation: str) -> None:
+        """Remove edge (u, v, relation) from the graph.
+
+        All built-in adapters override this method.
+        Custom subclasses must override it to enable ProvenanceLedger rollback.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not implement remove_edge(). "
+            "Override this method to enable ProvenanceLedger rollback."
+        )
+\end{lstlisting}
+
+The method is \textbf{non-abstract} (does not use \texttt{@abstractmethod}) to avoid breaking existing custom subclasses on import. The \texttt{NotImplementedError} is raised at call time, not at subclass definition time.
+
+\medskip\noindent\rule{\linewidth}{0.4pt}\medskip
+
+\section*{3. Built-in Adapter Implementations}
+
+All six built-in adapters implement \texttt{remove\_edge}:
+
+\begin{table}[h]
+\small\centering
+\begin{tabular}{ll}
+\toprule
+Adapter & Implementation \\
+\midrule
+\texttt{NetworkXAdapter} & \texttt{G.remove\_edge(u, v)} with edge matching by relation key \\
+\texttt{Neo4jAdapter} & Cypher \texttt{MATCH (u)-[r:RELATION]->(v) DELETE r} \\
+\texttt{RDFAdapter} & \texttt{graph.remove((subject, predicate, obj))} \\
+\texttt{CSVAdapter} & In-memory edge list filter + optional file flush \\
+\texttt{StreamAdapter} & Delegates to wrapped \texttt{base\_adapter.remove\_edge()} \\
+\texttt{RemoteCerebrumAdapter} & \texttt{DELETE /edges} REST call with signature \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\medskip\noindent\rule{\linewidth}{0.4pt}\medskip
+
+\section*{4. Migration Guide for Custom Adapters}
+
+Any custom \texttt{GraphAdapter} subclass must now explicitly handle edge removal:
+
+\begin{lstlisting}[language=Python]
+# Option A: Implement it
+class MyAdapter(GraphAdapter):
+    def remove_edge(self, u: str, v: str, relation: str) -> None:
+        self._edges = [(a, b, r) for (a, b, r) in self._edges
+                       if not (a == u and b == v and r == relation)]
+
+# Option B: Declare it unsupported
+class MyAdapter(GraphAdapter):
+    def remove_edge(self, u: str, v: str, relation: str) -> None:
+        raise NotImplementedError("MyAdapter does not support edge removal.")
+\end{lstlisting}
+
+Option B is equivalent to the previous silent-skip behavior, but now raises explicitly rather than silently doing nothing.
+
+\medskip\noindent\rule{\linewidth}{0.4pt}\medskip
+
+\section*{5. ProvenanceLedger Changes}
+
+\begin{lstlisting}[language=Python]
+# Post-Phase 80 (no hasattr guard)
+def rollback_batch(self, batch_id: str, adapter: GraphAdapter) -> int:
+    batch = self._batches[batch_id]
+    for edge in batch.edges:
+        adapter.remove_edge(edge.u, edge.v, edge.relation)  # raises if not implemented
+    batch.rolled_back = True
+    return len(batch.edges)
+\end{lstlisting}
+
+If \texttt{adapter.remove\_edge()} raises, the exception propagates to the caller. \texttt{ProvenanceLedger} does not catch it --- callers are expected to handle \texttt{NotImplementedError} if they choose to continue on partial rollback.
