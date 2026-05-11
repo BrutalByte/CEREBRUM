@@ -283,9 +283,9 @@ with four production requirements:
 \end{enumerate}
 
 The pipeline is composable: each stage can be enabled/disabled independently,
-and custom stages can be inserted at any point. Default throughput on a single CPU core
-is $\approx$50,000 triples/second for pure normalization; STDP discretization adds
-$O(1)$ amortized overhead per triple via Lazy Decay.
+and custom stages can be inserted at any point. Default throughput on a single CPU core is $\approx$50,000 triples/second for pure
+normalization (measured on AMD Ryzen 9 9950X3D, MetaQA KG: 43,234 entities / 124,680 edges);
+STDP discretization adds $O(1)$ amortized overhead per triple via Lazy Decay.
 
 % -----------------------------------------------------------------------
 \section{Eight Cross-Feature Integration Bugs}

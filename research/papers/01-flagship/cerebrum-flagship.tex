@@ -222,6 +222,10 @@ bridges at graph load time, eliminating cold-start penalties.
 
 \subsection{Datasets and Setup}
 
+\textbf{Hardware.} All experiments were run on a single workstation:
+AMD Ryzen 9 9950X3D (16-core), NVIDIA GeForce RTX 5090 (32GB VRAM), 62GB system RAM,
+Windows 11 Pro. No distributed computing was used.
+
 \textbf{MetaQA}~\cite{metaqa2017}: 400K+ questions over a movie KG.
 We evaluate on the full test sets: 9,947 (1-hop), 14,872 (2-hop), and 14,274 (3-hop) questions.
 
@@ -300,8 +304,8 @@ BFS baseline            &  1.1\%   & $-$11.4 \\
 \small
 \centering
 \caption{WebQSP and Hetionet results across three \CEREBRUM{} configurations,
-all measured on the same hardware (RTX 5090) in a single evaluation session
-to eliminate inter-run environment variance.}
+all measured in a single session on the same workstation (AMD Ryzen 9 9950X3D,
+RTX 5090, 62GB RAM) to eliminate inter-run environment variance.}
 \label{tab:webqsp}
 \begin{tabular}{lccc}
 \toprule
