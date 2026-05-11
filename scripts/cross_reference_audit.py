@@ -75,8 +75,12 @@ def check_citations(tex_path: Path, bib_keys: set[str]) -> list[str]:
         for k in group.split(","):
             cited.add(k.strip())
 
+    # Also collect inline \bibitem{key} entries defined in this file
+    inline_keys = set(re.findall(r"\\bibitem\{([^}]+)\}", text))
+    resolved = bib_keys | inline_keys
+
     issues = []
-    missing = cited - bib_keys
+    missing = cited - resolved
     if missing:
         for k in sorted(missing):
             issues.append(_fail(f"{tex_path.name}: \\cite{{{k}}} — key not in references.bib"))
@@ -108,12 +112,14 @@ def check_inputs(tex_path: Path, search_root: Path) -> list[str]:
     inputs = re.findall(r"\\input\{([^}]+)\}", text)
     issues = []
     for inp in inputs:
-        # Try relative to tex file's dir, then to search_root
+        # Try relative to tex file's dir, then to search_root, then arxiv_submission/
         candidates = [
             tex_path.parent / inp,
             tex_path.parent / (inp + ".tex"),
             search_root / inp,
             search_root / (inp + ".tex"),
+            search_root / "arxiv_submission" / inp,
+            search_root / "arxiv_submission" / (inp + ".tex"),
         ]
         if not any(c.exists() for c in candidates):
             issues.append(_warn(f"{tex_path.name}: \\input{{{inp}}} — target not found"))
