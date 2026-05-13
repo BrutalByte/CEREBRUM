@@ -25,8 +25,8 @@ BIB_FILE   = REPO_ROOT / "docs" / "latex" / "references.bib"
 
 PAPERS = {
     "00-technical-report": {
-        "tex":     "cerebrum-v251-report.tex",
-        "title":   "CEREBRUM v2.51: Complete Technical Specification",
+        "tex":     "cerebrum-v252-report.tex",
+        "title":   "CEREBRUM v2.52: Complete Technical Specification",
         "arxiv":   "cs.AI",
         "notes":   "Submit first — other papers reference this arXiv ID.",
     },

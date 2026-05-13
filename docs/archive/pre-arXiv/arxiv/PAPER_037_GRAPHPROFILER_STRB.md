@@ -2,7 +2,7 @@
 
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
-**Version**: v2.51.0 (Phase 167 COMPLETE)
+**Version**: v2.52.0 (Phase 172 COMPLETE)
 **Date**: May 5, 2026
 
 ---
@@ -47,7 +47,7 @@ On the MetaQA 3-hop benchmark, STRB alone improves Hits@1 by **8.4%**, as it cor
 GraphProfiler and STRB represent the culmination of the CEREBRUM autonomous reasoning roadmap. By automating both structural strategy selection and semantic intent recognition, we enable a truly zero-config, "plug-and-play" intelligence for Knowledge Graphs.
 
 ---
-**Manuscript Finalized: v2.51.0 (Phase 167 COMPLETE)**
+**Manuscript Finalized: v2.52.0 (Phase 172 COMPLETE)**
 
 ## Acknowledgments
 

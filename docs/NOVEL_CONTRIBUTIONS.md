@@ -5,7 +5,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026
-**Status**: v2.51.0 (Phase 167 (STRB — Semantic Terminal Relation Boost) COMPLETE)
+**Status**: v2.52.0 (Phase 172 (STRB — Semantic Terminal Relation Boost) COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -1072,7 +1072,7 @@ cosine-compared to all relation phrase embeddings; the top match drives the term
 relation boost. Falls back to structural SRI when random embeddings are in use.
 
 **Architecture**: Builds on `semantic_trb()` in `StructuralRelationInferrer` (Phase 163)
-which was implemented but not connected to the zero-config benchmark path. Phase 167
+which was implemented but not connected to the zero-config benchmark path. Phase 172
 closes the loop: `TEMPLATE_QUESTION` dict + `_seed_label()` constructs the question text
 per query, encodes it via `graph._embedding_engine.encode_one()`, and passes it as
 `query_embedding` to `graph.query()`. The existing `auto_infer_terminal_relation` routing
@@ -1106,4 +1106,4 @@ the "no training data" invariant of the CEREBRUM framework.
 
 ---
 
-**Reviewed on**: May 9, 2026 for version v2.51.1
+**Reviewed on**: May 9, 2026 for version v2.52.0

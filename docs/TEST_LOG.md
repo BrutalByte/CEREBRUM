@@ -6,12 +6,12 @@ retroactively; failures are recorded as faithfully as passes.
 
 ---
 
-## Run 168 — v2.51.0 Regression Fix: 27 → 0 Failures
+## Run 168 — v2.52.0 Regression Fix: 27 → 0 Failures
 
 | Field             | Value |
 |---|---|
 | **Date**          | 2026-05-07 |
-| **Phase**         | Post-Phase 167 (v2.51.0) |
+| **Phase**         | Post-Phase 172 (v2.52.0) |
 | **Purpose**       | Full quality audit; fix all pre-existing test failures |
 | **Operator**      | Bryan Alexander Buchorn |
 

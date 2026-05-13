@@ -1,5 +1,5 @@
 # PAPER 026: Discovery Calibration — EMA-Based Community Rate Tracking and Contradiction Resolution for Autonomous KG Research
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.52.0 (Phase 172 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
 **CEREBRUM Phase 73**
@@ -125,6 +125,6 @@ Default `max_boost = 3.0`. This rewards repeatedly-surfaced candidates without l
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 2, 2026 for version v2.52.0
 
 

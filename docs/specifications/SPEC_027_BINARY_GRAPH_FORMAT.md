@@ -1,7 +1,7 @@
 # [Buchorn, 2026]: Binary Graph Topology Format (v1.0)
 ## Structure of A-File and E-Block for Mmap Storage
 
-**Status**: v2.51.0 (Phase 169 DRAFT)
+**Status**: v2.52.0 (Phase 169 DRAFT)
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Storage / Performance

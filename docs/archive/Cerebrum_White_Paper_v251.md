@@ -7,7 +7,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: April 2026
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.52.0 (Phase 172 (STRB) COMPLETE)
 **License**: Proprietary — all rights reserved
 
 ---
@@ -97,7 +97,7 @@ cerebrum/
 └── PAPER.md       (this file)
 ```
 
-**Current phase**: Phase 57 COMPLETE (v2.51.0). GraphSAGE neighbourhood smoothing, Engram-steered traversal, TemporalCalibrator, QueryLog persistence, fault tolerance hardening, and Engram durable persistence implemented. 1,490+ tests passing.
+**Current phase**: Phase 57 COMPLETE (v2.52.0). GraphSAGE neighbourhood smoothing, Engram-steered traversal, TemporalCalibrator, QueryLog persistence, fault tolerance hardening, and Engram durable persistence implemented. 1,490+ tests passing.
 
 ---
 
@@ -831,7 +831,7 @@ Configuration: all-MiniLM-L6-v2 embeddings, beam_width=10, --min-community-size 
 
 | System | 1-hop H@1 | 2-hop H@1 | 3-hop H@1 | Training |
 |--------|-----------|-----------|-----------|---------|
-| **CEREBRUM (v2.51.0)** | **46.1%** | **30.0%** | **47.3%** | **None** |
+| **CEREBRUM (v2.52.0)** | **46.1%** | **30.0%** | **47.3%** | **None** |
 | MINERVA (RL) | 96.3% | 92.9% | 55.2% | Full supervision |
 | NSM (GNN) | 97.3% | 99.9% | 98.9% | Full supervision |
 
@@ -893,40 +893,40 @@ On all four dimensions, CEREBRUM is categorically superior to every baseline —
 | 0–9 | v0.x | Core theory, DSCF, CSA (5-param), BeamTraversal, initial benchmarks |
 | 10–13 | v0.3.x | Production hardening (JWT, ResourceGovernor, async streaming), Bridge Twin Nodes, STDP causal inference |
 | 14–19 | v0.x–v1.0 | Bayesian beam search, SignalEncoder, IngestionPipeline, namespace isolation, CausalSignificanceFilter, query snapshot isolation |
-| 20 | v2.51.0 | Per-community CSA params, query snapshot isolation, canonical basis anchor |
-| 21–24 | v2.51.0 | Validation, publication readiness, LaTeX pipeline |
-| 25–26 | v2.51.0 | Hardware universalization, optimized pipeline |
-| 27A–29 | v2.51.0 | Score-weighted voting, relation priors, CVT passthrough, repair engines |
-| 30 | v2.51.0 | Proactive GraphBridgeEngine |
-| 32 | v2.51.0 | Federated reasoning — DistributedBeamTraversal, /traverse endpoint |
-| 39–40 | v2.51.0 | Async bridge synthesis, IKGWQ hardening |
-| 41–42 | v2.51.0 | Temporal reasoning, Synaptic Bridge synthesis (REM), API hardening |
-| 43 | v2.51.0 | 10-param CSA formula (temporal context, synthesis density, grounding) |
-| 44 | v2.51.0 | IKGWQ-MetaQA benchmark — 40% recall improvement with REM synthesis |
-| 45 | v2.51.0 | 10-param CSAParameterLearner + MetaParameterLearner full upgrade |
-| 46 | v2.51.0 | Live feedback loop — /params endpoint, edge_features + community_sequence in responses |
-| 47 | v2.51.0 | Params persistence — to_dict/from_dict, POST /params restore, --params-file CLI |
-| 48 | v2.51.0 | Auto-Retrain Scheduler — feedback buffer, POST /retrain with CSAParameterLearner.fit() |
-| 49 | v2.51.0 | TSC Explicit Mode — configurable TSC/DSCF/Leiden/LPA community engine selection |
-| 50 | v2.51.0 | HypothesisEngine — multi-path abductive reasoning, Noisy-OR confidence fusion |
-| 51/52 | v2.51.0 | ResearchAgent autonomous discovery + ExternalValidator (PubMed/arXiv/OpenAlex) |
-| 53 | v2.51.0 | Adaptive search strategy — dynamic beam_width/max_hop via local graph density |
-| 54 | v2.51.0 | Observability — StudioEngine, RingBufferHandler, /logs, /build, CORS, request tracing |
-| 55 | v2.51.0 | GraphSAGE neighbourhood smoothing; Engram-steered traversal (Engram + EngramTraversal); TemporalCalibrator; QueryLog append-only history |
-| 56 | v2.51.0 | Fault tolerance — QueryResponse.partial/error fields; _partial_paths checkpoint; GlobalRebalancer crash guard |
-| 57 | v2.51.0 | Engram durable JSON persistence; /query/stream terminal error chunk; ProcessPoolExecutor sequential fallback |
+| 20 | v2.52.0 | Per-community CSA params, query snapshot isolation, canonical basis anchor |
+| 21–24 | v2.52.0 | Validation, publication readiness, LaTeX pipeline |
+| 25–26 | v2.52.0 | Hardware universalization, optimized pipeline |
+| 27A–29 | v2.52.0 | Score-weighted voting, relation priors, CVT passthrough, repair engines |
+| 30 | v2.52.0 | Proactive GraphBridgeEngine |
+| 32 | v2.52.0 | Federated reasoning — DistributedBeamTraversal, /traverse endpoint |
+| 39–40 | v2.52.0 | Async bridge synthesis, IKGWQ hardening |
+| 41–42 | v2.52.0 | Temporal reasoning, Synaptic Bridge synthesis (REM), API hardening |
+| 43 | v2.52.0 | 10-param CSA formula (temporal context, synthesis density, grounding) |
+| 44 | v2.52.0 | IKGWQ-MetaQA benchmark — 40% recall improvement with REM synthesis |
+| 45 | v2.52.0 | 10-param CSAParameterLearner + MetaParameterLearner full upgrade |
+| 46 | v2.52.0 | Live feedback loop — /params endpoint, edge_features + community_sequence in responses |
+| 47 | v2.52.0 | Params persistence — to_dict/from_dict, POST /params restore, --params-file CLI |
+| 48 | v2.52.0 | Auto-Retrain Scheduler — feedback buffer, POST /retrain with CSAParameterLearner.fit() |
+| 49 | v2.52.0 | TSC Explicit Mode — configurable TSC/DSCF/Leiden/LPA community engine selection |
+| 50 | v2.52.0 | HypothesisEngine — multi-path abductive reasoning, Noisy-OR confidence fusion |
+| 51/52 | v2.52.0 | ResearchAgent autonomous discovery + ExternalValidator (PubMed/arXiv/OpenAlex) |
+| 53 | v2.52.0 | Adaptive search strategy — dynamic beam_width/max_hop via local graph density |
+| 54 | v2.52.0 | Observability — StudioEngine, RingBufferHandler, /logs, /build, CORS, request tracing |
+| 55 | v2.52.0 | GraphSAGE neighbourhood smoothing; Engram-steered traversal (Engram + EngramTraversal); TemporalCalibrator; QueryLog append-only history |
+| 56 | v2.52.0 | Fault tolerance — QueryResponse.partial/error fields; _partial_paths checkpoint; GlobalRebalancer crash guard |
+| 57 | v2.52.0 | Engram durable JSON persistence; /query/stream terminal error chunk; ProcessPoolExecutor sequential fallback |
 | 58–62 | v2.1.x | SpeedTalk phonemic compression; CerebellarEngine; MACH consensus hierarchies; SPQT quantized traversal; Explainable Reasoning Trace (ERT) |
 | 63–67 | v2.2.x | Neural telemetry WebSocket bridge; EngramConsolidator; autonomous hypothesis materialization; Studio v2 dashboard |
 | 68–70 | v2.3.x | ChemicalModulator (metabolic regulation); PredictiveCodingEngine + soliton index; LoopedBeamTraversal (LoopLM-style) |
 | 71–74 | v2.4.x | AutoApprover (tiered SGD); TriangulationEngine; DiscoveryCalibrator; AutonomousDiscoveryLoop + circuit breaker |
 | 75–79 | v2.5.x | Studio v2 provenance panel; ProvenanceLedger; Loop-Provenance Recovery; GraphAdapter remove_edge protocol |
-| 80–83 | v2.51.0 | GraphSnapshot portable persistence; Adaptive Loop Tuning; UE5 3D visualization (UCerebrumLink, ANeuronNodeActor, ASynapseActor, ACerebrumBrain) |
-| 93 | v2.51.0 | Active Inference / Daydreaming — ActiveInferenceEngine seeds idle-period queries from high-PE nodes to consolidate weak priors |
-| 94 | v2.51.0 | Self-Modifying GUI — GUIAdaptationEngine + UEToolkitClient; dual-channel structural (HTTP→Blueprint) and runtime (WebSocket→HUD) adaptation; WBP_CerebrumHUD scaffold |
-| 102 | v2.51.0 | Default Mode Network (DMN) — self-referential idle reasoning and heuristic bottleneck audit |
-| 104-105| v2.51.0 | Homeostatic Metaplasticity and Recursive Self-Synthesis — system architects its own subroutines |
-| 107-108| v2.51.0 | De Novo Parameter Synthesis and Thalamofrontal Feedback Loop — dynamic metabolic gating |
-| 109-112| v2.51.0 | Counterfactual Reasoning, Global Workspace (GWS), Active Inference, and REM Cycle Shortcut Synthesis |
+| 80–83 | v2.52.0 | GraphSnapshot portable persistence; Adaptive Loop Tuning; UE5 3D visualization (UCerebrumLink, ANeuronNodeActor, ASynapseActor, ACerebrumBrain) |
+| 93 | v2.52.0 | Active Inference / Daydreaming — ActiveInferenceEngine seeds idle-period queries from high-PE nodes to consolidate weak priors |
+| 94 | v2.52.0 | Self-Modifying GUI — GUIAdaptationEngine + UEToolkitClient; dual-channel structural (HTTP→Blueprint) and runtime (WebSocket→HUD) adaptation; WBP_CerebrumHUD scaffold |
+| 102 | v2.52.0 | Default Mode Network (DMN) — self-referential idle reasoning and heuristic bottleneck audit |
+| 104-105| v2.52.0 | Homeostatic Metaplasticity and Recursive Self-Synthesis — system architects its own subroutines |
+| 107-108| v2.52.0 | De Novo Parameter Synthesis and Thalamofrontal Feedback Loop — dynamic metabolic gating |
+| 109-112| v2.52.0 | Counterfactual Reasoning, Global Workspace (GWS), Active Inference, and REM Cycle Shortcut Synthesis |
 | 119-123| v2.25.0 | Sleep Cycle & Metacognitive Monitor, Epistemic Gating, Counterfactual Engine |
 | 134-137| v2.31.0 | Vectorized Beam Scoring (10x boost), KGE-Enriched Embeddings, Funnel Beam Profile, H1SE (Hop-1 Seed Expansion) |
 | 149-150| v2.35.0 | Cingulate Engine (Reasoning Verifier) and Frontal Engine Executive Strategy |
@@ -934,7 +934,7 @@ On all four dimensions, CEREBRUM is categorically superior to every baseline —
 | 156-160| v2.44.0 | Penultimate Relation Boost (PRB), r2 Path-Consistency Boost, TRB Detection Fixes |
 | 161-163| v2.47.0 | StructuralRelationInferrer (SRI), CTRI (Community-Based TRB), SABS (Asymmetric Beam Search) |
 | 164-165| v2.49.0 | Terminal-Anchor Beam (TAB) and Hetionet Biomedical KG Benchmark |
-| 166-167| v2.51.0 | GraphProfiler (Auto Query Strategy) and STRB (Semantic Terminal Relation Boost) |
+| 166-167| v2.52.0 | GraphProfiler (Auto Query Strategy) and STRB (Semantic Terminal Relation Boost) |
 
 ---
 
@@ -997,7 +997,7 @@ Through 57 phases of development the core insight has remained unchanged while t
 
 Phases 55–57 mark the transition from a research-quality system to a production-hardened platform. GraphSAGE neighbourhood smoothing enriches every entity embedding with local structural context in a single $O(|E|)$ pass, requiring no training. The Engram-steered traversal system accumulates relation-sequence patterns from the system's own operational history and applies them as a compounding beam bias — yielding measurably sharper traversal focus on repeated query domains without any supervised training signal. The TemporalCalibrator brings principled, gradient-free calibration of the temporal CSA parameters to maximise Recall@K on held-out validation sets. The fault tolerance architecture ensures that transient failures in any individual component — graph adapters, persistence, community detection, external validators — degrade gracefully to partial results rather than cascading to hard errors.
 
-At v2.51.0, CEREBRUM is empirically validated against 39,093 MetaQA questions, 1,579 WebQSP questions, 5,170 GrailQA questions, and 400 IKGWQ questions. Recent advances in zero-config reasoning (GraphProfiler, STRB) and performance (Vectorized Scoring) make it a viable alternative to LLM-based systems for structured domain reasoning.
+At v2.52.0, CEREBRUM is empirically validated against 39,093 MetaQA questions, 1,579 WebQSP questions, 5,170 GrailQA questions, and 400 IKGWQ questions. Recent advances in zero-config reasoning (GraphProfiler, STRB) and performance (Vectorized Scoring) make it a viable alternative to LLM-based systems for structured domain reasoning.
 
 ---
 
@@ -1060,4 +1060,4 @@ CEREBRUM stands on the shoulders of decades of research in graph theory, communi
 - Zhang et al. (2018). Variational reasoning for question answering with knowledge graphs (MetaQA). *AAAI*.
 
 ---
-**Reviewed on**: May 3, 2026 for version v2.51.0
+**Reviewed on**: May 3, 2026 for version v2.52.0

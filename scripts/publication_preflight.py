@@ -60,7 +60,7 @@ PAPER_DIRS = [
 ]
 
 PAPER_TEX = {
-    "00-technical-report": "cerebrum-v251-report.tex",
+    "00-technical-report": "cerebrum-v252-report.tex",
     "01-flagship":          "cerebrum-flagship.tex",
     "02-community-detection": "tsc-paper.tex",
     "03-graph-plasticity":  "plasticity-paper.tex",

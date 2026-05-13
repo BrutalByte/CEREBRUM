@@ -2,7 +2,7 @@
 
 **Community-Structured Graph Attention for Knowledge Graph Reasoning**
 
-**Current Version:** v2.51.1 (Phase 167 COMPLETE)
+**Current Version:** v2.52.0 (Phase 172 COMPLETE)
 
 CEREBRUM is the first reasoning engine that treats the Knowledge Graph not as a static data dump, but as a living, self-optimizing neural substrate. By embedding the intelligence of Transformer-style attention directly into the graph's topology, it delivers hyper-accurate, verifiable reasoning at sub-millisecond speeds—completely eliminating the hallucinations of LLMs and the bottleneck of expensive, manual model training.
 
@@ -35,7 +35,7 @@ You don't need a machine learning team to train, fine-tune, or maintain CEREBRUM
 - **CEREBRUM**: Uses the graph's own topology to structure its attention. Our zero-shot performance (e.g., 85% H@10 on Hetionet) is achieved the moment your data is ingested, without a single gradient step.
 
 ### 3. Zero-Config, Auto-Reasoning
-With **GraphProfiler** (Phase 166) and **STRB** (Phase 167), you no longer need to be a graph theory expert to get production-grade results. The system automatically profiles your graph at build time, identifies its structural regime (Hub-heavy vs. Typed-Heterogeneous), and dynamically orchestrates the reasoning engine (H1SE, TAB, STRB) to optimize for your specific dataset.
+With **GraphProfiler** (Phase 166) and **STRB** (Phase 172), you no longer need to be a graph theory expert to get production-grade results. The system automatically profiles your graph at build time, identifies its structural regime (Hub-heavy vs. Typed-Heterogeneous), and dynamically orchestrates the reasoning engine (H1SE, TAB, STRB) to optimize for your specific dataset.
 
 ### 4. Memory-Efficient Scalability
 Legacy Knowledge Graphs require massive RAM overhead for index redundancy and path materialization. CEREBRUM’s **Hybrid-Memory Architecture** autonomously balances performance between RAM/VRAM and NVMe-backed storage, providing "live" reasoning performance on graphs that exceed your total system memory.
@@ -43,7 +43,7 @@ Legacy Knowledge Graphs require massive RAM overhead for index redundancy and pa
 ### 5. Verified Superiority
 CEREBRUM has been empirically validated on standardized benchmarks with zero training data:
 
-- **MetaQA 3-Hop Reasoning**: CEREBRUM achieves **12.5% H@1** (canonical subset, comparable to supervised SOTA) and **47.3% H@1** (full 14,274-question run, all v2.51.1 features enabled). Retrieves the correct answer in its top-10 at **50.3%** (canonical) / **73.2%** (full run) — the system *finds* the answer; ranking it first is the remaining challenge.
+- **MetaQA 3-Hop Reasoning**: CEREBRUM achieves **12.5% H@1** (canonical subset, comparable to supervised SOTA) and **47.3% H@1** (full 14,274-question run, all v2.52.0 features enabled). Retrieves the correct answer in its top-10 at **50.3%** (canonical) / **73.2%** (full run) — the system *finds* the answer; ranking it first is the remaining challenge.
 - **Biomedical Inference**: Achieves **85% H@10** on the Hetionet benchmark, providing actionable connection insights for drugs, diseases, and pathways.
 - **Resilience**: Maintains **89% reasoning capability** (AUC) even under extreme (50%) edge sparsity, proving its ability to reason over incomplete, real-world data.
 
@@ -51,7 +51,7 @@ CEREBRUM has been empirically validated on standardized benchmarks with zero tra
 
 ## Roadmap
 
-**Current Project Status: v2.51.1 — Phase 167 COMPLETE — 2177 passed, 1 skipped**
+**Current Project Status: v2.52.0 — Phase 172 COMPLETE — 2177 passed, 1 skipped**
 
 ### The Core Pillars
 - [x] **Phase 1**: Core Engine (GraphAdapter, TSC Engine, CSA Attention)
@@ -126,12 +126,12 @@ CEREBRUM has been empirically validated on standardized benchmarks with zero tra
 - [x] **Phase 81**: Graph Snapshot Persistence (v2.19.0) — JSON topology save/restore/diff
 - [x] **Phase 82**: Adaptive Loop Tuning (v2.20.0) — Autonomous resource scaling
 - [x] **Phase 83**: UE5 3D Neural Visualization (v2.21.0) — Unreal Engine C++ Plugin
-- [x] **Phase 93**: Active Inference / Daydreaming (v2.51.0) — Idle-period consolidation
-- [x] **Phase 94**: Self-Modifying GUI (v2.51.0) — UEToolkit integration
-- [x] **Phase 102**: Default Mode Network (v2.51.0) — Idle bottleneck audit
-- [x] **Phase 104-105**: Homeostatic Metaplasticity and Recursive Self-Synthesis (v2.51.0)
-- [x] **Phase 107-108**: De Novo Parameter Synthesis and Thalamofrontal Feedback Loop (v2.51.0)
-- [x] **Phase 109-112**: Counterfactual Reasoning, Global Workspace (GWS), Active Inference, and REM Cycle Shortcut Synthesis (v2.51.0)
+- [x] **Phase 93**: Active Inference / Daydreaming (v2.52.0) — Idle-period consolidation
+- [x] **Phase 94**: Self-Modifying GUI (v2.52.0) — UEToolkit integration
+- [x] **Phase 102**: Default Mode Network (v2.52.0) — Idle bottleneck audit
+- [x] **Phase 104-105**: Homeostatic Metaplasticity and Recursive Self-Synthesis (v2.52.0)
+- [x] **Phase 107-108**: De Novo Parameter Synthesis and Thalamofrontal Feedback Loop (v2.52.0)
+- [x] **Phase 109-112**: Counterfactual Reasoning, Global Workspace (GWS), Active Inference, and REM Cycle Shortcut Synthesis (v2.52.0)
 - [x] **Phase 119-123**: Sleep Cycle & Metacognitive Monitor, Epistemic Gating, Counterfactual Engine (v2.25.0)
 - [x] **Phase 134-137**: Vectorized Beam Scoring, KGE-Enriched Embeddings, Funnel Beam Profile, H1SE (Hop-1 Seed Expansion) (v2.31.0)
 - [x] **Phase 149-150**: Cingulate Engine (Reasoning Verifier) and Frontal Engine Executive Strategy (v2.35.0)
@@ -139,7 +139,7 @@ CEREBRUM has been empirically validated on standardized benchmarks with zero tra
 - [x] **Phase 156-160**: Penultimate Relation Boost (PRB), r2 Path-Consistency Boost, TRB Detection Fixes (v2.44.0)
 - [x] **Phase 161-163**: StructuralRelationInferrer (SRI), CTRI, SABS (Asymmetric Beam Search) (v2.47.0)
 - [x] **Phase 164-165**: Terminal-Anchor Beam (TAB) and Hetionet Biomedical KG Benchmark (v2.49.0)
-- [x] **Phase 166-167**: GraphProfiler (Auto Query Strategy) and STRB (Semantic Terminal Relation Boost) (v2.51.0) — closes zero-config gap on 1-hop tasks via semantic query embedding
+- [x] **Phase 166-167**: GraphProfiler (Auto Query Strategy) and STRB (Semantic Terminal Relation Boost) (v2.52.0) — closes zero-config gap on 1-hop tasks via semantic query embedding
 ...
 
 ## Benchmark Results
@@ -151,13 +151,13 @@ CEREBRUM is validated across three benchmarks that together demonstrate: correct
 | Variant | 1-hop H@1 | 2-hop H@1 | 3-hop H@1 | 1-hop H@10 | 2-hop H@10 | 3-hop H@10 |
 |---------|----------|----------|----------|-----------|-----------|-----------|
 | **CEREBRUM — canonical subset**¹ | **46.1%** | **30.0%** | **12.5%** | **96.6%** | **86.3%** | **50.3%** |
-| **CEREBRUM — full v2.51.1 run**² | 46.1% | 30.0% | 47.3% | 96.6% | 86.3% | 73.2% |
+| **CEREBRUM — full v2.52.0 run**² | 46.1% | 30.0% | 47.3% | 96.6% | 86.3% | 73.2% |
 | UniKGQA (ICLR 2023, supervised) | 97.5% | 99.0% | 99.1% | — | — | — |
 | EmbedKGQA (ACL 2020, supervised) | ~97% | ~94% | ~94% | — | — | — |
 | MINERVA (trained RL) | — | — | — | 95.3% | 78.2% | 45.6% |
 
 ¹ Canonical subset: standard MetaQA test split (~12,500 questions/hop), no edge removal, comparable to SOTA baselines.  
-² Full run: 14,274 questions, all v2.51.1 features (GraphSAGE, STRB, GraphProfiler). Not directly comparable to supervised baselines.
+² Full run: 14,274 questions, all v2.52.0 features (GraphSAGE, STRB, GraphProfiler). Not directly comparable to supervised baselines.
 
 **CEREBRUM operates with zero task-specific training, no labeled QA pairs, and no gradient updates** — purely graph structure and pre-trained sentence embeddings. The H@10 story is the key result: CEREBRUM retrieves the correct answer in its top-10 candidates at 96.6% (1-hop) and 86.3% (2-hop) on the canonical benchmark.
 
@@ -196,7 +196,7 @@ python -m api.server --csv data/my_graph.csv --port 8200
 ```
 
 ### 2. Querying the Knowledge Graph
-CEREBRUM’s **GraphProfiler** (Phase 166) automatically detects your graph's structural regime, and **STRB** (Phase 167) inferentially boosts the correct terminal relation for your question.
+CEREBRUM’s **GraphProfiler** (Phase 166) automatically detects your graph's structural regime, and **STRB** (Phase 172) inferentially boosts the correct terminal relation for your question.
 
 ```bash
 curl -X POST http://localhost:8200/v1/query \
@@ -241,7 +241,7 @@ WebQSP over Freebase is specifically hard for zero-training structural systems d
 | Extreme | 50% | 3.25% | 9.5% | 4.58% |
 ## Autonomous Discovery & Automation
 
-CEREBRUM v2.51.0 includes a production-grade automation suite for "Daydreaming" (background knowledge discovery) during off-peak hours.
+CEREBRUM v2.52.0 includes a production-grade automation suite for "Daydreaming" (background knowledge discovery) during off-peak hours.
 
 - **`scripts/discovery_scheduler.py`**: A fully automated pipeline that triggers:
     1. **Autonomous Research**: Mines the KG for latent connections.

@@ -1,7 +1,7 @@
 # White Paper: Epistemic Gating
 ## Managing Uncertainty in Multi-Hop Graph Reasoning
 
-**Version**: v2.51.0 (Phase 167 COMPLETE)
+**Version**: v2.52.0 (Phase 172 COMPLETE)
 **Author**: Bryan Alexander Buchorn
 
 ---
@@ -12,7 +12,7 @@ In multi-hop reasoning, uncertainty compounds at every hop. A path that is 90% c
 
 ### The Solution: Epistemic Gating
 
-CEREBRUM v2.51.0 introduces the **Epistemic Gate**, a unified uncertainty model that acts as a cognitive filter for the attention beam. Instead of just scoring paths by their semantic strength, the Epistemic Gate measures their **Epistemic Entropy**.
+CEREBRUM v2.52.0 introduces the **Epistemic Gate**, a unified uncertainty model that acts as a cognitive filter for the attention beam. Instead of just scoring paths by their semantic strength, the Epistemic Gate measures their **Epistemic Entropy**.
 
 **How it Works**:
 1.  **Confidence Propagation**: The system tracks a "Grounding Score" ($\theta$) for every edge, representing its source reliability (e.g., peer-reviewed vs. inferred).
@@ -33,4 +33,4 @@ Epistemic Gating makes CEREBRUM suitable for "Safety-Critical AI." It enables:
 -   **Risk Management**: Automatically identifies regions of the Knowledge Graph that are "Epistemically Weak" (requiring more data or research).
 
 ---
-**White Paper Finalized: v2.51.0 (Phase 167 COMPLETE)**
+**White Paper Finalized: v2.52.0 (Phase 172 COMPLETE)**

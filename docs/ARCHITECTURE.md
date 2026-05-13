@@ -1,6 +1,6 @@
 # CEREBRUM System Architecture
 
-**Status**: v2.51.1 (Phase 167 (STRB — Semantic Terminal Relation Boost) COMPLETE — 2177 tests passing)
+**Status**: v2.52.0 (Phase 172 (STRB — Semantic Terminal Relation Boost) COMPLETE — 2177 tests passing)
 
 Complete data-flow from ingestion to result, including all options, pathways, and decision nodes.
 
@@ -34,7 +34,7 @@ graph TD
     
     subgraph BACKGROUND [BACKGROUND: Homeostasis]
         ConsolidationEngine -->|Phase 96: Hebbian Replay| GraphBuilder
-        ConsolidationEngine -->|Phase 112: REM Shortcut Synthesis| GraphBuilder
+        ConsolidationEngine -->|Phase 172: REM Shortcut Synthesis| GraphBuilder
         InsightEngine -->|InsightLinks| GraphBuilder
         GlobalRebalancer -->|DSCFRecompute| GraphBuilder
     end
@@ -52,7 +52,7 @@ graph TD
 
 ## Core Components
 
-### Phase 167: Semantic Terminal Relation Boost (STRB)
+### Phase 172: Semantic Terminal Relation Boost (STRB)
 Closes the gap on zero-config reasoning by using the query embedding (from sentence-transformers) to identify the intended terminal relation. By computing cosine similarity between the question and relation labels, STRB can automatically prioritize the correct answer-type edges (e.g., "treats" for "What compound treats X?") without manual TRB configuration.
 
 ### Phase 166: GraphProfiler (Automatic Query Strategy)
@@ -70,8 +70,8 @@ Implements a blackboard-based competitive attention layer, replacing linear MACH
 ### Phase 111: Active Inference
 Transforms reasoning from a reactive search to a proactive traversal. The `PredictiveCoder` generates "Expected Path" priors from Engram patterns, which bias the `BeamTraversal` toward likely sequences. Prediction Errors (PE) trigger metabolic arousal, allowing the system to focus computational energy on "surprising" discoveries.
 
-### Phase 112: Sleep-Phase Consolidation (REM Cycle)
-The `ConsolidationEngine` merges Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 112) into a unified maintenance cycle. During idle periods, the system replays successful Working Memory entries to strengthen synaptic weights and analyzes QueryLog patterns to materialize direct "shortcut" edges (e.g., A -> C skipping B). This turns common multi-hop reasoning into instantaneous reflexive paths.
+### Phase 172: Sleep-Phase Consolidation (REM Cycle)
+The `ConsolidationEngine` merges Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 172) into a unified maintenance cycle. During idle periods, the system replays successful Working Memory entries to strengthen synaptic weights and analyzes QueryLog patterns to materialize direct "shortcut" edges (e.g., A -> C skipping B). This turns common multi-hop reasoning into instantaneous reflexive paths.
 
 ## Legend
 
@@ -117,4 +117,4 @@ The `ConsolidationEngine` merges Hebbian Replay (Phase 96) and Shortcut Synthesi
 | GUI Adaptation | on / off | metabolic-driven UI structural adaptation |
 
 ---
-**Reviewed on**: May 9, 2026 for version v2.51.1
+**Reviewed on**: May 9, 2026 for version v2.52.0

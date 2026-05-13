@@ -1,15 +1,15 @@
 arXiv Submission Package
 ========================
 
-Paper:    CEREBRUM v2.51: Complete Technical Specification
+Paper:    CEREBRUM v2.52: Complete Technical Specification
 Category: cs.AI
-Main file: cerebrum-v251-report.tex
+Main file: cerebrum-v252-report.tex
 
 Build:
-  pdflatex cerebrum-v251-report.tex
-  bibtex cerebrum-v251-report
-  pdflatex cerebrum-v251-report.tex
-  pdflatex cerebrum-v251-report.tex
+  pdflatex cerebrum-v252-report.tex
+  bibtex cerebrum-v252-report
+  pdflatex cerebrum-v252-report.tex
+  pdflatex cerebrum-v252-report.tex
 
 Pre-submission notes:
   Submit first — other papers reference this arXiv ID.

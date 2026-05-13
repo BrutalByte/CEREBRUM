@@ -1,6 +1,6 @@
 # CEREBRUM Performance Tuning Guide
 
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.52.0 (Phase 172 (STRB) COMPLETE)
 
 This guide covers the key parameters affecting query latency, throughput, reasoning quality, and memory usage — and how to tune them for your specific workload.
 
@@ -158,7 +158,7 @@ BeamTraversal(
 ```
 
 **warm_start_strength** guidance:
-- `0.0` — standard uniform Beta(1,1) prior (v2.51.0 behavior)
+- `0.0` — standard uniform Beta(1,1) prior (v2.52.0 behavior)
 - `2.0` — mild warm-start (reduces first-hop variance ~40%)
 - `5.0` — strong warm-start (reduces first-hop variance ~85%, recommended for sparse graphs)
 - `10.0` — aggressive seeding (can reduce diversity; use only on very sparse graphs)
@@ -308,4 +308,4 @@ The indirect performance effect is positive: Arousal dynamically scales `beam_wi
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 9, 2026 for version v2.51.1
+**Reviewed on**: May 9, 2026 for version v2.52.0

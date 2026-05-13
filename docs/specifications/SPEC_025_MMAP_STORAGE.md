@@ -1,7 +1,7 @@
 # [Buchorn, 2026]: Memory-Mapped (Mmap) Graph Storage
 ## Scaling to Massive Knowledge Graphs via NVMe
 
-**Status**: PROPOSED (Post-Phase 167)
+**Status**: PROPOSED (Post-Phase 172)
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Storage / Performance / Memory-Management

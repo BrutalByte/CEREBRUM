@@ -51,7 +51,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v2.51.0 (Phase 167 COMPLETE)** — 2177 passed, 1 skipped.
+**v2.52.0 (Phase 172 COMPLETE)** — 2177 passed, 1 skipped.
 
 ### System Architecture Names
 | Name | Role |
@@ -157,7 +157,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 - **StructuralRelationInferrer (SRI), CTRI, SABS (Phases 161-163)**: SRI infers likely terminal relations from structural patterns. CTRI cross-validates via community topology. SABS (Asymmetric Beam Search) expands the final hop's beam preferentially. `build_semantic_index()` + `semantic_trb()` enable embedding-based terminal relation selection.
 - **Terminal-Anchor Beam (TAB) and Hetionet Benchmark (Phases 164-165)**: TAB identifies anchor entities (source nodes for the target relation) and biases the beam toward them at hop N−1. Hetionet biomedical KG benchmark added: BFS 0.8% → TRB 73.5% 3-hop Hits@1 on `disease_gene_pathway` template.
 - **GraphProfiler — Auto Query Strategy (Phase 166)**: O(E) structural analysis at build time. Classifies graph into `hub_homogeneous` / `typed_heterogeneous` / `mixed`. Auto-configures `hop_expand`, `trb_auto`, `anchor_bonus`. `CerebrumGraph.query()` parameters default to profile values when `None`.
-- **STRB — Semantic Terminal Relation Boost (Phase 167)**: Closes the zero-config gap on 1-hop tasks. Encodes query text as `query_embedding` and calls `semantic_trb()` to identify the correct terminal relation from cosine similarity between question and relation labels. gene_participates_pathway: Profile-Auto+STRB (93.0%) = Explicit TRB (93.0%). Requires sentence-transformers; falls back to structural SRI with RandomEngine.
+- **STRB — Semantic Terminal Relation Boost (Phase 172)**: Closes the zero-config gap on 1-hop tasks. Encodes query text as `query_embedding` and calls `semantic_trb()` to identify the correct terminal relation from cosine similarity between question and relation labels. gene_participates_pathway: Profile-Auto+STRB (93.0%) = Explicit TRB (93.0%). Requires sentence-transformers; falls back to structural SRI with RandomEngine.
 
 ## Install & Development Commands
 
@@ -328,5 +328,5 @@ See [`docs/DOC_INDEX.md`](docs/DOC_INDEX.md) for the full documentation index:
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)
 - Synthetic graph helpers (`make_two_cliques()`, etc.) live in `tests/` for unit tests that don't need the CSV fixture
-- **2177 passed, 1 skipped as of v2.51.0 / Phase 167** (3 studio UI errors require running server)
+- **2177 passed, 1 skipped as of v2.52.0 / Phase 172** (3 studio UI errors require running server)
 - Type checker: no mypy/ruff configured as hard gate; run `python -m pytest tests/` as verification

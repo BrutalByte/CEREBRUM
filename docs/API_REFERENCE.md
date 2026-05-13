@@ -1,8 +1,8 @@
 # CEREBRUM REST API Reference
 
 **Base URL**: `http://localhost:8200`
-**API Version**: v2.51.0
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**API Version**: v2.52.0
+**Status**: v2.52.0 (Phase 172 (STRB) COMPLETE)
 **Authentication**: JWT Bearer token (all endpoints except `/health`)
 
 ---
@@ -26,7 +26,7 @@ Automatic Query Strategy Selection.
 - **Mechanism**: Profiles graph topology at build time to classify the "Regime" (Hub-Homogeneous, Typed-Heterogeneous, or Mixed).
 - **Auto-Config**: Automatically sets `hop_expand`, `trb_auto`, and `anchor_bonus` per-query based on the detected regime.
 
-### Semantic Terminal Relation Boost (STRB - Phase 167)
+### Semantic Terminal Relation Boost (STRB - Phase 172)
 Zero-config reasoning for question answering.
 - **Mechanism**: Computes cosine similarity between the query embedding and all relation labels.
 - **Benefit**: Automatically identifies and boosts the correct answer-type relation (e.g., "treats" for "What compound treats X?"), eliminating manual configuration.
@@ -79,7 +79,7 @@ Execute a multi-hop reasoning query against the loaded graph.
 | `max_hop` | int | `3` | Maximum reasoning depth. |
 | `beam_width` | int | `10` | Number of candidates per hop. |
 | `hop_expand` | bool | `false` | Enable Hop-1 Intermediate Seed Expansion (H1SE). |
-| `auto_infer_terminal_relation` | bool | `true` | **Phase 167 (STRB)**: Infer terminal relation from query text. |
+| `auto_infer_terminal_relation` | bool | `true` | **Phase 172 (STRB)**: Infer terminal relation from query text. |
 | `anchor_bonus` | float | `0.0` | **Phase 164 (TAB)**: Bonus for penultimate-hop entities. |
 | `query_embedding` | list[float] | `null` | Optional query vector for semantic alignment. |
 
@@ -1111,4 +1111,4 @@ checkpoint = client.get("/params").json()
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 9, 2026 for version v2.51.1
+**Reviewed on**: May 9, 2026 for version v2.52.0

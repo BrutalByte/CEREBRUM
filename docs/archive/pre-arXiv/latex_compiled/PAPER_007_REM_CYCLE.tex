@@ -2,13 +2,13 @@
 
 \textbf{Author}: Bryan Alexander Buchorn  
 \textbf{Affiliation}: Independent Researcher, Las Vegas, NV, USA  
-\textbf{Status}: v2.51.0 (Phase 167 (STRB) COMPLETE)
+\textbf{Status}: v2.52.0 (Phase 172 (STRB) COMPLETE)
 \textbf{Date}: May 2, 2026
 
 ---
 
 \subsubsection{Abstract}
-Autonomous Knowledge Graphs (KGs) that conti\-nuously ingest streaming data and generate speculative insights are subject to increasing infor\-mational entropy. We propose the \textbf{REM Cycle} (Rapid Edge Maintenance), a background metac\-ognitive framework that mimics biological sleep to ensure graph sanity and structural optim\-ization. The REM cycle performs three primary functions: (1) \textbf{Bilateral Verifi\-cation}, using transitive support and community consensus to validate speculative edges; (2) \textbf{Insight Confidence Decay}, a skepticism-weighted pruning mechanism to prevent recursive hallu\-cination loops (v2.51.0); and (3) \textbf{Background Re-optim\-ization}, triggering full community re-parti\-tioning when modularity drift exceeds a critical threshold. We formalize the trian\-gulation rules for edge verif\-ication and the skeptical decay function for speculative insights. Our results show that the REM cycle effectively maintains a high signal-to-noise ratio in dynamic graphs without inter\-rupting active reasoning tasks. As of v2.51.0, the IKGWQ benchmark (Phase 44) demon\-strates that REM Synaptic Bridge synthesis delivers a 40\% recall improvement at Level 4 (50\% edge removal), with a Graceful Degradation AUC of 0.89 across five incom\-pleteness levels; the HypothesisEngine (Phase 50) extends this further by generating abductive explanatory hypotheses that REM can materialize as confirmed edges after validation.
+Autonomous Knowledge Graphs (KGs) that conti\-nuously ingest streaming data and generate speculative insights are subject to increasing infor\-mational entropy. We propose the \textbf{REM Cycle} (Rapid Edge Maintenance), a background metac\-ognitive framework that mimics biological sleep to ensure graph sanity and structural optim\-ization. The REM cycle performs three primary functions: (1) \textbf{Bilateral Verifi\-cation}, using transitive support and community consensus to validate speculative edges; (2) \textbf{Insight Confidence Decay}, a skepticism-weighted pruning mechanism to prevent recursive hallu\-cination loops (v2.52.0); and (3) \textbf{Background Re-optim\-ization}, triggering full community re-parti\-tioning when modularity drift exceeds a critical threshold. We formalize the trian\-gulation rules for edge verif\-ication and the skeptical decay function for speculative insights. Our results show that the REM cycle effectively maintains a high signal-to-noise ratio in dynamic graphs without inter\-rupting active reasoning tasks. As of v2.52.0, the IKGWQ benchmark (Phase 44) demon\-strates that REM Synaptic Bridge synthesis delivers a 40\% recall improvement at Level 4 (50\% edge removal), with a Graceful Degradation AUC of 0.89 across five incom\-pleteness levels; the HypothesisEngine (Phase 50) extends this further by generating abductive explanatory hypotheses that REM can materialize as confirmed edges after validation.
 
 \subsubsection{1. Introd\-uction}
 The longevity of an autonomous reasoning system depends on its ability to forget as much as its ability to learn \cite{diekelmann2010memory}. In the absence of periodic pruning and conso\-lidation, Knowledge Graphs accumulate spurious causal links (from STDP) and false discoveries (from the InsightEngine). The REM cycle provides the necessary "System 2" maintenance layer to govern these emergent structures.
@@ -22,7 +22,7 @@ An edge $E_{uv}$ is considered "Verified" if it satisfies a trian\-gulation rule
 \end{equation}
 This ensures that every "AHA moment" is backed by both local topology and transitive reasoning.
 
-\paragraph{2.2 Recursive Halluc\-ination Prevention (v2.51.0)}
+\paragraph{2.2 Recursive Halluc\-ination Prevention (v2.52.0)}
 To prevent the system from reinforcing its own unverified discoveries, we implement a skeptical decay rate $\rho$:
 \begin{equation}
 c_{t+1} = c_t \cdot (\lambda \cdot \rho)^{\Delta t}
@@ -33,13 +33,13 @@ where $\rho < 1.0$ for all edges with the \texttt{INSIGHT\_LINK} relation. Edges
 The REM cycle monitors the \textbf{Modularity Drift} $\Delta Q_{total}$. When the partition stability falls below a threshold, it spawns a background DSCF/TSC task [Buchorn, 2026] and performs an atomic swap of the community map, ensuring the graph's "Attention Heads" remain aligned with the latest data.
 
 \subsubsection{3. Conclusion}
-The REM Cycle provides a robust archi\-tectural solution for the "Entropy Problem" in self-optimizing graphs. By integrating verif\-ication, pruning, and re-balancing into a unified background loop, it ensures that CEREBRUM remains a stable and reliable foundation for long-term autonomous intel\-ligence. In CEREBRUM v2.51.0, the IKGWQ benchmark quantifies REM's contr\-ibution at a 40\% recall improvement at Level 4 (50\% edge removal) with a Graceful Degradation AUC of 0.89, while the HypothesisEngine extends REM's role from maintenance to active knowledge const\-ruction via abductive reasoning.
+The REM Cycle provides a robust archi\-tectural solution for the "Entropy Problem" in self-optimizing graphs. By integrating verif\-ication, pruning, and re-balancing into a unified background loop, it ensures that CEREBRUM remains a stable and reliable foundation for long-term autonomous intel\-ligence. In CEREBRUM v2.52.0, the IKGWQ benchmark quantifies REM's contr\-ibution at a 40\% recall improvement at Level 4 (50\% edge removal) with a Graceful Degradation AUC of 0.89, while the HypothesisEngine extends REM's role from maintenance to active knowledge const\-ruction via abductive reasoning.
 
 ---
 
-\subsection{4. Recent Advances (v2.24.0 -\textgreater  v2.51.0)}
+\subsection{4. Recent Advances (v2.52.0 -\textgreater  v2.52.0)}
 
-The REM Cycle has been extended from a maintenance-only background loop to an active knowledge synthesis engine since v2.24.0. The following describes the key advances.
+The REM Cycle has been extended from a maintenance-only background loop to an active knowledge synthesis engine since v2.51.1. The following describes the key advances.
 
 \textbf{Synaptic Bridge Synthesis for Incomplete Graphs (Phase 41/43).} The most significant capability addition is REM's ability to synthesize "Synaptic Bridge" bridge edges across disco\-nnected or weakly connected graph components. When bilateral verif\-ication fails to find a transitive path between two entities — yet community centroid similarity suggests they are seman\-tically related — the REM Cycle can propose a synthetic edge with a confi\-gurable confidence threshold. These synthetic edges are tagged with \texttt{source="rem\_synthesis"} and incur a synthesis-density penalty in the CSA formula (\texttt{-mu*sd}), ensuring the reasoning engine does not over-rely on synthesized structure.
 
@@ -65,7 +65,7 @@ Graceful Degradation AUC across all five levels: \textbf{0.89} (1.0 = perfect; 0
 
 \textbf{Integration with GlobalRebalancer.} The post-rebalance hook that notifies \texttt{BridgeTwinEngine} to prune stale bridge records (Phase 19) has been extended to also trigger a REM synthesis pass on newly disco\-nnected components — ensuring that community re-parti\-tioning never leaves the graph in a state where previously reachable paths are no longer accessible.
 
-\textbf{Consol\-idated Sleep-Phase Maintenance (Phase 167).} CEREBRUM v2.51.0 formalizes the unification of mnemonic maintenance via the \texttt{ConsolidationEngine}. This engine executes a dual-process cycle during system idle time: (1) \textbf{Hebbian Replay}, which boosts the synaptic weights of high-salience reasoning paths stored in Working Memory; and (2) \textbf{Shortcut Synthesis}, which identifies recurrent multi-hop traje\-ctories in the \texttt{QueryLog} and mater\-ializes them as direct \texttt{REM\_SHORTCUT} edges. This trans\-formation effectively converts "compu\-tational reasoning" (System 2) into "structural reflexes" (System 1), increasing the system's reactive efficiency as a function of its operational experience.
+\textbf{Consol\-idated Sleep-Phase Maintenance (Phase 172).} CEREBRUM v2.52.0 formalizes the unification of mnemonic maintenance via the \texttt{ConsolidationEngine}. This engine executes a dual-process cycle during system idle time: (1) \textbf{Hebbian Replay}, which boosts the synaptic weights of high-salience reasoning paths stored in Working Memory; and (2) \textbf{Shortcut Synthesis}, which identifies recurrent multi-hop traje\-ctories in the \texttt{QueryLog} and mater\-ializes them as direct \texttt{REM\_SHORTCUT} edges. This trans\-formation effectively converts "compu\-tational reasoning" (System 2) into "structural reflexes" (System 1), increasing the system's reactive efficiency as a function of its operational experience.
 
 ---
 \subsection{Acknow\-ledgments}
@@ -84,4 +84,4 @@ The author gratefully ackno\-wledges the use of Claude (Anthropic) as a research
 
 \end{enumerate}
 ---
-\textbf{Reviewed on}: May 2, 2026 for version v2.51.0
+\textbf{Reviewed on}: May 2, 2026 for version v2.52.0

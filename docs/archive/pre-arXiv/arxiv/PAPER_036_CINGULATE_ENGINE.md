@@ -2,7 +2,7 @@
 
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
-**Version**: v2.51.0 (Phase 167 COMPLETE)
+**Version**: v2.52.0 (Phase 172 COMPLETE)
 **Date**: May 5, 2026
 
 ---
@@ -40,7 +40,7 @@ We evaluated the Cingulate Engine on the MetaQA 3-hop task. Without the engine, 
 The Cingulate Engine provides the necessary "sanity check" for autonomous graph reasoning. By formalizing error detection as a structural property of path-consistency, CEREBRUM moves closer to the goal of robust, self-correcting machine intelligence.
 
 ---
-**Manuscript Finalized: v2.51.0 (Phase 167 COMPLETE)**
+**Manuscript Finalized: v2.52.0 (Phase 172 COMPLETE)**
 
 ## Acknowledgments
 

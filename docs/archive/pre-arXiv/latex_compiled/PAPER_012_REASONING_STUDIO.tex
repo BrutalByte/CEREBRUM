@@ -2,13 +2,13 @@
 
 \textbf{Author}: Bryan Alexander Buchorn  
 \textbf{Affiliation}: Independent Researcher, Las Vegas, NV, USA  
-\textbf{Status}: v2.51.0 (Phase 167 (STRB) COMPLETE)
+\textbf{Status}: v2.52.0 (Phase 172 (STRB) COMPLETE)
 \textbf{Date}: May 2, 2026
 
 ---
 
 \subsubsection{Abstract}
-The "Black-Box" nature of modern Graph Neural Networks (GNNs) and Transformer-based reasoning systems limits their utility in domains requiring high audit\-ability. We present the \textbf{Glass-Box Reasoning Studio}, an interactive visua\-lization framework designed for the forensic audit of multi-hop Knowledge Graph inference. The Studio reifies the "Reasoning Beam" as a dynamic topological trace, where edges are scaled by their \textbf{Community-Structured Attention (CSA)} weights and nodes are color-coded by their \textbf{DSCF/TSC} community partitions. We introduce a "Forensic Score Breakdown" interface that exposes the latent mathe\-matical signals (semantic similarity, community guidance, and structural centrality) driving each traversal hop, building on found\-ational Explainable AI (XAI) principles \cite{samek2017explainable, ribeiro2016lime, lundberg2017shap}. Furthermore, we describe a real-time "Live Feed" visua\-lization for streaming graphs that animates \textbf{STDP spike events} and the mater\-ialization of speculative causal links. The v2.51.0 release adds adaptive node clustering to support visual scaling for graphs exceeding $10^5$ nodes. In v2.51.0 (Phase 54), a major archi\-tectural refactor extracts all Studio business logic into \texttt{core/studio\_engine.py} (StudioEngine class), enabling 38 new unit tests that run without a live Gradio server. The 10-parameter CSA weight profiler is corrected to expose all parameters including $\mu$ (synthesis-density penalty), and a new dark-mode monitoring dashboard with live log streaming is introduced. Our results show that this interactive "Glass-Box" approach signi\-ficantly reduces the time required for human experts to verify complex AI-generated hypotheses.
+The "Black-Box" nature of modern Graph Neural Networks (GNNs) and Transformer-based reasoning systems limits their utility in domains requiring high audit\-ability. We present the \textbf{Glass-Box Reasoning Studio}, an interactive visua\-lization framework designed for the forensic audit of multi-hop Knowledge Graph inference. The Studio reifies the "Reasoning Beam" as a dynamic topological trace, where edges are scaled by their \textbf{Community-Structured Attention (CSA)} weights and nodes are color-coded by their \textbf{DSCF/TSC} community partitions. We introduce a "Forensic Score Breakdown" interface that exposes the latent mathe\-matical signals (semantic similarity, community guidance, and structural centrality) driving each traversal hop, building on found\-ational Explainable AI (XAI) principles \cite{samek2017explainable, ribeiro2016lime, lundberg2017shap}. Furthermore, we describe a real-time "Live Feed" visua\-lization for streaming graphs that animates \textbf{STDP spike events} and the mater\-ialization of speculative causal links. The v2.52.0 release adds adaptive node clustering to support visual scaling for graphs exceeding $10^5$ nodes. In v2.52.0 (Phase 54), a major archi\-tectural refactor extracts all Studio business logic into \texttt{core/studio\_engine.py} (StudioEngine class), enabling 38 new unit tests that run without a live Gradio server. The 10-parameter CSA weight profiler is corrected to expose all parameters including $\mu$ (synthesis-density penalty), and a new dark-mode monitoring dashboard with live log streaming is introduced. Our results show that this interactive "Glass-Box" approach signi\-ficantly reduces the time required for human experts to verify complex AI-generated hypotheses.
 
 \subsubsection{1. Introd\-uction}
 Explai\-nability in AI (XAI) has tradi\-tionally focused on post-hoc inter\-pretations of neural weights (e.g., saliency maps). In graph-based reasoning, however, the explanation is the path itself. The Glass-Box Reasoning Studio provides the first integrated environment for visualizing graph attention as a physical, navigatable flow.
@@ -25,13 +25,13 @@ For temporal and streaming data, the Studio utilizes high-frequency state update
 \item \textbf{Drift}: Community boundaries shift smoothly using force-directed layouts to reflect modularity updates [Buchorn, 2026].
 
 \end{itemize}
-\subsubsection{3. Interactive Debugging (v2.51.0)}
-The Studio provides a "Dialectical reasoning" mode where users can manually adjust CSA parameters ($\alpha, \beta, \gamma$) via sliders and observe the immediate physical shift in the reasoning beam, providing a "Human-in-the-Loop" (HITL) interface for hyper\-parameter tuning. In v2.51.0, this includes real-time feedback submission to the \textbf{MetaParameterLearner}.
+\subsubsection{3. Interactive Debugging (v2.52.0)}
+The Studio provides a "Dialectical reasoning" mode where users can manually adjust CSA parameters ($\alpha, \beta, \gamma$) via sliders and observe the immediate physical shift in the reasoning beam, providing a "Human-in-the-Loop" (HITL) interface for hyper\-parameter tuning. In v2.52.0, this includes real-time feedback submission to the \textbf{MetaParameterLearner}.
 
-\subsubsection{4. Recent Advances (v2.24.0 -\textgreater  v2.51.0)}
+\subsubsection{4. Recent Advances (v2.52.0 -\textgreater  v2.52.0)}
 
 \paragraph{4.1 StudioEngine Archit\-ectural Refactor (Phase 54)}
-The most significant change in v2.51.0 is a complete archi\-tectural separation of Studio business logic from the Gradio server layer. Previously, all reasoning coord\-ination, graph management, and query dispatch were embedded directly in \texttt{ui/studio.py}. Phase 54 extracts these into a new \texttt{core/studio\_engine.py} module exposing the \texttt{StudioEngine} class.
+The most significant change in v2.52.0 is a complete archi\-tectural separation of Studio business logic from the Gradio server layer. Previously, all reasoning coord\-ination, graph management, and query dispatch were embedded directly in \texttt{ui/studio.py}. Phase 54 extracts these into a new \texttt{core/studio\_engine.py} module exposing the \texttt{StudioEngine} class.
 
 Benefits of this separation:
 \begin{itemize}
@@ -41,7 +41,7 @@ Benefits of this separation:
 
 \end{itemize}
 \paragraph{4.2 10-Parameter CSA Weight Profiler (Bug Fix)}
-The Studio's CSA weight profiler previously exposed only 9 of the 10 CSA parameters, omitting $\mu$ (synthesis-density penalty). This meant that Studio users tuning parameters inter\-actively could not adjust the penalty applied to paths over-relying on Synaptic Bridge-synthesized edges. In v2.51.0, the profiler exposes all 10 parameters:
+The Studio's CSA weight profiler previously exposed only 9 of the 10 CSA parameters, omitting $\mu$ (synthesis-density penalty). This meant that Studio users tuning parameters inter\-actively could not adjust the penalty applied to paths over-relying on Synaptic Bridge-synthesized edges. In v2.52.0, the profiler exposes all 10 parameters:
 
 \begin{center}
 {\footnotesize
@@ -78,7 +78,7 @@ A new \texttt{ui/dashboard.html} provides a production monitoring interface buil
 The Studio and API server now expose a \texttt{/logs} GET endpoint backed by a \texttt{RingBufferHandler} that captures all \texttt{cerebrum.*} log events at DEBUG level. The ring buffer holds the last N log entries (confi\-gurable, default 1,000) and returns them as structured JSON. A DELETE on \texttt{/logs} clears the buffer. This enables the monitoring dashboard to display live operational state without requiring external logging infra\-structure.
 
 \subsubsection{5. Conclusion}
-The Glass-Box Reasoning Studio transforms graph attention from an abstract mathe\-matical construct into a tangible, auditable artifact. In v2.51.0, the Phase 54 archi\-tectural refactor (StudioEngine extraction, 38 new unit tests), the corrected 10-parameter weight profiler, the \texttt{/build} hot-reload endpoint, and the dark-mode monitoring dashboard colle\-ctively advance the Studio from an interactive demo into a production-grade reasoning observatory. By bridging the gap between latent semantic operations and human-readable topologies, it enables the deployment of autonomous reasoning systems in high-stakes envir\-onments.
+The Glass-Box Reasoning Studio transforms graph attention from an abstract mathe\-matical construct into a tangible, auditable artifact. In v2.52.0, the Phase 54 archi\-tectural refactor (StudioEngine extraction, 38 new unit tests), the corrected 10-parameter weight profiler, the \texttt{/build} hot-reload endpoint, and the dark-mode monitoring dashboard colle\-ctively advance the Studio from an interactive demo into a production-grade reasoning observatory. By bridging the gap between latent semantic operations and human-readable topologies, it enables the deployment of autonomous reasoning systems in high-stakes envir\-onments.
 
 ---
 \subsection{Acknow\-ledgments}
@@ -97,4 +97,4 @@ The author gratefully ackno\-wledges the use of Claude (Anthropic) as a research
 
 \end{enumerate}
 ---
-\textbf{Reviewed on}: May 2, 2026 for version v2.51.0
+\textbf{Reviewed on}: May 2, 2026 for version v2.52.0

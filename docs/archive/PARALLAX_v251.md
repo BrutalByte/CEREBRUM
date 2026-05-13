@@ -4,7 +4,7 @@
 **Affiliations**: Independent Researcher · Anthropic
 **Contact**: bryan.alexander@buchorn.com
 **Date**: March 2026
-**Status**: Version 2.51.1 · Phase 167 COMPLETE — 2177 tests passing
+**Status**: Version 2.51.1 · Phase 172 COMPLETE — 2177 tests passing
 **License**: Proprietary — all rights reserved
 
 ---
@@ -80,7 +80,7 @@ parallax/
 └── PAPER.md       (this file)
 ```
 
-**Current phase**: Phase 167 complete (v2.51.0). CEREBRUM now features **STRB (Semantic Terminal Relation Boost)** for zero-shot query intent recognition, **GraphProfiler** for automatic regime-based strategy selection, **Terminal-Anchor Hints (TAB)** for deep multi-hop steering, and **Vectorized Beam Scoring** (NumPy-accelerated). The system also incorporates previous milestones: **H1SE (Hop-1 Seed Expansion)**, **Active Inference** via the Thalamofrontal Feedback Loop, **Sleep-Phase Consolidation** (REM Cycle), **Global Workspace (GWS)** coordination, **Metabolic Homeostasis** (Reinforcement, Arousal, Novelty, Cohesion, Persistence), **Epistemic Gating**, and **Counterfactual Reasoning**. 2177 tests passing.
+**Current phase**: Phase 172 complete (v2.52.0). CEREBRUM now features **STRB (Semantic Terminal Relation Boost)** for zero-shot query intent recognition, **GraphProfiler** for automatic regime-based strategy selection, **Terminal-Anchor Hints (TAB)** for deep multi-hop steering, and **Vectorized Beam Scoring** (NumPy-accelerated). The system also incorporates previous milestones: **H1SE (Hop-1 Seed Expansion)**, **Active Inference** via the Thalamofrontal Feedback Loop, **Sleep-Phase Consolidation** (REM Cycle), **Global Workspace (GWS)** coordination, **Metabolic Homeostasis** (Reinforcement, Arousal, Novelty, Cohesion, Persistence), **Epistemic Gating**, and **Counterfactual Reasoning**. 2177 tests passing.
 
 ---
 
@@ -208,7 +208,7 @@ $$
 
 This formula allows the system to balance semantic similarity, structural authority, and operational recency, enabling precise beam steering across complex, multi-hop trajectories.
 
-### 2.3 Phase 167 Innovations: STRB & GraphProfiler
+### 2.3 Phase 172 Innovations: STRB & GraphProfiler
 The latest breakthroughs eliminate the need for manual hyperparameter tuning:
 -   **STRB (Semantic Terminal Relation Boost)**: Uses query embeddings to automatically identify and weight the intended terminal relations, significantly improving precision in deep reasoning tasks.
 -   **GraphProfiler**: Performs $O(E)$ build-time analysis of graph topology (average degree, diameter, community density) to automatically select the optimal reasoning strategy (e.g., beam width, pruning thresholds) for the specific graph instance.
@@ -254,7 +254,7 @@ The latest breakthroughs eliminate the need for manual hyperparameter tuning:
 
 ## 4. Benchmarks and Results
 
-CEREBRUM v2.51.0 achieves state-of-the-art results for training-free KGQA on MetaQA:
+CEREBRUM v2.52.0 achieves state-of-the-art results for training-free KGQA on MetaQA:
 
 - **MetaQA 1-hop**: 96.6% Hits@10
 - **MetaQA 2-hop**: 86.3% Hits@10

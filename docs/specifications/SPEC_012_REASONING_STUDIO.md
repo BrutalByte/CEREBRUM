@@ -1,7 +1,7 @@
 # [Buchorn, 2026]: Glass-Box Reasoning Studio
 ## Interactive Visualization and Forensic Audit of Graph Attention
 
-**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Human-Computer Interaction / Explainable AI (XAI) / Data Visualization  
@@ -129,4 +129,4 @@ All fields are rendered in the Studio's **ERT viewer** when the trace endpoint i
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.51.0
+**Reviewed on**: April 21, 2026 for version v2.52.0

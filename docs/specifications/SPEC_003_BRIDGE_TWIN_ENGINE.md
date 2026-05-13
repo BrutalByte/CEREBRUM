@@ -1,7 +1,7 @@
 # [Buchorn, 2026]: The Bridge Twin Engine
 ## Experience-Dependent Structural Plasticity in Knowledge Graphs
 
-**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Neuromorphic Computing / Autonomous Systems / Graph Topology  
@@ -68,7 +68,7 @@ When the `GlobalRebalancer` [Buchorn, 2026] shuffles community IDs, existing bri
 3.  If the destination community ID has changed but the cluster is still semantically similar, **Update Record**.
 4.  Otherwise, **Prune**.
 
-### 6. Implementation Notes (v2.51.0)
+### 6. Implementation Notes (v2.52.0)
 *   **Storage**: Bridge records are stored in a sidecar `bridge_store.json` to ensure persistence across restarts.
 *   **Performance**: Querying a twin is $O(1)$ during the neighbor expansion phase of the beam search.
 *   **Integration**: Bridge Twins are automatically recognized by the `CSAEngine` as high-priority "Internal" edges, significantly increasing the beam's focus on successful historical paths.
@@ -79,4 +79,4 @@ When the `GlobalRebalancer` [Buchorn, 2026] shuffles community IDs, existing bri
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.51.0
+**Reviewed on**: April 21, 2026 for version v2.52.0

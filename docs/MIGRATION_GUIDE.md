@@ -4,7 +4,7 @@ This guide covers what operators and developers need to **do** (not just what ch
 
 ---
 
-## v2.24.0 -> v2.51.0 (Phases 69–94: Autonomous Loop, Provenance, Adaptive Tuning, Active Inference, GUI Adaptation)
+## v2.51.1 -> v2.52.0 (Phases 69–94: Autonomous Loop, Provenance, Adaptive Tuning, Active Inference, GUI Adaptation)
 
 ### Required actions: `remove_edge()` on custom GraphAdapter subclasses
 
@@ -65,7 +65,7 @@ research_agent.set_provenance_ledger(ledger)
 
 ---
 
-## v2.24.0 -> v2.51.0 (Phases 58–68: SpeedTalk, ERT, MACH, CEC, SPQT, Metabolic Modulation)
+## v2.51.1 -> v2.52.0 (Phases 58–68: SpeedTalk, ERT, MACH, CEC, SPQT, Metabolic Modulation)
 
 ### Required actions: none
 All Phase 58–68 features are opt-in via new parameters or optional engine attachments. Existing code continues to work without changes.
@@ -100,7 +100,7 @@ graph.attach_modulator(modulator)
 
 ---
 
-## v2.24.0 -> v2.51.0 (Phases 33–57: Temporal, Logit, Calibration, Engram, Fault Tolerance)
+## v2.51.1 -> v2.52.0 (Phases 33–57: Temporal, Logit, Calibration, Engram, Fault Tolerance)
 
 ### Required actions: none
 All Phase 33–57 changes use backward-compatible defaults. No existing code breaks on upgrade.
@@ -134,7 +134,7 @@ if result.partial:
 
 ---
 
-## v2.24.0 -> v2.51.0 (Phase 32: Federated Reasoning)
+## v2.51.1 -> v2.52.0 (Phase 32: Federated Reasoning)
 
 ### Required actions: GraphAdapter subclasses
 If you have custom `GraphAdapter` implementations outside the core library, you should implement the new `get_reasoning_branches` method. While it has a base implementation that returns an empty list, providing a real implementation enables delegated reasoning.
@@ -168,7 +168,7 @@ The new `/traverse` endpoint requires the `query` scope. Ensure your JWT tokens 
 
 ---
 
-## v2.24.0 -> v2.51.0 (Phases 21–30: Pipeline & Bridge)
+## v2.51.1 -> v2.52.0 (Phases 21–30: Pipeline & Bridge)
 
 ### Required actions: none
 All four Phase 20 fixes use backward-compatible defaults. No existing code breaks.
@@ -180,10 +180,10 @@ All four Phase 20 fixes use backward-compatible defaults. No existing code break
 If your deployment uses the `GlobalRebalancer` for live graph updates alongside concurrent queries, enable snapshot isolation explicitly:
 
 ```python
-# Before (v2.51.0 — no snapshot)
+# Before (v2.52.0 — no snapshot)
 traversal = BeamTraversal(adapter=adapter, csa_engine=csa, ...)
 
-# After (v2.51.0 — add snapshot at query start)
+# After (v2.52.0 — add snapshot at query start)
 csa.set_query_snapshot(adapter.community_map)
 traversal = BeamTraversal(adapter=adapter, csa_engine=csa, ...)
 ```
@@ -208,13 +208,13 @@ csa = CSAEngine(
 `InferenceValidator` now defaults to `path_preserving=True`. On dense graphs this is a no-op. On sparse graphs (avg degree < 3) this will improve recall estimates. No code changes needed unless you specifically want the old behavior:
 
 ```python
-# To restore v2.51.0 behavior (not recommended):
+# To restore v2.52.0 behavior (not recommended):
 validator = InferenceValidator(adapter, traversal, path_preserving=False)
 ```
 
 ---
 
-## v2.24.0 -> v2.51.0 (Phase 19: Production Hardening)
+## v2.51.1 -> v2.52.0 (Phase 19: Production Hardening)
 
 ### Required actions
 
@@ -223,11 +223,11 @@ validator = InferenceValidator(adapter, traversal, path_preserving=False)
 If you use both `IngestionPipeline` and `SignalEncoder` in the same graph, you must now add namespace prefixes to prevent entity collisions:
 
 ```python
-# Before (v2.51.0 — collision risk)
+# Before (v2.52.0 — collision risk)
 pipeline = IngestionPipeline(adapter)
 encoder  = SignalEncoder(entity_dim=128)
 
-# After (v2.51.0 — isolated namespaces)
+# After (v2.52.0 — isolated namespaces)
 pipeline = IngestionPipeline(adapter, namespace="text")
 encoder  = SignalEncoder(entity_dim=128, namespace="signal")
 ```
@@ -237,10 +237,10 @@ If your graph contains entities with the same name in both text and signal sourc
 **2. Wire the Zombie Bridge hook if using GlobalRebalancer + BridgeTwinEngine**
 
 ```python
-# Before (v2.51.0 — stale bridges after rebalance)
+# Before (v2.52.0 — stale bridges after rebalance)
 rebalancer = GlobalRebalancer(adapter, q_drift_threshold=0.05)
 
-# After (v2.51.0 — bridges stay consistent)
+# After (v2.52.0 — bridges stay consistent)
 rebalancer = GlobalRebalancer(adapter, q_drift_threshold=0.05, bridge_engine=bridge_engine)
 ```
 
@@ -268,7 +268,7 @@ discretizer = STDPDiscretizer(w_threshold=0.5, n_min=5, min_causal_span=1.0, use
 
 ---
 
-## v2.24.0 -> v2.51.0 (Phase 18: v0.4 Horizon)
+## v2.51.1 -> v2.52.0 (Phase 18: v0.4 Horizon)
 
 ### New required environment variable (if using API auth)
 ```bash
@@ -282,11 +282,11 @@ export CEREBRUM_ALLOW_ANONYMOUS=true
 
 ### IngestionPipeline replaces direct adapter.add_edge for text ingest
 ```python
-# Before (v2.51.0)
+# Before (v2.52.0)
 for subj, pred, obj in triples:
     adapter.add_edge(subj, obj, pred)
 
-# After (v2.51.0) — preferred for text data
+# After (v2.52.0) — preferred for text data
 pipeline = IngestionPipeline(adapter)
 for subj, pred, obj in triples:
     pipeline.process(subj, pred, obj, confidence=0.9)
@@ -305,7 +305,7 @@ from llm_bridge import generate, GenerationResult
 
 ---
 
-## v2.24.0 -> v2.51.0 (Phase 10–11: Production Hardening + Streaming)
+## v2.51.1 -> v2.52.0 (Phase 10–11: Production Hardening + Streaming)
 
 ### igraph / leidenalg dependency removed
 The native Leiden reimplementation (`core/leiden_native.py`) is now the default backend. Remove these from your environment if installed:
@@ -317,24 +317,24 @@ pip uninstall leidenalg python-igraph igraph
 The native implementation is API-compatible; no code changes are needed.
 
 ### JWT authentication added to API
-See v2.24.0 -> v2.51.0 section above (authentication was introduced in v2.51.0).
+See v2.51.1 -> v2.52.0 section above (authentication was introduced in v2.52.0).
 
 ### StreamAdapter replaces manual polling loops
 ```python
-# Before (v2.51.0 — polling)
+# Before (v2.52.0 — polling)
 while True:
     event = get_next_event()
     adapter.add_edge(event.subject, event.object, event.predicate)
     time.sleep(0.1)
 
-# After (v2.51.0 — StreamAdapter)
+# After (v2.52.0 — StreamAdapter)
 stream = StreamAdapter(base_adapter=adapter, window_size=10_000)
 stream.push_event(subject, predicate, object, timestamp, weight)
 ```
 
 ---
 
-## v2.24.0 -> v2.51.0 (Phase 6–9: Federated)
+## v2.51.1 -> v2.52.0 (Phase 6–9: Federated)
 
 No breaking changes. All Phase 6–9 features (FederatedAdapter, HolographicIndex, Handshake) are additive and do not affect single-graph deployments.
 
@@ -342,4 +342,4 @@ No breaking changes. All Phase 6–9 features (FederatedAdapter, HolographicInde
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 9, 2026 for version v2.51.1
+**Reviewed on**: May 9, 2026 for version v2.52.0

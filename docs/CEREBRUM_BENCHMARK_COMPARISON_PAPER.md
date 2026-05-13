@@ -2,7 +2,7 @@
 ## Zero-Shot Knowledge Graph Reasoning vs. Trained Baselines: A Comprehensive Analysis
 
 **Author**: Bryan Alexander Buchorn
-**Version**: v2.51.1 · Phase 167 COMPLETE — 2177 tests passing  
+**Version**: v2.52.0 · Phase 172 COMPLETE — 2177 tests passing  
 **Date**: May 2026  
 **Status**: Proprietary — all rights reserved
 
@@ -85,7 +85,7 @@ This paper covers:
 - 4 standard benchmarks: MetaQA (1/2/3-hop), Hetionet (6 query templates), WebQSP, IKGWQ
 - Complete latency and throughput data
 - ROI analysis at pharmaceutical discovery scale
-- Phase-by-phase progression from Phase 151 through Phase 167
+- Phase-by-phase progression from Phase 151 through Phase 172
 
 ---
 
@@ -158,7 +158,7 @@ All variants use the same CSA formula and DSCF community detection. Variants dif
 **Training required**: None.
 
 ### Variant B: +Engram (Mnemonic Path Cache)
-**Configuration**: RAW + Engram memory (Phase 112 shortcut synthesis + REM consolidation).  
+**Configuration**: RAW + Engram memory (Phase 172 shortcut synthesis + REM consolidation).  
 **What it adds**: Successful 3-hop paths are compressed (phonemic encoding, 8–20× compression) and replayed during sleep cycles. Queries matching known patterns resolve via materialized shortcut edges, converting multi-hop reasoning into single-hop reflexive responses.  
 **Training required**: None. Engram populates from query history without labels.
 
@@ -173,7 +173,7 @@ All variants use the same CSA formula and DSCF community detection. Variants dif
 **Training required**: None.
 
 ### Variant E: Profile-Auto+STRB
-**Configuration**: Profile-Auto + STRB (Phase 167).  
+**Configuration**: Profile-Auto + STRB (Phase 172).  
 **What it adds**: Query embedding (sentence-transformers) is compared via cosine similarity against all relation labels. The relation with the highest cosine similarity to the query text receives a configurable boost multiplier during beam scoring. For "What gene is associated with lupus?", STRB automatically identifies and boosts `gene_associated_with_disease` edges without any manual rule-writing.  
 **Training required**: None. Query-time inference only.
 
@@ -559,7 +559,7 @@ Additionally, CEREBRUM's Engram memory (materialized shortcut edges) explicitly 
 
 ## 10. Phase-by-Phase Progression
 
-The following table shows how MetaQA 3-hop H@1 evolved across the development arc that produced the current system, from Phase 151 through Phase 167.
+The following table shows how MetaQA 3-hop H@1 evolved across the development arc that produced the current system, from Phase 151 through Phase 172.
 
 | Phase | Feature Introduced | 3-hop H@1 | Delta |
 |---|---|---|---|
@@ -576,7 +576,7 @@ The following table shows how MetaQA 3-hop H@1 evolved across the development ar
 | Phase 164 | TAB (Terminal-Anchor Boost) | 44.8% | +2.7% |
 | Phase 165 | Vectorized Beam Scoring (NumPy) | 44.8% | 0% (latency gain only) |
 | Phase 166 | GraphProfiler (auto regime select) | 46.1% | +1.3% |
-| Phase 167 | STRB (Semantic Terminal Relation Boost) | **47.3%** | **+1.2%** |
+| Phase 172 | STRB (Semantic Terminal Relation Boost) | **47.3%** | **+1.2%** |
 
 **Observations**:
 
@@ -586,7 +586,7 @@ The following table shows how MetaQA 3-hop H@1 evolved across the development ar
 
 3. **Phases 157–161 collectively add +4.2%** through five incremental features. None individually dominates, but each addresses a specific structural failure mode (relation path bias, entropy-based self-doubt, semantic relation coercion, cross-type edge integration, semantic anchor steering). These phases demonstrate the value of systematic ablation-driven development.
 
-4. **STRB (Phase 167) adds +1.2% at 3-hop on MetaQA** but adds dramatically more on Hetionet (see Template 2: gene_participates_pathway, where STRB alone adds +27.2pp). The discrepancy is because MetaQA's relation vocabulary is small and somewhat predictable to beam search already; Hetionet's 24 relation types create much larger disambiguation problems.
+4. **STRB (Phase 172) adds +1.2% at 3-hop on MetaQA** but adds dramatically more on Hetionet (see Template 2: gene_participates_pathway, where STRB alone adds +27.2pp). The discrepancy is because MetaQA's relation vocabulary is small and somewhat predictable to beam search already; Hetionet's 24 relation types create much larger disambiguation problems.
 
 ---
 
@@ -850,7 +850,7 @@ The ability to reason without training is not a luxury — it is the critical en
 
 ### 17.4 What Comes Next
 
-CEREBRUM v2.51.1 is the conclusion of Phase 167. The planned development roadmap for the next capability tier:
+CEREBRUM v2.52.0 is the conclusion of Phase 172. The planned development roadmap for the next capability tier:
 
 - **Phase 168 — Neural-Symbolic Diffusion**: Integration of diffusion-based candidate generation to seed the initial beam with high-probability candidates, further reducing beam width requirements at equivalent accuracy.
 - **Phase 169 — Multi-Modal Engram Synthesis**: Direct image and audio feature nodes in reasoning paths, enabling CEREBRUM to reason over graphs that include visual or acoustic entities.
@@ -886,4 +886,4 @@ The foundation is solid. 167 phases. 2177 tests. Zero training required.
 ---
 
 **Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.**  
-**CEREBRUM v2.51.1 — Phase 167 COMPLETE — 2177 tests passing**
+**CEREBRUM v2.52.0 — Phase 172 COMPLETE — 2177 tests passing**

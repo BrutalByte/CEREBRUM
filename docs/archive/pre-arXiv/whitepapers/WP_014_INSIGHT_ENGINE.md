@@ -2,7 +2,7 @@
 ## Self-Verification and Metacognitive Bias Detection via the Insight Engine
 
 **Date**: March 2026
-**Status**: v2.51.0 (Phase 167 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Target Audience**: Risk Officers, Research Directors, Compliance Leads, AI Safety Teams
 
 ---
@@ -49,4 +49,4 @@ The Verification and Metacognition layer gives CEREBRUM a self-correcting intell
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.51.0
+**Reviewed on**: April 21, 2026 for version v2.52.0

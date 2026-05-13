@@ -222,7 +222,7 @@ class NeuralEvent(BaseModel):
         relation: str,
         confidence: float,
     ) -> "NeuralEvent":
-        """Helper to create an edge creation event (Phase 112)."""
+        """Helper to create an edge creation event (Phase 172)."""
         return cls(
             event_type=NeuralEventType.SYNAPTOGENESIS,
             payload={

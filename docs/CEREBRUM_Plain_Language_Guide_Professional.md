@@ -3,7 +3,7 @@
     <h1 class="title">CEREBRUM EXPLAINED</h1>
     <p class="subtitle">A Plain-Language Guide to the Research</p>
     <div class="meta">
-        <strong>Version 7.0 (v2.51.0 — Phase 167 COMPLETE)</strong><br>
+        <strong>Version 7.0 (v2.52.0 — Phase 172 COMPLETE)</strong><br>
         May 2026 — Independent Researcher
     </div>
 </div>
@@ -28,7 +28,7 @@ Each chapter builds on the last. If you're already comfortable with a concept, f
 | 6 | What is CEREBRUM? | The full picture — including THALAMUS and CORTEX |
 | 7 | Why does it matter? | Real-world stakes |
 | 8 | What are we trying to prove? | The research questions |
-| 9 | Does it work? | Validation results (v2.51.0) |
+| 9 | Does it work? | Validation results (v2.52.0) |
 | 10 | The Studio: Seeing it live | The interactive interface |
 | 11 | Real-time streaming data | Sensors, signals, and live feeds |
 | 12 | What kinds of data can it use? | Beyond spreadsheets |
@@ -37,7 +37,7 @@ Each chapter builds on the last. If you're already comfortable with a concept, f
 | 15 | Insight Learning | When the graph has a Eureka moment |
 | 16 | The 10-Parameter Attention Formula | How CEREBRUM weighs every step |
 | 17 | Autonomous Reasoning | CEREBRUM discovers what it doesn't know |
-| 18 | What's New in v2.51.0 | The latest capabilities |
+| 18 | What's New in v2.52.0 | The latest capabilities |
 | 19 | The Formal Journey | ArXiv, Margins, and Academic Rigor |
 | 20 | The Thalamofrontal Loop | Dynamic Gating and Consciousness |
 
@@ -53,8 +53,8 @@ Because LLMs are statistical, they "hallucinate." If they don't know an answer, 
 
 ---
 
-## CHAPTER 9 — Does It Work? (v2.51.0 Results)
-As of May 2026, CEREBRUM has been validated on several large-scale datasets and is operating at **v2.51.0 "Zero-Config Autonomous Reasoning"** status.
+## CHAPTER 9 — Does It Work? (v2.52.0 Results)
+As of May 2026, CEREBRUM has been validated on several large-scale datasets and is operating at **v2.52.0 "Zero-Config Autonomous Reasoning"** status.
 
 **What the tests showed:**
 1. **Unrivaled Stability**: The framework now passes **2,175 automated tests**, covering core reasoning, autonomous discovery, observability, and parameter learning.
@@ -80,7 +80,7 @@ As of May 2026, CEREBRUM has been validated on several large-scale datasets and 
 ## CHAPTER 16 — The 10-Parameter Attention Formula
 Every time CEREBRUM considers following an edge in the graph — from one fact to another — it performs a calculation. That calculation answers: *"How relevant is this step to the question being asked?"*
 
-In v2.51.0, this formula uses **ten separate signals** (called parameters), each measuring a different aspect of relevance:
+In v2.52.0, this formula uses **ten separate signals** (called parameters), each measuring a different aspect of relevance:
 
 | Parameter | Plain-English Meaning |
 |---|---|
@@ -102,7 +102,7 @@ These ten parameters can be learned from feedback over time, so CEREBRUM gets sm
 ---
 
 ## CHAPTER 17 — Autonomous Reasoning: CEREBRUM Discovers What It Doesn't Know
-One of the most exciting capabilities in v2.51.0 is that CEREBRUM can now reason about **gaps in its own knowledge** — and actively work to fill them.
+One of the most exciting capabilities in v2.52.0 is that CEREBRUM can now reason about **gaps in its own knowledge** — and actively work to fill them.
 
 ### HypothesisEngine: "What Could Be True?"
 The **HypothesisEngine** uses multi-path abductive reasoning to generate *hypotheses* — proposed connections that are not yet in the graph but are strongly suggested by the surrounding evidence. Think of a detective who, after reviewing all available clues, says: *"The only explanation that fits everything is that X caused Y."* CEREBRUM can now generate those kinds of proposals automatically.
@@ -121,7 +121,7 @@ Together, these three systems form a **closed-loop autonomous research assistant
 
 ---
 
-## CHAPTER 18 — What's New in v2.51.0
+## CHAPTER 18 — What's New in v2.52.0
 
 ### 1. HypothesisEngine (Phase 50)
 Multi-path abductive reasoning that generates proposed graph edges from indirect evidence. Experts approve or reject proposals via a simple interface.
@@ -164,7 +164,7 @@ The transition from a laboratory project to a formal **ArXiv Manuscript** requir
 ---
 
 ## CHAPTER 20 — The Thalamofrontal Loop: Dynamic Gating and Consciousness
-In v2.51.0 (Phase 108), CEREBRUM introduced its most advanced biological analog yet: the **Thalamofrontal Loop**.
+In v2.52.0 (Phase 108), CEREBRUM introduced its most advanced biological analog yet: the **Thalamofrontal Loop**.
 
 ### Preventing "Thermal Waste"
 In human biology, consciousness may have emerged as a way to keep the brain from overheating with useless data. Scientists call this preventing **"Thermal Waste."** In a Knowledge Graph, this happens when the system tries to follow every possible connection, most of which are irrelevant "noise."
@@ -179,7 +179,7 @@ This "Gating" makes the system significantly faster (over 10% faster in early te
 ---
 
 ## CHAPTER 21 — Zero-Config Reasoning: CEREBRUM Figures It Out
-The latest version of CEREBRUM (v2.51.0) moves from "custom-built" to "plug-and-play."
+The latest version of CEREBRUM (v2.52.0) moves from "custom-built" to "plug-and-play."
 
 ### GraphProfiler: Knowing the Terrain
 Not all knowledge graphs are the same. A movie database works differently than a medical database. CEREBRUM's **GraphProfiler** analyzes your data as soon as it's loaded and automatically picks the best reasoning strategy. You no longer need to be an expert in graph theory to get high-quality results.
@@ -202,13 +202,13 @@ Most legacy Knowledge Graph AI (like GNNs or Embedding-based models) are **Train
 CEREBRUM is not a Machine Learning system; it is an **Autonomous Reasoning Appliance**.
 
 1.  **Zero-Shot Reasoning**: When you load a new Knowledge Graph, CEREBRUM performs an $O(E)$ topological scan (via **GraphProfiler**). It doesn't learn weights; it maps the structural landscape. It reasons over the graph itself, using its actual topology as the attention mechanism.
-2.  **No Training, Just Consolidation**: CEREBRUM doesn't "train." Instead, it uses the **REM Cycle** (Phase 167) to autonomously synthesize "shortcuts" and optimize the graph structure *in real-time* as it learns which connections are most valuable for your specific questions. 
+2.  **No Training, Just Consolidation**: CEREBRUM doesn't "train." Instead, it uses the **REM Cycle** (Phase 172) to autonomously synthesize "shortcuts" and optimize the graph structure *in real-time* as it learns which connections are most valuable for your specific questions. 
 3.  **Real-Time Adaptation**: Because it relies on explicit graph edges rather than a hidden parameter space, CEREBRUM is inherently "live." Add a new edge? The reasoning engine can traverse it in the very next query. No retraining required.
 
 ### Comparative Efficiency
 By eliminating the training phase, CEREBRUM effectively acts as an appliance that provides "Reasoning-as-a-Service" without the high-overhead machine learning pipeline.
 
-| Feature | Legacy KG AI | CEREBRUM (v2.51.0) |
+| Feature | Legacy KG AI | CEREBRUM (v2.52.0) |
 |---|---|---|
 | **Model Setup** | Days of GPU training | **Zero (Plug-and-Play)** |
 | **KG Updates** | Requires model retraining | **Immediate (Real-time)** |
@@ -226,7 +226,7 @@ CEREBRUM stands on the shoulders of decades of foundational research in Graph Th
 **Bryan Alexander Buchorn** — bryan.alexander@buchorn.com
 
 ---
-*Generated: May 2026 — Project CEREBRUM v2.51.0 — Zero-Config Edition*
+*Generated: May 2026 — Project CEREBRUM v2.52.0 — Zero-Config Edition*
 
 ---
-**Reviewed on**: May 9, 2026 for version v2.51.1
+**Reviewed on**: May 9, 2026 for version v2.52.0

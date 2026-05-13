@@ -1,7 +1,7 @@
 # White Paper: Vectorized Beam Scoring
 ## Engineering Sub-Millisecond Intelligence at Scale
 
-**Version**: v2.51.0 (Phase 167 COMPLETE)
+**Version**: v2.52.0 (Phase 172 COMPLETE)
 **Author**: Bryan Alexander Buchorn
 
 ---
@@ -12,7 +12,7 @@ In deep multi-hop reasoning, the system must evaluate thousands of potential pat
 
 ### The Solution: NumPy-Vectorized Scoring
 
-CEREBRUM v2.51.0 utilizes a fully vectorized scoring architecture. Instead of scoring edges one-by-one, the entire candidate beam is converted into a multi-dimensional tensor, and the 10-parameter CSA formula is applied using bulk matrix operations.
+CEREBRUM v2.52.0 utilizes a fully vectorized scoring architecture. Instead of scoring edges one-by-one, the entire candidate beam is converted into a multi-dimensional tensor, and the 10-parameter CSA formula is applied using bulk matrix operations.
 
 **Key Technical Shifts**:
 1.  **Bulk Embeddings**: All candidate entity embeddings are stacked into a single $(N \times D)$ matrix for parallel cosine similarity calculation.
@@ -23,7 +23,7 @@ CEREBRUM v2.51.0 utilizes a fully vectorized scoring architecture. Instead of sc
 
 The transition to vectorized scoring yielded a **10x reduction in query latency**:
 -   **Baseline (Iterative)**: 120ms per 3-hop query.
--   **Vectorized (v2.51.0)**: 12ms per 3-hop query (on standard CPU hardware).
+-   **Vectorized (v2.52.0)**: 12ms per 3-hop query (on standard CPU hardware).
 
 ### Strategic Value
 
@@ -33,4 +33,4 @@ Vectorized Beam Scoring enables CEREBRUM to provide "Google-speed" reasoning ove
 -   **Deep Exploration**: Enabling wider beams and deeper hop counts without sacrificing responsiveness.
 
 ---
-**White Paper Finalized: v2.51.0 (Phase 167 COMPLETE)**
+**White Paper Finalized: v2.52.0 (Phase 172 COMPLETE)**

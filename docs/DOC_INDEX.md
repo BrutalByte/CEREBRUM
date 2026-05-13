@@ -1,5 +1,5 @@
 # CEREBRUM Documentation Index
-## v2.51.1 (Phase 167) — May 2026
+## v2.52.0 (Phase 172) — May 2026
 
 Single-page navigation for all CEREBRUM documentation. Start here.
 
@@ -61,7 +61,7 @@ See [`ARXIV_SUBMISSION_GUIDE.md`](ARXIV_SUBMISSION_GUIDE.md) for submission mech
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | System architecture, module map, Transformer↔KG analogy, data flow |
 | [`API_REFERENCE.md`](API_REFERENCE.md) | All REST endpoints with request/response schemas |
 | [`DEPLOYMENT.md`](DEPLOYMENT.md) | Production deployment, `--kge-model` flag, sentence-transformers requirement |
-| [`TESTING.md`](TESTING.md) | Test suite, fixture conventions, 2177 passed / 1 skipped (v2.51.1) |
+| [`TESTING.md`](TESTING.md) | Test suite, fixture conventions, 2177 passed / 1 skipped (v2.52.0) |
 | [`INTEGRATION_GUIDE.md`](INTEGRATION_GUIDE.md) | How to integrate CEREBRUM with external systems |
 | [`MIGRATION_GUIDE.md`](MIGRATION_GUIDE.md) | Version migration notes |
 | [`PERFORMANCE_TUNING.md`](PERFORMANCE_TUNING.md) | Latency, beam width, GraphSAGE tradeoffs |
@@ -75,7 +75,7 @@ See [`ARXIV_SUBMISSION_GUIDE.md`](ARXIV_SUBMISSION_GUIDE.md) for submission mech
 | File | Purpose |
 |------|---------|
 | [`CEREBRUM_BENCHMARK_COMPARISON_PAPER.md`](CEREBRUM_BENCHMARK_COMPARISON_PAPER.md) | Full benchmark analysis vs SOTA — detailed version of the comparison table in BENCHMARK_CANONICAL.md |
-| [`BENCHMARK_ANALYSIS_V2.51.0.md`](BENCHMARK_ANALYSIS_V2.51.0.md) | Phase 167 benchmark run analysis and ablation notes |
+| [`BENCHMARK_ANALYSIS_V2.51.0.md`](BENCHMARK_ANALYSIS_V2.51.0.md) | Phase 172 benchmark run analysis and ablation notes |
 | [`ROADMAP_FUTURE.md`](ROADMAP_FUTURE.md) | Post-v2.51 research directions |
 | [`whitepapers/`](whitepapers/) | Topic-specific technical whitepapers |
 | [`docs/Research/`](Research/) | Supporting research notes and phase-by-phase findings |
@@ -108,4 +108,4 @@ Superseded document versions — preserved for reference, not for new citations.
 
 ---
 
-*Last updated: 2026-05-08 | v2.51.1 publication cycle*
+*Last updated: 2026-05-08 | v2.52.0 publication cycle*

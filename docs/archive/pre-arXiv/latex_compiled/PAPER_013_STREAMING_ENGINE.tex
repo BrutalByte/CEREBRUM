@@ -2,13 +2,13 @@
 
 \textbf{Author}: Bryan Alexander Buchorn  
 \textbf{Affiliation}: Independent Researcher, Las Vegas, NV, USA  
-\textbf{Status}: v2.51.0 (Phase 167 (STRB) COMPLETE)
+\textbf{Status}: v2.52.0 (Phase 172 (STRB) COMPLETE)
 \textbf{Date}: May 2, 2026
 
 ---
 
 \subsubsection{Abstract}
-Real-world Knowledge Graph deployments must ingest conti\-nuously arriving data streams — sensor readings, financial ticks, event logs, and scientific obser\-vations — and immediately make this data available for reasoning. We present CEREBRUM's \textbf{Streaming Engine}, a composable pipeline that transforms heter\-ogeneous continuous signals into typed graph edges through a family of stateless discr\-etizers, then integrates the resulting edges into the live reasoning graph with zero downtime. The pipeline supports five discretizer types (threshold, STDP, delta, windowed-frequency, and pattern) and composes with the existing \texttt{StreamAdapter} and \texttt{IngestionPipeline} layers. In v2.51.0 (Phase 53), the engine gains \textbf{adaptive search strategy}: local graph density is measured per-query and dynamically adjusts beam width, depth limit, and branching factor. In Phase 54, the \texttt{/build} endpoint enables hot CSV reload without server restart. CORS middleware and request-timing middleware are added for production obser\-vability. The streaming engine now operates at the same production maturity level as the batch reasoning stack.
+Real-world Knowledge Graph deployments must ingest conti\-nuously arriving data streams — sensor readings, financial ticks, event logs, and scientific obser\-vations — and immediately make this data available for reasoning. We present CEREBRUM's \textbf{Streaming Engine}, a composable pipeline that transforms heter\-ogeneous continuous signals into typed graph edges through a family of stateless discr\-etizers, then integrates the resulting edges into the live reasoning graph with zero downtime. The pipeline supports five discretizer types (threshold, STDP, delta, windowed-frequency, and pattern) and composes with the existing \texttt{StreamAdapter} and \texttt{IngestionPipeline} layers. In v2.52.0 (Phase 53), the engine gains \textbf{adaptive search strategy}: local graph density is measured per-query and dynamically adjusts beam width, depth limit, and branching factor. In Phase 54, the \texttt{/build} endpoint enables hot CSV reload without server restart. CORS middleware and request-timing middleware are added for production obser\-vability. The streaming engine now operates at the same production maturity level as the batch reasoning stack.
 
 \subsubsection{1. Introd\-uction}
 Traditional Knowledge Graph pipelines assume a static or batch-updated graph: data arrives in bulk, the graph is rebuilt or updated offline, and queries run against a stable snapshot. This model fails for appli\-cations where the latency between observation and reasoning must be sub-second: industrial sensor networks, financial surve\-illance, genomic streaming sequencers, and real-time intel\-ligence fusion.
@@ -41,7 +41,7 @@ The \texttt{STDPDiscretizer} implements Hebbian-inspired causal edge inference: 
 \end{itemize}
 These protections are documented in detail in Paper 16 (Production Hardening).
 
-\subsubsection{5. Recent Advances (v2.24.0 -\textgreater  v2.51.0)}
+\subsubsection{5. Recent Advances (v2.52.0 -\textgreater  v2.52.0)}
 
 \paragraph{5.1 Adaptive Search Strategy (Phase 53)}
 The most conse\-quential algorithmic advance in the streaming engine is the intro\-duction of \textbf{adaptive search strategy} (Phase 53). Prior versions used fixed beam parameters (width, depth, branching factor) configured at startup. In streaming graphs, however, local density varies drama\-tically: a newly-ingested event cluster may produce a dense sub-graph that overwhelms a narrow beam, while a sparsely-observed sensor region starves a wide beam.
@@ -84,7 +84,7 @@ Two middleware layers are now applied to all API endpoints:
 Together with the \texttt{/logs} endpoint and dashboard.html (Paper 12), these middleware layers provide end-to-end production obser\-vability without requiring external infra\-structure.
 
 \subsubsection{6. Conclusion}
-The CEREBRUM Streaming Engine in v2.51.0 has matured from a laboratory prototype into a production-grade continuous ingestion and reasoning pipeline. The adaptive search strategy (Phase 53) brings intelligent runtime adaptation to beam traversal, the \texttt{/build} endpoint (Phase 54) enables zero-downtime graph evolution, and the production middleware stack provides the obser\-vability required for enterprise deployment. Combined with the 1,357-test suite and CORS/timing instr\-umentation, the streaming engine is now a first-class production component of the CEREBRUM framework.
+The CEREBRUM Streaming Engine in v2.52.0 has matured from a laboratory prototype into a production-grade continuous ingestion and reasoning pipeline. The adaptive search strategy (Phase 53) brings intelligent runtime adaptation to beam traversal, the \texttt{/build} endpoint (Phase 54) enables zero-downtime graph evolution, and the production middleware stack provides the obser\-vability required for enterprise deployment. Combined with the 1,357-test suite and CORS/timing instr\-umentation, the streaming engine is now a first-class production component of the CEREBRUM framework.
 
 ---
 \subsection{Acknow\-ledgments}
@@ -101,4 +101,4 @@ The author gratefully ackno\-wledges the use of Claude (Anthropic) as a research
 
 \end{enumerate}
 ---
-\textbf{Reviewed on}: May 2, 2026 for version v2.51.0
+\textbf{Reviewed on}: May 2, 2026 for version v2.52.0

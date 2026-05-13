@@ -61,7 +61,7 @@ pip install -e ".[dev]"          # installs networkx, numpy, scipy, igraph, leid
 python -m pytest tests/ -v
 ```
 
-Expected output: **2177 passed, 1 skipped** (v2.51.0 / Phase 167; 3 studio UI errors require a running server)
+Expected output: **2177 passed, 1 skipped** (v2.52.0 / Phase 172; 3 studio UI errors require a running server)
 
 ### 4. Run a single test layer
 

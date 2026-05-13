@@ -3,7 +3,7 @@
 
 ![CEREBRUM Hero Image](file:///C:/Users/bryan/.gemini/antigravity/brain/77bb37a0-e733-41be-824d-b07e7cce5a6f/cerebrum_hero_v77bb37a0_e730_41be_824d_b07e7cce5a6f_png_1774651388694.png)
 
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.52.0 (Phase 172 (STRB) COMPLETE)
 **Tests**: 2,175+ passing cases
 
 ---
@@ -56,7 +56,7 @@ CEREBRUM no longer just searches blindly. It **anticipates** and **encodes**.
 
 ---
 
-### **4. Sleep: Sleep-Phase Consolidation (Phase 167)**
+### **4. Sleep: Sleep-Phase Consolidation (Phase 172)**
 Just like your brain consolidates memories while you sleep, CEREBRUM now has a **REM Cycle**.
 - **Hebbian Replay**: The system replays its best reasoning paths to "strengthen the synapses" (weights) of those connections.
 - **Shortcuts**: If the system finds itself taking the same multi-hop path repeatedly, it synthesizes a direct shortcut. This turns slow, multi-step reasoning into an instantaneous "reflex."
@@ -241,4 +241,4 @@ Most AIs need weeks of "training" on supercomputers. They cost millions of dolla
 *For the technical details, read the official [CEREBRUM ArXiv Manuscript](file:///e:/Development/Cerebrum/docs/latex/cerebrum_master.pdf).*
 
 ---
-**Reviewed on**: May 9, 2026 for version v2.51.1
+**Reviewed on**: May 9, 2026 for version v2.52.0

@@ -6,10 +6,10 @@ This file provides essential context and instructions for Gemini CLI when workin
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph (KG) reasoning. It implements a multi-hop traversal mechanism inspired by Transformer architectures, allowing KGs to perform complex reasoning without an LLM or training data.
 
-**v2.51.0 (Phase 167 COMPLETE)** — 2175+ tests passing. Includes STRB (Semantic Terminal Relation Boost), GraphProfiler (Auto Query Strategy), Terminal-Anchor Hints (TAB), Vectorized Beam Scoring, and all previous advancements.
+**v2.52.0 (Phase 172 COMPLETE)** — 2177+ tests passing. Includes STRB (Semantic Terminal Relation Boost), GraphProfiler (Auto Query Strategy), Terminal-Anchor Hints (TAB), Vectorized Beam Scoring, and all previous advancements.
 
 ### Core Innovations
-1.  **STRB (Semantic Terminal Relation Boost - Phase 167)**: Zero-config reasoning using query embeddings to automatically identify intended terminal relations.
+1.  **STRB (Semantic Terminal Relation Boost - Phase 172)**: Zero-config reasoning using query embeddings to automatically identify intended terminal relations.
 2.  **GraphProfiler (Phase 166)**: O(E) build-time topology analysis for automatic per-query strategy selection (Regime-based auto-config).
 3.  **TAB (Terminal-Anchor Boost - Phase 164)**: Penultimate-hop biasing for 3+ hop queries in heterogeneous graphs.
 4.  **DSCF/TSC (Triple-Signal Consensus):** A novel community detection algorithm that fuses local (LPA), global (Modularity), and flow (Centrality) signals.
@@ -88,12 +88,12 @@ python core/autonomous_researcher.py --continuous --interval 60
 -   **Reproducibility:** Deterministic runs for DSCF/TSC.
 -   **Documentation:** Absolute precedence to `PARALLAX.md` and `README.md`.
 
-## Current Project Status (Phase 167 COMPLETE)
+## Current Project Status (Phase 172 COMPLETE)
 
-CEREBRUM is currently in **v2.51.0**. All phases through 167 shipped and verified.
+CEREBRUM is currently in **v2.52.0**. All phases through 167 shipped and verified.
 
 Key implementations (recent phases):
--   **Phase 167 — STRB**: Semantic Terminal Relation Boost using query embeddings.
+-   **Phase 172 — STRB**: Semantic Terminal Relation Boost using query embeddings.
 -   **Phase 166 — GraphProfiler**: Automatic Query Strategy Selection via topology profiling.
 -   **Phase 165 — Hetionet Benchmark**: 85% accuracy on zero-shot biomedical reasoning.
 -   **Phase 164 — TAB**: Terminal-Anchor Hints for penultimate-hop biasing.
@@ -107,7 +107,7 @@ Key implementations (recent phases):
 -   **Phase 123 — Counterfactual Engine**: Simulation of "what-if" KG state changes.
 -   **Phase 122 — Epistemic Gating**: Unified uncertainty model for path pruning.
 -   **Phases 119-121 — Sleep Cycle & Metacognitive Monitor**: Integrated self-optimization loop.
--   **Phase 112 — REM Cycle Shortcut Synthesis**: Autonomous synthesis of shortcut edges.
+-   **Phase 172 — REM Cycle Shortcut Synthesis**: Autonomous synthesis of shortcut edges.
 -   **Phase 111 — Active Inference**: Proactive reasoning during idle cycles.
 -   **Phase 110 — Global Workspace (GWS)**: Centralized blackboard for multi-agent coordination.
 -   **Phase 109 — Counterfactual Reasoning (Early)**: Initial implementation of hypothetical traversal.

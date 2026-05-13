@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.51.1 (Phase 167) — Locked May 9, 2026
+## Version: v2.52.0 (Phase 172) — Locked May 9, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -24,9 +24,9 @@ No bridge synthesis, no GraphSAGE smoothing (Phase 53 baseline).
 
 ---
 
-## MetaQA — Full v2.51.1 Run (README Only; Do NOT Use in Paper Comparison Tables)
+## MetaQA — Full v2.52.0 Run (README Only; Do NOT Use in Paper Comparison Tables)
 
-The "full" configuration uses all v2.51.1 features including GraphSAGE, STRB, GraphProfiler.
+The "full" configuration uses all v2.52.0 features including GraphSAGE, STRB, GraphProfiler.
 **NOT comparable to prior work** — cite this only when labeling CEREBRUM's best-case performance,
 never in a table alongside supervised methods.
 
@@ -37,7 +37,7 @@ never in a table alongside supervised methods.
 
 ---
 
-## Hetionet — v2.51.1 (STRB Enabled)
+## Hetionet — v2.52.0 (STRB Enabled)
 
 Biomedical KG: 47,031 entities / 2,250,197 edges. Template: `disease_gene_pathway`.
 
@@ -51,7 +51,7 @@ Biomedical KG: 47,031 entities / 2,250,197 edges. Template: `disease_gene_pathwa
 
 ---
 
-## WebQSP — v2.51.1
+## WebQSP — v2.52.0
 
 | Metric | Value | Phase | Notes |
 |--------|-------|-------|-------|
@@ -181,7 +181,7 @@ Use this table verbatim in the flagship paper and Paper A's context section.
 
 ## Notation for η (Eta) — Resolved Conflict
 
-**Decision (Phase 167 / May 2026):** The symbol `η` was used with two different meanings:
+**Decision (Phase 172 / May 2026):** The symbol `η` was used with two different meanings:
 - In CSA (Phase 43): `η` = temporal decay weight (one of the 10 CSA parameters)
 - In TSC/DSCF (Phase 1): `η` was used generically for temperature step decay
 
@@ -193,4 +193,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-05-09 | Locked for v2.51.1 publication cycle*
+*Last updated: 2026-05-09 | Locked for v2.52.0 publication cycle*

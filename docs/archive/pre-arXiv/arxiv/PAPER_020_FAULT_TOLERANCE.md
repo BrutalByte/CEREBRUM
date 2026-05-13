@@ -2,13 +2,13 @@
 
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
-**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)
+**Status**: v2.52.0 (Phase 172 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
 ---
 
 ### Abstract
-Production Knowledge Graph reasoning servers face five distinct failure classes: traversal failures mid-hop, persistence write failures during query logging, stream interruptions visible to connected clients, process spawning failures during community detection, and state loss across server restarts. We document five corresponding fault-tolerance patterns implemented in CEREBRUM v2.51.0 (Phases 56–57): **partial-result HTTP 200 degradation** (`QueryResponse.partial`, `_partial_paths`), **write-failure isolation** (QueryLog, Engram, GlobalRebalancer worker), **streaming error signalling** (terminal NDJSON error chunk), **ProcessPoolExecutor sequential fallback** (`best_of_n_dscf`), and **durable Engram persistence** (save/load/two-tier startup). Together, these patterns guarantee that no single failure class can crash a running CEREBRUM server, corrupt an in-flight query, or silently drop accumulated reasoning experience. Each pattern is backward-compatible and adds no new required parameters to existing APIs.
+Production Knowledge Graph reasoning servers face five distinct failure classes: traversal failures mid-hop, persistence write failures during query logging, stream interruptions visible to connected clients, process spawning failures during community detection, and state loss across server restarts. We document five corresponding fault-tolerance patterns implemented in CEREBRUM v2.52.0 (Phases 56–57): **partial-result HTTP 200 degradation** (`QueryResponse.partial`, `_partial_paths`), **write-failure isolation** (QueryLog, Engram, GlobalRebalancer worker), **streaming error signalling** (terminal NDJSON error chunk), **ProcessPoolExecutor sequential fallback** (`best_of_n_dscf`), and **durable Engram persistence** (save/load/two-tier startup). Together, these patterns guarantee that no single failure class can crash a running CEREBRUM server, corrupt an in-flight query, or silently drop accumulated reasoning experience. Each pattern is backward-compatible and adds no new required parameters to existing APIs.
 
 ### 1. Introduction
 Production distributed systems face a fundamental asymmetry: failures are rare but their consequences are disproportionate. A single traversal crash that returns HTTP 500 may abort a client's multi-step reasoning workflow. A disk-full condition that propagates from a log write to a query response degrades system availability unnecessarily. A stream client that receives a TCP disconnect mid-stream has no way to distinguish a deliberate completion from a server crash.
@@ -155,4 +155,4 @@ The author gratefully acknowledges the use of Claude (Anthropic) as a research a
 3. Vaswani, A., et al. (2017). Attention is All You Need. NIPS.
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.51.0
+**Reviewed on**: May 2, 2026 for version v2.52.0

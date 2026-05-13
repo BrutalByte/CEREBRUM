@@ -1,7 +1,7 @@
 # White Paper: H1SE (Hop-1 Seed Expansion)
 ## Solving the Hub-Crowding Problem in Deep Graph Reasoning
 
-**Version**: v2.51.0 (Phase 167 COMPLETE)
+**Version**: v2.52.0 (Phase 172 COMPLETE)
 **Author**: Bryan Alexander Buchorn
 
 ---
@@ -26,4 +26,4 @@ H1SE eliminates the "Visibility Bias" inherent in greedy search.
 -   **Robustness to Hubs**: The system can now reason effectively even when starting from massive hub nodes, making it suitable for web-scale Knowledge Graphs like Wikidata or Freebase.
 
 ---
-**White Paper Finalized: v2.51.0 (Phase 167 COMPLETE)**
+**White Paper Finalized: v2.52.0 (Phase 172 COMPLETE)**

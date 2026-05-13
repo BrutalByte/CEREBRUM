@@ -3,36 +3,59 @@ import re
 
 def sync_files():
     replacements = [
-        (r'v2\.24\.0', 'v2.51.0'),
-        (r'Phase 112', 'Phase 167'),
-        (r'1978\+ tests', '2175+ tests'),
-        (r'1,357 passing tests', '2175+ tests'),
+        # Standard vX.Y.Z
+        (r'v2\.51\.[01]', 'v2.52.0'),
+        (r'v2\.24\.0', 'v2.52.0'),
+        # Bare X.Y.Z in assignments
+        (r'(version\s*[:=]\s*")2\.24\.0(")', r'\g<1>2.52.0\g<2>'),
+        (r'(version\s*[:=]\s*")1\.3\.0(")', r'\g<1>2.52.0\g<2>'),
+        (r'(version\s*[:=]\s*")2\.4\.0(")', r'\g<1>2.52.0\g<2>'),
+        # Phase mappings
+        (r'Phase 167', 'Phase 172'),
+        (r'Phase 112', 'Phase 172'),
+        # Test counts
+        (r'2175\+ tests', '2177+ tests'),
+        (r'1,357 passing tests', '2177+ tests'),
     ]
 
     # Progression fixes
     progression_patterns = [
         # Headers
-        (r'v2\.51\.0\s*(->|→)\s*v2\.51\.0', 'v2.24.0 -> v2.51.0'),
-        # Table comparison headers (e.g. | H@1 (v2.51.0) | H@1 (v2.51.0 Phase 167) |)
-        (r'\(v2\.51\.0\)(?=.*\(v2\.51\.0 Phase 167\))', '(v2.24.0)'),
+        (r'v2\.52\.0\s*(->|→)\s*v2\.52\.0', 'v2.51.1 -> v2.52.0'),
+        # Table comparison headers (e.g. | H@1 (v2.52.0) | H@1 (v2.52.0 Phase 172) |)
+        (r'\(v2\.52\.0\)(?=.*\(v2\.52\.0 Phase 172\))', '(v2.51.1)'),
         # Textual progression
-        (r'between v2\.51\.0 and v2\.51\.0', 'between v2.24.0 and v2.51.0'),
-        (r'Prior to v2\.51\.0', 'Prior to v2.24.0'),
-        (r'at v2\.51\.0', 'at v2.24.0'),
-        (r'since v2\.51\.0', 'since v2.24.0'),
-        (r'Since v2\.51\.0', 'Since v2.24.0'),
-        (r'at Phase 167', 'at Phase 112'),
-        (r'from Phase 167', 'from Phase 112'),
+        (r'between v2\.52\.0 and v2\.52\.0', 'between v2.51.1 and v2.52.0'),
+        (r'Prior to v2\.52\.0', 'Prior to v2.51.1'),
+        (r'at v2\.52\.0', 'at v2.51.1'),
+        (r'since v2\.52\.0', 'since v2.51.1'),
+        (r'Since v2\.52\.0', 'Since v2.51.1'),
+        (r'at Phase 172', 'at Phase 167'),
+        (r'from Phase 172', 'from Phase 167'),
     ]
 
     files_to_process = []
-    for root, dirs, files in os.walk('docs'):
-        for file in files:
-            if file.endswith('.md'):
-                files_to_process.append(os.path.join(root, file))
+    # Directories to search
+    target_dirs = ['docs', 'research/papers', 'templates', 'core', 'api']
+    
+    for target in target_dirs:
+        if not os.path.exists(target):
+            continue
+        for root, dirs, files in os.walk(target):
+            for file in files:
+                if file.endswith(('.md', '.tex', '.sty')):
+                    files_to_process.append(os.path.join(root, file))
     
     if os.path.exists('README.md'):
         files_to_process.append('README.md')
+    if os.path.exists('GEMINI.md'):
+        files_to_process.append('GEMINI.md')
+    if os.path.exists('pyproject.toml'):
+        files_to_process.append('pyproject.toml')
+    if os.path.exists('api/server.py'):
+        files_to_process.append('api/server.py')
+    if os.path.exists('core/telemetry.py'):
+        files_to_process.append('core/telemetry.py')
 
     updated_count = 0
     for file_path in files_to_process:
