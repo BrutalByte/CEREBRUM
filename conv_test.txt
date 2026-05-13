@@ -1,0 +1,36 @@
+OK  01-dscf-tsc.md
+ERR 02-csa.md: MemoryError()
+OK  03-bridge-twin.md
+OK  04-stdp-causal.md
+OK  05-holographic-indexing.md
+OK  06-bayesian-beam.md
+OK  07-rem-cycle.md
+OK  08-signal-encoder.md
+OK  09-thalamus.md
+OK  10-inference-validator.md
+OK  11-contradiction.md
+OK  12-glass-box.md
+OK  13-streaming-engine.md
+OK  14-metacognitive-verification.md
+ERR 15-algorithmic-depth.md: MemoryError()
+ERR 16-structural-holes.md: MemoryError()
+ERR 17-graphsage-smoothing.md: MemoryError()
+ERR 18-engram-traversal.md: MemoryError()
+OK  19-temporal-calibrator.md
+ERR 20-fault-tolerance.md: MemoryError()
+ERR 21-speedtalk.md: MemoryError()
+ERR 22-looped-beam.md: MemoryError()
+ERR 23-predictive-coding.md: MemoryError()
+ERR 24-autoapprover.md: MemoryError()
+ERR 25-triangulation.md: MemoryError()
+ERR 26-discovery-calibration.md: MemoryError()
+ERR 27-autonomous-loop.md: MemoryError()
+ERR 28-studio-v2.md: MemoryError()
+ERR 29-provenance-ledger.md: MemoryError()
+ERR 30-feature-impact.md: MemoryError()
+ERR 31-loop-provenance-recovery.md: MemoryError()
+ERR 32-graph-adapter-protocol.md: MemoryError()
+ERR 33-graph-snapshot.md: MemoryError()
+ERR 34-adaptive-loop-tuning.md: MemoryError()
+ERR 35-ue5-visualization.md: MemoryError()
+OK  36-conclusion.md

@@ -65,6 +65,17 @@ class GraphAdapter(ABC):
         """
         ...
 
+    def get_neighbors_batch(
+        self,
+        entity_ids: List[str],
+        max_neighbors: int = 50,
+    ) -> Dict[str, List[Edge]]:
+        """
+        Phase 171: Return neighbors for multiple entities at once.
+        Default implementation calls get_neighbors in a loop.
+        """
+        return {eid: self.get_neighbors(eid, max_neighbors=max_neighbors) for eid in entity_ids}
+
     @abstractmethod
     def find_entities(self, query: str, top_k: int = 10) -> List[Entity]:
         """

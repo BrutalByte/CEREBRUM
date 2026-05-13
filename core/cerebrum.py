@@ -57,7 +57,7 @@ import numpy as np
 
 from adapters.networkx_adapter import NetworkXAdapter
 from adapters.mmap_adapter import MmapAdapter
-from core.hardware_governor import MemoryGovernor
+from core.hardware import MemoryGovernor
 from core.attention_engine import CSAEngine, HomeostaticModulator
 from core.embedding_engine import EmbeddingEngine, RandomEngine
 from core.graph_adapter import GraphAdapter
@@ -132,11 +132,13 @@ class CerebrumGraph:
         use_adaptive_expansion: bool = True,
         use_mmap:             bool = False,
         auto_hybrid:          bool = False,
+        max_ram_gb:           Optional[float] = None,
+        max_vram_gb:          Optional[float] = None,
     ):
         self.adapter             = adapter
         self.use_mmap            = use_mmap
         self.auto_hybrid         = auto_hybrid
-        self.governor            = MemoryGovernor()
+        self.governor            = MemoryGovernor(max_ram_gb=max_ram_gb, max_vram_gb=max_vram_gb)
         self._embedding_engine   = embedding_engine or RandomEngine(dim=64)
         self._beam_width         = beam_width
         self._max_hop            = max_hop
@@ -493,6 +495,34 @@ class CerebrumGraph:
     # THALAMUS build pipeline
     # ------------------------------------------------------------------
 
+    def _spill_to_mmap(self):
+        """Phase 169: Convert current NetworkXAdapter to MmapAdapter to save RAM."""
+        from adapters.mmap_adapter import MmapAdapter
+        import tempfile
+
+        if isinstance(self.adapter, MmapAdapter):
+            return
+
+        logger.warning("Memory pressure detected. Spilling graph topology to MmapAdapter...")
+        
+        # 1. Create temporary directory
+        temp_dir = tempfile.mkdtemp(prefix="cerebrum_mmap_")
+        
+        # 2. Serialize current adapter to binary
+        MmapAdapter.from_adapter(self.adapter, temp_dir)
+        
+        # 3. Swap adapter and preserve metadata
+        old_adapter = self.adapter
+        self.adapter = MmapAdapter(temp_dir, governor=self.governor)
+        
+        # Preserve community_map and embeddings if they were already computed
+        if hasattr(old_adapter, "community_map"):
+            self.adapter.community_map = old_adapter.community_map
+        if hasattr(old_adapter, "embeddings"):
+            self.adapter.embeddings = old_adapter.embeddings
+            
+        logger.info("Spill complete. Disk-backed reasoning active at: %s", temp_dir)
+
     def build(
         self,
         cache_dir:            Optional[Union[str, Path]] = None,
@@ -535,6 +565,10 @@ class CerebrumGraph:
 
         Returns self for chaining.
         """
+        # Phase 169: check memory governor before starting expensive build
+        if self.governor.is_spill_needed():
+            self._spill_to_mmap()
+
         from core.community_engine import dscf_communities, leiden_communities, lpa_communities
         from core.structural_encoder import (
             build_community_distance_matrix,

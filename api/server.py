@@ -252,11 +252,14 @@ async def _run_query_internal(
     from core.attention_engine import CSAEngine
     from reasoning.traversal import BeamTraversal
     from reasoning.answer_extractor import extract
+    from core.resource_governor import ResourceGovernor
     import numpy as np
 
     adapter = _state["adapter"]
     csa_meta = _state["csa_metadata"]
     default_weights = _state["default_edge_type_weights"]
+    max_ram_gb = _state.get("max_ram_gb")
+    max_vram_gb = _state.get("max_vram_gb")
 
     if not seeds:
         entities = adapter.find_entities(query, top_k=5)
@@ -300,6 +303,10 @@ async def _run_query_internal(
     if _state["meta_learner"]:
         csa.set_meta_learner(_state["meta_learner"])
 
+    governor = ResourceGovernor(
+        max_ram_gb=max_ram_gb,
+        max_vram_gb=max_vram_gb
+    )
     traversal = BeamTraversal(
         adapter=adapter,
         csa_engine=csa,
@@ -308,6 +315,7 @@ async def _run_query_internal(
         max_budget=max_budget,
         causal_bonus=causal_bonus,
         terminal_relation_boost=terminal_relation_boost or {},
+        governor=governor,
     )
     # Phase 124: propagate causal edge index from CerebrumGraph if available
     _graph_obj = _state.get("graph_obj")
@@ -351,6 +359,8 @@ def create_app(
     cache_path: Optional[str] = None,
     use_meta_learning: bool = True,
     ws_port: Optional[int] = None,
+    max_ram_gb: Optional[float] = None,
+    max_vram_gb: Optional[float] = None,
 ) -> FastAPI:
     """
     Create a configured FastAPI app.
@@ -447,6 +457,8 @@ def create_app(
                 default_edge_type_weights,
                 cache_path,
                 use_meta_learning=use_meta_learning,
+                max_ram_gb=max_ram_gb,
+                max_vram_gb=max_vram_gb,
             )
         try:
             yield
@@ -3674,12 +3686,17 @@ def _load(
     default_edge_type_weights: Optional[Dict[str, float]] = None,
     cache_path: Optional[str] = None,
     use_meta_learning: bool = True,
+    max_ram_gb: Optional[float] = None,
+    max_vram_gb: Optional[float] = None,
 ):
     """Load graph state into the global _state dict."""
     from core.community_engine import best_of_n_dscf, hierarchical_dscf
     from core.structural_encoder import build_community_distance_matrix, adjacent_community_pairs
     from core.persistence import is_state_cached, load_state, save_state
     from core.parameter_learner import MetaParameterLearner
+
+    _state["max_ram_gb"] = max_ram_gb
+    _state["max_vram_gb"] = max_vram_gb
 
     # 0. Check cache
     if cache_path and is_state_cached(cache_path):

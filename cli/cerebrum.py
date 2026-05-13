@@ -21,6 +21,7 @@ def cmd_query(args):
     from reasoning.traversal import BeamTraversal
     from reasoning.answer_extractor import extract
     from llm_bridge.context_formatter import to_structured
+    from core.resource_governor import ResourceGovernor
 
     adapter = load_csv_adapter(args.csv)
     G       = adapter.to_networkx()
@@ -82,11 +83,13 @@ def cmd_query(args):
 
     print(f"Seeds: {seeds}")
 
+    governor = ResourceGovernor(max_ram_gb=args.max_ram_gb, max_vram_gb=args.max_vram_gb)
     traversal = BeamTraversal(
         adapter=adapter,
         csa_engine=csa,
         beam_width=args.beam_width,
         max_hop=args.max_hop,
+        governor=governor,
     )
     paths   = traversal.traverse(seeds)
     answers = extract(paths, top_k=args.top_k)
@@ -186,6 +189,7 @@ def cmd_chat(args):
     )
     from core.conversation import ConversationManager
     from reasoning.traversal import BeamTraversal
+    from core.resource_governor import ResourceGovernor
 
     # ── Load graph + pipeline ────────────────────────────────────────
     adapter = load_csv_adapter(args.csv)
@@ -215,11 +219,13 @@ def cmd_chat(args):
     csa  = CSAEngine(adapter=adapter)
     csa.set_community_graph(dist, adj)
 
+    governor = ResourceGovernor(max_ram_gb=args.max_ram_gb, max_vram_gb=args.max_vram_gb)
     traversal = BeamTraversal(
         adapter=adapter,
         csa_engine=csa,
         beam_width=args.beam_width,
         max_hop=args.max_hop,
+        governor=governor,
     )
 
     manager = ConversationManager(
@@ -229,6 +235,7 @@ def cmd_chat(args):
         beam_traversal=traversal,
         top_k=args.top_k,
     )
+
     session = manager.new_session()
 
     # ── Enable readline history if available ────────────────────────
@@ -379,6 +386,7 @@ def cmd_ask(args):
     from core.verbalizer import PathVerbalizer
     from reasoning.traversal import BeamTraversal
     from reasoning.answer_extractor import extract
+    from core.resource_governor import ResourceGovernor
 
     adapter = load_csv_adapter(args.csv)
     G       = adapter.to_networkx()
@@ -432,13 +440,16 @@ def cmd_ask(args):
     csa  = CSAEngine(adapter=adapter)
     csa.set_community_graph(dist, adj)
 
+    governor = ResourceGovernor(max_ram_gb=args.max_ram_gb, max_vram_gb=args.max_vram_gb)
     traversal = BeamTraversal(
         adapter=adapter,
         csa_engine=csa,
         beam_width=args.beam_width,
         max_hop=parsed.hop_hint,
+        governor=governor,
     )
     paths   = traversal.traverse([parsed.seed_entity_id])
+
     answers = extract(paths, top_k=args.top_k)
 
     # Verbalize
@@ -479,6 +490,8 @@ def cmd_serve(args):
         target_communities=args.target_communities,
         default_edge_type_weights=bridge_weights,
         ws_port=getattr(args, "ws_port", None),
+        max_ram_gb=args.max_ram_gb,
+        max_vram_gb=args.max_vram_gb,
     )
 
     # Restore learned parameters from file if provided
@@ -509,6 +522,8 @@ def main():
         prog="cerebrum",
         description="CEREBRUM — Community-Structured Graph Attention for KG Reasoning",
     )
+    parser.add_argument("--max-ram-gb", type=float, default=None, help="Maximum system RAM (GB) before spilling to disk")
+    parser.add_argument("--max-vram-gb", type=float, default=None, help="Maximum GPU VRAM (GB) before falling back to CPU")
     sub = parser.add_subparsers(dest="command", required=True)
 
     # query

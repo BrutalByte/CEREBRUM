@@ -558,6 +558,14 @@ class BeamTraversal:
             if gws is not None and gws.blackboard.qsize() > 50: # Critical threshold
                 gws_bypass = True
 
+            # Phase 172: Vectorized Batch Neighbor Fetch (NVME Parallelism)
+            # Fetch neighbors for ALL beam tails in a single call to exploit deep NVME queues.
+            tails = list(dict.fromkeys(p.tail for p in beam))
+            all_edges_map = self.adapter.get_neighbors_batch(
+                tails,
+                max_neighbors=self.max_neighbors,
+            )
+
             for path in beam:
                 u = path.tail
                 
@@ -590,11 +598,7 @@ class BeamTraversal:
                 else:
                     csa_params = csa_params_base
 
-                edges = self.adapter.get_neighbors(
-                    u,
-                    max_neighbors=self.max_neighbors,
-                    context_embedding=path.embedding,
-                )
+                edges = all_edges_map.get(u, [])
                 self.expansions += 1
 
                 # Phase 134: accumulate all effective next-steps for batch scoring

@@ -38,11 +38,15 @@ class ResourceGovernor:
         memory_threshold_pct: float = 95.0,
         safety_buffer_mb: int = 200,
         vram_safety_buffer_mb: int = 256,
+        max_ram_gb: Optional[float] = None,
+        max_vram_gb: Optional[float] = None,
     ):
         self.process = psutil.Process(os.getpid())
         self.threshold = memory_threshold_pct
         self.buffer_bytes = safety_buffer_mb * 1024 * 1024
         self.vram_buffer_mb = vram_safety_buffer_mb
+        self.max_ram_bytes = (max_ram_gb * 1024**3) if max_ram_gb else None
+        self.max_vram_bytes = (max_vram_gb * 1024**3) if max_vram_gb else None
 
     # ------------------------------------------------------------------
     # System RAM
@@ -56,6 +60,7 @@ class ResourceGovernor:
             "system_ram_pct": mem.percent,
             "system_ram_free_mb": mem.available // (1024 * 1024),
             "process_rss_mb": proc_mem // (1024 * 1024),
+            "ram_limit_gb": self.max_ram_bytes / (1024**3) if self.max_ram_bytes else None
         }
 
     def can_expand(self, current_expansions: int, max_budget: int) -> bool:
@@ -71,11 +76,23 @@ class ResourceGovernor:
             return False
 
         mem = psutil.virtual_memory()
+        
+        # Check relative threshold
         if mem.percent > self.threshold:
             logger.warning(
                 "Governor: high system RAM pressure (%.1f%%)", mem.percent
             )
             return False
+            
+        # Check absolute limit (Phase 168)
+        proc_mem = self.process.memory_info().rss
+        if self.max_ram_bytes and (proc_mem + self.buffer_bytes >= self.max_ram_bytes):
+            logger.warning(
+                "Governor: process RSS (%d MB) exceeds max_ram_gb limit (%d MB)",
+                proc_mem // (1024**2), self.max_ram_bytes // (1024**2)
+            )
+            return False
+
         if mem.available < self.buffer_bytes:
             logger.warning(
                 "Governor: available RAM (%d MB) below safety buffer",
@@ -131,26 +148,31 @@ class ResourceGovernor:
 
     def can_use_gpu(self, required_mb: int = 256) -> bool:
         """
-        Return True if a CUDA device has at least ``required_mb`` MB of
-        free VRAM above the governor's safety buffer.
-
-        Use this as a pre-flight check before allocating large GPU tensors.
-
-        Parameters
-        ----------
-        required_mb : int
-            Estimated VRAM needed for the upcoming operation in megabytes.
+        Return True if a CUDA device has enough free VRAM AND we are within
+        the governor's absolute VRAM budget (max_vram_gb).
         """
         from core.hardware import HAS_CUDA, get_best_cuda_device, get_gpu_vram_mb
+        import torch
 
         if not HAS_CUDA:
             return False
+            
+        # Check absolute process budget (Phase 168)
+        if self.max_vram_bytes:
+            used_bytes = torch.cuda.memory_allocated()
+            if used_bytes + (required_mb * 1024**2) + self.vram_buffer_mb * 1024**2 >= self.max_vram_bytes:
+                logger.warning(
+                    "Governor: process VRAM (%d MB) exceeds max_vram_gb limit (%d MB)",
+                    used_bytes // (1024**2), self.max_vram_bytes // (1024**2)
+                )
+                return False
+
         idx = get_best_cuda_device()
         free_mb, _ = get_gpu_vram_mb(idx)
         needed = required_mb + self.vram_buffer_mb
         if free_mb < needed:
             logger.warning(
-                "Governor: insufficient VRAM — %d MB free, %d MB needed "
+                "Governor: insufficient physical VRAM — %d MB free, %d MB needed "
                 "(requested %d + %d buffer)",
                 free_mb, needed, required_mb, self.vram_buffer_mb,
             )
