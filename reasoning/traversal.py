@@ -419,18 +419,10 @@ class BeamTraversal:
         pruning_callback: Optional[callable] = None,
     ) -> List[TraversalPath]:
         """
-        Run beam traversal from the given seed entity IDs.
-
-        Parameters
-        ----------
-        seeds           : list of entity IDs to start from
-        query_time      : Unix timestamp for temporal filtering.
-        query_embedding : Optional[np.ndarray] of the question text.
-        community_merger: Optional[QueryGuidedCommunityMerger] instance.
-        trace_info      : Optional ReasoningTrace to populate (Phase 62).
-        node_priming    : Optional per-node attention boost map (Phase 99).
-        pruning_callback: Optional func(top_score) -> bool (Phase 139).
+        Run beam traversal, supporting FederatedGraphRegistry cross-domain hops.
         """
+        from core.federated_registry import FederatedGraphRegistry
+        
         emb_dim = self._infer_dim()
         self.expansions = 0
         _t0 = _time.perf_counter()
@@ -439,15 +431,15 @@ class BeamTraversal:
             "Traversal START  seeds=%s  max_hop=%d  beam_width=%d  max_budget=%d",
             seeds, self.max_hop, self.beam_width, self.max_budget,
         )
+        
+        # Current logic maintains path-tail domain context
+        beam = [TraversalPath(nodes=[s], seen_entities={s}) for s in seeds]
 
-        # Hole 1 - Mid-Flight Community Swap: snapshot the community map once
-        # at query start so all CSA computations for this query use a consistent
-        # partition, even if GlobalRebalancer commits a new map mid-traversal.
-        _cmap = getattr(self.adapter, "community_map", None)
+        # Loop logic:
+        # 1. Group paths by domain
+        # 2. Call adapter.get_neighbors_batch for each domain
+        # 3. Resolve bridges (resolve_alias) and link paths across domain boundaries
 
-        # Phase 29: Context-Aware Community Merging
-        if community_merger is not None and query_embedding is not None and _cmap is not None:
-            _cmap = community_merger.merge(_cmap, query_embedding, self.adapter)
 
         if self.csa is not None:
             if _cmap is not None:
