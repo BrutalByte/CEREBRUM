@@ -33,7 +33,8 @@ from adapters.stream_adapter import (
     HTTPPollingSource,
 )
 from core.cerebrum import CerebrumGraph
-from core.hardware import HardwareManager
+from core.federated_registry import FederatedGraphRegistry
+from core.trifecta import TrifectaEngine
 from core.discretizer import ThresholdDiscretizer
 from core.insight_engine import InsightEngine
 from core.insight_validator import InsightValidator
