@@ -530,8 +530,29 @@ class StudioEngine:
         return f"<table>{rows}</table>"
 
     # ------------------------------------------------------------------
-    # Graph Management (Phase 175)
+    # Emergency Management (Phase 178)
     # ------------------------------------------------------------------
+
+    def emergency_snapshot(self) -> str:
+        """Atomically persist all reasoning state to a 'panics/' snapshot."""
+        try:
+            snapshot_dir = Path("panics") / f"snapshot_{int(time.time())}"
+            snapshot_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Persist Engram and Graph State
+            if self.engram:
+                self.engram.save_if_path(str(snapshot_dir / "engram.json"))
+            
+            # Save Graph Topology
+            if self.graph_obj:
+                # We can't easily save the memmap state, but we save the mappings
+                with open(snapshot_dir / "nodes.map", "w") as f:
+                    for node, i in self.graph_obj.adapter.id_map.items():
+                        f.write(f"{node}\t{i}\n")
+                        
+            return f"DON'T PANIC. State saved to {snapshot_dir}"
+        except Exception as e:
+            return f"PANIC: Snapshot failed: {e}"
 
     def switch_graph(self, path: str, embedding_type: str) -> tuple:
         """Tear down current graph and load a new one."""
