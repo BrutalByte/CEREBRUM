@@ -269,7 +269,7 @@ async def _run_query_internal(
     if not seeds:
         return {"error": f"No entities found for query: {query}"}
 
-    # Phase 166: GraphProfiler - auto-select strategy if enabled
+    # Phase 172: GraphProfiler - auto-select strategy if enabled
     graph_obj = _state.get("graph_obj")
     if graph_obj is not None:
         q_emb_arr = np.array(query_embedding) if query_embedding else None

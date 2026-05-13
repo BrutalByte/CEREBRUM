@@ -26,7 +26,7 @@ This guide covers the key parameters affecting query latency, throughput, reason
 
 ---
 
-## 1. Zero-Config Optimization (Phase 166-167)
+## 1. Zero-Config Optimization (Phase 172-167)
 
 ### GraphProfiler (Automatic Strategy Selection)
 In latest versions, you no longer need to manually toggle `hop_expand` (H1SE) or `anchor_bonus` (TAB). The **GraphProfiler** performs a build-time topological analysis and selects the optimal "Graph Regime":
@@ -50,7 +50,7 @@ The core attention calculation is now implemented via optimized NumPy matrix ope
 ### beam_width
 The single most impactful parameter for latency. Beam width controls how many candidates are evaluated at each hop.
 
-| beam_width | Latency (v2.24) | Latency (v2.51 Vectorized) | H@10 (MetaQA-3hop) |
+| beam_width | Latency (v2.52.0) | Latency (v2.52.0 Vectorized) | H@10 (MetaQA-3hop) |
 |---|---|---|---|
 | 3 | 2.1ms | 0.4ms | 0.271 |
 | 5 | 3.4ms | 0.8ms | 0.294 |
@@ -68,7 +68,7 @@ The single most impactful parameter for latency. Beam width controls how many ca
 In hub-heavy graphs, a single global beam is often captured by popular entities (e.g., "USA") at hop 1. **Hop-1 Intermediate Seed Expansion (H1SE)** gives each hop-1 neighbor its own independent search budget.
 - **Tune**: `expansion_k` (default 5). Higher `expansion_k` improves recall but increases latency linearly.
 
-### TAB: Terminal-Anchor Boost (Phase 164)
+### TAB: Terminal-Anchor Boost (Phase 172)
 For 3-hop queries in typed graphs, use **TAB** to guide the penultimate hop. It applies a bonus to entities that are known sources of the target relation type.
 - **Tune**: `anchor_bonus` (default 2.0). Increase to 3.0+ for extremely sparse heterogeneous graphs.
 

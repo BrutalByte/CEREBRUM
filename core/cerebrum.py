@@ -181,7 +181,7 @@ class CerebrumGraph:
         self._working_memory: Optional[Any] = None
         self._goal_stack: Optional[Any] = None
 
-        # Persistence & REM Cycle (Phase 112)
+        # Persistence & REM Cycle (Phase 172)
         from core.persistence import QueryLog
         self.query_log = QueryLog()
         from core.consolidation_engine import ConsolidationEngine
@@ -827,14 +827,14 @@ class CerebrumGraph:
         self._csa.set_pagerank(pr_map)
 
         # ----------------------------------------------------------
-        # 5. StructuralRelationInferrer (Phase 161)
+        # 5. StructuralRelationInferrer (Phase 172)
         # ----------------------------------------------------------
         if callback: callback(0.88, "Step 5/6: Building Structural Relation Inferrer...")
         from core.structural_relation_inferrer import StructuralRelationInferrer
         self._sri = StructuralRelationInferrer()
         self._sri.build(self.adapter)
-        self._sri.build_community_fingerprints(self.adapter)  # Phase 162
-        # Phase 163: build semantic TRB index when a non-random embedding engine is available
+        self._sri.build_community_fingerprints(self.adapter)  # Phase 172
+        # Phase 172: build semantic TRB index when a non-random embedding engine is available
         _is_random_engine = type(self._embedding_engine).__name__.lower() == "randomengine"
         if not _is_random_engine:
             self._sri.build_semantic_index(self.adapter, self._embedding_engine)
@@ -845,7 +845,7 @@ class CerebrumGraph:
             self._sri._semantic_index_built,
         )
 
-        # Phase 164: Terminal-Anchor Source Index — O(E) pass
+        # Phase 172: Terminal-Anchor Source Index — O(E) pass
         # _anchor_sources[rel] = set of entity IDs with at least one outgoing rel edge.
         # Used at query time to bias the penultimate-hop beam toward entities that can
         # directly produce answers of the correct type.
@@ -858,16 +858,16 @@ class CerebrumGraph:
                     if _rel not in self._anchor_sources:
                         self._anchor_sources[_rel] = set()
                     self._anchor_sources[_rel].add(_u)
-            logger.info("Phase 164: anchor source index built (%d relation types)", len(self._anchor_sources))
+            logger.info("Phase 172: anchor source index built (%d relation types)", len(self._anchor_sources))
         except Exception as _exc:
-            logger.warning("Phase 164: anchor source index build failed: %s", _exc)
+            logger.warning("Phase 172: anchor source index build failed: %s", _exc)
 
-        # Phase 166: GraphProfiler — auto query strategy selection
+        # Phase 172: GraphProfiler — auto query strategy selection
         try:
             from core.graph_profiler import GraphProfiler
             self._query_profile = GraphProfiler.profile(self.adapter, self._anchor_sources)
             logger.info(
-                "Phase 166: graph profile computed — regime=%s "
+                "Phase 172: graph profile computed — regime=%s "
                 "hub_score=%.3f mean_rel_coverage=%.3f "
                 "recommended: hop_expand=%s trb_auto=%s anchor_bonus=%s",
                 self._query_profile.regime,
@@ -878,7 +878,7 @@ class CerebrumGraph:
                 self._query_profile.recommended_anchor_bonus,
             )
         except Exception as _exc:
-            logger.warning("Phase 166: graph profiling failed: %s", _exc)
+            logger.warning("Phase 172: graph profiling failed: %s", _exc)
             self._query_profile = None
 
         # ----------------------------------------------------------
@@ -917,7 +917,7 @@ class CerebrumGraph:
         return self
 
     # ------------------------------------------------------------------
-    # Phase 166: Query profile access
+    # Phase 172: Query profile access
     # ------------------------------------------------------------------
 
     @property
@@ -992,7 +992,7 @@ class CerebrumGraph:
                 "Graph has not been built. Call graph.build() first."
             )
 
-        # Phase 166: Resolve None params against QueryProfile defaults.
+        # Phase 172: Resolve None params against QueryProfile defaults.
         # Explicit True/False always wins; None = use profile recommendation.
         _qp = getattr(self, "_query_profile", None)
         if hop_expand is None:
@@ -1049,22 +1049,22 @@ class CerebrumGraph:
         needs_custom = (mh != self._max_hop or bw != self._beam_width or memory_threshold_pct != 95.0 or bool(csa_overrides) or hop_expand or (beam_widths is not None))
         _prev_widths: Dict[int, int] = {}  # only meaningful when not needs_custom
 
-        # Phase 161/163: Structural / semantic auto-inference of terminal relation boost.
-        # Phase 163: when query_embedding is available and a semantic index was built,
+        # Phase 172/163: Structural / semantic auto-inference of terminal relation boost.
+        # Phase 172: when query_embedding is available and a semantic index was built,
         # use query-relation cosine similarity (STRB) — more accurate than structural SRI.
-        # Phase 161: structural hard-select fallback when no embedding is available.
+        # Phase 172: structural hard-select fallback when no embedding is available.
         if auto_infer_terminal_relation and not terminal_relation_boost:
             _sri = getattr(self, "_sri", None)
             if _sri is not None:
                 if query_embedding is not None and _sri._semantic_index_built:
-                    # Phase 163: semantic TRB via embedding similarity
+                    # Phase 172: semantic TRB via embedding similarity
                     terminal_relation_boost = _sri.semantic_trb(
                         query_embedding=query_embedding,
                         boost_factor=5.0,
                         soft_mode=True,
                     )
                 elif seeds:
-                    # Phase 161: structural hard-select fallback
+                    # Phase 172: structural hard-select fallback
                     terminal_relation_boost = _sri.to_boost_dict(
                         seed_id=seeds[0],
                         n_hops=max_hop or self._max_hop,
@@ -1077,7 +1077,7 @@ class CerebrumGraph:
         _trb = terminal_relation_boost or {}
         _prb = penultimate_relation_boost or {}
 
-        # Phase 164: Terminal-Anchor hints — bias penultimate-hop beam toward entities
+        # Phase 172: Terminal-Anchor hints — bias penultimate-hop beam toward entities
         # that are sources of the terminal relation (can directly produce answer-type entities).
         # anchor_hints uses sub-traversal hop indices: for 3-hop, hop-1 of sub-traversal
         # (= hop-2 of full query) is the critical penultimate selection point.
@@ -1153,8 +1153,8 @@ class CerebrumGraph:
                 penultimate_relation_boost = _prb,  # Phase 156
                 beam_widths                = _auto_beam_widths,
                 penultimate_decay          = penultimate_decay,
-                anchor_hints               = _anchor_hints,       # Phase 164
-                stage1_anchor_hint         = _stage1_anchor,      # Phase 164
+                anchor_hints               = _anchor_hints,       # Phase 172
+                stage1_anchor_hint         = _stage1_anchor,      # Phase 172
                 **csa_overrides,
             )
             traversal._causal_edge_index = getattr(
@@ -1294,7 +1294,7 @@ class CerebrumGraph:
             adapter               = self.adapter,           # Phase 151 bug fix
         )
 
-        # Phase 162: community consensus post-traversal re-ranking
+        # Phase 172: community consensus post-traversal re-ranking
         if auto_infer_terminal_relation and answers:
             _sri = getattr(self, "_sri", None)
             if _sri is not None:
@@ -1408,5 +1408,5 @@ class CerebrumGraph:
         )
 
     async def run_rem_cycle(self):
-        """Phase 112: Run asynchronous shortcut synthesis (REM cycle)."""
+        """Phase 172: Run asynchronous shortcut synthesis (REM cycle)."""
         await self.consolidation_engine.run_rem_cycle()

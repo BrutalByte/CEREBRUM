@@ -9,7 +9,7 @@ Changes made:
   2. "Independent Researcher · Anthropic"
      → "Independent Researcher, Las Vegas, NV, USA"
   3. Ref-list entries: "Buchorn, B. A., & Sonnet, C. (2026). ... SPEC_xxx.md."
-     → "Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification. [CEREBRUM_REPORT_PLACEHOLDER]"
+     → "Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification. [CEREBRUM_REPORT_PLACEHOLDER]"
   4. Inline body citations: (SPEC_xxx) or PARALLAX.md
      → [Buchorn, 2026]
   5. Adds Acknowledgments section before ## References in each paper file
@@ -39,7 +39,7 @@ REF_SPEC_OLD = re.compile(
     r'Buchorn, B\. A\., & Sonnet, C\. \(2026\)\. (.+?)\. (?:SPEC_\d+\.md|PARALLAX\.md)\.'
 )
 REF_SPEC_NEW = (
-    r'Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification '
+    r'Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification '
     r'for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].'
 )
 
@@ -143,8 +143,8 @@ def fix_template_version(path):
         text = f.read()
     original = text
     # Update stale version strings
-    text = re.sub(r'v1\.\d+\.\d+ · \w+ 2026', 'v2.51.1 · May 2026', text)
-    text = re.sub(r'v2\.\d+\.\d+ · \w+ 2026', 'v2.51.1 · May 2026', text)
+    text = re.sub(r'v1\.\d+\.\d+ · \w+ 2026', 'v2.52.0 · May 2026', text)
+    text = re.sub(r'v2\.\d+\.\d+ · \w+ 2026', 'v2.52.0 · May 2026', text)
     if text != original:
         with open(path, 'w', encoding='utf-8') as f:
             f.write(text)

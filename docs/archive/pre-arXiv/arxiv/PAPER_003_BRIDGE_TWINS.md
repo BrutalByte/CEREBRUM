@@ -68,7 +68,7 @@ The author gratefully acknowledges the use of Claude (Anthropic) as a research a
 4. Newman, M. E. (2006). Modularity and community structure in networks. PNAS.
 5. Abbott, L. F., & Nelson, S. B. (2000). Synaptic plasticity: taming the beast. Nature Neuroscience.
 6. Caporale, N., & Dan, Y. (2008). Spike timing-dependent plasticity: a Hebbian learning rule. Annual Review of Neuroscience.
-7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
+7. Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.52.0

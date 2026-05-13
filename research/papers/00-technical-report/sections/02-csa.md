@@ -109,7 +109,7 @@ where `affinity` is derived from accumulated `_counts`. This biases beam search 
 7. Himmelstein, C. S., et al. (2017). Systematic integration of biomedical knowledge prioritizes drugs for inflammation. eLife.
 8. Zhang, Y., et al. (2018). Variational Reasoning for Question Answering over Knowledge Graphs. ICLR.
 9. Wang, Q., et al. (2017). Knowledge Graph Embedding: A Survey of Approaches and Applications. IEEE TKDE.
-10. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
+10. Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 11. Hamilton, W., Ying, Z., & Leskovec, J. (2017). Inductive Representation Learning on Large Graphs. NeurIPS.
 
 ---

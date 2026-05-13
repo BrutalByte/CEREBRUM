@@ -54,13 +54,13 @@ In many Knowledge Graphs, "popular" nodes (hubs) like *United States* or *Action
 
 In latest versions, CEREBRUM has moved from a "manual config" tool to an **Autonomous Reasoner**.
 
-### GraphProfiler: Automatic Strategy (Phase 166)
+### GraphProfiler: Automatic Strategy (Phase 172)
 Graphs come in many shapes. Some are "hub-heavy" (like Wikipedia), while others are "type-rich" (like medical databases). CEREBRUM's **GraphProfiler** analyzes the topology of your data at build time. It automatically detects the "Graph Regime" and configures the reasoning engine accordingly—turning on features like H1SE or STRB only when they are statistically likely to help.
 
 ### STRB: Zero-Config Intent Matching (Phase 172)
 Traditionally, you had to tell a graph searcher which "relation type" mattered (e.g., "Look for *treats* edges"). With **Semantic Terminal Relation Boost (STRB)**, CEREBRUM does this automatically. It uses its embedding engine to compare your query text to the labels of every relation in the graph. If you ask "What treats X?", STRB automatically boosts paths ending in "treats" or "therapeutic_use," enabling high-accuracy reasoning with zero manual configuration.
 
-### TAB: Navigating Deep Heterogeneity (Phase 164)
+### TAB: Navigating Deep Heterogeneity (Phase 172)
 For complex questions (3+ hops), the search can get lost in the "middle" hops. **Terminal-Anchor Boost (TAB)** provides a navigational beacon. It identifies "anchor sets"—groups of entities that are known to be just one step away from the target type—and applies a bonus to paths that reach those anchors at the penultimate hop. This "look-ahead" biasing significantly improves recall for deep, heterogeneous queries.
 
 ---

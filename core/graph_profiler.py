@@ -1,5 +1,5 @@
 """
-Phase 166: GraphProfiler — Automatic Query Strategy Selection.
+Phase 172: GraphProfiler — Automatic Query Strategy Selection.
 
 Computes structural signals from the loaded graph at build time and produces
 a QueryProfile that drives per-query defaults for hop_expand, auto_infer_terminal_relation,
@@ -104,7 +104,7 @@ class GraphProfiler:
         Parameters
         ----------
         adapter        : any GraphAdapter with to_networkx()
-        anchor_sources : dict from CerebrumGraph._anchor_sources (built in Phase 164)
+        anchor_sources : dict from CerebrumGraph._anchor_sources (built in Phase 172)
         hub_percentile : top fraction of nodes considered "hubs" (default 1%)
         """
         G = adapter.to_networkx()
@@ -139,7 +139,7 @@ class GraphProfiler:
 
         # ----------------------------------------------------------------
         # Relation coverage — O(E) pass on the graph directly.
-        # anchor_sources (Phase 164) only adds _u per edge, correct for
+        # anchor_sources (Phase 172) only adds _u per edge, correct for
         # directed graphs. For undirected graphs both endpoints can be
         # traversed from, so we recount here using both u and v.
         # This gives the correct "what fraction of nodes can be a source

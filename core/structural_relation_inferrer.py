@@ -1,5 +1,5 @@
 """
-StructuralRelationInferrer (SRI) — Phase 161
+StructuralRelationInferrer (SRI) — Phase 172
 
 Infers candidate terminal relations from graph topology alone.
 No domain knowledge, no keyword lists, no LLM.
@@ -40,11 +40,11 @@ class StructuralRelationInferrer:
         self._rel_target_degree_sum: Dict[str, float] = {}
         self._specificity: Dict[str, float] = {}
         self._built: bool = False
-        # Phase 162: community fingerprints
+        # Phase 172: community fingerprints
         self._community_dominant_rel: Dict[int, str] = {}
         self._community_purity: Dict[int, float] = {}
         self._community_rel_counts: Dict[int, Dict[str, int]] = {}
-        # Phase 163: semantic TRB — relation phrase embeddings
+        # Phase 172: semantic TRB — relation phrase embeddings
         self._rel_phrase_embs: Dict[str, "np.ndarray"] = {}
         self._semantic_index_built: bool = False
 
@@ -186,7 +186,7 @@ class StructuralRelationInferrer:
         }
 
     # ------------------------------------------------------------------
-    # Phase 162: community fingerprinting (build-time)
+    # Phase 172: community fingerprinting (build-time)
     # ------------------------------------------------------------------
 
     def build_community_fingerprints(self, adapter: "GraphAdapter") -> None:
@@ -220,7 +220,7 @@ class StructuralRelationInferrer:
             self._community_rel_counts[cid] = dict(rel_counts)
 
     # ------------------------------------------------------------------
-    # Phase 162: post-traversal community consensus boost (query-time)
+    # Phase 172: post-traversal community consensus boost (query-time)
     # ------------------------------------------------------------------
 
     def community_consensus_boost(
@@ -324,7 +324,7 @@ class StructuralRelationInferrer:
         return changed
 
     # ------------------------------------------------------------------
-    # Phase 163: semantic TRB — query-embedding × relation-phrase similarity
+    # Phase 172: semantic TRB — query-embedding × relation-phrase similarity
     # ------------------------------------------------------------------
 
     @staticmethod

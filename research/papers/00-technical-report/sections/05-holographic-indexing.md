@@ -54,7 +54,7 @@ Federated reasoning has been one of the most actively developed areas of the CER
 3. Kairouz, P., et al. (2021). Advances and open problems in federated learning. Foundations and Trends in Machine Learning.
 4. Broder, A., & Mitzenmacher, M. (2004). Network applications of Bloom filters: A survey. Internet Mathematics.
 5. Tarkoma, S., Rothenberg, C. E., & Lagerspetz, E. (2011). Theory and practice of Bloom filters for distributed systems. IEEE Communications Surveys & Tutorials.
-6. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
+6. Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.52.0

@@ -10,8 +10,8 @@ This file provides essential context and instructions for Gemini CLI when workin
 
 ### Core Innovations
 1.  **STRB (Semantic Terminal Relation Boost - Phase 172)**: Zero-config reasoning using query embeddings to automatically identify intended terminal relations.
-2.  **GraphProfiler (Phase 166)**: O(E) build-time topology analysis for automatic per-query strategy selection (Regime-based auto-config).
-3.  **TAB (Terminal-Anchor Boost - Phase 164)**: Penultimate-hop biasing for 3+ hop queries in heterogeneous graphs.
+2.  **GraphProfiler (Phase 172)**: O(E) build-time topology analysis for automatic per-query strategy selection (Regime-based auto-config).
+3.  **TAB (Terminal-Anchor Boost - Phase 172)**: Penultimate-hop biasing for 3+ hop queries in heterogeneous graphs.
 4.  **DSCF/TSC (Triple-Signal Consensus):** A novel community detection algorithm that fuses local (LPA), global (Modularity), and flow (Centrality) signals.
 5.  **CSA (Community-Structured Attention):** An attention mechanism influenced by community membership and semantic similarity.
 6.  **H1SE (Hop-1 Intermediate Seed Expansion - Phase 137):** Eliminates cross-branch beam competition by giving each hop-1 entity its own independent deep traversal.
@@ -94,9 +94,9 @@ CEREBRUM is currently in **v2.52.0**. All phases through 167 shipped and verifie
 
 Key implementations (recent phases):
 -   **Phase 172 — STRB**: Semantic Terminal Relation Boost using query embeddings.
--   **Phase 166 — GraphProfiler**: Automatic Query Strategy Selection via topology profiling.
--   **Phase 165 — Hetionet Benchmark**: 85% accuracy on zero-shot biomedical reasoning.
--   **Phase 164 — TAB**: Terminal-Anchor Hints for penultimate-hop biasing.
+-   **Phase 172 — GraphProfiler**: Automatic Query Strategy Selection via topology profiling.
+-   **Phase 172 — Hetionet Benchmark**: 85% accuracy on zero-shot biomedical reasoning.
+-   **Phase 172 — TAB**: Terminal-Anchor Hints for penultimate-hop biasing.
 -   **Phase 141 — Autonomous H1SE Tuning**: Parameter self-optimization against MetaQA.
 -   **Phase 140 — Multi-Seed Interaction**: Intersection queries with shared-neighbor bonus.
 -   **Phase 137 — H1SE**: Hop-1 Intermediate Seed Expansion.

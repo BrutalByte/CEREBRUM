@@ -1,10 +1,10 @@
 ---
-description: Ultimate validation for CEREBRUM framework (v2.51)
+description: Ultimate validation for CEREBRUM framework (v2.52.0)
 ---
 
 # Validate CEREBRUM
 
-Performs exhaustive validation of the CEREBRUM v2.51 framework across all pipelines:
+Performs exhaustive validation of the CEREBRUM v2.52.0 framework across all pipelines:
 ingestion (THALAMUS), community detection (TSC/DSCF), reasoning (CORTEX/beam search),
 maintenance (REM), production hardening, and publication artifacts.
 
@@ -83,7 +83,7 @@ Ensures the Reasoning Studio (Gradio UI) starts correctly.
 
 ## Summary
 
-If Phases 2–6 pass, CEREBRUM v2.51 is confirmed stable and ready for production deployment
+If Phases 2–6 pass, CEREBRUM v2.52.0 is confirmed stable and ready for production deployment
 and arXiv submission. Phase 1 failures are advisory. Phase 7 is optional (requires Gradio).
 
 Hardware context: AMD Ryzen 9 9950X3D, NVIDIA GeForce RTX 5090 (32GB), 62GB RAM, Windows 11 Pro.

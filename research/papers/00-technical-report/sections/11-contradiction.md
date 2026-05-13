@@ -57,7 +57,7 @@ Contradiction Materialization transforms Knowledge Graphs from static fact store
 4. Martinez, M. V., et al. (2013). Reasoning Over Inconsistent Knowledge Bases. Springer.
 5. Hunter, A. (2004). A logical framework for measuring inconsistency in inconsistent knowledge bases. Annals of Mathematics and Artificial Intelligence.
 6. Grant, J., & Hunter, A. (2011). Distance-based measures of inconsistency. ACM Transactions on Computational Logic.
-7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
+7. Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.52.0

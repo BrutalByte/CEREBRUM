@@ -198,7 +198,7 @@ CEREBRUM's defining property: every answer is a verifiable path through graph ed
 The background component that monitors modularity drift ($\Delta Q_{cum}$) across streaming ingest events. When drift exceeds a threshold, it spawns a background DSCF re-run, then performs an atomic swap of `adapter.community_map`. Notifies `BridgeTwinEngine` via `on_rebalance()` hook (Phase 19).
 
 **GraphProfiler**
-A Phase 166 component that performs automatic graph regime classification at build time. Analyzes topology signals (hub_score, rel_coverage, degree_cv) to classify the graph into one of three regimes: `hub_homogeneous`, `typed_heterogeneous`, or `mixed`. Automatically configures query strategies (H1SE, STRB, TAB) based on the detected regime.
+A Phase 172 component that performs automatic graph regime classification at build time. Analyzes topology signals (hub_score, rel_coverage, degree_cv) to classify the graph into one of three regimes: `hub_homogeneous`, `typed_heterogeneous`, or `mixed`. Automatically configures query strategies (H1SE, STRB, TAB) based on the detected regime.
 
 **GraphSnapshot**
 A portable JSON graph topology checkpoint (Phase 81) in `core/persistence.py`. `GraphSnapshot.save(adapter, path)` serializes all edges to a JSON file (not pickle — survives adapter class changes). `restore(path, adapter, skip_existing=True)` re-adds only new edges, safe to run repeatedly for incremental restoration after pod restart. `diff(path_a, path_b)` shows edge deltas between two snapshots for audit. See also: ProvenanceLedger.
@@ -211,7 +211,7 @@ A one-pass mean neighbourhood aggregation step applied after base entity encodin
 ## H
 
 **H@10 (Hits at 10)**
-The primary evaluation metric for CEREBRUM: the fraction of test queries where the correct answer appears in the top-10 ranked paths. CEREBRUM zero-shot benchmarks: MetaQA 3-hop = 0.73+ (Phase 164).
+The primary evaluation metric for CEREBRUM: the fraction of test queries where the correct answer appears in the top-10 ranked paths. CEREBRUM zero-shot benchmarks: MetaQA 3-hop = 0.73+ (Phase 172).
 
 **H1SE (Hop-1 Intermediate Seed Expansion)**
 A Phase 137 innovation to solve hub competition. Instead of a single global beam, each hop-1 entity from the seed(s) receives its own independent deep traversal. This prevents popular hubs from crowding out alternative reasoning branches early in the search.
@@ -412,7 +412,7 @@ A KGE method modeling relations as rotations in complex embedding space. Support
 A coherence metric computed by `PredictiveCodingEngine`: `soliton_index = 1 - mean(recent PEs)`. A value near 1.0 indicates that the Engram prior consistently predicts actual traversal paths — a self-reinforcing, self-localising pattern analogous to a soliton wave (UCFT 2025). Exposed in `ReasoningTrace.soliton_index`. Low soliton_index (high mean PE) suggests the graph is highly novel or the Engram has not yet converged.
 
 **SABS (Asymmetric Beam Search)**
-A Phase 163 optimization where intermediate hops use an independently wider beam width than entry and exit hops. For 3-hop queries, hop-2 is widened (e.g., 20) while hop-1 and hop-3 remain tight (e.g., 10), efficiently expanding coverage where it's needed most.
+A Phase 172 optimization where intermediate hops use an independently wider beam width than entry and exit hops. For 3-hop queries, hop-2 is widened (e.g., 20) while hop-1 and hop-3 remain tight (e.g., 10), efficiently expanding coverage where it's needed most.
 
 **STRB (Semantic Terminal Relation Boost)**
 A Phase 172 zero-config innovation. Uses sentence-transformer embeddings to match query text against relation labels. Automatically identifies and boosts the correct terminal relation for a query (e.g., "treats" for "What treats X?") without manual configuration.
@@ -470,7 +470,7 @@ The probabilistic path selection strategy in Bayesian Beam Search: for each cand
 The time-dependent reduction in edge weight for edges with `valid_until` timestamps: $w_{temp}(t) = w_0 \cdot \exp(-\lambda \cdot \max(0, t - t_{until}))$. Decay rate $\lambda$ is configurable per relation type (Phase 17 feature).
 
 **TAB (Terminal-Anchor Boost)**
-Also known as "Terminal-Anchor Hints" (Phase 164). A reasoning optimization for 3+ hop queries in heterogeneous graphs. It applies a score bonus to the penultimate-hop entities that are known sources of the terminal relation (the "anchor set"). This biases the search toward paths that can directly reach the target entity type in the final hop, significantly improving 3-hop recall.
+Also known as "Terminal-Anchor Hints" (Phase 172). A reasoning optimization for 3+ hop queries in heterogeneous graphs. It applies a score bonus to the penultimate-hop entities that are known sources of the terminal relation (the "anchor set"). This biases the search toward paths that can directly reach the target entity type in the final hop, significantly improving 3-hop recall.
 
 **TAB Anchor Set**
 The set of entities in a KG that serve as sources for a specific relation type. For example, in a "Compound-treats-Disease" relation, the anchor set is all Compound entities that have a "treats" edge. TAB uses these sets to guide penultimate-hop expansion.

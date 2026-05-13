@@ -69,7 +69,7 @@ The OPT configuration uses adaptive density-driven beam width selection with a m
 4. Russo, D. J., et al. (2018). A Tutorial on Thompson Sampling. Foundations and Trends in Machine Learning.
 5. Chapelle, O., & Li, L. (2011). An empirical evaluation of Thompson sampling. NIPS.
 6. Scott, S. L. (2010). A modern Bayesian look at the multi-armed bandit. Applied Stochastic Models in Business and Industry.
-7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
+7. Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 8. Zhu, R.-J., Wang, Z., Hua, K., et al. (2025). Scaling Latent Reasoning via Looped Language Models. arXiv:2510.25741. [zhu2025loooplm]
 
 ---

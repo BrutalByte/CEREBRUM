@@ -1,10 +1,10 @@
 import os
 
 dir_path = "docs/arxiv"
-old_status = "v2.24.0 (Phase 112 (Sleep-Phase Consolidation) COMPLETE)"
-new_status = "v2.51.0 (Phase 167 (STRB) COMPLETE)"
-old_date = "April 21, 2026 for version v2.24.0"
-new_date = "May 2, 2026 for version v2.51.0"
+old_status = "v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)"
+new_status = "v2.52.0 (Phase 172 (STRB) COMPLETE)"
+old_date = "April 21, 2026 for version v2.52.0"
+new_date = "May 2, 2026 for version v2.52.0"
 old_month = "April 2026"
 new_month = "May 2026"
 
@@ -18,7 +18,7 @@ for filename in os.listdir(dir_path):
         updated_content = updated_content.replace(old_date, new_date)
         updated_content = updated_content.replace(old_month, new_month)
         
-        # Also update generic v2.24.0 if it's in the text and not part of a phase description
+        # Also update generic v2.52.0 if it's in the text and not part of a phase description
         # But be careful. 
         # Actually, let's just do the headers and footers first.
         

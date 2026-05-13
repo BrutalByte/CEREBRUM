@@ -61,7 +61,7 @@ The STDP causal discovery pipeline has been hardened and extended since v2.51.1.
 4. Spirtes, P., Glymour, C. N., & Scheines, R. (2000). Causation, Prediction, and Search. MIT Press.
 5. Sjöström, J., & Gerstner, W. (2010). Spike-timing dependent plasticity. Scholarpedia.
 6. Song, S., Miller, K. D., & Abbott, L. F. (2000). Competitive Hebbian learning through spike-timing-dependent synaptic plasticity. Nature Neuroscience.
-7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
+7. Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.52.0

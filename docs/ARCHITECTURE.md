@@ -55,10 +55,10 @@ graph TD
 ### Phase 172: Semantic Terminal Relation Boost (STRB)
 Closes the gap on zero-config reasoning by using the query embedding (from sentence-transformers) to identify the intended terminal relation. By computing cosine similarity between the question and relation labels, STRB can automatically prioritize the correct answer-type edges (e.g., "treats" for "What compound treats X?") without manual TRB configuration.
 
-### Phase 166: GraphProfiler (Automatic Query Strategy)
+### Phase 172: GraphProfiler (Automatic Query Strategy)
 Performs O(E) structural analysis at build time to classify the graph into one of three regimes: `hub_homogeneous`, `typed_heterogeneous`, or `mixed`. This classification automatically configures per-query defaults for `hop_expand`, `trb_auto`, and `anchor_bonus`, eliminating the need for per-graph manual tuning.
 
-### Phase 164: Terminal-Anchor Boost (TAB)
+### Phase 172: Terminal-Anchor Boost (TAB)
 Penultimate-hop biasing for 3+ hop queries. Identifies the "anchor set" (entities that are source nodes for the target relation type) and applies a significant scoring bonus to paths that reach these anchors before the final hop. This effectively "navigates" the beam toward the correct entity type in complex heterogeneous graphs.
 
 ### Phase 134: Vectorized Beam Scoring

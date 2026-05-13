@@ -76,7 +76,7 @@ See [`ARXIV_SUBMISSION_GUIDE.md`](ARXIV_SUBMISSION_GUIDE.md) for submission mech
 |------|---------|
 | [`CEREBRUM_BENCHMARK_COMPARISON_PAPER.md`](CEREBRUM_BENCHMARK_COMPARISON_PAPER.md) | Full benchmark analysis vs SOTA — detailed version of the comparison table in BENCHMARK_CANONICAL.md |
 | [`BENCHMARK_ANALYSIS_V2.51.0.md`](BENCHMARK_ANALYSIS_V2.51.0.md) | Phase 172 benchmark run analysis and ablation notes |
-| [`ROADMAP_FUTURE.md`](ROADMAP_FUTURE.md) | Post-v2.51 research directions |
+| [`ROADMAP_FUTURE.md`](ROADMAP_FUTURE.md) | Post-v2.52.0 research directions |
 | [`whitepapers/`](whitepapers/) | Topic-specific technical whitepapers |
 | [`docs/Research/`](Research/) | Supporting research notes and phase-by-phase findings |
 

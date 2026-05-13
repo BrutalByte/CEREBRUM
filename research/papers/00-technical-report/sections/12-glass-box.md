@@ -76,7 +76,7 @@ The Glass-Box Reasoning Studio transforms graph attention from an abstract mathe
 4. Miller, T. (2019). Explanation in artificial intelligence: Insights from the social sciences. Artificial Intelligence.
 5. Samek, W., et al. (2017). Explainable AI: Interpreting, Explaining and Visualizing Deep Learning. Springer.
 6. Lundberg, S. M., & Lee, S. I. (2017). A Unified Approach to Interpreting Model Predictions. NIPS.
-7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
+7. Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.52.0

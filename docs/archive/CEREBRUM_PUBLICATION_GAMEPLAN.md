@@ -103,7 +103,7 @@ Each one stands alone. Each one references the flagship paper. Submit to arXiv w
 
 ### The Other "1" — IP Technical Report (arXiv: cs.AI, category: technical report)
 
-**Title:** *CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning*
+**Title:** *CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning*
 
 **Purpose:** This is your prior art document. It's the full monograph, cleaned up.
 
@@ -253,7 +253,7 @@ to be replaced with the technical report arXiv citation later.
 ```
 Task 2.1: Write unified front matter for the technical report
 
-- Title: "CEREBRUM v2.51: Complete Technical Specification for
+- Title: "CEREBRUM v2.52.0: Complete Technical Specification for
   Autonomous Knowledge Graph Reasoning"
 - Author: Bryan Alexander Buchorn (Independent Researcher)
 - Single comprehensive abstract covering the full system

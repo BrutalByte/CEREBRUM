@@ -145,7 +145,7 @@ class HopExpandedTraversal:
         self.residual_k = residual_k
         # Phase 151: PenultimateGate — hop-1 branch score-gap filter
         self.penultimate_decay: float = float(traversal_kwargs.get("penultimate_decay", 0.0))
-        # Phase 164: Stage-1 anchor — biases which hop-1 entities receive deep traversals.
+        # Phase 172: Stage-1 anchor — biases which hop-1 entities receive deep traversals.
         # Entities in the anchor set get a score bonus during stage-1 ranking.
         self._stage1_anchor = traversal_kwargs.get("stage1_anchor_hint", None)
         self._traversal_kwargs = traversal_kwargs
@@ -191,7 +191,7 @@ class HopExpandedTraversal:
         # Ensure we don't pass duplicate beam_widths or other explicit args via kwargs
         clean_kwargs = self._traversal_kwargs.copy()
         clean_kwargs.pop('beam_widths', None)
-        clean_kwargs.pop('stage1_anchor_hint', None)  # Phase 164: not needed in BeamTraversal
+        clean_kwargs.pop('stage1_anchor_hint', None)  # Phase 172: not needed in BeamTraversal
         # relation boost is explicitly handled below if not in clean_kwargs
         trb = clean_kwargs.pop('terminal_relation_boost', None)
         prb = clean_kwargs.pop('penultimate_relation_boost', None)  # Phase 156
@@ -260,13 +260,13 @@ class HopExpandedTraversal:
 
         # Rank hop-1 entities.
         # Multi-seed logic: boost score of entities reached by >1 seed.
-        # Phase 164: Stage-1 anchor bonus for entities that can lead to the answer type.
+        # Phase 172: Stage-1 anchor bonus for entities that can lead to the answer type.
         _s1_anchor = self._stage1_anchor  # Optional Tuple[Set[str], float]
         def _rank_key(eid: str) -> float:
             base_score = parent_map[eid].score
             # Intersection bonus: +20% per additional seed
             bonus = 1.0 + (0.2 * (neighbor_seed_counts[eid] - 1))
-            # Phase 164: anchor bonus — prefer hop-1 entities in anchor set
+            # Phase 172: anchor bonus — prefer hop-1 entities in anchor set
             if _s1_anchor and eid in _s1_anchor[0]:
                 bonus *= _s1_anchor[1]
             return base_score * bonus

@@ -78,7 +78,7 @@ The CEREBRUM Streaming Engine in v2.52.0 has matured from a laboratory prototype
 2. Leskovec, J., et al. (2007). Graph Evolution: Densification and Shrinking Diameters. ACM TKDD.
 3. Aggarwal, C. C., et al. (2010). On Classification of Graph Streams. SIAM Data Mining.
 4. Seber, G. A. F. (1984). Multivariate Observations. Wiley.
-5. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
+5. Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.52.0

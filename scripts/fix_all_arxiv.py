@@ -2,9 +2,9 @@ import os
 import re
 
 dir_path = "docs/arxiv"
-new_status = "**Status**: v2.51.0 (Phase 167 (STRB) COMPLETE)"
+new_status = "**Status**: v2.52.0 (Phase 172 (STRB) COMPLETE)"
 new_date = "**Date**: May 2, 2026"
-new_review = "**Reviewed on**: May 2, 2026 for version v2.51.0"
+new_review = "**Reviewed on**: May 2, 2026 for version v2.52.0"
 
 for filename in os.listdir(dir_path):
     if filename.startswith("PAPER_") and filename.endswith(".md"):
@@ -14,9 +14,9 @@ for filename in os.listdir(dir_path):
         
         changed = False
         
-        # 1. Update title if it contains v2.24.0
-        if "v2.24.0" in lines[0]:
-            lines[0] = lines[0].replace("v2.24.0", "v2.51.0")
+        # 1. Update title if it contains v2.52.0
+        if "v2.52.0" in lines[0]:
+            lines[0] = lines[0].replace("v2.52.0", "v2.52.0")
             changed = True
             
         # 2. Find or Insert Status and Date

@@ -35,7 +35,7 @@ You don't need a machine learning team to train, fine-tune, or maintain CEREBRUM
 - **CEREBRUM**: Uses the graph's own topology to structure its attention. Our zero-shot performance (e.g., 85% H@10 on Hetionet) is achieved the moment your data is ingested, without a single gradient step.
 
 ### 3. Zero-Config, Auto-Reasoning
-With **GraphProfiler** (Phase 166) and **STRB** (Phase 172), you no longer need to be a graph theory expert to get production-grade results. The system automatically profiles your graph at build time, identifies its structural regime (Hub-heavy vs. Typed-Heterogeneous), and dynamically orchestrates the reasoning engine (H1SE, TAB, STRB) to optimize for your specific dataset.
+With **GraphProfiler** (Phase 172) and **STRB** (Phase 172), you no longer need to be a graph theory expert to get production-grade results. The system automatically profiles your graph at build time, identifies its structural regime (Hub-heavy vs. Typed-Heterogeneous), and dynamically orchestrates the reasoning engine (H1SE, TAB, STRB) to optimize for your specific dataset.
 
 ### 4. Memory-Efficient Scalability
 Legacy Knowledge Graphs require massive RAM overhead for index redundancy and path materialization. CEREBRUM’s **Hybrid-Memory Architecture** autonomously balances performance between RAM/VRAM and NVMe-backed storage, providing "live" reasoning performance on graphs that exceed your total system memory.
@@ -137,9 +137,9 @@ CEREBRUM has been empirically validated on standardized benchmarks with zero tra
 - [x] **Phase 149-150**: Cingulate Engine (Reasoning Verifier) and Frontal Engine Executive Strategy (v2.35.0)
 - [x] **Phase 151-154**: Vote-Weight Suppression, Answer-Type Constraint Filter, DBC Scoring (v2.39.0)
 - [x] **Phase 156-160**: Penultimate Relation Boost (PRB), r2 Path-Consistency Boost, TRB Detection Fixes (v2.44.0)
-- [x] **Phase 161-163**: StructuralRelationInferrer (SRI), CTRI, SABS (Asymmetric Beam Search) (v2.47.0)
-- [x] **Phase 164-165**: Terminal-Anchor Beam (TAB) and Hetionet Biomedical KG Benchmark (v2.49.0)
-- [x] **Phase 166-167**: GraphProfiler (Auto Query Strategy) and STRB (Semantic Terminal Relation Boost) (v2.52.0) — closes zero-config gap on 1-hop tasks via semantic query embedding
+- [x] **Phase 172-163**: StructuralRelationInferrer (SRI), CTRI, SABS (Asymmetric Beam Search) (v2.47.0)
+- [x] **Phase 172-165**: Terminal-Anchor Beam (TAB) and Hetionet Biomedical KG Benchmark (v2.49.0)
+- [x] **Phase 172-167**: GraphProfiler (Auto Query Strategy) and STRB (Semantic Terminal Relation Boost) (v2.52.0) — closes zero-config gap on 1-hop tasks via semantic query embedding
 ...
 
 ## Benchmark Results
@@ -196,7 +196,7 @@ python -m api.server --csv data/my_graph.csv --port 8200
 ```
 
 ### 2. Querying the Knowledge Graph
-CEREBRUM’s **GraphProfiler** (Phase 166) automatically detects your graph's structural regime, and **STRB** (Phase 172) inferentially boosts the correct terminal relation for your question.
+CEREBRUM’s **GraphProfiler** (Phase 172) automatically detects your graph's structural regime, and **STRB** (Phase 172) inferentially boosts the correct terminal relation for your question.
 
 ```bash
 curl -X POST http://localhost:8200/v1/query \
@@ -216,7 +216,7 @@ curl -X POST http://localhost:8200/v1/query \
 |---------|--------|---------|-----|
 | BFS baseline (no TRB) | 0.8% | — | — |
 | TRB only (no STRB) | 73.5% | — | — |
-| **CEREBRUM v2.51 (TRB + STRB)** | **61%** | **85%** | **0.72** |
+| **CEREBRUM v2.52.0 (TRB + STRB)** | **61%** | **85%** | **0.72** |
 
 Hetionet results on the `disease_gene_pathway` template demonstrate the power of **STRB** and **TAB** in navigating complex heterogeneous biological relationships. BFS baseline (0.8%) confirms TRB is essential for typed heterogeneous graphs.
 

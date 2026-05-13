@@ -69,7 +69,7 @@ The author gratefully acknowledges the use of Claude (Anthropic) as a research a
 4. Walker, M. P. (2009). The role of sleep in cognition and emotion. Annals of the New York Academy of Sciences.
 5. Tononi, G., & Cirelli, C. (2014). Sleep and the price of plasticity: from synaptic and cellular homeostasis to memory consolidation and integration. Neuron.
 6. Rasch, B., & Born, J. (2013). About sleep's role in memory. Physiological Reviews.
-7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
+7. Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.52.0

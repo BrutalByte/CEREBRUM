@@ -61,7 +61,7 @@ The author gratefully acknowledges the use of Claude (Anthropic) as a research a
 4. Smith, S. L., et al. (2017). Offline bilingual word vectors, orthogonal transformations and the inverted softmax. ICLR.
 5. Conneau, A., et al. (2017). Word Translation without Parallel Data. ICLR.
 6. Artetxe, M., et al. (2018). A robust self-learning method for fully unsupervised cross-lingual mappings of word embeddings. ACL.
-7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
+7. Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.52.0

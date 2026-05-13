@@ -15,8 +15,8 @@ The evaluation compares CEREBRUM's **Full Pipeline** (including GraphProfiler, S
 
 ### Performance Interpretations
 *   **STRB (Phase 172)**: The jump in 1-hop accuracy to 99%+ is driven by Semantic Terminal Relation Boost, which virtually eliminates "wrong relation" noise in zero-config scenarios.
-*   **GraphProfiler (Phase 166)**: Automatic strategy selection ensured optimal `expansion_k` and `hop_expand` settings were used for each query type, contributing to the steady gains across all hop counts.
-*   **TAB (Phase 164)**: Penultimate-hop biasing (Terminal-Anchor Boost) is responsible for the significant 6.38% leap in 3-hop recall, as it prevents the beam search from wandering into irrelevant subgraphs in the final stages.
+*   **GraphProfiler (Phase 172)**: Automatic strategy selection ensured optimal `expansion_k` and `hop_expand` settings were used for each query type, contributing to the steady gains across all hop counts.
+*   **TAB (Phase 172)**: Penultimate-hop biasing (Terminal-Anchor Boost) is responsible for the significant 6.38% leap in 3-hop recall, as it prevents the beam search from wandering into irrelevant subgraphs in the final stages.
 
 ## 3. Hetionet 1-Hop Performance (Zero-Shot)
 

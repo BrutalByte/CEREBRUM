@@ -3,8 +3,8 @@ import re
 from datetime import datetime
 
 # CONFIGURATION
-TARGET_VERSION = "v2.24.0"
-TARGET_STATUS = "Phase 112 (Sleep-Phase Consolidation) COMPLETE"
+TARGET_VERSION = "v2.52.0"
+TARGET_STATUS = "Phase 172 (Sleep-Phase Consolidation) COMPLETE"
 REVIEW_DATE = "April 22, 2026"
 DOCS_DIR = "docs"
 

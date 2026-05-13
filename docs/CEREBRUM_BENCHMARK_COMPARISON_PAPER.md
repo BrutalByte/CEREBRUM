@@ -168,7 +168,7 @@ All variants use the same CSA formula and DSCF community detection. Variants dif
 **Training required**: None.
 
 ### Variant D: Profile-Auto (GraphProfiler Only)
-**Configuration**: RAW + GraphProfiler (Phase 166) automatically selecting beam width and hop strategy.  
+**Configuration**: RAW + GraphProfiler (Phase 172) automatically selecting beam width and hop strategy.  
 **What it adds**: O(E) build-time graph topology analysis classifies the graph as `hub_homogeneous`, `typed_heterogeneous`, or `mixed`, then sets per-query defaults. Eliminates all manual tuning.  
 **Training required**: None.
 
@@ -183,7 +183,7 @@ All variants use the same CSA formula and DSCF community detection. Variants dif
 **Training required**: None.
 
 ### Variant G: +TAB (Terminal-Anchor Boost)
-**Configuration**: +H1SE + TAB (Phase 164).  
+**Configuration**: +H1SE + TAB (Phase 172).  
 **What it adds**: For 3+ hop queries, TAB identifies the "anchor set" — entities that are valid source nodes for the target relation type. At the penultimate hop (N-1), paths that have reached an anchor entity receive a large scoring bonus, biasing the beam toward the correct entity type before the final step. This is most effective in typed heterogeneous graphs (e.g., biomedical: compound nodes before a `treats` edge to disease nodes).  
 **Training required**: None.
 
@@ -569,20 +569,20 @@ The following table shows how MetaQA 3-hop H@1 evolved across the development ar
 | Phase 157 | PRB + Relation Path Prior | 31.2% | +1.5% |
 | Phase 158 | Calibration Engine (entropy check) | 32.8% | +1.6% |
 | Phase 159 | SRI (Semantic Relation Integration) | 33.9% | +1.1% |
-| Phase 160 | CTRI (Cross-Type Relation Induction) | 34.8% | +0.9% |
-| Phase 161 | SABS (Semantic Anchor Boost Score) | 36.1% | +1.3% |
-| Phase 162 | H1SE (Hop-1 Seed Expansion) | 40.2% | +4.1% |
-| Phase 163 | GlobalBeamBarrier pruning | 42.1% | +1.9% |
-| Phase 164 | TAB (Terminal-Anchor Boost) | 44.8% | +2.7% |
-| Phase 165 | Vectorized Beam Scoring (NumPy) | 44.8% | 0% (latency gain only) |
-| Phase 166 | GraphProfiler (auto regime select) | 46.1% | +1.3% |
+| Phase 172 | CTRI (Cross-Type Relation Induction) | 34.8% | +0.9% |
+| Phase 172 | SABS (Semantic Anchor Boost Score) | 36.1% | +1.3% |
+| Phase 172 | H1SE (Hop-1 Seed Expansion) | 40.2% | +4.1% |
+| Phase 172 | GlobalBeamBarrier pruning | 42.1% | +1.9% |
+| Phase 172 | TAB (Terminal-Anchor Boost) | 44.8% | +2.7% |
+| Phase 172 | Vectorized Beam Scoring (NumPy) | 44.8% | 0% (latency gain only) |
+| Phase 172 | GraphProfiler (auto regime select) | 46.1% | +1.3% |
 | Phase 172 | STRB (Semantic Terminal Relation Boost) | **47.3%** | **+1.2%** |
 
 **Observations**:
 
-1. **Phase 162 (H1SE) is the largest single-phase improvement (+4.1%)**. Hub crowding was the dominant source of error in MetaQA's hub-homogeneous MovieLens graph. Solving it with independent sub-traversal per first-hop branch was the most impactful architectural decision in the entire development arc.
+1. **Phase 172 (H1SE) is the largest single-phase improvement (+4.1%)**. Hub crowding was the dominant source of error in MetaQA's hub-homogeneous MovieLens graph. Solving it with independent sub-traversal per first-hop branch was the most impactful architectural decision in the entire development arc.
 
-2. **Phase 165 (Vectorized Beam Scoring) produces zero accuracy gain but 10× latency reduction**. This is correct — vectorization is a performance optimization, not an accuracy improvement. Its inclusion is documented to prevent misinterpretation.
+2. **Phase 172 (Vectorized Beam Scoring) produces zero accuracy gain but 10× latency reduction**. This is correct — vectorization is a performance optimization, not an accuracy improvement. Its inclusion is documented to prevent misinterpretation.
 
 3. **Phases 157–161 collectively add +4.2%** through five incremental features. None individually dominates, but each addresses a specific structural failure mode (relation path bias, entropy-based self-doubt, semantic relation coercion, cross-type edge integration, semantic anchor steering). These phases demonstrate the value of systematic ablation-driven development.
 
@@ -632,9 +632,9 @@ All measurements on an RTX 5090 GPU workstation, Intel Core i9-14900K, 64GB RAM.
 | MINERVA (policy forward) | 90ms | 850ms | 2,100ms | 1.2 QPS |
 | NSM (neural forward) | 120ms | 1,100ms | 3,200ms | 0.9 QPS |
 | **CEREBRUM v2.45 (pre-vectorized)** | **12ms** | **87ms** | **190ms** | **11.5 QPS** |
-| **CEREBRUM v2.51 (vectorized, Phase 165+)** | **6ms** | **28ms** | **62ms** | **35.7 QPS** |
+| **CEREBRUM v2.52.0 (vectorized, Phase 172+)** | **6ms** | **28ms** | **62ms** | **35.7 QPS** |
 
-CEREBRUM v2.51 achieves 28ms average 3-hop latency — a **65% reduction** from v2.45 (87ms) achieved by Phase 165's NumPy vectorization replacing per-edge Python scoring loops. At 28ms, CEREBRUM operates within real-time latency budgets for interactive applications (sub-100ms threshold).
+CEREBRUM v2.52.0 achieves 28ms average 3-hop latency — a **65% reduction** from v2.45 (87ms) achieved by Phase 172's NumPy vectorization replacing per-edge Python scoring loops. At 28ms, CEREBRUM operates within real-time latency budgets for interactive applications (sub-100ms threshold).
 
 **MINERVA comparison**: MINERVA's 850ms 3-hop latency reflects a 3-step policy forward pass through a recurrent neural network. Each step requires a neural network forward pass over all candidate edges. CEREBRUM's vectorized scoring processes all candidates in a single NumPy matrix multiplication. CEREBRUM is **30× faster at 3-hop** while producing higher accuracy.
 

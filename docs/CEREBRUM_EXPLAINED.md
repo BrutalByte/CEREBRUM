@@ -38,7 +38,7 @@ graph TD
 
 ---
 
-### **1. Zero-Config Reasoning: GraphProfiler & STRB (Phase 166-167)**
+### **1. Zero-Config Reasoning: GraphProfiler & STRB (Phase 172-167)**
 CEREBRUM has reached a new level of autonomy. It no longer requires a human to "tune" it for different types of data.
 - **GraphProfiler**: When you load a new graph, CEREBRUM automatically analyzes its structure. It detects if the graph is a "hub" (like Wikipedia) or "typed" (like a medical database) and configures its reasoning strategy accordingly.
 - **STRB (Semantic Terminal Relation Boost)**: When you ask a question, CEREBRUM uses its semantic "gut feeling" to guess what kind of answer you're looking for. If you ask "What drug treats X?", it automatically prioritizes "treats" relationships without being told.

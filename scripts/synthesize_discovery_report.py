@@ -33,7 +33,7 @@ def synthesize_report(json_output: str, md_output: str):
         
     # 2. Generate Human-Readable Markdown Report
     with open(md_output, 'w') as f:
-        f.write("# Discovery Verification Report (v2.51.0)\n\n")
+        f.write("# Discovery Verification Report (v2.52.0)\n\n")
         f.write(f"**Total Findings**: {len(report['discoveries'])}\n\n")
         for i, d in enumerate(report['discoveries']):
             f.write(f"## Finding {i+1}: {d['node_id']}\n")

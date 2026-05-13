@@ -10,7 +10,7 @@
 ---
 
 ### 1. Introduction
-**GraphProfiler** (Phase 166) performs O(E) topological analysis at build time to automatically configure reasoning strategies for a given graph.
+**GraphProfiler** (Phase 172) performs O(E) topological analysis at build time to automatically configure reasoning strategies for a given graph.
 
 ### 2. Methodology
 - **Signals**: Analyzes hub_score, degree_cv, and relation coverage.

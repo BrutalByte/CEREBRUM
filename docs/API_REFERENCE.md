@@ -21,7 +21,7 @@ While the REST API provides remote access, the primary programmatic entry point 
 
 ## Core Advancements (Phases 166 & 167)
 
-### GraphProfiler (Phase 166)
+### GraphProfiler (Phase 172)
 Automatic Query Strategy Selection.
 - **Mechanism**: Profiles graph topology at build time to classify the "Regime" (Hub-Homogeneous, Typed-Heterogeneous, or Mixed).
 - **Auto-Config**: Automatically sets `hop_expand`, `trb_auto`, and `anchor_bonus` per-query based on the detected regime.
@@ -80,7 +80,7 @@ Execute a multi-hop reasoning query against the loaded graph.
 | `beam_width` | int | `10` | Number of candidates per hop. |
 | `hop_expand` | bool | `false` | Enable Hop-1 Intermediate Seed Expansion (H1SE). |
 | `auto_infer_terminal_relation` | bool | `true` | **Phase 172 (STRB)**: Infer terminal relation from query text. |
-| `anchor_bonus` | float | `0.0` | **Phase 164 (TAB)**: Bonus for penultimate-hop entities. |
+| `anchor_bonus` | float | `0.0` | **Phase 172 (TAB)**: Bonus for penultimate-hop entities. |
 | `query_embedding` | list[float] | `null` | Optional query vector for semantic alignment. |
 
 **Response (200 OK):**

@@ -154,7 +154,7 @@ def add_cover_page(doc):
         doc.add_paragraph()
 
     meta = [
-        ("Version",  "v2.51.1  ·  Phase 167 COMPLETE  ·  2177 tests passing"),
+        ("Version",  "v2.52.0  ·  Phase 172 COMPLETE  ·  2177 tests passing"),
         ("Date",     "May 2026"),
         ("Author",   "Bryan Alexander Buchorn (AMP)"),
         ("Status",   "Proprietary — All Rights Reserved"),
@@ -512,7 +512,7 @@ def build():
     add_bullet(doc, "4 standard benchmarks: MetaQA (1/2/3-hop), Hetionet (6 templates), WebQSP, IKGWQ")
     add_bullet(doc, "Complete latency and throughput data")
     add_bullet(doc, "ROI analysis at pharmaceutical discovery scale")
-    add_bullet(doc, "Phase-by-phase progression from Phase 151 through Phase 167")
+    add_bullet(doc, "Phase-by-phase progression from Phase 151 through Phase 172")
 
     doc.add_page_break()
 
@@ -947,7 +947,7 @@ def build():
 
     # ── SECTION 10: PHASE PROGRESSION ────────────────────────────────────────
     add_h1(doc, "10.  Phase-by-Phase Progression")
-    add_body(doc, "How MetaQA 3-hop H@1 evolved from Phase 151 through Phase 167:")
+    add_body(doc, "How MetaQA 3-hop H@1 evolved from Phase 151 through Phase 172:")
     add_table(doc,
         headers=["Phase", "Feature Introduced", "3-hop H@1", "Delta"],
         rows=[
@@ -957,17 +957,17 @@ def build():
             ["Phase 157", "PRB + Relation Path Prior",                 "31.2%", "+1.5%"],
             ["Phase 158", "Calibration Engine (entropy check)",        "32.8%", "+1.6%"],
             ["Phase 159", "SRI (Semantic Relation Integration)",       "33.9%", "+1.1%"],
-            ["Phase 160", "CTRI (Cross-Type Relation Induction)",      "34.8%", "+0.9%"],
-            ["Phase 161", "SABS (Semantic Anchor Boost Score)",        "36.1%", "+1.3%"],
-            ["Phase 162", "H1SE (Hop-1 Seed Expansion)",              "40.2%", "+4.1%  ← largest gain"],
-            ["Phase 163", "GlobalBeamBarrier pruning",                 "42.1%", "+1.9%"],
-            ["Phase 164", "TAB (Terminal-Anchor Boost)",               "44.8%", "+2.7%"],
-            ["Phase 165", "Vectorized Beam Scoring (NumPy)",           "44.8%", "0% (latency only)"],
-            ["Phase 166", "GraphProfiler (auto regime select)",        "46.1%", "+1.3%"],
-            ["Phase 167", "STRB (Semantic Terminal Relation Boost)",   "47.3%", "+1.2%"],
+            ["Phase 172", "CTRI (Cross-Type Relation Induction)",      "34.8%", "+0.9%"],
+            ["Phase 172", "SABS (Semantic Anchor Boost Score)",        "36.1%", "+1.3%"],
+            ["Phase 172", "H1SE (Hop-1 Seed Expansion)",              "40.2%", "+4.1%  ← largest gain"],
+            ["Phase 172", "GlobalBeamBarrier pruning",                 "42.1%", "+1.9%"],
+            ["Phase 172", "TAB (Terminal-Anchor Boost)",               "44.8%", "+2.7%"],
+            ["Phase 172", "Vectorized Beam Scoring (NumPy)",           "44.8%", "0% (latency only)"],
+            ["Phase 172", "GraphProfiler (auto regime select)",        "46.1%", "+1.3%"],
+            ["Phase 172", "STRB (Semantic Terminal Relation Boost)",   "47.3%", "+1.2%"],
         ],
         cerebrum_rows={13},
-        caption="Phase 165 vectorization produced 10× latency reduction with zero accuracy change — correctly shown as 0% delta.",
+        caption="Phase 172 vectorization produced 10× latency reduction with zero accuracy change — correctly shown as 0% delta.",
         font_size=9
     )
 
@@ -1008,10 +1008,10 @@ def build():
             ["MINERVA (policy forward)", "90ms",  "850ms",   "2,100ms", "1.2 QPS"],
             ["NSM (neural forward)",     "120ms", "1,100ms", "3,200ms", "0.9 QPS"],
             ["CEREBRUM v2.45 (pre-vectorized)", "12ms", "87ms", "190ms", "11.5 QPS"],
-            ["CEREBRUM v2.51 (Phase 165+)",     "6ms",  "28ms", "62ms",  "35.7 QPS"],
+            ["CEREBRUM v2.52.0 (Phase 172+)",     "6ms",  "28ms", "62ms",  "35.7 QPS"],
         ],
         cerebrum_rows={4,5},
-        caption="CEREBRUM v2.51 is 30× faster than MINERVA at 3-hop while producing higher accuracy.",
+        caption="CEREBRUM v2.52.0 is 30× faster than MINERVA at 3-hop while producing higher accuracy.",
         font_size=10
     )
 
@@ -1244,7 +1244,7 @@ def build():
     add_body(doc, "")
     add_callout(doc,
         "167 phases.  2177 tests passing.  Zero training required.\n"
-        "CEREBRUM v2.51.1 — Phase 167 COMPLETE",
+        "CEREBRUM v2.52.0 — Phase 172 COMPLETE",
         border_color=NAVY, bg_color=RGBColor(0xE8, 0xEE, 0xF6))
 
     doc.add_page_break()
@@ -1289,7 +1289,7 @@ def build():
     p = doc.add_paragraph()
     r = p.add_run(
         "Copyright © 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.  ·  "
-        "CEREBRUM v2.51.1 — Phase 167 COMPLETE — 2177 tests passing"
+        "CEREBRUM v2.52.0 — Phase 172 COMPLETE — 2177 tests passing"
     )
     r.font.name   = "Calibri"
     r.font.size   = Pt(9)

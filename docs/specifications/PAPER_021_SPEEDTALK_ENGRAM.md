@@ -58,4 +58,4 @@ This transforms Engram exploration from a brute-force dictionary scan into a hig
 ---
 **References**
 1. Heinlein, R. A. (1949). Gulf. Astounding Science Fiction.
-2. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
+2. Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].

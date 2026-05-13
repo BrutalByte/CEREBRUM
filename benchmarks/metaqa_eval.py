@@ -436,7 +436,7 @@ def evaluate_hop(
         # question prefix (first 5 words).  Applied at all hops: prefix-only
         # scanning avoids false hits from intermediate-hop keywords in multi-hop
         # questions.  Penultimate cascade fires automatically inside traversal.
-        # Phase 161: --structural-trb skips keyword detection entirely and lets
+        # Phase 172: --structural-trb skips keyword detection entirely and lets
         # CerebrumGraph.query() infer TRB from graph topology (SRI).
         _trb: Dict[str, float] = {}
         if not structural_trb and question_text and _kb_relations:
@@ -506,7 +506,7 @@ def evaluate_hop(
 
         # Phase 158/160: r2 path-consistency boost — answers whose best path reached
         # hop-2 via the expected r2 (from the r3→r2 training map) are boosted.
-        # Phase 160: r2_boost_map allows per-relation tuning (e.g., higher boost for
+        # Phase 172: r2_boost_map allows per-relation tuning (e.g., higher boost for
         # starred_actors where hub-entity dominance is worst).
         if _is_3hop and _trb and r2_map:
             _detected_r3_pc = next(iter(_trb))
@@ -664,13 +664,13 @@ def main():
                              "path has r2 == expected r2 (from training r3->r2 map) get "
                              "score *= (1 + r2-boost). Default 0.40 (tuned Phase 158).")
     parser.add_argument("--sa-r2-boost", type=float, default=None,
-                        help="Phase 160: r2-boost override for starred_actors questions. "
+                        help="Phase 172: r2-boost override for starred_actors questions. "
                              "Default None uses --r2-boost for all relations. "
                              "starred_actors has worst H@1 (27%%) due to hub-entity "
                              "dominance; a higher boost (e.g. 0.70) may close the gap. "
                              "Other relations keep --r2-boost value.")
     parser.add_argument("--eval-min-hop", type=int, default=None,
-                        help="Phase 160: minimum hop depth for 3-hop answer extraction. "
+                        help="Phase 172: minimum hop depth for 3-hop answer extraction. "
                              "Default None=1 (current: allows 1-hop and 2-hop paths). "
                              "Set to 2 to exclude 1-hop paths (seed's own direct relations "
                              "like directed_by/has_genre). Set to 3 for strict 3-hop only. "
@@ -692,13 +692,13 @@ def main():
                              "Default 1 (current behaviour). Try 3 or 5 to reduce filter "
                              "false negatives from wrong TRB detection.")
     parser.add_argument("--structural-trb", action="store_true",
-                        help="Phase 161: use StructuralRelationInferrer (SRI) for terminal "
+                        help="Phase 172: use StructuralRelationInferrer (SRI) for terminal "
                              "relation boost instead of keyword detection. Fully agnostic — "
                              "no question text, no domain keywords. Skips the answer-type "
                              "hard filter (which requires KB relation names). Measures the "
                              "gap between graph-structural inference and domain-assisted TRB.")
     parser.add_argument("--anchor-bonus", type=float, default=None,
-                        help="Phase 164: Terminal-Anchor bonus multiplier applied at the "
+                        help="Phase 172: Terminal-Anchor bonus multiplier applied at the "
                              "penultimate hop (hop-2 for 3-hop) to entities that are sources "
                              "of the terminal relation. Default None (disabled).")
     parser.add_argument("--seed",       type=int,   default=42)

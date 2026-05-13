@@ -647,7 +647,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 | **Distinct-Branch Convergence (DBC)** | Path count aggregation, GraftNet joint training | Log-scale bonus on entities confirmed via structurally independent hop-2 intermediaries; zero overhead when n_branches=1; no training required |
 | **Penultimate Relation Boost (r3→r2 map)** | Penultimate cascade (same-relation only) | Data-driven r3→r2 frequency map enables boosting a DIFFERENT relation at hop N-1; cascade was previously dead for cross-type templates |
 | **r2 Path-Consistency Boost (Phase 158)** | Path re-ranking, relation sequence scoring | Post-hoc score boost for answers whose best path uses training-verified r2 (nodes[1] check); pure multiplicative boost (no penalty); uses existing TraversalPath.nodes structure |
-| **Pre-pass 4 TRB Detection Fix (Phase 160)** | Keyword matching, question classification | Catches "who is listed as {relation_type} ..." templates where the answer keyword is at word[4], preventing suffix contamination from intermediate entity descriptors |
+| **Pre-pass 4 TRB Detection Fix (Phase 172)** | Keyword matching, question classification | Catches "who is listed as {relation_type} ..." templates where the answer keyword is at word[4], preventing suffix contamination from intermediate entity descriptors |
 
 ---
 
@@ -657,7 +657,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 **Novelty Statement**: Existing KG QA systems apply entity type constraints either at graph construction time (type-constrained embedding) or via post-hoc neural classifiers. CEREBRUM's answer-type filter is applied dynamically at query time from the KB's own triple structure, requires no training data, and is strictly constrained to observed KB objects — not type ontologies or predicted entity classes. Combined with a wider initial retrieval window, this allows a high `vote_weight` (convergence bonus) to amplify correctly-typed candidates without being overwhelmed by popular wrong-type hub entities.
 
-**Result**: H@1 MetaQA 3-hop: 23.0% (Phase 151) → 44.2% (Phase 152) → 45.1% (Phase 153) → 45.7% (Phase 154, DBC) → 46.0% (Phase 156, penultimate r2 boost) → 46.1% (Phase 157, vote_weight=0.85) → 46.4% (Phase 158, r2 path-consistency boost) → **46.6%** (Phase 160, TRB detection fix). CEREBRUM surpasses all published baselines (GraftNet 22.8%, EmbedKGQA 29.8%) using only graph structure — no LLMs, no training data, no KG embeddings.
+**Result**: H@1 MetaQA 3-hop: 23.0% (Phase 151) → 44.2% (Phase 152) → 45.1% (Phase 153) → 45.7% (Phase 154, DBC) → 46.0% (Phase 156, penultimate r2 boost) → 46.1% (Phase 157, vote_weight=0.85) → 46.4% (Phase 158, r2 path-consistency boost) → **46.6%** (Phase 172, TRB detection fix). CEREBRUM surpasses all published baselines (GraftNet 22.8%, EmbedKGQA 29.8%) using only graph structure — no LLMs, no training data, no KG embeddings.
 
 **Relevant files**: `benchmarks/metaqa_eval.py` (`evaluate_hop`, `detect_target_relation`, `_relation_answer_set`)
 
@@ -667,7 +667,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 **Description**: `detect_target_relation()` uses four targeted pre-passes before a two-pass keyword scan to avoid cross-branch keyword collisions in 3-hop question templates: (1) `"when ..."` unambiguously maps to `release_year` regardless of intermediate relation keywords in the prefix; (2) terminal `"in which TERM"` patterns are detected by checking only the last word before suffix contamination from entity names; (3) `"what are/is..."` questions use an extended 6-word prefix to catch answer types at position 5 (e.g., `"what are the primary languages"`); (4) `"who is listed as RELATION_TYPE ..."` templates check `words[4]` directly — without this pass, the suffix matches intermediate entity descriptors (e.g., "starred by X actors") and misclassifies `directed_by`/`written_by` questions as `starred_actors`.
 
-**Novelty Statement**: Standard NLP question classification assumes a fixed-length prefix is sufficient for intent detection. In multi-hop KG templates, intermediate relation keywords (actors, directors, writers) appear in the first 5-8 words, causing false positives that corrupt downstream type filtering. The pre-pass structure specifically targets the structural invariants of MetaQA-style 3-hop templates, reducing wrong detection from 16.8% to ~5.8% without expanding the prefix window globally. Phase 160 extended this with a fourth pre-pass that recovers 32+ previously misclassified questions whose answer type appears at word position 4 (one beyond the default prefix window).
+**Novelty Statement**: Standard NLP question classification assumes a fixed-length prefix is sufficient for intent detection. In multi-hop KG templates, intermediate relation keywords (actors, directors, writers) appear in the first 5-8 words, causing false positives that corrupt downstream type filtering. The pre-pass structure specifically targets the structural invariants of MetaQA-style 3-hop templates, reducing wrong detection from 16.8% to ~5.8% without expanding the prefix window globally. Phase 172 extended this with a fourth pre-pass that recovers 32+ previously misclassified questions whose answer type appears at word position 4 (one beyond the default prefix window).
 
 **Relevant files**: `benchmarks/metaqa_eval.py` (`detect_target_relation`)
 
@@ -814,9 +814,9 @@ relation is verifiable, reproducible evidence from the graph structure itself.
 **Honest performance characterisation**: On MetaQA 3-hop (full 14,274 test set):
 | Mode | H@1 | H@10 | MRR |
 |------|-----|------|-----|
-| Keyword TRB (domain-assisted, Phase 160) | 46.6% | 72.1% | 56.1% |
-| SRI only (Phase 161, agnostic) | ~14.4% | ~49.2% | ~23.2% |
-| CTRI (Phase 162, agnostic) | **14.73%** | **49.68%** | **23.54%** |
+| Keyword TRB (domain-assisted, Phase 172) | 46.6% | 72.1% | 56.1% |
+| SRI only (Phase 172, agnostic) | ~14.4% | ~49.2% | ~23.2% |
+| CTRI (Phase 172, agnostic) | **14.73%** | **49.68%** | **23.54%** |
 
 CTRI yields +0.3pp H@1, +0.5pp H@10 over SRI. The marginal improvement on MetaQA reflects a
 fundamental structural limitation: ALL MetaQA 3-hop seeds are movie entities, making the traversal
@@ -866,7 +866,7 @@ among them using the known terminal relation.
 **Empirical results on MetaQA 3-hop** (full 14,274):
 | Config | H@1 | H@10 | MRR |
 |--------|-----|------|-----|
-| Flat bw=10, TRB=5.0 (Phase 162 baseline) | 46.6% | 72.1% | 56.1% |
+| Flat bw=10, TRB=5.0 (Phase 172 baseline) | 46.6% | 72.1% | 56.1% |
 | Flat bw=15, TRB=8.0 | 47.05% | 73.85% | 56.60% |
 | **SABS: hop2-bw=20, bw=10, TRB=8.0** | **47.31%** | **73.20%** | **56.87%** |
 
@@ -925,7 +925,7 @@ wiring), `benchmarks/metaqa_eval.py` (`--anchor-bonus` flag)
 
 ---
 
-### Claim 56: CerebrumGraph-Based Heterogeneous KG Benchmark (Hetionet Phase 165)
+### Claim 56: CerebrumGraph-Based Heterogeneous KG Benchmark (Hetionet Phase 172)
 
 **Description**: A systematic benchmark framework that measures the independent contribution
 of each CEREBRUM architectural component on a typed heterogeneous biomedical knowledge graph
@@ -1071,12 +1071,12 @@ graph's sentence embedding engine. At query time, the question text is encoded a
 cosine-compared to all relation phrase embeddings; the top match drives the terminal
 relation boost. Falls back to structural SRI when random embeddings are in use.
 
-**Architecture**: Builds on `semantic_trb()` in `StructuralRelationInferrer` (Phase 163)
+**Architecture**: Builds on `semantic_trb()` in `StructuralRelationInferrer` (Phase 172)
 which was implemented but not connected to the zero-config benchmark path. Phase 172
 closes the loop: `TEMPLATE_QUESTION` dict + `_seed_label()` constructs the question text
 per query, encodes it via `graph._embedding_engine.encode_one()`, and passes it as
 `query_embedding` to `graph.query()`. The existing `auto_infer_terminal_relation` routing
-in `cerebrum.py` (Phase 163) then dispatches to `semantic_trb()` automatically.
+in `cerebrum.py` (Phase 172) then dispatches to `semantic_trb()` automatically.
 
 **Empirical results** (Hetionet, 200 questions, SentenceEngine 384-dim):
 | Template | Profile-Auto (SRI) | Profile-Auto+STRB | Explicit TRB |

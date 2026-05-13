@@ -25,19 +25,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.51.0] - 2026-05-02
 ### Added
-- **Phase 167: STRB — Semantic Terminal Relation Boost**
+- **Phase 172: STRB — Semantic Terminal Relation Boost**
   - **`benchmarks/hetionet_cerebrum_eval.py`**: Added `TEMPLATE_QUESTION` dict mapping each
     template to a natural-language question template (e.g. "What compound treats {seed}?").
     Added `_seed_label()` helper extracting readable label from entity ID. Added `use_strb`
     variant flag in `evaluate_template()` — when set and semantic index is built, encodes
     the question text per query and passes it as `query_embedding` to `graph.query()`,
-    triggering `semantic_trb()` (Phase 163) instead of structural SRI.
+    triggering `semantic_trb()` (Phase 172) instead of structural SRI.
   - **New "Profile-Auto+STRB" variant**: same zero-config GraphProfiler strategy selection
     as Profile-Auto, but with semantic query embedding for terminal relation inference.
     Falls back silently to structural SRI when `--embeddings random` (RandomEngine).
-  - **`semantic_trb()` already existed** in `core/structural_relation_inferrer.py` (Phase 163)
+  - **`semantic_trb()` already existed** in `core/structural_relation_inferrer.py` (Phase 172)
     and `build_semantic_index()` was already called in `core/cerebrum.py` build() for
-    non-random engines. Phase 167 closes the loop by providing the query_embedding at
+    non-random engines. Phase 172 closes the loop by providing the query_embedding at
     query time in the zero-config benchmark path.
   - **Empirical results** (200 questions, beam_width=10, SentenceEngine 384-dim):
     | Template | Profile-Auto H@1 | Profile-Auto+STRB H@1 | Explicit TRB H@1 |
@@ -65,7 +65,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.50.0] - 2026-05-02
 ### Added
-- **Phase 166: GraphProfiler — Automatic Query Strategy Selection**
+- **Phase 172: GraphProfiler — Automatic Query Strategy Selection**
   - **`core/graph_profiler.py`** (new): O(E) structural analysis of any loaded graph at build
     time. Computes four signals and classifies the graph into a regime that auto-configures
     per-query defaults for `hop_expand`, `auto_infer_terminal_relation`, and `anchor_bonus`.
@@ -126,7 +126,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.49.0] - 2026-05-01
 ### Added
-- **Phase 165: CerebrumGraph-based Hetionet Biomedical KG Benchmark**
+- **Phase 172: CerebrumGraph-based Hetionet Biomedical KG Benchmark**
   - **`benchmarks/hetionet_cerebrum_eval.py`** (new): Full CEREBRUM stack demonstration on
     Hetionet — a 47,031-node heterogeneous biomedical KG with 11 entity types and 24 metaedge
     types (Disease, Gene, Compound, Pathway, Anatomy, etc.).
@@ -185,7 +185,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.48.0] - 2026-05-02
 ### Added
-- **Phase 164: Terminal-Anchor Beam (TAB)**
+- **Phase 172: Terminal-Anchor Beam (TAB)**
   - **`BeamTraversal._anchor_hints: Dict[int, Tuple[Set[str], float]]`** (new):
     Per-hop anchor hints. At the specified non-terminal hop, entities in the anchor set
     receive a score multiplier for pruning sort order. Does NOT mutate path scores —
@@ -204,7 +204,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - **MetaQA 3-hop results** (full 14,274, anchor_bonus=1.5):
     | Config | H@1 | H@10 | MRR |
     |--------|-----|------|-----|
-    | Phase 163 best (no anchor) | 47.31% | 73.20% | 56.87% |
+    | Phase 172 best (no anchor) | 47.31% | 73.20% | 56.87% |
     | + anchor_bonus=1.5 | 47.09% | 73.13% | 56.75% |
   - **Honest assessment for MetaQA**: The anchor boost is neutral-to-slightly-harmful on
     MetaQA 3-hop because MetaQA's graph is structurally homogeneous — ALL hop-2 intermediate
@@ -224,7 +224,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.47.0] - 2026-05-01
 ### Added
-- **Phase 163: Semantic Embeddings + Asymmetric Beam Search (SABS)**
+- **Phase 172: Semantic Embeddings + Asymmetric Beam Search (SABS)**
   - **Sentence-transformer integration**: `--embeddings sentence` now uses BGE-small-en-v1.5
     (384 dims) with correct asymmetric encoding: `encode_query()` with BGE instruction prefix
     for question text; `encode_entities()` for entity labels. Previous code used
@@ -255,7 +255,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - **MetaQA 3-hop results** (full 14,274):
     | Config | H@1 | H@10 | MRR |
     |--------|-----|------|-----|
-    | Phase 162 baseline (random emb) | 46.6% | 72.1% | 56.1% |
+    | Phase 172 baseline (random emb) | 46.6% | 72.1% | 56.1% |
     | + sentence embeddings | 46.9% | 73.15% | 56.4% |
     | + asymmetric beam (hop2-bw=20, TRB=8.0) | **47.31%** | **73.20%** | **56.87%** |
   - **Parameter ablation** (2000-sample):
@@ -271,7 +271,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.46.0] - 2026-05-01
 ### Added
-- **Phase 162: Community-Based Terminal Relation Inference (CTRI)**
+- **Phase 172: Community-Based Terminal Relation Inference (CTRI)**
   - **`StructuralRelationInferrer.build_community_fingerprints(adapter)`** (new method):
     O(E) pass over graph edges counting **incoming** relation types per DSCF community.
     Computes `dominant_rel` and `purity = max_rel_count / total` per community.
@@ -293,8 +293,8 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     | Mode | H@1 | H@10 | MRR |
     |------|-----|------|-----|
     | Keyword TRB (domain-assisted) | 46.6% | 72.1% | 56.1% |
-    | SRI only (Phase 161, agnostic) | ~14.4% | ~49.2% | ~23.2% |
-    | CTRI (Phase 162, agnostic) | **14.73%** | **49.68%** | **23.54%** |
+    | SRI only (Phase 172, agnostic) | ~14.4% | ~49.2% | ~23.2% |
+    | CTRI (Phase 172, agnostic) | **14.73%** | **49.68%** | **23.54%** |
   - **Diagnosis**: For MetaQA 3-hop, all seeds are movies — structurally homogeneous.
     The traversal without TRB finds a mix of actor/director/writer/year/genre candidates
     regardless of question type. Path consensus correctly identifies `starred_actors` 67%
@@ -308,7 +308,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.45.0] - 2026-05-01
 ### Added
-- **Phase 161: StructuralRelationInferrer (SRI) — Agnostic Terminal Relation Boost**
+- **Phase 172: StructuralRelationInferrer (SRI) — Agnostic Terminal Relation Boost**
   - **New component** `core/structural_relation_inferrer.py`: pure graph-topology inference
     of candidate terminal relations. No domain keywords, no LLM, no question text.
   - **Structural insight**: Relations whose target entities are low-degree and high-diversity
@@ -354,7 +354,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.44.0] - 2026-05-01
 ### Added
-- **Phase 160: TRB Detection Fix for "who is listed as X" Templates**
+- **Phase 172: TRB Detection Fix for "who is listed as X" Templates**
   - **Root cause**: `detect_target_relation()` with `prefix_words=4` produces the prefix
     "who is listed as" (4 words), which contains no relation keyword. The suffix then
     matches "starred by [X] actors" in the path description → wrong `starred_actors`
@@ -652,13 +652,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.24.0] â 2026-04-22
 ### Added
-- **Phase 112: REM Cycle Shortcut Synthesis**: Autonomous synthesis of shortcut edges based on high-frequency QueryLog traces.
+- **Phase 172: REM Cycle Shortcut Synthesis**: Autonomous synthesis of shortcut edges based on high-frequency QueryLog traces.
 - **Phase 111: Active Inference (Proactive Reasoning)**: Daydreaming mode that explores high-probability priors during idle cycles.
 - **Phase 110: Global Workspace (GWS)**: Centralized blackboard for multi-agent signaling and focus-switching.
 - **Phase 109: Counterfactual Reasoning**: Ability to simulate KG state changes and evaluate hypothetical reasoning outcomes.
 
 ### Fixed
-- **ConsolidationEngine**: Merged Phase 96 (Hebbian Replay) and Phase 112 (REM Cycle) into a unified engine, restoring system stability.
+- **ConsolidationEngine**: Merged Phase 96 (Hebbian Replay) and Phase 172 (REM Cycle) into a unified engine, restoring system stability.
 - **Telemetry**: Added missing `synaptogenesis` helper for edge creation events.
 
 ## [2.23.0] â 2026-04-20

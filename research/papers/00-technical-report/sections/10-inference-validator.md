@@ -59,7 +59,7 @@ The Inference Validator provides a mathematically sound and self-contained frame
 4. Schlichtkrull, M., et al. (2018). Modeling Relational Data with Graph Convolutional Networks. ESWC.
 5. Wang, Z., et al. (2014). Knowledge Graph Embedding by Translating on Hyperplanes. AAAI.
 6. Lin, Y., et al. (2015). Learning Entity and Relation Embeddings for Knowledge Graph Completion. AAAI.
-7. Buchorn, B. A. (2026). CEREBRUM v2.51: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
+7. Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
 **Reviewed on**: May 2, 2026 for version v2.52.0

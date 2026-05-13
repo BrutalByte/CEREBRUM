@@ -550,7 +550,7 @@ def build(src_path, out_path):
     cover.add_run('\n')
     add_run(cover, 'Master Scientific Manuscript', bold=False, size=16, color=BLUE)
     cover.add_run('\n')
-    add_run(cover, 'v2.51.1 · Phase 167 · 37 Research Papers', size=11, color=MGRAY)
+    add_run(cover, 'v2.52.0 · Phase 172 · 37 Research Papers', size=11, color=MGRAY)
     doc.add_paragraph().add_run().add_break(
         __import__('docx.enum.text', fromlist=['WD_BREAK_TYPE']).WD_BREAK_TYPE.PAGE
     )

@@ -29,7 +29,7 @@ Authentication: Send `-H "X-API-Key: your-key-here"` or `-H "Authorization: Bear
 
 ---
 
-## Zero-Config Reasoning (Phase 167)
+## Zero-Config Reasoning (Phase 172)
 
 CEREBRUM now automatically configures itself for your graph. Just load it and query:
 
@@ -43,7 +43,7 @@ curl -X POST http://localhost:8200/v1/query \
   }'
 ```
 
-The **GraphProfiler** (Phase 166) detects your graph type, and **STRB** (Phase 167) automatically boosts the "treats" relationship based on the question text.
+The **GraphProfiler** (Phase 172) detects your graph type, and **STRB** (Phase 172) automatically boosts the "treats" relationship based on the question text.
 
 ---
 

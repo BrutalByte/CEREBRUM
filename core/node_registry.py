@@ -1,5 +1,5 @@
 """
-NodeRegistry — Phase 112.5.
+NodeRegistry — Phase 172.5.
 
 Persistent registry of trusted federated peers, their public keys, and metadata.
 """

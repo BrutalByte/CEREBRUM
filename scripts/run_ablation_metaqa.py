@@ -16,7 +16,7 @@ The "Full CEREBRUM" row in the ablation table is re-measured by this script.
 The Phase 53 canonical 12.5% (used in the comparison-against-SOTA table) is
 measured WITHOUT GraphSAGE and without BridgeTwinEngine — it is NOT the same
 as "Full CEREBRUM" in the ablation table. This is consistent: the ablation
-table shows component contributions within v2.51.1; the comparison table shows
+table shows component contributions within v2.52.0; the comparison table shows
 training-free performance against supervised SOTA.
 
 Usage:

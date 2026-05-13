@@ -1,11 +1,11 @@
 """
-ConsolidationEngine — Phase 96 & Phase 112.
+ConsolidationEngine — Phase 96 & Phase 172.
 
 Phase 96: Memory Consolidation (Hebbian Replay).
 During idle loop cycles, replays high-quality WorkingMemory entries and
 applies Hebbian weight boosts to the edges on those paths.
 
-Phase 112: REM Cycle Daemon.
+Phase 172: REM Cycle Daemon.
 Analyzes reasoning traces from QueryLog and materializes high-utility shortcut paths.
 """
 from __future__ import annotations
@@ -35,14 +35,14 @@ class ConsolidationResult:
 
 class ConsolidationEngine:
     """
-    Handles both Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 112).
+    Handles both Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 172).
 
     Parameters
     ----------
     adapter       : graph adapter
     graph         : CerebrumGraph — used for telemetry emit()
-    query_log     : QueryLog instance for Phase 112
-    threshold     : frequency threshold for shortcut materialization (Phase 112)
+    query_log     : QueryLog instance for Phase 172
+    threshold     : frequency threshold for shortcut materialization (Phase 172)
     min_score     : minimum top_score an entry must have to be replayed (Phase 96)
     max_weight    : upper bound on any edge weight after boosting (Phase 96)
     hebbian_delta : base weight increment per replay (Phase 96)
@@ -121,7 +121,7 @@ class ConsolidationEngine:
         return result
 
     async def run_rem_cycle(self):
-        """Phase 112: Analyzes logs and synthesizes shortcut edges."""
+        """Phase 172: Analyzes logs and synthesizes shortcut edges."""
         if not self.query_log:
             logger.warning("REM Cycle: No QueryLog provided, skipping.")
             return
