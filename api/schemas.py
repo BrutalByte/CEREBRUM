@@ -5,6 +5,33 @@ from pydantic import BaseModel, Field
 
 from enum import IntEnum
 
+class PathNode(BaseModel):
+    type: str       # "entity" or "relation"
+    id: Optional[str] = None
+    label: str
+    community: Optional[int] = None
+
+
+class PathResult(BaseModel):
+    rank: int
+    answer_entity: str
+    score: float
+    score_breakdown: Dict[str, float]
+    path: List[PathNode]
+    edge_features: List[List[float]] = Field(
+        default_factory=list,
+        description=(
+            "Per-hop 10-element feature vectors "
+            "(sim, cs, etw, nd, hd, pr_v, td, nr_v, sd, grounding). "
+            "Pass directly to POST /feedback to enable online parameter learning."
+        ),
+    )
+    community_sequence: List[int] = Field(
+        default_factory=list,
+        description="Community ID for each entity node along this path (required for /feedback).",
+    )
+
+
 class ConsensusLevel(IntEnum):
     """
     Consensus Hierarchy Levels (Phase 60).
@@ -178,33 +205,6 @@ class QueryConsensusResponse(BaseModel):
     total_paths_explored: int
     duration_seconds: float
     level_reached: ConsensusLevel
-
-
-class PathNode(BaseModel):
-    type: str       # "entity" or "relation"
-    id: Optional[str] = None
-    label: str
-    community: Optional[int] = None
-
-
-class PathResult(BaseModel):
-    rank: int
-    answer_entity: str
-    score: float
-    score_breakdown: Dict[str, float]
-    path: List[PathNode]
-    edge_features: List[List[float]] = Field(
-        default_factory=list,
-        description=(
-            "Per-hop 10-element feature vectors "
-            "(sim, cs, etw, nd, hd, pr_v, td, nr_v, sd, grounding). "
-            "Pass directly to POST /feedback to enable online parameter learning."
-        ),
-    )
-    community_sequence: List[int] = Field(
-        default_factory=list,
-        description="Community ID for each entity node along this path (required for /feedback).",
-    )
 
 
 class QueryResponse(BaseModel):

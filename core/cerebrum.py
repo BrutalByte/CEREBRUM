@@ -1097,6 +1097,8 @@ class CerebrumGraph:
                 _stage1_anchor = None  # Disabled: too broad for most graphs, enable per-domain
         if needs_custom:
             from core.resource_governor import ResourceGovernor
+            # Use the existing governor if available, else initialize
+            gov = getattr(self, "governor", ResourceGovernor(memory_threshold_pct=memory_threshold_pct))
             traversal = BeamTraversal(
                 adapter             = self.adapter,
                 csa_engine          = self._csa,
@@ -1105,7 +1107,7 @@ class CerebrumGraph:
                 max_neighbors       = self._max_neighbors,
                 probabilistic       = self._probabilistic,
                 warm_start_strength = self._warm_start_strength,
-                governor            = ResourceGovernor(memory_threshold_pct=memory_threshold_pct),
+                governor            = gov,
                 beam_widths         = _auto_beam_widths,  # Phase 136
                 terminal_relation_boost    = _trb,
                 penultimate_relation_boost = _prb,  # Phase 156

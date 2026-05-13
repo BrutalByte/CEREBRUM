@@ -21,7 +21,10 @@ def _relax_resource_governor(request, monkeypatch):
     if "test_resource_governor" in request.fspath.basename:
         return  # let governor tests run with real defaults
 
-    def _patched_init(self, memory_threshold_pct=99.0, safety_buffer_mb=50):
-        _original_rg_init(self, memory_threshold_pct, safety_buffer_mb)
+    def _patched_init(self, *args, **kwargs):
+        # Always inject the relaxed test defaults
+        kwargs.setdefault("memory_threshold_pct", 99.0)
+        kwargs.setdefault("safety_buffer_mb", 50)
+        _original_rg_init(self, *args, **kwargs)
 
     monkeypatch.setattr(ResourceGovernor, "__init__", _patched_init)

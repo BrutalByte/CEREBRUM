@@ -18,6 +18,7 @@ Or programmatically:
 import logging
 import os
 import time
+import asyncio
 from contextlib import asynccontextmanager
 from typing import Optional, Dict, List, Any
 
@@ -303,10 +304,10 @@ async def _run_query_internal(
     if _state["meta_learner"]:
         csa.set_meta_learner(_state["meta_learner"])
 
-    governor = ResourceGovernor(
-        max_ram_gb=max_ram_gb,
-        max_vram_gb=max_vram_gb
-    )
+    gov_kwargs = {}
+    if max_ram_gb is not None: gov_kwargs["max_ram_gb"] = max_ram_gb
+    if max_vram_gb is not None: gov_kwargs["max_vram_gb"] = max_vram_gb
+    governor = ResourceGovernor(**gov_kwargs)
     traversal = BeamTraversal(
         adapter=adapter,
         csa_engine=csa,
@@ -676,7 +677,8 @@ def create_app(
         _soliton_idx: Optional[float] = None
         try:
             if _state["predictive_coder"] is not None:
-                pred_result = _state["predictive_coder"].update(_pred_prior, paths)
+                # Pass None for prior if no explicit prediction prior is available
+                pred_result = _state["predictive_coder"].update(None, paths)
                 _pred_error  = pred_result.prediction_error
                 _soliton_idx = pred_result.soliton_stability
                 # Drive ChemicalModulator if present

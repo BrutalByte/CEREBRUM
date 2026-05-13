@@ -440,7 +440,7 @@ class BeamTraversal:
         # 2. Call adapter.get_neighbors_batch for each domain
         # 3. Resolve bridges (resolve_alias) and link paths across domain boundaries
 
-
+        _cmap = getattr(self.adapter, "community_map", None)
         if self.csa is not None:
             if _cmap is not None:
                 self.csa.set_query_snapshot(dict(_cmap))
