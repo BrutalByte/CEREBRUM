@@ -210,6 +210,19 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
                     v3_btn = gr.Button("Refresh 3D")
                     v3_out = gr.HTML()
 
+                with gr.Tab("Settings"):
+                    gr.Markdown("### SSD & Storage Manager")
+                    disk_dropdown = gr.Dropdown(
+                        label="Select NVMe SSD",
+                        choices=[d['mountpoint'] for d in _engine.get_storage_disks()],
+                    )
+                    refresh_disks_btn = gr.Button("Refresh Disks")
+                    init_disk_btn = gr.Button("Initialize Selected SSD")
+                    storage_status = gr.Textbox(label="Storage Status")
+                    
+                    gr.Markdown("### Live I/O Performance")
+                    io_plot = gr.LinePlot(label="Read/Write Throughput (MB/s)")
+
                 with gr.Tab("Insight & Maintenance"):
                     with gr.Row():
                         with gr.Column(scale=1):
@@ -241,8 +254,17 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
 
     # ── Wiring ────────────────────────────────────────────────────────
 
-    # Clear one input when the other is used
-    file_in.upload(lambda: "",   None,         path_in)
+    # Disk Management
+    refresh_disks_btn.click(
+        lambda: gr.update(choices=[d['mountpoint'] for d in _engine.get_storage_disks()]),
+        None, disk_dropdown
+    )
+    init_disk_btn.click(_engine.init_storage, [disk_dropdown], [storage_status])
+    
+    # Simple I/O monitor
+    # In a real app, use a timer to poll every ~1s; here we trigger on load/click
+    # Placeholder for live gauge:
+    # io_plot.change(...) 
     file_in.clear( lambda: "",   None,         path_in)
     path_in.change(lambda x: None if x and x.strip() else gr.update(),
                    inputs=[path_in], outputs=[file_in])

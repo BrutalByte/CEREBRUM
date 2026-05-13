@@ -33,6 +33,7 @@ from adapters.stream_adapter import (
     HTTPPollingSource,
 )
 from core.cerebrum import CerebrumGraph
+from core.hardware import HardwareManager
 from core.discretizer import ThresholdDiscretizer
 from core.insight_engine import InsightEngine
 from core.insight_validator import InsightValidator
@@ -528,8 +529,24 @@ class StudioEngine:
         return f"<table>{rows}</table>"
 
     # ------------------------------------------------------------------
-    # Visualisation (graph-state-dependent)
+    # Hardware/Storage Management (Phase 174)
     # ------------------------------------------------------------------
+
+    def get_storage_disks(self) -> List[Dict[str, Any]]:
+        """Return list of available disks for Mmap storage."""
+        return HardwareManager.list_drives()
+
+    def init_storage(self, mountpoint: str) -> str:
+        """Initialize Cerebrum binary storage on selected drive."""
+        try:
+            return HardwareManager.initialize_drive(mountpoint)
+        except Exception as exc:
+            log.error("Failed to initialize drive: %s", exc)
+            return f"ERROR: {exc}"
+
+    def get_io_performance(self, path: str) -> Dict[str, float]:
+        """Return live disk I/O metrics."""
+        return HardwareManager.get_io_stats(path)
 
     def generate_graph_viz(self) -> str:
         """Render an interactive 2D PyVis graph as an HTML iframe string."""
