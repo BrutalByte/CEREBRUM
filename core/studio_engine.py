@@ -529,24 +529,30 @@ class StudioEngine:
         return f"<table>{rows}</table>"
 
     # ------------------------------------------------------------------
-    # Hardware/Storage Management (Phase 174)
+    # Graph Management (Phase 175)
     # ------------------------------------------------------------------
 
-    def get_storage_disks(self) -> List[Dict[str, Any]]:
-        """Return list of available disks for Mmap storage."""
-        return HardwareManager.list_drives()
+    def switch_graph(self, path: str, embedding_type: str) -> tuple:
+        """Tear down current graph and load a new one."""
+        # 1. Cleanup
+        if self.graph_obj:
+            self.graph_obj.adapter.close()
+        
+        # 2. Reload
+        return next(self.load_graph(path, embedding_type))
 
-    def init_storage(self, mountpoint: str) -> str:
-        """Initialize Cerebrum binary storage on selected drive."""
-        try:
-            return HardwareManager.initialize_drive(mountpoint)
-        except Exception as exc:
-            log.error("Failed to initialize drive: %s", exc)
-            return f"ERROR: {exc}"
-
-    def get_io_performance(self, path: str) -> Dict[str, float]:
-        """Return live disk I/O metrics."""
-        return HardwareManager.get_io_stats(path)
+    def enable_adaptive_reasoning(self, enabled: bool) -> str:
+        """Enable or disable autonomous parameter tuning."""
+        if not self.csa:
+            return "ERROR: Load graph first."
+        
+        if enabled:
+            from core.parameter_learner import MetaParameterLearner
+            self.meta_learner = MetaParameterLearner(self.csa)
+            return "Adaptive reasoning enabled."
+        else:
+            self.meta_learner = None
+            return "Adaptive reasoning disabled."
 
     def generate_graph_viz(self) -> str:
         """Render an interactive 2D PyVis graph as an HTML iframe string."""
