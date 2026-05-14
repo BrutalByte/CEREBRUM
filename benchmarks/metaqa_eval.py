@@ -56,6 +56,12 @@ Notes
 import argparse
 import csv
 import math
+import multiprocessing
+import os
+
+# Optional experiment tracking — imported lazily when --mlflow / --wandb used
+_mlflow = None
+_wandb  = None
 import pickle
 import csv
 import re
@@ -332,6 +338,235 @@ def detect_target_relation(
 
 
 # ---------------------------------------------------------------------------
+# Phase 182: Question-level multiprocessing — worker globals and functions
+# ---------------------------------------------------------------------------
+
+# Module-level globals populated by _worker_init in each spawned process.
+_W_GRAPH               = None
+_W_QUERY_ENGINE        = None
+_W_RELATION_ANSWER_SET = None
+_W_ANSWER_FREQ         = None
+_W_PRIORS              = None
+_W_R2_FOR_R3           = None
+_W_FAN_OUT             = None
+_W_KB_RELATIONS        = None
+
+
+def _worker_init(graph_args: dict, shared: dict) -> None:
+    """Initializer called once per spawned worker process."""
+    global _W_GRAPH, _W_QUERY_ENGINE, _W_RELATION_ANSWER_SET, _W_ANSWER_FREQ
+    global _W_PRIORS, _W_R2_FOR_R3, _W_FAN_OUT, _W_KB_RELATIONS
+
+    _W_GRAPH = CerebrumGraph.from_kb(
+        graph_args["kb_file"],
+        sep="|", directed=False,
+        embeddings=graph_args["embeddings"],
+        beam_width=graph_args["beam_width"],
+        max_hop=3, max_neighbors=100,
+    )
+    _W_GRAPH.build(
+        cache_dir=graph_args["cache_dir"],
+        min_community_size=graph_args["min_community_size"],
+        force_rebuild=False,
+        seed=graph_args["seed"],
+        use_graphsage=graph_args["graphsage"],
+        use_kge=graph_args["kge"],
+        kge_blend=graph_args["kge_blend"],
+        kge_epochs=graph_args["kge_epochs"],
+        community_engine=graph_args["community_engine"],
+    )
+    _W_QUERY_ENGINE = (
+        _W_GRAPH._embedding_engine if graph_args["embeddings"] == "sentence" else None
+    )
+
+    # Build KB relation vocabulary from the worker's own graph
+    try:
+        _W_KB_RELATIONS = list({
+            e.relation_type
+            for eid in list(_W_GRAPH.adapter._G.nodes())[:500]
+            for e in _W_GRAPH.adapter.get_neighbors(eid)
+        })
+    except Exception:
+        _W_KB_RELATIONS = []
+
+    _W_RELATION_ANSWER_SET = shared["relation_answer_set"]
+    _W_ANSWER_FREQ         = shared["answer_freq"]
+    _W_PRIORS              = shared["priors"]
+    _W_R2_FOR_R3           = shared["r2_for_r3"]
+    _W_FAN_OUT             = shared["fan_out"]
+
+
+def _worker_process_question(task: tuple) -> tuple:
+    """
+    Process one question. Returns (q_idx, pred_or_None, diag_or_None).
+    pred_or_None is None when the question produces no answers (skipped).
+    Reads shared state from module globals set by _worker_init.
+    """
+    try:
+        (q_idx, seed, correct_answers, question_text,
+         hop, top_k, beam_width, eval_min_hop,
+         vote_weight_3hop, branch_bonus_weight, trb_factor_3hop, idf_weight,
+         hop2_beam_width, r2_boost, r2_boost_map, min_filter_size,
+         expansion_k, structural_trb, anchor_bonus, pss_weight, fhrb_factor,
+         do_diag) = task
+
+        graph               = _W_GRAPH
+        embedding_engine    = _W_QUERY_ENGINE
+        kb_relations        = _W_KB_RELATIONS or []
+        relation_answer_set = _W_RELATION_ANSWER_SET or {}
+        answer_freq_map     = _W_ANSWER_FREQ
+        relation_prior      = (_W_PRIORS.get(hop) if _W_PRIORS else None)
+        r2_map              = _W_R2_FOR_R3 or {}
+        fan_out             = _W_FAN_OUT or {}
+
+        _is_3hop   = (hop == 3)
+        _raw_top_k = 100 if _is_3hop else top_k
+
+        # Encode question text as query embedding
+        query_emb = None
+        if question_text and embedding_engine is not None:
+            try:
+                encode_query_fn = getattr(embedding_engine, "encode_query", None)
+                if encode_query_fn is not None:
+                    query_emb = encode_query_fn([question_text])[0]
+                else:
+                    q_vecs    = embedding_engine.encode_entities({"__q__": question_text})
+                    query_emb = q_vecs.get("__q__")
+            except Exception:
+                pass
+
+        # Terminal Relation Boost
+        _trb: Dict[str, float] = {}
+        if not structural_trb and question_text and kb_relations:
+            detected = detect_target_relation(question_text, kb_relations)
+            if detected:
+                boost_factor = trb_factor_3hop if _is_3hop else 3.0
+                _trb = {detected: boost_factor}
+
+        # Penultimate Relation Boost
+        _prb: Dict[str, float] = {}
+        if _is_3hop and _trb and r2_map:
+            _r2 = r2_map.get(next(iter(_trb)))
+            if _r2:
+                _prb = {_r2: next(iter(_trb.values())) ** 0.5}
+
+        # First-Hop Relation Boost (Phase 180)
+        _irb: Optional[Dict[str, float]] = None
+        if _is_3hop and fhrb_factor > 0.0 and question_text and kb_relations:
+            _r1_candidate = detect_target_relation(
+                question_text, kb_relations,
+                exclude_relation=next(iter(_trb)) if _trb else None,
+            )
+            if _r1_candidate:
+                _irb = {_r1_candidate: fhrb_factor}
+
+        # Per-hop beam widths
+        _beam_widths: Optional[Dict[int, int]] = None
+        if _is_3hop and hop2_beam_width is not None and hop2_beam_width > beam_width:
+            _beam_widths = {1: hop2_beam_width}
+
+        answers_obj = graph.query(
+            seeds                        = [seed],
+            top_k                        = _raw_top_k,
+            min_hop                      = eval_min_hop,
+            max_hop                      = hop,
+            hop_expand                   = (hop >= 2),
+            query_embedding              = query_emb,
+            relation_prior               = relation_prior,
+            terminal_relation_boost      = _trb,
+            penultimate_relation_boost   = _prb,
+            vote_weight                  = vote_weight_3hop if _is_3hop else 0.45,
+            branch_bonus_weight          = branch_bonus_weight if _is_3hop else 0.0,
+            beam_widths                  = _beam_widths,
+            expansion_k                  = expansion_k if _is_3hop else None,
+            auto_infer_terminal_relation = structural_trb and _is_3hop,
+            anchor_bonus                 = anchor_bonus if _is_3hop else None,
+            fan_out                      = fan_out if (_is_3hop and pss_weight > 0.0) else None,
+            weight_specificity           = pss_weight if _is_3hop else 0.0,
+            initial_relation_boost       = _irb,
+        )
+
+        # IDF hub-entity penalty
+        if _is_3hop and _trb and idf_weight > 0.0 and answer_freq_map:
+            _detected_r3 = next(iter(_trb))
+            _freq_ctr    = answer_freq_map.get(_detected_r3)
+            _n_unique    = len(relation_answer_set.get(_detected_r3, set()))
+            if _freq_ctr and _n_unique > 100:
+                for _ans in answers_obj:
+                    _freq = _freq_ctr.get(_ans.entity_id, 1)
+                    _ans.score *= 1.0 / (1.0 + idf_weight * math.log1p(_freq))
+                answers_obj.sort(key=lambda a: a.score, reverse=True)
+
+        # r2 path-consistency boost
+        if _is_3hop and _trb and r2_map:
+            _detected_r3 = next(iter(_trb))
+            _eff_r2_boost = (
+                r2_boost_map.get(_detected_r3, r2_boost) if r2_boost_map else r2_boost
+            )
+            _expected_r2 = r2_map.get(_detected_r3) if _eff_r2_boost > 0.0 else None
+            if _expected_r2:
+                _changed = False
+                for _ans in answers_obj:
+                    _bp = _ans.best_path
+                    if _bp is not None and len(_bp.nodes) >= 2:
+                        if _bp.nodes[1] == _expected_r2:
+                            _ans.score *= (1.0 + _eff_r2_boost)
+                            _changed = True
+                if _changed:
+                    answers_obj.sort(key=lambda a: a.score, reverse=True)
+
+        pred = [a.entity_id for a in answers_obj]
+
+        # Diagnostic row
+        _diag: Optional[Dict] = None
+        if do_diag and _is_3hop:
+            _correct_in_beam = any(e in correct_answers for e in pred)
+            _beam_rank = next((i + 1 for i, e in enumerate(pred) if e in correct_answers), 0)
+            _diag = {
+                "q_idx": q_idx,
+                "seed": seed,
+                "correct_answer": next(iter(correct_answers), ""),
+                "in_beam_top100": _correct_in_beam,
+                "beam_rank": _beam_rank,
+                "detected_rel": next(iter(_trb), "") if _trb else "",
+                "n_filtered": -1,
+                "correct_in_filtered": False,
+                "final_rank": 0,
+            }
+
+        if not pred:
+            return (q_idx, None, _diag)
+
+        # Answer-type filter
+        if _is_3hop and _trb:
+            detected_rel  = next(iter(_trb))
+            valid_answers = relation_answer_set.get(detected_rel)
+            if valid_answers:
+                filtered = [p for p in pred if p in valid_answers]
+                if _diag is not None:
+                    _diag["n_filtered"] = len(filtered)
+                    _diag["correct_in_filtered"] = any(e in correct_answers for e in filtered)
+                pred = filtered[:top_k] if len(filtered) >= min_filter_size else pred[:top_k]
+            else:
+                pred = pred[:top_k]
+        else:
+            pred = pred[:top_k]
+
+        if _diag is not None:
+            _diag["final_rank"] = next(
+                (i + 1 for i, e in enumerate(pred) if e in correct_answers), 0
+            )
+
+        return (q_idx, pred, _diag)
+
+    except Exception as e:
+        import traceback
+        print(f"\n[worker] Error q_idx={task[0]}: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        return (task[0], None, None)
+
+
+# ---------------------------------------------------------------------------
 # Per-hop evaluation  (thin harness over CerebrumGraph.query)
 # ---------------------------------------------------------------------------
 
@@ -362,6 +597,7 @@ def evaluate_hop(
     fan_out:          Optional[Dict]              = None,
     pss_weight:       float                       = 0.0,
     fhrb_factor:      float                       = 0.0,
+    pool=None,
 ) -> Dict:
     """
     Evaluate one hop level using the unified CerebrumGraph.query() interface.
@@ -409,6 +645,71 @@ def evaluate_hop(
     _diag_rows: List[Dict] = []
 
     t0 = time.time()
+
+    # ------------------------------------------------------------------ #
+    # Phase 182: Parallel path                                             #
+    # ------------------------------------------------------------------ #
+    if pool is not None:
+        _do_diag  = bool(diagnose_path)
+        _eval_min = eval_min_hop
+        _r2bmap   = ({k: v for k, v in r2_boost_map.items()} if r2_boost_map else None)
+        tasks = [
+            (
+                i,
+                (qa[0] if not has_question else qa[0]),
+                (qa[1] if not has_question else qa[1]),
+                (qa[2] if has_question else None),
+                hop, top_k, beam_width, _eval_min,
+                vote_weight_3hop, branch_bonus_weight, trb_factor_3hop, idf_weight,
+                hop2_beam_width, r2_boost, _r2bmap, min_filter_size,
+                expansion_k, structural_trb, anchor_bonus, pss_weight, fhrb_factor,
+                _do_diag,
+            )
+            for i, qa in enumerate(qa_pairs)
+        ]
+        completed = 0
+        n_total   = len(qa_pairs)
+        for q_idx, pred, diag in pool.imap_unordered(
+            _worker_process_question, tasks, chunksize=64
+        ):
+            completed += 1
+            if completed % 500 == 0 or completed == n_total:
+                print(
+                    f"    {completed:,}/{n_total:,} questions "
+                    f"({time.time()-t0:.1f}s elapsed)",
+                    end="\r",
+                )
+            if pred is None:
+                skipped += 1
+            else:
+                correct = qa_pairs[q_idx][1]
+                found    += 1
+                h1       += hits_at_k(pred, correct, k=1)
+                h10      += hits_at_k(pred, correct, k=10)
+                mrr_sum  += reciprocal_rank(pred, correct)
+            if diag is not None:
+                _diag_rows.append(diag)
+
+        elapsed = time.time() - t0
+        print()
+        n = len(qa_pairs)
+        if diagnose_path and _diag_rows:
+            _diag_rows.sort(key=lambda r: r["q_idx"])
+            _fields = ["q_idx", "seed", "correct_answer", "in_beam_top100", "beam_rank",
+                       "detected_rel", "n_filtered", "correct_in_filtered", "final_rank"]
+            with open(diagnose_path, "w", newline="", encoding="utf-8") as _csvf:
+                _w = csv.DictWriter(_csvf, fieldnames=_fields)
+                _w.writeheader()
+                _w.writerows(_diag_rows)
+            print(f"  Diagnostic CSV written: {diagnose_path} ({len(_diag_rows):,} rows)")
+        return {
+            "hop": hop, "n_total": n, "n_answered": found, "n_skipped": skipped,
+            "hits_1": h1 / n, "hits_10": h10 / n, "mrr": mrr_sum / n,
+            "elapsed_s": elapsed,
+        }
+    # ------------------------------------------------------------------ #
+    # Serial path (unchanged)                                              #
+    # ------------------------------------------------------------------ #
     for i, qa in enumerate(qa_pairs):
         if has_question:
             seed, correct_answers, question_text = qa
@@ -629,6 +930,67 @@ def evaluate_hop(
 
 
 # ---------------------------------------------------------------------------
+# Phase 181: GPU startup cleanup
+# ---------------------------------------------------------------------------
+
+def _cleanup_stale_gpu_processes() -> None:
+    """Kill idle metaqa_eval processes holding VRAM from prior crashed/OOM runs.
+
+    Only kills processes with near-zero CPU activity — actively running
+    benchmarks are left untouched.
+    """
+    import os
+    import signal
+
+    current_pid = os.getpid()
+
+    try:
+        import psutil
+        current_start = psutil.Process(current_pid).create_time()
+        candidates = []
+        for proc in psutil.process_iter(["pid", "name", "cmdline"]):
+            try:
+                if proc.info["pid"] == current_pid:
+                    continue
+                name = (proc.info["name"] or "").lower()
+                if "python" not in name:
+                    continue
+                cmdline = " ".join(proc.info["cmdline"] or [])
+                if "metaqa_eval" not in cmdline:
+                    continue
+                # Only target processes that started >60s before us — this
+                # prevents killing our own pool workers or a concurrent run
+                # that started at roughly the same time.
+                if proc.create_time() > current_start - 60:
+                    continue
+                # Sample CPU over 1 second — skip actively working processes
+                cpu = proc.cpu_percent(interval=1.0)
+                if cpu > 2.0:
+                    continue  # process is alive and working — leave it alone
+                candidates.append(proc.info["pid"])
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+
+        if candidates:
+            print(f"[startup] Cleaning up {len(candidates)} idle metaqa_eval process(es): {candidates}")
+            for pid in candidates:
+                try:
+                    os.kill(pid, signal.SIGTERM)
+                except OSError:
+                    pass
+    except ImportError:
+        pass
+
+    # Flush any cached CUDA allocations in the current process
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except Exception:
+        pass
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -735,12 +1097,72 @@ def main():
                              "matching r1 by this factor; non-matching edges get 0.1 penalty. "
                              "Default 0.0 (disabled). Try 3.0–8.0 alongside --use-prior.")
     parser.add_argument("--seed",       type=int,   default=42)
+    parser.add_argument("--mlflow",  action="store_true", default=False,
+                        help="Log metrics and params to MLflow (tracking URI: ./mlruns).")
+    parser.add_argument("--mlflow-uri", type=str, default=None,
+                        help="MLflow tracking URI (default: local ./mlruns).")
+    parser.add_argument("--wandb",   action="store_true", default=False,
+                        help="Log metrics and params to Weights & Biases.")
+    parser.add_argument("--wandb-project", type=str, default="cerebrum-metaqa",
+                        help="W&B project name (default: cerebrum-metaqa).")
+    parser.add_argument(
+        "--workers", type=int, default=None, metavar="N",
+        help="Worker processes for question-level parallelism. "
+             "Default: os.cpu_count(). Set to 1 to disable multiprocessing.",
+    )
     args = parser.parse_args()
 
     if args.no_cache:
         args.use_cache = False
 
     hops = [args.hop] if args.hop else [1, 2, 3]
+
+    # ------------------------------------------------------------------
+    # Experiment tracking init (MLflow / W&B)
+    # ------------------------------------------------------------------
+    global _mlflow, _wandb
+    _run_params = {
+        "hop": args.hop, "beam_width": args.beam_width, "top_k": args.top_k,
+        "embeddings": args.embeddings, "use_prior": args.use_prior,
+        "vote_weight": args.vote_weight, "trb_factor": args.trb_factor,
+        "r2_boost": args.r2_boost, "fhrb_factor": args.fhrb_factor,
+        "pss_weight": args.pss_weight, "idf_weight": args.idf_weight,
+        "workers": args.workers, "sample": args.sample, "seed": args.seed,
+    }
+
+    if args.mlflow:
+        try:
+            import mlflow as _mlf
+            _mlflow = _mlf
+            uri = args.mlflow_uri or "mlruns"
+            _mlflow.set_tracking_uri(uri)
+            _mlflow.set_experiment("cerebrum-metaqa")
+            _mlflow.start_run(run_name=f"metaqa_hop{args.hop or 'all'}_bw{args.beam_width}")
+            _mlflow.log_params(_run_params)
+            print(f"  MLflow tracking: {uri}")
+        except ImportError:
+            print("  [warning] mlflow not installed — run: pip install mlflow")
+            _mlflow = None
+
+    if args.wandb:
+        try:
+            import wandb as _wb
+            _wandb = _wb
+            _wandb.init(
+                project=args.wandb_project,
+                name=f"metaqa_hop{args.hop or 'all'}_bw{args.beam_width}",
+                config=_run_params,
+            )
+            print(f"  W&B tracking: project={args.wandb_project}")
+        except ImportError:
+            print("  [warning] wandb not installed — run: pip install wandb")
+            _wandb = None
+
+    # ------------------------------------------------------------------
+    # Phase 181: GPU startup cleanup — kill stale Python processes that
+    # hold VRAM from prior crashed/OOM runs before allocating our own.
+    # ------------------------------------------------------------------
+    _cleanup_stale_gpu_processes()
 
     # ------------------------------------------------------------------
     # Validate data files exist
@@ -885,55 +1307,120 @@ def main():
               f"(weight={args.pss_weight})")
 
     # ------------------------------------------------------------------
+    # Phase 182: Resolve worker count and build multiprocessing pool
+    # ------------------------------------------------------------------
+    n_workers = max(1, args.workers if args.workers is not None else os.cpu_count())
+    _pool = None
+    if n_workers > 1:
+        print(f"\nSpawning {n_workers} worker processes...")
+        _ctx  = multiprocessing.get_context("spawn")
+        _pool = _ctx.Pool(
+            processes=n_workers,
+            initializer=_worker_init,
+            initargs=(
+                {
+                    "kb_file":             str(KB_FILE),
+                    "cache_dir":           str(CACHE_DIR),
+                    "embeddings":          args.embeddings,
+                    "beam_width":          args.beam_width,
+                    "min_community_size":  args.min_community_size,
+                    "seed":                args.seed,
+                    "graphsage":           args.graphsage,
+                    "kge":                 args.kge,
+                    "kge_blend":           args.kge_blend,
+                    "kge_epochs":          args.kge_epochs,
+                    "community_engine":    args.community_engine,
+                },
+                {
+                    "relation_answer_set": dict(_relation_answer_set),
+                    "answer_freq":         dict(_answer_freq),
+                    "priors":              priors,
+                    "r2_for_r3":           _r2_for_r3,
+                    "fan_out":             _fan_out or {},
+                },
+            ),
+        )
+        print(f"  Workers ready.")
+
+    # ------------------------------------------------------------------
     # Evaluate each hop level
     # ------------------------------------------------------------------
     results = []
 
-    for hop in hops:
-        print(f"\n--- {hop}-hop evaluation ---")
-        qa_pairs = load_qa(
-            hop,
-            sample           = args.sample,
-            seed             = args.seed,
-            include_question = True,  # Phase 146: always load for TRB detection
-        )
-        n_label = f"{len(qa_pairs):,}" + (" (sample)" if args.sample else "")
-        print(f"  {n_label} test questions")
-        prior_label = " + RelationPrior" if hop in priors else ""
-        print(f"  Running traversal (beam_width={args.beam_width}, max_hop={hop}{prior_label})...")
+    try:
+        for hop in hops:
+            print(f"\n--- {hop}-hop evaluation ---")
+            qa_pairs = load_qa(
+                hop,
+                sample           = args.sample,
+                seed             = args.seed,
+                include_question = True,
+            )
+            n_label = f"{len(qa_pairs):,}" + (" (sample)" if args.sample else "")
+            print(f"  {n_label} test questions")
+            prior_label = " + RelationPrior" if hop in priors else ""
+            print(f"  Running traversal (beam_width={args.beam_width}, max_hop={hop}{prior_label})...")
 
-        metrics = evaluate_hop(hop, graph, qa_pairs,
-                               top_k=args.top_k, beam_width=args.beam_width,
-                               embedding_engine=query_engine,
-                               relation_prior=priors.get(hop),
-                               relation_answer_set=_relation_answer_set,
-                               branch_bonus_weight=args.branch_bonus,
-                               r2_map=_r2_for_r3,
-                               vote_weight_3hop=args.vote_weight,
-                               trb_factor_3hop=args.trb_factor,
-                               answer_freq_map=_answer_freq,
-                               idf_weight=args.idf_weight,
-                               hop2_beam_width=args.hop2_beam_width,
-                               r2_boost=args.r2_boost,
-                               diagnose_path=args.diagnose if hop == 3 else None,
-                               min_filter_size=args.min_filter_size,
-                               expansion_k=args.expansion_k,
-                               eval_min_hop_3hop=args.eval_min_hop,
-                               r2_boost_map=({"starred_actors": args.sa_r2_boost}
-                                             if args.sa_r2_boost is not None else None),
-                               structural_trb=args.structural_trb,
-                               anchor_bonus=args.anchor_bonus,
-                               fan_out=_fan_out if args.pss_weight > 0.0 else None,
-                               pss_weight=args.pss_weight,
-                               fhrb_factor=args.fhrb_factor)
-        results.append(metrics)
+            metrics = evaluate_hop(hop, graph, qa_pairs,
+                                   top_k=args.top_k, beam_width=args.beam_width,
+                                   embedding_engine=query_engine,
+                                   relation_prior=priors.get(hop),
+                                   relation_answer_set=_relation_answer_set,
+                                   branch_bonus_weight=args.branch_bonus,
+                                   r2_map=_r2_for_r3,
+                                   vote_weight_3hop=args.vote_weight,
+                                   trb_factor_3hop=args.trb_factor,
+                                   answer_freq_map=_answer_freq,
+                                   idf_weight=args.idf_weight,
+                                   hop2_beam_width=args.hop2_beam_width,
+                                   r2_boost=args.r2_boost,
+                                   diagnose_path=args.diagnose if hop == 3 else None,
+                                   min_filter_size=args.min_filter_size,
+                                   expansion_k=args.expansion_k,
+                                   eval_min_hop_3hop=args.eval_min_hop,
+                                   r2_boost_map=({"starred_actors": args.sa_r2_boost}
+                                                 if args.sa_r2_boost is not None else None),
+                                   structural_trb=args.structural_trb,
+                                   anchor_bonus=args.anchor_bonus,
+                                   fan_out=_fan_out if args.pss_weight > 0.0 else None,
+                                   pss_weight=args.pss_weight,
+                                   fhrb_factor=args.fhrb_factor,
+                                   pool=_pool)
+            results.append(metrics)
 
-        print(f"  Hits@1  : {metrics['hits_1']:.4f}  ({metrics['hits_1']*100:.1f}%)")
-        print(f"  Hits@10 : {metrics['hits_10']:.4f}  ({metrics['hits_10']*100:.1f}%)")
-        print(f"  MRR     : {metrics['mrr']:.4f}")
-        print(f"  Answered: {metrics['n_answered']:,}/{metrics['n_total']:,}  "
-              f"(skipped: {metrics['n_skipped']:,})")
-        print(f"  Time    : {metrics['elapsed_s']:.1f}s")
+            print(f"  Hits@1  : {metrics['hits_1']:.4f}  ({metrics['hits_1']*100:.1f}%)")
+            print(f"  Hits@10 : {metrics['hits_10']:.4f}  ({metrics['hits_10']*100:.1f}%)")
+            print(f"  MRR     : {metrics['mrr']:.4f}")
+            print(f"  Answered: {metrics['n_answered']:,}/{metrics['n_total']:,}  "
+                  f"(skipped: {metrics['n_skipped']:,})")
+            print(f"  Time    : {metrics['elapsed_s']:.1f}s")
+
+            # Experiment tracking
+            _h = hop
+            if _mlflow:
+                _mlflow.log_metrics({
+                    f"hop{_h}_hits1":    metrics["hits_1"],
+                    f"hop{_h}_hits10":   metrics["hits_10"],
+                    f"hop{_h}_mrr":      metrics["mrr"],
+                    f"hop{_h}_elapsed":  metrics["elapsed_s"],
+                    f"hop{_h}_answered": metrics["n_answered"],
+                })
+            if _wandb:
+                _wandb.log({
+                    f"hop{_h}/hits1":    metrics["hits_1"],
+                    f"hop{_h}/hits10":   metrics["hits_10"],
+                    f"hop{_h}/mrr":      metrics["mrr"],
+                    f"hop{_h}/elapsed":  metrics["elapsed_s"],
+                    f"hop{_h}/answered": metrics["n_answered"],
+                })
+    finally:
+        if _pool is not None:
+            _pool.terminate()
+            _pool.join()
+        if _mlflow:
+            _mlflow.end_run()
+        if _wandb:
+            _wandb.finish()
 
     # ------------------------------------------------------------------
     # Summary table

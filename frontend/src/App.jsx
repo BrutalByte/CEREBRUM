@@ -28,13 +28,22 @@ export default function App() {
     <div style={s.root}>
       {/* ── Main View Area ── */}
       <div style={s.mainArea}>
-        {view === 'graph' ? (
+        {view === 'graph' && (
           <Brain3D events={events} connected={connected} queryPaths={queryPaths} showLabels={showLabels} />
-        ) : (
+        )}
+        {view === 'dashboard' && (
           <iframe
             src="/ui/dashboard.html"
             style={{ width: '100%', height: '100%', border: 'none' }}
             title="Dashboard"
+          />
+        )}
+        {view === 'benchmark' && (
+          <iframe
+            src="http://localhost:8501"
+            style={{ width: '100%', height: '100%', border: 'none' }}
+            title="Benchmark Monitor"
+            allow="same-origin"
           />
         )}
       </div>
@@ -47,8 +56,9 @@ export default function App() {
         <span style={{ flex: 1 }} />
         
         <div style={s.navGroup}>
-          <NavBtn active={view === 'graph'} onClick={() => setView('graph')}>3D Graph</NavBtn>
+          <NavBtn active={view === 'graph'}      onClick={() => setView('graph')}>3D Graph</NavBtn>
           <NavBtn active={view === 'dashboard'} onClick={() => setView('dashboard')}>Dashboard</NavBtn>
+          <NavBtn active={view === 'benchmark'} onClick={() => setView('benchmark')}>Benchmark</NavBtn>
         </div>
 
         <span style={s.sep} />
