@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-from reasoning.path_scorer import score_path, community_coherence, path_confidence
+from reasoning.path_scorer import score_path, community_coherence, path_confidence, path_specificity_score
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from reasoning.relation_path_prior import RelationPathPrior, GraphRelationPrior
@@ -214,6 +214,8 @@ def extract(
     branch_bonus_weight: float = 0.0,
     degree_penalty_weight: float = 0.0,
     adapter: Optional[Any] = None,
+    fan_out: Optional[Dict] = None,
+    weight_specificity: float = 0.0,
 ) -> List[Answer]:
     """
     Extract the top-K answer entities from a list of TraversalPaths.
@@ -293,6 +295,18 @@ def extract(
     # Normalise weighted vote sums to [0, 1] relative to the highest-voted entity
     max_vote_sum = max(vote_weight_sum.values()) if vote_weight_sum else 1.0
 
+    # Phase 179: Precompute PSS for each candidate's best path and normalise.
+    _pss_raw: Dict[str, float] = {}
+    if fan_out is not None and weight_specificity > 0.0:
+        for eid, (path, _) in best.items():
+            _pss_raw[eid] = path_specificity_score(path, fan_out)
+        _max_pss = max(_pss_raw.values()) if _pss_raw else 1.0
+        _norm_pss: Dict[str, float] = {
+            eid: s / _max_pss for eid, s in _pss_raw.items()
+        }
+    else:
+        _norm_pss = {}
+
     # Combine path score with normalised weighted vote sum.
     # Phase 144: Apply branch-diversity multiplier — log-scale bonus for answers
     # reached via multiple independent hop-1 branches.
@@ -312,6 +326,10 @@ def extract(
             deg = adapter.get_degree(entity_id)
             penalty = 1.0 / (1.0 + degree_penalty_weight * _math.log1p(deg))
             base *= penalty
+        # Phase 179: Path Specificity Score — penalise hub-like traversals
+        if _norm_pss:
+            pss = _norm_pss.get(entity_id, 0.0)
+            base = (1.0 - weight_specificity) * base + weight_specificity * pss
         return base
 
     # Sort and return top-K

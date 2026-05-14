@@ -6,6 +6,8 @@ Combines:
   - Community coherence (domain consistency across hops)
   - Semantic alignment to the query (optional)
   - Relation path prior (optional) — frequency bonus for productive sequences
+  - Path Specificity Score / PSS (Phase 179) — inverse relation fan-out penalty
+    for hub-like traversals; favours narrow, specific reasoning chains
 """
 import math
 from typing import Any, List, Optional
@@ -91,6 +93,47 @@ def grounding_score(path) -> float:
             score *= 0.9  # 10% penalty for ungrounded hop
 
     return float(np.clip(score, 0.0, 1.0))
+
+
+def path_specificity_score(path, fan_out: "Dict[str, Dict[str, int]]") -> float:
+    """
+    Phase 179 — Path Specificity Score (PSS).
+
+    For each hop (entity u) → (relation r) → (entity v), compute the inverse
+    fan-out of relation r from u: 1 / |{targets of r from u}|.
+
+    Paths that traverse narrow, specific edges score near 1.0.
+    Paths that pass through hub entities with hundreds of r-neighbours score
+    near 0.0 — these are likely generic hub-traversals, not the intended chain.
+
+    PSS = geometric mean of per-hop inverse fan-outs, clamped to [0, 1].
+
+    Parameters
+    ----------
+    path     : TraversalPath — nodes alternate entity/relation/entity/...
+    fan_out  : {entity_id: {relation: edge_count}} precomputed from KB
+
+    Returns
+    -------
+    float in (0, 1]  (never 0: unknown fan-out treated as 1)
+    """
+    nodes = getattr(path, "nodes", [])
+    # Need at least one hop: [entity, relation, entity]
+    if len(nodes) < 3:
+        return 1.0
+
+    log_sum = 0.0
+    n_hops = 0
+    for i in range(1, len(nodes) - 1, 2):
+        entity = nodes[i - 1]
+        relation = nodes[i]
+        count = fan_out.get(entity, {}).get(relation, 1)
+        log_sum += math.log(1.0 / max(count, 1))
+        n_hops += 1
+
+    if n_hops == 0:
+        return 1.0
+    return float(math.exp(log_sum / n_hops))
 
 
 def score_path(

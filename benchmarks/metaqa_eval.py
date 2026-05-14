@@ -270,6 +270,7 @@ def detect_target_relation(
     kb_relations: List[str],
     prefix_words: int = 4,
     suffix_words: int = 6,
+    exclude_relation: Optional[str] = None,
 ) -> Optional[str]:
     """
     Map a question string to a MetaQA KB relation type via keyword matching.
@@ -323,6 +324,8 @@ def detect_target_relation(
         for relation, keywords in _RELATION_KEYWORDS:
             if relation not in kb_relations:
                 continue
+            if relation == exclude_relation:
+                continue
             if any(kw in scan for kw in keywords):
                 return relation
     return None
@@ -356,6 +359,9 @@ def evaluate_hop(
     r2_boost_map:     Optional[Dict[str, float]] = None,
     structural_trb:   bool                        = False,
     anchor_bonus:     Optional[float]             = None,
+    fan_out:          Optional[Dict]              = None,
+    pss_weight:       float                       = 0.0,
+    fhrb_factor:      float                       = 0.0,
 ) -> Dict:
     """
     Evaluate one hop level using the unified CerebrumGraph.query() interface.
@@ -465,6 +471,21 @@ def evaluate_hop(
             if _r2:
                 _prb = {_r2: _trb[_detected_r3] ** 0.5}
 
+        # Phase 180: First-Hop Relation Boost — detect r1 from question and
+        # steer hop-1 beam along the intended first relation.
+        # r1 is typically a DIFFERENT relation from r3 (terminal). We detect
+        # both and use the non-r3 one as r1. Edges matching r1 are boosted;
+        # all others receive a 0.1 penalty (same mechanism as TRB at last hop).
+        _irb: Optional[Dict[str, float]] = None
+        if _is_3hop and fhrb_factor > 0.0 and question_text and _kb_relations:
+            _detected_r3_for_r1 = next(iter(_trb)) if _trb else None
+            _r1_candidate = detect_target_relation(
+                question_text, _kb_relations,
+                exclude_relation=_detected_r3_for_r1,
+            )
+            if _r1_candidate:
+                _irb = {_r1_candidate: fhrb_factor}
+
         # Phase 158: per-hop beam widths — {1: hop2_beam_width} widens the H1SE
         # sub-traversal's hop-1 (= original hop-2), improving coverage by allowing
         # more intermediate entities to survive into the final hop.
@@ -488,6 +509,9 @@ def evaluate_hop(
             expansion_k                   = expansion_k if _is_3hop else None,
             auto_infer_terminal_relation  = structural_trb and _is_3hop,
             anchor_bonus                  = anchor_bonus if _is_3hop else None,
+            fan_out                       = fan_out if _is_3hop else None,
+            weight_specificity            = pss_weight if _is_3hop else 0.0,
+            initial_relation_boost        = _irb,       # Phase 180: FHRB
         )
         # Phase 157: IDF hub-entity penalty — applied before answer-type filter.
         # Penalizes entities that appear very frequently as objects of the target
@@ -701,6 +725,15 @@ def main():
                         help="Phase 172: Terminal-Anchor bonus multiplier applied at the "
                              "penultimate hop (hop-2 for 3-hop) to entities that are sources "
                              "of the terminal relation. Default None (disabled).")
+    parser.add_argument("--pss-weight", type=float, default=0.0,
+                        help="Phase 179: Path Specificity Score weight [0,1]. "
+                             "Penalises hub-like traversals by inverse relation fan-out. "
+                             "Default 0.0 (disabled). Try 0.15–0.30 for 3-hop H@1.")
+    parser.add_argument("--fhrb-factor", type=float, default=0.0,
+                        help="Phase 180: First-Hop Relation Boost factor. When >0, "
+                             "detects r1 from question keywords and boosts hop-1 edges "
+                             "matching r1 by this factor; non-matching edges get 0.1 penalty. "
+                             "Default 0.0 (disabled). Try 3.0–8.0 alongside --use-prior.")
     parser.add_argument("--seed",       type=int,   default=42)
     args = parser.parse_args()
 
@@ -840,6 +873,18 @@ def main():
             print(f"  r3->r2 template map: {_r2_for_r3}")
 
     # ------------------------------------------------------------------
+    # Phase 179: Build relation fan-out index for Path Specificity Score.
+    # fan_out[entity][relation] = number of distinct targets in the KB.
+    # Derived entirely from graph structure — no training labels used.
+    # ------------------------------------------------------------------
+    _fan_out: Dict[str, Dict[str, int]] = {}
+    if args.pss_weight > 0.0 and _kb_index:
+        for _ent, _rels in _kb_index.items():
+            _fan_out[_ent] = {_r: len(_tgts) for _r, _tgts in _rels.items()}
+        print(f"  PSS fan-out index: {len(_fan_out):,} entities "
+              f"(weight={args.pss_weight})")
+
+    # ------------------------------------------------------------------
     # Evaluate each hop level
     # ------------------------------------------------------------------
     results = []
@@ -877,7 +922,10 @@ def main():
                                r2_boost_map=({"starred_actors": args.sa_r2_boost}
                                              if args.sa_r2_boost is not None else None),
                                structural_trb=args.structural_trb,
-                               anchor_bonus=args.anchor_bonus)
+                               anchor_bonus=args.anchor_bonus,
+                               fan_out=_fan_out if args.pss_weight > 0.0 else None,
+                               pss_weight=args.pss_weight,
+                               fhrb_factor=args.fhrb_factor)
         results.append(metrics)
 
         print(f"  Hits@1  : {metrics['hits_1']:.4f}  ({metrics['hits_1']*100:.1f}%)")

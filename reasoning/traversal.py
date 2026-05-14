@@ -386,6 +386,8 @@ class BeamTraversal:
         self.terminal_relation_boost: Dict[str, float] = dict(kwargs.get("terminal_relation_boost", {}) or {})
         # Phase 156: Penultimate Relation Boost - separate relation(s) to boost at hop N-1
         self.penultimate_relation_boost: Dict[str, float] = dict(kwargs.get("penultimate_relation_boost", {}) or {})
+        # Phase 180: Initial Relation Boost - applied only at hop 1 to steer the first step
+        self.initial_relation_boost: Dict[str, float] = dict(kwargs.get("initial_relation_boost", {}) or {})
         # Phase 172: Terminal-Anchor hints — {hop: (entity_set, bonus_factor)}
         # At the specified hop, entities in the set get their sort key multiplied by bonus_factor.
         # Does not mutate path scores; only affects pruning order. Safe to apply at any non-terminal hop.
@@ -727,6 +729,10 @@ class BeamTraversal:
                                     tb = self.terminal_relation_boost.get(rel_eff, 1.0)
                                     if tb > 1.0:
                                         w *= tb ** 0.5  # penultimate cascade
+                        # Phase 180: Initial Relation Boost — steer first hop along detected r1
+                        if self.initial_relation_boost and hop == 1:
+                            ib = self.initial_relation_boost.get(rel_eff, 0.1)
+                            w *= ib
 
                         if v_eff not in comm_cache:
                             comm_cache[v_eff] = _get_comm(v_eff)

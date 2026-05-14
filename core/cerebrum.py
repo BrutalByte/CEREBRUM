@@ -957,6 +957,9 @@ class CerebrumGraph:
         penultimate_decay:           float = 0.0,
         auto_infer_terminal_relation: Optional[bool] = None,
         anchor_bonus:                Optional[float] = None,
+        fan_out:                     Optional[Dict]  = None,
+        weight_specificity:          float           = 0.0,
+        initial_relation_boost:      Optional[Dict[str, float]] = None,
     ) -> List[Answer]:
         """
         Traverse the graph from ``seeds`` and return ranked answers.
@@ -1111,6 +1114,7 @@ class CerebrumGraph:
                 beam_widths         = _auto_beam_widths,  # Phase 136
                 terminal_relation_boost    = _trb,
                 penultimate_relation_boost = _prb,  # Phase 156
+                initial_relation_boost     = initial_relation_boost,  # Phase 180
                 penultimate_decay          = penultimate_decay,
                 **csa_overrides # Inject hormonal overrides
             )
@@ -1151,6 +1155,7 @@ class CerebrumGraph:
                 residual_k            = residual_k,
                 terminal_relation_boost    = _trb,
                 penultimate_relation_boost = _prb,  # Phase 156
+                initial_relation_boost     = initial_relation_boost,  # Phase 180
                 beam_widths                = _auto_beam_widths,
                 penultimate_decay          = penultimate_decay,
                 anchor_hints               = _anchor_hints,       # Phase 172
@@ -1290,8 +1295,10 @@ class CerebrumGraph:
             relation_prior        = relation_prior,
             vote_weight           = vote_weight,
             branch_bonus_weight   = branch_bonus_weight,
-            degree_penalty_weight = degree_penalty_weight,  # Phase 151 bug fix
-            adapter               = self.adapter,           # Phase 151 bug fix
+            degree_penalty_weight = degree_penalty_weight,
+            adapter               = self.adapter,
+            fan_out               = fan_out,               # Phase 179: PSS
+            weight_specificity    = weight_specificity,    # Phase 179: PSS
         )
 
         # Phase 172: community consensus post-traversal re-ranking
