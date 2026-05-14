@@ -51,7 +51,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v2.52.0 (Phase 172 COMPLETE)** — 2177 passed, 1 skipped.
+**v2.53.0 (Phase 178 COMPLETE)** — 2178 passed, 1 skipped.
 
 ### System Architecture Names
 | Name | Role |
@@ -158,6 +158,11 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 - **Terminal-Anchor Beam (TAB) and Hetionet Benchmark (Phases 164-165)**: TAB identifies anchor entities (source nodes for the target relation) and biases the beam toward them at hop N−1. Hetionet biomedical KG benchmark added: BFS 0.8% → TRB 73.5% 3-hop Hits@1 on `disease_gene_pathway` template.
 - **GraphProfiler — Auto Query Strategy (Phase 172)**: O(E) structural analysis at build time. Classifies graph into `hub_homogeneous` / `typed_heterogeneous` / `mixed`. Auto-configures `hop_expand`, `trb_auto`, `anchor_bonus`. `CerebrumGraph.query()` parameters default to profile values when `None`.
 - **STRB — Semantic Terminal Relation Boost (Phase 172)**: Closes the zero-config gap on 1-hop tasks. Encodes query text as `query_embedding` and calls `semantic_trb()` to identify the correct terminal relation from cosine similarity between question and relation labels. gene_participates_pathway: Profile-Auto+STRB (93.0%) = Explicit TRB (93.0%). Requires sentence-transformers; falls back to structural SRI with RandomEngine.
+- **NVMe SSD Management UI (Phase 174)**: `HardwareManager` refactored for clarity. Studio gains a dedicated Settings tab for NVMe SSD management — configure drive paths, monitor disk-resident graph state, and tune hybrid-memory spill thresholds from the UI. `ui/studio.py` exposes SSD controls; `core/hardware.py` slimmed from 212 → ~70 effective lines.
+- **Studio Hot-Swap & Adaptive Control (Phase 175)**: `StudioEngine` settings panel adds live graph hot-swap (load a new graph without restarting the server) and adaptive reasoning toggle — enable/disable H1SE, TAB, and STRB at runtime without code changes.
+- **FederatedGraphRegistry — Cross-Domain Reasoning (Phase 176)**: `core/federated_registry.py` manages multiple independent graph backends. Resolves cross-domain entity aliases during beam traversal via `resolve_alias()`. `BeamTraversal` upgraded with batch-fallback neighbor fetch: uses `get_neighbors_batch` on `MmapAdapter` for NVME parallelism, falls back to per-node `get_neighbors` on all other adapters.
+- **Continuous Improvement Trifecta (Phase 177)**: `core/trifecta.py` implements the three-pillar autonomous loop — (1) Autonomous Discovery via federated graph auto-traversal, (2) Self-Correction via `ProvenanceLedger` rollbacks, (3) Evolutionary Tuning via adaptive CSA parameter backprop. `StudioEngine` imports and exposes `TrifectaEngine`.
+- **DON'T PANIC Emergency Snapshot (Phase 178)**: `StudioEngine.emergency_snapshot()` atomically persists all reasoning state — Engram, graph node/edge mappings, community assignments, active CSA parameters — to a timestamped `panics/snapshot_<ts>/` directory for post-mortem recovery.
 
 ## Install & Development Commands
 
@@ -328,5 +333,5 @@ See [`docs/DOC_INDEX.md`](docs/DOC_INDEX.md) for the full documentation index:
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)
 - Synthetic graph helpers (`make_two_cliques()`, etc.) live in `tests/` for unit tests that don't need the CSV fixture
-- **2177 passed, 1 skipped as of v2.52.0 / Phase 172** (3 studio UI errors require running server)
+- **2178 passed, 1 skipped as of v2.53.0 / Phase 178** (3 studio UI errors require running server)
 - Type checker: no mypy/ruff configured as hard gate; run `python -m pytest tests/` as verification

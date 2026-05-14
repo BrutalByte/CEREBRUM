@@ -48,6 +48,31 @@ retroactively; failures are recorded as faithfully as passes.
 
 ---
 
+## Run 169 — v2.53.0 Phase 174–178 Sync: Traversal Regression Fix
+
+| Field             | Value |
+|---|---|
+| **Date**          | 2026-05-13 |
+| **Phase**         | Post-Phase 178 (v2.53.0) |
+| **Purpose**       | Regression fix after Phases 174–178; full docs sync |
+| **Operator**      | Bryan Alexander Buchorn |
+
+### Root Cause Fixed
+
+**Phase 176 traversal regression — `get_neighbors_batch` missing fallback**
+- `BeamTraversal._traverse_inner` was refactored in Phase 176 to always call `self.adapter.get_neighbors_batch()`. This method exists only on `MmapAdapter`; all other adapters (including `MagicMock` test adapters) have no implementation.
+- On a `MagicMock` adapter, `get_neighbors_batch()` auto-creates a method returning a `MagicMock`, not a `dict`. Calling `.get(u, [])` on a `MagicMock` yields another `MagicMock`, and iterating over it yields nothing — silently producing empty edge lists.
+- Result: 8 tests failed across `test_cvt_traversal.py`, `test_cross_branch_pruning.py`, `test_multi_seed_h1se.py`.
+- **Fix**: Added `isinstance(result, dict)` guard. If `get_neighbors_batch` is absent or returns a non-dict, traversal falls back to per-node `get_neighbors` calls for each tail, preserving full backward compatibility.
+- Additionally restored the `community_merger` merge call that Phase 176 had removed from `BeamTraversal.traverse()`.
+
+### Results
+- **Before**: 9 failed, 2169 passed, 1 skipped, 3 errors
+- **After**: **2178 passed, 1 skipped, 3 errors** (UI errors require live server — pre-existing)
+- **Net gain**: 9 failures → 0 failures; 1 new test added (net +1)
+
+---
+
 ## Run 105 — Phase 105 Final: Recursive Self-Synthesis
 
 | Field             | Value |

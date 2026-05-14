@@ -5,6 +5,18 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.53.0] - 2026-05-13
+### Added
+- **Phase 174: NVMe SSD Management UI** — `core/hardware.py` refactored; Studio gains a dedicated Settings tab for NVMe configuration (`ui/studio.py`, `core/studio_engine.py`).
+- **Phase 175: Studio Hot-Swap & Adaptive Control** — Live graph hot-swap and runtime toggle for H1SE / TAB / STRB from the settings panel (`core/studio_engine.py`).
+- **Phase 176: FederatedGraphRegistry** — `core/federated_registry.py` manages multiple graph backends; `resolve_alias()` bridges entity IDs across domains. `BeamTraversal` updated with batch-fallback neighbor fetch.
+- **Phase 177: Continuous Improvement Trifecta** — `core/trifecta.py`: Autonomous Discovery, Self-Correction via `ProvenanceLedger`, and Evolutionary CSA parameter tuning.
+- **Phase 178: DON'T PANIC Emergency Snapshot** — `StudioEngine.emergency_snapshot()` atomically persists all reasoning state to `panics/snapshot_<ts>/`.
+### Fixed
+- **Phase 176 traversal regression** (`reasoning/traversal.py`): `BeamTraversal._traverse_inner` called `get_neighbors_batch` unconditionally; only `MmapAdapter` implements it. Added `isinstance(result, dict)` guard with per-node `get_neighbors` fallback. Restored `community_merger.merge()` call removed in Phase 176. Resolves 8 failures across `test_cvt_traversal`, `test_cross_branch_pruning`, `test_multi_seed_h1se`. **2178 passed, 1 skipped, 3 UI server errors**.
+- **Pydantic schema conflicts** (`api/schemas.py`): Added `PathNode` and `PathResult` models.
+- **API server init** (`api/server.py`): Fixed `FastAPI` app initialization order.
+
 ## [2.52.0] - 2026-05-12
 ### Added
 - **Phases 168–172: Hybrid-Memory Architecture (NVME Optimized)**

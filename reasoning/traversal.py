@@ -432,15 +432,9 @@ class BeamTraversal:
             seeds, self.max_hop, self.beam_width, self.max_budget,
         )
         
-        # Current logic maintains path-tail domain context
-        beam = [TraversalPath(nodes=[s], seen_entities={s}) for s in seeds]
-
-        # Loop logic:
-        # 1. Group paths by domain
-        # 2. Call adapter.get_neighbors_batch for each domain
-        # 3. Resolve bridges (resolve_alias) and link paths across domain boundaries
-
         _cmap = getattr(self.adapter, "community_map", None)
+        if community_merger is not None and query_embedding is not None and _cmap is not None:
+            _cmap = community_merger.merge(_cmap, query_embedding, self.adapter)
         if self.csa is not None:
             if _cmap is not None:
                 self.csa.set_query_snapshot(dict(_cmap))
@@ -552,11 +546,15 @@ class BeamTraversal:
 
             # Phase 172: Vectorized Batch Neighbor Fetch (NVME Parallelism)
             # Fetch neighbors for ALL beam tails in a single call to exploit deep NVME queues.
+            # Falls back to individual get_neighbors when batch method is unavailable.
             tails = list(dict.fromkeys(p.tail for p in beam))
-            all_edges_map = self.adapter.get_neighbors_batch(
-                tails,
-                max_neighbors=self.max_neighbors,
-            )
+            _batch_fn = getattr(self.adapter, "get_neighbors_batch", None)
+            if _batch_fn is not None and callable(_batch_fn):
+                all_edges_map = _batch_fn(tails, max_neighbors=self.max_neighbors)
+                if not isinstance(all_edges_map, dict):
+                    all_edges_map = {t: self.adapter.get_neighbors(t, max_neighbors=self.max_neighbors) for t in tails}
+            else:
+                all_edges_map = {t: self.adapter.get_neighbors(t, max_neighbors=self.max_neighbors) for t in tails}
 
             for path in beam:
                 u = path.tail

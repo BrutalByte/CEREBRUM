@@ -1,5 +1,5 @@
 # ROADMAP_FUTURE.md
-## Future Vision: Hybrid-Memory Architecture (Post-Phase 172)
+## Future Vision: Hybrid-Memory Architecture & Autonomous Operation (Post-Phase 172)
 
 This roadmap defines the transition from a purely RAM-resident reasoning engine to a **Hybrid-Memory Architecture**, allowing CEREBRUM to operate on graphs of arbitrary size while maintaining sub-millisecond reasoning performance for hot reasoning paths.
 
@@ -33,7 +33,40 @@ This roadmap defines the transition from a purely RAM-resident reasoning engine 
 
 ---
 
-## 2. Resource-Aware Reasoning (The Tuning Matrix)
+## 2. Studio & Federated Reasoning (Phases 173–178)
+
+### Phase 173: Bug Fixes & API Hardening — COMPLETE (v2.52.0)
+-   **NameError Fix**: Resolved import-time `NameError` in traversal.
+-   **Pydantic Schema Conflicts**: Resolved `PathNode`/`PathResult` schema conflicts in `api/schemas.py`.
+-   **API Server Init**: Fixed `FastAPI` app initialization order.
+
+### Phase 174: NVMe SSD Management UI — COMPLETE (v2.53.0)
+-   **Hardware Refactor**: `core/hardware.py` streamlined; removed dead code, improved clarity.
+-   **Settings Tab**: Studio gains a dedicated NVMe SSD management tab in `ui/studio.py`.
+-   **Runtime Configuration**: Configure drive paths and spill thresholds from the UI without restarts.
+
+### Phase 175: Studio Hot-Swap & Adaptive Control — COMPLETE (v2.53.0)
+-   **Live Graph Hot-Swap**: Load a new graph into the running server without restarting.
+-   **Adaptive Toggle**: Enable/disable H1SE, TAB, and STRB at runtime from the settings panel.
+
+### Phase 176: FederatedGraphRegistry — COMPLETE (v2.53.0)
+-   **Cross-Domain Registry**: `core/federated_registry.py` manages multiple independent graph backends.
+-   **Alias Resolution**: `resolve_alias()` bridges entity IDs across domain boundaries during beam traversal.
+-   **Batch Fallback**: `BeamTraversal` uses `get_neighbors_batch` when available; falls back to per-node `get_neighbors` on all other adapters, preserving backward compatibility.
+
+### Phase 177: Continuous Improvement Trifecta — COMPLETE (v2.53.0)
+-   **Autonomous Discovery**: Auto-traversal of federated graphs to surface missing links.
+-   **Self-Correction**: `ProvenanceLedger`-backed rollback when traversal confidence drops below threshold.
+-   **Evolutionary Tuning**: Adaptive CSA parameter backpropagation over session history.
+
+### Phase 178: DON'T PANIC Emergency Snapshot — COMPLETE (v2.53.0)
+-   **Atomic Snapshot**: `StudioEngine.emergency_snapshot()` persists all reasoning state to `panics/snapshot_<ts>/`.
+-   **Recoverable State**: Saves Engram JSON, node/edge ID maps, community assignments, and active CSA parameters.
+-   **Zero-Loss Recovery**: Enables post-mortem analysis and full state restoration after crashes.
+
+---
+
+## 3. Resource-Aware Reasoning (The Tuning Matrix)
 
 | Mode | Memory Budget | Reasoning Strategy | Target Hardware |
 |---|---|---|---|
