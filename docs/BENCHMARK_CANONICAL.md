@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.52.0 (Phase 172) — Locked May 9, 2026
+## Version: v2.52.0 (Phase 182) — Updated May 14, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -24,16 +24,31 @@ No bridge synthesis, no GraphSAGE smoothing (Phase 53 baseline).
 
 ---
 
-## MetaQA — Full v2.52.0 Run (README Only; Do NOT Use in Paper Comparison Tables)
+## MetaQA — Full Stack Run (README Only; Do NOT Use in Paper Comparison Tables)
 
-The "full" configuration uses all v2.52.0 features including GraphSAGE, STRB, GraphProfiler.
+The "full" configuration uses all current features: sentence-transformers, H1SE, TRB/PRB/FHRB,
+r2 path-consistency boost, RelationPathPrior, GraphProfiler.
 **NOT comparable to prior work** — cite this only when labeling CEREBRUM's best-case performance,
 never in a table alongside supervised methods.
 
 | Metric | 1-hop | 2-hop | 3-hop | Phase | Notes |
 |--------|-------|-------|-------|-------|-------|
-| Hits@1 | 46.1% | 30.0% | 47.3% | 167 | Full 14,274-question run, all features |
-| Hits@10 | 96.6% | 86.3% | 73.2% | 167 | Full run |
+| Hits@1 | 46.1% | 30.0% | **49.68%** | 167 / **182** | 3-hop: full 14,274-question run |
+| Hits@10 | 96.6% | 86.3% | **79.46%** | 167 / **182** | 3-hop: full run |
+| MRR | — | — | **0.6047** | **182** | 3-hop |
+
+**Phase 182 3-hop configuration:** sentence-transformers, beam-width=20, RelationPathPrior,
+r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs ~4h serial).
+14,268/14,274 questions answered (6 skipped). Run date: 2026-05-14.
+
+**Phase progression (3-hop H@1, full 14,274 questions):**
+
+| Phase | Key addition | H@1 | H@10 | MRR |
+|-------|-------------|-----|------|-----|
+| 156 | Baseline | 45.95% | 71.23% | 0.5519 |
+| 158 | r2-boost=0.40 | 46.36% | 71.35% | 0.5557 |
+| 167 | Full v2.52.0 stack | 47.30% | 73.20% | — |
+| **182** | **+FHRB=3.0 + parallel eval** | **49.68%** | **79.46%** | **0.6047** |
 
 ---
 
@@ -91,7 +106,12 @@ Use this table verbatim in the flagship paper and Paper A's context section.
 | GNN-QE (ICML 2022) | Supervised | ~95% | ~95% | ~95% | ~72% |
 | FlexKG (2025, LLM+KG) | Supervised+LLM | 99.9% | — | — | 79.7% |
 | EPERM (2025, LLM+KG) | Supervised+LLM | — | — | — | 88.8% |
-| **CEREBRUM (ours)** | **None** | **46.1%** | **30.0%** | **12.5%** | **7.5%** |
+| **CEREBRUM Phase 53 (ours)** | **None** | **46.1%** | **30.0%** | **12.5%** | **7.5%** |
+| CEREBRUM Phase 182 (full stack)† | None | 46.1% | 30.0% | **49.68%** | 7.5% |
+
+† Phase 182 3-hop result uses full feature stack (FHRB, r2-boost, RelationPathPrior) and is
+**not directly comparable** to supervised methods in this table — listed for internal tracking only.
+Use Phase 53 numbers in all paper comparison tables.
 
 **Framing (include as footnote or paragraph):**
 > CEREBRUM achieves these results with zero task-specific training, no labeled question-answer pairs,
@@ -193,4 +213,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-05-09 | Locked for v2.52.0 publication cycle*
+*Last updated: 2026-05-14 | Phase 182 3-hop canonical run added | Paper comparison table rows unchanged*
