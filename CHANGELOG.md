@@ -5,6 +5,16 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.53.1] - 2026-05-14
+### Added
+- **Phase 182: Question-Level Multiprocessing** — `benchmarks/metaqa_eval.py` now supports `--workers N` to distribute the 14,274-question MetaQA benchmark across a `multiprocessing.Pool` using the `spawn` start method (Windows-safe, CUDA-safe). Each worker initializes its own graph and sentence-transformer instance from cached files (`force_rebuild=False`). Default: `os.cpu_count()`. Achieves **6.5× speedup** — 36.9 min vs ~4h serial on 8 workers.
+- **Phase 181/182: Automatic GPU Startup Cleanup** — `_cleanup_stale_gpu_processes()` kills idle `metaqa_eval` Python processes at benchmark startup, freeing VRAM held by prior crashed/OOM runs. Guards: process must have started >60s before the current process AND have CPU usage ≤2% — prevents killing active benchmarks or pool workers.
+- **Phase 182: MLflow / W&B Experiment Tracking** — `--mlflow` / `--mlflow-uri` / `--wandb` / `--wandb-project` flags log per-hop H@1, H@10, MRR, elapsed time, and all hyperparameters to experiment trackers.
+- **Phase 182: Streamlit Benchmark Monitor** — `benchmarks/monitor.py`: live dashboard parsing `metaqa_run.log` for progress, ETA, rate, and final results. MLflow run history tab. Launch with `streamlit run benchmarks/monitor.py`.
+- **Phase 182: Benchmark Portal Tab** — `frontend/src/App.jsx` adds a Benchmark nav button embedding the Streamlit monitor (`localhost:8501`) in the main React portal.
+### Results
+- **MetaQA 3-hop canonical run (Phase 182):** H@1=**49.68%**, H@10=**79.46%**, MRR=**0.6047** — 14,268/14,274 answered, 8 workers, 36.9 min. New best across all phases.
+
 ## [2.53.0] - 2026-05-13
 ### Added
 - **Phase 174: NVMe SSD Management UI** — `core/hardware.py` refactored; Studio gains a dedicated Settings tab for NVMe configuration (`ui/studio.py`, `core/studio_engine.py`).

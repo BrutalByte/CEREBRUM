@@ -51,7 +51,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v2.53.0 (Phase 178 COMPLETE)** — 2178 passed, 1 skipped.
+**v2.53.1 (Phase 182 COMPLETE)** — 2178 passed, 1 skipped.
 
 ### System Architecture Names
 | Name | Role |
@@ -163,6 +163,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 - **FederatedGraphRegistry — Cross-Domain Reasoning (Phase 176)**: `core/federated_registry.py` manages multiple independent graph backends. Resolves cross-domain entity aliases during beam traversal via `resolve_alias()`. `BeamTraversal` upgraded with batch-fallback neighbor fetch: uses `get_neighbors_batch` on `MmapAdapter` for NVME parallelism, falls back to per-node `get_neighbors` on all other adapters.
 - **Continuous Improvement Trifecta (Phase 177)**: `core/trifecta.py` implements the three-pillar autonomous loop — (1) Autonomous Discovery via federated graph auto-traversal, (2) Self-Correction via `ProvenanceLedger` rollbacks, (3) Evolutionary Tuning via adaptive CSA parameter backprop. `StudioEngine` imports and exposes `TrifectaEngine`.
 - **DON'T PANIC Emergency Snapshot (Phase 178)**: `StudioEngine.emergency_snapshot()` atomically persists all reasoning state — Engram, graph node/edge mappings, community assignments, active CSA parameters — to a timestamped `panics/snapshot_<ts>/` directory for post-mortem recovery.
+- **Question-Level Multiprocessing (Phase 182)**: `benchmarks/metaqa_eval.py` distributes MetaQA evaluation across a `multiprocessing.Pool` (spawn, CUDA-safe). `--workers N` (default `os.cpu_count()`). Workers load graph from cache; each gets its own sentence-transformer instance. 6.5× speedup: 36.9 min vs ~4h serial on 8 workers. `_cleanup_stale_gpu_processes()` kills idle metaqa_eval procs at startup with creation-time + CPU-idle guards. `--mlflow` / `--wandb` experiment tracking. `benchmarks/monitor.py` Streamlit live dashboard. Benchmark tab added to React portal. Canonical result: H@1=49.68%, H@10=79.46%, MRR=0.6047 (14,274 questions, 2026-05-14).
 
 ## Install & Development Commands
 
@@ -333,5 +334,5 @@ See [`docs/DOC_INDEX.md`](docs/DOC_INDEX.md) for the full documentation index:
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)
 - Synthetic graph helpers (`make_two_cliques()`, etc.) live in `tests/` for unit tests that don't need the CSV fixture
-- **2178 passed, 1 skipped as of v2.53.0 / Phase 178** (3 studio UI errors require running server)
+- **2178 passed, 1 skipped as of v2.53.1 / Phase 182** (3 studio UI errors require running server)
 - Type checker: no mypy/ruff configured as hard gate; run `python -m pytest tests/` as verification
