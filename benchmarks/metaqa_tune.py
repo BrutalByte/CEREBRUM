@@ -53,7 +53,6 @@ _BASE_ARGS = [
     "--beam-width", "20",
     "--use-prior",
     "--fhrb-factor", "3.0",
-    "--workers", str(os.cpu_count()),
 ]
 
 _WORKDIR = str(Path(__file__).parent.parent)
@@ -75,11 +74,12 @@ _SPACE = {
 }
 
 
-def _run_config(params: dict, sample: int, seed: int) -> dict | None:
+def _run_config(params: dict, sample: int, seed: int, workers: int = 8) -> dict | None:
     """Run metaqa_eval with given params, return metrics dict or None on error."""
     cmd = _BASE_ARGS + [
         "--sample",      str(sample),
         "--seed",        str(seed),
+        "--workers",     str(workers),
         "--pss-weight",  str(params.get("pss_weight",  _FIXED["pss_weight"])),
         "--vote-weight", str(params.get("vote_weight", _FIXED["vote_weight"])),
         "--r2-boost",    str(params.get("r2_boost",    _FIXED["r2_boost"])),
@@ -128,7 +128,7 @@ def _run_config(params: dict, sample: int, seed: int) -> dict | None:
     }
 
 
-def build_objective(active_params: list[str], sample: int, mlflow_run=None):
+def build_objective(active_params: list[str], sample: int, workers: int, mlflow_run=None):
     trial_num = [0]
 
     def objective(trial: optuna.Trial) -> float:
@@ -141,12 +141,12 @@ def build_objective(active_params: list[str], sample: int, mlflow_run=None):
         label = "  ".join(f"{k}={v:.3f}" for k, v in params.items())
         print(f"\n[trial {trial_num[0]:3d}] {label}", flush=True)
 
-        metrics = _run_config(params, sample=sample, seed=42)
+        metrics = _run_config(params, sample=sample, seed=42, workers=workers)
         if metrics is None:
             raise optuna.TrialPruned()
 
         h1 = metrics["hits1"]
-        print(f"           → H@1={h1*100:.2f}%  H@10={metrics['hits10']*100:.2f}%  "
+        print(f"           -> H@1={h1*100:.2f}%  H@10={metrics['hits10']*100:.2f}%  "
               f"MRR={metrics['mrr']:.4f}  ({metrics['elapsed']:.0f}s)", flush=True)
 
         if mlflow_run is not None:
@@ -182,6 +182,8 @@ def main():
     parser.add_argument("--validate",  type=int,   default=2000,
                         help="Questions for final validation run of best params (default: 2000). "
                              "Set 0 to skip.")
+    parser.add_argument("--workers",   type=int,   default=8,
+                        help="Worker processes per metaqa_eval trial (default: 8)")
     args = parser.parse_args()
 
     print("=" * 60)
@@ -191,7 +193,7 @@ def main():
     print(f"  Sample/trial: {args.sample} questions")
     print(f"  Searching   : {args.search}")
     print(f"  Fixed       : r2_boost={_FIXED['r2_boost']}  fhrb=3.0  bw=20  prior=yes")
-    print(f"  Workers     : {os.cpu_count()}")
+    print(f"  Workers     : {args.workers}")
     print()
 
     # MLflow parent run (optional)
@@ -216,13 +218,13 @@ def main():
     # Seed with Phase 182 baseline (all params at current defaults)
     baseline_params = {p: _FIXED[p] for p in args.search}
     print(f"[trial   0] BASELINE {baseline_params}", flush=True)
-    baseline = _run_config(baseline_params, sample=args.sample, seed=42)
+    baseline = _run_config(baseline_params, sample=args.sample, seed=42, workers=args.workers)
     if baseline:
-        print(f"           → H@1={baseline['hits1']*100:.2f}%  "
+        print(f"           -> H@1={baseline['hits1']*100:.2f}%  "
               f"H@10={baseline['hits10']*100:.2f}%  MRR={baseline['mrr']:.4f}", flush=True)
         study.enqueue_trial(baseline_params)
 
-    objective = build_objective(args.search, sample=args.sample, mlflow_run=mlflow_run)
+    objective = build_objective(args.search, sample=args.sample, workers=args.workers, mlflow_run=mlflow_run)
     study.optimize(objective, n_trials=args.n_trials)
 
     # ---------------------------------------------------------------------------
@@ -252,14 +254,14 @@ def main():
     # ---------------------------------------------------------------------------
     if args.validate > 0 and best.value > (baseline["hits1"] if baseline else 0):
         print(f"\n  Running validation at n={args.validate} with best params...", flush=True)
-        val = _run_config(best.params, sample=args.validate, seed=42)
+        val = _run_config(best.params, sample=args.validate, seed=42, workers=args.workers)
         if val:
             print(f"\n  VALIDATION RESULT:")
             print(f"    H@1  : {val['hits1']*100:.2f}%")
             print(f"    H@10 : {val['hits10']*100:.2f}%")
             print(f"    MRR  : {val['mrr']:.4f}")
             if baseline:
-                print(f"    Δ H@1 vs baseline: {(val['hits1']-baseline['hits1'])*100:+.2f}pp")
+                print(f"    d H@1 vs baseline: {(val['hits1']-baseline['hits1'])*100:+.2f}pp")
             if mlflow_run is not None:
                 try:
                     import mlflow
