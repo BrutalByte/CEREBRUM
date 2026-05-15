@@ -71,3 +71,7 @@ ue5_project/
 # Old release/validation snapshots (superseded by docs/)
 release/
 validation/
+
+# MLflow / Optuna experiment tracking artifacts
+mlruns/
+optuna_studies/
