@@ -15,6 +15,21 @@ _log = logging.getLogger("cerebrum.traversal")
 
 from reasoning.traversal import BeamTraversal, TraversalPath
 
+# ---------------------------------------------------------------------------
+# Phase 184: diagnostic hook — set by phase184_hop1_audit.py only.
+# Called with (sorted_neighbors, score_map, k_eff) after stage-1 ranking.
+# None in all production paths.
+# ---------------------------------------------------------------------------
+_hop1_audit_cb = None
+
+def set_hop1_audit_cb(cb):
+    global _hop1_audit_cb
+    _hop1_audit_cb = cb
+
+def clear_hop1_audit_cb():
+    global _hop1_audit_cb
+    _hop1_audit_cb = None
+
 
 class GlobalBeamBarrier:
     """
@@ -273,6 +288,8 @@ class HopExpandedTraversal:
 
         # sorted_neighbors is kept in scope for the Phase 145 residual sweep.
         sorted_neighbors = sorted(parent_map.keys(), key=_rank_key, reverse=True)
+        if _hop1_audit_cb is not None:
+            _hop1_audit_cb(sorted_neighbors, {e: _rank_key(e) for e in sorted_neighbors}, k_eff)
         hop1_entities: List[str] = []
         for eid in sorted_neighbors:
             hop1_entities.append(eid)
@@ -308,9 +325,12 @@ class HopExpandedTraversal:
                 per_budget=per_budget,
             )
 
-            # Callback links sub-traversal to the global barrier
+            # Phase 184: Barrier evaluates sub-traversal quality independently
+            # of hop-1 entity score. Prior: parent.score * top_score caused the
+            # barrier to terminate sub-traversals for low-scoring hop-1 entities
+            # (avg score ratio 0.227) before they could reach the answer at hop-2.
             def _prune_cb(top_score: float, sub_id=i) -> bool:
-                return barrier.report(sub_id, parent.score * top_score)
+                return barrier.report(sub_id, top_score)
 
             # FIX: We need to prime the sub-traversal to avoid the forbidden seeds.
             # BeamTraversal doesn't have a direct forbidden_nodes list, but we can

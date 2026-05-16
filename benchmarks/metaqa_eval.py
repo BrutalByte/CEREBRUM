@@ -408,7 +408,7 @@ def _worker_process_question(task: tuple) -> tuple:
          vote_weight_3hop, branch_bonus_weight, trb_factor_3hop, idf_weight,
          hop2_beam_width, r2_boost, r2_boost_map, min_filter_size,
          expansion_k, structural_trb, anchor_bonus, pss_weight, fhrb_factor,
-         do_diag) = task
+         do_diag, do_diag_jsonl) = task
 
         graph               = _W_GRAPH
         embedding_engine    = _W_QUERY_ENGINE
@@ -517,11 +517,12 @@ def _worker_process_question(task: tuple) -> tuple:
 
         pred = [a.entity_id for a in answers_obj]
 
-        # Diagnostic row
+        # Diagnostic row (Phase 184: enriched for --diagnose-jsonl)
         _diag: Optional[Dict] = None
-        if do_diag and _is_3hop:
-            _correct_in_beam = any(e in correct_answers for e in pred)
-            _beam_rank = next((i + 1 for i, e in enumerate(pred) if e in correct_answers), 0)
+        if (do_diag or do_diag_jsonl) and _is_3hop:
+            _correct_set_w = set(correct_answers)
+            _correct_in_beam = any(e in _correct_set_w for e in pred)
+            _beam_rank = next((idx + 1 for idx, e in enumerate(pred) if e in _correct_set_w), 0)
             _diag = {
                 "q_idx": q_idx,
                 "seed": seed,
@@ -532,7 +533,26 @@ def _worker_process_question(task: tuple) -> tuple:
                 "n_filtered": -1,
                 "correct_in_filtered": False,
                 "final_rank": 0,
+                "filter_applied": False,
+                "filter_fell_back": False,
             }
+            if do_diag_jsonl:
+                _ca_score = 0.0
+                _t1_score = answers_obj[0].score if answers_obj else 0.0
+                _t1_entity = answers_obj[0].entity_id if answers_obj else ""
+                for _a in answers_obj:
+                    if _a.entity_id in _correct_set_w:
+                        _ca_score = _a.score
+                        break
+                _diag.update({
+                    "question_text": question_text or "",
+                    "all_correct_answers": "|".join(str(a) for a in correct_answers),
+                    "n_candidates_before_filter": len(pred),
+                    "predicted_top10": "|".join(pred[:10]),
+                    "correct_answer_score": _ca_score,
+                    "top1_answer": _t1_entity,
+                    "top1_score": _t1_score,
+                })
 
         if not pred:
             return (q_idx, None, _diag)
@@ -546,6 +566,8 @@ def _worker_process_question(task: tuple) -> tuple:
                 if _diag is not None:
                     _diag["n_filtered"] = len(filtered)
                     _diag["correct_in_filtered"] = any(e in correct_answers for e in filtered)
+                    _diag["filter_applied"] = True
+                    _diag["filter_fell_back"] = len(filtered) < min_filter_size
                 pred = filtered[:top_k] if len(filtered) >= min_filter_size else pred[:top_k]
             else:
                 pred = pred[:top_k]
@@ -587,7 +609,8 @@ def evaluate_hop(
     idf_weight:       float          = 0.0,
     hop2_beam_width:  Optional[int]  = None,
     r2_boost:         float          = 0.0,
-    diagnose_path:    Optional[str]  = None,
+    diagnose_path:      Optional[str]  = None,
+    diagnose_jsonl_path: Optional[str] = None,
     min_filter_size:  int            = 1,
     expansion_k:      Optional[int]  = None,
     eval_min_hop_3hop: Optional[int] = None,
@@ -650,7 +673,8 @@ def evaluate_hop(
     # Phase 182: Parallel path                                             #
     # ------------------------------------------------------------------ #
     if pool is not None:
-        _do_diag  = bool(diagnose_path)
+        _do_diag       = bool(diagnose_path)
+        _do_diag_jsonl = bool(diagnose_jsonl_path)
         _eval_min = eval_min_hop
         _r2bmap   = ({k: v for k, v in r2_boost_map.items()} if r2_boost_map else None)
         tasks = [
@@ -663,7 +687,7 @@ def evaluate_hop(
                 vote_weight_3hop, branch_bonus_weight, trb_factor_3hop, idf_weight,
                 hop2_beam_width, r2_boost, _r2bmap, min_filter_size,
                 expansion_k, structural_trb, anchor_bonus, pss_weight, fhrb_factor,
-                _do_diag,
+                _do_diag, _do_diag_jsonl,
             )
             for i, qa in enumerate(qa_pairs)
         ]
@@ -698,10 +722,17 @@ def evaluate_hop(
             _fields = ["q_idx", "seed", "correct_answer", "in_beam_top100", "beam_rank",
                        "detected_rel", "n_filtered", "correct_in_filtered", "final_rank"]
             with open(diagnose_path, "w", newline="", encoding="utf-8") as _csvf:
-                _w = csv.DictWriter(_csvf, fieldnames=_fields)
+                _w = csv.DictWriter(_csvf, fieldnames=_fields, extrasaction="ignore")
                 _w.writeheader()
                 _w.writerows(_diag_rows)
             print(f"  Diagnostic CSV written: {diagnose_path} ({len(_diag_rows):,} rows)")
+        if diagnose_jsonl_path and _diag_rows:
+            import json as _json
+            _diag_rows.sort(key=lambda r: r["q_idx"])
+            with open(diagnose_jsonl_path, "w", encoding="utf-8") as _jf:
+                for _row in _diag_rows:
+                    _jf.write(_json.dumps(_row, default=str) + "\n")
+            print(f"  Diagnostic JSONL written: {diagnose_jsonl_path} ({len(_diag_rows):,} rows)")
         return {
             "hop": hop, "n_total": n, "n_answered": found, "n_skipped": skipped,
             "hits_1": h1 / n, "hits_10": h10 / n, "mrr": mrr_sum / n,
@@ -852,11 +883,12 @@ def evaluate_hop(
 
         pred = [a.entity_id for a in answers_obj]
 
-        # Phase 159: diagnostic — capture pre-filter beam state
+        # Phase 159/184: diagnostic — capture pre-filter beam state
         _diag: Optional[Dict] = None
-        if diagnose_path and _is_3hop:
-            _correct_in_beam = any(e in correct_answers for e in pred)
-            _beam_rank = next((i + 1 for i, e in enumerate(pred) if e in correct_answers), 0)
+        if (diagnose_path or diagnose_jsonl_path) and _is_3hop:
+            _correct_set_s = set(correct_answers)
+            _correct_in_beam = any(e in _correct_set_s for e in pred)
+            _beam_rank = next((idx + 1 for idx, e in enumerate(pred) if e in _correct_set_s), 0)
             _diag = {
                 "q_idx": i,
                 "seed": seed,
@@ -867,7 +899,26 @@ def evaluate_hop(
                 "n_filtered": -1,
                 "correct_in_filtered": False,
                 "final_rank": 0,
+                "filter_applied": False,
+                "filter_fell_back": False,
             }
+            if diagnose_jsonl_path:
+                _ca_score = 0.0
+                _t1_score = answers_obj[0].score if answers_obj else 0.0
+                _t1_entity = answers_obj[0].entity_id if answers_obj else ""
+                for _a in answers_obj:
+                    if _a.entity_id in _correct_set_s:
+                        _ca_score = _a.score
+                        break
+                _diag.update({
+                    "question_text": question_text or "",
+                    "all_correct_answers": "|".join(str(a) for a in correct_answers),
+                    "n_candidates_before_filter": len(pred),
+                    "predicted_top10": "|".join(pred[:10]),
+                    "correct_answer_score": _ca_score,
+                    "top1_answer": _t1_entity,
+                    "top1_score": _t1_score,
+                })
 
         if not pred:
             skipped += 1
@@ -886,6 +937,8 @@ def evaluate_hop(
                 if _diag is not None:
                     _diag["n_filtered"] = len(filtered)
                     _diag["correct_in_filtered"] = any(e in correct_answers for e in filtered)
+                    _diag["filter_applied"] = True
+                    _diag["filter_fell_back"] = len(filtered) < min_filter_size
                 if len(filtered) >= min_filter_size:
                     pred = filtered[:top_k]
                 else:
@@ -912,10 +965,16 @@ def evaluate_hop(
         _fields = ["q_idx", "seed", "correct_answer", "in_beam_top100", "beam_rank",
                    "detected_rel", "n_filtered", "correct_in_filtered", "final_rank"]
         with open(diagnose_path, "w", newline="", encoding="utf-8") as _csvf:
-            _w = csv.DictWriter(_csvf, fieldnames=_fields)
+            _w = csv.DictWriter(_csvf, fieldnames=_fields, extrasaction="ignore")
             _w.writeheader()
             _w.writerows(_diag_rows)
         print(f"  Diagnostic CSV written: {diagnose_path} ({len(_diag_rows):,} rows)")
+    if diagnose_jsonl_path and _diag_rows:
+        import json as _json
+        with open(diagnose_jsonl_path, "w", encoding="utf-8") as _jf:
+            for _row in _diag_rows:
+                _jf.write(_json.dumps(_row, default=str) + "\n")
+        print(f"  Diagnostic JSONL written: {diagnose_jsonl_path} ({len(_diag_rows):,} rows)")
 
     return {
         "hop":        hop,
@@ -1071,6 +1130,12 @@ def main():
                         help="Phase 159: write per-question diagnostic CSV to PATH. "
                              "Columns: in_beam_top100, beam_rank, n_filtered, "
                              "correct_in_filtered, final_rank. 3-hop only.")
+    parser.add_argument("--diagnose-jsonl", type=str, default=None, metavar="PATH",
+                        help="Phase 184: write per-question rich diagnostic JSONL to PATH. "
+                             "Superset of --diagnose: adds question_text, predicted_top10, "
+                             "n_candidates_before_filter, correct_answer_score, top1_score, "
+                             "filter_applied, filter_fell_back. 3-hop only. "
+                             "Used by benchmarks/phase184_diagnose.py.")
     parser.add_argument("--min-filter-size", type=int, default=1,
                         help="Phase 159: minimum number of type-filtered answers required "
                              "to apply the hard answer-type filter. If fewer than this many "
@@ -1375,6 +1440,7 @@ def main():
                                    hop2_beam_width=args.hop2_beam_width,
                                    r2_boost=args.r2_boost,
                                    diagnose_path=args.diagnose if hop == 3 else None,
+                                   diagnose_jsonl_path=(args.diagnose_jsonl if hop == 3 else None),
                                    min_filter_size=args.min_filter_size,
                                    expansion_k=args.expansion_k,
                                    eval_min_hop_3hop=args.eval_min_hop,
