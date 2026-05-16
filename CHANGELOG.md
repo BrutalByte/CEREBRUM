@@ -5,6 +5,17 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.54.0] - 2026-05-15
+### Added
+- **Phase 185: GlobalBeamBarrier `min_guaranteed=10`** (`reasoning/expanded_traversal.py`) — Top-10 hop-1 branches always run to completion regardless of barrier score. Previously, low-scoring hop-1 entities (score_ratio ~0.23) were pruned before their deep traversals completed, causing 71 beam_coverage misses. Phase 184 diagnostic confirmed all 71 had viable rank ≤ 8; barrier fix recovers them. `HopExpandedTraversal(barrier_min_guaranteed=10)` (configurable). Tests: `test_global_beam_barrier_min_guaranteed`, updated `test_h1se_passes_callback_and_prunes`.
+- **Phase 185: Pure-genre cross-type penalty** (`benchmarks/metaqa_eval.py`) — Multiplies score × 0.10 for the 23 `has_genre` label entities (Drama, Comedy, Horror…) when the detected terminal relation is `written_by`, `directed_by`, `starred_actors`, or `release_year`. Also penalizes `in_language` entities for `release_year` queries. `_pure_genre` = `has_genre` answers minus person/year answers — guarantees no correct answer is penalized. Case-insensitive matching added in Phase 186 to catch lowercase beam variants.
+- **Phase 186: Geometric mean stitch scoring** (`reasoning/expanded_traversal.py`, `_stitch()`) — Replaces `parent.score * child.score` product with `sqrt(parent.score * child.score)`. Hop-1 entities with score_ratio ~0.33 produced stitched paths scoring 0.33× the best, falling below the global top-100 cutoff; geometric mean raises them to 0.58×.
+- **Phase 186: r2_boost default raised to 3.0** (`benchmarks/metaqa_eval.py`) — Phase 183 Optuna search found 3.0 optimal (vs prior default 0.40). Path-consistency boost rewards answer entities whose best path uses the expected hop-2 relation.
+- **Phase 187: Optuna tuner updated** (`benchmarks/metaqa_tune.py`) — Search space updated to [1.0, 6.0] for r2_boost and [0.70, 0.95] for vote_weight around Phase 186 optimum. Workers hardcoded to 1 (Windows WinError232 workaround). Manual sweep confirms vote_weight=0.85 and r2_boost=3.0 are at local optimum.
+### Results
+- **MetaQA 3-hop Phase 185/186 (14,274 questions):** H@1=**56.12%**, H@10=**87.62%**, MRR=**0.6704** — up from Phase 182 H@1=49.68% (+6.44pp). 500-sample estimate (seed=42): H@1=60.8%, H@10=88.8%, MRR=0.702.
+- **Test suite:** 2191 passed, 1 skipped, 3 UI server errors (expected).
+
 ## [2.53.2] - 2026-05-14
 ### Added
 - **Phase 183: Optuna Hyperparameter Tuner** — `benchmarks/metaqa_tune.py`: TPE-sampled search over `pss_weight`, `vote_weight`, `r2_boost`, `idf_weight` scoring parameters. Each trial runs `metaqa_eval` on a configurable subsample (default 500 questions). Seeds with Phase 182 baseline, then runs N Optuna trials, validates best params on a larger sample (default 2000 questions). MLflow nested-run logging (`--mlflow`). Prints top-5 trials and ready-to-run canonical command. Quick search: 30 trials × 500 q ≈ 35 min.

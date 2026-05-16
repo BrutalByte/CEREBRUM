@@ -50,27 +50,28 @@ _BASE_ARGS = [
     sys.executable, "-u", "-m", "benchmarks.metaqa_eval",
     "--hop", "3",
     "--embeddings", "sentence",
-    "--beam-width", "20",
+    "--beam-width", "10",
     "--use-prior",
     "--fhrb-factor", "3.0",
+    "--workers", "1",        # Phase 183: Windows WinError232 workaround
 ]
 
 _WORKDIR = str(Path(__file__).parent.parent)
 
-# Parameters that are FIXED in Phase 182 canonical and not searched by default
+# Phase 186 baseline: best known params after barrier+geo-mean+genre-penalty
 _FIXED = {
-    "r2_boost": 0.40,
+    "r2_boost":   3.0,
     "pss_weight": 0.0,
     "vote_weight": 0.85,
     "idf_weight": 0.0,
 }
 
-# Search space bounds
+# Search space bounds — Phase 187 re-tune around Phase 186 optimum
 _SPACE = {
-    "pss_weight":  (0.00, 0.50),
-    "vote_weight": (0.60, 0.90),
-    "r2_boost":    (0.20, 0.80),
-    "idf_weight":  (0.00, 0.80),
+    "pss_weight":  (0.00, 0.40),
+    "vote_weight": (0.70, 0.95),
+    "r2_boost":    (1.0,  6.0),
+    "idf_weight":  (0.00, 0.30),
 }
 
 
@@ -79,7 +80,6 @@ def _run_config(params: dict, sample: int, seed: int, workers: int = 8) -> dict 
     cmd = _BASE_ARGS + [
         "--sample",      str(sample),
         "--seed",        str(seed),
-        "--workers",     str(workers),
         "--pss-weight",  str(params.get("pss_weight",  _FIXED["pss_weight"])),
         "--vote-weight", str(params.get("vote_weight", _FIXED["vote_weight"])),
         "--r2-boost",    str(params.get("r2_boost",    _FIXED["r2_boost"])),
@@ -187,12 +187,12 @@ def main():
     args = parser.parse_args()
 
     print("=" * 60)
-    print("CEREBRUM MetaQA Hyperparameter Search — Phase 183")
+    print("CEREBRUM MetaQA Hyperparameter Search — Phase 187")
     print("=" * 60)
     print(f"  Trials      : {args.n_trials}")
     print(f"  Sample/trial: {args.sample} questions")
     print(f"  Searching   : {args.search}")
-    print(f"  Fixed       : r2_boost={_FIXED['r2_boost']}  fhrb=3.0  bw=20  prior=yes")
+    print(f"  Fixed       : r2_boost={_FIXED['r2_boost']}  fhrb=3.0  bw=10  prior=yes  workers=1")
     print(f"  Workers     : {args.workers}")
     print()
 

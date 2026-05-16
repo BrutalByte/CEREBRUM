@@ -82,4 +82,16 @@ Correct answer is in beam/top-100 but ranked below top-1. Sub-cases:
 | Phase 184 diagnostic | 54.6% | 83.0% | — |
 | +barrier fix | 56.0% | 88.2% | 0.684 |
 | +genre penalty | 56.4% | 89.4% | 0.683 |
-| +geo mean stitch | **57.2%** | **88.8%** | **0.687** |
+| +geo mean stitch | 57.2% | 88.8% | 0.687 |
+| +r2_boost=3.0 + case-insensitive penalty | **60.8%** | **88.8%** | **0.702** | (500-q sample) |
+| **Phase 185/186 OFFICIAL (14,274q)** | **56.12%** | **87.62%** | **0.6704** | |
+
+## Phase 187 Exploration (no gain found)
+- Extended cross-type penalty to year+language for person-relations → -0.4pp (reverted)
+- _raw_top_k=150 → 0 H@1 gain, slight H@10 regression (reverted)
+- beam_profile_factor=4.0 → -1.8pp (reverted)
+- Arithmetic mean stitch → -1.8pp (reverted)
+- IDF weight (all values) → regression (reverted)
+- PSS weight → regression (reverted)
+- Manual vote_weight sweep: 0.85 is optimal (0.80: -0.8pp, 0.90: -1.4pp)
+- Manual r2_boost sweep: 3.0 is optimal (2.0: -2.8pp, 4.0: -1.2pp, 5.0: -0.8pp)
