@@ -515,8 +515,8 @@ def _worker_process_question(task: tuple) -> tuple:
                 if _changed:
                     answers_obj.sort(key=lambda a: a.score, reverse=True)
 
-        # Phase 185: Cross-type penalty — suppress pure genre entities for
-        # person/year terminal relations. Built lazily from relation_answer_set.
+        # Phase 185/186: Cross-type penalty (worker path).
+        _FORMAT_TAGS_W: frozenset = frozenset()  # unused post-186
         if _is_3hop and _trb:
             _det_r3_xtp = next(iter(_trb))
             _py_rels = {"written_by", "directed_by", "starred_actors", "release_year"}
@@ -525,17 +525,23 @@ def _worker_process_question(task: tuple) -> tuple:
                     e for r in _py_rels
                     for e in relation_answer_set.get(r, set())
                 )
-                _pure_genres = frozenset(
+                _pure_g = frozenset(
                     relation_answer_set.get("has_genre", set())
                 ) - _py_answers
-                if _pure_genres:
-                    _changed_xtp = False
-                    for _ans in answers_obj:
-                        if _ans.entity_id in _pure_genres:
-                            _ans.score *= 0.10
-                            _changed_xtp = True
-                    if _changed_xtp:
-                        answers_obj.sort(key=lambda a: a.score, reverse=True)
+                _lang_ents = frozenset(
+                    relation_answer_set.get("in_language", set())
+                ) - _py_answers
+                _changed_xtp = False
+                for _ans in answers_obj:
+                    eid = _ans.entity_id
+                    if eid in _pure_g or eid.lower() in _FORMAT_TAGS_W:
+                        _ans.score *= 0.10
+                        _changed_xtp = True
+                    elif _det_r3_xtp == "release_year" and eid in _lang_ents:
+                        _ans.score *= 0.10
+                        _changed_xtp = True
+                if _changed_xtp:
+                    answers_obj.sort(key=lambda a: a.score, reverse=True)
 
         pred = [a.entity_id for a in answers_obj]
 
@@ -687,10 +693,12 @@ def evaluate_hop(
     # is built directly from KB triples (objects only — not reversed edges).
     _relation_answer_set: Dict[str, set] = relation_answer_set or {}
 
-    # Phase 185: Cross-type penalty — pure genre entities that NEVER appear as
-    # valid answers for person/year relations. This excludes language entities
-    # (French, English) which can be valid answers via multi-hop paths that cross
-    # relation boundaries.
+    # Phase 185/186: Cross-type penalty.
+    # _pure_genre: the 23 has_genre labels (Action, Drama, Comedy…) that never
+    # appear as valid written_by/directed_by/starred_actors/release_year answers.
+    # _language_entities: in_language answers — safe to penalize for release_year
+    # (a language is never a year) but NOT for person relations where multi-hop
+    # paths can legitimately end at a language entity.
     _person_year_relations: frozenset = frozenset(
         {"written_by", "directed_by", "starred_actors", "release_year"}
     )
@@ -698,9 +706,13 @@ def evaluate_hop(
         e for r in _person_year_relations
         for e in _relation_answer_set.get(r, set())
     )
-    _pure_genre_entities: frozenset = frozenset(
+    _pure_genre: frozenset = frozenset(
         _relation_answer_set.get("has_genre", set())
     ) - _person_year_answers
+    _language_entities: frozenset = frozenset(
+        _relation_answer_set.get("in_language", set())
+    ) - _person_year_answers
+    _FORMAT_TAG_BLOCKLIST: frozenset = frozenset()  # placeholder, unused post-186
 
     _diag_rows: List[Dict] = []
 
@@ -918,16 +930,19 @@ def evaluate_hop(
                 if _changed:
                     answers_obj.sort(key=lambda a: a.score, reverse=True)
 
-        # Phase 185: Cross-type penalty — suppress pure genre entities for
-        # person/year terminal relations. "Pure genre" = in has_genre answers but
-        # NOT in any written_by/directed_by/starred_actors/release_year answers,
-        # so penalizing them cannot affect correct answers.
+        # Phase 185/186: Cross-type penalty.
+        # Pure genre labels + explicit format-tag blocklist suppressed for all
+        # person/year relations. Language entities suppressed for release_year only.
         if _is_3hop and _trb:
             _det_r3_xtp = next(iter(_trb))
-            if _det_r3_xtp in _person_year_relations and _pure_genre_entities:
+            if _det_r3_xtp in _person_year_relations:
                 _changed_xtp = False
                 for _ans in answers_obj:
-                    if _ans.entity_id in _pure_genre_entities:
+                    eid = _ans.entity_id
+                    if eid in _pure_genre or eid.lower() in _FORMAT_TAG_BLOCKLIST:
+                        _ans.score *= 0.10
+                        _changed_xtp = True
+                    elif _det_r3_xtp == "release_year" and eid in _language_entities:
                         _ans.score *= 0.10
                         _changed_xtp = True
                 if _changed_xtp:
@@ -1156,10 +1171,10 @@ def main():
     parser.add_argument("--hop2-beam-width", type=int, default=None,
                         help="Per-hop beam width override at hop-2 for 3-hop traversal. "
                              "Default: same as --beam-width.")
-    parser.add_argument("--r2-boost", type=float, default=0.40,
-                        help="Phase 158: path-consistency r2 boost. Answers whose best "
+    parser.add_argument("--r2-boost", type=float, default=3.0,
+                        help="Phase 158/186: path-consistency r2 boost. Answers whose best "
                              "path has r2 == expected r2 (from training r3->r2 map) get "
-                             "score *= (1 + r2-boost). Default 0.40 (tuned Phase 158).")
+                             "score *= (1 + r2-boost). Default 3.0 (tuned Phase 186).")
     parser.add_argument("--sa-r2-boost", type=float, default=None,
                         help="Phase 172: r2-boost override for starred_actors questions. "
                              "Default None uses --r2-boost for all relations. "
