@@ -528,13 +528,14 @@ def _worker_process_question(task: tuple) -> tuple:
                 _pure_g = frozenset(
                     relation_answer_set.get("has_genre", set())
                 ) - _py_answers
+                _pure_g_lower = frozenset(g.lower() for g in _pure_g)
                 _lang_ents = frozenset(
                     relation_answer_set.get("in_language", set())
                 ) - _py_answers
                 _changed_xtp = False
                 for _ans in answers_obj:
                     eid = _ans.entity_id
-                    if eid in _pure_g or eid.lower() in _FORMAT_TAGS_W:
+                    if eid in _pure_g or eid.lower() in _pure_g_lower:
                         _ans.score *= 0.10
                         _changed_xtp = True
                     elif _det_r3_xtp == "release_year" and eid in _lang_ents:
@@ -709,6 +710,10 @@ def evaluate_hop(
     _pure_genre: frozenset = frozenset(
         _relation_answer_set.get("has_genre", set())
     ) - _person_year_answers
+    # Case-insensitive genre set — the beam can return lowercase variants
+    # ("animation" vs "Animation"). Safe because the 23 genre labels cannot
+    # be person names (unlike the 4892-entry has_tags set).
+    _pure_genre_lower: frozenset = frozenset(g.lower() for g in _pure_genre)
     _language_entities: frozenset = frozenset(
         _relation_answer_set.get("in_language", set())
     ) - _person_year_answers
@@ -939,7 +944,7 @@ def evaluate_hop(
                 _changed_xtp = False
                 for _ans in answers_obj:
                     eid = _ans.entity_id
-                    if eid in _pure_genre or eid.lower() in _FORMAT_TAG_BLOCKLIST:
+                    if eid in _pure_genre or eid.lower() in _pure_genre_lower:
                         _ans.score *= 0.10
                         _changed_xtp = True
                     elif _det_r3_xtp == "release_year" and eid in _language_entities:
