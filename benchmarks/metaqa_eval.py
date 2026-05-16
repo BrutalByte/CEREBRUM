@@ -515,6 +515,28 @@ def _worker_process_question(task: tuple) -> tuple:
                 if _changed:
                     answers_obj.sort(key=lambda a: a.score, reverse=True)
 
+        # Phase 185: Cross-type penalty — suppress pure genre entities for
+        # person/year terminal relations. Built lazily from relation_answer_set.
+        if _is_3hop and _trb:
+            _det_r3_xtp = next(iter(_trb))
+            _py_rels = {"written_by", "directed_by", "starred_actors", "release_year"}
+            if _det_r3_xtp in _py_rels:
+                _py_answers = frozenset(
+                    e for r in _py_rels
+                    for e in relation_answer_set.get(r, set())
+                )
+                _pure_genres = frozenset(
+                    relation_answer_set.get("has_genre", set())
+                ) - _py_answers
+                if _pure_genres:
+                    _changed_xtp = False
+                    for _ans in answers_obj:
+                        if _ans.entity_id in _pure_genres:
+                            _ans.score *= 0.10
+                            _changed_xtp = True
+                    if _changed_xtp:
+                        answers_obj.sort(key=lambda a: a.score, reverse=True)
+
         pred = [a.entity_id for a in answers_obj]
 
         # Diagnostic row (Phase 184: enriched for --diagnose-jsonl)
@@ -664,6 +686,21 @@ def evaluate_hop(
     # Phase 152: Answer-type constraint index — passed in from main() where it
     # is built directly from KB triples (objects only — not reversed edges).
     _relation_answer_set: Dict[str, set] = relation_answer_set or {}
+
+    # Phase 185: Cross-type penalty — pure genre entities that NEVER appear as
+    # valid answers for person/year relations. This excludes language entities
+    # (French, English) which can be valid answers via multi-hop paths that cross
+    # relation boundaries.
+    _person_year_relations: frozenset = frozenset(
+        {"written_by", "directed_by", "starred_actors", "release_year"}
+    )
+    _person_year_answers: frozenset = frozenset(
+        e for r in _person_year_relations
+        for e in _relation_answer_set.get(r, set())
+    )
+    _pure_genre_entities: frozenset = frozenset(
+        _relation_answer_set.get("has_genre", set())
+    ) - _person_year_answers
 
     _diag_rows: List[Dict] = []
 
@@ -879,6 +916,21 @@ def evaluate_hop(
                             _ans.score *= (1.0 + _eff_r2_boost)
                             _changed = True
                 if _changed:
+                    answers_obj.sort(key=lambda a: a.score, reverse=True)
+
+        # Phase 185: Cross-type penalty — suppress pure genre entities for
+        # person/year terminal relations. "Pure genre" = in has_genre answers but
+        # NOT in any written_by/directed_by/starred_actors/release_year answers,
+        # so penalizing them cannot affect correct answers.
+        if _is_3hop and _trb:
+            _det_r3_xtp = next(iter(_trb))
+            if _det_r3_xtp in _person_year_relations and _pure_genre_entities:
+                _changed_xtp = False
+                for _ans in answers_obj:
+                    if _ans.entity_id in _pure_genre_entities:
+                        _ans.score *= 0.10
+                        _changed_xtp = True
+                if _changed_xtp:
                     answers_obj.sort(key=lambda a: a.score, reverse=True)
 
         pred = [a.entity_id for a in answers_obj]
