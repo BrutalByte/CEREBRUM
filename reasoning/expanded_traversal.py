@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Dict, List, Optional, Set, Any, Callable
 import logging
+import math
 
 _log = logging.getLogger("cerebrum.traversal")
 
@@ -95,16 +96,20 @@ def _stitch(parent: TraversalPath, child: TraversalPath) -> TraversalPath:
     Concatenate parent (seed→hop1) with child (hop1→answer) into a single
     full-depth path (seed→hop1→answer).
 
-    parent.nodes = [seed, r1, hop1]
-    child.nodes  = [hop1, r2, answer, ...]
-    result.nodes = [seed, r1, hop1, r2, answer, ...]
+    Phase 185: use geometric mean (√(parent × child)) instead of product so
+    that low-scoring hop-1 branches (score_ratio ~0.33) don't bury valid paths
+    below the global top-100 cutoff. The geometric mean is symmetric: weak
+    branches lose less ground relative to dominant ones.
     """
     stitched_nodes = parent.nodes + child.nodes[1:]
+    stitched_score = math.sqrt(parent.score * child.score) if (
+        parent.score > 0 and child.score > 0
+    ) else parent.score * child.score
     return TraversalPath(
         nodes=stitched_nodes,
         seen_entities=parent.seen_entities | child.seen_entities,
         embedding=child.embedding,
-        score=parent.score * child.score,
+        score=stitched_score,
         attention_weights=parent.attention_weights + child.attention_weights,
         community_sequence=parent.community_sequence + child.community_sequence,
         edge_confidences=parent.edge_confidences + child.edge_confidences,
