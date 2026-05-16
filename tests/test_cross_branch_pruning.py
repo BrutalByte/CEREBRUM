@@ -6,17 +6,35 @@ from reasoning.traversal import TraversalPath
 
 def test_global_beam_barrier_pruning_logic():
     """Verify barrier correctly identifies non-viable branches."""
-    # target_count=3, threshold_ratio=0.5
-    barrier = GlobalBeamBarrier(target_count=3, threshold_ratio=0.5)
-    
+    # min_guaranteed=0 so pruning logic engages immediately (unit-test mode).
+    barrier = GlobalBeamBarrier(target_count=3, threshold_ratio=0.5, min_guaranteed=0)
+
     # First report: always True (not enough data)
     assert barrier.report(sub_id=0, top_score=100.0) is True
-    
+
     # Second report: still True (max(100, 50) = 100. 50 >= 100*0.5)
     assert barrier.report(sub_id=1, top_score=50.0) is True
-    
+
     # Third report: max is 100. 10.0 < 100*0.5 -> False (Prune)
     assert barrier.report(sub_id=2, top_score=10.0) is False
+
+
+def test_global_beam_barrier_min_guaranteed():
+    """Phase 185: top-N branches always run regardless of score."""
+    barrier = GlobalBeamBarrier(target_count=20, threshold_ratio=0.5, min_guaranteed=10)
+
+    # Seed data from high-scoring branches
+    for i in range(10):
+        barrier.report(sub_id=i, top_score=100.0 - i)
+
+    # Branch 9 (last guaranteed): always True
+    assert barrier.report(sub_id=9, top_score=0.001) is True
+
+    # Branch 10 (first non-guaranteed): low score -> pruned
+    assert barrier.report(sub_id=10, top_score=0.001) is False
+
+    # Branch 11: high score -> kept
+    assert barrier.report(sub_id=11, top_score=60.0) is True
 
 def test_h1se_passes_callback_and_prunes():
     """Integration test: Verify HopExpandedTraversal prunes weak branches."""
@@ -65,7 +83,8 @@ def test_h1se_passes_callback_and_prunes():
         adapter=adapter,
         csa_engine=csa,
         expansion_k=3,
-        max_hop=3
+        max_hop=3,
+        barrier_min_guaranteed=0,
     )
     
     results = het.traverse(["Seed"])

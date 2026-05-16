@@ -36,11 +36,19 @@ class GlobalBeamBarrier:
     Phase 139: Cross-Branch Pruning Barrier.
     Allows independent H1SE traversals to synchronize and prune branches
     that fall behind the global top score.
+
+    Phase 185: min_guaranteed ensures the first N sub-branches (by hop-1 rank)
+    always complete regardless of score. Phase 184 audit found all 71 beam-
+    coverage misses had viable hop-1 rank <= 8 with score_ratio ~0.23, so the
+    0.5 threshold was cutting legitimate paths. Guaranteeing top-10 branches
+    recovers all such cases without removing noise control for tail branches.
     """
 
-    def __init__(self, target_count: int, threshold_ratio: float = 0.5):
+    def __init__(self, target_count: int, threshold_ratio: float = 0.5,
+                 min_guaranteed: int = 10):
         self.target_count = target_count
         self.threshold_ratio = threshold_ratio
+        self.min_guaranteed = min_guaranteed
         self.best_scores: Dict[int, float] = {}  # sub_id -> score
 
     def report(self, sub_id: int, top_score: float) -> bool:
@@ -49,7 +57,11 @@ class GlobalBeamBarrier:
         Returns True if the branch should continue, False if it should be pruned.
         """
         self.best_scores[sub_id] = top_score
-        
+
+        # Always run the top-N ranked branches to completion.
+        if sub_id < self.min_guaranteed:
+            return True
+
         # Don't prune until we have data from at least 1/3 of the expected branches
         if len(self.best_scores) < max(2, self.target_count // 3):
             return True
@@ -60,7 +72,7 @@ class GlobalBeamBarrier:
 
         # Prune if this branch's best is significantly worse than the global best
         is_viable = top_score >= (global_max * self.threshold_ratio)
-        _log.debug("Barrier report sub_id=%d score=%.4f global_max=%.4f viable=%s", 
+        _log.debug("Barrier report sub_id=%d score=%.4f global_max=%.4f viable=%s",
                    sub_id, top_score, global_max, is_viable)
         return is_viable
 
@@ -142,6 +154,7 @@ class HopExpandedTraversal:
         use_adaptive_expansion: bool = True,
         min_diversity_target: int = 15,
         residual_k: int = 10,
+        barrier_min_guaranteed: int = 10,
         **traversal_kwargs,
     ):
         self.adapter = adapter
@@ -158,6 +171,7 @@ class HopExpandedTraversal:
         self.use_adaptive_expansion = use_adaptive_expansion
         self.min_diversity_target = min_diversity_target
         self.residual_k = residual_k
+        self.barrier_min_guaranteed = barrier_min_guaranteed
         # Phase 151: PenultimateGate — hop-1 branch score-gap filter
         self.penultimate_decay: float = float(traversal_kwargs.get("penultimate_decay", 0.0))
         # Phase 172: Stage-1 anchor — biases which hop-1 entities receive deep traversals.
@@ -305,7 +319,11 @@ class HopExpandedTraversal:
 
         # Stage 2: independent deep traversal per hop-1 entity.
         # Phase 139: Synchronization barrier for cross-branch pruning.
-        barrier = GlobalBeamBarrier(target_count=len(hop1_entities), threshold_ratio=0.5)
+        barrier = GlobalBeamBarrier(
+            target_count=len(hop1_entities),
+            threshold_ratio=0.5,
+            min_guaranteed=self.barrier_min_guaranteed,
+        )
 
         deep_hop = self.max_hop - 1
         # all_paths: List[TraversalPath] = list(scan_paths)
