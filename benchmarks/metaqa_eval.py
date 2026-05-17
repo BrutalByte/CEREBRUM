@@ -350,12 +350,13 @@ _W_PRIORS              = None
 _W_R2_FOR_R3           = None
 _W_FAN_OUT             = None
 _W_KB_RELATIONS        = None
+_W_TAG_ONLY_ENTITIES   = None
 
 
 def _worker_init(graph_args: dict, shared: dict) -> None:
     """Initializer called once per spawned worker process."""
     global _W_GRAPH, _W_QUERY_ENGINE, _W_RELATION_ANSWER_SET, _W_ANSWER_FREQ
-    global _W_PRIORS, _W_R2_FOR_R3, _W_FAN_OUT, _W_KB_RELATIONS
+    global _W_PRIORS, _W_R2_FOR_R3, _W_FAN_OUT, _W_KB_RELATIONS, _W_TAG_ONLY_ENTITIES
 
     _W_GRAPH = CerebrumGraph.from_kb(
         graph_args["kb_file"],
@@ -394,6 +395,7 @@ def _worker_init(graph_args: dict, shared: dict) -> None:
     _W_PRIORS              = shared["priors"]
     _W_R2_FOR_R3           = shared["r2_for_r3"]
     _W_FAN_OUT             = shared["fan_out"]
+    _W_TAG_ONLY_ENTITIES   = shared.get("tag_only_entities", frozenset())
 
 
 def _worker_process_question(task: tuple) -> tuple:
@@ -516,7 +518,6 @@ def _worker_process_question(task: tuple) -> tuple:
                     answers_obj.sort(key=lambda a: a.score, reverse=True)
 
         # Phase 185/186: Cross-type penalty (worker path).
-        _FORMAT_TAGS_W: frozenset = frozenset()  # unused post-186
         if _is_3hop and _trb:
             _det_r3_xtp = next(iter(_trb))
             _py_rels = {"written_by", "directed_by", "starred_actors", "release_year"}
@@ -539,6 +540,9 @@ def _worker_process_question(task: tuple) -> tuple:
                         _ans.score *= 0.10
                         _changed_xtp = True
                     elif _det_r3_xtp == "release_year" and eid in _lang_ents:
+                        _ans.score *= 0.10
+                        _changed_xtp = True
+                    elif eid in _W_TAG_ONLY_ENTITIES or eid.lower() in _W_TAG_ONLY_ENTITIES:
                         _ans.score *= 0.10
                         _changed_xtp = True
                 if _changed_xtp:
@@ -650,6 +654,8 @@ def evaluate_hop(
     pss_weight:       float                       = 0.0,
     fhrb_factor:      float                       = 0.0,
     pool=None,
+    verbose:          bool                        = False,
+    tag_only_entities: Optional[frozenset]        = None,
 ) -> Dict:
     """
     Evaluate one hop level using the unified CerebrumGraph.query() interface.
@@ -717,7 +723,11 @@ def evaluate_hop(
     _language_entities: frozenset = frozenset(
         _relation_answer_set.get("in_language", set())
     ) - _person_year_answers
-    _FORMAT_TAG_BLOCKLIST: frozenset = frozenset()  # placeholder, unused post-186
+    # Phase 188: KB-derived tag-only blocklist.
+    # Entities that appear ONLY as objects of has_tags/has_imdb_* can never be
+    # a valid answer for person/year/genre/language terminal-relation questions.
+    _tag_only: frozenset = tag_only_entities if tag_only_entities else frozenset()
+    _tag_only_lower: frozenset = frozenset(e.lower() for e in _tag_only)
 
     _diag_rows: List[Dict] = []
 
@@ -762,9 +772,22 @@ def evaluate_hop(
             else:
                 correct = qa_pairs[q_idx][1]
                 found    += 1
-                h1       += hits_at_k(pred, correct, k=1)
+                _hit1    = hits_at_k(pred, correct, k=1)
+                h1       += _hit1
                 h10      += hits_at_k(pred, correct, k=10)
                 mrr_sum  += reciprocal_rank(pred, correct)
+                if verbose:
+                    _seed_v  = qa_pairs[q_idx][0]
+                    _mark    = "✓" if _hit1 else "✗"
+                    _got     = pred[0] if pred else ""
+                    _cor     = correct[0] if correct else ""
+                    _run_h1  = f"{h1/found*100:.1f}%" if found else "—"
+                    if _hit1:
+                        print(f"  [{completed:5d}/{n_total:5d}] {_mark} [{_seed_v}] → {_got}  (H@1 {_run_h1})", flush=True)
+                    else:
+                        _rank = next((r+1 for r, e in enumerate(pred) if e in set(correct)), 0)
+                        _rank_s = f"rank={_rank}" if _rank else "not-in-top10"
+                        print(f"  [{completed:5d}/{n_total:5d}] {_mark} [{_seed_v}] got={_got!r}  correct={_cor!r}  {_rank_s}  (H@1 {_run_h1})", flush=True)
             if diag is not None:
                 _diag_rows.append(diag)
 
@@ -935,8 +958,8 @@ def evaluate_hop(
                 if _changed:
                     answers_obj.sort(key=lambda a: a.score, reverse=True)
 
-        # Phase 185/186: Cross-type penalty.
-        # Pure genre labels + explicit format-tag blocklist suppressed for all
+        # Phase 185/186/188: Cross-type penalty.
+        # Pure genre labels and KB-derived tag-only entities suppressed for all
         # person/year relations. Language entities suppressed for release_year only.
         if _is_3hop and _trb:
             _det_r3_xtp = next(iter(_trb))
@@ -948,6 +971,9 @@ def evaluate_hop(
                         _ans.score *= 0.10
                         _changed_xtp = True
                     elif _det_r3_xtp == "release_year" and eid in _language_entities:
+                        _ans.score *= 0.10
+                        _changed_xtp = True
+                    elif eid in _tag_only or eid.lower() in _tag_only_lower:
                         _ans.score *= 0.10
                         _changed_xtp = True
                 if _changed_xtp:
@@ -1025,9 +1051,21 @@ def evaluate_hop(
             _diag_rows.append(_diag)
 
         found   += 1
-        h1      += hits_at_k(pred, correct_answers, k=1)
+        _hit1    = hits_at_k(pred, correct_answers, k=1)
+        h1      += _hit1
         h10     += hits_at_k(pred, correct_answers, k=10)
         mrr_sum += reciprocal_rank(pred, correct_answers)
+        if verbose:
+            _mark   = "✓" if _hit1 else "✗"
+            _got    = pred[0] if pred else ""
+            _cor    = correct_answers[0] if correct_answers else ""
+            _run_h1 = f"{h1/found*100:.1f}%" if found else "—"
+            if _hit1:
+                print(f"  [{i+1:5d}/{len(qa_pairs):5d}] {_mark} [{seed}] → {_got}  (H@1 {_run_h1})", flush=True)
+            else:
+                _rank = next((r+1 for r, e in enumerate(pred) if e in set(correct_answers)), 0)
+                _rank_s = f"rank={_rank}" if _rank else "not-in-top10"
+                print(f"  [{i+1:5d}/{len(qa_pairs):5d}] {_mark} [{seed}] got={_got!r}  correct={_cor!r}  {_rank_s}  (H@1 {_run_h1})", flush=True)
 
     elapsed = time.time() - t0
     print()
@@ -1247,6 +1285,10 @@ def main():
         help="Worker processes for question-level parallelism. "
              "Default: os.cpu_count(). Set to 1 to disable multiprocessing.",
     )
+    parser.add_argument(
+        "--verbose", action="store_true", default=False,
+        help="Print per-question hit/miss details during evaluation.",
+    )
     args = parser.parse_args()
 
     if args.no_cache:
@@ -1395,6 +1437,33 @@ def main():
         _relation_answer_set = {}
         _answer_freq = {}
 
+    # Phase 188: Build tag-only entity set.
+    # Entities that appear ONLY as objects of has_tags/has_imdb_rating/has_imdb_votes
+    # can never be correct answers for person/year/genre/language queries.
+    _meta_only_rels = frozenset({"has_tags", "has_imdb_rating", "has_imdb_votes"})
+    _valid_answer_rels = frozenset({
+        "written_by", "directed_by", "starred_actors", "release_year",
+        "has_genre", "in_language",
+    })
+    _obj_rels: Dict[str, set] = {}
+    try:
+        with open(KB_FILE, encoding="utf-8", errors="replace") as _kbf2:
+            for _line2 in _kbf2:
+                _p2 = _line2.strip().split("|")
+                if len(_p2) >= 3:
+                    _o2, _r2 = _p2[2].strip(), _p2[1].strip()
+                    if _o2 not in _obj_rels:
+                        _obj_rels[_o2] = set()
+                    _obj_rels[_o2].add(_r2)
+    except Exception:
+        _obj_rels = {}
+    _tag_only_entities: frozenset = frozenset(
+        e for e, rels in _obj_rels.items()
+        if rels.issubset(_meta_only_rels) and not (rels & _valid_answer_rels)
+    )
+    print(f"  Tag-only entity blocklist: {len(_tag_only_entities):,} entities "
+          f"(appear only in has_tags/imdb metadata)")
+
     # ------------------------------------------------------------------
     # Phase 156: Build r3 → most-common-r2 map from 3-hop training data.
     # Walks all correct (seed, answer) paths in the KB to count r2 frequencies
@@ -1474,6 +1543,7 @@ def main():
                     "priors":              priors,
                     "r2_for_r3":           _r2_for_r3,
                     "fan_out":             _fan_out or {},
+                    "tag_only_entities":   _tag_only_entities,
                 },
             ),
         )
@@ -1523,7 +1593,9 @@ def main():
                                    fan_out=_fan_out if args.pss_weight > 0.0 else None,
                                    pss_weight=args.pss_weight,
                                    fhrb_factor=args.fhrb_factor,
-                                   pool=_pool)
+                                   pool=_pool,
+                                   verbose=args.verbose,
+                                   tag_only_entities=_tag_only_entities)
             results.append(metrics)
 
             print(f"  Hits@1  : {metrics['hits_1']:.4f}  ({metrics['hits_1']*100:.1f}%)")
