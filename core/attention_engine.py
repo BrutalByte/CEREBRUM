@@ -352,6 +352,38 @@ class CSAEngine:
             return v.item() if hasattr(v, "item") else float(v)
         return tuple(_to_float(x) for x in (a, b, g, d, e, zeta, eta, iota, mu, theta))
 
+    def score_logits_batch(
+        self,
+        logits: "List[ReasoningLogit]",
+    ) -> "np.ndarray":
+        """Vectorized sigmoid scoring for a batch of ReasoningLogit objects.
+
+        Replaces N individual logit.score(params) calls (each a Python scalar
+        multiply-chain + exp) with a single numpy matmul + vectorised exp.
+        Returns float32 array of shape (N,) — same values as calling
+        logit.score(get_current_params()) for each logit individually.
+        """
+        if not logits:
+            return np.zeros(0, dtype=np.float32)
+
+        def _f(t):
+            return t.item() if hasattr(t, "item") else float(t)
+
+        # Weight vector with sign baked in: matches ReasoningLogit.score() formula.
+        # [a, b, g, -d, e, z, eta, iota, -mu, theta]
+        _w = np.array([
+            _f(self.alpha), _f(self.beta), _f(self.gamma),
+            -_f(self.delta), _f(self.epsilon), _f(self.zeta),
+            _f(self.eta), _f(self.iota), -_f(self.mu), _f(self.theta),
+        ], dtype=np.float32)
+
+        # Feature matrix (N, 10) — one row per logit
+        _L = np.array([l.to_vector() for l in logits], dtype=np.float32)
+
+        # Vectorised sigmoid: shape (N,)
+        _raw = _L @ _w
+        return (1.0 / (1.0 + np.exp(-_raw))).astype(np.float32)
+
 def _cosine_sim(a, b):
     na, nb = np.linalg.norm(a), np.linalg.norm(b)
     return float(np.dot(a, b) / (na * nb)) if na > 0 and nb > 0 else 0.0

@@ -645,6 +645,13 @@ class BeamTraversal:
                     _cwb_candidate is not None
                     and any("compute_weights_batch" in cls.__dict__ for cls in type(self.csa).__mro__)
                 ) else None
+                # Phase 189+: vectorised logit scoring — one numpy matmul per batch
+                # instead of N individual Python scalar chains.
+                _slb_candidate = getattr(self.csa, "score_logits_batch", None)
+                _slb = _slb_candidate if (
+                    _slb_candidate is not None
+                    and any("score_logits_batch" in cls.__dict__ for cls in type(self.csa).__mro__)
+                ) else None
                 _prior_scale = (
                     1.0 + self.warm_start_strength
                     if (self.probabilistic and self.warm_start_strength > 0.0 and len(path.nodes) == 1)
@@ -686,10 +693,23 @@ class BeamTraversal:
                             ) if _cwf else None
                             _logits.append(_fr_result)
 
+                    # Phase 189+: batch-score all ReasoningLogit objects at once.
+                    _rl_indices = [i for i, l in enumerate(_logits) if isinstance(l, ReasoningLogit)]
+                    if _slb is not None and _rl_indices:
+                        _rl_objects = [_logits[i] for i in _rl_indices]
+                        _rl_pb = np.array([_batch_steps[i][6] for i in _rl_indices], dtype=np.float32)
+                        _rl_scores_arr = _slb(_rl_objects) * _rl_pb
+                        _batch_score_map = {idx: float(s) for idx, s in zip(_rl_indices, _rl_scores_arr)}
+                    else:
+                        _batch_score_map = None
+
                     for _i, (v_eff, rel_eff, conf_eff, prov_eff, vf_eff, vt_eff, prior_bias) in enumerate(_batch_steps):
                         _logit = _logits[_i]
                         if isinstance(_logit, ReasoningLogit):
-                            w = _logit.score(csa_params) * prior_bias
+                            if _batch_score_map is not None:
+                                w = _batch_score_map[_i]
+                            else:
+                                w = _logit.score(csa_params) * prior_bias
                             features_vector = _logit.to_vector()
                         else:
                             # Fallback for mocks / older CSAEngine without batch scorer
