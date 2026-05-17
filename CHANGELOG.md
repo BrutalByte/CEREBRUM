@@ -5,6 +5,14 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.55.0] - 2026-05-17
+### Added
+- **Phase 189: Data-agnostic cross-type penalty** (`benchmarks/metaqa_eval.py`) — Replaces all hardcoded relation names (`written_by`, `directed_by`, `starred_actors`, `release_year`, `has_genre`, `in_language`, `has_tags`, `has_imdb_rating`, `has_imdb_votes`) with a single KB-derived check: penalize any candidate entity not in `_relation_answer_set[detected_rel]`. Fires for every detected terminal relation, not just the 4 hardcoded person/year relations. Removes second KB pass, `_tag_only_entities` blocklist, `_pure_genre`, `_language_entities`, and all domain-specific sets. 95-line net reduction. Works identically on any KB schema — fully data-agnostic.
+### Fixed
+- **Phase 188/189: Case-insensitive false-positive in tag-only blocklist** — MetaQA KB stores person names in proper case as objects of `directed_by`/`starred_actors` (e.g., `"Adam Sandler"`) AND in lowercase as objects of `has_tags` (e.g., `"adam sandler"`). The Phase 188 `.lower()` case-insensitive match caused 2,487 correct actor/director/writer answers to be penalized at 0.10×, regressing H@1 from 51.4% to 49.0%. Phase 189 exact-match penalty (via `_relation_answer_set`) eliminates this class of error entirely.
+### Results
+- **MetaQA 3-hop Phase 189 (14,274 questions):** H@1=**56.17%**, H@10=**87.92%**, MRR=**0.6704** — up from Phase 185/186 best of 56.12% (+0.05pp). Recovers +7.16pp from broken Phase 188 result (49.01%). New architecture baseline: zero hardcoded KB relation names.
+
 ## [2.54.0] - 2026-05-15
 ### Added
 - **Phase 185: GlobalBeamBarrier `min_guaranteed=10`** (`reasoning/expanded_traversal.py`) — Top-10 hop-1 branches always run to completion regardless of barrier score. Previously, low-scoring hop-1 entities (score_ratio ~0.23) were pruned before their deep traversals completed, causing 71 beam_coverage misses. Phase 184 diagnostic confirmed all 71 had viable rank ≤ 8; barrier fix recovers them. `HopExpandedTraversal(barrier_min_guaranteed=10)` (configurable). Tests: `test_global_beam_barrier_min_guaranteed`, updated `test_h1se_passes_callback_and_prunes`.

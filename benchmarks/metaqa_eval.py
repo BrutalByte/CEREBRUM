@@ -350,13 +350,12 @@ _W_PRIORS              = None
 _W_R2_FOR_R3           = None
 _W_FAN_OUT             = None
 _W_KB_RELATIONS        = None
-_W_TAG_ONLY_ENTITIES   = None
 
 
 def _worker_init(graph_args: dict, shared: dict) -> None:
     """Initializer called once per spawned worker process."""
     global _W_GRAPH, _W_QUERY_ENGINE, _W_RELATION_ANSWER_SET, _W_ANSWER_FREQ
-    global _W_PRIORS, _W_R2_FOR_R3, _W_FAN_OUT, _W_KB_RELATIONS, _W_TAG_ONLY_ENTITIES
+    global _W_PRIORS, _W_R2_FOR_R3, _W_FAN_OUT, _W_KB_RELATIONS
 
     _W_GRAPH = CerebrumGraph.from_kb(
         graph_args["kb_file"],
@@ -395,7 +394,6 @@ def _worker_init(graph_args: dict, shared: dict) -> None:
     _W_PRIORS              = shared["priors"]
     _W_R2_FOR_R3           = shared["r2_for_r3"]
     _W_FAN_OUT             = shared["fan_out"]
-    _W_TAG_ONLY_ENTITIES   = shared.get("tag_only_entities", frozenset())
 
 
 def _worker_process_question(task: tuple) -> tuple:
@@ -517,32 +515,17 @@ def _worker_process_question(task: tuple) -> tuple:
                 if _changed:
                     answers_obj.sort(key=lambda a: a.score, reverse=True)
 
-        # Phase 185/186: Cross-type penalty (worker path).
+        # Phase 189: Data-agnostic cross-type penalty (worker path).
+        # Penalise any candidate not in the KB's valid-answer set for the
+        # detected terminal relation. No hardcoded relation names — works on
+        # any KB schema.
         if _is_3hop and _trb:
             _det_r3_xtp = next(iter(_trb))
-            _py_rels = {"written_by", "directed_by", "starred_actors", "release_year"}
-            if _det_r3_xtp in _py_rels:
-                _py_answers = frozenset(
-                    e for r in _py_rels
-                    for e in relation_answer_set.get(r, set())
-                )
-                _pure_g = frozenset(
-                    relation_answer_set.get("has_genre", set())
-                ) - _py_answers
-                _pure_g_lower = frozenset(g.lower() for g in _pure_g)
-                _lang_ents = frozenset(
-                    relation_answer_set.get("in_language", set())
-                ) - _py_answers
+            _valid_for_rel = frozenset(relation_answer_set.get(_det_r3_xtp, set()))
+            if _valid_for_rel:
                 _changed_xtp = False
                 for _ans in answers_obj:
-                    eid = _ans.entity_id
-                    if eid in _pure_g or eid.lower() in _pure_g_lower:
-                        _ans.score *= 0.10
-                        _changed_xtp = True
-                    elif _det_r3_xtp == "release_year" and eid in _lang_ents:
-                        _ans.score *= 0.10
-                        _changed_xtp = True
-                    elif eid in _W_TAG_ONLY_ENTITIES or eid.lower() in _W_TAG_ONLY_ENTITIES:
+                    if _ans.entity_id not in _valid_for_rel:
                         _ans.score *= 0.10
                         _changed_xtp = True
                 if _changed_xtp:
@@ -655,7 +638,6 @@ def evaluate_hop(
     fhrb_factor:      float                       = 0.0,
     pool=None,
     verbose:          bool                        = False,
-    tag_only_entities: Optional[frozenset]        = None,
 ) -> Dict:
     """
     Evaluate one hop level using the unified CerebrumGraph.query() interface.
@@ -700,34 +682,8 @@ def evaluate_hop(
     # is built directly from KB triples (objects only — not reversed edges).
     _relation_answer_set: Dict[str, set] = relation_answer_set or {}
 
-    # Phase 185/186: Cross-type penalty.
-    # _pure_genre: the 23 has_genre labels (Action, Drama, Comedy…) that never
-    # appear as valid written_by/directed_by/starred_actors/release_year answers.
-    # _language_entities: in_language answers — safe to penalize for release_year
-    # (a language is never a year) but NOT for person relations where multi-hop
-    # paths can legitimately end at a language entity.
-    _person_year_relations: frozenset = frozenset(
-        {"written_by", "directed_by", "starred_actors", "release_year"}
-    )
-    _person_year_answers: frozenset = frozenset(
-        e for r in _person_year_relations
-        for e in _relation_answer_set.get(r, set())
-    )
-    _pure_genre: frozenset = frozenset(
-        _relation_answer_set.get("has_genre", set())
-    ) - _person_year_answers
-    # Case-insensitive genre set — the beam can return lowercase variants
-    # ("animation" vs "Animation"). Safe because the 23 genre labels cannot
-    # be person names (unlike the 4892-entry has_tags set).
-    _pure_genre_lower: frozenset = frozenset(g.lower() for g in _pure_genre)
-    _language_entities: frozenset = frozenset(
-        _relation_answer_set.get("in_language", set())
-    ) - _person_year_answers
-    # Phase 188: KB-derived tag-only blocklist.
-    # Entities that appear ONLY as objects of has_tags/has_imdb_* can never be
-    # a valid answer for person/year/genre/language terminal-relation questions.
-    _tag_only: frozenset = tag_only_entities if tag_only_entities else frozenset()
-    _tag_only_lower: frozenset = frozenset(e.lower() for e in _tag_only)
+    # Phase 189: Data-agnostic cross-type penalty sets are computed per-question
+    # directly from _relation_answer_set[detected_rel]. No hardcoded relation names.
 
     _diag_rows: List[Dict] = []
 
@@ -958,22 +914,17 @@ def evaluate_hop(
                 if _changed:
                     answers_obj.sort(key=lambda a: a.score, reverse=True)
 
-        # Phase 185/186/188: Cross-type penalty.
-        # Pure genre labels and KB-derived tag-only entities suppressed for all
-        # person/year relations. Language entities suppressed for release_year only.
+        # Phase 189: Data-agnostic cross-type penalty (serial path).
+        # Penalise any candidate not in the KB's valid-answer set for the
+        # detected terminal relation. No hardcoded relation names — works on
+        # any KB schema.
         if _is_3hop and _trb:
             _det_r3_xtp = next(iter(_trb))
-            if _det_r3_xtp in _person_year_relations:
+            _valid_for_rel = frozenset(_relation_answer_set.get(_det_r3_xtp, set()))
+            if _valid_for_rel:
                 _changed_xtp = False
                 for _ans in answers_obj:
-                    eid = _ans.entity_id
-                    if eid in _pure_genre or eid.lower() in _pure_genre_lower:
-                        _ans.score *= 0.10
-                        _changed_xtp = True
-                    elif _det_r3_xtp == "release_year" and eid in _language_entities:
-                        _ans.score *= 0.10
-                        _changed_xtp = True
-                    elif eid in _tag_only or eid.lower() in _tag_only_lower:
+                    if _ans.entity_id not in _valid_for_rel:
                         _ans.score *= 0.10
                         _changed_xtp = True
                 if _changed_xtp:
@@ -1437,32 +1388,8 @@ def main():
         _relation_answer_set = {}
         _answer_freq = {}
 
-    # Phase 188: Build tag-only entity set.
-    # Entities that appear ONLY as objects of has_tags/has_imdb_rating/has_imdb_votes
-    # can never be correct answers for person/year/genre/language queries.
-    _meta_only_rels = frozenset({"has_tags", "has_imdb_rating", "has_imdb_votes"})
-    _valid_answer_rels = frozenset({
-        "written_by", "directed_by", "starred_actors", "release_year",
-        "has_genre", "in_language",
-    })
-    _obj_rels: Dict[str, set] = {}
-    try:
-        with open(KB_FILE, encoding="utf-8", errors="replace") as _kbf2:
-            for _line2 in _kbf2:
-                _p2 = _line2.strip().split("|")
-                if len(_p2) >= 3:
-                    _o2, _r2 = _p2[2].strip(), _p2[1].strip()
-                    if _o2 not in _obj_rels:
-                        _obj_rels[_o2] = set()
-                    _obj_rels[_o2].add(_r2)
-    except Exception:
-        _obj_rels = {}
-    _tag_only_entities: frozenset = frozenset(
-        e for e, rels in _obj_rels.items()
-        if rels.issubset(_meta_only_rels) and not (rels & _valid_answer_rels)
-    )
-    print(f"  Tag-only entity blocklist: {len(_tag_only_entities):,} entities "
-          f"(appear only in has_tags/imdb metadata)")
+    # Phase 189: Cross-type penalty is now fully data-agnostic — computed
+    # per-question from _relation_answer_set[detected_rel]. No second KB pass needed.
 
     # ------------------------------------------------------------------
     # Phase 156: Build r3 → most-common-r2 map from 3-hop training data.
@@ -1543,7 +1470,6 @@ def main():
                     "priors":              priors,
                     "r2_for_r3":           _r2_for_r3,
                     "fan_out":             _fan_out or {},
-                    "tag_only_entities":   _tag_only_entities,
                 },
             ),
         )
@@ -1594,8 +1520,7 @@ def main():
                                    pss_weight=args.pss_weight,
                                    fhrb_factor=args.fhrb_factor,
                                    pool=_pool,
-                                   verbose=args.verbose,
-                                   tag_only_entities=_tag_only_entities)
+                                   verbose=args.verbose)
             results.append(metrics)
 
             print(f"  Hits@1  : {metrics['hits_1']:.4f}  ({metrics['hits_1']*100:.1f}%)")
