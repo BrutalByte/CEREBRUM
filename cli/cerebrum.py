@@ -458,6 +458,83 @@ def cmd_ask(args):
     print(output)
 
 
+def cmd_init(args):
+    """Quickstart wizard: load a KB and optionally launch Studio."""
+    import os
+    import webbrowser
+    from pathlib import Path
+
+    # ── Resolve CSV path ────────────────────────────────────────────────────
+    if args.demo:
+        csv_path = str(Path(__file__).parent.parent / "tests" / "fixtures" / "toy_graph.csv")
+        print("CEREBRUM Quickstart — demo mode (toy_graph.csv)")
+    elif args.from_csv:
+        csv_path = args.from_csv
+        if not Path(csv_path).exists():
+            print(f"Error: file not found: {csv_path!r}", file=sys.stderr)
+            sys.exit(1)
+        print(f"CEREBRUM Quickstart — loading {csv_path!r}")
+    else:
+        print("Provide --from-csv PATH or --demo", file=sys.stderr)
+        sys.exit(1)
+
+    # ── Load graph ───────────────────────────────────────────────────────────
+    from adapters.csv_adapter import load_csv_adapter
+    from core.community_engine import best_of_n_dscf
+
+    print("  Loading knowledge base...", end=" ", flush=True)
+    adapter = load_csv_adapter(csv_path)
+    G = adapter.to_networkx()
+    print("done.")
+
+    # ── Detect communities ───────────────────────────────────────────────────
+    print("  Detecting communities...", end=" ", flush=True)
+    parts = best_of_n_dscf(G, n_trials=3, seed=42)
+    rel_types = {d.get("relation_type") or d.get("relation", "—") for _, _, d in G.edges(data=True)}
+    print("done.")
+
+    # ── Summary ──────────────────────────────────────────────────────────────
+    print()
+    print("=" * 50)
+    print("  Knowledge Base Ready")
+    print("=" * 50)
+    print(f"  Entities       : {G.number_of_nodes():,}")
+    print(f"  Relations      : {G.number_of_edges():,}")
+    print(f"  Relation types : {len(rel_types)}")
+    print(f"  Communities    : {len(parts)}")
+    print()
+    print("  Try it now:")
+    print(f'    cerebrum ask --csv "{csv_path}" "Your question here"')
+    print(f'    cerebrum chat --csv "{csv_path}"')
+    print(f'    cerebrum serve --csv "{csv_path}" --port 8200')
+    print()
+
+    # ── Optionally launch Studio ──────────────────────────────────────────────
+    if args.serve or args.open:
+        try:
+            import uvicorn
+        except ImportError:
+            print("uvicorn required to launch server: pip install uvicorn", file=sys.stderr)
+            sys.exit(1)
+        from core.embedding_engine import RandomEngine
+        from api.server import create_app
+
+        engine = RandomEngine(dim=64)
+        app = create_app(
+            adapter=adapter,
+            embedding_engine=engine,
+            max_ram_gb=None,
+            max_vram_gb=None,
+        )
+        port = args.port
+        url = f"http://localhost:{port}/v1/docs"
+        print(f"  Starting API server at http://localhost:{port}/v1/")
+        print(f"  Swagger docs: {url}")
+        if args.open:
+            webbrowser.open(url)
+        uvicorn.run(app, host="0.0.0.0", port=port)
+
+
 def cmd_serve(args):
     try:
         import uvicorn
@@ -581,6 +658,15 @@ def main():
                      help="Number of discoveries to print")
     inf.add_argument("--quiet", action="store_true", help="Suppress diagnostic headers")
 
+    # init
+    ini = sub.add_parser("init", help="Quickstart wizard: load a KB and explore it immediately")
+    ini_src = ini.add_mutually_exclusive_group()
+    ini_src.add_argument("--from-csv", metavar="PATH", dest="from_csv", help="Path to edge-list CSV")
+    ini_src.add_argument("--demo", action="store_true", help="Use the built-in toy KB for instant demo")
+    ini.add_argument("--serve", action="store_true", help="Start the REST API server after loading")
+    ini.add_argument("--open", action="store_true", help="Start server and open Swagger UI in browser")
+    ini.add_argument("--port", type=int, default=8200)
+
     # ask
     a = sub.add_parser("ask", help="Answer a natural language question using the graph")
     a.add_argument("question", help="Natural language question, e.g. 'What did newton influence?'")
@@ -623,7 +709,9 @@ def main():
 
     args = parser.parse_args()
 
-    if args.command == "ingest":
+    if args.command == "init":
+        cmd_init(args)
+    elif args.command == "ingest":
         cmd_ingest(args)
     elif args.command == "chat":
         cmd_chat(args)

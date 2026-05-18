@@ -140,6 +140,68 @@ class StudioEngine:
             log.error("Load error: %s", exc, exc_info=True)
             yield f"[ERROR] {type(exc).__name__}: {exc}", "N/A"
 
+    def load_graph_with_columns(
+        self,
+        path: str,
+        src_col: str,
+        tgt_col: str,
+        rel_col: str,
+        embedding_type: str,
+        progress=None,
+    ):
+        """KB Builder entry-point: loads a CSV with user-specified column names."""
+        from adapters.csv_adapter import load_csv_adapter
+        from core.cerebrum import CerebrumGraph
+        from core.embedding_engine import RandomEngine, SentenceEngine
+        from reasoning.traversal import BeamTraversal
+        from core.rem_engine import REMEngine
+        from core.insight_engine import InsightEngine
+        from core.insight_validator import InsightValidator
+
+        if not path or not path.strip():
+            yield "ERROR: No file path provided.", "N/A"
+            return
+
+        path = path.strip()
+        source_name = Path(path).name
+        try:
+            t0 = time.time()
+            if progress:
+                progress(0.1, desc="Reading columns...")
+
+            adapter = load_csv_adapter(
+                path,
+                source_col=src_col or "source",
+                target_col=tgt_col or "target",
+                relation_col=rel_col or "relation",
+            )
+
+            if progress:
+                progress(0.4, desc="Building index...")
+            emb_mode = "sentence" if "Sentence" in embedding_type else "random"
+            graph = CerebrumGraph.from_adapter(adapter, embeddings=emb_mode)
+            graph.build(seed=42)
+
+            if progress:
+                progress(0.9, desc="Finalizing...")
+            self.graph_obj = graph
+            self.adapter = graph.adapter
+            self.csa = graph._csa
+            self.communities = graph.communities
+            self.n_nodes = graph.node_count
+            self.graph_loaded = True
+            self.rem = REMEngine(graph.adapter)
+            self.insight = InsightEngine(graph.adapter)
+            self.validator = InsightValidator(graph.adapter)
+
+            elapsed = time.time() - t0
+            comm_summary = f"{len(graph.communities)} communities detected via DSCF."
+            status = f"[OK] Built KB from {source_name} ({elapsed:.2f}s) | {graph.node_count} nodes"
+            yield status, comm_summary
+        except Exception as exc:
+            log.error("KB build error: %s", exc, exc_info=True)
+            yield f"[ERROR] {type(exc).__name__}: {exc}", "N/A"
+
     def save_current_state(self, backup_name: Optional[str] = None) -> str:
         """
         Save the current graph state as a binary backup for restoration.
@@ -204,6 +266,25 @@ class StudioEngine:
     def get_recent_paths(self) -> List[str]:
         """Expose history to the UI."""
         return StudioHistory.get_history()
+
+    def get_storage_disks(self) -> List[Dict[str, Any]]:
+        """Return available disk mount points for NVMe management."""
+        try:
+            import psutil
+            return [{"mountpoint": p.mountpoint, "device": p.device} for p in psutil.disk_partitions()]
+        except Exception:
+            return [{"mountpoint": "/", "device": "default"}]
+
+    def init_storage(self, mountpoint: str) -> str:
+        """Initialize CEREBRUM data directory on the selected disk."""
+        if not mountpoint:
+            return "No disk selected."
+        try:
+            data_dir = Path(mountpoint) / "cerebrum_data"
+            data_dir.mkdir(parents=True, exist_ok=True)
+            return f"Initialized storage at {data_dir}"
+        except Exception as exc:
+            return f"Error: {exc}"
 
     # ------------------------------------------------------------------
     # Reasoning

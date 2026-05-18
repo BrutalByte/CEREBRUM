@@ -5,6 +5,16 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.56.0] - 2026-05-18
+### Added
+- **Phase 190: Ecosystem Foundation** — Strategic roadmap executed: accessible by anyone, competitive in market.
+- **`cerebrum init` CLI wizard** (`cli/cerebrum.py`) — `cerebrum init --from-csv data.csv` loads any CSV, detects communities, prints KB summary, and optionally launches the API server. `--demo` uses built-in toy KB for instant demo. `--serve`/`--open` flags launch and optionally open Swagger in browser.
+- **KB Builder tab in Studio** (`ui/studio.py`) — Drag-and-drop CSV import with auto-preview, smart column detection (source/target/relation), manual column mapping dropdowns, and guided "Build Knowledge Base" button. No Python required. Wired to new `StudioEngine.load_graph_with_columns()`.
+- **`StudioEngine.load_graph_with_columns()`** (`core/studio_engine.py`) — Accepts `src_col`, `tgt_col`, `rel_col` for arbitrary CSV schemas. Uses `CerebrumGraph.from_adapter()` + `load_csv_adapter()`.
+- **`StudioEngine.get_storage_disks()` / `init_storage()`** (`core/studio_engine.py`) — Fixed pre-existing AttributeError at Studio startup; storage management now returns real disk partitions via psutil.
+- **Python SDK** (`sdk/python/cerebrum_sdk.py`) — `Cerebrum.from_csv()`, `from_triples()`, `from_kb()`, `.ask()`, `.query()`, `.stats`. Returns typed `Result` with `.answer`, `.confidence`, `.trace_path`, `.top_k`, `.elapsed_ms`. Crystal-box trace extracted from `TraversalPath.nodes` alternating entity/relation format.
+- **TypeScript SDK** (`sdk/typescript/cerebrum.ts`) — Typed fetch wrapper over REST API. `Cerebrum.ask()`, `.query()`, `.trace()`, `.stats()`, `.isHealthy()`. `Result`, `TraceStep`, `TopCandidate` types. `CerebrumError` for API errors.
+
 ## [2.55.0] - 2026-05-17
 ### Added
 - **Phase 189: Data-agnostic cross-type penalty** (`benchmarks/metaqa_eval.py`) — Replaces all hardcoded relation names (`written_by`, `directed_by`, `starred_actors`, `release_year`, `has_genre`, `in_language`, `has_tags`, `has_imdb_rating`, `has_imdb_votes`) with a single KB-derived check: penalize any candidate entity not in `_relation_answer_set[detected_rel]`. Fires for every detected terminal relation, not just the 4 hardcoded person/year relations. Removes second KB pass, `_tag_only_entities` blocklist, `_pure_genre`, `_language_entities`, and all domain-specific sets. 95-line net reduction. Works identically on any KB schema — fully data-agnostic.

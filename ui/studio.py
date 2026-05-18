@@ -93,6 +93,75 @@ def generate_param_radar(
 # Gradio file-upload adapter
 # ---------------------------------------------------------------------------
 
+def _kb_preview_cb(file_obj, path_text):
+    """Read uploaded CSV and return an HTML preview table + detected column list."""
+    import csv as _csv
+    path = None
+    if file_obj is not None:
+        path = file_obj.name
+    elif path_text and path_text.strip():
+        path = path_text.strip()
+    if not path:
+        return "<p>Upload a CSV file to preview it.</p>", [], [], []
+
+    try:
+        with open(path, newline="", encoding="utf-8", errors="replace") as f:
+            reader = _csv.DictReader(f)
+            cols = list(reader.fieldnames or [])
+            rows = [dict(r) for _, r in zip(range(5), reader)]
+    except Exception as exc:
+        return f"<p>Error reading file: {exc}</p>", [], [], []
+
+    if not cols:
+        return "<p>No columns detected — check file format.</p>", [], [], []
+
+    # Build HTML table
+    header = "".join(f"<th style='padding:4px 10px;border-bottom:1px solid #30363d'>{c}</th>" for c in cols)
+    body = ""
+    for row in rows:
+        cells = "".join(f"<td style='padding:3px 10px'>{row.get(c,'')}</td>" for c in cols)
+        body += f"<tr>{cells}</tr>"
+    html = (
+        "<table style='border-collapse:collapse;font-size:13px;width:100%'>"
+        f"<thead><tr>{header}</tr></thead><tbody>{body}</tbody></table>"
+        f"<p style='color:#8b949e;margin-top:6px'>Showing first {len(rows)} rows · {len(cols)} columns detected</p>"
+    )
+
+    # Smart defaults: try to guess src/tgt/rel columns
+    lower = [c.lower() for c in cols]
+    def _pick(candidates):
+        for cand in candidates:
+            for i, l in enumerate(lower):
+                if cand in l:
+                    return cols[i]
+        return cols[0] if cols else ""
+
+    default_src = _pick(["source", "src", "subject", "head", "from", "entity1"])
+    default_tgt = _pick(["target", "tgt", "object", "tail", "to", "entity2"])
+    default_rel = _pick(["relation", "rel", "predicate", "edge", "type"])
+
+    return html, gr.update(choices=cols, value=default_src), gr.update(choices=cols, value=default_tgt), gr.update(choices=cols, value=default_rel)
+
+
+def _kb_build_cb(file_obj, path_text, src_col, tgt_col, rel_col, emb_type, progress=gr.Progress()):
+    """Build KB using user-specified column mapping, update engine state."""
+    path = None
+    if file_obj is not None:
+        path = file_obj.name
+    elif path_text and path_text.strip():
+        path = path_text.strip()
+    if not path:
+        return "ERROR: No file provided.", "N/A"
+
+    res = ("Building...", "N/A")
+    for status, comms in _engine.load_graph_with_columns(
+        path, src_col or "source", tgt_col or "target",
+        rel_col or "relation", emb_type, progress=progress
+    ):
+        res = (status, comms)
+    return res
+
+
 def _load_graph_cb(file_obj, csv_path_text, embedding_type, progress=gr.Progress()):
     """Bridge between Gradio file-upload and engine.load_graph(path, emb_type)."""
     if file_obj is not None:
@@ -188,6 +257,28 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
         # ── Right panel: results ──────────────────────────────────────
         with gr.Column(scale=3):
             with gr.Tabs():
+                with gr.Tab("KB Builder"):
+                    gr.Markdown("### Build a Knowledge Base from any CSV")
+                    with gr.Row():
+                        with gr.Column(scale=1):
+                            kb_file_in = gr.File(label="Upload CSV")
+                            kb_path_in = gr.Textbox(label="Or paste file path", placeholder=r"E:\data\triples.csv")
+                            kb_preview_btn = gr.Button("Preview CSV", variant="secondary")
+                            kb_emb_in = gr.Dropdown(
+                                ["Random (Fast)", "Sentence (BGE)"],
+                                value="Random (Fast)",
+                                label="Embeddings",
+                            )
+                            kb_build_btn = gr.Button("Build Knowledge Base", variant="primary")
+                        with gr.Column(scale=2):
+                            kb_preview_html = gr.HTML("<p>Upload a CSV to see a preview.</p>")
+                            with gr.Row():
+                                kb_src_col = gr.Dropdown(label="Source column", choices=[], interactive=True)
+                                kb_tgt_col = gr.Dropdown(label="Target column", choices=[], interactive=True)
+                                kb_rel_col = gr.Dropdown(label="Relation column", choices=[], interactive=True)
+                    kb_status_out  = gr.Textbox(label="Build Status")
+                    kb_comm_out    = gr.Textbox(label="Community Summary")
+
                 with gr.Tab("Reasoning"):
                     with gr.Row():
                         with gr.Column(scale=2):
@@ -253,6 +344,28 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
                             st_ref = gr.Button("Refresh Log")
 
     # ── Wiring ────────────────────────────────────────────────────────
+
+    # KB Builder
+    for _kb_trigger in (kb_file_in, kb_path_in):
+        _kb_trigger.change(
+            _kb_preview_cb,
+            [kb_file_in, kb_path_in],
+            [kb_preview_html, kb_src_col, kb_tgt_col, kb_rel_col],
+        )
+    kb_preview_btn.click(
+        _kb_preview_cb,
+        [kb_file_in, kb_path_in],
+        [kb_preview_html, kb_src_col, kb_tgt_col, kb_rel_col],
+    )
+    kb_build_btn.click(
+        _kb_build_cb,
+        [kb_file_in, kb_path_in, kb_src_col, kb_tgt_col, kb_rel_col, kb_emb_in],
+        [kb_status_out, kb_comm_out],
+    ).then(
+        fn=lambda *args: (generate_param_radar(*args), *_engine.get_graph_stats()),
+        inputs=weights,
+        outputs=[p_radar, s_plot, s_md],
+    )
 
     # Disk Management
     refresh_disks_btn.click(
