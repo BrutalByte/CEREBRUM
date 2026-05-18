@@ -378,14 +378,78 @@ class CerebrumGraph:
         path:          Union[str, Path],
         embeddings:    str = "random",
         embedding_dim: int = 64,
+        source_col:    str = "source",
+        target_col:    str = "target",
+        relation_col:  str = "relation",
+        **kwargs,
+    ) -> "CerebrumGraph":
+        """Load from a CSV triples file with optional column name mapping."""
+        from adapters.csv_adapter import load_csv_adapter
+        adapter = load_csv_adapter(
+            str(path),
+            source_col=source_col,
+            target_col=target_col,
+            relation_col=relation_col,
+        )
+        eng = cls._make_engine(embeddings, embedding_dim)
+        return cls(adapter, embedding_engine=eng, **kwargs)
+
+    @classmethod
+    def from_sql(
+        cls,
+        connection,
+        query:         str,
+        embeddings:    str = "random",
+        embedding_dim: int = 64,
+        source_col:    str = "source",
+        target_col:    str = "target",
+        relation_col:  str = "relation",
+        directed:      bool = False,
         **kwargs,
     ) -> "CerebrumGraph":
         """
-        Load from a CSV triples file (CEREBRUM CSV adapter format).
+        Load from a SQL query result.
+
+        Parameters
+        ----------
+        connection : SQLAlchemy URL string or DBAPI2 connection object
+        query      : SQL SELECT that returns source, target, (optional) relation columns
         """
-        from adapters.csv_adapter import load_csv_adapter
-        adapter = load_csv_adapter(str(path))
-        eng     = cls._make_engine(embeddings, embedding_dim)
+        from adapters.sql_adapter import load_sql_adapter
+        adapter = load_sql_adapter(
+            connection, query,
+            source_col=source_col, target_col=target_col,
+            relation_col=relation_col, directed=directed,
+        )
+        eng = cls._make_engine(embeddings, embedding_dim)
+        return cls(adapter, embedding_engine=eng, **kwargs)
+
+    @classmethod
+    def from_parquet(
+        cls,
+        source,
+        embeddings:    str = "random",
+        embedding_dim: int = 64,
+        source_col:    str = "source",
+        target_col:    str = "target",
+        relation_col:  str = "relation",
+        directed:      bool = False,
+        **kwargs,
+    ) -> "CerebrumGraph":
+        """
+        Load from a Parquet file, Feather/Arrow file, pandas DataFrame, or pyarrow Table.
+
+        Parameters
+        ----------
+        source : File path, pandas DataFrame, or pyarrow Table
+        """
+        from adapters.parquet_adapter import load_parquet_adapter
+        adapter = load_parquet_adapter(
+            source,
+            source_col=source_col, target_col=target_col,
+            relation_col=relation_col, directed=directed,
+        )
+        eng = cls._make_engine(embeddings, embedding_dim)
         return cls(adapter, embedding_engine=eng, **kwargs)
 
     @classmethod

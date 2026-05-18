@@ -118,6 +118,57 @@ class Cerebrum:
         return obj
 
     @classmethod
+    def from_sql(
+        cls,
+        connection,
+        query: str,
+        *,
+        source_col: str = "source",
+        target_col: str = "target",
+        relation_col: str = "relation",
+        directed: bool = False,
+        embeddings: str = "random",
+        beam_width: int = 10,
+        max_hop: int = 3,
+        top_k: int = 5,
+    ) -> "Cerebrum":
+        """Load from a SQL query (SQLAlchemy URL string or DBAPI2 connection)."""
+        from adapters.sql_adapter import load_sql_adapter
+        adapter = load_sql_adapter(
+            connection, query,
+            source_col=source_col, target_col=target_col,
+            relation_col=relation_col, directed=directed,
+        )
+        obj = cls(adapter, embeddings=embeddings, beam_width=beam_width, max_hop=max_hop, top_k=top_k)
+        obj._build()
+        return obj
+
+    @classmethod
+    def from_parquet(
+        cls,
+        source,
+        *,
+        source_col: str = "source",
+        target_col: str = "target",
+        relation_col: str = "relation",
+        directed: bool = False,
+        embeddings: str = "random",
+        beam_width: int = 10,
+        max_hop: int = 3,
+        top_k: int = 5,
+    ) -> "Cerebrum":
+        """Load from a Parquet file, Arrow file, pandas DataFrame, or pyarrow Table."""
+        from adapters.parquet_adapter import load_parquet_adapter
+        adapter = load_parquet_adapter(
+            source,
+            source_col=source_col, target_col=target_col,
+            relation_col=relation_col, directed=directed,
+        )
+        obj = cls(adapter, embeddings=embeddings, beam_width=beam_width, max_hop=max_hop, top_k=top_k)
+        obj._build()
+        return obj
+
+    @classmethod
     def from_kb(
         cls,
         path: str,
