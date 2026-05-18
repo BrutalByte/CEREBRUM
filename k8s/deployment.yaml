@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cerebrum
+  namespace: cerebrum
+  labels:
+    app: cerebrum
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cerebrum
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: cerebrum
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/v1/metrics"
+        prometheus.io/port: "8200"
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: cerebrum
+          image: ghcr.io/brutalbyte/cerebrum:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8200
+          envFrom:
+            - configMapRef:
+                name: cerebrum-config
+            - secretRef:
+                name: cerebrum-secrets
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8200
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8200
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "4"
+              memory: "8Gi"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: cerebrum-data

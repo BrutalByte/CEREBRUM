@@ -5,6 +5,14 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.58.0] - 2026-05-18
+### Added
+- **Phase 193: D3 — Horizontal Scale** — Kubernetes manifests + Docker Compose scale-out for stateless multi-replica deployments.
+- **`k8s/`** — Full Kustomize deployment: `namespace.yaml`, `pvc.yaml` (ReadWriteMany), `configmap.yaml`, `secret.yaml` (example), `deployment.yaml` (2-replica, rolling update, readiness/liveness probes, Prometheus annotations), `service.yaml` (ClusterIP + LoadBalancer), `hpa.yaml` (scale 2→10 at 60% CPU / 70% memory), `kustomization.yaml`.
+- **`docker-compose.scale.yml`** — Scale-out overlay: Nginx load balancer + `--scale cerebrum=N` replicas sharing a single data volume.
+- **`nginx.conf`** — Nginx upstream config for Docker Compose multi-replica.
+- **`docs/deployment/kubernetes.md`** — Architecture diagram, quick-deploy steps, storage sizing guide, resource table, HPA, GPU scheduling note.
+
 ## [2.57.0] - 2026-05-18
 ### Added
 - **Phase 191: D1 — Multi-Tenant API** — Enterprise-ready dynamic API key management with per-tenant KB isolation and per-key usage metering.

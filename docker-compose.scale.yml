@@ -1,0 +1,36 @@
+version: "3.9"
+
+# Scale-out pattern: stateless API replicas behind Nginx, shared NFS/bind-mount data volume.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.scale.yml up --scale cerebrum=4
+#
+# All cerebrum instances share /data (read-only graph + read-write key store / audit log).
+# For production NFS, replace the bind-mount volume with an NFS driver volume.
+
+services:
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - "8200:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - cerebrum
+    restart: unless-stopped
+
+  cerebrum:
+    # Override: do NOT publish host port directly — nginx is the entry point
+    ports: []
+    environment:
+      CEREBRUM_ADMIN_KEY: "${CEREBRUM_ADMIN_KEY:-change-me}"
+
+volumes:
+  cerebrum_data:
+    driver: local
+    # Swap to NFS for true multi-host scale-out:
+    # driver: local
+    # driver_opts:
+    #   type: nfs
+    #   o: addr=<nfs-server>,rw,nfsvers=4
+    #   device: ":/path/to/cerebrum_data"

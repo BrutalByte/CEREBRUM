@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cerebrum
+  namespace: cerebrum
+  labels:
+    app: cerebrum
+spec:
+  type: ClusterIP
+  selector:
+    app: cerebrum
+  ports:
+    - name: http
+      port: 8200
+      targetPort: 8200
+---
+# Expose externally — swap type to NodePort for bare-metal clusters
+apiVersion: v1
+kind: Service
+metadata:
+  name: cerebrum-lb
+  namespace: cerebrum
+  labels:
+    app: cerebrum
+spec:
+  type: LoadBalancer
+  selector:
+    app: cerebrum
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8200

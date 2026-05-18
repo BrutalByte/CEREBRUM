@@ -82,6 +82,7 @@ nav:
     - Configuration: deployment/configuration.md
     - Hardware Guide: deployment/hardware.md
     - Monitoring: deployment/monitoring.md
+    - Kubernetes: deployment/kubernetes.md
   - Reference:
     - Architecture: reference/architecture.md
     - Glossary: reference/glossary.md

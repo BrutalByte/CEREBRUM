@@ -1,0 +1,21 @@
+# Shared ReadWriteMany PVC for:
+#   - KB graph CSV / state cache
+#   - api_keys.json (ApiKeyStore persistence)
+#   - cerebrum_audit.jsonl (compliance ledger)
+#   - engram_cache.json (relation pattern prior)
+#   - query_log.ndjson (durable query history)
+#
+# Use a storage class that supports ReadWriteMany (NFS, EFS, Longhorn RWX, etc.)
+# For single-replica deployments, ReadWriteOnce is sufficient.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cerebrum-data
+  namespace: cerebrum
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""   # Set to your RWX-capable StorageClass
+  resources:
+    requests:
+      storage: 10Gi

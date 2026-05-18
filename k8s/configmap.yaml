@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cerebrum-config
+  namespace: cerebrum
+data:
+  CEREBRUM_DATA_DIR: "/data"
+  # Path inside the container to the pre-loaded KB CSV (must be on the shared PVC)
+  # CEREBRUM_CSV_PATH: "/data/graph.csv"
+  #
+  # Cache path — speeds up restarts by persisting community detection results
+  # CEREBRUM_CACHE_PATH: "/data/cerebrum_state.pkl"
+  #
+  # Set to "true" to enable compliance audit logging
+  CEREBRUM_COMPLIANCE: "false"
+  CEREBRUM_AUDIT_LOG: "/data/cerebrum_audit.jsonl"
+  PYTHONUNBUFFERED: "1"
