@@ -204,6 +204,7 @@ _state: Dict[str, Any] = {
     "graph":             None,     # CerebrumGraph (set when available)
     "_query_path_cache":  {},      # Phase 127: query_id -> (answers, expiry_ts)
     "_platt_calibration": None,   # Phase 129: PlattCalibration instance
+    "audit_ledger":       None,   # QueryAuditLedger — compliance mode logging
 }
 
 
@@ -362,6 +363,8 @@ def create_app(
     ws_port: Optional[int] = None,
     max_ram_gb: Optional[float] = None,
     max_vram_gb: Optional[float] = None,
+    compliance: bool = False,
+    audit_log_file: Optional[str] = None,
 ) -> FastAPI:
     """
     Create a configured FastAPI app.
@@ -461,6 +464,13 @@ def create_app(
                 max_ram_gb=max_ram_gb,
                 max_vram_gb=max_vram_gb,
             )
+            if compliance:
+                from core.query_audit_ledger import QueryAuditLedger
+                _state["audit_ledger"] = QueryAuditLedger(
+                    log_file=audit_log_file or "cerebrum_audit.jsonl"
+                )
+                _api_log.info("Compliance mode enabled — audit logging to %s",
+                              audit_log_file or "cerebrum_audit.jsonl")
         try:
             yield
         finally:
@@ -548,6 +558,56 @@ def create_app(
             node_count=len(emb),
             community_count=len(set(cm.values())) if cm else 0,
         )
+
+    @router.get("/compliance/audit", tags=["compliance"])
+    async def get_audit_log(fmt: str = "json", n: int = 1000):
+        """
+        Export the compliance audit log.
+
+        Parameters
+        ----------
+        fmt : "json" (default) or "csv"
+        n   : Number of most recent records to return (default 1000, 0 = all)
+        """
+        ledger = _state.get("audit_ledger")
+        if ledger is None:
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                {"error": "Compliance mode is not enabled. Start the server with --compliance."},
+                status_code=404,
+            )
+        records = ledger.recent(n) if n > 0 else ledger.all_records()
+        if fmt == "csv":
+            import io, csv as _csv
+            from fastapi.responses import StreamingResponse
+            buf = io.StringIO()
+            writer = _csv.writer(buf)
+            writer.writerow(["record_id","timestamp","iso_time","client_id",
+                             "query","answer","confidence","hop_depth","elapsed_ms","trace_path"])
+            import json as _json
+            for r in records:
+                writer.writerow([r.record_id, r.timestamp, r.iso_time, r.client_id,
+                                 r.query, r.answer, r.confidence, r.hop_depth,
+                                 r.elapsed_ms,
+                                 _json.dumps([{"entity": e, "relation": rel} for e, rel in r.trace_path])])
+            buf.seek(0)
+            return StreamingResponse(
+                buf, media_type="text/csv",
+                headers={"Content-Disposition": "attachment; filename=cerebrum_audit.csv"},
+            )
+        return {"audit": [r.to_dict() for r in records], "stats": ledger.stats()}
+
+    @router.get("/compliance/stats", tags=["compliance"])
+    async def get_audit_stats():
+        """Return compliance audit log summary statistics."""
+        ledger = _state.get("audit_ledger")
+        if ledger is None:
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                {"error": "Compliance mode is not enabled."},
+                status_code=404,
+            )
+        return ledger.stats()
 
     def _path_to_result(path, rank: int, answer_entity: str) -> PathResult:
         """Helper to convert TraversalPath to PathResult."""
@@ -846,6 +906,26 @@ def create_app(
         # Evict expired entries (simple TTL sweep)
         for _k in [k for k, v in _cache.items() if v[1] < _now]:
             del _cache[_k]
+
+        # Compliance audit logging
+        _audit = _state.get("audit_ledger")
+        if _audit is not None and answers:
+            _best = answers[0]
+            _trace = []
+            _nodes = _best.best_path.nodes if _best.best_path else []
+            for _i in range(0, len(_nodes) - 1, 2):
+                _trace.append((_nodes[_i], _nodes[_i + 1] if _i + 1 < len(_nodes) else ""))
+            try:
+                _audit.record(
+                    query=req.query,
+                    answer=_best.entity_id,
+                    confidence=float(_best.score),
+                    trace_path=_trace,
+                    elapsed_ms=round((_time.monotonic() - _now) * 1000, 2),
+                    client_id=node.get("sub", "anonymous") if isinstance(node, dict) else "anonymous",
+                )
+            except Exception as _ae:
+                _api_log.debug("audit_ledger.record failed: %s", _ae)
 
         return QueryResponse(
             query=req.query,

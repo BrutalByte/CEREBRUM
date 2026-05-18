@@ -569,6 +569,8 @@ def cmd_serve(args):
         ws_port=getattr(args, "ws_port", None),
         max_ram_gb=args.max_ram_gb,
         max_vram_gb=args.max_vram_gb,
+        compliance=getattr(args, "compliance", False),
+        audit_log_file=getattr(args, "audit_log", None),
     )
 
     # Restore learned parameters from file if provided
@@ -695,6 +697,10 @@ def main():
     s.add_argument("--hierarchical", action="store_true", help="Use hierarchical DSCF for API server")
     s.add_argument("--target-communities", type=int, default=500, dest="target_communities", help="Target communities for hierarchical DSCF")
     s.add_argument("--bridge-bonus", help="JSON or 'key:val,key:val' for default API edge weights")
+    s.add_argument("--compliance", action="store_true",
+                   help="Enable compliance mode: log every query + full trace to audit file")
+    s.add_argument("--audit-log", dest="audit_log", default=None, metavar="FILE",
+                   help="Path for JSONL audit log (default: cerebrum_audit.jsonl)")
     s.add_argument(
         "--params-file",
         dest="params_file",
