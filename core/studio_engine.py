@@ -365,6 +365,7 @@ class StudioEngine:
                 f"<div style='margin-top:10px;'>{ert_html}</div></details>"
                 + self._format_path_html(answers)
             )
+            self._last_answers = answers  # cache for audit export
             structured = [
                 {"answer": a.entity_id, "score": a.score, "path": a.best_path.nodes}
                 for a in answers
@@ -373,6 +374,13 @@ class StudioEngine:
         except Exception as exc:
             log.error("Reasoning error: %s", exc, exc_info=True)
             return f"[ERROR] {exc}", None, empty_fig, []
+
+    def generate_audit_json_from_last(self) -> str:
+        """Export the last reasoning result as a crystal-box JSON audit report."""
+        answers = getattr(self, "_last_answers", [])
+        if not answers:
+            return '{"error": "No reasoning result available. Run a query first."}'
+        return self.generate_audit_json(answers)
 
     # ------------------------------------------------------------------
     # Structural analytics
@@ -1334,32 +1342,89 @@ class StudioEngine:
 
     @staticmethod
     def _format_path_html(answers) -> str:
-        """HTML cards for reasoning results."""
+        """HTML result cards with visual hop-by-hop path flowcharts."""
         if not answers:
             return (
                 "<div style='color:#888;padding:20px;'>"
                 "No paths found. Try increasing beam width or max hops."
                 "</div>"
             )
+
+        # Colours
+        ENTITY_BG   = "#1c2b3a"
+        ENTITY_FG   = "#79c0ff"
+        RELATION_FG = "#bc8cff"
+        BEST_BORDER = "#00ffff"
+        OTHER_BORDER= "#30363d"
+
+        def _path_flow(nodes):
+            """Render alternating [entity] → [relation] → [entity] nodes."""
+            parts = []
+            for i, node in enumerate(nodes):
+                if i % 2 == 0:
+                    # Entity node
+                    parts.append(
+                        f"<span style='background:{ENTITY_BG};color:{ENTITY_FG};"
+                        f"border:1px solid #30363d;border-radius:4px;padding:2px 7px;"
+                        f"font-family:monospace;font-size:0.85em;'>{node}</span>"
+                    )
+                else:
+                    # Relation arrow
+                    parts.append(
+                        f"<span style='color:{RELATION_FG};margin:0 4px;font-size:0.8em;'>"
+                        f"&mdash;[{node}]&rarr;</span>"
+                    )
+            return "".join(parts)
+
         html = "<div class='results-container'>"
-        for ans in answers:
-            path_str  = " &rarr; ".join(f"<code>{n}</code>" for n in ans.best_path.nodes)
-            score_pct = int(min(ans.score, 1.0) * 100)
+        for rank, ans in enumerate(answers):
+            score_pct  = int(min(ans.score, 1.0) * 100)
+            border_col = BEST_BORDER if rank == 0 else OTHER_BORDER
+            rank_badge = (
+                "<span style='background:#00ffff;color:#000;border-radius:3px;"
+                "padding:1px 6px;font-size:0.75em;margin-left:6px;'>BEST</span>"
+                if rank == 0 else f"<span style='color:#666;font-size:0.8em;margin-left:4px;'>#{rank+1}</span>"
+            )
+            path_flow = _path_flow(ans.best_path.nodes) if ans.best_path else ""
             html += f"""
-            <div class='cerebrum-card'>
-                <div style='display:flex;justify-content:space-between;align-items:center;'>
-                    <span class='entity-id'>{ans.entity_id}</span>
-                    <span style='color:#00ffff;font-family:monospace;'>{ans.score:.4f}</span>
+            <div style='background:#161b22;border:1px solid {border_col};border-radius:8px;
+                        padding:12px 16px;margin-bottom:10px;'>
+                <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;'>
+                    <span style='color:#c9d1d9;font-weight:bold;font-size:1.05em;'>{ans.entity_id}{rank_badge}</span>
+                    <span style='color:#00ffff;font-family:monospace;font-size:1.1em;'>{ans.score:.4f}</span>
                 </div>
-                <div class='score-bar-bg'>
-                    <div class='score-bar-fill' style='width:{score_pct}%;'></div>
+                <div style='background:#30363d;height:6px;border-radius:3px;margin-bottom:8px;'>
+                    <div style='background:#58a6ff;width:{score_pct}%;height:100%;border-radius:3px;'></div>
                 </div>
-                <div class='path-text'>{path_str}</div>
-                <div style='font-size:0.8em;color:#666;margin-top:5px;'>
-                    Comm: {ans.score_breakdown.get('community', 0):.2f} |
-                    Sim: {ans.score_breakdown.get('semantic', 0):.2f} |
-                    Edge: {ans.score_breakdown.get('edge', 0):.2f}
+                <div style='margin-bottom:8px;line-height:2em;'>{path_flow}</div>
+                <div style='font-size:0.78em;color:#8b949e;border-top:1px solid #21262d;padding-top:5px;'>
+                    Community&nbsp;{ans.score_breakdown.get('community', 0):.3f} &nbsp;|&nbsp;
+                    Semantic&nbsp;{ans.score_breakdown.get('semantic', 0):.3f} &nbsp;|&nbsp;
+                    Edge&nbsp;{ans.score_breakdown.get('edge', 0):.3f} &nbsp;|&nbsp;
+                    Hops&nbsp;{ans.best_path.hop_depth if ans.best_path else '?'}
                 </div>
             </div>"""
         html += "</div>"
         return html
+
+    def generate_audit_json(self, answers) -> str:
+        """Return the reasoning results as a JSON audit report (crystal-box export)."""
+        import json as _json
+        records = []
+        for rank, ans in enumerate(answers):
+            nodes = ans.best_path.nodes if ans.best_path else []
+            entities = nodes[0::2]
+            relations = nodes[1::2]
+            records.append({
+                "rank": rank + 1,
+                "answer": ans.entity_id,
+                "confidence": round(float(ans.score), 6),
+                "hop_depth": ans.best_path.hop_depth if ans.best_path else None,
+                "path": {
+                    "entities": entities,
+                    "relations": relations,
+                    "full_nodes": nodes,
+                },
+                "score_breakdown": {k: round(float(v), 6) for k, v in (ans.score_breakdown or {}).items()},
+            })
+        return _json.dumps({"cerebrum_audit": records, "n_candidates": len(records)}, indent=2)

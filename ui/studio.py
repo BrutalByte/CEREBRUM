@@ -199,7 +199,8 @@ CUSTOM_CSS = (
 
 with gr.Blocks(title="CEREBRUM Studio") as demo:
     gr.Markdown("# CEREBRUM STUDIO Pro")
-    best_path_state = gr.State([])   # hidden state for 3D path highlighting
+    best_path_state   = gr.State([])   # hidden state for 3D path highlighting
+    reasoning_answers = gr.State([])   # last reasoning answers for audit export
 
     with gr.Row():
         # ── Left panel: controls ──────────────────────────────────────
@@ -285,6 +286,9 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
                             q_in  = gr.Textbox(label="Query Entity", placeholder="e.g. newton")
                             q_btn = gr.Button("Run", variant="primary")
                             q_html = gr.HTML()
+                            with gr.Accordion("Export Audit Report (JSON)", open=False):
+                                audit_btn  = gr.Button("Generate JSON Audit", variant="secondary")
+                                audit_json = gr.Code(language="json", label="Crystal-Box Audit Export")
                         with gr.Column(scale=1):
                             attn_radar = gr.Plot(label="Attention Analysis")
 
@@ -413,6 +417,9 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
     ).then(
         lambda: gr.update(choices=_engine.get_recent_paths()), None, history_in
     )
+
+    # Audit export
+    audit_btn.click(_engine.generate_audit_json_from_last, [], audit_json)
 
     # Reasoning → also update 3D path highlight
     q_btn.click(
