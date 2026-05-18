@@ -5,6 +5,17 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.57.0] - 2026-05-18
+### Added
+- **Phase 191: D1 — Multi-Tenant API** — Enterprise-ready dynamic API key management with per-tenant KB isolation and per-key usage metering.
+- **`core/api_key_store.py`** — `ApiKeyStore` with thread-safe generate/revoke/validate/list; SHA-256 hashed key storage (raw secrets never persisted); JSON file persistence with atomic writes; per-key `ApiKeyUsage` with daily reset, total queries, avg latency, last_used_at.
+- **Admin REST endpoints** (`api/server.py`) — `POST /v1/admin/keys` (generate), `GET /v1/admin/keys` (list), `DELETE /v1/admin/keys/{key_id}` (revoke), `GET /v1/admin/keys/{key_id}/usage` (per-key stats), `GET /v1/admin/usage` (all-key aggregate). Require `CEREBRUM_ADMIN_KEY` env var.
+- **Per-tenant KB registration** — `POST /v1/admin/tenants` loads a CSV for a tenant; `GET /v1/admin/tenants` lists tenants. Keys with matching `tenant_id` route to the tenant graph.
+- **Per-key usage metering** — Every `/v1/query` records elapsed_ms against the key_id (fire-and-forget).
+- **Auth layering** — Dynamic store → admin env-var key → static `CEREBRUM_API_KEYS` → dev mode. All modes additive; existing behaviour unaffected.
+- **`docs/api/multi-tenant.md`** — Key management, per-tenant routing, usage metering, auth modes reference.
+- **New schemas**: `ApiKeyCreate`, `ApiKeyInfo`, `ApiKeyCreated`, `ApiKeyListResponse`, `ApiKeyUsageResponse`, `TenantRegisterRequest`, `TenantInfo`, `TenantListResponse`.
+
 ## [2.56.0] - 2026-05-18
 ### Added
 - **Phase 190: Ecosystem Foundation** — Strategic roadmap executed: accessible by anyone, competitive in market.

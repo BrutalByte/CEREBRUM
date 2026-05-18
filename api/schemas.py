@@ -1410,3 +1410,59 @@ class MetabolicStatusResponse(BaseModel):
     learning_rate_scale: float
     decay_rate: float
     state: Dict[str, float]
+
+
+# ---------------------------------------------------------------------------
+# D1 — Multi-tenant / API Key Management
+# ---------------------------------------------------------------------------
+
+class ApiKeyCreate(BaseModel):
+    label: str = Field(..., description="Human-readable label for this key")
+    tenant_id: str = Field("default", description="Tenant namespace; routes queries to tenant graph if registered")
+
+
+class ApiKeyInfo(BaseModel):
+    key_id: str
+    tenant_id: str
+    label: str
+    created_at: float
+    is_active: bool
+
+
+class ApiKeyCreated(ApiKeyInfo):
+    """Returned once on creation — raw_secret is never stored."""
+    raw_secret: str = Field(..., description="Store this — it will not be shown again")
+
+
+class ApiKeyListResponse(BaseModel):
+    keys: List[ApiKeyInfo]
+    total: int
+
+
+class ApiKeyUsageResponse(BaseModel):
+    key_id: str
+    tenant_id: str
+    label: str
+    queries_today: int
+    total_queries: int
+    avg_latency_ms: float
+    last_used_at: Optional[float] = None
+
+
+class TenantRegisterRequest(BaseModel):
+    tenant_id: str
+    csv_path: str = Field(..., description="Path to CSV file on the server to load as tenant KB")
+    source_col: str = "subject"
+    target_col: str = "object"
+    relation_col: Optional[str] = None
+
+
+class TenantInfo(BaseModel):
+    tenant_id: str
+    entity_count: int
+    edge_count: int
+    loaded_at: float
+
+
+class TenantListResponse(BaseModel):
+    tenants: List[TenantInfo]

@@ -76,6 +76,7 @@ nav:
     - Authentication: api/auth.md
     - Endpoints: api/endpoints.md
     - Compliance Mode: api/compliance.md
+    - Multi-Tenant API: api/multi-tenant.md
   - Deployment:
     - Docker: deployment/docker.md
     - Configuration: deployment/configuration.md

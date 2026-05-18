@@ -86,6 +86,8 @@ from api.schemas import (
     ProvenanceBatchesResponse, ProvenanceRollbackResponse,
     CouplingMessageSchema, CouplingStatusResponse, MetabolicStatusResponse,
     GoalCreate, GoalResponse, GoalListResponse, GoalHistoryResponse,
+    ApiKeyCreate, ApiKeyInfo, ApiKeyCreated, ApiKeyListResponse, ApiKeyUsageResponse,
+    TenantRegisterRequest, TenantInfo, TenantListResponse,
 )
 
 # ---------------------------------------------------------------------------
@@ -126,8 +128,30 @@ async def get_authenticated_node(
 
     # 1. Try API Key
     if api_key:
+        # 1a. Dynamic key store (D1 multi-tenant) — first priority
+        store = _state.get("api_key_store")
+        if store is not None:
+            key_obj = store.validate(api_key)
+            if key_obj is not None:
+                scopes = ["query", "search", "graph"]
+                if api_key == os.getenv("CEREBRUM_ADMIN_KEY", ""):
+                    scopes.append("admin")
+                return {
+                    "node_id": key_obj.key_id,
+                    "tenant_id": key_obj.tenant_id,
+                    "scopes": scopes,
+                    "_key_id": key_obj.key_id,
+                }
+
+        # 1b. Admin key (env var) — explicit admin bypass
+        admin_key = os.getenv("CEREBRUM_ADMIN_KEY", "")
+        if admin_key and api_key == admin_key:
+            return {"node_id": "local-admin", "scopes": ["query", "search", "graph", "admin"], "tenant_id": "default"}
+
+        # 1c. Static env-var keys or dev mode (no keys configured → accept anything)
         if not valid_keys or api_key in valid_keys:
-            return {"node_id": "local-admin", "scopes": ["query", "search", "graph"]}
+            return {"node_id": "local-admin", "scopes": ["query", "search", "graph"], "tenant_id": "default"}
+
         raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Invalid API Key")
 
     # 2. Try JWT Bearer Token (Federated / Production)
@@ -205,6 +229,8 @@ _state: Dict[str, Any] = {
     "_query_path_cache":  {},      # Phase 127: query_id -> (answers, expiry_ts)
     "_platt_calibration": None,   # Phase 129: PlattCalibration instance
     "audit_ledger":       None,   # QueryAuditLedger — compliance mode logging
+    "api_key_store":      None,   # ApiKeyStore — dynamic key management (D1)
+    "_tenant_graphs":     {},     # tenant_id -> CerebrumGraph (D1 per-tenant KB)
 }
 
 
@@ -471,6 +497,14 @@ def create_app(
                 )
                 _api_log.info("Compliance mode enabled — audit logging to %s",
                               audit_log_file or "cerebrum_audit.jsonl")
+
+        # D1: Initialize API key store always (even without graph loaded)
+        from core.api_key_store import ApiKeyStore
+        from core.persistence import SAFE_DATA_DIR
+        key_store_path = str(SAFE_DATA_DIR / "api_keys.json")
+        _state["api_key_store"] = ApiKeyStore(store_file=key_store_path)
+        _api_log.info("API key store initialised (%s)", key_store_path)
+
         try:
             yield
         finally:
@@ -608,6 +642,133 @@ def create_app(
                 status_code=404,
             )
         return ledger.stats()
+
+    # ── D1: Multi-tenant API Key Management ──────────────────────────────────
+
+    def _require_admin(node: Dict):
+        """Raise 403 unless the node has admin scope."""
+        if "admin" not in node.get("scopes", []):
+            raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Admin scope required")
+
+    @router.post("/admin/keys", response_model=ApiKeyCreated, tags=["admin"])
+    async def create_api_key(req: ApiKeyCreate, node: Dict = Depends(get_authenticated_node)):
+        """
+        Generate a new API key.
+
+        Requires admin scope (set CEREBRUM_ADMIN_KEY env var and pass it as X-API-Key).
+        The returned raw_secret is shown once — store it securely.
+        """
+        _require_admin(node)
+        store = _state.get("api_key_store")
+        if store is None:
+            raise HTTPException(status_code=503, detail="API key store not initialised")
+        key_id, raw_secret = store.generate(label=req.label, tenant_id=req.tenant_id)
+        key_obj = store.get(key_id)
+        return ApiKeyCreated(
+            key_id=key_id,
+            tenant_id=key_obj.tenant_id,
+            label=key_obj.label,
+            created_at=key_obj.created_at,
+            is_active=True,
+            raw_secret=raw_secret,
+        )
+
+    @router.get("/admin/keys", response_model=ApiKeyListResponse, tags=["admin"])
+    async def list_api_keys(tenant_id: Optional[str] = None, node: Dict = Depends(get_authenticated_node)):
+        """List all API keys. Filter by tenant_id if provided. Requires admin scope."""
+        _require_admin(node)
+        store = _state.get("api_key_store")
+        if store is None:
+            raise HTTPException(status_code=503, detail="API key store not initialised")
+        keys = store.list_keys(tenant_id=tenant_id)
+        return ApiKeyListResponse(keys=[ApiKeyInfo(**k) for k in keys], total=len(keys))
+
+    @router.delete("/admin/keys/{key_id}", tags=["admin"])
+    async def revoke_api_key(key_id: str, node: Dict = Depends(get_authenticated_node)):
+        """Revoke an API key by key_id. Requires admin scope."""
+        _require_admin(node)
+        store = _state.get("api_key_store")
+        if store is None:
+            raise HTTPException(status_code=503, detail="API key store not initialised")
+        if not store.revoke(key_id):
+            raise HTTPException(status_code=404, detail=f"Key {key_id!r} not found")
+        return {"revoked": key_id}
+
+    @router.get("/admin/keys/{key_id}/usage", response_model=ApiKeyUsageResponse, tags=["admin"])
+    async def get_key_usage(key_id: str, node: Dict = Depends(get_authenticated_node)):
+        """Per-key usage statistics. Requires admin scope."""
+        _require_admin(node)
+        store = _state.get("api_key_store")
+        if store is None:
+            raise HTTPException(status_code=503, detail="API key store not initialised")
+        usage = store.get_usage(key_id)
+        if usage is None:
+            raise HTTPException(status_code=404, detail=f"Key {key_id!r} not found")
+        return ApiKeyUsageResponse(**usage)
+
+    @router.get("/admin/usage", tags=["admin"])
+    async def get_all_usage(node: Dict = Depends(get_authenticated_node)):
+        """Usage statistics for all keys. Requires admin scope."""
+        _require_admin(node)
+        store = _state.get("api_key_store")
+        if store is None:
+            raise HTTPException(status_code=503, detail="API key store not initialised")
+        with store._lock:
+            key_ids = list(store._keys.keys())
+        return {"usage": [store.get_usage(kid) for kid in key_ids if store.get_usage(kid)]}
+
+    # ── D1: Tenant KB Management ──────────────────────────────────────────────
+
+    @router.post("/admin/tenants", response_model=TenantInfo, tags=["admin"])
+    async def register_tenant(req: TenantRegisterRequest, node: Dict = Depends(get_authenticated_node)):
+        """
+        Load a CSV knowledge base for a tenant namespace.
+
+        After registration, all API keys with matching tenant_id will query
+        this graph instead of the default graph.
+        """
+        _require_admin(node)
+        import time as _time
+        try:
+            from core.cerebrum import CerebrumGraph
+            g = CerebrumGraph.from_csv(
+                req.csv_path,
+                source_col=req.source_col,
+                target_col=req.target_col,
+                **({"relation_col": req.relation_col} if req.relation_col else {}),
+            )
+            g.build()
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"Failed to load tenant KB: {exc}")
+        _state["_tenant_graphs"][req.tenant_id] = {
+            "graph": g,
+            "loaded_at": _time.time(),
+        }
+        adapter = g._adapter if hasattr(g, "_adapter") else None
+        entity_count = len(adapter.id_map) if adapter and hasattr(adapter, "id_map") else 0
+        return TenantInfo(
+            tenant_id=req.tenant_id,
+            entity_count=entity_count,
+            edge_count=g.edge_count if hasattr(g, "edge_count") else 0,
+            loaded_at=_state["_tenant_graphs"][req.tenant_id]["loaded_at"],
+        )
+
+    @router.get("/admin/tenants", response_model=TenantListResponse, tags=["admin"])
+    async def list_tenants(node: Dict = Depends(get_authenticated_node)):
+        """List registered tenant graphs. Requires admin scope."""
+        _require_admin(node)
+        tenants = []
+        for tid, entry in _state["_tenant_graphs"].items():
+            g = entry["graph"]
+            adapter = g._adapter if hasattr(g, "_adapter") else None
+            entity_count = len(adapter.id_map) if adapter and hasattr(adapter, "id_map") else 0
+            tenants.append(TenantInfo(
+                tenant_id=tid,
+                entity_count=entity_count,
+                edge_count=g.edge_count if hasattr(g, "edge_count") else 0,
+                loaded_at=entry["loaded_at"],
+            ))
+        return TenantListResponse(tenants=tenants)
 
     def _path_to_result(path, rank: int, answer_entity: str) -> PathResult:
         """Helper to convert TraversalPath to PathResult."""
@@ -908,6 +1069,7 @@ def create_app(
             del _cache[_k]
 
         # Compliance audit logging
+        _elapsed_ms = round((_time.monotonic() - _now) * 1000, 2)
         _audit = _state.get("audit_ledger")
         if _audit is not None and answers:
             _best = answers[0]
@@ -921,11 +1083,20 @@ def create_app(
                     answer=_best.entity_id,
                     confidence=float(_best.score),
                     trace_path=_trace,
-                    elapsed_ms=round((_time.monotonic() - _now) * 1000, 2),
+                    elapsed_ms=_elapsed_ms,
                     client_id=node.get("sub", "anonymous") if isinstance(node, dict) else "anonymous",
                 )
             except Exception as _ae:
                 _api_log.debug("audit_ledger.record failed: %s", _ae)
+
+        # D1: Per-key usage metering (fire-and-forget)
+        try:
+            _key_store = _state.get("api_key_store")
+            _key_id = node.get("_key_id") if isinstance(node, dict) else None
+            if _key_store is not None and _key_id:
+                _key_store.record_usage(_key_id, _elapsed_ms)
+        except Exception as _ue:
+            _api_log.debug("api_key_store.record_usage failed: %s", _ue)
 
         return QueryResponse(
             query=req.query,
