@@ -33,6 +33,7 @@ dependencies = [
 embeddings = ["sentence-transformers>=2.2.0"]
 kge        = ["pykeen>=1.10.0"]
 api        = ["fastapi>=0.100.0", "uvicorn[standard]>=0.23.0", "pydantic>=2.0.0"]
+monitoring = ["prometheus-client>=0.20.0"]
 neo4j      = ["neo4j>=5.8.0"]
 rdf        = ["SPARQLWrapper>=2.0"]
 enterprise = ["gremlinpython>=3.7.0", "pyspark>=3.5.0", "graphframes>=0.8.0"]
@@ -48,7 +49,7 @@ tpu   = ["torch>=2.0.0", "torch-xla>=2.0.0"]
 # Intel Gaudi 2 / 3 (Habana Labs)
 gaudi = ["torch>=2.0.0", "habana-torch-plugin>=1.16.0"]
 
-all   = ["cerebrum-kg[embeddings,api,neo4j,dev,enterprise,gpu]"]
+all   = ["cerebrum-kg[embeddings,api,neo4j,dev,enterprise,gpu,monitoring]"]
 
 [project.scripts]
 cerebrum = "cli.cerebrum:main"

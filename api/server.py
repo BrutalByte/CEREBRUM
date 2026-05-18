@@ -593,6 +593,42 @@ def create_app(
             community_count=len(set(cm.values())) if cm else 0,
         )
 
+    # ── D2: Prometheus metrics ────────────────────────────────────────────────
+
+    @router.get("/metrics", tags=["system"], include_in_schema=False)
+    async def prometheus_metrics():
+        """Prometheus text-format metrics scrape endpoint."""
+        from api.metrics import is_available, prometheus_response, ACTIVE_TENANTS, GRAPH_NODES, GRAPH_EDGES, AUDIT_RECORDS, API_KEYS_ACTIVE
+        if not is_available():
+            from fastapi.responses import PlainTextResponse
+            return PlainTextResponse(
+                "# prometheus_client not installed\n"
+                "# pip install prometheus-client\n",
+                status_code=200,
+                media_type="text/plain",
+            )
+        # Refresh gauges from live state
+        try:
+            ACTIVE_TENANTS.set(len(_state.get("_tenant_graphs", {})))
+            emb = _state.get("embeddings") or {}
+            GRAPH_NODES.set(len(emb))
+            adapter = _state.get("adapter")
+            if adapter is not None and hasattr(adapter, "edge_count"):
+                GRAPH_EDGES.set(adapter.edge_count)
+            ledger = _state.get("audit_ledger")
+            if ledger is not None:
+                AUDIT_RECORDS.set(len(ledger._records))
+            key_store = _state.get("api_key_store")
+            if key_store is not None:
+                with key_store._lock:
+                    active = sum(1 for k in key_store._keys.values() if k.is_active)
+                API_KEYS_ACTIVE.set(active)
+        except Exception as _me:
+            _api_log.debug("metrics gauge refresh failed: %s", _me)
+        body, content_type = prometheus_response()
+        from fastapi.responses import Response
+        return Response(content=body, media_type=content_type)
+
     @router.get("/compliance/audit", tags=["compliance"])
     async def get_audit_log(fmt: str = "json", n: int = 1000):
         """
@@ -861,6 +897,9 @@ def create_app(
 
     @router.post("/query", response_model=QueryResponse, tags=["reasoning"])
     async def query(req: QueryRequest, node: Dict = Depends(check_scope("query"))):
+        from api.metrics import QUERIES_TOTAL, PATHS_EXPLORED, HOP_DEPTH, ANSWER_CONFIDENCE, QUERY_LATENCY
+        import time as _qtime
+        _q_start = _qtime.monotonic()
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
 
@@ -1090,13 +1129,29 @@ def create_app(
                 _api_log.debug("audit_ledger.record failed: %s", _ae)
 
         # D1: Per-key usage metering (fire-and-forget)
+        _true_elapsed_ms = round((_qtime.monotonic() - _q_start) * 1000, 2)
         try:
             _key_store = _state.get("api_key_store")
             _key_id = node.get("_key_id") if isinstance(node, dict) else None
             if _key_store is not None and _key_id:
-                _key_store.record_usage(_key_id, _elapsed_ms)
+                _key_store.record_usage(_key_id, _true_elapsed_ms)
         except Exception as _ue:
             _api_log.debug("api_key_store.record_usage failed: %s", _ue)
+
+        # D2: Prometheus metrics (fire-and-forget)
+        try:
+            _qstatus = "partial" if _traversal_error else "ok"
+            QUERIES_TOTAL.labels(status=_qstatus).inc()
+            QUERY_LATENCY.observe(_true_elapsed_ms / 1000.0)
+            PATHS_EXPLORED.inc(len(paths))
+            if answers:
+                _top = answers[0]
+                ANSWER_CONFIDENCE.observe(float(_top.score))
+                if _top.best_path is not None:
+                    _hdepth = max(0, (len(_top.best_path.nodes) - 1) // 2)
+                    HOP_DEPTH.observe(_hdepth)
+        except Exception as _pe:
+            _api_log.debug("prometheus metric record failed: %s", _pe)
 
         return QueryResponse(
             query=req.query,
