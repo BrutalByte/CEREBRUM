@@ -1,0 +1,97 @@
+site_name: CEREBRUM
+site_description: Crystal-box knowledge graph reasoning — traceable, deterministic, zero hallucination
+site_url: https://brutalbyte.github.io/CEREBRUM/
+repo_url: https://github.com/BrutalByte/CEREBRUM
+repo_name: BrutalByte/CEREBRUM
+edit_uri: edit/main/
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: deep purple
+    accent: cyan
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: false
+            show_bases: true
+            docstring_style: numpy
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - tables
+  - attr_list
+  - def_list
+  - footnotes
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: getting-started/quickstart.md
+    - Installation: getting-started/installation.md
+    - Your First KB: getting-started/first-kb.md
+  - Concepts:
+    - Crystal-Box Reasoning: concepts/crystal-box.md
+    - How CEREBRUM Works: concepts/how-it-works.md
+    - Benchmarks: concepts/benchmarks.md
+  - Data Connectors:
+    - Overview: connectors/overview.md
+    - CSV: connectors/csv.md
+    - SQL: connectors/sql.md
+    - Parquet & Arrow: connectors/parquet.md
+    - Neo4j & Neptune: connectors/graph-databases.md
+  - SDK Reference:
+    - Python SDK: sdk/python.md
+    - TypeScript SDK: sdk/typescript.md
+  - Integrations:
+    - LangChain: integrations/langchain.md
+    - LlamaIndex: integrations/llamaindex.md
+    - Jupyter: integrations/jupyter.md
+  - REST API:
+    - Overview: api/overview.md
+    - Authentication: api/auth.md
+    - Endpoints: api/endpoints.md
+    - Compliance Mode: api/compliance.md
+  - Deployment:
+    - Docker: deployment/docker.md
+    - Configuration: deployment/configuration.md
+    - Hardware Guide: deployment/hardware.md
+  - Reference:
+    - Architecture: reference/architecture.md
+    - Glossary: reference/glossary.md
+    - Changelog: reference/changelog.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/BrutalByte/CEREBRUM
+  analytics:
+    provider: google
+    property: ""
+
+extra_css:
+  - stylesheets/extra.css

@@ -37,6 +37,7 @@ neo4j      = ["neo4j>=5.8.0"]
 rdf        = ["SPARQLWrapper>=2.0"]
 enterprise = ["gremlinpython>=3.7.0", "pyspark>=3.5.0", "graphframes>=0.8.0"]
 dev        = ["pytest>=7.0", "pytest-asyncio>=0.21", "matplotlib>=3.7.0"]
+docs       = ["mkdocs>=1.5.0", "mkdocs-material>=9.5.0", "mkdocstrings[python]>=0.24.0"]
 
 # ── GPU / accelerator extras ──────────────────────────────────────────────
 # Install the base torch package; the correct CUDA/ROCm/CPU-only wheel

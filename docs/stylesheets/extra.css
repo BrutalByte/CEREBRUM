@@ -1,0 +1,19 @@
+/* CEREBRUM docs — extra styles */
+
+:root {
+  --md-primary-fg-color: #7c3aed;
+  --md-accent-fg-color:  #22d3ee;
+}
+
+.md-typeset table:not([class]) th {
+  background-color: #1e1b4b;
+}
+
+.md-typeset code {
+  font-size: 0.85em;
+}
+
+/* Highlight the "Best" row in benchmark tables */
+.md-typeset table:not([class]) tr:first-child td:nth-child(2) {
+  font-weight: bold;
+}
