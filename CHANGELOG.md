@@ -8,6 +8,8 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [2.56.0] - 2026-05-18
 ### Added
 - **Phase 190: Ecosystem Foundation** — Strategic roadmap executed: accessible by anyone, competitive in market.
+- **LangChain retriever adapter** (`llm_bridge/langchain_adapter.py`) — `CerebrumRetriever` implements `BaseRetriever` (auto-registered if `langchain-core` installed, degrades gracefully if not). Factory: `from_csv()`, `from_kb()`, `from_triples()`. Each result Document has `page_content` = full hop-by-hop trace, `metadata` = entity/confidence/source. Works in RetrievalQA, LCEL chains, RunnableSequence.
+- **LlamaIndex retriever adapter** (`llm_bridge/llamaindex_adapter.py`) — `CerebrumLlamaRetriever` implements `BaseRetriever` (auto-registered if `llama-index-core` installed). Returns `NodeWithScore` with trace text + confidence score. `.as_query_engine(llm)` convenience wrapper.
 - **`cerebrum init` CLI wizard** (`cli/cerebrum.py`) — `cerebrum init --from-csv data.csv` loads any CSV, detects communities, prints KB summary, and optionally launches the API server. `--demo` uses built-in toy KB for instant demo. `--serve`/`--open` flags launch and optionally open Swagger in browser.
 - **KB Builder tab in Studio** (`ui/studio.py`) — Drag-and-drop CSV import with auto-preview, smart column detection (source/target/relation), manual column mapping dropdowns, and guided "Build Knowledge Base" button. No Python required. Wired to new `StudioEngine.load_graph_with_columns()`.
 - **`StudioEngine.load_graph_with_columns()`** (`core/studio_engine.py`) — Accepts `src_col`, `tgt_col`, `rel_col` for arbitrary CSV schemas. Uses `CerebrumGraph.from_adapter()` + `load_csv_adapter()`.
