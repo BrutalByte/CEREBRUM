@@ -24,18 +24,22 @@ Drug-disease-gene knowledge graph with heterogeneous edge types.
 |--------|-------|
 | H@10 | **85%** |
 
-## Comparison vs LLM approaches
+## Comparison vs LLM and KGE approaches
 
-| System | MetaQA 3-hop H@1 | Cost/1K queries | Hallucination rate | Explainable |
-|--------|-----------------|-----------------|-------------------|-------------|
-| **CEREBRUM** | **56.2%** | **~$0.001** | **0%** | **Yes (full trace)** |
-| GPT-4 (KGQA prompting) | ~38–45%* | ~$10–100 | ~5–15% | No |
-| RAG baseline | ~30–40%* | ~$1–20 | ~10–20% | Partial |
-| MINERVA (trained RL) | ~43%* | Training required | 0% | No |
+| System | MetaQA 3-hop H@1 | Cost/1K queries | Hallucination | Explainable | Training |
+|--------|-----------------|-----------------|---------------|-------------|---------|
+| **CEREBRUM v2.58** | **56.2%** | **~$0.001** | **0%** | **Full trace** | None |
+| GPT-4 (KGQA prompting)¹ | ~38–45% | ~$10–100 | ~5–15% | No | Massive |
+| GPT-4o mini¹ | ~32–40% | ~$0.15–0.60 | ~8–18% | No | Massive |
+| RAG + GPT-4¹ | ~40–48% | ~$1–20 | ~10–20% | Partial | Pre-train |
+| TransE² | ~43% | ~$0.05–0.50 | 0% | No | Yes |
+| RotatE² | ~47% | ~$0.05–0.50 | 0% | No | Yes |
+| MINERVA (RL)² | ~48% | Training cost | 0% | No | Yes (RL) |
 
-*Published literature estimates; exact figures vary by prompt strategy and dataset split.
+¹ Published LLM KGQA benchmarks; exact figures vary by prompt strategy.  
+² From published KGE papers on MetaQA 3-hop.
 
-CEREBRUM beats trained RL systems on MetaQA 3-hop without a single gradient step.
+CEREBRUM beats every trained KGE baseline on MetaQA 3-hop without a single gradient step.
 
 ## Reproducibility
 

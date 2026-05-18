@@ -1428,3 +1428,252 @@ class StudioEngine:
                 "score_breakdown": {k: round(float(v), 6) for k, v in (ans.score_breakdown or {}).items()},
             })
         return _json.dumps({"cerebrum_audit": records, "n_candidates": len(records)}, indent=2)
+
+    # ------------------------------------------------------------------
+    # C1 — Explainability Dashboard
+    # ------------------------------------------------------------------
+
+    def explain_beam(self, answer_index: int = 0) -> str:
+        """
+        Return an HTML panel explaining WHY the chosen answer scored highest.
+
+        Shows:
+        - The winning path with per-feature score bars
+        - Feature-by-feature delta vs the runner-up (green = winner advantage)
+        - Top-10 candidate paths ranked by score
+        """
+        answers = getattr(self, "_last_answers", [])
+        if not answers:
+            return "<div style='color:#888;padding:16px;'>Run a query first.</div>"
+        if answer_index >= len(answers):
+            answer_index = 0
+
+        winner = answers[answer_index]
+        runner_up = answers[answer_index + 1] if answer_index + 1 < len(answers) else None
+
+        FEATURE_LABELS = ["Semantic", "Community", "Edge-Type", "Distance", "Hop-Decay",
+                          "PageRank", "Temporal", "Recency", "Synth-Density", "Grounding"]
+
+        def _bar(value: float, max_val: float, color: str) -> str:
+            pct = int(min(value / max(max_val, 1e-9), 1.0) * 100)
+            return (
+                f"<div style='display:inline-block;width:80px;height:8px;"
+                f"background:#21262d;border-radius:4px;vertical-align:middle;margin-left:6px;'>"
+                f"<div style='width:{pct}%;height:100%;background:{color};border-radius:4px;'></div>"
+                f"</div>"
+            )
+
+        def _feature_row(label: str, w_val: float, r_val: float) -> str:
+            delta = w_val - r_val
+            delta_col = "#3fb950" if delta >= 0 else "#f85149"
+            delta_str = f"+{delta:.3f}" if delta >= 0 else f"{delta:.3f}"
+            return (
+                f"<tr>"
+                f"<td style='color:#8b949e;font-size:0.82em;padding:3px 8px;'>{label}</td>"
+                f"<td style='color:#58a6ff;font-family:monospace;font-size:0.82em;'>"
+                f"{w_val:.3f}{_bar(w_val, 1.0, '#58a6ff')}</td>"
+                f"<td style='color:#6e7681;font-family:monospace;font-size:0.82em;'>"
+                f"{r_val:.3f}{_bar(r_val, 1.0, '#6e7681')}</td>"
+                f"<td style='color:{delta_col};font-family:monospace;font-size:0.82em;'>{delta_str}</td>"
+                f"</tr>"
+            )
+
+        def _edge_feats(ans) -> list:
+            if ans.best_path is None or not ans.best_path.edge_features:
+                return [0.0] * 10
+            import numpy as np
+            arr = np.array(ans.best_path.edge_features)
+            return list(np.mean(arr, axis=0))
+
+        def _path_mini(nodes, score: float, rank: int) -> str:
+            ENTITY_BG = "#1c2b3a"; ENTITY_FG = "#79c0ff"; REL_FG = "#bc8cff"
+            parts = []
+            for i, n in enumerate(nodes):
+                if i % 2 == 0:
+                    parts.append(
+                        f"<span style='background:{ENTITY_BG};color:{ENTITY_FG};"
+                        f"border:1px solid #30363d;border-radius:3px;padding:1px 5px;"
+                        f"font-family:monospace;font-size:0.78em;'>{n}</span>"
+                    )
+                else:
+                    parts.append(
+                        f"<span style='color:{REL_FG};margin:0 3px;font-size:0.75em;'>"
+                        f"—[{n}]→</span>"
+                    )
+            rank_badge = (
+                "<span style='background:#00ffff;color:#000;border-radius:3px;"
+                "padding:0 4px;font-size:0.72em;'>BEST</span> " if rank == 0
+                else f"<span style='color:#6e7681;font-size:0.75em;'>#{rank+1}</span> "
+            )
+            score_pct = int(min(score, 1.0) * 100)
+            return (
+                f"<div style='padding:6px 0;border-bottom:1px solid #21262d;'>"
+                f"<div style='display:flex;justify-content:space-between;margin-bottom:3px;'>"
+                f"<span>{rank_badge}{''.join(parts)}</span>"
+                f"<span style='color:#00ffff;font-family:monospace;font-size:0.82em;'>{score:.4f}</span>"
+                f"</div>"
+                f"<div style='background:#21262d;height:4px;border-radius:2px;'>"
+                f"<div style='width:{score_pct}%;height:100%;background:#58a6ff;border-radius:2px;'></div>"
+                f"</div></div>"
+            )
+
+        # ── Section 1: Winner explanation ─────────────────────────────────
+        w_feats = _edge_feats(winner)
+        r_feats = _edge_feats(runner_up) if runner_up else [0.0] * 10
+
+        # Score breakdown (structured) — fall back to edge features
+        w_bd = winner.score_breakdown or {}
+        r_bd = (runner_up.score_breakdown or {}) if runner_up else {}
+
+        # Feature comparison table (only show when runner-up exists)
+        cmp_table = ""
+        if runner_up:
+            rows = ""
+            for i, label in enumerate(FEATURE_LABELS):
+                wv = float(w_feats[i]) if i < len(w_feats) else 0.0
+                rv = float(r_feats[i]) if i < len(r_feats) else 0.0
+                rows += _feature_row(label, wv, rv)
+            ru_path = _path_mini(
+                runner_up.best_path.nodes if runner_up.best_path else [],
+                runner_up.score, 1
+            )
+            cmp_table = f"""
+            <div style='margin-top:14px;'>
+              <div style='color:#bc8cff;font-weight:bold;font-size:0.9em;margin-bottom:6px;'>
+                Feature comparison vs runner-up ({runner_up.entity_id})
+              </div>
+              <table style='width:100%;border-collapse:collapse;'>
+                <tr>
+                  <th style='color:#6e7681;font-size:0.78em;text-align:left;padding:2px 8px;'>Feature</th>
+                  <th style='color:#58a6ff;font-size:0.78em;text-align:left;'>Winner</th>
+                  <th style='color:#6e7681;font-size:0.78em;text-align:left;'>Runner-up</th>
+                  <th style='color:#8b949e;font-size:0.78em;text-align:left;'>Delta</th>
+                </tr>
+                {rows}
+              </table>
+              <div style='margin-top:8px;color:#8b949e;font-size:0.8em;'>Runner-up path:</div>
+              {ru_path}
+            </div>"""
+
+        win_path_html = _path_mini(
+            winner.best_path.nodes if winner.best_path else [],
+            winner.score, answer_index
+        )
+
+        bd_items = " &nbsp;|&nbsp; ".join(
+            f"<span style='color:#8b949e;'>{k}:</span> "
+            f"<span style='color:#58a6ff;font-family:monospace;'>{v:.3f}</span>"
+            for k, v in (w_bd or {}).items()
+        )
+
+        section1 = f"""
+        <div style='background:#161b22;border:1px solid #00ffff;border-radius:8px;padding:14px 16px;margin-bottom:12px;'>
+          <div style='color:#00ffff;font-weight:bold;margin-bottom:8px;'>
+            ✦ Why <code style='background:#1c2b3a;padding:1px 5px;border-radius:3px;'>{winner.entity_id}</code>
+            scored highest (rank #{answer_index+1})
+          </div>
+          {win_path_html}
+          <div style='font-size:0.8em;margin-top:6px;'>{bd_items}</div>
+          {cmp_table}
+        </div>"""
+
+        # ── Section 2: All candidate paths ───────────────────────────────
+        all_paths = "".join(
+            _path_mini(
+                a.best_path.nodes if a.best_path else [],
+                a.score, rank
+            )
+            for rank, a in enumerate(answers[:10])
+        )
+        section2 = f"""
+        <div style='background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px 16px;'>
+          <div style='color:#bc8cff;font-weight:bold;margin-bottom:8px;'>
+            Top-{min(len(answers), 10)} candidate paths
+          </div>
+          {all_paths}
+        </div>"""
+
+        return (
+            "<div style='font-family:system-ui,sans-serif;max-width:900px;'>"
+            + section1 + section2
+            + "</div>"
+        )
+
+    def explain_beam_from_last(self) -> str:
+        """Explain why the top-1 answer from the last query scored highest."""
+        return self.explain_beam(answer_index=0)
+
+    def export_audit_pdf_html(self) -> str:
+        """
+        Return a self-contained HTML string suitable for browser print-to-PDF.
+
+        The page includes the full crystal-box reasoning trace, score breakdown,
+        and all candidate paths for the last query result.
+        """
+        answers = getattr(self, "_last_answers", [])
+        if not answers:
+            return "<html><body><p>No reasoning result available.</p></body></html>"
+
+        import json as _json
+        import time as _time
+
+        records = _json.loads(self.generate_audit_json(answers))
+        explain_html = self.explain_beam(answer_index=0)
+        ts = _time.strftime("%Y-%m-%d %H:%M:%S UTC", _time.gmtime())
+
+        return f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>CEREBRUM Crystal-Box Audit Report</title>
+<style>
+  body {{ font-family: system-ui, sans-serif; margin: 40px; color: #24292f; }}
+  h1   {{ color: #5a2d82; }}
+  h2   {{ color: #6e40c9; border-bottom: 1px solid #d0d7de; padding-bottom: 4px; }}
+  code {{ background: #f6f8fa; padding: 1px 4px; border-radius: 3px; font-size: 0.9em; }}
+  pre  {{ background: #f6f8fa; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.82em; }}
+  table {{ border-collapse: collapse; width: 100%; }}
+  th, td {{ border: 1px solid #d0d7de; padding: 6px 10px; font-size: 0.88em; }}
+  th   {{ background: #f6f8fa; }}
+  .best {{ background: #dafbe1; font-weight: bold; }}
+  @media print {{ body {{ margin: 20px; }} }}
+</style>
+</head>
+<body>
+<h1>CEREBRUM Crystal-Box Audit Report</h1>
+<p><strong>Generated:</strong> {ts}<br>
+<strong>System:</strong> CEREBRUM v2.58.0 — zero-hallucination KG traversal<br>
+<strong>Candidates:</strong> {records['n_candidates']}</p>
+
+<h2>Candidate Paths</h2>
+<table>
+<tr><th>Rank</th><th>Answer</th><th>Confidence</th><th>Hop Depth</th><th>Path (entities)</th><th>Path (relations)</th></tr>
+{"".join(
+    f"<tr class='{'best' if r['rank'] == 1 else ''}'>"
+    f"<td>#{r['rank']}</td>"
+    f"<td><code>{r['answer']}</code></td>"
+    f"<td>{r['confidence']:.4f}</td>"
+    f"<td>{r['hop_depth']}</td>"
+    f"<td>{' → '.join(r['path']['entities'])}</td>"
+    f"<td>{' → '.join(r['path']['relations'])}</td>"
+    f"</tr>"
+    for r in records['cerebrum_audit']
+)}
+</table>
+
+<h2>Score Breakdown (Top Answer)</h2>
+<table>
+{"".join(f"<tr><th>{k}</th><td>{v}</td></tr>" for k, v in records['cerebrum_audit'][0]['score_breakdown'].items())}
+</table>
+
+<h2>Full JSON Audit Record</h2>
+<pre>{_json.dumps(records, indent=2)}</pre>
+
+<hr>
+<p style='font-size:0.8em;color:#57606a;'>
+This report was generated by CEREBRUM's crystal-box reasoning engine.
+Every answer is a verified path through knowledge graph edges — no neural inference,
+no hallucination. The path shown IS the explanation.
+</p>
+</body>
+</html>"""

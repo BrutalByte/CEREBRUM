@@ -286,9 +286,15 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
                             q_in  = gr.Textbox(label="Query Entity", placeholder="e.g. newton")
                             q_btn = gr.Button("Run", variant="primary")
                             q_html = gr.HTML()
-                            with gr.Accordion("Export Audit Report (JSON)", open=False):
-                                audit_btn  = gr.Button("Generate JSON Audit", variant="secondary")
+                            with gr.Accordion("Why this answer? — Beam Explanation", open=False):
+                                explain_btn  = gr.Button("Explain Top Answer", variant="secondary")
+                                explain_html = gr.HTML()
+                            with gr.Accordion("Export Audit Report", open=False):
+                                with gr.Row():
+                                    audit_btn  = gr.Button("JSON", variant="secondary")
+                                    pdf_btn    = gr.Button("PDF (browser print)", variant="secondary")
                                 audit_json = gr.Code(language="json", label="Crystal-Box Audit Export")
+                                pdf_html   = gr.HTML(visible=False)
                         with gr.Column(scale=1):
                             attn_radar = gr.Plot(label="Attention Analysis")
 
@@ -418,8 +424,17 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
         lambda: gr.update(choices=_engine.get_recent_paths()), None, history_in
     )
 
-    # Audit export
+    # C1 — Explainability Dashboard
+    explain_btn.click(_engine.explain_beam_from_last, [], explain_html)
     audit_btn.click(_engine.generate_audit_json_from_last, [], audit_json)
+    pdf_btn.click(
+        _engine.export_audit_pdf_html,
+        [],
+        pdf_html,
+    ).then(
+        fn=None,
+        js="() => { const w=window.open('','_blank'); w.document.write(document.querySelector('#pdf_html_preview').innerHTML); w.print(); }",
+    )
 
     # Reasoning → also update 3D path highlight
     q_btn.click(

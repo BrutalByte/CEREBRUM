@@ -5,6 +5,25 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.59.0] - 2026-05-18
+### Added
+- **Phase 194: C1/C3/C4 — Explainability Dashboard + Benchmark Comparison + Crystal-Box Whitepaper**
+- **C1 — Explainability Dashboard** (`core/studio_engine.py`, `ui/studio.py`):
+  - `StudioEngine.explain_beam(answer_index)` — "Why this answer?" panel: winner path with per-feature score bars, feature-by-feature delta table vs runner-up (green/red), top-10 candidate paths with score bars
+  - `StudioEngine.explain_beam_from_last()` — one-click top-1 explanation
+  - `StudioEngine.export_audit_pdf_html()` — self-contained HTML page (print-to-PDF); includes candidate table, score breakdown table, full JSON audit record, CEREBRUM provenance footer
+  - Studio "Reasoning" tab: "Why this answer? — Beam Explanation" accordion with Explain button; "Export Audit Report" accordion with JSON + PDF buttons
+- **C3 — Benchmark Comparison** (`README.md`, `docs/concepts/benchmarks.md`):
+  - Full accuracy table: CEREBRUM vs GPT-4, GPT-4o mini, RAG+GPT-4, TransE, RotatE, MINERVA — with training requirements and hallucination rates
+  - Cost comparison table with GPU amortisation break-even calculation
+  - Updated to v2.59.0 / Phase 194
+- **C4 — Crystal-Box Whitepaper** (`docs/concepts/crystal-box-whitepaper.md`):
+  - Defines crystal-box vs black-box and XAI; three formal properties (trace completeness, path determinism, provenance)
+  - Three case studies: healthcare drug-drug interaction, finance beneficial ownership, legal precedent graph
+  - Crystal-box certification checklist (6 questions)
+  - Regulatory alignment table: GDPR, HIPAA, SOX, EU AI Act, FDA 21 CFR Part 11
+  - Positioning matrix vs LLM/RAG/KGE/GraphRAG/XAI tools
+
 ## [2.58.0] - 2026-05-18
 ### Added
 - **Phase 193: D3 — Horizontal Scale** — Kubernetes manifests + Docker Compose scale-out for stateless multi-replica deployments.
