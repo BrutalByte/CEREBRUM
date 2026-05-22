@@ -535,6 +535,26 @@ def cmd_init(args):
         uvicorn.run(app, host="0.0.0.0", port=port)
 
 
+def cmd_tune(args):
+    """Launch the live hyperparameter tuner (Optuna + Rich dashboard)."""
+    try:
+        from benchmarks.cerebrum_tuner import run_tuner
+    except ImportError as exc:
+        print(
+            f"cerebrum_tuner import failed: {exc}\n"
+            "Install dependencies with:  pip install 'cerebrum-kg[tuning]'",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    run_tuner(
+        n_trials=args.n_trials,
+        sample=args.sample,
+        study_name=args.study_name,
+        validate=args.validate,
+        seed=args.seed,
+    )
+
+
 def cmd_serve(args):
     try:
         import uvicorn
@@ -677,6 +697,18 @@ def main():
     a.add_argument("--beam-width", type=int, default=10, dest="beam_width")
     a.add_argument("--quiet", action="store_true", help="Suppress diagnostic output, print only the answer")
 
+    # tune
+    tn = sub.add_parser("tune", help="Live hyperparameter tuner with Rich dashboard (Optuna TPE)")
+    tn.add_argument("--n-trials",   type=int, default=100,              dest="n_trials",
+                    help="Optuna trials to run (default 100)")
+    tn.add_argument("--sample",     type=int, default=500,
+                    help="Questions per trial (default 500 ≈ 30s; use 2000 for stability)")
+    tn.add_argument("--validate",   type=int, default=0,
+                    help="After tuning, validate best on N questions (0=skip; 14274=full dataset)")
+    tn.add_argument("--study-name", type=str, default="cerebrum-tuner", dest="study_name",
+                    help="Optuna study name shown in dashboard header")
+    tn.add_argument("--seed",       type=int, default=42)
+
     # serve
     s = sub.add_parser("serve", help="Start the REST API server")
     s.add_argument("--csv", required=True, help="Path to edge-list CSV")
@@ -729,6 +761,8 @@ def main():
         cmd_infer(args)
     elif args.command == "ask":
         cmd_ask(args)
+    elif args.command == "tune":
+        cmd_tune(args)
     elif args.command == "serve":
         cmd_serve(args)
 

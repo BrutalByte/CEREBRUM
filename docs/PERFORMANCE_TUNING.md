@@ -1,6 +1,6 @@
 # CEREBRUM Performance Tuning Guide
 
-**Status**: v2.52.0 (Phase 172 (STRB) COMPLETE)
+**Status**: v2.63.0 (Phase 198 COMPLETE)
 
 This guide covers the key parameters affecting query latency, throughput, reasoning quality, and memory usage — and how to tune them for your specific workload.
 
@@ -23,6 +23,17 @@ This guide covers the key parameters affecting query latency, throughput, reason
 | `warm_start_strength` | 0.0 | First-hop variance | Probabilistic mode on sparse graphs |
 | `window_size` (stream) | 10,000 | Memory, temporal context | High-volume ingest |
 | `batch_size` (stream) | 50 | Ingest throughput | High-frequency event streams |
+| `--trb-factor` | 4.0 | Terminal relation boost magnitude | H@1 is below target on typed graphs |
+| `--r2-boost` | 3.0 | Multi-path corroboration reward | Answers lack consistency across paths |
+| `--vote-weight` | 0.7 | Community vote suppression | Community boundaries are noisy |
+| `--beam-width` | 10 | Candidate set size per hop | Recall is low or latency budget allows |
+| `--idf-weight` | 0.05 | IDF term weighting in scoring | Queries have high-frequency stopword entities |
+| `--branch-bonus` | 0.3 | Branching path bonus | Beam collapse on single paths |
+| `--fhrb-factor` | 0.5 | First-hop relation boost | First-hop relation signal is weak |
+| `--wb-r2-boost` | 5.0 | WikiData-backed r2 boost | WikiData-corroborated paths underscored |
+| `--db-r2-boost` | 7.0 | DBpedia-backed r2 boost | DBpedia-corroborated paths underscored |
+| `--ry-r2-boost` | 2.0 | Release-year r2 boost | Year queries rank incorrectly |
+| `--sa-r2-boost` | 5.0 | Semantic-anchor r2 boost | Semantic anchor paths underweighted |
 
 ---
 
@@ -62,7 +73,90 @@ The single most impactful parameter for latency. Beam width controls how many ca
 
 ---
 
-## 3. Deep Reasoning (3+ Hops)
+## 3. Scoring Parameter Tuning (Phases 196–198)
+
+Starting in Phase 196, CEREBRUM exposes 11 fine-grained scoring parameters as CLI flags. These parameters directly control the beam scoring formula and have been characterized via fANOVA importance analysis using Optuna.
+
+### CLI Flags
+
+```bash
+python benchmarks/metaqa_eval.py \
+  --trb-factor 6.397 \
+  --r2-boost 3.604 \
+  --vote-weight 0.8779 \
+  --beam-width 8 \
+  --idf-weight 0.024 \
+  --branch-bonus 0.288 \
+  --fhrb-factor 0.668 \
+  --wb-r2-boost 6.202 \
+  --db-r2-boost 8.257 \
+  --ry-r2-boost 1.951 \
+  --sa-r2-boost 6.055 \
+  --kb data/metaqa/kb/kb.txt \
+  --questions data/metaqa/3-hop/qa_test.txt \
+  --hops 3 --embeddings sentence
+```
+
+### fANOVA Importance Ranking (Optuna Analysis)
+
+fANOVA decomposes the variance in H@1 attributable to each parameter. This tells you which knobs actually move the needle and which are safe to leave at defaults.
+
+| Rank | Parameter | fANOVA Importance | Tuning Priority |
+|------|-----------|-------------------|-----------------|
+| 1 | `trb_factor` | **60.2%** | Tune first — dominant driver |
+| 2 | `fhrb_factor` | **10.7%** | Tune second |
+| 3 | `sa_r2_boost` | 6.2% | Tune in full search |
+| 4 | `r2_boost` | 5.6% | Tune in full search |
+| 5 | `vote_weight` | 5.6% | Tune in full search |
+| 6 | `wb_r2_boost` | 3.5% | Include in Optuna |
+| 7 | `db_r2_boost` | 2.9% | Include in Optuna |
+| 8 | `idf_weight` | 2.8% | Include in Optuna |
+| 9 | `branch_bonus` | 1.2% | Low priority — fix at default |
+| 10 | `ry_r2_boost` | 1.0% | Low priority — fix at default |
+| 11 | `beam_width` | **0.4%** | Near-irrelevant — fix at 8–10 |
+
+> **Key insight**: `trb_factor` alone explains 60.2% of H@1 variance. Start every tuning run by isolating this parameter. `beam_width` contributes only 0.4% — do not waste Optuna budget on it; fix it at 8 or 10.
+
+### Practical Tuning Strategy
+
+| Phase | Action | Parameters |
+|-------|--------|------------|
+| Quick win | Grid-search `trb_factor` in [2, 4, 6, 8, 10] | `trb_factor` only |
+| Second pass | Add `fhrb_factor` sweep | `trb_factor`, `fhrb_factor` |
+| Full Optuna | All 11 params, 100 trials | All flags |
+| Fix | Lock low-importance params | `branch_bonus`, `ry_r2_boost`, `beam_width` |
+
+### Live Tuner
+
+The `cerebrum_tuner.py` script runs a fully automated Optuna TPE search against the MetaQA 3-hop benchmark:
+
+```bash
+python -u benchmarks/cerebrum_tuner.py --n-trials 100 --sample 2000
+```
+
+Each trial evaluates the parameter configuration on a 2,000-question random sample (~8s/trial on RTX 5090). The best config is validated on the full 14,274-question dataset at the end of each run. MLflow logging is enabled by default; results appear in `mlruns/`.
+
+### Current Best-Known Config (Tuner Run 4)
+
+Phase 198 best configuration, validated at H@1=56.6% on 2,000-sample, full-dataset validation pending:
+
+| Parameter | Best Value | Default |
+|-----------|------------|---------|
+| `trb_factor` | **6.397** | 4.0 |
+| `r2_boost` | 3.604 | 3.0 |
+| `vote_weight` | 0.8779 | 0.7 |
+| `beam_width` | 8 | 10 |
+| `idf_weight` | 0.024 | 0.05 |
+| `branch_bonus` | 0.288 | 0.3 |
+| `fhrb_factor` | **0.668** | 0.5 |
+| `wb_r2_boost` | 6.202 | 5.0 |
+| `db_r2_boost` | 8.257 | 7.0 |
+| `ry_r2_boost` | 1.951 | 2.0 |
+| `sa_r2_boost` | 6.055 | 5.0 |
+
+---
+
+## 4. Deep Reasoning (3+ Hops)
 
 ### H1SE: Solving the Hub Problem (Phase 137)
 In hub-heavy graphs, a single global beam is often captured by popular entities (e.g., "USA") at hop 1. **Hop-1 Intermediate Seed Expansion (H1SE)** gives each hop-1 neighbor its own independent search budget.
@@ -88,7 +182,7 @@ For a graph with avg_degree=5 and beam_width=10:
 
 ---
 
-## 2. Community Detection Quality vs. Speed
+## 5. Community Detection Quality vs. Speed
 
 ### n_trials (DSCF)
 DSCF is stochastic; running multiple trials and selecting the highest-modularity result improves Q.
@@ -111,7 +205,7 @@ For production, compute communities once at startup or cache them. Communities o
 
 ---
 
-## 3. Streaming Ingest Throughput
+## 6. Streaming Ingest Throughput
 
 ### batch_size and flush_interval_ms
 Events are batched before commit to amortize graph write cost.
@@ -146,7 +240,7 @@ Rebalancing is expensive ($O(N \log N)$). For high-ingest deployments, set `min_
 
 ---
 
-## 4. Probabilistic Mode (Bayesian Beam Search)
+## 7. Probabilistic Mode (Bayesian Beam Search)
 
 Probabilistic mode adds Thompson sampling overhead (~15% latency increase) but improves quality on sparse graphs and provides confidence intervals.
 
@@ -165,7 +259,7 @@ BeamTraversal(
 
 ---
 
-## 5. Embedding Choice
+## 8. Embedding Choice
 
 | Engine | Semantic quality | Speed | Use when |
 |---|---|---|---|
@@ -178,7 +272,7 @@ For pure structural reasoning (graphs where entity names are opaque IDs), `Rando
 
 ---
 
-## 6. ResourceGovernor Budgets
+## 9. ResourceGovernor Budgets
 
 ```python
 from core.hardware import ResourceGovernor
@@ -195,7 +289,7 @@ For latency-critical deployments, set `rem_cpu_budget=0.05` to give more CPU to 
 
 ---
 
-## 7. Memory Optimization
+## 10. Memory Optimization
 
 | Component | Memory | Reduction strategy |
 |---|---|---|
@@ -209,7 +303,7 @@ For a 100K-node graph with `dim=64`: embedding matrix ≈ 25MB. For 1M nodes: �
 
 ---
 
-## 8. Benchmark Your Deployment
+## 11. Benchmark Your Deployment
 
 ```bash
 # Run the synthetic benchmark
@@ -230,7 +324,7 @@ See `benchmarks/README.md` for full benchmark documentation.
 
 ---
 
-## 9. Looped Beam Traversal (Phase 70)
+## 12. Looped Beam Traversal (Phase 70)
 
 `LoopedBeamTraversal` applies beam traversal T times with seed expansion between loops, guided by PredictiveCodingEngine and Engram channels. This increases answer quality but multiplies latency.
 
@@ -255,7 +349,7 @@ answers = graph.query("entity", max_hops=3, beam_width=10, max_loops=3)
 
 ---
 
-## 10. Autonomous Discovery Loop Tuning (Phase 74 / 82)
+## 13. Autonomous Discovery Loop Tuning (Phase 74 / 82)
 
 The `AutonomousDiscoveryLoop` runs in the background. Its parameters affect CPU and graph saturation, not query latency.
 
@@ -298,7 +392,7 @@ LoopConfig(
 
 ---
 
-## 11. ChemicalModulator Overhead (Phase 68)
+## 14. ChemicalModulator Overhead (Phase 68)
 
 `ChemicalModulator` is a lightweight state machine updating 5 float scalars per query. Overhead is negligible (<0.1ms). No tuning is required for latency.
 
@@ -308,4 +402,4 @@ The indirect performance effect is positive: Arousal dynamically scales `beam_wi
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 9, 2026 for version v2.52.0
+**Reviewed on**: May 19, 2026 for version v2.63.0

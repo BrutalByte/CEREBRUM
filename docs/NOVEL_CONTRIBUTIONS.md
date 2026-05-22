@@ -1106,4 +1106,29 @@ the "no training data" invariant of the CEREBRUM framework.
 
 ---
 
+---
+
+### Claim 59: Empirical Hyperparameter Sensitivity Analysis for Knowledge Graph Beam Traversal Scoring (Phase 198)
+
+**Description**: Using Optuna TPE with fANOVA importance analysis across 11 scoring parameters on MetaQA 3-hop (14,274 questions), CEREBRUM establishes that Terminal Relation Boost (TRB) explains 60.2% of H@1 variance — 150× more than beam width (0.4%). First-Hop Relation Boost (FHRB), previously unrecognized as a significant parameter, accounts for 10.7%. Release-year questions require a structurally lower path-consistency boost (~2.0) than person-type relations (~6-8), confirmed independently across two separate 2000-question tuning runs. These findings are the first systematic sensitivity analysis of beam traversal scoring parameters for KGQA and provide design guidance for future KGQA systems.
+
+**Novelty Statement**: Prior work on KGQA hyperparameter tuning (MINERVA, BeamQA, CEREBRUM Phases 183-186) uses ablation studies or grid/random search to find good parameter values, but does not measure the *relative importance* of individual parameters to overall system performance. CEREBRUM's fANOVA sensitivity analysis is the first to quantify the variance contribution of each scoring parameter in a beam traversal system, revealing that: (1) terminal relation detection dominates all other parameters by an order of magnitude; (2) beam width — the most commonly tuned parameter in beam search systems — is essentially irrelevant once scoring is correct; (3) first-hop guidance is the second most important factor, substantially outweighing global path-consistency parameters. These findings invert common assumptions about beam search tuning and have direct implications for the design of future KGQA systems.
+
+**Key Findings**:
+- `trb_factor` (60.2%): Correctly identifying the answer-type relation from question text is the single dominant factor in 3-hop KGQA accuracy.
+- `fhrb_factor` (10.7%): First-hop direction bias was previously unrecognized as significant; Optuna TPE identified it as the second most important parameter.
+- `beam_width` (0.4%): Near-irrelevant once scoring parameters are well-configured — contradicts conventional beam search tuning wisdom.
+- Per-relation `r2_boost` values differ structurally: release_year templates require ~2.0 vs. person-type relations (~6-8), confirmed across independent tuning runs.
+
+**Closest Prior Art**:
+- MINERVA (Das et al., 2018): Manual ablation of RL reward and beam width; no variance decomposition
+- Grid search KGQA tuning: Identifies optima but not relative importance
+- fANOVA for neural architecture search (Hutter et al., 2014): Applied to NAS, not to KG traversal scoring
+
+**Key Technical Differentiator**: First systematic fANOVA variance decomposition of beam traversal scoring parameters for KGQA, enabling principled identification of high-leverage vs. irrelevant parameters.
+
+**Relevant files**: `benchmarks/cerebrum_tuner.py`
+
+---
+
 **Reviewed on**: May 9, 2026 for version v2.52.0

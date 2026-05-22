@@ -531,6 +531,10 @@ def _worker_process_question(task: tuple) -> tuple:
                 if _changed_xtp:
                     answers_obj.sort(key=lambda a: a.score, reverse=True)
 
+        # Phase 196: secondary sort by branch_count descending — tiebreaker for
+        # equal-score candidates (e.g. genre ties where multiple genres score 4.0).
+        answers_obj.sort(key=lambda a: (-a.score, -a.branch_count))
+
         pred = [a.entity_id for a in answers_obj]
 
         # Diagnostic row (Phase 184: enriched for --diagnose-jsonl)
@@ -620,7 +624,7 @@ def evaluate_hop(
     branch_bonus_weight: float       = 0.0,
     r2_map:           Optional[Dict[str, str]] = None,
     vote_weight_3hop: float          = 0.85,
-    trb_factor_3hop:  float          = 5.0,
+    trb_factor_3hop:  float          = 3.0,
     answer_freq_map:  Optional[Dict] = None,
     idf_weight:       float          = 0.0,
     hop2_beam_width:  Optional[int]  = None,
@@ -895,8 +899,7 @@ def evaluate_hop(
 
         # Phase 158/160: r2 path-consistency boost — answers whose best path reached
         # hop-2 via the expected r2 (from the r3→r2 training map) are boosted.
-        # Phase 172: r2_boost_map allows per-relation tuning (e.g., higher boost for
-        # starred_actors where hub-entity dominance is worst).
+        # Phase 172: r2_boost_map allows per-relation tuning.
         if _is_3hop and _trb and r2_map:
             _detected_r3_pc = next(iter(_trb))
             _eff_r2_boost = (r2_boost_map.get(_detected_r3_pc, r2_boost)
@@ -907,8 +910,7 @@ def evaluate_hop(
                 for _ans in answers_obj:
                     _bp = _ans.best_path
                     if _bp is not None and len(_bp.nodes) >= 2:
-                        _path_r2 = _bp.nodes[1]  # odd index 1 = first edge relation
-                        if _path_r2 == _expected_r2_pc:
+                        if _bp.nodes[1] == _expected_r2_pc:
                             _ans.score *= (1.0 + _eff_r2_boost)
                             _changed = True
                 if _changed:
@@ -929,6 +931,9 @@ def evaluate_hop(
                         _changed_xtp = True
                 if _changed_xtp:
                     answers_obj.sort(key=lambda a: a.score, reverse=True)
+
+        # Phase 196: secondary sort by branch_count — tiebreaker for equal scores.
+        answers_obj.sort(key=lambda a: (-a.score, -a.branch_count))
 
         pred = [a.entity_id for a in answers_obj]
 
@@ -1154,7 +1159,7 @@ def main():
     parser.add_argument("--vote-weight", type=float, default=0.85,
                         help="Vote convergence weight for 3-hop scoring "
                              "(default 0.85, tuned Phase 157).")
-    parser.add_argument("--trb-factor",  type=float, default=5.0,
+    parser.add_argument("--trb-factor",  type=float, default=3.0,
                         help="Terminal Relation Boost multiplier for 3-hop "
                              "(default 5.0).")
     parser.add_argument("--idf-weight",  type=float, default=0.0,
@@ -1175,6 +1180,18 @@ def main():
                              "starred_actors has worst H@1 (27%%) due to hub-entity "
                              "dominance; a higher boost (e.g. 0.70) may close the gap. "
                              "Other relations keep --r2-boost value.")
+    parser.add_argument("--wb-r2-boost", type=float, default=None,
+                        help="Phase 196: r2-boost override for written_by questions. "
+                             "Default None falls back to --r2-boost. "
+                             "written_by has 57%% failure rate — try higher (e.g. 5.0).")
+    parser.add_argument("--db-r2-boost", type=float, default=None,
+                        help="Phase 196: r2-boost override for directed_by questions. "
+                             "Default None falls back to --r2-boost. "
+                             "directed_by has 60%% failure rate — try values in [2.0, 6.0].")
+    parser.add_argument("--ry-r2-boost", type=float, default=None,
+                        help="Phase 196: r2-boost override for release_year questions. "
+                             "Default None falls back to --r2-boost. "
+                             "release_year has 63%% failure rate — try values in [1.0, 5.0].")
     parser.add_argument("--eval-min-hop", type=int, default=None,
                         help="Phase 172: minimum hop depth for 3-hop answer extraction. "
                              "Default None=1 (current: allows 1-hop and 2-hop paths). "
@@ -1512,8 +1529,14 @@ def main():
                                    min_filter_size=args.min_filter_size,
                                    expansion_k=args.expansion_k,
                                    eval_min_hop_3hop=args.eval_min_hop,
-                                   r2_boost_map=({"starred_actors": args.sa_r2_boost}
-                                                 if args.sa_r2_boost is not None else None),
+                                   r2_boost_map=({
+                                       k: v for k, v in {
+                                           "starred_actors": args.sa_r2_boost,
+                                           "written_by":     args.wb_r2_boost,
+                                           "directed_by":    args.db_r2_boost,
+                                           "release_year":   args.ry_r2_boost,
+                                       }.items() if v is not None
+                                   } or None),
                                    structural_trb=args.structural_trb,
                                    anchor_bonus=args.anchor_bonus,
                                    fan_out=_fan_out if args.pss_weight > 0.0 else None,

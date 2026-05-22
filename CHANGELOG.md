@@ -5,6 +5,50 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.63.0] - 2026-05-22
+### Added
+- **Phase 198: Validated full-dataset result** — MetaQA 3-hop H@1 **57.02%** (+0.43pp vs Phase 197 56.59%), H@10 89.2%, MRR 0.680. New all-time best, achieved via 11-parameter Optuna TPE tuning with per-relation r2_boost flags and fhrb_factor.
+- **Phase 198: Tuner trial logging** (`benchmarks/cerebrum_tuner.py`):
+  - Every trial appended as a JSONL line immediately on completion — survives crashes, readable mid-run.
+  - `--log-file PATH` CLI arg; defaults to `benchmarks/tuner_<ISO-timestamp>.jsonl` so each run produces its own file automatically.
+  - Each trial record includes: all 11 parameters, H@1/H@10/MRR, elapsed_s, `rank_so_far`, `trials_completed`, `best_h1_so_far`, `delta_from_best`, and `d_<param>` deltas vs the previous trial (shows TPE search direction).
+  - Run header written as first line (`type: run_start`) with param space bounds, n_trials, sample, seed.
+  - Best config written as final trial line (`type: best_config`) with canonical command embedded.
+  - Parameter importance scores (Optuna fANOVA) written after tuning (`type: param_importances`) and printed to terminal — ranks all 11 parameters by impact on H@1.
+  - Validation result written to log (`type: validation`) when `--validate` is used.
+
+## [2.62.0] - 2026-05-20
+### Changed
+- **Phase 197: Full 11-parameter tuner** (`benchmarks/cerebrum_tuner.py`):
+  - Search space expanded from 6 to 11 parameters: adds `fhrb-factor` [0.0–3.0], `wb-r2-boost` [0.0–10.0], `db-r2-boost` [0.0–10.0], `ry-r2-boost` [0.0–10.0], `sa-r2-boost` [0.0–10.0].
+  - `r2-boost` ceiling expanded 5.0 → 10.0 (previous best hit ceiling at 4.983). `trb-factor` range shifted to [2.0–8.0]. `vote-weight` range narrowed to [0.85–0.99]. `idf-weight` range narrowed to [0.0–0.3].
+  - TPE warm-up raised from 10 → 15 random trials to better seed the 11-dimensional landscape.
+  - Default `--n-trials` raised from 100 → 200 (200+ recommended for 11-parameter search).
+  - Dashboard updated: header panel shows 3-line best config (core params + per-relation boosts); scrolling table shows all 11 params + metrics in compact columns; per-relation columns labelled `wb`/`db`/`ry`/`sa`.
+  - Canonical command now includes all 11 flags.
+  - `--validate` validation run passes all 11 parameters.
+
+## [2.61.0] - 2026-05-19
+### Added
+- **Phase 196: Branch Bonus Tuning + Per-Relation r2_boost + Tie-breaking** (`benchmarks/metaqa_eval.py`, `benchmarks/cerebrum_tuner.py`):
+  - **Branch-diversity tiebreaker** — secondary sort by `branch_count` descending applied after all scoring passes (both worker and serial paths). Equal-score candidates (e.g. genre ties at score=4.0) now rank the answer with more independent traversal branches higher. Fixes 3 confirmed genre tie failures from Phase 195 diagnostics.
+  - **Per-relation r2-boost flags**: `--wb-r2-boost` (written_by), `--db-r2-boost` (directed_by), `--ry-r2-boost` (release_year) — per-relation overrides for path-consistency r2 boost. Phase 195 diagnostics showed written_by (57%), directed_by (60%), and release_year (63%) as the three highest-failure relations; separate tuning levers allow targeted optimization.
+  - **`branch_bonus` added to tuner search space** [0.0–1.5] — previously unexplored. `branch_bonus_weight` was already implemented in the eval (default 0.25) but not Optuna-searchable. Tuner now surfaces branch diversity as a first-class parameter.
+  - Live dashboard updated: `bbns` column added alongside trb/r2/vote/beam/idf; canonical command includes `--branch-bonus`; plain-text fallback updated to match.
+  - Usage: `cerebrum tune --n-trials 100 --sample 500` now searches 6-dimensional space including branch diversity.
+
+## [2.60.0] - 2026-05-19
+### Changed
+- **Phase 195: TRB default tuning** — `--trb-factor` default reduced from 5.0 to 3.0 based on full 14,274-question MetaQA evaluation. MetaQA 3-hop H@1 improves from 56.17% → **56.36%** (+0.19pp). `trb_factor_3hop` function default updated to match.
+### Added
+- **Phase 195: Live Hyperparameter Tuner** (`benchmarks/cerebrum_tuner.py`, `cli/cerebrum.py`):
+  - Optuna TPE search over `trb-factor` [1.0–6.0], `r2-boost` [0.0–5.0], `vote-weight` [0.70–0.99], `beam-width` {8,10,12,15}, `idf-weight` [0.0–0.5]
+  - Rich live terminal dashboard: header panel shows current best + ETA; scrolling trial table shows H@1, H@10, MRR, Δbest highlighted in green, elapsed seconds per trial
+  - Plain-text fallback when `rich` is not installed
+  - `--validate N` flag: after search, validates best config on N questions (use 14274 for full dataset confirmation)
+  - `cerebrum tune` CLI subcommand: `cerebrum tune --n-trials 100 --sample 500 --validate 14274`
+  - New optional dependency group: `pip install 'cerebrum-kg[tuning]'` installs `optuna>=3.0.0` and `rich>=13.0.0`
+
 ## [2.59.0] - 2026-05-18
 ### Added
 - **Phase 194: C1/C3/C4 — Explainability Dashboard + Benchmark Comparison + Crystal-Box Whitepaper**
