@@ -74,6 +74,7 @@ from typing import Dict, List, Optional, Tuple, Any
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.cerebrum import CerebrumGraph
+from core.schema_relation_detector import SchemaAwareRelationDetector
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -350,12 +351,14 @@ _W_PRIORS              = None
 _W_R2_FOR_R3           = None
 _W_FAN_OUT             = None
 _W_KB_RELATIONS        = None
+_W_SCHEMA_REL_DETECTOR = None
 
 
 def _worker_init(graph_args: dict, shared: dict) -> None:
     """Initializer called once per spawned worker process."""
     global _W_GRAPH, _W_QUERY_ENGINE, _W_RELATION_ANSWER_SET, _W_ANSWER_FREQ
     global _W_PRIORS, _W_R2_FOR_R3, _W_FAN_OUT, _W_KB_RELATIONS
+    global _W_SCHEMA_REL_DETECTOR
 
     _W_GRAPH = CerebrumGraph.from_kb(
         graph_args["kb_file"],
@@ -389,6 +392,11 @@ def _worker_init(graph_args: dict, shared: dict) -> None:
     except Exception:
         _W_KB_RELATIONS = []
 
+    # Build schema-aware relation detector (replaces keyword-based detect_target_relation)
+    _W_SCHEMA_REL_DETECTOR = SchemaAwareRelationDetector()
+    if _W_QUERY_ENGINE is not None and _W_KB_RELATIONS:
+        _W_SCHEMA_REL_DETECTOR.build(_W_KB_RELATIONS, _W_QUERY_ENGINE)
+
     _W_RELATION_ANSWER_SET = shared["relation_answer_set"]
     _W_ANSWER_FREQ         = shared["answer_freq"]
     _W_PRIORS              = shared["priors"]
@@ -418,6 +426,7 @@ def _worker_process_question(task: tuple) -> tuple:
         relation_prior      = (_W_PRIORS.get(hop) if _W_PRIORS else None)
         r2_map              = _W_R2_FOR_R3 or {}
         fan_out             = _W_FAN_OUT or {}
+        _srd                = _W_SCHEMA_REL_DETECTOR
 
         _is_3hop   = (hop == 3)
         _raw_top_k = 100 if _is_3hop else top_k
@@ -435,10 +444,15 @@ def _worker_process_question(task: tuple) -> tuple:
             except Exception:
                 pass
 
-        # Terminal Relation Boost
+        # Terminal Relation Boost — schema-aware embedding detector (Phase 201),
+        # falls back to keyword matcher when detector not built (no sentence engine).
         _trb: Dict[str, float] = {}
-        if not structural_trb and question_text and kb_relations:
-            detected = detect_target_relation(question_text, kb_relations)
+        if not structural_trb and question_text:
+            detected = None
+            if _srd is not None and _srd.is_built:
+                detected = _srd.detect_terminal(question_text)
+            elif kb_relations:
+                detected = detect_target_relation(question_text, kb_relations)
             if detected:
                 boost_factor = trb_factor_3hop if _is_3hop else 3.0
                 _trb = {detected: boost_factor}
@@ -450,13 +464,18 @@ def _worker_process_question(task: tuple) -> tuple:
             if _r2:
                 _prb = {_r2: next(iter(_trb.values())) ** 0.5}
 
-        # First-Hop Relation Boost (Phase 180)
+        # First-Hop Relation Boost (Phase 180) — schema-aware detector for R1.
         _irb: Optional[Dict[str, float]] = None
-        if _is_3hop and fhrb_factor > 0.0 and question_text and kb_relations:
-            _r1_candidate = detect_target_relation(
-                question_text, kb_relations,
-                exclude_relation=next(iter(_trb)) if _trb else None,
-            )
+        if _is_3hop and fhrb_factor > 0.0 and question_text:
+            _r3_detected = next(iter(_trb)) if _trb else None
+            _r1_candidate = None
+            if _srd is not None and _srd.is_built:
+                _r1_candidate = _srd.detect_initial(question_text, exclude=_r3_detected)
+            elif kb_relations:
+                _r1_candidate = detect_target_relation(
+                    question_text, kb_relations,
+                    exclude_relation=_r3_detected,
+                )
             if _r1_candidate:
                 _irb = {_r1_candidate: fhrb_factor}
 
@@ -682,6 +701,11 @@ def evaluate_hop(
     except Exception:
         pass
 
+    # Phase 201: schema-aware relation detector (replaces keyword-based detection)
+    _srd = SchemaAwareRelationDetector()
+    if embedding_engine is not None and _kb_relations:
+        _srd.build(_kb_relations, embedding_engine)
+
     # Phase 152: Answer-type constraint index — passed in from main() where it
     # is built directly from KB triples (objects only — not reversed edges).
     _relation_answer_set: Dict[str, set] = relation_answer_set or {}
@@ -807,18 +831,17 @@ def evaluate_hop(
             except Exception:
                 pass
 
-        # Phase 146/147: Terminal Relation Boost — detect target relation from
-        # question prefix (first 5 words).  Applied at all hops: prefix-only
-        # scanning avoids false hits from intermediate-hop keywords in multi-hop
-        # questions.  Penultimate cascade fires automatically inside traversal.
-        # Phase 172: --structural-trb skips keyword detection entirely and lets
-        # CerebrumGraph.query() infer TRB from graph topology (SRI).
+        # Terminal Relation Boost — schema-aware embedding detector (Phase 201),
+        # falls back to keyword matcher when detector not built (no sentence engine).
+        # Phase 172: --structural-trb skips question-based detection entirely.
         _trb: Dict[str, float] = {}
-        if not structural_trb and question_text and _kb_relations:
-            detected = detect_target_relation(question_text, _kb_relations)
+        if not structural_trb and question_text:
+            detected = None
+            if _srd.is_built:
+                detected = _srd.detect_terminal(question_text)
+            elif _kb_relations:
+                detected = detect_target_relation(question_text, _kb_relations)
             if detected:
-                # Phase 151: TRB factor — 5.0 is sufficient with vote_weight=0.0;
-                # higher values (25.0) were counter-productive per ablation.
                 boost_factor = trb_factor_3hop if hop == 3 else 3.0
                 _trb = {detected: boost_factor}
 
@@ -840,18 +863,18 @@ def evaluate_hop(
             if _r2:
                 _prb = {_r2: _trb[_detected_r3] ** 0.5}
 
-        # Phase 180: First-Hop Relation Boost — detect r1 from question and
-        # steer hop-1 beam along the intended first relation.
-        # r1 is typically a DIFFERENT relation from r3 (terminal). We detect
-        # both and use the non-r3 one as r1. Edges matching r1 are boosted;
-        # all others receive a 0.1 penalty (same mechanism as TRB at last hop).
+        # First-Hop Relation Boost (Phase 180) — schema-aware detector for R1.
         _irb: Optional[Dict[str, float]] = None
-        if _is_3hop and fhrb_factor > 0.0 and question_text and _kb_relations:
+        if _is_3hop and fhrb_factor > 0.0 and question_text:
             _detected_r3_for_r1 = next(iter(_trb)) if _trb else None
-            _r1_candidate = detect_target_relation(
-                question_text, _kb_relations,
-                exclude_relation=_detected_r3_for_r1,
-            )
+            _r1_candidate = None
+            if _srd.is_built:
+                _r1_candidate = _srd.detect_initial(question_text, exclude=_detected_r3_for_r1)
+            elif _kb_relations:
+                _r1_candidate = detect_target_relation(
+                    question_text, _kb_relations,
+                    exclude_relation=_detected_r3_for_r1,
+                )
             if _r1_candidate:
                 _irb = {_r1_candidate: fhrb_factor}
 

@@ -5,6 +5,16 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.64.0] - 2026-05-25
+### Added
+- **Phase 201: SchemaAwareRelationDetector** (`core/schema_relation_detector.py`) — KB-agnostic, embedding-based replacement for the keyword-based `detect_target_relation()`:
+  - `build(relation_types, embedding_engine)` — encodes KB relation phrases at load time; works for any KB (MetaQA's 9 relations or FreeBase's 6,000+)
+  - `detect_terminal(question)` — WH-word rule + head/tail confidence selection; "when" starter uses "year" as temporal proxy; 84.5% R3 accuracy vs 82.6% for keyword detector
+  - `detect_initial(question)` — content-word scan (batch embed, max confidence gap) + multi-window phrase candidates + suffix evaluation; robust to filler phrases like "with the film"
+  - `detect_path(question)` — returns (R1, R2) tuple; detects terminal first, then initial excluding R3 to reduce cross-contamination
+  - 28 unit tests in `tests/test_schema_relation_detector.py`, all passing
+- **Data-agnostic principle enforced**: both `_worker_process_question` and serial `evaluate_hop` paths in `benchmarks/metaqa_eval.py` now use SRD when sentence engine is available; keyword function retained as fallback for non-sentence-engine runs
+
 ## [2.63.0] - 2026-05-22
 ### Added
 - **Phase 198: Validated full-dataset result** — MetaQA 3-hop H@1 **57.02%** (+0.43pp vs Phase 197 56.59%), H@10 89.2%, MRR 0.680. New all-time best, achieved via 11-parameter Optuna TPE tuning with per-relation r2_boost flags and fhrb_factor.
