@@ -14,6 +14,9 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `detect_path(question)` — returns (R1, R2) tuple; detects terminal first, then initial excluding R3 to reduce cross-contamination
   - 28 unit tests in `tests/test_schema_relation_detector.py`, all passing
 - **Data-agnostic principle enforced**: both `_worker_process_question` and serial `evaluate_hop` paths in `benchmarks/metaqa_eval.py` now use SRD when sentence engine is available; keyword function retained as fallback for non-sentence-engine runs
+### Validated
+- **MetaQA 3-hop H@1: 58.90%** (14,274 questions) — new all-time best, +1.11pp over Phase 200's 57.79%
+- H@10: 88.32%, MRR: 0.6930; same hyperparameter config as Phase 200
 
 ## [2.63.0] - 2026-05-22
 ### Added
