@@ -106,7 +106,7 @@ not principled methodology.
         domain-specific parameters to 1--2 graph-derived parameters.
   \item \textbf{\SRD{}} (\S\ref{sec:srd}): an embedding-based
         query-to-terminal-relation mapper requiring no KB-specific keyword lists.
-  \item \textbf{An empirical structural finding} (\S\ref{sec:fanова}):
+  \item \textbf{An empirical structural finding} (\S\ref{sec:fanova}):
         \fanova{} analysis shows \texttt{branch\_bonus} jumps from 1.2\%
         to 46.2\% importance when per-relation overrides are removed, revealing
         that traversal path diversity is the dominant signal that domain-specific
@@ -146,7 +146,7 @@ baseline. This paper advances that baseline by replacing its KB-specific
 tuning components with analytically derived substitutes.
 
 \paragraph{Hyperparameter importance analysis.}
-\fanova{}~\cite{hutter2014fanова} decomposes objective variance across hyperparameter
+\fanova{}~\cite{hutter2014fanova} decomposes objective variance across hyperparameter
 subsets using functional ANOVA on random forests fitted to trial data. It has been
 used to study NAS and ML pipeline importance but not, to our knowledge, applied to
 the hyperparameter space of graph beam-traversal scoring functions.
@@ -356,9 +356,9 @@ detection that the keyword-based approach missed on paraphrase queries.
 
 % ── 7. fANOVA ─────────────────────────────────────────────────────────────────
 \section{Parameter Importance Analysis}
-\label{sec:fanоva}
+\label{sec:fanova}
 
-We apply functional ANOVA (\fanova{})~\cite{hutter2014fanова} to the
+We apply functional ANOVA (\fanova{})~\cite{hutter2014fanova} to the
 9-parameter scoring space across a 200-trial Optuna search, fitting a random
 forest to trial outcomes and decomposing objective variance by parameter.
 
@@ -681,7 +681,7 @@ Sun, J., et al. (2023).
 Think-on-Graph: Deep and Responsible Reasoning of Large Language Model on Knowledge Graph.
 \emph{ICLR 2024}.
 
-\bibitem{hutter2014fanова}
+\bibitem{hutter2014fanova}
 Hutter, F., Hoos, H., \& Leyton-Brown, K. (2014).
 An Efficient Approach for Assessing Hyperparameter Importance.
 \emph{ICML}.

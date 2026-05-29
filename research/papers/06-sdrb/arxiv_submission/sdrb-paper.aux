@@ -1,0 +1,118 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{saxena2020improve}
+\citation{he2021}
+\citation{jiang2023}
+\citation{buchorn2026report}
+\citation{buchorn2026report}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{1}{1}{Introduction}{section.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{The problem with per-relation tuning.}{1}{section*.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Contributions.}{1}{section*.3}\protected@file@percent }
+\citation{saxena2020improve}
+\citation{he2021}
+\citation{jiang2023}
+\citation{sun2023tog}
+\citation{das2018minerva}
+\citation{buchorn2026report}
+\citation{hutter2014fanova}
+\citation{buchorn2026report}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{section.2}\protected@file@percent }
+\newlabel{sec:related}{{2}{2}{Related Work}{section.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Supervised KGQA.}{2}{section*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{LLM-augmented methods.}{2}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Training-free structural methods.}{2}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Hyperparameter importance analysis.}{2}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Background: Beam Traversal Scoring}{2}{section.3}\protected@file@percent }
+\newlabel{sec:background}{{3}{2}{Background: Beam Traversal Scoring}{section.3}{}}
+\newlabel{eq:score}{{1}{2}{Background: Beam Traversal Scoring}{equation.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Scoring parameters.}{2}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Schema-Derived Relation Boost}{2}{section.4}\protected@file@percent }
+\newlabel{sec:sdrb}{{4}{2}{Schema-Derived Relation Boost}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Motivation}{2}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Fan-Out Computation}{2}{subsection.4.2}\protected@file@percent }
+\newlabel{eq:fanout}{{2}{2}{Fan-Out Computation}{equation.2}{}}
+\citation{buchorn2026report}
+\citation{metaqa2017}
+\citation{buchorn2026report}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}SDRB Formula}{3}{subsection.4.3}\protected@file@percent }
+\newlabel{eq:sdrb}{{3}{3}{SDRB Formula}{equation.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Parameterization.}{3}{section*.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Parameter reduction.}{3}{section*.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Implementation.}{3}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Schema-Aware Relation Detector}{3}{section.5}\protected@file@percent }
+\newlabel{sec:srd}{{5}{3}{Schema-Aware Relation Detector}{section.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Experiments}{3}{section.6}\protected@file@percent }
+\newlabel{sec:experiments}{{6}{3}{Experiments}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Setup}{3}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Dataset.}{3}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Baselines.}{3}{section*.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Hyperparameter tuning.}{3}{section*.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Main Results}{3}{subsection.6.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces MetaQA 3-hop results. $\dagger $: training-free. $\ddagger $: black-box --- no auditable reasoning path; can produce confident incorrect answers. Full-pipeline \textsc  {Cerebrum}{} uses \textsc  {SRD}{} + \textsc  {SDRB}{} + all scoring components.}}{3}{table.1}\protected@file@percent }
+\newlabel{tab:main}{{1}{3}{MetaQA 3-hop results. $\dagger $: training-free. $\ddagger $: black-box --- no auditable reasoning path; can produce confident incorrect answers. Full-pipeline \CEREBRUM {} uses \SRD {} + \SDRB {} + all scoring components}{table.1}{}}
+\citation{hutter2014fanova}
+\citation{newman2004modularity}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Ablation Study}{4}{subsection.6.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Ablation on MetaQA 3-hop H@1 (14,274 questions). Each row adds one component to the previous. \textsc  {SRD}{} = Schema-Aware Relation Detector; \textsc  {SDRB}{} = Schema-Derived Relation Boost.}}{4}{table.2}\protected@file@percent }
+\newlabel{tab:ablation}{{2}{4}{Ablation on MetaQA 3-hop H@1 (14,274 questions). Each row adds one component to the previous. \SRD {} = Schema-Aware Relation Detector; \SDRB {} = Schema-Derived Relation Boost}{table.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Parameter Importance Analysis}{4}{section.7}\protected@file@percent }
+\newlabel{sec:fanova}{{7}{4}{Parameter Importance Analysis}{section.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces f\textsc  {ANOVA}{} parameter importances after \textsc  {SDRB}{} replacement. Importances sum to 1.0 (only main effects shown; interaction terms $<$0.5\%).}}{4}{table.3}\protected@file@percent }
+\newlabel{tab:fanova}{{3}{4}{\fanova {} parameter importances after \SDRB {} replacement. Importances sum to 1.0 (only main effects shown; interaction terms $<$0.5\%)}{table.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Structural finding: the branch diversity collapse.}{4}{section*.15}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Implications.}{4}{section*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}ParameterInitializer: Principled Defaults}{4}{section.8}\protected@file@percent }
+\newlabel{sec:paraminit}{{8}{4}{ParameterInitializer: Principled Defaults}{section.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Graph Statistics}{4}{subsection.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Universal Constants}{4}{subsection.8.2}\protected@file@percent }
+\citation{mahdisoltani2013}
+\citation{zipf1949}
+\citation{newman2004modularity}
+\citation{sparckjones1972}
+\citation{buchorn2026report}
+\newlabel{def:bcc}{{1}{5}{Branch Convergence Constant}{definition.1}{}}
+\newlabel{prop:universal}{{1}{5}{Universal constants}{proposition.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Graph-Relative Formulas}{5}{subsection.8.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{\texttt  {trb\_factor} (Terminal Relation Boost magnitude).}{5}{section*.17}\protected@file@percent }
+\newlabel{eq:trb}{{4}{5}{\texttt {trb\_factor} (Terminal Relation Boost magnitude)}{equation.4}{}}
+\@writefile{toc}{\contentsline {paragraph}{$\gamma _{\mathrm  {s}}$ (SDRB scale factor).}{5}{section*.18}\protected@file@percent }
+\newlabel{eq:gamma}{{5}{5}{$\gS $ (SDRB scale factor)}{equation.5}{}}
+\@writefile{toc}{\contentsline {paragraph}{\texttt  {vote\_weight} (Community suppression).}{5}{section*.19}\protected@file@percent }
+\newlabel{eq:vote}{{6}{5}{\texttt {vote\_weight} (Community suppression)}{equation.6}{}}
+\@writefile{toc}{\contentsline {paragraph}{\texttt  {idf\_weight} (Hub penalty).}{5}{section*.20}\protected@file@percent }
+\newlabel{eq:idf}{{7}{5}{\texttt {idf\_weight} (Hub penalty)}{equation.7}{}}
+\@writefile{toc}{\contentsline {paragraph}{\texttt  {r2\_boost} (Path-consistency corroboration).}{5}{section*.21}\protected@file@percent }
+\newlabel{eq:r2}{{8}{5}{\texttt {r2\_boost} (Path-consistency corroboration)}{equation.8}{}}
+\@writefile{toc}{\contentsline {paragraph}{\texttt  {fhrb\_factor} (First-hop relation boost).}{5}{section*.22}\protected@file@percent }
+\newlabel{eq:fhrb}{{9}{5}{\texttt {fhrb\_factor} (First-hop relation boost)}{equation.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Regime-Stratified Multipliers}{5}{subsection.8.4}\protected@file@percent }
+\newlabel{sec:regime}{{8.4}{5}{Regime-Stratified Multipliers}{subsection.8.4}{}}
+\bibstyle{plain}
+\bibcite{saxena2020improve}{1}
+\bibcite{he2021}{2}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Regime-specific initialization multipliers. Hub-homogeneous validated on MetaQA; typed-heterogeneous estimated (cross-KB validation on Hetionet in progress).}}{6}{table.4}\protected@file@percent }
+\newlabel{tab:regime}{{4}{6}{Regime-specific initialization multipliers. Hub-homogeneous validated on MetaQA; typed-heterogeneous estimated (cross-KB validation on Hetionet in progress)}{table.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces \textsc  {ParamInit}{} parameter summary. Universal constants are graph-invariant. Graph-relative parameters scale with measurable graph statistics.}}{6}{table.5}\protected@file@percent }
+\newlabel{tab:paraminit}{{5}{6}{\PI {} parameter summary. Universal constants are graph-invariant. Graph-relative parameters scale with measurable graph statistics}{table.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.5}Summary: From Tuning to Theory}{6}{subsection.8.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}Discussion}{6}{section.9}\protected@file@percent }
+\newlabel{sec:discussion}{{9}{6}{Discussion}{section.9}{}}
+\@writefile{toc}{\contentsline {paragraph}{The hallucination-free guarantee.}{6}{section*.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{What the H@1 gap means.}{6}{section*.24}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Limitations.}{6}{section*.25}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10}Conclusion}{6}{section.10}\protected@file@percent }
+\newlabel{sec:conclusion}{{10}{6}{Conclusion}{section.10}{}}
+\bibcite{jiang2023}{3}
+\bibcite{das2018minerva}{4}
+\bibcite{sun2023tog}{5}
+\bibcite{hutter2014fanova}{6}
+\bibcite{metaqa2017}{7}
+\bibcite{newman2004modularity}{8}
+\bibcite{sparckjones1972}{9}
+\bibcite{zipf1949}{10}
+\bibcite{mahdisoltani2013}{11}
+\bibcite{buchorn2026report}{12}
+\gdef \@abspage@last{7}
