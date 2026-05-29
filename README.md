@@ -132,11 +132,233 @@ Every answer includes a full hop-by-hop reasoning trace — the exact path throu
 
 ---
 
-- **TSC**: Triple-Signal Consensus — novel community detection combining LPA (local),
-  modularity gain (global), and centrality (flow) simultaneously at each node update
-- **CSA**: Community-Structured Attention — attention weights that incorporate community
-  membership as a soft global constraint on graph traversal
-- **Graph-Grounded**: every answer is a path through verified graph edges
+## Research — Novel Contributions
+
+CEREBRUM was built by inventing new algorithms to solve problems that existing tools couldn't handle. Each contribution below is an original idea that didn't exist before CEREBRUM. Together they form the pipeline that turns raw graph data into verified reasoning.
+
+---
+
+### Layer 1: The Reasoning Foundation
+
+These three inventions form the core of the engine. Every query touches all three.
+
+**Triple-Signal Community Fusion (DSCF / TSC)**
+When you load a graph, CEREBRUM automatically partitions it into communities — groups of closely related entities. Most community detection algorithms run one method and stop. DSCF runs three algorithms simultaneously on every node at every update step: local label propagation (local patterns), modularity gain (global structure), and information flow centrality. The result is communities that capture all three structural signals at once, producing richer "attention heads" than any single-method approach. Every other component in CEREBRUM uses these communities.
+
+**Community-Structured Attention (CSA)**
+This is CEREBRUM's core scoring formula. When evaluating whether to follow an edge from entity A to entity B, CSA computes a weighted score across 10 simultaneous signals: semantic similarity, community co-membership, edge type weight, distance penalty, hop decay, PageRank authority, temporal decay, node recency, synthesis density, and grounding confidence. No published graph attention formula includes community membership as a direct term — it appears here for the first time. The 10-parameter formula is computed analytically from the graph's own structure, with no training required.
+
+**Glass-Box Beam Traversal**
+CEREBRUM navigates the graph using beam search guided by CSA scores — keeping the top N candidates alive at each hop and pruning the rest. Unlike MINERVA, DeepPath, or BeamQA (all of which require training on labeled question-answer pairs), CEREBRUM's traversal is entirely training-free. The system produces a complete reasoning trace showing every hop taken, every branch evaluated, and every path pruned — making its reasoning fully auditable. This is what "crystal-box" means: not just the answer, but the exact logical path that produced it.
+
+---
+
+### Layer 2: Structural Self-Organization
+
+These mechanisms allow CEREBRUM to change its own structure based on experience — analogous to how the brain's physical connections change with use.
+
+**Bridge Twins (Experience-Dependent Structural Relay Nodes)**
+When CEREBRUM repeatedly traverses from one part of the graph to another (crossing community boundaries), it materializes a new relay node — a "bridge twin" — between those communities. This mirrors synaptic Long-Term Potentiation (LTP) in hippocampal circuits: frequently-used pathways get physically reinforced. Bridges decay when unused. This makes the graph increasingly efficient at the exact reasoning patterns it has encountered before, without any labeled training data.
+
+**STDP Causal Edge Discovery**
+CEREBRUM can infer cause-and-effect relationships from event timing. When streaming event data, if event A consistently precedes event B, CEREBRUM materializes a directed `CAUSES` edge. This uses Spike-Timing-Dependent Plasticity (STDP) mechanics from computational neuroscience — but applied to knowledge graph edge discovery rather than neural learning rules. This is the first known application of STDP to dynamic causal edge inference in a knowledge graph.
+
+**REM Cycle (Sleep-Inspired Graph Maintenance)**
+Biological brains use sleep to consolidate important memories and prune unnecessary connections. CEREBRUM implements a three-phase background maintenance cycle: (1) Prune — remove low-confidence synthetic edges; (2) Consolidate — strengthen frequently traversed structural patterns; (3) Synthesize — proactively create new connections between entities that should be connected but aren't. The system maintains its own graph quality without human intervention.
+
+---
+
+### Layer 3: Autonomous Discovery and Hypothesis
+
+These components give CEREBRUM the ability to find things it wasn't asked about and propose connections that don't yet exist in the graph.
+
+**HypothesisEngine (Training-Free Abductive Reasoning)**
+Given an observation, CEREBRUM can work backwards to find the most plausible explanation. It runs multiple reverse-traversal paths from an observed state, then combines their confidence scores using Noisy-OR probability aggregation to produce a ranked list of explanatory hypotheses. This is abductive reasoning — reasoning from effect to cause — performed without any trained model. Discovered hypotheses can be materialized as provisional graph edges for review.
+
+**ResearchAgent (Autonomous Missing-Link Discovery)**
+CEREBRUM continuously monitors its own graph structure for connectivity gaps — nodes that are under-connected relative to their structural importance. When it finds gaps, it autonomously proposes new edges that would fill them, based purely on structural analysis. All proposals are queued for human review; nothing is added to the graph without explicit approval. This is fundamentally different from embedding-based KG completion (TransE, RotatE) because it targets structural gaps rather than predicting random missing triples, and requires mandatory human sign-off before any change.
+
+**ExternalValidator (Live Literature Scoring)**
+When the ResearchAgent proposes a new connection, the ExternalValidator automatically queries live scientific databases (PubMed, arXiv, OpenAlex, ClinicalTrials.gov) to check whether the proposed relationship is supported by existing literature. Each proposal gets a structured evidence report with specific citations. This is real-time, multi-database validation of dynamically proposed graph edges — not static provenance links added at ingest time.
+
+**AutoApprover + TriangulationEngine (Tiered Decision Stack)**
+Proposed graph changes pass through a three-tier approval pipeline: (1) hard gates (block proposals with missing validation or bad literature status); (2) an online logistic classifier that learns from past human approval decisions; (3) an optional LLM fallback for semantic edge cases. The TriangulationEngine validates each candidate from four independent perspectives: reverse-direction confidence, multi-strategy voting agreement, path independence, and semantic type consistency. This combination catches different failure modes that a single perspective would miss.
+
+**Autonomous Discovery Loop (Circuit-Breaker-Protected)**
+The full discover → validate → approve → materialize pipeline runs autonomously in the background. If the approval rate drops below a threshold (e.g., 60% of recent proposals approved), a sliding-window circuit breaker automatically pauses materialization and rolls back the bad cycle's changes. This makes the loop self-healing: if the agent starts proposing low-quality connections, it stops itself and waits for human review before proceeding.
+
+---
+
+### Layer 4: Predictive and Adaptive Reasoning
+
+These mechanisms make CEREBRUM learn from its own experience and predict what it will find before it looks.
+
+**Engram-Steered Traversal (Training-Free Pattern Memory)**
+Every time CEREBRUM successfully answers a question, it records the relation sequence that led to the answer (e.g., `starring → directed_by → release_year`). Future queries that start on similar paths get a multiplicative score boost biasing them toward patterns that worked before. This is the opposite of training: there's no loss function, no gradient, no labeled data. The pattern memory accumulates from live queries and immediately influences the next traversal. Patterns are compressed using SpeedTalk phonemic encoding (8-20× compression) and persist across restarts.
+
+**Predictive Coding Engine (Prior Generation + Prediction Error)**
+Before each traversal, CEREBRUM generates a "prior path" — its best guess of what relation sequence the answer will require — based on Engram patterns. After the traversal, it measures how different the actual path was from the prediction (Prediction Error). High PE means something surprising happened; low PE means the engine's model of the graph is accurate. The `soliton_index` (1 - mean recent PE) tracks overall predictive stability — a stable prior that consistently yields low PE behaves like a soliton wave, self-reinforcing and self-localizing.
+
+**Chemical Modulator (Metabolic State Machine)**
+CEREBRUM maintains five internal "metabolic" scalars that dynamically regulate its behavior: Reinforcement (dopamine analog), Arousal (norepinephrine), Novelty (acetylcholine), Cohesion (oxytocin), and Persistence (vasopressin). These scalars change in response to reasoning outcomes — high prediction error raises arousal, successful answers raise reinforcement — and decay back to homeostatic baselines over time. They feed back into beam parameters and attention formula weights, making the system more exploratory when uncertain and more focused when confident.
+
+**Active Inference / Daydreaming**
+During idle periods between discovery cycles, CEREBRUM proactively queries its own graph, seeding traversals from nodes with the highest recent prediction error. These "daydream" queries drive the Engram and PredictiveCodingEngine to update, consolidating the internal model without external stimulus. This is the first known application of Friston's active inference principle (free-energy minimization) to a symbolic knowledge graph reasoner.
+
+---
+
+### Layer 5: Zero-Config Auto-Adaptation
+
+These components allow CEREBRUM to adapt to any knowledge graph without manual configuration.
+
+**GraphProfiler (Automatic Graph Regime Classification)**
+When CEREBRUM loads a graph, it computes four structural signals in a single O(E) pass: hub score (how concentrated edges are on top nodes), minimum and mean relation coverage (what fraction of entities participate in each relation type), and degree coefficient of variation. These signals classify the graph into one of three regimes — hub-homogeneous (e.g., MovieLens), typed-heterogeneous (e.g., Hetionet biomedical), or mixed — and automatically configure the optimal reasoning strategy for that graph. No manual tuning required.
+
+**STRB (Semantic Terminal Relation Boost)**
+At query time, CEREBRUM encodes the question text using sentence embeddings and compares it to embeddings of each relation type's natural-language label. The best-matching relation gets a traversal boost, guiding the beam toward the correct answer type. On 1-hop tasks, this zero-config approach matches hand-crafted domain-specific configurations. It requires no training data and works on any KB — the only input is the question and the relation names already in the graph.
+
+**SDRB (Schema-Derived Relation Boost, Phase 202/203)**
+Rather than tuning per-relation boost values manually, SDRB derives them automatically from the graph's own statistical structure. For each relation, it computes `fan_out = total_triples / unique_head_entities` — a measure of how many targets each relation typically points to. Relations with higher fan-out (e.g., "starred_actors") get proportionally stronger boosts. The formula `boost(r) = gamma × fan_out(r)^beta` requires only two global parameters (gamma and beta) instead of one per relation, and works on any KB without domain knowledge.
+
+---
+
+### Layer 6: Explainability and Production Safety
+
+**Explainable Reasoning Trace (ERT)**
+Every query produces a complete audit trail of the search process — not just the winning path, but all evaluated branches, the top rejected competitors at each hop, and the full 10-dimensional feature vector (the "Attention Radar") that scored each candidate. This makes CEREBRUM's reasoning fully reproducible and debuggable. If an answer is wrong, you can see exactly which reasoning step went wrong and why, down to the individual scoring component.
+
+**Fault-Tolerant Partial Results**
+If the traversal fails mid-execution (timeout, exception), CEREBRUM returns HTTP 200 with the partial results collected so far and a `partial=True` flag — not HTTP 500. Clients receive useful intermediate reasoning rather than an error. Persistence failures (writing to Engram or QueryLog) are independently isolated — neither can crash the reasoning endpoint.
+
+**Graph Provenance Ledger (Surgical Rollback)**
+Every edge added by the autonomous discovery pipeline is recorded with its batch ID and cycle number. If a batch of proposed edges turns out to be wrong, a single API call rolls back exactly those edges — no full restore required. Combined with the circuit breaker, this makes autonomous graph modification fully reversible at fine granularity.
+
+**Neural Telemetry + UE5 Visualization**
+CEREBRUM streams live reasoning events (per-hop traversal pulses, node creation, edge pruning) over WebSockets. These events are consumed by an Unreal Engine 5 plugin that renders the reasoning process as a 3D neural visualization in real time — nodes glow as they're traversed, synapses pulse along active paths, pruned branches fade out. This is the first system to stream symbolic knowledge graph reasoning as live, high-fidelity 3D telemetry.
+
+---
+
+### Research Summary
+
+| Area | Key Inventions | What They Deliver |
+|------|---------------|-------------------|
+| Core reasoning | DSCF, CSA, Crystal-Box Beam | Training-free multi-hop inference with full trace |
+| Self-organization | Bridge Twins, STDP, REM Cycle | Graph that improves from its own use |
+| Autonomous discovery | HypothesisEngine, ResearchAgent, ExternalValidator | Finds missing connections and validates them against literature |
+| Safety & approval | AutoApprover, TriangulationEngine, Circuit Breaker, Rollback | Fully auditable, reversible autonomous graph modification |
+| Adaptive reasoning | Engram, Predictive Coding, Chemical Modulator, Active Inference | System learns from experience without training data |
+| Auto-configuration | GraphProfiler, STRB, SDRB | Works on any graph without manual tuning |
+| Explainability | ERT, Fault Tolerance, Provenance | Full audit trail; partial results on failure; surgical undo |
+| Visualization | Neural Telemetry, UE5 3D Bridge | Real-time 3D view of the reasoning process as it happens |
+
+Full technical claims, prior art comparisons, and novelty statements are documented in [`docs/NOVEL_CONTRIBUTIONS.md`](docs/NOVEL_CONTRIBUTIONS.md).
+
+---
+
+## Install Variants
+
+CEREBRUM is split into two packages. Install only what you need.
+
+---
+
+### `pip install cerebrum-kg-core` — The Reasoning Engine
+
+This is CEREBRUM's core: graph loading, community detection, beam traversal, the REST API, and the CLI. No UI, no heavy ML dependencies unless you opt in.
+
+```bash
+# Minimal — pure graph reasoning, no embeddings
+pip install cerebrum-kg-core
+
+# + Semantic embeddings (sentence-transformers, STRB, SRD)
+# Required for STRB, SchemaAwareRelationDetector, and full pipeline performance
+pip install "cerebrum-kg-core[embeddings]"
+
+# + REST API server (FastAPI + Uvicorn + Pydantic)
+pip install "cerebrum-kg-core[api]"
+
+# + GPU acceleration (PyTorch for CUDA-accelerated beam scoring and embeddings)
+pip install "cerebrum-kg-core[gpu]"
+
+# + Hyperparameter tuner (Optuna + Rich live dashboard)
+pip install "cerebrum-kg-core[tuning]"
+
+# + Prometheus metrics endpoint for production monitoring
+pip install "cerebrum-kg-core[monitoring]"
+
+# + Neo4j graph database backend
+pip install "cerebrum-kg-core[neo4j]"
+
+# + RDF/SPARQL graph backend
+pip install "cerebrum-kg-core[rdf]"
+
+# + Apache Spark / Gremlin enterprise graph backends
+pip install "cerebrum-kg-core[enterprise]"
+
+# + Studio UI (installs cerebrum-kg-studio automatically)
+pip install "cerebrum-kg-core[studio]"
+
+# Everything (embeddings + api + gpu + tuning + monitoring + neo4j + enterprise)
+pip install "cerebrum-kg-core[all]"
+```
+
+| Extra | Key packages | When you need it |
+|-------|-------------|-----------------|
+| *(none)* | networkx, numpy, scipy | Pure structural reasoning, opaque-ID graphs |
+| `embeddings` | sentence-transformers | Semantic questions, STRB, full pipeline performance |
+| `api` | fastapi, uvicorn, pydantic | Running the REST API server |
+| `gpu` | torch | CUDA-accelerated embeddings and beam scoring |
+| `tuning` | optuna, rich | Running the hyperparameter tuner |
+| `monitoring` | prometheus-client | Production `/metrics` endpoint for Prometheus/Grafana |
+| `neo4j` | neo4j | Using a Neo4j graph database as the backend |
+| `rdf` | SPARQLWrapper | Connecting to RDF/SPARQL endpoints |
+| `enterprise` | pyspark, gremlinpython | Spark GraphX offline DSCF, Gremlin-compatible backends |
+| `studio` | cerebrum-kg-studio | Gradio UI + React portal |
+| `dev` | pytest, matplotlib | Running the test suite and benchmark plots |
+| `all` | All of the above except studio | Full production deployment |
+
+---
+
+### `pip install cerebrum-kg-studio` — The Interactive UI
+
+The Studio is the visual layer. It automatically installs `cerebrum-kg-core` as a dependency — you don't need to install core separately.
+
+```bash
+# Studio (Gradio UI) — installs core automatically
+pip install cerebrum-kg-studio
+
+# + Streamlit live benchmark monitor
+pip install "cerebrum-kg-studio[monitor]"
+
+# Everything
+pip install "cerebrum-kg-studio[all]"
+```
+
+| Extra | Key packages | What you get |
+|-------|-------------|-------------|
+| *(none)* | gradio, plotly, pyvis, + core | Gradio reasoning studio at `http://localhost:7860` |
+| `monitor` | streamlit | Live benchmark monitoring dashboard |
+| `all` | Everything above | Full studio suite |
+
+**Launch the studio:**
+```bash
+cerebrum-studio                    # default port 7860
+cerebrum-studio --port 8080        # custom port
+```
+
+---
+
+### Quick-pick guide
+
+| Your use case | Install command |
+|--------------|----------------|
+| Just the reasoning API | `pip install "cerebrum-kg-core[api,embeddings]"` |
+| Full production server | `pip install "cerebrum-kg-core[all]"` |
+| Interactive UI | `pip install cerebrum-kg-studio` |
+| Hyperparameter tuning | `pip install "cerebrum-kg-core[tuning,embeddings,gpu]"` |
+| Development / everything | `pip install "cerebrum-kg-core[all]" && pip install "cerebrum-kg-studio[all]"` |
+| Biomedical / Neo4j graph | `pip install "cerebrum-kg-core[api,embeddings,neo4j]"` |
+
+---
 
 ## Mathematical Foundations
 
