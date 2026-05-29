@@ -6,7 +6,8 @@ All business logic lives in core.studio_engine.StudioEngine.  This file is
 responsible only for layout, wiring, and pure presentation helpers.
 
 Usage:
-    python ui/studio.py
+    python studio/ui/studio.py
+    cerebrum-studio                   # when installed via pip install cerebrum-kg-studio
 """
 import sys
 import logging
@@ -28,8 +29,11 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# In development: add monorepo root to path so `from core.xxx` resolves.
+# studio/ui/studio.py → studio/ui → studio → repo root
+_repo_root = Path(__file__).resolve().parent.parent.parent
+if str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
 
 from core.studio_engine import StudioEngine
 
@@ -471,15 +475,19 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
     st_ref.click(_engine.get_stream_event_log, [], st_log,          api_name="get_stream_log")
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Entry point for `cerebrum-studio` console script."""
     parser = argparse.ArgumentParser(description="CEREBRUM Studio")
     parser.add_argument("--port", type=int, default=7860, help="Port to run on")
-    parser.add_argument("--reload", action="store_true", help="Use 'gradio ui/studio.py' for real reload")
+    parser.add_argument("--reload", action="store_true", help="Use 'gradio studio/ui/studio.py' for real reload")
     args = parser.parse_args()
 
     if args.reload:
         print("Starting in Gradio Dev Mode...")
-        # Note: True reload requires running 'gradio ui/studio.py' from shell
         demo.launch(server_port=args.port, share=False, css=CUSTOM_CSS)
     else:
         demo.launch(server_port=args.port, share=False, css=CUSTOM_CSS)
+
+
+if __name__ == "__main__":
+    main()

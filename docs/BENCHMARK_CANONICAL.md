@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.52.0 (Phase 182) — Updated May 14, 2026
+## Version: v2.65.1 (Phase 203) — Updated May 29, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -49,6 +49,11 @@ r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs 
 | 158 | r2-boost=0.40 | 46.36% | 71.35% | 0.5557 |
 | 167 | Full v2.52.0 stack | 47.30% | 73.20% | — |
 | **182** | **+FHRB=3.0 + parallel eval** | **49.68%** | **79.46%** | **0.6047** |
+| **185/186** | **+genre penalty + geom-mean stitch** | **56.12%** | **87.62%** | **0.6704** |
+| **198** | **+11-param Optuna (trb/fhrb/per-relation)** | **57.02%** | **89.2%** | **0.680** |
+| **201** | **+SchemaAwareRelationDetector (SRD)** | **58.90%** | **88.32%** | **0.6930** |
+| **202** | **+SDRB gamma (2000-sample best; full validation pending)** | **~62.55%** | — | — |
+| **203** | **+SDRB beta power-law (tuner in progress)** | TBD | — | — |
 
 ---
 
@@ -108,8 +113,9 @@ Use this table verbatim in the flagship paper and Paper A's context section.
 | EPERM (2025, LLM+KG) | Supervised+LLM | — | — | — | 88.8% |
 | **CEREBRUM Phase 53 (ours)** | **None** | **46.1%** | **30.0%** | **12.5%** | **7.5%** |
 | CEREBRUM Phase 182 (full stack)† | None | 46.1% | 30.0% | **49.68%** | 7.5% |
+| CEREBRUM Phase 201 (full stack)† | None | — | — | **58.90%** | — |
 
-† Phase 182 3-hop result uses full feature stack (FHRB, r2-boost, RelationPathPrior) and is
+† Full-stack 3-hop results use FHRB, r2-boost, SRD, RelationPathPrior and are
 **not directly comparable** to supervised methods in this table — listed for internal tracking only.
 Use Phase 53 numbers in all paper comparison tables.
 
@@ -213,4 +219,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-05-14 | Phase 182 3-hop canonical run added | Paper comparison table rows unchanged*
+*Last updated: 2026-05-29 | Phases 185/186/198/201/202/203 progression rows added | Phase 201 row added to comparison table | Phase 53 canonical paper numbers unchanged*

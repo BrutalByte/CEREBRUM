@@ -2,6 +2,8 @@
 
 ## CEREBRUM: Community-Structured Graph Attention for Knowledge Graph Reasoning
 
+*Thought, finally formalized.*
+
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: April 2026

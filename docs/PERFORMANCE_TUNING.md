@@ -1,6 +1,6 @@
 # CEREBRUM Performance Tuning Guide
 
-**Status**: v2.63.0 (Phase 198 COMPLETE)
+**Status**: v2.65.1 (Phase 203)
 
 This guide covers the key parameters affecting query latency, throughput, reasoning quality, and memory usage — and how to tune them for your specific workload.
 
@@ -30,10 +30,12 @@ This guide covers the key parameters affecting query latency, throughput, reason
 | `--idf-weight` | 0.05 | IDF term weighting in scoring | Queries have high-frequency stopword entities |
 | `--branch-bonus` | 0.3 | Branching path bonus | Beam collapse on single paths |
 | `--fhrb-factor` | 0.5 | First-hop relation boost | First-hop relation signal is weak |
-| `--wb-r2-boost` | 5.0 | WikiData-backed r2 boost | WikiData-corroborated paths underscored |
-| `--db-r2-boost` | 7.0 | DBpedia-backed r2 boost | DBpedia-corroborated paths underscored |
-| `--ry-r2-boost` | 2.0 | Release-year r2 boost | Year queries rank incorrectly |
-| `--sa-r2-boost` | 5.0 | Semantic-anchor r2 boost | Semantic anchor paths underweighted |
+| `--gamma` | None | SDRB scale (KB-agnostic per-relation boost) | Use instead of per-relation flags on any KB |
+| `--beta` | 1.0 | SDRB exponent — power-law shape | `>1` amplifies high-fan_out relations; `<1` compresses |
+| ~~`--wb-r2-boost`~~ | ~~5.0~~ | ~~Per-relation boost (written_by)~~ | **Deprecated** — use `--gamma`/`--beta` instead |
+| ~~`--db-r2-boost`~~ | ~~7.0~~ | ~~Per-relation boost (directed_by)~~ | **Deprecated** — use `--gamma`/`--beta` instead |
+| ~~`--ry-r2-boost`~~ | ~~2.0~~ | ~~Per-relation boost (release_year)~~ | **Deprecated** — use `--gamma`/`--beta` instead |
+| ~~`--sa-r2-boost`~~ | ~~5.0~~ | ~~Per-relation boost (starred_actors)~~ | **Deprecated** — use `--gamma`/`--beta` instead |
 
 ---
 
@@ -73,86 +75,98 @@ The single most impactful parameter for latency. Beam width controls how many ca
 
 ---
 
-## 3. Scoring Parameter Tuning (Phases 196–198)
+## 3. Scoring Parameter Tuning (Phases 202–203: SDRB)
 
-Starting in Phase 196, CEREBRUM exposes 11 fine-grained scoring parameters as CLI flags. These parameters directly control the beam scoring formula and have been characterized via fANOVA importance analysis using Optuna.
+Phase 202 replaced the four MetaQA-specific per-relation boost flags (`wb/db/ry/sa-r2-boost`) with a single KB-agnostic parameter derived from the graph's own fan-out statistics. Phase 203 extended this with a power-law exponent. The search space is now 9 parameters instead of 11, and the approach works on any KB without domain knowledge.
 
-### CLI Flags
+### SDRB Formula
+
+```
+boost(r) = gamma × fan_out(r)^beta
+fan_out(r) = total_triples(r) / unique_head_entities(r)   # computed at load time
+```
+
+`beta=1.0` (default) is linear — identical to Phase 202. `beta>1.0` amplifies high-fan_out relations disproportionately (reproducing the asymmetry that hand-tuned per-relation params encoded). `beta<1.0` compresses differences.
+
+### CLI Flags (Phase 203)
 
 ```bash
 python benchmarks/metaqa_eval.py \
-  --trb-factor 6.397 \
-  --r2-boost 3.604 \
-  --vote-weight 0.8779 \
-  --beam-width 8 \
+  --trb-factor 26.018 \
+  --r2-boost 7.416 \
+  --vote-weight 0.858 \
+  --beam-width 10 \
   --idf-weight 0.024 \
-  --branch-bonus 0.288 \
-  --fhrb-factor 0.668 \
-  --wb-r2-boost 6.202 \
-  --db-r2-boost 8.257 \
-  --ry-r2-boost 1.951 \
-  --sa-r2-boost 6.055 \
+  --branch-bonus 0.154 \
+  --fhrb-factor 4.189 \
+  --gamma 7.927 \
+  --beta 1.0 \
   --kb data/metaqa/kb/kb.txt \
   --questions data/metaqa/3-hop/qa_test.txt \
-  --hops 3 --embeddings sentence
+  --hops 3 --embeddings sentence --workers 16
 ```
 
-### fANOVA Importance Ranking (Optuna Analysis)
+### fANOVA Importance Ranking (Phase 202 Analysis)
 
-fANOVA decomposes the variance in H@1 attributable to each parameter. This tells you which knobs actually move the needle and which are safe to leave at defaults.
+After replacing the 4 per-relation params with SDRB, fANOVA shows a major shift: the system now routes more variance through the branching diversity mechanism (`branch_bonus`) rather than per-relation overrides.
 
 | Rank | Parameter | fANOVA Importance | Tuning Priority |
 |------|-----------|-------------------|-----------------|
-| 1 | `trb_factor` | **60.2%** | Tune first — dominant driver |
-| 2 | `fhrb_factor` | **10.7%** | Tune second |
-| 3 | `sa_r2_boost` | 6.2% | Tune in full search |
-| 4 | `r2_boost` | 5.6% | Tune in full search |
-| 5 | `vote_weight` | 5.6% | Tune in full search |
-| 6 | `wb_r2_boost` | 3.5% | Include in Optuna |
-| 7 | `db_r2_boost` | 2.9% | Include in Optuna |
-| 8 | `idf_weight` | 2.8% | Include in Optuna |
-| 9 | `branch_bonus` | 1.2% | Low priority — fix at default |
-| 10 | `ry_r2_boost` | 1.0% | Low priority — fix at default |
-| 11 | `beam_width` | **0.4%** | Near-irrelevant — fix at 8–10 |
+| 1 | `branch_bonus` | **46.2%** | Tune first — dominant after SDRB |
+| 2 | `trb_factor` | **29.4%** | Tune second |
+| 3 | `gamma` | ~9% | SDRB scale |
+| 4 | `fhrb_factor` | ~6% | First-hop guidance |
+| 5 | `r2_boost` | ~4% | Path corroboration |
+| 6 | `vote_weight` | ~3% | Community suppression |
+| 7 | `idf_weight` | ~1.5% | Hub penalty |
+| 8 | `beta` | ~0.5% | SDRB shape |
+| 9 | `beam_width` | **<0.5%** | Near-irrelevant — fix at 8–10 |
 
-> **Key insight**: `trb_factor` alone explains 60.2% of H@1 variance. Start every tuning run by isolating this parameter. `beam_width` contributes only 0.4% — do not waste Optuna budget on it; fix it at 8 or 10.
+> **Key insight (Phase 202)**: When per-relation overrides are removed, `branch_bonus` jumps from 1.2% → 46.2% importance. The system compensates for loss of per-relation specificity by routing more budget through broader traversal. This is an architectural finding: diversity of traversal paths is load-bearing when relation-specific tuning is unavailable.
+
+> **Phase 198 key insight (preserved)**: `trb_factor` (terminal relation detection) explains the majority of structural H@1 variance. `beam_width` is near-irrelevant — never waste Optuna budget on it.
 
 ### Practical Tuning Strategy
 
 | Phase | Action | Parameters |
 |-------|--------|------------|
-| Quick win | Grid-search `trb_factor` in [2, 4, 6, 8, 10] | `trb_factor` only |
-| Second pass | Add `fhrb_factor` sweep | `trb_factor`, `fhrb_factor` |
-| Full Optuna | All 11 params, 100 trials | All flags |
-| Fix | Lock low-importance params | `branch_bonus`, `ry_r2_boost`, `beam_width` |
+| Quick win | Grid-search `trb_factor` in [10, 20, 30] | `trb_factor` only |
+| Second pass | Add `branch_bonus` sweep [0.0, 0.5, 1.0] | `trb_factor`, `branch_bonus` |
+| SDRB pass | Add `gamma` sweep [2, 4, 8, 12] | Above + `gamma` |
+| Full Optuna | 9-param two-phase search | All flags |
+| Fix | Lock low-importance params | `beta`, `beam_width` |
 
-### Live Tuner
+### Live Two-Phase Tuner (Phase 199+)
 
-The `cerebrum_tuner.py` script runs a fully automated Optuna TPE search against the MetaQA 3-hop benchmark:
+The `cerebrum_tuner.py` script runs a two-phase search: Phase 1 uses RandomSampler for wide exploration, Phase 2 uses TPE over bounds derived from the top-K Phase 1 trials.
 
 ```bash
-python -u benchmarks/cerebrum_tuner.py --n-trials 100 --sample 2000
+python -u benchmarks/cerebrum_tuner.py \
+  --phase1-trials 100 \
+  --phase2-trials 100 \
+  --sample 2000 \
+  --workers 16
 ```
 
-Each trial evaluates the parameter configuration on a 2,000-question random sample (~8s/trial on RTX 5090). The best config is validated on the full 14,274-question dataset at the end of each run. MLflow logging is enabled by default; results appear in `mlruns/`.
+With 32 CPU cores and RTX 5090, each trial takes ~8s on a 2,000-question sample (~3.5 min for 25 trials). The `--workers 16` flag parallelises question evaluation within each trial; the tuner itself runs trials sequentially.
 
-### Current Best-Known Config (Tuner Run 4)
+### Current Best-Known Config (Phase 202 tuner, 2000-sample)
 
-Phase 198 best configuration, validated at H@1=56.6% on 2,000-sample, full-dataset validation pending:
+Phase 202 best on 2,000-sample (full-dataset validation pending). SDRB replaces all per-relation flags:
 
 | Parameter | Best Value | Default |
 |-----------|------------|---------|
-| `trb_factor` | **6.397** | 4.0 |
-| `r2_boost` | 3.604 | 3.0 |
-| `vote_weight` | 0.8779 | 0.7 |
-| `beam_width` | 8 | 10 |
+| `trb_factor` | **26.018** | 4.0 |
+| `r2_boost` | 7.416 | 3.0 |
+| `vote_weight` | 0.858 | 0.7 |
+| `beam_width` | 10 | 10 |
 | `idf_weight` | 0.024 | 0.05 |
-| `branch_bonus` | 0.288 | 0.3 |
-| `fhrb_factor` | **0.668** | 0.5 |
-| `wb_r2_boost` | 6.202 | 5.0 |
-| `db_r2_boost` | 8.257 | 7.0 |
-| `ry_r2_boost` | 1.951 | 2.0 |
-| `sa_r2_boost` | 6.055 | 5.0 |
+| `branch_bonus` | **0.154** | 0.3 |
+| `fhrb_factor` | **4.189** | 0.5 |
+| `gamma` | **7.927** | — |
+| `beta` | 1.0 | 1.0 |
+
+> **Note**: gamma=7.927 hit the ceiling of the Phase 202 search range [1.5, 8.0]. Phase 203 expanded the range to [1.5, 16.0] with the beta exponent to allow the model to reproduce per-relation asymmetry without requiring a higher global scale.
 
 ---
 
@@ -402,4 +416,4 @@ The indirect performance effect is positive: Arousal dynamically scales `beam_wi
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 19, 2026 for version v2.63.0
+**Reviewed on**: May 29, 2026 for version v2.65.1

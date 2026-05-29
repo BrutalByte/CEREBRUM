@@ -1,5 +1,7 @@
 # CEREBRUM: What It Is and Why It's Different
 
+*Thought, finally formalized.*
+
 ## The One-Sentence Version
 
 CEREBRUM is a knowledge graph reasoning engine that answers multi-hop questions by following verified paths through a graph — with no LLM, no training data, and full transparency into every step of the answer.

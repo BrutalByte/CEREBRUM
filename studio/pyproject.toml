@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "cerebrum-kg-studio"
+version = "2.65.1"
+description = "CEREBRUM Studio — Interactive reasoning UI and 3D visualization dashboard"
+authors = [
+    {name = "Bryan Alexander Buchorn", email = "bryan.alexander@buchorn.com"},
+]
+license = {text = "PolyForm Noncommercial License 1.0.0"}
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: Other/Proprietary License",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "cerebrum-kg-core>=2.65.1",
+    "gradio>=4.0.0",
+    "plotly>=5.0.0",
+    "pyvis>=0.3.0",
+]
+
+[project.optional-dependencies]
+monitor = ["streamlit>=1.28.0"]
+all     = ["cerebrum-kg-studio[monitor]"]
+
+[project.scripts]
+cerebrum-studio = "ui.studio:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ui*"]

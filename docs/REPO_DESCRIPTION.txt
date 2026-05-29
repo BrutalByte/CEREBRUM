@@ -1,1 +1,3 @@
-﻿CEREBRUM is an autonomous, training-free Knowledge Graph reasoning engine that reasons like a TransformerΓÇöusing community structure as attention, path-depth as layer-depth, and topology as the model. No LLM, no training data, and 100% glass-box interpretability. v2.52.0 (Phase 172) features zero-config GraphProfiler, Semantic Terminal Relation Boost (STRB), and Hybrid-Memory Mmap storage.
+Thought, finally formalized.
+
+CEREBRUM is an autonomous, training-free Knowledge Graph reasoning engine that reasons like a Transformer — using community structure as attention, path-depth as layer-depth, and topology as the model. No LLM, no training data, and 100% crystal-box interpretability. v2.65.0 (Phase 202) features zero-config GraphProfiler, Schema-Aware Relation Detection, Schema-Derived Relation Boost (SDRB), and a production-grade multi-tenant API with horizontal scale-out.

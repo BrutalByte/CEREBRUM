@@ -74,6 +74,7 @@ from typing import Dict, List, Optional, Tuple, Any
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.cerebrum import CerebrumGraph
+from core.relation_boost_deriver import RelationBoostDeriver
 from core.schema_relation_detector import SchemaAwareRelationDetector
 
 # ---------------------------------------------------------------------------
@@ -256,9 +257,12 @@ def build_or_load_prior(
 
 # ---------------------------------------------------------------------------
 # Phase 146: Zero-shot relation detection from question text
+# NOTE: _RELATION_KEYWORDS and detect_target_relation() are MetaQA-specific fallbacks.
+# Primary path (Phase 201): SchemaAwareRelationDetector (KB-agnostic, embedding-based).
+# This fallback is only active when sentence embeddings are unavailable.
 # ---------------------------------------------------------------------------
 
-# Ordered keyword rules: first match wins.
+# Ordered keyword rules: first match wins. MetaQA-specific — do not extend.
 _RELATION_KEYWORDS = [
     ("directed_by",    ["direct", "director"]),
     ("written_by",     ["writ", "wrote", "writer", "written", "screenwriter", "screenplay"]),
@@ -352,13 +356,14 @@ _W_R2_FOR_R3           = None
 _W_FAN_OUT             = None
 _W_KB_RELATIONS        = None
 _W_SCHEMA_REL_DETECTOR = None
+_W_BOOST_DERIVER       = None
 
 
 def _worker_init(graph_args: dict, shared: dict) -> None:
     """Initializer called once per spawned worker process."""
     global _W_GRAPH, _W_QUERY_ENGINE, _W_RELATION_ANSWER_SET, _W_ANSWER_FREQ
     global _W_PRIORS, _W_R2_FOR_R3, _W_FAN_OUT, _W_KB_RELATIONS
-    global _W_SCHEMA_REL_DETECTOR
+    global _W_SCHEMA_REL_DETECTOR, _W_BOOST_DERIVER
 
     _W_GRAPH = CerebrumGraph.from_kb(
         graph_args["kb_file"],
@@ -396,6 +401,13 @@ def _worker_init(graph_args: dict, shared: dict) -> None:
     _W_SCHEMA_REL_DETECTOR = SchemaAwareRelationDetector()
     if _W_QUERY_ENGINE is not None and _W_KB_RELATIONS:
         _W_SCHEMA_REL_DETECTOR.build(_W_KB_RELATIONS, _W_QUERY_ENGINE)
+
+    # Build relation boost deriver from KB file (Phase 202 — replaces wb/db/ry/sa params)
+    _W_BOOST_DERIVER = RelationBoostDeriver()
+    try:
+        _W_BOOST_DERIVER.build_from_file(graph_args["kb_file"])
+    except Exception:
+        _W_BOOST_DERIVER = None
 
     _W_RELATION_ANSWER_SET = shared["relation_answer_set"]
     _W_ANSWER_FREQ         = shared["answer_freq"]
@@ -628,6 +640,41 @@ def _worker_process_question(task: tuple) -> tuple:
 
 
 # ---------------------------------------------------------------------------
+# r2_boost_map builder (Phase 202: SDRB --gamma or legacy per-relation args)
+# ---------------------------------------------------------------------------
+
+def _build_r2_boost_map(args) -> Optional[Dict[str, float]]:
+    """
+    Return the r2_boost_map to use for a run.
+
+    Priority:
+      1. --gamma N  →  {relation: gamma * fan_out(r)} for all KB relations
+                       (requires _W_BOOST_DERIVER built in worker init)
+      2. Legacy --wb/db/ry/sa-r2-boost  →  explicit per-relation map
+      3. Neither set  →  None  (uniform --r2-boost applied to all)
+    """
+    if getattr(args, "gamma", None) is not None:
+        beta = getattr(args, "beta", 1.0)
+        # SDRB mode: derive boost map from KB fan-out
+        if _W_BOOST_DERIVER is not None and _W_BOOST_DERIVER.is_built:
+            return _W_BOOST_DERIVER.boost_map(args.gamma, beta)
+        # Deriver not available in main process (workers have it); return sentinel
+        return {"__gamma__": args.gamma, "__beta__": beta}
+
+    # Legacy mode — MetaQA-specific per-relation flags (deprecated since Phase 202).
+    # Use --gamma / --beta (SDRB) for any new KB or tuning run.
+    legacy = {
+        k: v for k, v in {
+            "starred_actors": getattr(args, "sa_r2_boost", None),
+            "written_by":     getattr(args, "wb_r2_boost", None),
+            "directed_by":    getattr(args, "db_r2_boost", None),
+            "release_year":   getattr(args, "ry_r2_boost", None),
+        }.items() if v is not None
+    }
+    return legacy or None
+
+
+# ---------------------------------------------------------------------------
 # Per-hop evaluation  (thin harness over CerebrumGraph.query)
 # ---------------------------------------------------------------------------
 
@@ -706,6 +753,22 @@ def evaluate_hop(
     if embedding_engine is not None and _kb_relations:
         _srd.build(_kb_relations, embedding_engine)
 
+    # Phase 202: resolve --gamma sentinel into a full boost map for the serial path
+    _resolved_r2_boost_map = r2_boost_map
+    if isinstance(r2_boost_map, dict) and "__gamma__" in r2_boost_map:
+        _gamma = r2_boost_map["__gamma__"]
+        _beta  = r2_boost_map.get("__beta__", 1.0)
+        _deriver = RelationBoostDeriver()
+        try:
+            from benchmarks.metaqa_eval import KB_FILE
+            _deriver.build_from_file(str(KB_FILE))
+        except Exception:
+            _deriver = None
+        _resolved_r2_boost_map = (
+            _deriver.boost_map(_gamma, _beta) if _deriver and _deriver.is_built else None
+        )
+    r2_boost_map = _resolved_r2_boost_map
+
     # Phase 152: Answer-type constraint index — passed in from main() where it
     # is built directly from KB triples (objects only — not reversed edges).
     _relation_answer_set: Dict[str, set] = relation_answer_set or {}
@@ -724,7 +787,17 @@ def evaluate_hop(
         _do_diag       = bool(diagnose_path)
         _do_diag_jsonl = bool(diagnose_jsonl_path)
         _eval_min = eval_min_hop
-        _r2bmap   = ({k: v for k, v in r2_boost_map.items()} if r2_boost_map else None)
+        # Phase 202: resolve __gamma__ sentinel using worker-side deriver
+        if isinstance(r2_boost_map, dict) and "__gamma__" in r2_boost_map:
+            _gamma_val = r2_boost_map["__gamma__"]
+            _beta_val  = r2_boost_map.get("__beta__", 1.0)
+            _r2bmap = (
+                _W_BOOST_DERIVER.boost_map(_gamma_val, _beta_val)
+                if _W_BOOST_DERIVER and _W_BOOST_DERIVER.is_built
+                else None
+            )
+        else:
+            _r2bmap = ({k: v for k, v in r2_boost_map.items()} if r2_boost_map else None)
         tasks = [
             (
                 i,
@@ -1197,24 +1270,28 @@ def main():
                         help="Phase 158/186: path-consistency r2 boost. Answers whose best "
                              "path has r2 == expected r2 (from training r3->r2 map) get "
                              "score *= (1 + r2-boost). Default 3.0 (tuned Phase 186).")
+    parser.add_argument("--gamma", type=float, default=None,
+                        help="Phase 202/203 (SDRB): scale factor for schema-derived "
+                             "per-relation r2_boost. boost(r) = gamma * fan_out(r)^beta, "
+                             "where fan_out is computed from the KB at load time. Replaces "
+                             "the four per-relation args below. Tuned range ~[1.5, 16.0].")
+    parser.add_argument("--beta", type=float, default=1.0,
+                        help="Phase 203 (SDRB): power-law exponent for fan-out shaping. "
+                             "boost(r) = gamma * fan_out(r)^beta. beta=1.0 (default) gives "
+                             "linear Phase 202 behaviour. beta>1.0 amplifies high-fan_out "
+                             "relations disproportionately. Tuned range ~[0.5, 3.0].")
     parser.add_argument("--sa-r2-boost", type=float, default=None,
                         help="Phase 172: r2-boost override for starred_actors questions. "
-                             "Default None uses --r2-boost for all relations. "
-                             "starred_actors has worst H@1 (27%%) due to hub-entity "
-                             "dominance; a higher boost (e.g. 0.70) may close the gap. "
-                             "Other relations keep --r2-boost value.")
+                             "Ignored when --gamma is set. Default None uses --r2-boost.")
     parser.add_argument("--wb-r2-boost", type=float, default=None,
                         help="Phase 196: r2-boost override for written_by questions. "
-                             "Default None falls back to --r2-boost. "
-                             "written_by has 57%% failure rate — try higher (e.g. 5.0).")
+                             "Ignored when --gamma is set. Default None falls back to --r2-boost.")
     parser.add_argument("--db-r2-boost", type=float, default=None,
                         help="Phase 196: r2-boost override for directed_by questions. "
-                             "Default None falls back to --r2-boost. "
-                             "directed_by has 60%% failure rate — try values in [2.0, 6.0].")
+                             "Ignored when --gamma is set. Default None falls back to --r2-boost.")
     parser.add_argument("--ry-r2-boost", type=float, default=None,
                         help="Phase 196: r2-boost override for release_year questions. "
-                             "Default None falls back to --r2-boost. "
-                             "release_year has 63%% failure rate — try values in [1.0, 5.0].")
+                             "Ignored when --gamma is set. Default None falls back to --r2-boost.")
     parser.add_argument("--eval-min-hop", type=int, default=None,
                         help="Phase 172: minimum hop depth for 3-hop answer extraction. "
                              "Default None=1 (current: allows 1-hop and 2-hop paths). "
@@ -1552,14 +1629,7 @@ def main():
                                    min_filter_size=args.min_filter_size,
                                    expansion_k=args.expansion_k,
                                    eval_min_hop_3hop=args.eval_min_hop,
-                                   r2_boost_map=({
-                                       k: v for k, v in {
-                                           "starred_actors": args.sa_r2_boost,
-                                           "written_by":     args.wb_r2_boost,
-                                           "directed_by":    args.db_r2_boost,
-                                           "release_year":   args.ry_r2_boost,
-                                       }.items() if v is not None
-                                   } or None),
+                                   r2_boost_map=_build_r2_boost_map(args),
                                    structural_trb=args.structural_trb,
                                    anchor_bonus=args.anchor_bonus,
                                    fan_out=_fan_out if args.pss_weight > 0.0 else None,

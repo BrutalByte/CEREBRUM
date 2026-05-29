@@ -5,6 +5,29 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.65.1] - 2026-05-29
+### Added
+- **Phase 203: Two-Parameter SDRB — power-law beta exponent** (`core/relation_boost_deriver.py`, `benchmarks/metaqa_eval.py`, `benchmarks/cerebrum_tuner.py`):
+  - `boost(r) = gamma × fan_out(r)^beta` — extends Phase 202 linear SDRB with a shape exponent
+  - `beta=1.0` (default) — identical to Phase 202 linear behaviour (fully backward-compatible)
+  - `beta>1.0` — amplifies high-fan_out relations disproportionately, reproducing the asymmetry that hand-tuned per-relation params had to encode explicitly
+  - `beta<1.0` — compresses differences; useful for near-uniform KBs
+  - `RelationBoostDeriver.boost_map(gamma, beta=1.0)` updated; optimised path for `beta==1.0` bypasses `pow()`
+  - `benchmarks/metaqa_eval.py` — `--beta` CLI arg added; resolves alongside `--gamma` in both serial and parallel paths
+  - `benchmarks/cerebrum_tuner.py` — 9-parameter Phase 203 search space: 7 structural params + `gamma` [1.5, 16.0] + `beta` [0.5, 3.0]; two-phase RandomSampler → TPE; dashboard, table, JSONL log, and canonical command updated
+  - 3 new unit tests in `tests/test_relation_boost_deriver.py` (beta amplification, beta=1 identity, exact power-law values); all 17 tests pass
+- **docs/REPO_DESCRIPTION.txt** — slogan "Thought, finally formalized." added as opening line
+
+## [2.65.0] - 2026-05-28
+### Added
+- **Phase 202: Schema-Derived Relation Boost (SDRB)** — replaces 4 MetaQA-specific free parameters (`wb/db/ry/sa-r2-boost`) with a single KB-agnostic scale factor `--gamma`:
+  - `core/relation_boost_deriver.py` — `RelationBoostDeriver` computes `fan_out(r) = triples(r) / unique_heads(r)` for every relation at KB load time; `boost_map(gamma)` returns `{r: gamma * fan_out(r)}` as a drop-in for `r2_boost_map`
+  - `benchmarks/metaqa_eval.py` — `--gamma` arg triggers SDRB mode; `_build_r2_boost_map()` resolves to SDRB or legacy per-relation args; deriver built in `_worker_init` from KB file; `__gamma__` sentinel handles main-process → worker-process resolution for parallel eval
+  - `benchmarks/cerebrum_tuner.py` — 4 per-relation params replaced by single `gamma` [1.5, 8.0]; 11 → 8 free parameters; dashboard, table, JSONL log, and canonical command output all updated
+  - 14 unit tests in `tests/test_relation_boost_deriver.py`, all passing
+- **SDRB correlation analysis** (`benchmarks/sdrb_analysis.py`) — loads all tuner JSONL logs, fits `boost = γ × fan_out^β` per trial, reports R², γ, β distributions; ratio analysis confirms fan_out ordering matches boost ordering (all 4 MetaQA relations MATCH within 40%); identifies γ ≈ 3.89 ± 0.80 as candidate scale constant
+- **New best config (pre-SDRB validation)**: trial 157 from `20260527T050107` — H@1 65.6%, trb=26.018, r2=7.416, vote=0.858, bm=10, idf=0.024, bbns=0.154, fhrb=4.189, wb=9.608, db=2.633, ry=2.272, sa=6.606
+
 ## [2.64.0] - 2026-05-25
 ### Added
 - **Phase 201: SchemaAwareRelationDetector** (`core/schema_relation_detector.py`) — KB-agnostic, embedding-based replacement for the keyword-based `detect_target_relation()`:

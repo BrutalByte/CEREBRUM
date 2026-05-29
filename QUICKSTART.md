@@ -52,7 +52,15 @@ The **GraphProfiler** (Phase 172) detects your graph type, and **STRB** (Phase 1
 ### 1. Install
 
 ```bash
+# Core reasoning engine + API server
+pip install cerebrum-kg-core[api,embeddings]
+
+# Add the interactive Studio UI (optional)
+pip install cerebrum-kg-studio
+
+# Development (monorepo editable install)
 pip install -e ".[api,embeddings]"
+pip install -e "studio/[all]"
 ```
 
 ### 2. Start the server
