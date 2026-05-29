@@ -494,7 +494,22 @@ CEREBRUM has been empirically validated on standardized benchmarks with zero tra
 - [x] **Phase 176**: FederatedGraphRegistry — cross-domain reasoning with alias resolution; traversal batch fallback (v2.53.0)
 - [x] **Phase 177**: Continuous Improvement Trifecta — autonomous discovery, self-correction, evolutionary CSA tuning (v2.53.0)
 - [x] **Phase 178**: DON'T PANIC Emergency Snapshot — atomic state persistence to `panics/` for crash recovery (v2.53.0)
-...
+- [x] **Phase 181–182**: Question-Level Multiprocessing + GPU Startup Cleanup + MLflow/W&B Tracking + Streamlit Benchmark Monitor (v2.53.1) — 6.5× speedup, 49.68% H@1
+- [x] **Phase 183**: Optuna Hyperparameter Tuner — TPE-sampled search over scoring parameters with MLflow logging (v2.53.2)
+- [x] **Phase 185–186**: GlobalBeamBarrier `min_guaranteed=10` + Pure-Genre Cross-Type Penalty + Geometric Mean Stitch Scoring + r2_boost default 3.0 (v2.54.0) — 56.12% H@1
+- [x] **Phase 187**: Optuna tuner search-space refinement around Phase 186 optimum (v2.54.0)
+- [x] **Phase 188–189**: Data-Agnostic Cross-Type Penalty — replaces all hardcoded relation names with KB-derived `_relation_answer_set`; 95-line reduction (v2.55.0) — 56.17% H@1
+- [x] **Phase 190**: Ecosystem Foundation — accessible quickstart, market positioning, deployment docs (v2.56.0)
+- [x] **Phase 191**: D1 Multi-Tenant API — dynamic key management, per-tenant KB isolation, usage metering (v2.57.0)
+- [x] **Phase 193**: D3 Horizontal Scale — Kubernetes manifests + Docker Compose scale-out (v2.58.0)
+- [x] **Phase 194**: C1/C3/C4 — Explainability Dashboard + Benchmark Comparison + Crystal-Box Whitepaper (v2.59.0)
+- [x] **Phase 195**: TRB Default Tuning + Live Hyperparameter Tuner CLI (`cerebrum_tuner.py`) (v2.60.0) — 56.36% H@1
+- [x] **Phase 196**: Branch Bonus + Per-Relation r2_boost flags (`--wb/db/ry-r2-boost`) + Branch-Diversity Tiebreaker (v2.61.0)
+- [x] **Phase 197**: Full 11-parameter tuner — expanded r2_boost ceiling, refined search ranges (v2.62.0)
+- [x] **Phase 198**: Validated full-dataset run — 11-parameter Optuna TPE; **57.02% H@1**, 89.2% H@10, MRR 0.680 (v2.63.0)
+- [x] **Phase 201**: SchemaAwareRelationDetector — KB-agnostic, embedding-based replacement for keyword `detect_target_relation()`; **58.90% H@1**, 88.32% H@10, MRR 0.693 (v2.64.0)
+- [x] **Phase 202**: SDRB (Schema-Derived Relation Boost) — replaces 4 MetaQA-specific free params with single KB-agnostic `--gamma`; fANOVA confirms `branch_bonus` 46.2% dominant (v2.65.0)
+- [x] **Phase 203**: Two-Parameter SDRB — power-law beta exponent `boost(r) = γ × fan_out(r)^β`; two-phase RandomSampler→TPE tuner (v2.65.1)
 
 ## Benchmark Results
 
