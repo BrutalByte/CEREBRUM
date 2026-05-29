@@ -4,7 +4,7 @@
 
 *Thought, finally formalized.*
 
-**Current Version:** v2.65.1 (Phase 203)
+**Current Version:** v2.66.0 (Phase 204)
 
 CEREBRUM is the first reasoning engine that treats the Knowledge Graph not as a static data dump, but as a living, self-optimizing neural substrate. By embedding the intelligence of Transformer-style attention directly into the graph's topology, it delivers hyper-accurate, verifiable reasoning at sub-millisecond speeds—completely eliminating the hallucinations of LLMs and the bottleneck of expensive, manual model training.
 
@@ -401,7 +401,7 @@ CEREBRUM has been empirically validated on standardized benchmarks with zero tra
 
 ## Roadmap
 
-**Current Project Status: v2.65.1 — Phase 203 (SDRB beta tuner running)**
+**Current Project Status: v2.66.0 — Phase 204 (Sobol + CMA-ES tuner)**
 
 ### The Core Pillars
 - [x] **Phase 1**: Core Engine (GraphAdapter, TSC Engine, CSA Attention)
@@ -512,6 +512,7 @@ CEREBRUM has been empirically validated on standardized benchmarks with zero tra
 - [x] **Phase 201**: SchemaAwareRelationDetector — KB-agnostic, embedding-based replacement for keyword `detect_target_relation()`; **58.90% H@1**, 88.32% H@10, MRR 0.693 (v2.64.0)
 - [x] **Phase 202**: SDRB (Schema-Derived Relation Boost) — replaces 4 MetaQA-specific free params with single KB-agnostic `--gamma`; fANOVA confirms `branch_bonus` 46.2% dominant (v2.65.0)
 - [x] **Phase 203**: Two-Parameter SDRB — power-law beta exponent `boost(r) = γ × fan_out(r)^β`; two-phase RandomSampler→TPE tuner (v2.65.1)
+- [x] **Phase 204**: Sobol QMC Phase 1 + CMA-ES Phase 2 — replaces RandomSampler→TPE; models parameter correlations; fixes validation run bug (v2.66.0)
 
 ## Benchmark Results
 

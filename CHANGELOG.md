@@ -5,6 +5,15 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.66.0] - 2026-05-29
+### Changed
+- **Phase 204: Sobol + CMA-ES tuner — faster convergence** (`benchmarks/cerebrum_tuner.py`):
+  - **Phase 1 sampler**: `RandomSampler` → `QMCSampler(qmc_type="sobol", scramble=True)` — Sobol sequences are low-discrepancy; they guarantee uniform coverage of the 9D hyperparameter space without accidental clustering. Same trial budget, significantly better exploration quality.
+  - **Phase 2 sampler**: `TPESampler` → `CmaEsSampler` — CMA-ES (Covariance Matrix Adaptation Evolution Strategy) adapts a covariance matrix to model correlations between parameters. `trb_factor` and `branch_bonus` interact (both drive path scoring); TPE treated each dimension independently. CMA-ES is initialized at the best Phase 1 config (`x0`) and warmed with all Phase 1 trials via `source_trials`, giving it a calibrated covariance from the start rather than exploring blindly.
+  - **Validation bug fixed**: `_run_eval()` call in `--validate` path had stale `wb_r2_boost`/`db_r2_boost`/`ry_r2_boost`/`sa_r2_boost` kwargs from pre-Phase 202 API; replaced with `gamma` and `beta`.
+  - **Run log**: `run_start` event now records `sampler_p1: "sobol_qmc"` and `sampler_p2: "cmaes"` for traceability.
+  - **Optuna requirement**: `>=3.0.0` → `>=3.2.0` (`QMCSampler` requires Optuna 3.2+).
+
 ## [2.65.1] - 2026-05-29
 ### Added
 - **Phase 203: Two-Parameter SDRB — power-law beta exponent** (`core/relation_boost_deriver.py`, `benchmarks/metaqa_eval.py`, `benchmarks/cerebrum_tuner.py`):

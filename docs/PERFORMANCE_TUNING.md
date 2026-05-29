@@ -1,6 +1,6 @@
 # CEREBRUM Performance Tuning Guide
 
-**Status**: v2.65.1 (Phase 203)
+**Status**: v2.66.0 (Phase 204)
 
 This guide covers the key parameters affecting query latency, throughput, reasoning quality, and memory usage — and how to tune them for your specific workload.
 
@@ -136,19 +136,22 @@ After replacing the 4 per-relation params with SDRB, fANOVA shows a major shift:
 | Full Optuna | 9-param two-phase search | All flags |
 | Fix | Lock low-importance params | `beta`, `beam_width` |
 
-### Live Two-Phase Tuner (Phase 199+)
+### Live Two-Phase Tuner (Phase 204)
 
-The `cerebrum_tuner.py` script runs a two-phase search: Phase 1 uses RandomSampler for wide exploration, Phase 2 uses TPE over bounds derived from the top-K Phase 1 trials.
+The `cerebrum_tuner.py` script runs a two-phase search:
+
+- **Phase 1 — Sobol QMC** (`QMCSampler`): Low-discrepancy Sobol sequences guarantee uniform coverage of the 9D space without the random clustering that can plague `RandomSampler`. Same trial budget, better exploration.
+- **Phase 2 — CMA-ES** (`CmaEsSampler`): Initialized at the best Phase 1 config and warmed with all Phase 1 trial observations. CMA-ES adapts a covariance matrix to model parameter correlations — critical because `trb_factor` and `branch_bonus` interact and TPE treated them as independent.
 
 ```bash
 python -u benchmarks/cerebrum_tuner.py \
-  --phase1-trials 100 \
-  --phase2-trials 100 \
+  --phase1-trials 60 \
+  --phase2-trials 140 \
   --sample 2000 \
   --workers 16
 ```
 
-With 32 CPU cores and RTX 5090, each trial takes ~8s on a 2,000-question sample (~3.5 min for 25 trials). The `--workers 16` flag parallelises question evaluation within each trial; the tuner itself runs trials sequentially.
+With 32 CPU cores and RTX 5090, each trial takes ~8s on a 2,000-question sample. The `--workers 16` flag parallelises question evaluation within each trial; the tuner itself runs trials sequentially. CMA-ES typically converges to the best region in 40–60 Phase 2 trials vs. 100+ with TPE.
 
 ### Current Best-Known Config (Phase 202 tuner, 2000-sample)
 
@@ -416,4 +419,4 @@ The indirect performance effect is positive: Arousal dynamically scales `beam_wi
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 29, 2026 for version v2.65.1
+**Reviewed on**: May 29, 2026 for version v2.66.0

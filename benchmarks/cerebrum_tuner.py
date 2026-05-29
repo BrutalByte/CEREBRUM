@@ -1,9 +1,11 @@
 """
 CEREBRUM Live Hyperparameter Tuner
 ====================================
-Two-phase search: Phase 1 explores wide bounds with RandomSampler to locate the
-high-value region; Phase 2 auto-derives tighter bounds from the top-K trials and
-fine-tunes with TPESampler seeded with the best Phase 1 configs.
+Two-phase search: Phase 1 uses Sobol quasi-random sampling (QMCSampler) for
+maximum uniform coverage of the 9D parameter space; Phase 2 uses CMA-ES
+(CmaEsSampler) initialized from the best Phase 1 config and warmed with all
+Phase 1 trials, enabling the optimizer to model parameter correlations that
+TPE treats as independent dimensions.
 
 Parameters searched (9 total):
   Core:           trb-factor, r2-boost, vote-weight, beam-width, idf-weight, branch-bonus
@@ -448,15 +450,17 @@ def run_tuner(
     """
     Two-phase hyperparameter search.
 
-    Phase 1 — Exploration  : RandomSampler over PARAM_SPACE_WIDE. Quickly locates
-                             the high-value region without wasting trials on TPE
-                             warm-up in a space where ceilings may be active.
+    Phase 1 — Exploration  : Sobol QMCSampler over PARAM_SPACE_WIDE. Low-discrepancy
+                             sequences guarantee uniform 9D coverage without
+                             accidental clustering (unlike pure random sampling).
 
-    Phase 2 — Fine-tuning  : TPESampler over bounds auto-derived from the top-K
-                             Phase 1 trials (±margin). Seeded with those top configs
-                             so the first Phase-2 trials are already competitive.
+    Phase 2 — Fine-tuning  : CmaEsSampler over bounds auto-derived from the top-K
+                             Phase 1 trials (±margin). Initialized at the best Phase 1
+                             config (x0) and warmed with all Phase 1 trials so CMA-ES
+                             starts with a calibrated covariance estimate. Models
+                             parameter correlations that TPE treats as independent.
 
-    Pass n_trials > 0 to run single-phase TPE (backward-compatible with Phase 198).
+    Pass n_trials > 0 to run single-phase Sobol-only (backward-compatible).
     """
     if not _HAS_OPTUNA:
         print(
@@ -483,6 +487,8 @@ def run_tuner(
         "type": "run_start", "run_id": run_id, "study_name": study_name,
         "phase1_trials": phase1_trials, "phase2_trials": phase2_trials,
         "sample": sample, "seed": seed,
+        "sampler_p1": "sobol_qmc",
+        "sampler_p2": "cmaes",
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "param_space_wide": {
             k: list(v) if isinstance(v, list) else list(v)
@@ -490,9 +496,9 @@ def run_tuner(
         },
     })
     print(f"  Trial log : {log_file}")
-    print(f"  Phase 1   : {phase1_trials} trials (RandomSampler, wide bounds)")
+    print(f"  Phase 1   : {phase1_trials} trials (Sobol QMC, wide bounds)")
     if phase2_trials:
-        print(f"  Phase 2   : {phase2_trials} trials (TPE, refined bounds from top-{top_k})")
+        print(f"  Phase 2   : {phase2_trials} trials (CMA-ES, refined bounds from top-{top_k})")
 
     console   = Console() if _HAS_RICH else None
     dashboard = LiveDashboard(total_trials, sample, study_name)
@@ -538,8 +544,8 @@ def run_tuner(
                     f"{r.h1*100:>6.2f}%  {r.h10*100:>6.2f}%  {r.mrr:>6.4f}  {flag}"
                 )
 
-    # Phase 1 study — RandomSampler
-    p1_sampler = optuna.samplers.RandomSampler(seed=seed)
+    # Phase 1 study — Sobol QMC (low-discrepancy, uniform 9D coverage)
+    p1_sampler = optuna.samplers.QMCSampler(qmc_type="sobol", seed=seed, scramble=True)
     p1_study   = optuna.create_study(
         study_name=f"{study_name}-p1", direction="maximize", sampler=p1_sampler,
     )
@@ -564,13 +570,25 @@ def run_tuner(
                     },
                 })
 
-                dashboard.phase_label = "Phase 2/2 — Fine-tuning"
+                dashboard.phase_label = "Phase 2/2 — Fine-tuning (CMA-ES)"
 
-                p2_sampler = optuna.samplers.TPESampler(seed=seed + 1, n_startup_trials=10)
+                # CMA-ES: initialize at best Phase 1 config; warm covariance from all P1 trials
+                best_p1 = sorted(dashboard.records, key=lambda r: r.h1, reverse=True)[0]
+                x0 = {
+                    name: max(bounds[0], min(bounds[1], float(getattr(best_p1, name))))
+                    for name, bounds in refined_space.items()
+                    if not isinstance(bounds, list)
+                }
+                p2_sampler = optuna.samplers.CmaEsSampler(
+                    x0=x0,
+                    sigma0=0.3,
+                    seed=seed + 1,
+                    source_trials=p1_study.trials,
+                )
                 p2_study   = optuna.create_study(
                     study_name=f"{study_name}-p2", direction="maximize", sampler=p2_sampler,
                 )
-                # Seed Phase 2 with top-K configs from Phase 1 (clamped to refined bounds)
+                # Enqueue top-K Phase 1 configs so CMA-ES first iterations are competitive
                 top_seeds = sorted(dashboard.records, key=lambda r: r.h1, reverse=True)[:top_k]
                 for seed_rec in top_seeds:
                     clamped: dict = {}
@@ -611,8 +629,19 @@ def run_tuner(
                     for k, v in refined_space.items()
                 },
             })
-            print(f"\n--- Phase 2: fine-tuning (refined bounds) ---")
-            p2_sampler = optuna.samplers.TPESampler(seed=seed + 1, n_startup_trials=10)
+            print(f"\n--- Phase 2: fine-tuning (CMA-ES, refined bounds) ---")
+            best_p1 = sorted(dashboard.records, key=lambda r: r.h1, reverse=True)[0]
+            x0 = {
+                name: max(bounds[0], min(bounds[1], float(getattr(best_p1, name))))
+                for name, bounds in refined_space.items()
+                if not isinstance(bounds, list)
+            }
+            p2_sampler = optuna.samplers.CmaEsSampler(
+                x0=x0,
+                sigma0=0.3,
+                seed=seed + 1,
+                source_trials=p1_study.trials,
+            )
             p2_study   = optuna.create_study(
                 study_name=f"{study_name}-p2", direction="maximize", sampler=p2_sampler,
             )
@@ -698,10 +727,8 @@ def run_tuner(
                 idf_weight=best.idf_weight,
                 branch_bonus=best.branch_bonus,
                 fhrb_factor=best.fhrb_factor,
-                wb_r2_boost=best.wb_r2_boost,
-                db_r2_boost=best.db_r2_boost,
-                ry_r2_boost=best.ry_r2_boost,
-                sa_r2_boost=best.sa_r2_boost,
+                gamma=best.gamma,
+                beta=best.beta,
                 timeout=3600,
                 workers=workers,
             )
