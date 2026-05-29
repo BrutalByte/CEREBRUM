@@ -72,13 +72,15 @@ The numbers below are the **full pipeline** results unless otherwise noted. The 
 |--------|-----------|----------|-------------------|
 | **CEREBRUM v2.65 (full pipeline)** | **58.9%** | Crystal-box beam traversal + SDRB | **No** |
 | CEREBRUM v2.65 (search only) | 12.5% | Structural beam traversal, no embeddings | No |
-| MINERVA (RL) | ~48% | Reinforcement learning paths | Yes — RL training |
-| RotatE (KGE) | ~47% | Complex embedding rotation | Yes — KG-specific training |
-| TransE (KGE) | ~43% | Embedding distance | Yes — KG-specific training |
-| RAG + GPT-4 | ~40–48%¹ | Vector retrieval + LLM generation | Pre-training + embeddings |
-| GPT-4 (prompting) | ~38–45%¹ | LLM next-token prediction | Massive pre-training |
+| MINERVA (RL)† | ~48% | Reinforcement learning paths | Yes — RL training |
+| RotatE (KGE)† | ~47% | Complex embedding rotation | Yes — KG-specific training |
+| TransE (KGE)† | ~43% | Embedding distance | Yes — KG-specific training |
+| RAG + GPT-4‡ | ~40–48%¹ | Vector retrieval + LLM generation | Pre-training + embeddings |
+| GPT-4 (prompting)‡ | ~38–45%¹ | LLM next-token prediction | Massive pre-training |
 
-¹ Published LLM KGQA benchmarks; figures vary by prompt strategy.
+¹ Published LLM KGQA benchmarks; figures vary by prompt strategy.  
+† **Black-box neural model** — trained weights produce no traceable reasoning path. The system cannot explain why it selected an answer, and it can output confident wrong answers with no indication of failure.  
+‡ **Black-box generative LLM** — answers are synthesized via next-token prediction and are not grounded in explicit graph traversal. The model can and does fabricate plausible-sounding facts (hallucinate) that contradict the source knowledge graph, with no mechanism to detect the error.
 
 > CEREBRUM's full pipeline outperforms all listed baselines — including supervised methods trained specifically on knowledge graph tasks — while requiring zero training, zero labeled data, and zero gradient steps. The search-only baseline (12.5%) establishes the floor: everything above it is contributed by the pipeline layers.
 
@@ -521,12 +523,13 @@ CEREBRUM is validated across three benchmarks that together demonstrate: correct
 |---------|----------|----------|----------|-----------|-----------|-----------|
 | **CEREBRUM — canonical subset**¹ | **46.1%** | **30.0%** | **12.5%** | **96.6%** | **86.3%** | **50.3%** |
 | **CEREBRUM — full v2.52.0 run**² | 46.1% | 30.0% | 47.3% | 96.6% | 86.3% | 73.2% |
-| UniKGQA (ICLR 2023, supervised) | 97.5% | 99.0% | 99.1% | — | — | — |
-| EmbedKGQA (ACL 2020, supervised) | ~97% | ~94% | ~94% | — | — | — |
-| MINERVA (trained RL) | — | — | — | 95.3% | 78.2% | 45.6% |
+| UniKGQA (ICLR 2023, supervised)† | 97.5% | 99.0% | 99.1% | — | — | — |
+| EmbedKGQA (ACL 2020, supervised)† | ~97% | ~94% | ~94% | — | — | — |
+| MINERVA (trained RL)† | — | — | — | 95.3% | 78.2% | 45.6% |
 
 ¹ Canonical subset: standard MetaQA test split (~12,500 questions/hop), no edge removal, comparable to SOTA baselines.  
-² Full run: 14,274 questions, all v2.52.0 features (GraphSAGE, STRB, GraphProfiler). Not directly comparable to supervised baselines.
+² Full run: 14,274 questions, all v2.52.0 features (GraphSAGE, STRB, GraphProfiler). Not directly comparable to supervised baselines.  
+† **Black-box model** — produced by supervised training or reinforcement learning on labeled QA pairs. Answers are generated without an auditable reasoning path; the system cannot show which graph edges support its answer, and it can output confidently wrong results with no self-indication of error (hallucination).
 
 **CEREBRUM operates with zero task-specific training, no labeled QA pairs, and no gradient updates** — purely graph structure and pre-trained sentence embeddings. The H@10 story is the key result: CEREBRUM retrieves the correct answer in its top-10 candidates at 96.6% (1-hop) and 86.3% (2-hop) on the canonical benchmark.
 
@@ -595,7 +598,9 @@ Hetionet results on the `disease_gene_pathway` template demonstrate the power of
 |---------|--------|---------|-----|
 | CEREBRUM RAW | 4.0% | 10.5% | 6.2% |
 | **CEREBRUM FULL** | **7.5%** | **17.5%** | **9.8%** |
-| NSM (trained) | 74% | — | — |
+| NSM (trained)† | 74% | — | — |
+
+† **Black-box model** — supervised neural network trained on labeled WebQSP QA pairs. No traceable reasoning path; can produce confident wrong answers (hallucinate) with no self-indication of error.
 
 WebQSP over Freebase is specifically hard for zero-training structural systems due to CVT mediator nodes with opaque MID identifiers that break semantic attention on indirect paths.
 
