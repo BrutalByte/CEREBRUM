@@ -1,6 +1,6 @@
 # Contributing to CEREBRUM
 
-Thank you for your interest in contributing. CEREBRUM is dual-licensed (PolyForm Noncommercial / Commercial). By submitting a contribution you agree that your changes may be distributed under both license tiers.
+Thank you for your interest in contributing. CEREBRUM is licensed under AGPL-3.0 with a commercial exception for proprietary deployments. By submitting a contribution you agree that your changes may be distributed under the AGPL-3.0 and any commercial license tiers.
 
 ---
 

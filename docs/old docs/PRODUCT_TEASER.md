@@ -80,7 +80,7 @@ CEREBRUM is that future, available today.
 ---
 
 *CEREBRUM v1.1.0 — Phase 20 COMPLETE — 994 tests passing*
-*Dual-licensed: PolyForm Noncommercial / Commercial*
+*Licensed: AGPL-3.0 / Commercial Exception*
 *Contact: bryan.alexander@buchorn.com*
 
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**

@@ -10,12 +10,12 @@ description = "CEREBRUM — Community-Structured Graph Attention for Knowledge G
 authors = [
     {name = "Bryan Alexander Buchorn", email = "bryan.alexander@buchorn.com"},
 ]
-license = {text = "PolyForm Noncommercial License 1.0.0"}
+license = {text = "AGPL-3.0-only"}
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: Other/Proprietary License",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 readme = "README.md"

@@ -230,3 +230,21 @@ CEREBRUM stands on the shoulders of decades of foundational research in Graph Th
 
 ---
 **Reviewed on**: May 9, 2026 for version v2.52.0
+
+---
+
+## References
+
+Das, R., Dhuliawala, S., Zaheer, M., Vilnis, L., Durugkar, I., Krishnamurthy, A., Smola, A., & McCallum, A. (2018). Go for a walk and arrive at the answer: Reasoning over paths in knowledge bases using reinforcement learning. In *Proceedings of the 6th International Conference on Learning Representations (ICLR 2018)*. OpenReview. https://openreview.net/forum?id=Syg-YfWCW
+
+He, G., Lan, Y., Jiang, J., Zhao, W. X., & Wen, J. R. (2021). Improving multi-hop knowledge base question answering by learning intermediate supervision signals. In *Proceedings of the 14th ACM International Conference on Web Search and Data Mining* (pp. 553–561). ACM. https://doi.org/10.1145/3437963.3441753
+
+Himmelstein, D. S., Lizee, A., Hessler, C., Brueggeman, L., Chen, S. L., Hadley, D., Green, A., Khankhanian, P., & Baranzini, S. E. (2017). Systematic integration of biomedical knowledge prioritizes drugs for repurposing. *eLife, 6*, e26726. https://doi.org/10.7554/eLife.26726
+
+Jiang, J., Zhou, K., Dong, Z., Ye, K., Zhao, W. X., & Wen, J. R. (2023). UniKGQA: Unified retrieval and reasoning for solving multi-hop question answering over knowledge graph. In *Proceedings of the 11th International Conference on Learning Representations (ICLR 2023)*. OpenReview. https://openreview.net/forum?id=Z63RvyAZ2Vh
+
+Saxena, A., Tripathi, A., & Talukdar, P. (2020). Improving multi-hop question answering over knowledge graphs using knowledge base embeddings. In *Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics* (pp. 4498–4507). ACL. https://aclanthology.org/2020.acl-main.412
+
+Yih, W., Richardson, M., Meek, C., Chang, M. W., & Suh, J. (2016). The value of semantic parse labeling for knowledge base question answering. In *Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics* (Vol. 2, pp. 201–206). ACL. https://aclanthology.org/P16-2033
+
+Zhang, Y., Dai, H., Kozareva, Z., Smola, A., & Song, L. (2018). Variational reasoning for question answering with knowledge graphs. In *Proceedings of the 32nd AAAI Conference on Artificial Intelligence* (Vol. 32, No. 1). AAAI Press. https://arxiv.org/abs/1709.04071

@@ -1,41 +1,28 @@
-PolyForm Noncommercial License 1.0.0
+                    GNU AFFERO GENERAL PUBLIC LICENSE
+                       Version 3, 19 November 2007
 
-Copyright (c) 2026 Bryan Alexander Buchorn (AMP). All Rights Reserved.
+ Copyright (C) 2026 Bryan Alexander Buchorn. All Rights Reserved.
 
-1. Purpose
+ CEREBRUM is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of
+ the License, or (at your option) any later version.
 
-This license allows you to use the software for noncommercial purposes.
+ CEREBRUM is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
 
-2. Agreement
+ You should have received a copy of the GNU Affero General Public
+ License along with CEREBRUM. If not, see
+ <https://www.gnu.org/licenses/agpl-3.0>.
 
-This license is a legal agreement between you and the licensor for the use of the software. By using the software, you agree to the terms of this license.
+ ADDITIONAL TERMS — COMMERCIAL USE
 
-3. Grant of License
+ The AGPL-3.0 permits commercial use subject to its copyleft
+ requirements. Organizations that cannot comply with the AGPL's
+ source-disclosure obligations (e.g., proprietary SaaS deployments)
+ may obtain a separate commercial license exempt from those
+ requirements. Commercial licensing inquiries:
 
-The licensor grants you a non-exclusive, royalty-free, worldwide, non-sublicensable, non-transferable license to use, copy, modify, and distribute the software for noncommercial purposes.
-
-4. Conditions
-
-You may not use the software for any commercial purpose. A commercial purpose includes, but is not limited to:
-a. using the software in a product or service that you sell or license for a fee;
-b. using the software to provide a service to third parties for a fee;
-c. using the software in a commercial environment or for internal business operations of a for-profit entity;
-d. distributing the software in a manner that requires payment or subscription.
-
-5. Attribution
-
-You must retain all copyright, patent, trademark, and attribution notices that are present in the software. You must verify that every copy of the software you distribute includes a copy of this license.
-
-6. Disclaimer
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-7. Termination
-
-This license terminates automatically if you violate any of its terms or conditions.
-
-8. Commercial Use Inquiries
-
-For commercial licensing, enterprise support, or exemptions to these terms, please contact:
-Bryan Alexander Buchorn (AMP)
-Email: bryan.alexander@buchorn.com
+   bryan.buchorn@gmail.com

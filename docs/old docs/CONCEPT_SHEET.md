@@ -106,8 +106,8 @@ Text documents     →  EmbeddingEngine   →  PathScorer         →  + HMAC pr
 
 ## Licensing
 
-- **Non-commercial**: Free under PolyForm Noncommercial License 1.0.0
-- **Commercial**: Separate license required — contact bryan.alexander@buchorn.com
+- **Open use**: Free under GNU Affero General Public License v3.0 (AGPL-3.0)
+- **Commercial exception**: Proprietary/SaaS deployments — contact bryan.alexander@buchorn.com
 
 ---
 

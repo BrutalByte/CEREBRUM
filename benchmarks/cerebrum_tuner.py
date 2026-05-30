@@ -20,6 +20,9 @@ Usage
     # Custom split
     python -u benchmarks/cerebrum_tuner.py --phase1-trials 80 --phase2-trials 160 --sample 500
 
+    # Resume after restart — skip Phase 1, jump straight to Phase 2
+    python -u benchmarks/cerebrum_tuner.py --resume benchmarks/tuner_<run_id>.jsonl --phase2-trials 140 --sample 2000 --workers 16
+
     # Single-phase (legacy TPE, backward-compatible)
     python -u benchmarks/cerebrum_tuner.py --n-trials 200 --sample 500
 
@@ -118,6 +121,101 @@ def _compute_refined_space(
         new_hi = min(bounds[1], hi + span * margin)
         refined[name] = (round(new_lo, 4), round(new_hi, 4))
     return refined
+
+
+# ── resume helpers ───────────────────────────────────────────────────────────
+def _load_resume(path: Path) -> tuple[list["TrialRecord"], Optional[dict]]:
+    """
+    Read a previous tuner JSONL and return (phase1_records, refined_space).
+    refined_space comes from the saved phase2_bounds entry if present;
+    otherwise it is None and the caller should recompute it.
+    """
+    raw_records: list[dict] = []
+    refined_space: Optional[dict] = None
+
+    with path.open(encoding="utf-8") as fh:
+        for line in fh:
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            t = obj.get("type")
+            if t == "trial" and obj.get("phase") == 1:
+                raw_records.append(obj)
+            elif t == "phase2_bounds":
+                raw = obj["refined_space"]
+                refined_space = {}
+                for k, v in raw.items():
+                    if isinstance(PARAM_SPACE_WIDE.get(k), list):
+                        refined_space[k] = v          # categorical — keep as list
+                    else:
+                        refined_space[k] = (v[0], v[1])  # float range tuple
+
+    records: list[TrialRecord] = []
+    best_h1 = -1.0
+    for obj in raw_records:
+        rec = TrialRecord(
+            trial_id=obj["trial_id"],
+            phase=1,
+            trb_factor=obj["trb_factor"],
+            r2_boost=obj["r2_boost"],
+            vote_weight=obj["vote_weight"],
+            beam_width=obj["beam_width"],
+            idf_weight=obj["idf_weight"],
+            branch_bonus=obj["branch_bonus"],
+            fhrb_factor=obj["fhrb_factor"],
+            gamma=obj["gamma"],
+            beta=obj["beta"],
+            h1=obj["h1"],
+            h10=obj["h10"],
+            mrr=obj["mrr"],
+            elapsed_s=obj["elapsed_s"],
+        )
+        if rec.h1 > best_h1:
+            best_h1 = rec.h1
+            rec.is_best = True
+            if records:
+                records[-1].is_best = False  # clear prior best
+            # mark previous best as not best
+            for r in records:
+                r.is_best = False
+            rec.is_best = True
+        records.append(rec)
+    return records, refined_space
+
+
+def _make_source_trials(records: "list[TrialRecord]", space: dict) -> list:
+    """Build Optuna FrozenTrial objects from TrialRecord list for CMA-ES warm-start."""
+    from optuna.distributions import FloatDistribution, CategoricalDistribution
+
+    distributions: dict = {}
+    for name, bounds in space.items():
+        if isinstance(bounds, list):
+            distributions[name] = CategoricalDistribution(bounds)
+        else:
+            distributions[name] = FloatDistribution(bounds[0], bounds[1])
+
+    frozen: list = []
+    for rec in records:
+        params = {
+            "trb_factor":   rec.trb_factor,
+            "r2_boost":     rec.r2_boost,
+            "vote_weight":  rec.vote_weight,
+            "beam_width":   rec.beam_width,
+            "idf_weight":   rec.idf_weight,
+            "branch_bonus": rec.branch_bonus,
+            "fhrb_factor":  rec.fhrb_factor,
+            "gamma":        rec.gamma,
+            "beta":         rec.beta,
+        }
+        frozen.append(
+            optuna.trial.create_trial(
+                params=params,
+                distributions=distributions,
+                value=rec.h1,
+            )
+        )
+    return frozen
 
 
 # ── trial record ──────────────────────────────────────────────────────────────
@@ -446,6 +544,7 @@ def run_tuner(
     top_k:         int            = 10,
     margin:        float          = 0.25,
     workers:       int            = 1,
+    resume_file:   Optional[Path] = None,
 ) -> Optional[TrialRecord]:
     """
     Two-phase hyperparameter search.
@@ -475,6 +574,21 @@ def run_tuner(
         phase1_trials = n_trials
         phase2_trials = 0
 
+    # ── resume: skip Phase 1, load from previous JSONL ───────────────────
+    _resume_records:      list[TrialRecord] = []
+    _resume_refined_space: Optional[dict]   = None
+    if resume_file is not None:
+        resume_file = Path(resume_file)
+        if not resume_file.exists():
+            print(f"ERROR: --resume file not found: {resume_file}", file=sys.stderr)
+            return None
+        _resume_records, _resume_refined_space = _load_resume(resume_file)
+        if not _resume_records:
+            print(f"ERROR: no Phase 1 trial records found in {resume_file}", file=sys.stderr)
+            return None
+        phase1_trials = len(_resume_records)
+        print(f"  Resuming  : {resume_file.name}  ({phase1_trials} Phase 1 trials loaded)")
+
     total_trials = phase1_trials + phase2_trials
 
     # ── log file setup ────────────────────────────────────────────────────
@@ -496,7 +610,10 @@ def run_tuner(
         },
     })
     print(f"  Trial log : {log_file}")
-    print(f"  Phase 1   : {phase1_trials} trials (Sobol QMC, wide bounds)")
+    if resume_file:
+        print(f"  Phase 1   : {phase1_trials} trials (loaded from resume — skipping)")
+    else:
+        print(f"  Phase 1   : {phase1_trials} trials (Sobol QMC, wide bounds)")
     if phase2_trials:
         print(f"  Phase 2   : {phase2_trials} trials (CMA-ES, refined bounds from top-{top_k})")
 
@@ -544,62 +661,79 @@ def run_tuner(
                     f"{r.h1*100:>6.2f}%  {r.h10*100:>6.2f}%  {r.mrr:>6.4f}  {flag}"
                 )
 
-    # Phase 1 study — Sobol QMC (low-discrepancy, uniform 9D coverage)
+    # ── Phase 1 — Sobol QMC (or reload from resume) ──────────────────────
     p1_sampler = optuna.samplers.QMCSampler(qmc_type="sobol", seed=seed, scramble=True)
     p1_study   = optuna.create_study(
         study_name=f"{study_name}-p1", direction="maximize", sampler=p1_sampler,
     )
-    p1_obj = make_objective(PARAM_SPACE_WIDE, phase=1)
+
+    if _resume_records:
+        # Pre-populate dashboard with loaded Phase 1 data; skip running Phase 1
+        for rec in _resume_records:
+            dashboard.push(rec)
+        dashboard.phase_label = "Phase 2/2 — Fine-tuning (CMA-ES) [resumed]"
+    else:
+        p1_obj = make_objective(PARAM_SPACE_WIDE, phase=1)
+
+    # ── helper: build Phase 2 study ───────────────────────────────────────
+    def _build_p2_study(p1_records: list, p1_source_trials) -> tuple:
+        """Return (refined_space, p2_study) from Phase 1 data."""
+        if _resume_records and _resume_refined_space:
+            rs = _resume_refined_space
+        else:
+            rs = _compute_refined_space(p1_records, PARAM_SPACE_WIDE, top_k=top_k, margin=margin)
+            _write_log(log_file, {
+                "type": "phase2_bounds", "run_id": run_id,
+                "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "top_k": top_k, "margin": margin,
+                "refined_space": {
+                    k: list(v) if isinstance(v, list) else list(v)
+                    for k, v in rs.items()
+                },
+            })
+
+        if p1_source_trials:
+            # source_trials initializes x0/sigma0 from data — cannot specify both
+            sampler = optuna.samplers.CmaEsSampler(
+                seed=seed + 1,
+                source_trials=p1_source_trials,
+            )
+        else:
+            best_p1 = sorted(p1_records, key=lambda r: r.h1, reverse=True)[0]
+            x0 = {
+                name: max(bounds[0], min(bounds[1], float(getattr(best_p1, name))))
+                for name, bounds in rs.items()
+                if not isinstance(bounds, list)
+            }
+            sampler = optuna.samplers.CmaEsSampler(
+                x0=x0,
+                sigma0=0.3,
+                seed=seed + 1,
+            )
+        study = optuna.create_study(
+            study_name=f"{study_name}-p2", direction="maximize", sampler=sampler,
+        )
+        top_seeds = sorted(p1_records, key=lambda r: r.h1, reverse=True)[:top_k]
+        for seed_rec in top_seeds:
+            clamped: dict = {}
+            for name, bounds in rs.items():
+                val = getattr(seed_rec, name)
+                clamped[name] = val if isinstance(bounds, list) else max(bounds[0], min(bounds[1], val))
+            study.enqueue_trial(clamped)
+        return rs, study
 
     if _HAS_RICH and console:
         with Live(dashboard, console=console, refresh_per_second=2, screen=False):
-            _run_phase(p1_study, p1_obj, phase1_trials)
+            if not _resume_records:
+                _run_phase(p1_study, p1_obj, phase1_trials)
 
             if phase2_trials > 0:
-                # Compute and log refined bounds
-                refined_space = _compute_refined_space(
-                    dashboard.records, PARAM_SPACE_WIDE, top_k=top_k, margin=margin,
-                )
-                _write_log(log_file, {
-                    "type": "phase2_bounds", "run_id": run_id,
-                    "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                    "top_k": top_k, "margin": margin,
-                    "refined_space": {
-                        k: list(v) if isinstance(v, list) else list(v)
-                        for k, v in refined_space.items()
-                    },
-                })
-
                 dashboard.phase_label = "Phase 2/2 — Fine-tuning (CMA-ES)"
-
-                # CMA-ES: initialize at best Phase 1 config; warm covariance from all P1 trials
-                best_p1 = sorted(dashboard.records, key=lambda r: r.h1, reverse=True)[0]
-                x0 = {
-                    name: max(bounds[0], min(bounds[1], float(getattr(best_p1, name))))
-                    for name, bounds in refined_space.items()
-                    if not isinstance(bounds, list)
-                }
-                p2_sampler = optuna.samplers.CmaEsSampler(
-                    x0=x0,
-                    sigma0=0.3,
-                    seed=seed + 1,
-                    source_trials=p1_study.trials,
+                p1_source = (
+                    _make_source_trials(_resume_records, PARAM_SPACE_WIDE)
+                    if _resume_records else p1_study.trials
                 )
-                p2_study   = optuna.create_study(
-                    study_name=f"{study_name}-p2", direction="maximize", sampler=p2_sampler,
-                )
-                # Enqueue top-K Phase 1 configs so CMA-ES first iterations are competitive
-                top_seeds = sorted(dashboard.records, key=lambda r: r.h1, reverse=True)[:top_k]
-                for seed_rec in top_seeds:
-                    clamped: dict = {}
-                    for name, bounds in refined_space.items():
-                        val = getattr(seed_rec, name)
-                        if isinstance(bounds, list):
-                            clamped[name] = val
-                        else:
-                            clamped[name] = max(bounds[0], min(bounds[1], val))
-                    p2_study.enqueue_trial(clamped)
-
+                refined_space, p2_study = _build_p2_study(dashboard.records, p1_source)
                 p2_obj = make_objective(refined_space, phase=2)
                 _run_phase(p2_study, p2_obj, phase2_trials)
                 final_study = p2_study
@@ -607,54 +741,23 @@ def run_tuner(
                 final_study = p1_study
     else:
         # Plain-text fallback
-        header = (
-            f"{'Ph':>3}  {'#':>4}  {'trb':>5}  {'r2':>5}  {'vote':>6}  {'bm':>3}  "
-            f"{'idf':>5}  {'bbns':>5}  {'fhrb':>5}  {'gamma':>6}  {'beta':>5}  "
-            f"{'H@1':>7}  {'H@10':>7}  {'MRR':>6}  B"
-        )
-        print(header)
-        print("-" * len(header))
-        _run_phase_plain(p1_study, p1_obj, phase1_trials)
+        if not _resume_records:
+            header = (
+                f"{'Ph':>3}  {'#':>4}  {'trb':>5}  {'r2':>5}  {'vote':>6}  {'bm':>3}  "
+                f"{'idf':>5}  {'bbns':>5}  {'fhrb':>5}  {'gamma':>6}  {'beta':>5}  "
+                f"{'H@1':>7}  {'H@10':>7}  {'MRR':>6}  B"
+            )
+            print(header)
+            print("-" * len(header))
+            _run_phase_plain(p1_study, p1_obj, phase1_trials)
 
         if phase2_trials > 0:
-            refined_space = _compute_refined_space(
-                dashboard.records, PARAM_SPACE_WIDE, top_k=top_k, margin=margin,
-            )
-            _write_log(log_file, {
-                "type": "phase2_bounds", "run_id": run_id,
-                "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                "top_k": top_k, "margin": margin,
-                "refined_space": {
-                    k: list(v) if isinstance(v, list) else list(v)
-                    for k, v in refined_space.items()
-                },
-            })
             print(f"\n--- Phase 2: fine-tuning (CMA-ES, refined bounds) ---")
-            best_p1 = sorted(dashboard.records, key=lambda r: r.h1, reverse=True)[0]
-            x0 = {
-                name: max(bounds[0], min(bounds[1], float(getattr(best_p1, name))))
-                for name, bounds in refined_space.items()
-                if not isinstance(bounds, list)
-            }
-            p2_sampler = optuna.samplers.CmaEsSampler(
-                x0=x0,
-                sigma0=0.3,
-                seed=seed + 1,
-                source_trials=p1_study.trials,
+            p1_source = (
+                _make_source_trials(_resume_records, PARAM_SPACE_WIDE)
+                if _resume_records else p1_study.trials
             )
-            p2_study   = optuna.create_study(
-                study_name=f"{study_name}-p2", direction="maximize", sampler=p2_sampler,
-            )
-            top_seeds = sorted(dashboard.records, key=lambda r: r.h1, reverse=True)[:top_k]
-            for seed_rec in top_seeds:
-                clamped = {}
-                for name, bounds in refined_space.items():
-                    val = getattr(seed_rec, name)
-                    if isinstance(bounds, list):
-                        clamped[name] = val
-                    else:
-                        clamped[name] = max(bounds[0], min(bounds[1], val))
-                p2_study.enqueue_trial(clamped)
+            refined_space, p2_study = _build_p2_study(dashboard.records, p1_source)
             p2_obj = make_objective(refined_space, phase=2)
             _run_phase_plain(p2_study, p2_obj, phase2_trials)
             final_study = p2_study
@@ -797,6 +900,12 @@ def main() -> None:
         "--log-file", type=Path, default=None, dest="log_file",
         help="JSONL file to log every trial (default: benchmarks/tuner_<timestamp>.jsonl)",
     )
+    parser.add_argument(
+        "--resume", type=Path, default=None, dest="resume_file",
+        metavar="JSONL",
+        help="Resume from a previous run: load Phase 1 trials from this JSONL and skip "
+             "straight to Phase 2.  --phase1-trials is ignored when this is set.",
+    )
     args = parser.parse_args()
 
     run_tuner(
@@ -811,6 +920,7 @@ def main() -> None:
         margin=args.margin,
         log_file=args.log_file,
         workers=args.workers,
+        resume_file=args.resume_file,
     )
 
 
