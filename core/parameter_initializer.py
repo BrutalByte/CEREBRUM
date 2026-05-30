@@ -7,8 +7,9 @@ graph structure.  The tuner (cerebrum_tuner.py) becomes an optional refinement s
 
 All formulas are grounded in data-science TTPs (see docs/PERFORMANCE_TUNING.md):
   trb_factor   — log-normalized category-count scaling (TFIDF analogue)
-  gamma        — Zipf normalization of fan_out distribution
-  beta         — power-law null hypothesis; regime-specific constant
+  gamma        — universal BOOST_SCALE formula: score*(1+boost) targets constant
+                 mean amplification across all KBs (see BOOST_SCALE constant below)
+  beta         — power-law shape; regime-specific constant
   r2_boost     — path corroboration scaled by path diversity
   fhrb_factor  — first-hop ambiguity scaled by mean degree
   idf_weight   — IDF hub penalty (standard formula, CV-scaled)
@@ -17,6 +18,7 @@ All formulas are grounded in data-science TTPs (see docs/PERFORMANCE_TUNING.md):
   beam_width   — fixed at 12; diminishing returns plateau proven by fANOVA
 
 Calibration basis: Phase 204 tuner validation on MetaQA 3-hop (60.36% H@1).
+Multi-KB survey (Phase 205): MetaQA, Hetionet, synthetic typed, synthetic hub.
 """
 from __future__ import annotations
 
@@ -40,6 +42,18 @@ IDF_SCALE_C: float = 0.0102   # degree_cv × IDF_SCALE_C → idf_weight
 VOTE_BASE: float   = 0.72     # vote_weight lower bound (Q=0 → community uninformative)
 VOTE_Q_SCALE: float = 0.15    # sensitivity to modularity: 0.72 at Q=0, 0.87 at Q=1
 
+# gamma — universal BOOST_SCALE formula
+# SDRB scoring: score *= (1 + boost), where boost(r) = gamma * fan_out(r)^beta.
+# BOOST_SCALE targets the mean boost across all relations at ~21.8 for all KBs:
+#   gamma = BOOST_SCALE / mean_fan_out^beta
+# Calibration: MetaQA Phase 204 — gamma=8.73, mean_fo=1.55, beta=2.085
+#   BOOST_SCALE = 8.73 * 1.55^2.085 = 21.79
+# This gives Hetionet (mean_fo=9.46, beta=1.0): gamma = 21.79/9.46 = 2.30
+# compared to the unstable old formula which gave gamma=39 for Hetionet.
+BOOST_SCALE: float = 21.79    # universal — derived from Phase 204 MetaQA validation
+GAMMA_MIN:   float = 0.5     # floor: prevents degenerate near-zero gamma on KBs
+                              # with extreme fan_out (e.g. mean_fo > 50)
+
 # ---------------------------------------------------------------------------
 # Regime-specific constants
 # ---------------------------------------------------------------------------
@@ -51,12 +65,6 @@ _TRB_C = {
     "hub_homogeneous":    9.33,   # 21.486 / log(9+1) — Phase 204 MetaQA
     "typed_heterogeneous": 6.00,  # lower: typed KBs have fewer competing relations
     "mixed":               7.50,
-}
-
-_GAMMA_C = {
-    "hub_homogeneous":    3.73,   # 8.732 / (max_fo/harmonic_fo=2.342) — Phase 204
-    "typed_heterogeneous": 6.00,  # higher: typed KBs have wider fan_out spread
-    "mixed":               4.50,
 }
 
 _BETA = {
@@ -154,12 +162,18 @@ class ParameterInitializer:
                        If unknown, 0.5 gives a safe mid-range vote_weight.
         """
         # GraphProfiler's regime is primarily for routing decisions (hop_expand,
-        # trb_auto).  For parameter scaling, degree_cv is the dominant signal for
-        # hub behavior: if CV > 3.0, the degree distribution is heavy-tailed enough
-        # that hub_homogeneous constants apply even when min_rel_coverage flags a few
-        # rare metadata relations as "typed" (e.g. MetaQA has_imdb_rating, in_language).
+        # trb_auto).  For parameter scaling we apply a hub override when:
+        #   - degree_cv > 3.0  (heavy-tailed distribution = hub bottleneck present)
+        #   - mean_rel_coverage > 0.20  (most nodes are sources of most relations
+        #                                = low real typing, peripheral metadata only)
+        # This captures MetaQA (cv=5.68, cov=0.261) — whose rare metadata relations
+        # (has_imdb_rating, in_language) mis-trigger "typed_heterogeneous" in
+        # GraphProfiler — without incorrectly overriding genuinely typed graphs like
+        # Hetionet (cv=4.17, cov=0.166) where typing carries semantic meaning.
         regime = profile.regime
-        if profile.degree_cv > 3.0 and regime == "typed_heterogeneous":
+        if (regime == "typed_heterogeneous"
+                and profile.degree_cv > 3.0
+                and profile.mean_rel_coverage > 0.20):
             regime = "hub_homogeneous"
 
         n_rel  = max(profile.n_relation_types, 1)
@@ -169,9 +183,10 @@ class ParameterInitializer:
         # Undirected mean degree: sum_degrees = 2*n_edges for undirected graph.
         mean_degree = (2.0 * n_edges / n_nodes) if n_edges > 0 else 1.0
 
-        max_fo, _mean_fo, harmonic_fo, n_rel_deriver = deriver.fan_out_stats()
+        max_fo, mean_fo, harmonic_fo, n_rel_deriver = deriver.fan_out_stats()
         if n_rel_deriver > 0:
             n_rel = n_rel_deriver  # prefer deriver count (more precise)
+        mean_fo = max(mean_fo, 1e-6)
 
         # ------------------------------------------------------------------
         # trb_factor  = C × log(n_rel + 1)
@@ -179,14 +194,23 @@ class ParameterInitializer:
         trb_factor = _TRB_C[regime] * math.log(n_rel + 1)
 
         # ------------------------------------------------------------------
-        # gamma  = C × (max_fan_out / harmonic_mean_fan_out)
-        # ------------------------------------------------------------------
-        gamma = _GAMMA_C[regime] * (max_fo / harmonic_fo)
-
-        # ------------------------------------------------------------------
-        # beta — regime constant
+        # beta — regime constant (must be set before gamma)
         # ------------------------------------------------------------------
         beta = _BETA[regime]
+
+        # ------------------------------------------------------------------
+        # gamma  = BOOST_SCALE / mean_fan_out^beta  (universal formula)
+        #
+        # SDRB: score *= (1 + gamma * fan_out(r)^beta)
+        # Mean boost across all relations ≈ gamma * mean_fo^beta = BOOST_SCALE
+        # → gamma = BOOST_SCALE / mean_fo^beta
+        #
+        # This normalizes the SDRB amplitude to the KB's own fan_out scale,
+        # preventing runaway boosts on KBs with large fan_out values (e.g.
+        # Hetionet Gene-participates-BP fan_out=33.6 vs MetaQA max=3.1).
+        # MetaQA check: 21.79 / 1.55^2.0 = 9.06  (validated: 8.73, Δ=3.8%)
+        # ------------------------------------------------------------------
+        gamma = max(GAMMA_MIN, BOOST_SCALE / (mean_fo ** beta))
 
         # ------------------------------------------------------------------
         # r2_boost  = 1.5 + C × log(mean_deg / n_rel + 1)

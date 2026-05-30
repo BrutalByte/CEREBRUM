@@ -23,6 +23,7 @@ def _mock_profile(
     n_relation_types=9,
     degree_cv=5.6821,
     hub_score=0.45,
+    mean_rel_coverage=0.261,
 ):
     p = MagicMock()
     p.regime = regime
@@ -31,6 +32,7 @@ def _mock_profile(
     p.n_relation_types = n_relation_types
     p.degree_cv = degree_cv
     p.hub_score = hub_score
+    p.mean_rel_coverage = mean_rel_coverage
     return p
 
 
@@ -111,33 +113,47 @@ def test_as_dict_has_all_keys():
 
 def test_typed_heterogeneous_lower_trb():
     hub_p = _mock_profile(regime="hub_homogeneous", degree_cv=5.0)
-    # Low degree_cv prevents the hub_homogeneous override
-    typ_p = _mock_profile(regime="typed_heterogeneous", degree_cv=0.8)
+    # Low mean_rel_coverage prevents the hub_homogeneous override
+    typ_p = _mock_profile(regime="typed_heterogeneous", degree_cv=0.8,
+                          mean_rel_coverage=0.10)
     d = _mock_deriver()
     assert ParameterInitializer.compute(typ_p, d).trb_factor < \
            ParameterInitializer.compute(hub_p, d).trb_factor
 
 
 def test_typed_heterogeneous_beta_one():
-    # Use low degree_cv so the override doesn't fire
-    p = _mock_profile(regime="typed_heterogeneous", degree_cv=0.8)
+    p = _mock_profile(regime="typed_heterogeneous", degree_cv=0.8,
+                      mean_rel_coverage=0.10)
     params = ParameterInitializer.compute(p, _mock_deriver())
     assert params.beta == 1.0
     assert params.effective_regime == "typed_heterogeneous"
 
 
-def test_hub_override_when_high_degree_cv():
-    """typed_heterogeneous + degree_cv > 3.0 → treated as hub_homogeneous."""
-    p = _mock_profile(regime="typed_heterogeneous", degree_cv=5.68)
+def test_hub_override_metaqa_like():
+    """MetaQA-like: typed_heterogeneous + high CV + high mean_rel_coverage → hub_homogeneous."""
+    p = _mock_profile(regime="typed_heterogeneous", degree_cv=5.68,
+                      n_nodes=43234, n_edges=124680)
+    # mean_rel_coverage defaults to 0.261 in _mock_profile helper — above 0.20
+    p.mean_rel_coverage = 0.261
     params = ParameterInitializer.compute(p, _mock_deriver())
     assert params.effective_regime == "hub_homogeneous"
     assert params.beta == 2.0  # hub constant, not typed constant
 
 
+def test_no_override_hetionet_like():
+    """Hetionet-like: typed_heterogeneous + low mean_rel_coverage → stays typed."""
+    p = _mock_profile(regime="typed_heterogeneous", degree_cv=4.17)
+    p.mean_rel_coverage = 0.166  # below 0.20 — real typed graph
+    params = ParameterInitializer.compute(p, _mock_deriver())
+    assert params.effective_regime == "typed_heterogeneous"
+    assert params.beta == 1.0
+
+
 def test_mixed_regime_mid_range():
     hub_p   = _mock_profile(regime="hub_homogeneous", degree_cv=5.0)
-    mixed_p = _mock_profile(regime="mixed", degree_cv=2.0)
-    typ_p   = _mock_profile(regime="typed_heterogeneous", degree_cv=0.8)
+    mixed_p = _mock_profile(regime="mixed", degree_cv=2.0, mean_rel_coverage=0.15)
+    typ_p   = _mock_profile(regime="typed_heterogeneous", degree_cv=0.8,
+                            mean_rel_coverage=0.10)
     d = _mock_deriver()
     hub_trb   = ParameterInitializer.compute(hub_p, d).trb_factor
     mixed_trb = ParameterInitializer.compute(mixed_p, d).trb_factor
