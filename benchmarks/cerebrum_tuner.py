@@ -62,6 +62,7 @@ except ImportError:
     _HAS_RICH = False
 
 _EVAL_SCRIPT = Path(__file__).parent / "metaqa_eval.py"
+_DEFAULT_KB  = Path(__file__).parent / "data" / "metaqa" / "kb.txt"
 
 # ── search space (Phase 1 — wide exploration) ─────────────────────────────────
 # Phase 203: two-parameter SDRB — gamma ceiling raised to 16.0 (hit 7.93/8.0 in
@@ -530,6 +531,53 @@ def _run_eval_logged(
     return h1, h10, mrr, elapsed
 
 
+# ── ParameterInitializer warm-start ──────────────────────────────────────────
+def _compute_param_init_x0(kb_file: Path) -> Optional[dict]:
+    """
+    Compute ParameterInitializer defaults from the KB and return as a param dict
+    suitable for p1_study.enqueue_trial().  Returns None on any error (graceful
+    fallback — tuner continues without the warm-start hint).
+    """
+    try:
+        import sys as _sys
+        _sys.path.insert(0, str(Path(__file__).parent.parent))
+        from core.graph_profiler import GraphProfiler
+        from core.relation_boost_deriver import RelationBoostDeriver
+        from core.parameter_initializer import ParameterInitializer
+        import networkx as nx
+
+        deriver = RelationBoostDeriver()
+        deriver.build_from_file(str(kb_file))
+
+        G = nx.Graph()
+        with open(kb_file, encoding="utf-8") as f:
+            for line in f:
+                parts = line.strip().split("|")
+                if len(parts) == 3:
+                    h, _, t = parts
+                    G.add_edge(h, t)
+
+        class _FakeAdapter:
+            def to_networkx(self): return G
+            def is_directed(self): return False
+
+        profile = GraphProfiler.profile(_FakeAdapter(), {})
+        init    = ParameterInitializer.compute(profile, deriver)
+        d       = init.as_dict()
+        # Clamp to PARAM_SPACE_WIDE bounds so enqueue_trial doesn't error
+        for name, bounds in PARAM_SPACE_WIDE.items():
+            if isinstance(bounds, list):
+                if d.get(name) not in bounds:
+                    d[name] = bounds[0]
+            else:
+                lo, hi = bounds
+                d[name] = max(lo, min(hi, float(d.get(name, lo))))
+        return d
+    except Exception as exc:
+        print(f"  [ParameterInitializer] warm-start skipped: {exc}", file=sys.stderr)
+        return None
+
+
 # ── tuning loop ───────────────────────────────────────────────────────────────
 def run_tuner(
     phase1_trials: int            = 60,
@@ -545,6 +593,8 @@ def run_tuner(
     margin:        float          = 0.25,
     workers:       int            = 1,
     resume_file:   Optional[Path] = None,
+    param_init:    bool           = False,
+    kb_file:       Optional[Path] = None,
 ) -> Optional[TrialRecord]:
     """
     Two-phase hyperparameter search.
@@ -666,6 +716,13 @@ def run_tuner(
     p1_study   = optuna.create_study(
         study_name=f"{study_name}-p1", direction="maximize", sampler=p1_sampler,
     )
+
+    if param_init and not _resume_records:
+        _kb = kb_file or _DEFAULT_KB
+        x0_hint = _compute_param_init_x0(_kb)
+        if x0_hint is not None:
+            p1_study.enqueue_trial(x0_hint)
+            print(f"  Param-init: warm-start trial enqueued from {_kb.name}")
 
     if _resume_records:
         # Pre-populate dashboard with loaded Phase 1 data; skip running Phase 1
@@ -906,6 +963,15 @@ def main() -> None:
         help="Resume from a previous run: load Phase 1 trials from this JSONL and skip "
              "straight to Phase 2.  --phase1-trials is ignored when this is set.",
     )
+    parser.add_argument(
+        "--param-init", action="store_true", dest="param_init",
+        help="(Phase 205) Enqueue a ParameterInitializer warm-start trial as the first "
+             "Phase 1 evaluation.  Biases Sobol toward the analytically-derived optimum.",
+    )
+    parser.add_argument(
+        "--kb-file", type=Path, default=None, dest="kb_file",
+        help="KB triples file for --param-init (default: benchmarks/data/metaqa/kb.txt).",
+    )
     args = parser.parse_args()
 
     run_tuner(
@@ -921,6 +987,8 @@ def main() -> None:
         log_file=args.log_file,
         workers=args.workers,
         resume_file=args.resume_file,
+        param_init=args.param_init,
+        kb_file=args.kb_file,
     )
 
 

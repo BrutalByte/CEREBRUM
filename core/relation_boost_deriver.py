@@ -104,6 +104,21 @@ class RelationBoostDeriver:
             return {r: gamma * fo for r, fo in self._fan_out.items()}
         return {r: gamma * (fo ** beta) for r, fo in self._fan_out.items()}
 
+    def fan_out_stats(self):
+        """Return (max_fan_out, mean_fan_out, harmonic_mean_fan_out, n_relations).
+
+        Used by ParameterInitializer to derive gamma analytically.
+        Returns (1.0, 1.0, 1.0, 0) if not built.
+        """
+        if not self.is_built:
+            return 1.0, 1.0, 1.0, 0
+        values = list(self._fan_out.values())
+        n = len(values)
+        max_fo = max(values)
+        mean_fo = sum(values) / n
+        harmonic_fo = n / sum(1.0 / v for v in values)
+        return max_fo, mean_fo, harmonic_fo, n
+
     def relation_stats(self) -> Dict[str, Dict]:
         """Full per-relation statistics for logging and analysis."""
         return {
