@@ -863,10 +863,15 @@ class CerebrumGraph:
         # ----------------------------------------------------------
         # 3. Optional coarsening
         # ----------------------------------------------------------
-        # Automatic coarsen if over 2000 (structural matrix cap)
-        if n_raw > 2000 and coarsen_target is None and min_community_size == 0:
-            coarsen_target = 2000
-            logger.warning("Community count %d exceeds 2000. Auto-coarsening to 2000.", n_raw)
+        # Auto-coarsen only when coarsen_target is not explicitly set.
+        # Default cap is 2000 for memory safety on general graphs; pass
+        # coarsen_target=N explicitly to preserve more communities (e.g.
+        # Hetionet: coarsen_target=5568 keeps full community resolution).
+        _AUTO_CAP = 2000
+        if n_raw > _AUTO_CAP and coarsen_target is None and min_community_size == 0:
+            coarsen_target = _AUTO_CAP
+            logger.warning("Community count %d exceeds %d. Auto-coarsening to %d.",
+                           n_raw, _AUTO_CAP, _AUTO_CAP)
 
         if min_community_size > 0:
             from core.structural_encoder import coarsen_communities as _size_coarsen
