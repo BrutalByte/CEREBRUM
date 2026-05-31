@@ -883,14 +883,24 @@ def run_tuner(
         f"fhrb-factor={best.fhrb_factor:.3f}"
     )
     _print(f"  gamma={best.gamma:.4f}  beta={best.beta:.4f}")
-    canonical = (
-        f"python -u benchmarks/metaqa_eval.py --hop 3 "
-        f"--beam-width {best.beam_width} --embeddings sentence "
+    _param_flags = (
+        f"--beam-width {best.beam_width} "
         f"--trb-factor {best.trb_factor:.3f} --r2-boost {best.r2_boost:.3f} "
         f"--vote-weight {best.vote_weight:.4f} --idf-weight {best.idf_weight:.3f} "
         f"--branch-bonus {best.branch_bonus:.3f} --fhrb-factor {best.fhrb_factor:.3f} "
         f"--gamma {best.gamma:.4f} --beta {best.beta:.4f}"
     )
+    if dataset == "hetionet":
+        canonical = (
+            f"python -u benchmarks/hetionet_param_eval.py "
+            f"--n-questions 200 --min-eval-hop 1 --max-neighbors 200 --workers 8 "
+            f"{_param_flags}"
+        )
+    else:
+        canonical = (
+            f"python -u benchmarks/metaqa_eval.py --hop 3 --embeddings sentence "
+            f"{_param_flags}"
+        )
     _print(f"\nCanonical benchmark command:\n  {canonical}\n")
     _print(f"  Trial log: {log_file}")
 

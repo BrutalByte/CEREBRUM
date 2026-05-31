@@ -99,7 +99,7 @@ def _worker_init(graph_args: dict) -> None:
 
 
 def _worker_process_question(task: tuple) -> tuple:
-    """Process one question. Returns (q_idx, template, h1, h10, mrr, answered)."""
+    """Process one question. Returns (q_idx, template, h1, h10, mrr, answered, n_typed)."""
     (q_idx, template, seed, correct_answers,
      hop, answer_type, trb, fhrb,
      penultimate_rel, penultimate_idx,
@@ -107,7 +107,7 @@ def _worker_process_question(task: tuple) -> tuple:
      vote_weight, branch_bonus, top_k) = task
 
     if _W_GRAPH is None:
-        return (q_idx, template, 0.0, 0.0, 0.0, False)
+        return (q_idx, template, 0.0, 0.0, 0.0, False, 0)
 
     freq_ctr  = dict(freq_ctr_items) if freq_ctr_items else {}
     overfetch = _OVERFETCH.get(hop, 5) * top_k
@@ -125,11 +125,12 @@ def _worker_process_question(task: tuple) -> tuple:
             initial_relation_boost  = fhrb,
         )
     except Exception:
-        return (q_idx, template, 0.0, 0.0, 0.0, False)
+        return (q_idx, template, 0.0, 0.0, 0.0, False, 0)
 
     answers_obj = [a for a in answers_obj if a.entity_id.startswith(f"{answer_type}::")]
+    n_typed = len(answers_obj)
     if not answers_obj:
-        return (q_idx, template, 0.0, 0.0, 0.0, False)
+        return (q_idx, template, 0.0, 0.0, 0.0, False, 0)
 
     # r2 path-consistency: boost answers whose penultimate hop uses the
     # expected chain relation; scale boost by SDRB amplitude for that relation.
@@ -161,6 +162,7 @@ def _worker_process_question(task: tuple) -> tuple:
         float(hits_at_k(pred, correct_answers, k=10)),
         float(reciprocal_rank(pred, correct_answers)),
         True,
+        n_typed,
     )
 
 
@@ -260,6 +262,7 @@ def _eval_template_serial(
     h1 = h10 = 0
     mrr_sum = 0.0
     n_answered = 0
+    n_typed_total = 0
     t0 = time.time()
 
     for i, (seed, correct_answers) in enumerate(qa_pairs):
@@ -279,6 +282,7 @@ def _eval_template_serial(
             initial_relation_boost  = fhrb,
         )
         answers_obj = [a for a in answers_obj if a.entity_id.startswith(f"{answer_type}::")]
+        n_typed_total += len(answers_obj)
         if not answers_obj:
             continue
 
@@ -315,6 +319,7 @@ def _eval_template_serial(
         "hits_10": h10 / n if n else 0.0,
         "mrr":     mrr_sum / n if n else 0.0,
         "elapsed_s": time.time() - t0,
+        "avg_typed": n_typed_total / n if n else 0.0,
     }
 
 
@@ -504,13 +509,15 @@ def main() -> None:
 
         buckets: Dict[str, Dict] = {
             name: {"h1": 0.0, "h10": 0.0, "mrr": 0.0, "n_answered": 0,
+                   "n_typed_total": 0,
                    "n_total": len(qa_by_template[name]), "hop": TEMPLATE_HOP[name]}
             for name in templates if qa_by_template.get(name)
         }
-        for (_, tname, h1, h10, mrr, answered) in raw:
+        for (_, tname, h1, h10, mrr, answered, n_typed) in raw:
             if tname in buckets:
                 b = buckets[tname]
                 b["h1"] += h1; b["h10"] += h10; b["mrr"] += mrr
+                b["n_typed_total"] += n_typed
                 if answered:
                     b["n_answered"] += 1
 
@@ -523,6 +530,7 @@ def main() -> None:
                 "hits_10": b["h10"] / n if n else 0.0,
                 "mrr":     b["mrr"] / n if n else 0.0,
                 "elapsed_s": time.time() - t0_eval,
+                "avg_typed": b["n_typed_total"] / n if n else 0.0,
             })
 
     else:
@@ -581,14 +589,21 @@ def main() -> None:
 
     if len(templates) > 1:
         print("\n  Per-template breakdown:")
-        print(f"  {'Template':<32} {'Hop':>3} {'N':>5} {'H@1':>7} {'H@10':>7} {'MRR':>7}")
-        print(f"  {'-'*32} {'-'*3} {'-'*5} {'-'*7} {'-'*7} {'-'*7}")
+        print(f"  {'Template':<32} {'Hop':>3} {'N':>5} {'H@1':>7} {'H@10':>7} {'MRR':>7} {'AvgTyped':>9}")
+        print(f"  {'-'*32} {'-'*3} {'-'*5} {'-'*7} {'-'*7} {'-'*7} {'-'*9}")
         for r in sorted(all_results, key=lambda x: (x["hop"], x["template"])):
+            avg_t = r.get("avg_typed", 0.0)
             print(
                 f"  {r['template']:<32} {r['hop']:>3} {r['n_total']:>5,} "
                 f"{r['hits_1']*100:>6.1f}% {r['hits_10']*100:>6.1f}% "
-                f"{r['mrr']*100:>6.1f}%"
+                f"{r['mrr']*100:>6.1f}% {avg_t:>8.1f}"
             )
+        # Warn if avg typed candidates is very low (likely cause of H@1≈H@10)
+        overall_avg_typed = sum(r.get("avg_typed", 0) * r["n_total"] for r in all_results) / max(sum(r["n_total"] for r in all_results), 1)
+        if overall_avg_typed < 2.0:
+            print(f"\n  WARNING: avg typed candidates after filter = {overall_avg_typed:.2f} "
+                  f"(< 2.0) — H@1≈H@10 is expected. "
+                  f"Try --max-neighbors 200 for a more diverse ranked list.")
 
 
 if __name__ == "__main__":
