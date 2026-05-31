@@ -121,7 +121,7 @@ def _worker_process_question(task: tuple) -> tuple:
             terminal_relation_boost = trb,
             vote_weight             = vote_weight,
             branch_bonus_weight     = branch_bonus,
-            hop_expand              = (hop >= 2),
+            hop_expand              = (hop >= 3),
             initial_relation_boost  = fhrb,
         )
     except Exception:
@@ -278,7 +278,7 @@ def _eval_template_serial(
             terminal_relation_boost = trb,
             vote_weight             = vote_weight,
             branch_bonus_weight     = branch_bonus,
-            hop_expand              = (hop >= 2),
+            hop_expand              = (hop >= 3),
             initial_relation_boost  = fhrb,
         )
         answers_obj = [a for a in answers_obj if a.entity_id.startswith(f"{answer_type}::")]
