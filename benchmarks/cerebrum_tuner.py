@@ -500,7 +500,7 @@ def _run_eval_logged(
             "--embeddings",   "sentence",
             "--workers",      str(kwargs.get("workers", 1)),
             "--min-eval-hop", "2",   # skip near-ceiling 1-hop in tuning
-            "--max-neighbors","200",
+            "--max-neighbors","50",  # tuning needs relative signal, not absolute accuracy
         ]
     else:
         sample = kwargs["sample"]
