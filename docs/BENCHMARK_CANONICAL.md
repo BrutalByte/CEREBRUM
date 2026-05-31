@@ -106,9 +106,9 @@ Note: beam_width importance ≈0 confirms fixed at 8 is correct. beta is now the
 
 | Metric | 1-hop | 2-hop | 3-hop | Notes |
 |--------|-------|-------|-------|-------|
-| Hits@1 | **94.8%** | **47.0%** | **81.8%** | 200q/template, max_neighbors=200 |
-| Hits@10 | **94.8%** | **47.0%** | **81.8%** | H@1=H@10: system ranks correct answer 1st when found |
-| MRR | **0.9476** | **0.4699** | **0.8182** | Recall-limited, not ranking-limited |
+| Hits@1 | **95.7%** | **47.9%** | **79.5%** | 200q/template, max_neighbors=200 |
+| Hits@10 | **95.7%** | **47.9%** | **79.5%** | H@1=H@10: system ranks correct answer 1st when found |
+| MRR | **0.9569** | **0.4789** | **0.7955** | Recall-limited, not ranking-limited |
 
 **Per-template:**
 
@@ -116,12 +116,13 @@ Note: beam_width importance ≈0 confirms fixed at 8 is correct. beta is now the
 |----------|-----|---|-----|----------|-------|
 | disease_associates_gene | 1 | 134 | 100.0% | 16.8 | |
 | gene_participates_pathway | 1 | 200 | 98.5% | 6.5 | |
-| compound_treats_disease | 1 | 200 | 87.5% | 1.6 | |
-| disease_gene_pathway | 2 | 132 | 71.2% | 3.2 | |
-| compound_gene_disease | 2 | 200 | 31.0% | 0.9 | Sparse Compound-binds-Gene first hop — recall-limited |
-| disease_compound_via_gene | 3 | 132 | 81.8% | 19.0 | |
+| compound_treats_disease | 1 | 200 | 90.0% | 1.6 | |
+| disease_gene_pathway | 2 | 132 | 71.2% | 3.1 | |
+| compound_gene_disease | 2 | 200 | 32.5% | 0.9 | Sparse Compound-binds-Gene first hop — recall-limited |
+| disease_compound_via_gene | 3 | 132 | 79.5% | 19.2 | |
 
-compound_gene_disease 31% is a graph-structure ceiling: Hetionet has sparse Compound→binds→Gene edges. AvgTyped=0.9 means most queries find <1 typed candidate after the first hop. Not a tuning problem.
+Note: ~2pp run-to-run variance expected from 64-dim random embeddings (no sentence-transformers on Hetionet yet).
+compound_gene_disease ~32% is a graph-structure ceiling: AvgTyped=0.9 means most queries find <1 typed candidate after the first hop. Not a tuning problem.
 
 ### Phase 165 — Legacy Single-Template Result (disease_gene_pathway only)
 
