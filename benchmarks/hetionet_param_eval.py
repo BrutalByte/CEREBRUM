@@ -6,23 +6,34 @@ in the exact format parsed by cerebrum_tuner.py:
 
   {hop}-hop  {n:>7,} {h1:>8.4f} {h10:>9.4f} {mrr:>8.4f}
 
-The 3-hop line is the objective function the tuner reads.
+Performance optimizations vs. hetionet_cerebrum_eval:
+  - max_neighbors cap (default 50): Hetionet Gene nodes have 3K+ neighbors;
+    capping at 50 cuts per-query time 10-60x with minor H@1 loss.
+  - --min-eval-hop 2: skip 1-hop templates (near-ceiling, low tuning signal);
+    halves query count per trial.
+  - Tiered over-fetch: 1-hop=2x, 2-hop=3x, 3-hop=5x top_k.
+  - --workers N: per-question multiprocessing pool; each worker loads its own
+    CerebrumGraph from cache.
 
 Param wiring:
-  trb_factor   -> terminal_relation_boost weight (known per-template terminal rel)
-  gamma + beta -> SDRB: deriver.boost_map(gamma, beta) scales r2 path-consistency boost
+  trb_factor   -> terminal_relation_boost (known per-template terminal rel)
+  gamma + beta -> SDRB: boost_map scales r2 path-consistency boost amplitude
   vote_weight  -> CerebrumGraph.query(vote_weight=...)
   branch_bonus -> CerebrumGraph.query(branch_bonus_weight=...)
-  r2_boost     -> path-consistency boost for multi-hop (penultimate chain relation check)
+  r2_boost     -> penultimate-chain-relation path-consistency multiplier
   idf_weight   -> post-query IDF frequency penalty on answer entities
-  fhrb_factor  -> initial_relation_boost for first chain relation (2+ hop)
+  fhrb_factor  -> initial_relation_boost for chain[0] (2+ hop only)
   beam_width   -> traversal beam width
 
 Usage:
+  # Tuner-mode (fast): skip 1-hop, 50 questions, max_neighbors=50, 8 workers
   python -u benchmarks/hetionet_param_eval.py \\
-      --beam-width 12 --trb-factor 3.0 --gamma 2.3 --beta 1.0 \\
-      --vote-weight 0.79 --idf-weight 0.04 --branch-bonus 0.17 \\
-      --fhrb-factor 1.5 --r2-boost 3.0 --n-questions 100 --workers 8
+      --n-questions 50 --workers 8 --min-eval-hop 2 --max-neighbors 50 \\
+      --gamma 2.3 --beta 1.0
+
+  # Full validation (accurate): all hops, 200 questions, max_neighbors=200
+  python -u benchmarks/hetionet_param_eval.py \\
+      --n-questions 200 --workers 8 --max-neighbors 200
 """
 from __future__ import annotations
 
@@ -39,21 +50,26 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
 # ---------------------------------------------------------------------------
-# Worker-side globals (populated by _worker_init)
+# Over-fetch ratio by hop: enough candidates to survive type-filtering
+# without over-fetching on cheap 1-hop queries.
+# ---------------------------------------------------------------------------
+_OVERFETCH = {1: 2, 2: 3, 3: 5}
+
+
+# ---------------------------------------------------------------------------
+# Worker-side globals (populated by _worker_init in each spawn'd process)
 # ---------------------------------------------------------------------------
 
-_W_GRAPH    = None
-_W_ADAPTER  = None
-_W_ARGS     = None   # (cache_dir_str, beam_width, seed, embeddings)
+_W_GRAPH = None
 
 
 def _worker_init(graph_args: dict) -> None:
-    """Load CerebrumGraph from cache in each worker process."""
-    global _W_GRAPH, _W_ADAPTER, _W_ARGS
-    _W_ARGS = graph_args
-
+    """Load CerebrumGraph from cache inside each worker process."""
+    global _W_GRAPH
     from benchmarks.hetionet_eval import load_hetionet
-    from benchmarks.hetionet_cerebrum_eval import build_cerebrum_graph, CACHE_DIR
+    from benchmarks.hetionet_cerebrum_eval import CACHE_DIR
+    from core.cerebrum import CerebrumGraph
+    from core.embedding_engine import RandomEngine, SentenceEngine
 
     adapter, node_type_map = load_hetionet(use_graph_cache=True)
     G = adapter.to_networkx()
@@ -61,39 +77,45 @@ def _worker_init(graph_args: dict) -> None:
         if node in G.nodes:
             G.nodes[node]["type"] = ntype
 
-    cache_dir = CACHE_DIR / "cerebrum" if graph_args.get("use_cache", True) else None
-    _W_GRAPH = build_cerebrum_graph(
-        adapter        = adapter,
-        embedding_mode = graph_args.get("embeddings", "random"),
-        cache_dir      = cache_dir,
-        n_trials       = 1,
-        seed           = graph_args.get("seed", 42),
-        beam_width     = graph_args.get("beam_width", 12),
-        max_hop        = 3,
+    if graph_args.get("embeddings") == "sentence":
+        try:
+            engine = SentenceEngine()
+        except ImportError:
+            engine = RandomEngine(dim=64)
+    else:
+        engine = RandomEngine(dim=64)
+
+    graph = CerebrumGraph(
+        adapter         = adapter,
+        embedding_engine= engine,
+        beam_width      = graph_args.get("beam_width", 12),
+        max_hop         = 3,
+        max_neighbors   = graph_args.get("max_neighbors", 50),
     )
-    _W_ADAPTER = adapter
+    cache_dir = str(CACHE_DIR / "cerebrum") if graph_args.get("use_cache", True) else None
+    graph.build(cache_dir=cache_dir, n_trials=1, seed=graph_args.get("seed", 42),
+                community_engine="dscf")
+    _W_GRAPH = graph
 
 
 def _worker_process_question(task: tuple) -> tuple:
-    """
-    Process one question.  Returns (q_idx, template, h1, h10, mrr, answered).
-    """
+    """Process one question. Returns (q_idx, template, h1, h10, mrr, answered)."""
     (q_idx, template, seed, correct_answers,
-     hop, answer_type, trb, fhrb, penultimate_rel, penultimate_idx,
+     hop, answer_type, trb, fhrb,
+     penultimate_rel, penultimate_idx,
      boost_map, r2_boost, idf_weight, freq_ctr_items,
      vote_weight, branch_bonus, top_k) = task
 
-    graph = _W_GRAPH
-    if graph is None:
+    if _W_GRAPH is None:
         return (q_idx, template, 0.0, 0.0, 0.0, False)
 
-    # Reconstruct freq_ctr from passed items (Counter not always picklable on old Python)
-    freq_ctr = dict(freq_ctr_items) if freq_ctr_items else {}
+    freq_ctr  = dict(freq_ctr_items) if freq_ctr_items else {}
+    overfetch = _OVERFETCH.get(hop, 5) * top_k
 
     try:
-        answers_obj = graph.query(
+        answers_obj = _W_GRAPH.query(
             seeds                   = [seed],
-            top_k                   = top_k * 5,
+            top_k                   = overfetch,
             min_hop                 = hop,
             max_hop                 = hop,
             terminal_relation_boost = trb,
@@ -105,14 +127,12 @@ def _worker_process_question(task: tuple) -> tuple:
     except Exception:
         return (q_idx, template, 0.0, 0.0, 0.0, False)
 
-    answers_obj = [
-        a for a in answers_obj
-        if a.entity_id.startswith(f"{answer_type}::")
-    ]
+    answers_obj = [a for a in answers_obj if a.entity_id.startswith(f"{answer_type}::")]
     if not answers_obj:
         return (q_idx, template, 0.0, 0.0, 0.0, False)
 
-    # r2 path-consistency + SDRB
+    # r2 path-consistency: boost answers whose penultimate hop uses the
+    # expected chain relation; scale boost by SDRB amplitude for that relation.
     if penultimate_rel is not None:
         eff_r2 = boost_map.get(penultimate_rel, r2_boost) if boost_map else r2_boost
         changed = False
@@ -125,7 +145,7 @@ def _worker_process_question(task: tuple) -> tuple:
         if changed:
             answers_obj.sort(key=lambda a: a.score, reverse=True)
 
-    # IDF penalty
+    # IDF hub-entity penalty
     if idf_weight > 0.0 and freq_ctr:
         for a in answers_obj:
             freq = freq_ctr.get(a.entity_id, 1)
@@ -135,22 +155,24 @@ def _worker_process_question(task: tuple) -> tuple:
     pred = [a.entity_id for a in answers_obj][:top_k]
 
     from benchmarks.metaqa_eval import hits_at_k, reciprocal_rank
-    h1  = float(hits_at_k(pred, correct_answers, k=1))
-    h10 = float(hits_at_k(pred, correct_answers, k=10))
-    mrr = float(reciprocal_rank(pred, correct_answers))
-    return (q_idx, template, h1, h10, mrr, True)
+    return (
+        q_idx, template,
+        float(hits_at_k(pred, correct_answers, k=1)),
+        float(hits_at_k(pred, correct_answers, k=10)),
+        float(reciprocal_rank(pred, correct_answers)),
+        True,
+    )
 
 
 # ---------------------------------------------------------------------------
 # Template chain configuration
 # ---------------------------------------------------------------------------
 
-def _get_template_chains() -> Dict[str, List[str]]:
-    from benchmarks.hetionet_cerebrum_eval import QA_TEMPLATES_FIXED
-    return {
-        name: list(chain)
-        for name, (_, _, _, chain) in QA_TEMPLATES_FIXED.items()
-    }
+def _get_template_meta() -> Tuple[Dict, Dict, Dict, Dict]:
+    """Return (QA_TEMPLATES_FIXED, TEMPLATE_ANSWER_TYPE, TEMPLATE_HOP, chains)."""
+    from benchmarks.hetionet_cerebrum_eval import QA_TEMPLATES_FIXED, TEMPLATE_ANSWER_TYPE, TEMPLATE_HOP
+    chains = {name: list(chain) for name, (_, _, _, chain) in QA_TEMPLATES_FIXED.items()}
+    return QA_TEMPLATES_FIXED, TEMPLATE_ANSWER_TYPE, TEMPLATE_HOP, chains
 
 
 # ---------------------------------------------------------------------------
@@ -158,12 +180,12 @@ def _get_template_chains() -> Dict[str, List[str]]:
 # ---------------------------------------------------------------------------
 
 def _build_answer_freq(
-    qa_by_template: Dict[str, List[Tuple[str, List[str]]]],
-    template_chains: Dict[str, List[str]],
+    qa_by_template: Dict[str, List[Tuple]],
+    chains: Dict[str, List[str]],
 ) -> Dict[str, Counter]:
     freq: Dict[str, Counter] = defaultdict(Counter)
     for name, qa_pairs in qa_by_template.items():
-        terminal_rel = template_chains[name][-1]
+        terminal_rel = chains[name][-1]
         for _, correct_answers in qa_pairs:
             for ans in correct_answers:
                 freq[terminal_rel][ans] += 1
@@ -171,36 +193,69 @@ def _build_answer_freq(
 
 
 # ---------------------------------------------------------------------------
+# Local graph builder (exposes max_neighbors unlike build_cerebrum_graph)
+# ---------------------------------------------------------------------------
+
+def _build_graph(adapter, *, beam_width: int, max_neighbors: int,
+                 embeddings: str, cache_dir: Optional[Path], seed: int):
+    from core.cerebrum import CerebrumGraph
+    from core.embedding_engine import RandomEngine, SentenceEngine
+
+    if embeddings == "sentence":
+        try:
+            engine = SentenceEngine()
+            print(f"  Using SentenceEngine ({engine.dim}-dim)")
+        except ImportError:
+            print("  sentence-transformers not installed — falling back to RandomEngine")
+            engine = RandomEngine(dim=64)
+    else:
+        engine = RandomEngine(dim=64)
+        print(f"  Using RandomEngine (64-dim)")
+
+    graph = CerebrumGraph(
+        adapter          = adapter,
+        embedding_engine = engine,
+        beam_width       = beam_width,
+        max_hop          = 3,
+        max_neighbors    = max_neighbors,
+    )
+    if cache_dir:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+    t0 = time.time()
+    graph.build(
+        cache_dir      = str(cache_dir) if cache_dir else None,
+        n_trials       = 1,
+        seed           = seed,
+        community_engine = "dscf",
+    )
+    print(f"  CerebrumGraph built in {time.time()-t0:.1f}s")
+    return graph
+
+
+# ---------------------------------------------------------------------------
 # Serial per-template evaluation (workers=1 path)
 # ---------------------------------------------------------------------------
 
-def _evaluate_template_serial(
-    graph,
-    template: str,
-    qa_pairs: List[Tuple[str, List[str]]],
-    boost_map: dict,
-    answer_freq: Dict[str, Counter],
-    template_chains: Dict[str, List[str]],
-    *,
-    trb_factor: float,
-    r2_boost: float,
-    idf_weight: float,
-    vote_weight: float,
-    branch_bonus: float,
-    top_k: int,
+def _eval_template_serial(
+    graph, template: str, qa_pairs: List[Tuple],
+    boost_map: dict, answer_freq: Dict[str, Counter],
+    chains: Dict[str, List[str]],
+    TEMPLATE_ANSWER_TYPE: Dict, TEMPLATE_HOP: Dict,
+    *, trb_factor: float, r2_boost: float, idf_weight: float,
+    vote_weight: float, branch_bonus: float, fhrb_factor: float, top_k: int,
 ) -> Dict:
-    from benchmarks.hetionet_cerebrum_eval import TEMPLATE_ANSWER_TYPE, TEMPLATE_HOP
     from benchmarks.metaqa_eval import hits_at_k, reciprocal_rank
 
     hop          = TEMPLATE_HOP[template]
     answer_type  = TEMPLATE_ANSWER_TYPE[template]
-    chain        = template_chains[template]
+    chain        = chains[template]
     terminal_rel = chain[-1]
     trb          = {terminal_rel: trb_factor}
-    fhrb         = {chain[0]: 1.0} if hop >= 2 else None  # fhrb embedded in boost_map path
+    fhrb         = ({chain[0]: fhrb_factor} if hop >= 2 and fhrb_factor > 0.0 else None)
     penultimate_rel = chain[-2] if hop >= 2 else None
     penultimate_idx = (hop - 1) * 2 - 1 if hop >= 2 else -1
-    freq_ctr = answer_freq.get(terminal_rel)
+    freq_ctr     = answer_freq.get(terminal_rel)
+    overfetch    = _OVERFETCH.get(hop, 5) * top_k
 
     h1 = h10 = 0
     mrr_sum = 0.0
@@ -214,7 +269,7 @@ def _evaluate_template_serial(
 
         answers_obj = graph.query(
             seeds                   = [seed],
-            top_k                   = top_k * 5,
+            top_k                   = overfetch,
             min_hop                 = hop,
             max_hop                 = hop,
             terminal_relation_boost = trb,
@@ -247,18 +302,18 @@ def _evaluate_template_serial(
 
         pred = [a.entity_id for a in answers_obj][:top_k]
         n_answered += 1
-        h1         += hits_at_k(pred, correct_answers, k=1)
-        h10        += hits_at_k(pred, correct_answers, k=10)
-        mrr_sum    += reciprocal_rank(pred, correct_answers)
+        h1  += hits_at_k(pred, correct_answers, k=1)
+        h10 += hits_at_k(pred, correct_answers, k=10)
+        mrr_sum += reciprocal_rank(pred, correct_answers)
 
     print()
     n = len(qa_pairs)
     return {
-        "template":  template, "hop": hop,
-        "n_total":   n, "n_answered": n_answered,
-        "hits_1":    h1 / n if n else 0.0,
-        "hits_10":   h10 / n if n else 0.0,
-        "mrr":       mrr_sum / n if n else 0.0,
+        "template": template, "hop": hop,
+        "n_total": n, "n_answered": n_answered,
+        "hits_1":  h1 / n if n else 0.0,
+        "hits_10": h10 / n if n else 0.0,
+        "mrr":     mrr_sum / n if n else 0.0,
         "elapsed_s": time.time() - t0,
     }
 
@@ -271,47 +326,54 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Phase 206: Parametric Hetionet benchmark (tuner-compatible)",
     )
-    parser.add_argument("--n-questions", type=int,  default=100,
+    # Run control
+    parser.add_argument("--n-questions",   type=int, default=100,
                         help="Questions per template (default 100)")
-    parser.add_argument("--top-k",       type=int,  default=10)
-    parser.add_argument("--seed",        type=int,  default=42)
-    parser.add_argument("--embeddings",  choices=["random", "sentence"], default="random")
-    parser.add_argument("--use-cache",   action="store_true", default=True)
-    parser.add_argument("--no-cache",    action="store_true")
-    parser.add_argument("--no-download", action="store_true")
-    parser.add_argument("--template",    type=str,  default=None,
-                        help="Evaluate a single template (default: all 6)")
-    parser.add_argument("--workers",     type=int,  default=1,
-                        help="Parallel worker processes (default 1). Each worker loads "
-                             "its own CerebrumGraph from cache.")
+    parser.add_argument("--top-k",         type=int, default=10)
+    parser.add_argument("--seed",          type=int, default=42)
+    parser.add_argument("--embeddings",    choices=["random", "sentence"], default="random")
+    parser.add_argument("--use-cache",     action="store_true", default=True)
+    parser.add_argument("--no-cache",      action="store_true")
+    parser.add_argument("--no-download",   action="store_true")
+    parser.add_argument("--template",      type=str, default=None,
+                        help="Single template to evaluate (default: all)")
+    parser.add_argument("--workers",       type=int, default=1,
+                        help="Worker processes (default 1). Each loads graph from cache.")
+    parser.add_argument("--min-eval-hop",  type=int, default=1,
+                        help="Skip templates below this hop depth (default 1 = all). "
+                             "Use 2 for tuner runs to skip near-ceiling 1-hop templates.")
+    parser.add_argument("--max-neighbors", type=int, default=50,
+                        help="Per-node neighbor cap in traversal (default 50). "
+                             "Hetionet Gene nodes have 3K+ neighbors — cap cuts query "
+                             "time 10-60x. Use 200 for final validation.")
     # All 9 tunable params
-    parser.add_argument("--beam-width",   type=int,   default=12)
-    parser.add_argument("--trb-factor",   type=float, default=3.0)
-    parser.add_argument("--gamma",        type=float, default=2.30)
-    parser.add_argument("--beta",         type=float, default=1.0)
-    parser.add_argument("--vote-weight",  type=float, default=0.79)
-    parser.add_argument("--branch-bonus", type=float, default=0.17)
-    parser.add_argument("--r2-boost",     type=float, default=3.0)
-    parser.add_argument("--idf-weight",   type=float, default=0.04)
-    parser.add_argument("--fhrb-factor",  type=float, default=1.5)
+    parser.add_argument("--beam-width",    type=int,   default=12)
+    parser.add_argument("--trb-factor",    type=float, default=3.0)
+    parser.add_argument("--gamma",         type=float, default=2.30)
+    parser.add_argument("--beta",          type=float, default=1.0)
+    parser.add_argument("--vote-weight",   type=float, default=0.79)
+    parser.add_argument("--branch-bonus",  type=float, default=0.17)
+    parser.add_argument("--r2-boost",      type=float, default=3.0)
+    parser.add_argument("--idf-weight",    type=float, default=0.04)
+    parser.add_argument("--fhrb-factor",   type=float, default=1.5)
     args = parser.parse_args()
 
     if args.no_cache:
         args.use_cache = False
 
     print("\n=== CEREBRUM Phase 206: Parametric Hetionet Benchmark ===\n")
-    print(f"  beam_width={args.beam_width}  trb_factor={args.trb_factor}  "
-          f"gamma={args.gamma}  beta={args.beta}")
+    print(f"  beam_width={args.beam_width}  max_neighbors={args.max_neighbors}  "
+          f"trb_factor={args.trb_factor}")
+    print(f"  gamma={args.gamma}  beta={args.beta}  r2_boost={args.r2_boost}")
     print(f"  vote_weight={args.vote_weight}  branch_bonus={args.branch_bonus}  "
-          f"r2_boost={args.r2_boost}")
-    print(f"  idf_weight={args.idf_weight}  fhrb_factor={args.fhrb_factor}")
-    print(f"  n_questions={args.n_questions}  workers={args.workers}  "
-          f"embeddings={args.embeddings}\n")
+          f"idf_weight={args.idf_weight}  fhrb_factor={args.fhrb_factor}")
+    print(f"  n_questions={args.n_questions}  min_eval_hop={args.min_eval_hop}  "
+          f"workers={args.workers}  embeddings={args.embeddings}\n")
 
-    from benchmarks.hetionet_eval import JSON_FILE, download_hetionet, load_hetionet, generate_hetionet_qa
-    from benchmarks.hetionet_cerebrum_eval import (
-        QA_TEMPLATES_FIXED, TEMPLATE_ANSWER_TYPE, TEMPLATE_HOP, CACHE_DIR, build_cerebrum_graph,
+    from benchmarks.hetionet_eval import (
+        JSON_FILE, download_hetionet, load_hetionet, generate_hetionet_qa,
     )
+    from benchmarks.hetionet_cerebrum_eval import CACHE_DIR
     from core.relation_boost_deriver import RelationBoostDeriver
     import benchmarks.hetionet_eval as _heval
 
@@ -320,7 +382,7 @@ def main() -> None:
     # ------------------------------------------------------------------
     if not JSON_FILE.exists():
         if args.no_download:
-            print(f"ERROR: {JSON_FILE} not found and --no-download specified.")
+            print("ERROR: hetionet JSON not found and --no-download specified.")
             sys.exit(1)
         download_hetionet()
 
@@ -333,191 +395,181 @@ def main() -> None:
     print(f"  {G.number_of_nodes():,} nodes, {G.number_of_edges():,} edges\n")
 
     # ------------------------------------------------------------------
-    # Main-process CerebrumGraph (used for serial path or graph cache warmup)
+    # Build main-process CerebrumGraph (warms cache for workers)
     # ------------------------------------------------------------------
-    print("Building CerebrumGraph (main process)...")
+    print(f"Building CerebrumGraph (max_neighbors={args.max_neighbors})...")
     cache_dir = CACHE_DIR / "cerebrum" if args.use_cache else None
-    graph = build_cerebrum_graph(
-        adapter        = adapter,
-        embedding_mode = args.embeddings,
-        cache_dir      = cache_dir,
-        n_trials       = 1,
-        seed           = args.seed,
-        beam_width     = args.beam_width,
-        max_hop        = 3,
+    graph = _build_graph(
+        adapter,
+        beam_width    = args.beam_width,
+        max_neighbors = args.max_neighbors,
+        embeddings    = args.embeddings,
+        cache_dir     = cache_dir,
+        seed          = args.seed,
     )
     print()
 
     # ------------------------------------------------------------------
-    # RelationBoostDeriver (SDRB)
+    # RelationBoostDeriver
     # ------------------------------------------------------------------
     print("Building RelationBoostDeriver...")
     deriver = RelationBoostDeriver()
-    deriver.build_from_triples(
-        (u, d["relation"], v) for u, v, d in G.edges(data=True)
-    )
+    deriver.build_from_triples((u, d["relation"], v) for u, v, d in G.edges(data=True))
     max_fo, mean_fo, _, n_rels = deriver.fan_out_stats()
     boost_map = deriver.boost_map(args.gamma, args.beta) if deriver.is_built else {}
     print(f"  {n_rels} relations  mean_fo={mean_fo:.2f}  max_fo={max_fo:.2f}\n")
 
     # ------------------------------------------------------------------
-    # Templates
+    # Template metadata
     # ------------------------------------------------------------------
-    template_chains = _get_template_chains()
+    QA_TEMPLATES_FIXED, TEMPLATE_ANSWER_TYPE, TEMPLATE_HOP, chains = _get_template_meta()
 
     if args.template:
         if args.template not in QA_TEMPLATES_FIXED:
-            print(f"ERROR: unknown template '{args.template}'")
+            print(f"ERROR: unknown template '{args.template}'. Options: "
+                  f"{', '.join(QA_TEMPLATES_FIXED.keys())}")
             sys.exit(1)
         templates = [args.template]
     else:
-        templates = list(QA_TEMPLATES_FIXED.keys())
+        templates = [
+            name for name in QA_TEMPLATES_FIXED
+            if TEMPLATE_HOP[name] >= args.min_eval_hop
+        ]
+
+    print(f"Templates to evaluate ({len(templates)}): {', '.join(templates)}\n")
 
     # ------------------------------------------------------------------
     # Generate QA pairs
     # ------------------------------------------------------------------
-    _orig_templates = _heval.QA_TEMPLATES
+    _orig = _heval.QA_TEMPLATES
     _heval.QA_TEMPLATES = QA_TEMPLATES_FIXED
-    qa_by_template: Dict[str, List[Tuple[str, List[str]]]] = {}
+    qa_by_template: Dict[str, List] = {}
     print("Generating QA pairs...")
     for name in templates:
         qa_by_template[name] = generate_hetionet_qa(
             G=G, template=name, n_questions=args.n_questions, seed=args.seed,
         )
         print(f"  {name}: {len(qa_by_template[name])} pairs")
-    _heval.QA_TEMPLATES = _orig_templates
+    _heval.QA_TEMPLATES = _orig
     print()
 
-    answer_freq = _build_answer_freq(qa_by_template, template_chains)
+    answer_freq = _build_answer_freq(qa_by_template, chains)
 
     # ------------------------------------------------------------------
     # Evaluate — parallel or serial
     # ------------------------------------------------------------------
     all_results: List[Dict] = []
+    t0_eval = time.time()
 
     if args.workers > 1:
-        # Build task list across all templates
+        # Build per-question task list
         tasks = []
         for name in templates:
-            qa_pairs = qa_by_template[name]
+            qa_pairs = qa_by_template.get(name, [])
             if not qa_pairs:
                 continue
             hop          = TEMPLATE_HOP[name]
             answer_type  = TEMPLATE_ANSWER_TYPE[name]
-            chain        = template_chains[name]
+            chain        = chains[name]
             terminal_rel = chain[-1]
             trb          = {terminal_rel: args.trb_factor}
-            fhrb         = ({chain[0]: args.fhrb_factor} if hop >= 2 and args.fhrb_factor > 0 else None)
+            fhrb         = ({chain[0]: args.fhrb_factor}
+                            if hop >= 2 and args.fhrb_factor > 0.0 else None)
             penultimate_rel = chain[-2] if hop >= 2 else None
             penultimate_idx = (hop - 1) * 2 - 1 if hop >= 2 else -1
-            freq_ctr_items  = list(answer_freq.get(terminal_rel, {}).items())
-
+            freq_items      = list(answer_freq.get(terminal_rel, {}).items())
             for q_idx, (seed, correct_answers) in enumerate(qa_pairs):
                 tasks.append((
                     q_idx, name, seed, correct_answers,
                     hop, answer_type, trb, fhrb,
                     penultimate_rel, penultimate_idx,
-                    boost_map, args.r2_boost, args.idf_weight, freq_ctr_items,
+                    boost_map, args.r2_boost, args.idf_weight, freq_items,
                     args.vote_weight, args.branch_bonus, args.top_k,
                 ))
 
         graph_args = {
             "use_cache": args.use_cache, "embeddings": args.embeddings,
             "seed": args.seed, "beam_width": args.beam_width,
+            "max_neighbors": args.max_neighbors,
         }
-        print(f"  Launching {args.workers} worker processes ({len(tasks)} tasks)...")
-        t0_all = time.time()
+        print(f"  Launching {args.workers} workers ({len(tasks)} tasks)...")
         ctx = mp.get_context("spawn")
         with ctx.Pool(
             processes   = args.workers,
             initializer = _worker_init,
             initargs    = (graph_args,),
         ) as pool:
-            raw_results = pool.map(_worker_process_question, tasks, chunksize=4)
-        print(f"  Workers done in {time.time()-t0_all:.1f}s\n")
+            raw = pool.map(_worker_process_question, tasks, chunksize=4)
+        print(f"  Workers done in {time.time()-t0_eval:.1f}s\n")
 
-        # Aggregate per template
-        from collections import defaultdict as _dd
-        buckets: Dict[str, Dict] = {}
-        for name in templates:
-            if qa_by_template.get(name):
-                buckets[name] = {
-                    "h1": 0.0, "h10": 0.0, "mrr": 0.0, "n_answered": 0,
-                    "n_total": len(qa_by_template[name]),
-                    "hop": TEMPLATE_HOP[name],
-                }
-        for (q_idx, tname, h1, h10, mrr, answered) in raw_results:
-            if tname not in buckets:
-                continue
-            b = buckets[tname]
-            b["h1"]  += h1
-            b["h10"] += h10
-            b["mrr"] += mrr
-            if answered:
-                b["n_answered"] += 1
+        buckets: Dict[str, Dict] = {
+            name: {"h1": 0.0, "h10": 0.0, "mrr": 0.0, "n_answered": 0,
+                   "n_total": len(qa_by_template[name]), "hop": TEMPLATE_HOP[name]}
+            for name in templates if qa_by_template.get(name)
+        }
+        for (_, tname, h1, h10, mrr, answered) in raw:
+            if tname in buckets:
+                b = buckets[tname]
+                b["h1"] += h1; b["h10"] += h10; b["mrr"] += mrr
+                if answered:
+                    b["n_answered"] += 1
 
         for name, b in buckets.items():
             n = b["n_total"]
             all_results.append({
-                "template":  name,
-                "hop":       b["hop"],
-                "n_total":   n,
-                "n_answered":b["n_answered"],
-                "hits_1":    b["h1"] / n if n else 0.0,
-                "hits_10":   b["h10"] / n if n else 0.0,
-                "mrr":       b["mrr"] / n if n else 0.0,
-                "elapsed_s": time.time() - t0_all,
+                "template": name, "hop": b["hop"],
+                "n_total": n, "n_answered": b["n_answered"],
+                "hits_1":  b["h1"]  / n if n else 0.0,
+                "hits_10": b["h10"] / n if n else 0.0,
+                "mrr":     b["mrr"] / n if n else 0.0,
+                "elapsed_s": time.time() - t0_eval,
             })
 
     else:
-        # Serial path
         for name in templates:
-            qa_pairs = qa_by_template[name]
+            qa_pairs = qa_by_template.get(name, [])
             if not qa_pairs:
                 print(f"  Skipping {name}: no QA pairs")
                 continue
-            hop = TEMPLATE_HOP[name]
-            print(f"  Evaluating {name} ({hop}-hop, {len(qa_pairs)} questions)...")
-            result = _evaluate_template_serial(
-                graph         = graph,
-                template      = name,
-                qa_pairs      = qa_pairs,
-                boost_map     = boost_map,
-                answer_freq   = answer_freq,
-                template_chains = template_chains,
-                trb_factor    = args.trb_factor,
-                r2_boost      = args.r2_boost,
-                idf_weight    = args.idf_weight,
-                vote_weight   = args.vote_weight,
-                branch_bonus  = args.branch_bonus,
-                top_k         = args.top_k,
-            )
-            all_results.append(result)
+            print(f"  Evaluating {name} ({TEMPLATE_HOP[name]}-hop, "
+                  f"{len(qa_pairs)} questions)...")
+            all_results.append(_eval_template_serial(
+                graph, name, qa_pairs, boost_map, answer_freq, chains,
+                TEMPLATE_ANSWER_TYPE, TEMPLATE_HOP,
+                trb_factor  = args.trb_factor,
+                r2_boost    = args.r2_boost,
+                idf_weight  = args.idf_weight,
+                vote_weight = args.vote_weight,
+                branch_bonus= args.branch_bonus,
+                fhrb_factor = args.fhrb_factor,
+                top_k       = args.top_k,
+            ))
 
     # ------------------------------------------------------------------
     # Aggregate by hop level
     # ------------------------------------------------------------------
-    hop_buckets: Dict[int, List[Dict]] = defaultdict(list)
+    hop_buckets: Dict[int, List] = defaultdict(list)
     for r in all_results:
         hop_buckets[r["hop"]].append(r)
 
     hop_metrics: Dict[int, Dict] = {}
     for hop, rows in sorted(hop_buckets.items()):
         total_n = sum(r["n_total"] for r in rows)
-        if total_n == 0:
+        if not total_n:
             continue
-        h1  = sum(r["hits_1"]  * r["n_total"] for r in rows) / total_n
-        h10 = sum(r["hits_10"] * r["n_total"] for r in rows) / total_n
-        mrr = sum(r["mrr"]     * r["n_total"] for r in rows) / total_n
         hop_metrics[hop] = {
-            "hop": hop, "n_total": total_n,
-            "hits_1": h1, "hits_10": h10, "mrr": mrr,
+            "hop":     hop,
+            "n_total": total_n,
+            "hits_1":  sum(r["hits_1"]  * r["n_total"] for r in rows) / total_n,
+            "hits_10": sum(r["hits_10"] * r["n_total"] for r in rows) / total_n,
+            "mrr":     sum(r["mrr"]     * r["n_total"] for r in rows) / total_n,
         }
 
     # ------------------------------------------------------------------
     # Summary — tuner-parseable output
     # ------------------------------------------------------------------
-    print("\n=== Results Summary ===\n")
+    total_elapsed = time.time() - t0_eval
+    print(f"\n=== Results Summary  ({total_elapsed:.0f}s eval) ===\n")
     print(f"  {'Hop':<6} {'N':>7} {'Hits@1':>8} {'Hits@10':>9} {'MRR':>8}")
     print(f"  {'-'*6} {'-'*7} {'-'*8} {'-'*9} {'-'*8}")
     for hop in sorted(hop_metrics):
@@ -529,16 +581,16 @@ def main() -> None:
 
     if len(templates) > 1:
         print("\n  Per-template breakdown:")
-        print(f"  {'Template':<32} {'Hop':>3} {'N':>6} {'H@1':>7} {'H@10':>7} {'MRR':>7}")
-        print(f"  {'-'*32} {'-'*3} {'-'*6} {'-'*7} {'-'*7} {'-'*7}")
-        for r in sorted(all_results, key=lambda x: x["hop"]):
+        print(f"  {'Template':<32} {'Hop':>3} {'N':>5} {'H@1':>7} {'H@10':>7} {'MRR':>7}")
+        print(f"  {'-'*32} {'-'*3} {'-'*5} {'-'*7} {'-'*7} {'-'*7}")
+        for r in sorted(all_results, key=lambda x: (x["hop"], x["template"])):
             print(
-                f"  {r['template']:<32} {r['hop']:>3} {r['n_total']:>6,} "
+                f"  {r['template']:<32} {r['hop']:>3} {r['n_total']:>5,} "
                 f"{r['hits_1']*100:>6.1f}% {r['hits_10']*100:>6.1f}% "
                 f"{r['mrr']*100:>6.1f}%"
             )
 
 
 if __name__ == "__main__":
-    mp.freeze_support()   # required for Windows spawn + PyInstaller
+    mp.freeze_support()
     main()

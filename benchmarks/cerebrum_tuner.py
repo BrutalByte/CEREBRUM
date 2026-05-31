@@ -484,7 +484,7 @@ def _run_eval_logged(
 ) -> tuple[float, float, float, float]:
     dataset = kwargs.get("dataset", "metaqa")
     if dataset == "hetionet":
-        n_questions = kwargs.get("sample", 100)
+        n_questions = kwargs.get("sample", 50)
         cmd = [
             sys.executable, "-u", str(_HETIONET_EVAL_SCRIPT),
             "--n-questions",  str(n_questions),
@@ -498,6 +498,8 @@ def _run_eval_logged(
             "--gamma",        str(kwargs["gamma"]),
             "--beta",         str(kwargs["beta"]),
             "--workers",      str(kwargs.get("workers", 1)),
+            "--min-eval-hop", "2",   # skip near-ceiling 1-hop in tuning
+            "--max-neighbors","50",  # cap high-fan-out nodes (Gene: 3K+ neighbors)
         ]
     else:
         sample = kwargs["sample"]

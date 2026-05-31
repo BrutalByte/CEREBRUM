@@ -774,9 +774,20 @@ class CerebrumGraph:
         # 2. Structural & Temporal Enrichment (Phase 33)
         # ----------------------------------------------------------
         if callback: callback(0.3, "Step 2/5: Computing Structural Features...")
-        # Compute raw graph features (PageRank, Betweenness, Recency)
-        logger.info("Computing structural features (Phase 33)...")
-        struct_features = compute_structural_features(G, current_time=time.time())
+        _struct_cache = cache / "structural_features.pkl" if cache else None
+        _loaded_struct_from_cache = bool(
+            not force_rebuild and _struct_cache and _struct_cache.exists()
+        )
+        if _loaded_struct_from_cache:
+            logger.info("Loading cached structural features from %s", _struct_cache)
+            with open(_struct_cache, "rb") as _f:
+                struct_features = pickle.load(_f)
+        else:
+            logger.info("Computing structural features (Phase 33)...")
+            struct_features = compute_structural_features(G, current_time=time.time())
+            if _struct_cache:
+                with open(_struct_cache, "wb") as _f:
+                    pickle.dump(struct_features, _f)
 
         # Apply structural enrichment only when embeddings were freshly encoded.
         # When loaded from either cache the enrichment is already baked in.
