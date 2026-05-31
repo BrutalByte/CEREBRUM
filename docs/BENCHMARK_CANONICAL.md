@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.65.1 (Phase 203) — Updated May 29, 2026
+## Version: v2.66.0 (Phase 206) — Updated May 31, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -52,18 +52,58 @@ r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs 
 | **185/186** | **+genre penalty + geom-mean stitch** | **56.12%** | **87.62%** | **0.6704** |
 | **198** | **+11-param Optuna (trb/fhrb/per-relation)** | **57.02%** | **89.2%** | **0.680** |
 | **201** | **+SchemaAwareRelationDetector (SRD)** | **58.90%** | **88.32%** | **0.6930** |
-| **202** | **+SDRB gamma (2000-sample best; full validation pending)** | **~62.55%** | — | — |
-| **203** | **+SDRB beta power-law (tuner in progress)** | TBD | — | — |
+| **202** | **+SDRB gamma (RelationBoostDeriver, 8-param tuner)** | **~62.55%** | — | — |
+| **203/204** | **+SDRB beta power-law (full 14,274-question validation)** | **60.36%** | — | — |
 
 ---
 
-## Hetionet — v2.52.0 (STRB Enabled)
+## Hetionet — Phase 206 (Parametric Multi-Template Eval)
 
-Biomedical KG: 47,031 entities / 2,250,197 edges. Template: `disease_gene_pathway`.
+Biomedical KG: 47,031 entities / 2,250,197 edges.
+
+### Phase 206 — Tuned Parameters (pilot: 50 questions/template, 2+hop templates)
+
+| Metric | 2-hop | 3-hop | Overall | Phase | Notes |
+|--------|-------|-------|---------|-------|-------|
+| Hits@1 | — | — | **44.00%** | 206 | Pilot run (50q/template, 2+ hop) |
+| Hits@10 | — | — | **44.00%** | 206 | |
+| MRR | — | — | **0.4400** | 206 | |
+
+**Phase 206 best parameters (Optuna TPE, 20 trials):**
+```
+trb_factor=22.350  gamma=5.9183  beta=1.8778  r2_boost=4.201
+vote_weight=0.6460  beam_width=8  idf_weight=0.032
+branch_bonus=0.451  fhrb_factor=3.013
+```
+
+**Canonical eval command (2+hop templates, 50q/template):**
+```bash
+python -u benchmarks/hetionet_param_eval.py \
+    --n-questions 50 --min-eval-hop 2 --max-neighbors 50 --workers 8 \
+    --beam-width 8 --trb-factor 22.350 --gamma 5.9183 --beta 1.8778 \
+    --r2-boost 4.201 --vote-weight 0.6460 --idf-weight 0.032 \
+    --branch-bonus 0.451 --fhrb-factor 3.013
+```
+
+**Phase 206 fANOVA parameter importances:**
+
+| Parameter | Importance | Bar |
+|-----------|-----------|-----|
+| vote_weight | 0.5651 | ██████████████████████ |
+| beam_width | 0.1536 | ██████ |
+| gamma | 0.0534 | ██ |
+| idf_weight | 0.0450 | █ |
+| fhrb_factor | 0.0436 | █ |
+| r2_boost | 0.0425 | █ |
+| trb_factor | 0.0404 | █ |
+| branch_bonus | 0.0367 | █ |
+| beta | 0.0197 | |
+
+### Phase 165 — Legacy Single-Template Result (disease_gene_pathway only)
 
 | Metric | Value | Phase | Notes |
 |--------|-------|-------|-------|
-| Hits@1 | 61% | 165 | TRB + STRB enabled |
+| Hits@1 | 61% | 165 | TRB + STRB, single template only |
 | Hits@10 | 85% | 165 | |
 | MRR | 0.72 | 165 | |
 | BFS baseline | 0.8% | 165 | No TRB — confirms TRB necessity |
@@ -247,4 +287,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-05-29 | Phases 185/186/198/201/202/203 progression rows added | Phase 201 row added to comparison table | Phase 53 canonical paper numbers unchanged*
+*Last updated: 2026-05-31 | Phase 203/204 MetaQA validated (60.36% H@1) | Phase 206 Hetionet parametric eval added (44.00% H@1 pilot) | fANOVA table added | Phase 53 canonical paper numbers unchanged*

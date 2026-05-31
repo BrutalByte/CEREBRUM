@@ -42,17 +42,32 @@ IDF_SCALE_C: float = 0.0102   # degree_cv × IDF_SCALE_C → idf_weight
 VOTE_BASE: float   = 0.72     # vote_weight lower bound (Q=0 → community uninformative)
 VOTE_Q_SCALE: float = 0.15    # sensitivity to modularity: 0.72 at Q=0, 0.87 at Q=1
 
-# gamma — universal BOOST_SCALE formula
+# gamma — regime-specific BOOST_SCALE formula
 # SDRB scoring: score *= (1 + boost), where boost(r) = gamma * fan_out(r)^beta.
-# BOOST_SCALE targets the mean boost across all relations at ~21.8 for all KBs:
-#   gamma = BOOST_SCALE / mean_fan_out^beta
-# Calibration: MetaQA Phase 204 — gamma=8.73, mean_fo=1.55, beta=2.085
-#   BOOST_SCALE = 8.73 * 1.55^2.085 = 21.79
-# This gives Hetionet (mean_fo=9.46, beta=1.0): gamma = 21.79/9.46 = 2.30
-# compared to the unstable old formula which gave gamma=39 for Hetionet.
-BOOST_SCALE: float = 21.79    # universal — derived from Phase 204 MetaQA validation
-GAMMA_MIN:   float = 0.5     # floor: prevents degenerate near-zero gamma on KBs
-                              # with extreme fan_out (e.g. mean_fo > 50)
+# Formula: gamma = BOOST_SCALE[regime] / mean_fan_out^beta
+#
+# BOOST_SCALE is NOT universal — it varies significantly by regime because
+# mean_fo^beta grows super-linearly with fan_out as beta increases:
+#
+#   hub_homogeneous (MetaQA Phase 204):
+#     gamma=8.73, mean_fo=1.55, beta=2.085 → BOOST_SCALE=21.79
+#
+#   typed_heterogeneous (Hetionet Phase 206 tuner validation):
+#     gamma=5.9183, mean_fo=9.46, beta=1.8778
+#     → BOOST_SCALE = 5.9183 * 9.46^1.8778 = 5.9183 * 68.2 = 403.6
+#     Note: with beta=1.88 on Hetionet's large fan_out, mean_fo^beta=68.2
+#     so BOOST_SCALE must be much larger to produce a usable gamma.
+#
+BOOST_SCALE: float = 21.79    # hub_homogeneous — Phase 204 MetaQA validation
+GAMMA_MIN:   float = 0.5      # floor: prevents degenerate near-zero gamma
+
+# Regime-specific BOOST_SCALE overrides (derived from per-KB calibration).
+# Used in place of the global BOOST_SCALE constant for non-hub regimes.
+_BOOST_SCALE = {
+    "hub_homogeneous":    21.79,   # Phase 204 MetaQA validated
+    "typed_heterogeneous": 403.6,  # Phase 206 Hetionet validated (gamma=5.92, beta=1.88)
+    "mixed":              100.0,   # geometric mean estimate — refine when mixed KB available
+}
 
 # ---------------------------------------------------------------------------
 # Regime-specific constants
@@ -63,32 +78,32 @@ GAMMA_MIN:   float = 0.5     # floor: prevents degenerate near-zero gamma on KBs
 
 _TRB_C = {
     "hub_homogeneous":    9.33,   # 21.486 / log(9+1) — Phase 204 MetaQA
-    "typed_heterogeneous": 6.00,  # lower: typed KBs have fewer competing relations
+    "typed_heterogeneous": 6.94,  # 22.350 / log(24+1) — Phase 206 Hetionet
     "mixed":               7.50,
 }
 
 _BETA = {
     "hub_homogeneous":    2.0,    # Phase 204 best: 2.0846; amplifies hub relations
-    "typed_heterogeneous": 1.0,   # linear — typed KBs have uniform fan_out
-    "mixed":               1.5,
+    "typed_heterogeneous": 1.88,  # Phase 206 Hetionet tuner: 1.8778 (not linear as estimated)
+    "mixed":               1.7,
 }
 
 _BRANCH_BONUS = {
     "hub_homogeneous":    0.48,   # Phase 204 best: 0.482
-    "typed_heterogeneous": 0.17,  # naïve-Bayes log-odds of 2 independent paths agreeing
-    "mixed":               0.30,
+    "typed_heterogeneous": 0.45,  # Phase 206 Hetionet tuner: 0.451
+    "mixed":               0.40,
 }
 
 _R2_C = {
     "hub_homogeneous":    13.50,  # (8.185 - 1.5) / log(5.768/9+1) — Phase 204
-    "typed_heterogeneous":  8.00,
-    "mixed":               10.00,
+    "typed_heterogeneous":  1.68, # (4.201 - 1.5) / log(95.7/24+1) — Phase 206 Hetionet
+    "mixed":               4.00,
 }
 
 _FHRB_C = {
     "hub_homogeneous":    1.18,   # (3.260 - 1.0) / log(5.768+1) — Phase 204
-    "typed_heterogeneous": 0.70,
-    "mixed":               0.90,
+    "typed_heterogeneous": 0.44,  # (3.013 - 1.0) / log(95.7+1) — Phase 206 Hetionet
+    "mixed":               0.70,
 }
 
 
@@ -199,18 +214,18 @@ class ParameterInitializer:
         beta = _BETA[regime]
 
         # ------------------------------------------------------------------
-        # gamma  = BOOST_SCALE / mean_fan_out^beta  (universal formula)
+        # gamma  = _BOOST_SCALE[regime] / mean_fan_out^beta
         #
         # SDRB: score *= (1 + gamma * fan_out(r)^beta)
         # Mean boost across all relations ≈ gamma * mean_fo^beta = BOOST_SCALE
         # → gamma = BOOST_SCALE / mean_fo^beta
         #
-        # This normalizes the SDRB amplitude to the KB's own fan_out scale,
-        # preventing runaway boosts on KBs with large fan_out values (e.g.
-        # Hetionet Gene-participates-BP fan_out=33.6 vs MetaQA max=3.1).
-        # MetaQA check: 21.79 / 1.55^2.0 = 9.06  (validated: 8.73, Δ=3.8%)
+        # BOOST_SCALE is regime-specific (not universal):
+        #   hub_homogeneous:    21.79  (MetaQA Phase 204: 21.79/1.55^2.0 = 9.06, Δ=3.8%)
+        #   typed_heterogeneous: 403.6 (Hetionet Phase 206: 403.6/9.46^1.88 = 5.92, validated)
         # ------------------------------------------------------------------
-        gamma = max(GAMMA_MIN, BOOST_SCALE / (mean_fo ** beta))
+        _bs = _BOOST_SCALE.get(regime, BOOST_SCALE)
+        gamma = max(GAMMA_MIN, _bs / (mean_fo ** beta))
 
         # ------------------------------------------------------------------
         # r2_boost  = 1.5 + C × log(mean_deg / n_rel + 1)
