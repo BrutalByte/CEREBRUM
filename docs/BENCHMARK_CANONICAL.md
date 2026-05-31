@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.66.0 (Phase 206) — Updated May 31, 2026
+## Version: v2.67.0 (Phase 207) — Updated May 31, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -57,11 +57,52 @@ r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs 
 
 ---
 
-## Hetionet — Phase 206 (Parametric Multi-Template Eval)
+## Hetionet — Phase 207 (Tuner Re-run, hop_expand Fixed)
 
 Biomedical KG: 47,031 entities / 2,250,197 edges.
 
-### Phase 206 — Validated Results (100q/template, all hops, hop_expand bug fixed)
+### Phase 207 — Tuner Results (hop_expand bug fixed, properly calibrated params)
+
+**Tuner best:** H@1=61.00% H@10=61.00% MRR=0.6100 (200q/template pilot)
+
+| Parameter | Value |
+|-----------|-------|
+| trb_factor | 19.769 |
+| gamma | 4.9679 |
+| beta | 0.7770 |
+| r2_boost | 3.224 |
+| vote_weight | 0.6047 |
+| beam_width | 8 |
+| idf_weight | 0.039 |
+| branch_bonus | 0.308 |
+| fhrb_factor | 4.658 |
+
+**Canonical eval command:**
+```bash
+python -u benchmarks/hetionet_param_eval.py \
+    --n-questions 200 --min-eval-hop 1 --max-neighbors 200 --workers 8 \
+    --beam-width 8 --trb-factor 19.769 --gamma 4.9679 --beta 0.7770 \
+    --r2-boost 3.224 --vote-weight 0.6047 --idf-weight 0.039 \
+    --branch-bonus 0.308 --fhrb-factor 4.658
+```
+
+**Phase 207 fANOVA:**
+
+| Parameter | Importance | Bar |
+|-----------|-----------|-----|
+| beta | 0.2175 | ████████ |
+| vote_weight | 0.1956 | ███████ |
+| gamma | 0.1573 | ██████ |
+| r2_boost | 0.1218 | ████ |
+| fhrb_factor | 0.1204 | ████ |
+| branch_bonus | 0.0754 | ███ |
+| idf_weight | 0.0708 | ██ |
+| trb_factor | 0.0384 | █ |
+| beam_width | 0.0028 | |
+
+Note: beam_width importance ≈0 confirms fixed at 8 is correct. beta is now the dominant parameter (was near-zero in Phase 206 broken-2-hop run).
+
+### Phase 206 — Validated Multi-Template Results (100q/template, params pre-tuner-rerun)
 
 | Metric | 1-hop | 2-hop | 3-hop | Notes |
 |--------|-------|-------|-------|-------|
@@ -79,37 +120,6 @@ Biomedical KG: 47,031 entities / 2,250,197 edges.
 | disease_gene_pathway | 2 | 76.0% | 3.6 | |
 | compound_gene_disease | 2 | 34.0% | 0.8 | Sparse Compound-binds-Gene first hop |
 | disease_compound_via_gene | 3 | 74.0% | 19.1 | |
-
-**Parameters used (pilot-tuned; re-tuning pending with fixed 2-hop eval):**
-```
-trb_factor=22.350  gamma=5.9183  beta=1.8778  r2_boost=4.201
-vote_weight=0.6460  beam_width=8  idf_weight=0.032
-branch_bonus=0.451  fhrb_factor=3.013
-```
-⚠ These params were tuned before the hop_expand bug fix — 2-hop templates were broken (3%/16%) during tuning. Re-run tuner for properly calibrated params.
-
-**Canonical eval command:**
-```bash
-python -u benchmarks/hetionet_param_eval.py \
-    --n-questions 100 --min-eval-hop 1 --max-neighbors 200 --workers 16 \
-    --beam-width 8 --trb-factor 22.350 --gamma 5.9183 --beta 1.8778 \
-    --r2-boost 4.201 --vote-weight 0.6460 --idf-weight 0.032 \
-    --branch-bonus 0.451 --fhrb-factor 3.013
-```
-
-**Phase 206 fANOVA (from broken-2-hop pilot — re-run pending):**
-
-| Parameter | Importance | Bar |
-|-----------|-----------|-----|
-| vote_weight | 0.5651 | ██████████████████████ |
-| beam_width | 0.1536 | ██████ |
-| gamma | 0.0534 | ██ |
-| idf_weight | 0.0450 | █ |
-| fhrb_factor | 0.0436 | █ |
-| r2_boost | 0.0425 | █ |
-| trb_factor | 0.0404 | █ |
-| branch_bonus | 0.0367 | █ |
-| beta | 0.0197 | |
 
 ### Phase 165 — Legacy Single-Template Result (disease_gene_pathway only)
 
