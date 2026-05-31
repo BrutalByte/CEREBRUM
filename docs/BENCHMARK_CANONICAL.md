@@ -102,24 +102,26 @@ python -u benchmarks/hetionet_param_eval.py \
 
 Note: beam_width importance ≈0 confirms fixed at 8 is correct. beta is now the dominant parameter (was near-zero in Phase 206 broken-2-hop run).
 
-### Phase 206 — Validated Multi-Template Results (100q/template, params pre-tuner-rerun)
+### Phase 207 — Full Validation Results (200q/template, Phase 207 params)
 
 | Metric | 1-hop | 2-hop | 3-hop | Notes |
 |--------|-------|-------|-------|-------|
-| Hits@1 | **97.3%** | **55.0%** | **74.0%** | 100q/template, max_neighbors=200 |
-| Hits@10 | **97.3%** | **55.0%** | **74.0%** | H@1=H@10: system ranks correct answer 1st when found |
-| MRR | **0.9733** | **0.5500** | **0.7400** | Recall-limited, not ranking-limited |
+| Hits@1 | **94.8%** | **47.0%** | **81.8%** | 200q/template, max_neighbors=200 |
+| Hits@10 | **94.8%** | **47.0%** | **81.8%** | H@1=H@10: system ranks correct answer 1st when found |
+| MRR | **0.9476** | **0.4699** | **0.8182** | Recall-limited, not ranking-limited |
 
 **Per-template:**
 
-| Template | Hop | H@1 | AvgTyped | Notes |
-|----------|-----|-----|----------|-------|
-| disease_associates_gene | 1 | 100.0% | 16.9 | |
-| gene_participates_pathway | 1 | 99.0% | 6.1 | |
-| compound_treats_disease | 1 | 93.0% | 1.7 | |
-| disease_gene_pathway | 2 | 76.0% | 3.6 | |
-| compound_gene_disease | 2 | 34.0% | 0.8 | Sparse Compound-binds-Gene first hop |
-| disease_compound_via_gene | 3 | 74.0% | 19.1 | |
+| Template | Hop | N | H@1 | AvgTyped | Notes |
+|----------|-----|---|-----|----------|-------|
+| disease_associates_gene | 1 | 134 | 100.0% | 16.8 | |
+| gene_participates_pathway | 1 | 200 | 98.5% | 6.5 | |
+| compound_treats_disease | 1 | 200 | 87.5% | 1.6 | |
+| disease_gene_pathway | 2 | 132 | 71.2% | 3.2 | |
+| compound_gene_disease | 2 | 200 | 31.0% | 0.9 | Sparse Compound-binds-Gene first hop — recall-limited |
+| disease_compound_via_gene | 3 | 132 | 81.8% | 19.0 | |
+
+compound_gene_disease 31% is a graph-structure ceiling: Hetionet has sparse Compound→binds→Gene edges. AvgTyped=0.9 means most queries find <1 typed candidate after the first hop. Not a tuning problem.
 
 ### Phase 165 — Legacy Single-Template Result (disease_gene_pathway only)
 
