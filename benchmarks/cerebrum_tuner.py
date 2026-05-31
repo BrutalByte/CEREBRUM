@@ -61,7 +61,8 @@ try:
 except ImportError:
     _HAS_RICH = False
 
-_EVAL_SCRIPT = Path(__file__).parent / "metaqa_eval.py"
+_EVAL_SCRIPT          = Path(__file__).parent / "metaqa_eval.py"
+_HETIONET_EVAL_SCRIPT = Path(__file__).parent / "hetionet_param_eval.py"
 _DEFAULT_KB  = Path(__file__).parent / "data" / "metaqa" / "kb.txt"
 
 # ── search space (Phase 1 — wide exploration) ─────────────────────────────────
@@ -79,6 +80,21 @@ PARAM_SPACE_WIDE: dict = {
     "fhrb_factor":  (3.0,  8.0),
     "gamma":        (1.5,  16.0),  # Phase 203: expanded ceiling (hit 7.93/8.0 in P202)
     "beta":         (0.5,  3.0),   # Phase 203: power-law exponent for fan_out shaping
+}
+
+# Phase 206: Hetionet (typed_heterogeneous) search space.
+# Centered around ParameterInitializer typed_heterogeneous predictions:
+#   gamma~2.30, beta=1.0, trb~19.6, fhrb~2.64, r2~4.27, idf~0.043, branch=0.17
+PARAM_SPACE_HETIONET: dict = {
+    "trb_factor":   (2.0,  25.0),
+    "r2_boost":     (1.0,  10.0),
+    "vote_weight":  (0.60, 0.95),
+    "beam_width":   [8, 10, 12],
+    "idf_weight":   (0.0,  0.15),
+    "branch_bonus": (0.0,  0.80),
+    "fhrb_factor":  (1.0,  5.0),
+    "gamma":        (0.5,  8.0),
+    "beta":         (0.5,  2.0),
 }
 
 # Float param names (excludes categorical beam_width)
@@ -466,23 +482,40 @@ def _run_eval_logged(
     trial_id: int,
     **kwargs,
 ) -> tuple[float, float, float, float]:
-    sample = kwargs["sample"]
-    cmd = [
-        sys.executable, "-u", str(_EVAL_SCRIPT),
-        "--hop",           "3",
-        "--sample",        str(sample),
-        "--beam-width",    str(kwargs["beam_width"]),
-        "--embeddings",    "sentence",
-        "--vote-weight",   str(kwargs["vote_weight"]),
-        "--trb-factor",    str(kwargs["trb_factor"]),
-        "--r2-boost",      str(kwargs["r2_boost"]),
-        "--idf-weight",    str(kwargs["idf_weight"]),
-        "--branch-bonus",  str(kwargs["branch_bonus"]),
-        "--fhrb-factor",   str(kwargs["fhrb_factor"]),
-        "--gamma",         str(kwargs["gamma"]),
-        "--beta",          str(kwargs["beta"]),
-        "--workers",       str(kwargs.get("workers", 1)),
-    ]
+    dataset = kwargs.get("dataset", "metaqa")
+    if dataset == "hetionet":
+        n_questions = kwargs.get("sample", 100)
+        cmd = [
+            sys.executable, "-u", str(_HETIONET_EVAL_SCRIPT),
+            "--n-questions",  str(n_questions),
+            "--beam-width",   str(kwargs["beam_width"]),
+            "--vote-weight",  str(kwargs["vote_weight"]),
+            "--trb-factor",   str(kwargs["trb_factor"]),
+            "--r2-boost",     str(kwargs["r2_boost"]),
+            "--idf-weight",   str(kwargs["idf_weight"]),
+            "--branch-bonus", str(kwargs["branch_bonus"]),
+            "--fhrb-factor",  str(kwargs["fhrb_factor"]),
+            "--gamma",        str(kwargs["gamma"]),
+            "--beta",         str(kwargs["beta"]),
+        ]
+    else:
+        sample = kwargs["sample"]
+        cmd = [
+            sys.executable, "-u", str(_EVAL_SCRIPT),
+            "--hop",           "3",
+            "--sample",        str(sample),
+            "--beam-width",    str(kwargs["beam_width"]),
+            "--embeddings",    "sentence",
+            "--vote-weight",   str(kwargs["vote_weight"]),
+            "--trb-factor",    str(kwargs["trb_factor"]),
+            "--r2-boost",      str(kwargs["r2_boost"]),
+            "--idf-weight",    str(kwargs["idf_weight"]),
+            "--branch-bonus",  str(kwargs["branch_bonus"]),
+            "--fhrb-factor",   str(kwargs["fhrb_factor"]),
+            "--gamma",         str(kwargs["gamma"]),
+            "--beta",          str(kwargs["beta"]),
+            "--workers",       str(kwargs.get("workers", 1)),
+        ]
     t0      = time.time()
     timeout = kwargs.get("timeout", 600)
     lines:  list[str] = []
@@ -595,6 +628,7 @@ def run_tuner(
     resume_file:   Optional[Path] = None,
     param_init:    bool           = False,
     kb_file:       Optional[Path] = None,
+    dataset:       str            = "metaqa",
 ) -> Optional[TrialRecord]:
     """
     Two-phase hyperparameter search.
@@ -623,6 +657,9 @@ def run_tuner(
     if n_trials > 0:
         phase1_trials = n_trials
         phase2_trials = 0
+
+    # Dataset-specific parameter space
+    _param_space = PARAM_SPACE_HETIONET if dataset == "hetionet" else PARAM_SPACE_WIDE
 
     # ── resume: skip Phase 1, load from previous JSONL ───────────────────
     _resume_records:      list[TrialRecord] = []
@@ -654,9 +691,10 @@ def run_tuner(
         "sampler_p1": "sobol_qmc",
         "sampler_p2": "cmaes",
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "dataset": dataset,
         "param_space_wide": {
             k: list(v) if isinstance(v, list) else list(v)
-            for k, v in PARAM_SPACE_WIDE.items()
+            for k, v in _param_space.items()
         },
     })
     print(f"  Trial log : {log_file}")
@@ -679,7 +717,8 @@ def run_tuner(
             tid    = offset + trial.number
             h1, h10, mrr, elapsed = _run_eval_logged(
                 log_file=log_file, run_id=run_id, trial_id=tid,
-                sample=sample, timeout=timeout_s, workers=workers, **params,
+                sample=sample, timeout=timeout_s, workers=workers,
+                dataset=dataset, **params,
             )
             rec = TrialRecord(
                 trial_id=tid, phase=phase,
@@ -730,7 +769,7 @@ def run_tuner(
             dashboard.push(rec)
         dashboard.phase_label = "Phase 2/2 — Fine-tuning (CMA-ES) [resumed]"
     else:
-        p1_obj = make_objective(PARAM_SPACE_WIDE, phase=1)
+        p1_obj = make_objective(_param_space, phase=1)
 
     # ── helper: build Phase 2 study ───────────────────────────────────────
     def _build_p2_study(p1_records: list, p1_source_trials) -> tuple:
@@ -738,7 +777,7 @@ def run_tuner(
         if _resume_records and _resume_refined_space:
             rs = _resume_refined_space
         else:
-            rs = _compute_refined_space(p1_records, PARAM_SPACE_WIDE, top_k=top_k, margin=margin)
+            rs = _compute_refined_space(p1_records, _param_space, top_k=top_k, margin=margin)
             _write_log(log_file, {
                 "type": "phase2_bounds", "run_id": run_id,
                 "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -787,7 +826,7 @@ def run_tuner(
             if phase2_trials > 0:
                 dashboard.phase_label = "Phase 2/2 — Fine-tuning (CMA-ES)"
                 p1_source = (
-                    _make_source_trials(_resume_records, PARAM_SPACE_WIDE)
+                    _make_source_trials(_resume_records, _param_space)
                     if _resume_records else p1_study.trials
                 )
                 refined_space, p2_study = _build_p2_study(dashboard.records, p1_source)
@@ -811,7 +850,7 @@ def run_tuner(
         if phase2_trials > 0:
             print(f"\n--- Phase 2: fine-tuning (CMA-ES, refined bounds) ---")
             p1_source = (
-                _make_source_trials(_resume_records, PARAM_SPACE_WIDE)
+                _make_source_trials(_resume_records, _param_space)
                 if _resume_records else p1_study.trials
             )
             refined_space, p2_study = _build_p2_study(dashboard.records, p1_source)
@@ -929,7 +968,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--sample", type=int, default=500,
-        help="Questions per trial (default 500 ≈ 30s; use 2000 for stability)",
+        help="Questions per trial (default 500 ~30s; use 2000 for stability)",
     )
     parser.add_argument(
         "--validate", type=int, default=0,
@@ -972,6 +1011,11 @@ def main() -> None:
         "--kb-file", type=Path, default=None, dest="kb_file",
         help="KB triples file for --param-init (default: benchmarks/data/metaqa/kb.txt).",
     )
+    parser.add_argument(
+        "--dataset", choices=["metaqa", "hetionet"], default="metaqa", dest="dataset",
+        help="(Phase 206) KB to tune against. 'hetionet' uses hetionet_param_eval.py with "
+             "PARAM_SPACE_HETIONET. Default: metaqa.",
+    )
     args = parser.parse_args()
 
     run_tuner(
@@ -989,6 +1033,7 @@ def main() -> None:
         resume_file=args.resume_file,
         param_init=args.param_init,
         kb_file=args.kb_file,
+        dataset=args.dataset,
     )
 
 
