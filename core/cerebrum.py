@@ -1214,6 +1214,21 @@ class CerebrumGraph:
             if branch_bonus_weight == 0.0: branch_bonus_weight = _pd.branch_bonus
             if beam_width        is None:  beam_width          = _pd.beam_width
 
+        # Phase 207: implicit seed-reuse signal — check if any seed in this query
+        # was a top-ranked answer in a recent prior query. If so, the user implicitly
+        # confirmed that answer was meaningful by following it. Fire positive feedback
+        # automatically — no user involvement required.
+        _answer_cache = getattr(self, "_recent_answer_cache", {})
+        import time as _time
+        _now = _time.monotonic()
+        for _seed in seeds:
+            _cached = _answer_cache.get(_seed)
+            if _cached is not None:
+                _cached_params, _cached_ts = _cached
+                if _now - _cached_ts < 3600:  # 1-hour recency window
+                    self.record_feedback(_seed, correct=True, query_params=_cached_params)
+                    logger.debug("Phase 207: implicit positive signal — seed %s reused", _seed)
+
         # Phase 119: notify sleep orchestrator of query activity
         orc = getattr(self, "_sleep_orchestrator", None)
         if orc is not None:
@@ -1540,6 +1555,24 @@ class CerebrumGraph:
                 ))
             except Exception as exc:
                 logger.warning("WorkingMemory record failed: %s", exc)
+
+        # Phase 207: cache top-5 answers with current params for implicit
+        # seed-reuse signal on the next query. Bounded to 500 entries.
+        if answers:
+            _pd_snap = getattr(self, "_param_defaults", None)
+            _params_snap = _pd_snap.as_dict() if _pd_snap else {}
+            _ts = _time.monotonic()
+            if not hasattr(self, "_recent_answer_cache"):
+                self._recent_answer_cache = {}
+            for _ans in answers[:5]:
+                self._recent_answer_cache[_ans.entity_id] = (_params_snap, _ts)
+            # Evict oldest entries when cache grows too large
+            if len(self._recent_answer_cache) > 500:
+                _oldest = sorted(
+                    self._recent_answer_cache, key=lambda k: self._recent_answer_cache[k][1]
+                )[:100]
+                for _k in _oldest:
+                    del self._recent_answer_cache[_k]
 
         return answers
 
