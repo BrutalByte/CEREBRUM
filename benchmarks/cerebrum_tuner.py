@@ -497,9 +497,10 @@ def _run_eval_logged(
             "--fhrb-factor",  str(kwargs["fhrb_factor"]),
             "--gamma",        str(kwargs["gamma"]),
             "--beta",         str(kwargs["beta"]),
+            "--embeddings",   "sentence",
             "--workers",      str(kwargs.get("workers", 1)),
             "--min-eval-hop", "2",   # skip near-ceiling 1-hop in tuning
-            "--max-neighbors","50",  # cap high-fan-out nodes (Gene: 3K+ neighbors)
+            "--max-neighbors","200",
         ]
     else:
         sample = kwargs["sample"]
@@ -894,7 +895,7 @@ def run_tuner(
         canonical = (
             f"python -u benchmarks/hetionet_param_eval.py "
             f"--n-questions 200 --min-eval-hop 1 --max-neighbors 200 --workers 8 "
-            f"{_param_flags}"
+            f"--embeddings sentence {_param_flags}"
         )
     else:
         canonical = (
