@@ -497,6 +497,7 @@ def _run_eval_logged(
             "--fhrb-factor",  str(kwargs["fhrb_factor"]),
             "--gamma",        str(kwargs["gamma"]),
             "--beta",         str(kwargs["beta"]),
+            "--workers",      str(kwargs.get("workers", 1)),
         ]
     else:
         sample = kwargs["sample"]
