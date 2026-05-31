@@ -61,31 +61,43 @@ r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs 
 
 Biomedical KG: 47,031 entities / 2,250,197 edges.
 
-### Phase 206 — Tuned Parameters (pilot: 50 questions/template, 2+hop templates)
+### Phase 206 — Validated Results (100q/template, all hops, hop_expand bug fixed)
 
-| Metric | 2-hop | 3-hop | Overall | Phase | Notes |
-|--------|-------|-------|---------|-------|-------|
-| Hits@1 | — | — | **44.00%** | 206 | Pilot run (50q/template, 2+ hop) |
-| Hits@10 | — | — | **44.00%** | 206 | |
-| MRR | — | — | **0.4400** | 206 | |
+| Metric | 1-hop | 2-hop | 3-hop | Notes |
+|--------|-------|-------|-------|-------|
+| Hits@1 | **97.3%** | **55.0%** | **74.0%** | 100q/template, max_neighbors=200 |
+| Hits@10 | **97.3%** | **55.0%** | **74.0%** | H@1=H@10: system ranks correct answer 1st when found |
+| MRR | **0.9733** | **0.5500** | **0.7400** | Recall-limited, not ranking-limited |
 
-**Phase 206 best parameters (Optuna TPE, 20 trials):**
+**Per-template:**
+
+| Template | Hop | H@1 | AvgTyped | Notes |
+|----------|-----|-----|----------|-------|
+| disease_associates_gene | 1 | 100.0% | 16.9 | |
+| gene_participates_pathway | 1 | 99.0% | 6.1 | |
+| compound_treats_disease | 1 | 93.0% | 1.7 | |
+| disease_gene_pathway | 2 | 76.0% | 3.6 | |
+| compound_gene_disease | 2 | 34.0% | 0.8 | Sparse Compound-binds-Gene first hop |
+| disease_compound_via_gene | 3 | 74.0% | 19.1 | |
+
+**Parameters used (pilot-tuned; re-tuning pending with fixed 2-hop eval):**
 ```
 trb_factor=22.350  gamma=5.9183  beta=1.8778  r2_boost=4.201
 vote_weight=0.6460  beam_width=8  idf_weight=0.032
 branch_bonus=0.451  fhrb_factor=3.013
 ```
+⚠ These params were tuned before the hop_expand bug fix — 2-hop templates were broken (3%/16%) during tuning. Re-run tuner for properly calibrated params.
 
-**Canonical eval command (2+hop templates, 50q/template):**
+**Canonical eval command:**
 ```bash
 python -u benchmarks/hetionet_param_eval.py \
-    --n-questions 50 --min-eval-hop 2 --max-neighbors 50 --workers 8 \
+    --n-questions 100 --min-eval-hop 1 --max-neighbors 200 --workers 16 \
     --beam-width 8 --trb-factor 22.350 --gamma 5.9183 --beta 1.8778 \
     --r2-boost 4.201 --vote-weight 0.6460 --idf-weight 0.032 \
     --branch-bonus 0.451 --fhrb-factor 3.013
 ```
 
-**Phase 206 fANOVA parameter importances:**
+**Phase 206 fANOVA (from broken-2-hop pilot — re-run pending):**
 
 | Parameter | Importance | Bar |
 |-----------|-----------|-----|
@@ -287,4 +299,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-05-31 | Phase 203/204 MetaQA validated (60.36% H@1) | Phase 206 Hetionet parametric eval added (44.00% H@1 pilot) | fANOVA table added | Phase 53 canonical paper numbers unchanged*
+*Last updated: 2026-05-31 | Phase 206 Hetionet: hop_expand bug fixed; 2-hop 9.5%→55.0%; validated 1/2/3-hop: 97.3%/55.0%/74.0% | Re-tuning needed with fixed eval | Phase 53 canonical paper numbers unchanged*
