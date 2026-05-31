@@ -957,6 +957,46 @@ class CerebrumGraph:
             self._query_profile = None
 
         # ----------------------------------------------------------
+        # Phase 207: ParameterInitializer — derive all 9 hyperparams from
+        # graph statistics and store as live defaults for query().
+        # Modularity Q is computed from the DSCF partition already in `cm`.
+        # ----------------------------------------------------------
+        try:
+            from core.parameter_initializer import ParameterInitializer
+            from core.relation_boost_deriver import RelationBoostDeriver
+            _pi_deriver = RelationBoostDeriver()
+            _pi_deriver.build_from_triples(
+                (u, d.get("relation", ""), v) for u, v, d in G.edges(data=True)
+            )
+            _comm_sets = {}
+            for _n, _c in cm.items():
+                _comm_sets.setdefault(_c, set()).add(_n)
+            try:
+                _modularity_Q = nx.community.modularity(
+                    G_und, list(_comm_sets.values())
+                )
+            except Exception:
+                _modularity_Q = 0.5
+            if self._query_profile is not None:
+                self._param_defaults = ParameterInitializer.compute(
+                    self._query_profile, _pi_deriver, modularity_Q=_modularity_Q
+                )
+                self._deriver = _pi_deriver
+                logger.info(
+                    "Phase 207: ParameterInitializer regime=%s  "
+                    "gamma=%.3f beta=%.3f vote=%.3f trb=%.3f beam=%d  Q=%.3f",
+                    self._param_defaults.effective_regime,
+                    self._param_defaults.gamma, self._param_defaults.beta,
+                    self._param_defaults.vote_weight, self._param_defaults.trb_factor,
+                    self._param_defaults.beam_width, _modularity_Q,
+                )
+            else:
+                self._param_defaults = None
+        except Exception as _exc:
+            logger.warning("Phase 207: ParameterInitializer skipped: %s", _exc)
+            self._param_defaults = None
+
+        # ----------------------------------------------------------
         # 6. BeamTraversal
         # ----------------------------------------------------------
         self._traversal = BeamTraversal(
@@ -999,6 +1039,91 @@ class CerebrumGraph:
     def query_profile(self):
         """Return the QueryProfile computed during build(), or None if unavailable."""
         return getattr(self, "_query_profile", None)
+
+    @property
+    def param_defaults(self):
+        """Return live ParameterInitializer defaults (EMA-adapted over time)."""
+        return getattr(self, "_param_defaults", None)
+
+    # ------------------------------------------------------------------
+    # Phase 207: Adaptive parameter feedback loop
+    # ------------------------------------------------------------------
+
+    def record_feedback(
+        self,
+        answer_entity: str,
+        correct: bool,
+        query_params: Optional[dict] = None,
+    ) -> None:
+        """
+        Record whether a returned answer was correct.
+
+        Accumulates signal for EMA-based adaptation of all 9 CEREBRUM
+        hyperparameters.  Called automatically by the REST /feedback endpoint
+        when a CerebrumGraph is in use; can also be called directly.
+
+        Parameters
+        ----------
+        answer_entity : entity_id of the answer that was evaluated
+        correct       : True if the answer was correct, False otherwise
+        query_params  : param dict used for that query (defaults to current
+                        _param_defaults if not supplied)
+        """
+        if not hasattr(self, "_feedback_buf"):
+            self._feedback_buf: list = []
+
+        pd = getattr(self, "_param_defaults", None)
+        if query_params is None and pd is not None:
+            query_params = pd.as_dict()
+
+        if query_params:
+            self._feedback_buf.append({"correct": correct, "params": query_params})
+
+        # Trigger EMA adaptation every 20 confirmed-correct answers
+        n_correct = sum(1 for e in self._feedback_buf if e["correct"])
+        if correct and n_correct % 20 == 0 and n_correct > 0:
+            self._adapt_params_ema()
+
+    def _adapt_params_ema(self, alpha: float = 0.08) -> None:
+        """
+        Nudge _param_defaults toward the mean config of confirmed-correct answers.
+
+        alpha=0.08 → slow, stable drift (takes ~12 batches to shift 50% toward target).
+        Only scalar params are adapted; beam_width stays fixed (fANOVA: 15% importance,
+        discrete — better handled by explicit retune).
+        """
+        import dataclasses as _dc
+
+        pd = getattr(self, "_param_defaults", None)
+        if pd is None:
+            return
+
+        correct = [e["params"] for e in self._feedback_buf if e["correct"]]
+        if not correct:
+            return
+
+        _SCALAR_KEYS = [
+            "trb_factor", "gamma", "beta", "r2_boost",
+            "fhrb_factor", "idf_weight", "vote_weight", "branch_bonus",
+        ]
+        updates: dict = {}
+        for k in _SCALAR_KEYS:
+            vals = [p[k] for p in correct if k in p]
+            if vals:
+                target  = sum(vals) / len(vals)
+                current = getattr(pd, k)
+                updates[k] = round(current * (1.0 - alpha) + target * alpha, 4)
+
+        if updates:
+            self._param_defaults = _dc.replace(pd, **updates)
+            logger.info(
+                "Phase 207: EMA param adaptation (%d correct answers, alpha=%.2f): %s",
+                len(correct), alpha,
+                {k: f"{getattr(pd, k):.3f}->{v:.3f}" for k, v in updates.items()},
+            )
+
+        # Bound buffer to last 200 entries
+        self._feedback_buf = self._feedback_buf[-200:]
 
     # ------------------------------------------------------------------
     # CORTEX query
@@ -1079,6 +1204,15 @@ class CerebrumGraph:
             auto_infer_terminal_relation = _qp.recommended_trb_auto if _qp else False
         if anchor_bonus is None and _qp is not None:
             anchor_bonus = _qp.recommended_anchor_bonus  # may still be None
+
+        # Phase 207: apply ParameterInitializer (or EMA-adapted) defaults when
+        # the caller left params at their legacy hardcoded values.
+        # Explicit overrides always win — only the unchanged defaults are replaced.
+        _pd = getattr(self, "_param_defaults", None)
+        if _pd is not None:
+            if vote_weight       == 0.45:  vote_weight         = _pd.vote_weight
+            if branch_bonus_weight == 0.0: branch_bonus_weight = _pd.branch_bonus
+            if beam_width        is None:  beam_width          = _pd.beam_width
 
         # Phase 119: notify sleep orchestrator of query activity
         orc = getattr(self, "_sleep_orchestrator", None)

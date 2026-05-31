@@ -1327,8 +1327,24 @@ def create_app(
     async def feedback(req: FeedbackRequest, node: Dict = Depends(check_scope("query"))):
         """
         Record user feedback for a specific reasoning path.
-        Triggers online parameter adaptation via MetaParameterLearner.
+        Triggers online parameter adaptation via MetaParameterLearner and
+        Phase 207 EMA hyperparameter adaptation on CerebrumGraph.
         """
+        # Phase 207: feed signal into CerebrumGraph adaptive param loop.
+        # Works independently of MetaParameterLearner — no meta_learner required.
+        _cg = _state.get("graph")
+        if _cg is not None and hasattr(_cg, "record_feedback"):
+            try:
+                _correct_entity = getattr(req, "correct_entity", None)
+                _is_correct = req.reward > 0 if hasattr(req, "reward") else None
+                if _correct_entity and _is_correct is not None:
+                    _cg.record_feedback(
+                        answer_entity = _correct_entity,
+                        correct       = bool(_is_correct),
+                    )
+            except Exception as _e207:
+                pass  # never block feedback on adaptation errors
+
         if not _state["meta_learner"]:
             raise HTTPException(status_code=501, detail="Meta-learning is not enabled")
 
