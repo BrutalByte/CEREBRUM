@@ -1,5 +1,5 @@
 """
-Phase 205/207: ParameterInitializer — principled hyperparameter defaults from graph statistics.
+Phase 205/207/208: ParameterInitializer — principled hyperparameter defaults from graph statistics.
 
 Replaces black-box tuning as the *required* starting point.  Given a loaded KB,
 the class analytically derives parameter values that work out-of-the-box for any
@@ -17,9 +17,15 @@ All formulas are grounded in data-science TTPs (see docs/PERFORMANCE_TUNING.md):
   branch_bonus — naïve-Bayes independent-evidence combination
   beam_width   — fixed at 12; diminishing returns plateau proven by fANOVA
 
+Constants exist in a 2D space: (regime × embedding_method).
+Sentence-transformers fundamentally changes the scoring landscape — idf_weight
+dominates (fANOVA=0.43) vs beta-dominated (fANOVA=0.22) with random embeddings.
+
 Calibration basis:
-  hub_homogeneous:    Phase 204 MetaQA 3-hop  60.36% H@1 (8.73, beta=2.09)
-  typed_heterogeneous: Phase 207 Hetionet multi-template 61.00% H@1 (hop_expand fixed)
+  hub_homogeneous   × random:    Phase 204 MetaQA 3-hop  60.36% H@1 (gamma=8.73, beta=2.09)
+  typed_heterogeneous × random:  Phase 207 Hetionet multi-template 61.00% H@1 (hop_expand fixed)
+  typed_heterogeneous × sentence: Phase 208 Hetionet sentence-transformers 55.00% H@1 (tuner pilot)
+  hub_homogeneous   × sentence:  pending — using random constants as estimate
 """
 from __future__ import annotations
 
@@ -38,7 +44,8 @@ if TYPE_CHECKING:
 BEAM_WIDTH: int = 12          # fANOVA importance ~0.1%; plateau at 8–12
 
 IDF_SCALE_C: float = 0.0102   # degree_cv × IDF_SCALE_C → idf_weight
-                               # MetaQA: cv=5.68, idf=0.058 → C=0.0102
+                               # MetaQA random: cv=5.68, idf=0.058 → C=0.0102
+                               # For sentence-transformers see _SENTENCE_OVERRIDES["idf_scale_c"]
 
 VOTE_BASE: float   = 0.72     # vote_weight lower bound (Q=0 → community uninformative)
 VOTE_Q_SCALE: float = 0.15    # sensitivity to modularity: 0.72 at Q=0, 0.87 at Q=1
@@ -123,6 +130,44 @@ _VOTE_BASE = {
     "mixed":               0.64,
 }
 
+# ---------------------------------------------------------------------------
+# Sentence-transformers overrides (regime × "sentence" embedding_method)
+#
+# With real semantic embeddings the scoring landscape shifts substantially:
+#   - idf_weight dominates (fANOVA=0.43) vs beta-dominant with random
+#   - beta rises (more gradient needed across larger fan-out)
+#   - BOOST_SCALE rises correspondingly (beta=1.88 on Hetionet mean_fo=9.46
+#     raises mean_fo^beta from 5.73 to 68.0, so BS scales accordingly)
+#   - idf_scale_c drops: sentence embeddings already encode hub-ness
+#     semantically, so the IDF penalty coefficient is smaller
+#
+# Source: Phase 208 Hetionet tuner (sentence, 55-trial Sobol+CMA-ES, 20q)
+# typed_heterogeneous: gamma=5.9183, beta=1.8778, trb=22.350, r2=4.201,
+#   vote=0.6460, idf=0.032, branch=0.451, fhrb=3.013
+# ---------------------------------------------------------------------------
+_SENTENCE_OVERRIDES: dict[str, dict] = {
+    "typed_heterogeneous": {
+        # Phase 209 multi-hop calibration (--min-eval-hop 2, hop_expand=False tuning).
+        # Phase 208 all-hop tuning was dominated by near-ceiling 1-hop templates
+        # → idf_weight over-weighted (0.43 fANOVA). Phase 209 targets 2-hop + 3-hop
+        # where vote_weight is the dominant parameter (0.28 fANOVA).
+        #
+        # Source: gamma=1.0147, beta=0.9545, trb=13.871, r2=1.322, vote=0.6400,
+        #   idf=0.018, branch=0.032, fhrb=1.726  (Hetionet Phase 209, 200-trial S+CMA-ES)
+        "boost_scale":  8.67,    # 1.0147 × 9.46^0.9545 = 1.0147 × 8.54 = 8.67
+        "beta":          0.9545, # Phase 209; lower than Phase 208 (1.878 was all-hop)
+        "trb_c":         4.31,   # 13.871 / log(25) = 4.31
+        "branch_bonus":  0.032,  # Phase 209: much lower than random (0.308) or Ph208 (0.451)
+        "r2_c":          -0.111,  # (1.322−1.5) / log(4.988) = -0.111  (negative for typed)
+        "r2_floor":       1.0,   # clamp floor: sentence typed can go below 1.5
+        "fhrb_c":        0.159,  # (1.726−1.0) / log(96.7) = 0.726/4.572 = 0.159
+        "idf_scale_c":   0.00432,# 0.018 / 4.17 = 0.00432 (Hetionet degree_cv=4.17)
+        "vote_base":     0.565,  # 0.6400 − 0.15×0.5 = 0.565 (vote is now #1 fANOVA driver)
+    },
+    # hub_homogeneous × sentence: pending Phase 210 MetaQA sentence tuner run
+    # mixed × sentence: pending Phase 211 ConceptNet tuner run
+}
+
 
 # ---------------------------------------------------------------------------
 # Result dataclass
@@ -140,7 +185,8 @@ class InitialParams:
     vote_weight:  float
     branch_bonus: float
     beam_width:   int
-    effective_regime: str = "unknown"   # regime used for constant selection
+    effective_regime: str = "unknown"    # regime used for constant selection
+    embedding_method: str = "random"     # embedding method used for constant selection
 
     def as_dict(self) -> dict:
         return {
@@ -156,7 +202,8 @@ class InitialParams:
         }
 
     def summary(self) -> str:
-        lines = [f"ParameterInitializer defaults (regime={self.effective_regime}):"]
+        emb_tag = self.embedding_method if (self.embedding_method == "sentence") else "random"
+        lines = [f"ParameterInitializer defaults (regime={self.effective_regime}/{emb_tag}):"]
         for k, v in self.as_dict().items():
             lines.append(f"  {k:14s} = {v}")
         return "\n".join(lines)
@@ -182,16 +229,20 @@ class ParameterInitializer:
         profile: "QueryProfile",
         deriver: "RelationBoostDeriver",
         modularity_Q: float = 0.5,
+        embedding_method: str = "random",
     ) -> InitialParams:
         """
         Compute principled defaults.
 
         Parameters
         ----------
-        profile      : QueryProfile from GraphProfiler.profile()
-        deriver      : RelationBoostDeriver (built from KB file or triples)
-        modularity_Q : Newman-Girvan modularity of the community partition.
-                       If unknown, 0.5 gives a safe mid-range vote_weight.
+        profile          : QueryProfile from GraphProfiler.profile()
+        deriver          : RelationBoostDeriver (built from KB file or triples)
+        modularity_Q     : Newman-Girvan modularity of the community partition.
+                           If unknown, 0.5 gives a safe mid-range vote_weight.
+        embedding_method : "random" or "sentence".  Sentence-transformers shifts
+                           the scoring landscape (idf dominates, beta rises).
+                           Phase 208 constants available for typed_heterogeneous.
         """
         # GraphProfiler's regime is primarily for routing decisions (hop_expand,
         # trb_auto).  For parameter scaling we apply a hub override when:
@@ -208,6 +259,12 @@ class ParameterInitializer:
                 and profile.mean_rel_coverage > 0.20):
             regime = "hub_homogeneous"
 
+        # Sentence-transformers overrides: apply when embedding_method="sentence"
+        # and regime has calibrated sentence constants. Falls back to random
+        # constants for regimes not yet validated with sentence embeddings.
+        use_sentence = embedding_method == "sentence"
+        _sovr: dict = _SENTENCE_OVERRIDES.get(regime, {}) if use_sentence else {}
+
         n_rel  = max(profile.n_relation_types, 1)
         n_nodes = max(profile.n_nodes, 1)
         n_edges = profile.n_edges
@@ -223,55 +280,67 @@ class ParameterInitializer:
         # ------------------------------------------------------------------
         # trb_factor  = C × log(n_rel + 1)
         # ------------------------------------------------------------------
-        trb_factor = _TRB_C[regime] * math.log(n_rel + 1)
+        trb_c      = _sovr.get("trb_c", _TRB_C[regime])
+        trb_factor = trb_c * math.log(n_rel + 1)
 
         # ------------------------------------------------------------------
         # beta — regime constant (must be set before gamma)
         # ------------------------------------------------------------------
-        beta = _BETA[regime]
+        beta = _sovr.get("beta", _BETA[regime])
 
         # ------------------------------------------------------------------
-        # gamma  = _BOOST_SCALE[regime] / mean_fan_out^beta
+        # gamma  = BOOST_SCALE / mean_fan_out^beta
         #
         # SDRB: score *= (1 + gamma * fan_out(r)^beta)
         # Mean boost across all relations ≈ gamma * mean_fo^beta = BOOST_SCALE
         # → gamma = BOOST_SCALE / mean_fo^beta
         #
-        # BOOST_SCALE is regime-specific (not universal):
-        #   hub_homogeneous:     21.79 (MetaQA Phase 204: 21.79/1.55^2.0  = 9.06, Δ=3.8%)
-        #   typed_heterogeneous: 28.48 (Hetionet Phase 207: 28.48/9.46^0.777 = 4.97, validated)
-        #   Phase 206 value 403.6 was tuned on broken 2-hop data; fixed in Phase 207.
+        # BOOST_SCALE is regime × embedding specific:
+        #   hub_homogeneous   × random:    21.79 (MetaQA Phase 204)
+        #   typed_heterogeneous × random:  28.48 (Hetionet Phase 207, beta=0.777)
+        #   typed_heterogeneous × sentence: 8.67 (Hetionet Phase 209, beta=0.9545)
+        #   Phase 208 (402.8/beta=1.878) was all-hop tuning; Phase 209 multi-hop
+        #   calibration yields a much lower BOOST_SCALE and beta.
         # ------------------------------------------------------------------
-        _bs = _BOOST_SCALE.get(regime, BOOST_SCALE)
+        _bs = _sovr.get("boost_scale", _BOOST_SCALE.get(regime, BOOST_SCALE))
         gamma = max(GAMMA_MIN, _bs / (mean_fo ** beta))
 
         # ------------------------------------------------------------------
-        # r2_boost  = 1.5 + C × log(mean_deg / n_rel + 1)
+        # r2_boost  = r2_base + C × log(mean_deg / n_rel + 1)
+        # r2_base defaults to 1.5; sentence-transformers typed uses 1.0 (lower
+        # is better when beam already selects semantically-consistent paths).
         # ------------------------------------------------------------------
-        r2_boost = 1.5 + _R2_C[regime] * math.log(mean_degree / n_rel + 1)
-        r2_boost = max(1.5, r2_boost)
+        r2_c     = _sovr.get("r2_c",    _R2_C[regime])
+        r2_floor = _sovr.get("r2_floor", 1.5)
+        r2_boost = 1.5 + r2_c * math.log(mean_degree / n_rel + 1)
+        r2_boost = max(r2_floor, r2_boost)
 
         # ------------------------------------------------------------------
         # fhrb_factor  = 1.0 + C × log(mean_deg + 1)
         # ------------------------------------------------------------------
-        fhrb_factor = 1.0 + _FHRB_C[regime] * math.log(mean_degree + 1)
+        fhrb_c      = _sovr.get("fhrb_c", _FHRB_C[regime])
+        fhrb_factor = 1.0 + fhrb_c * math.log(mean_degree + 1)
         fhrb_factor = max(1.0, fhrb_factor)
 
         # ------------------------------------------------------------------
-        # idf_weight  = max(0.01, IDF_SCALE_C × degree_cv)
+        # idf_weight  = max(0.01, idf_scale_c × degree_cv)
+        # Sentence-transformers embeddings already encode hub-ness semantically,
+        # so the IDF penalty coefficient is smaller than with random embeddings.
         # ------------------------------------------------------------------
-        idf_weight = max(0.01, IDF_SCALE_C * profile.degree_cv)
+        idf_c      = _sovr.get("idf_scale_c", IDF_SCALE_C)
+        idf_weight = max(0.01, idf_c * profile.degree_cv)
 
         # ------------------------------------------------------------------
-        # vote_weight  = _VOTE_BASE[regime] + VOTE_Q_SCALE × Q
+        # vote_weight  = vote_base + VOTE_Q_SCALE × Q
         # ------------------------------------------------------------------
         q_clamped   = max(0.0, min(1.0, modularity_Q))
-        vote_weight = _VOTE_BASE.get(regime, VOTE_BASE) + VOTE_Q_SCALE * q_clamped
+        vote_base   = _sovr.get("vote_base", _VOTE_BASE.get(regime, VOTE_BASE))
+        vote_weight = vote_base + VOTE_Q_SCALE * q_clamped
 
         # ------------------------------------------------------------------
-        # branch_bonus — regime constant
+        # branch_bonus — regime constant (or sentence override)
         # ------------------------------------------------------------------
-        branch_bonus = _BRANCH_BONUS[regime]
+        branch_bonus = _sovr.get("branch_bonus", _BRANCH_BONUS[regime])
 
         return InitialParams(
             trb_factor       = round(trb_factor,  4),
@@ -284,4 +353,5 @@ class ParameterInitializer:
             branch_bonus     = round(branch_bonus, 4),
             beam_width       = BEAM_WIDTH,
             effective_regime = regime,
+            embedding_method = embedding_method,
         )

@@ -115,7 +115,7 @@ def _worker_init(graph_args: dict) -> None:
         n_trials         = 1,
         seed             = graph_args.get("seed", 42),
         community_engine = "dscf",
-        use_graphsage    = _use_sentence,
+        use_graphsage    = graph_args.get("use_graphsage", _use_sentence),
     )
     _W_GRAPH     = graph
     _W_MAX_LOOPS = graph_args.get("max_loops", 1)
@@ -227,7 +227,8 @@ def _build_answer_freq(
 # ---------------------------------------------------------------------------
 
 def _build_graph(adapter, *, beam_width: int, max_neighbors: int,
-                 embeddings: str, cache_dir: Optional[Path], seed: int):
+                 embeddings: str, cache_dir: Optional[Path], seed: int,
+                 use_graphsage: Optional[bool] = None):
     from core.cerebrum import CerebrumGraph
     from core.embedding_engine import RandomEngine, SentenceEngine
 
@@ -257,7 +258,7 @@ def _build_graph(adapter, *, beam_width: int, max_neighbors: int,
         n_trials         = 1,
         seed             = seed,
         community_engine = "dscf",
-        use_graphsage    = embeddings == "sentence",
+        use_graphsage    = (embeddings == "sentence") if use_graphsage is None else use_graphsage,
     )
     print(f"  CerebrumGraph built in {time.time()-t0:.1f}s")
     return graph
@@ -275,6 +276,7 @@ def _eval_template_serial(
     *, trb_factor: float, r2_boost: float, idf_weight: float,
     vote_weight: float, branch_bonus: float, fhrb_factor: float, top_k: int,
     max_loops: int = 1,
+    hop_expand: bool = True,
 ) -> Dict:
     from benchmarks.metaqa_eval import hits_at_k, reciprocal_rank
 
@@ -311,7 +313,7 @@ def _eval_template_serial(
             terminal_relation_boost = trb,
             vote_weight             = vote_weight,
             branch_bonus_weight     = branch_bonus,
-            hop_expand              = (hop >= 3),
+            hop_expand              = hop_expand and (hop >= 3),
             initial_relation_boost  = fhrb,
             query_embedding         = _qemb,
             max_loops               = max_loops,
@@ -359,6 +361,134 @@ def _eval_template_serial(
 
 
 # ---------------------------------------------------------------------------
+# In-process API — avoids rebuilding graph (~66s) on every tuner trial
+# ---------------------------------------------------------------------------
+
+def build_hetionet_state(
+    n_questions:   int  = 20,
+    max_neighbors: int  = 50,
+    embeddings:    str  = "sentence",
+    seed:          int  = 42,
+    use_cache:     bool = True,
+    min_eval_hop:  int  = 2,
+) -> dict:
+    """
+    Build CerebrumGraph + precompute QA data once.  Pass the returned dict
+    to run_trial_inprocess() for each tuner trial — eliminates the ~66s
+    sentence-transformers graph build that otherwise runs per subprocess.
+    """
+    from benchmarks.hetionet_eval import load_hetionet, generate_hetionet_qa
+    from benchmarks.hetionet_cerebrum_eval import CACHE_DIR
+    from core.relation_boost_deriver import RelationBoostDeriver
+    import benchmarks.hetionet_eval as _heval
+
+    print("\n[HetionetState] Loading Hetionet graph...")
+    adapter, node_type_map = load_hetionet(use_graph_cache=use_cache)
+    G = adapter.to_networkx()
+    for node, ntype in node_type_map.items():
+        if node in G.nodes:
+            G.nodes[node]["type"] = ntype
+    print(f"  {G.number_of_nodes():,} nodes, {G.number_of_edges():,} edges")
+
+    cache_dir = CACHE_DIR / "cerebrum" if use_cache else None
+    print(f"[HetionetState] Building CerebrumGraph (max_neighbors={max_neighbors})...")
+    graph = _build_graph(
+        adapter,
+        beam_width    = 12,
+        max_neighbors = max_neighbors,
+        embeddings    = embeddings,
+        cache_dir     = cache_dir,
+        seed          = seed,
+    )
+
+    print("[HetionetState] Building RelationBoostDeriver...")
+    deriver = RelationBoostDeriver()
+    deriver.build_from_triples((u, d["relation"], v) for u, v, d in G.edges(data=True))
+
+    QA_TEMPLATES_FIXED, TEMPLATE_ANSWER_TYPE, TEMPLATE_HOP, chains = _get_template_meta()
+    templates = [t for t in QA_TEMPLATES_FIXED if TEMPLATE_HOP[t] >= min_eval_hop]
+
+    print(f"[HetionetState] Pre-generating {n_questions}q × {len(templates)} templates...")
+    _orig = _heval.QA_TEMPLATES
+    _heval.QA_TEMPLATES = QA_TEMPLATES_FIXED
+    qa_by_template: Dict[str, List] = {}
+    for name in templates:
+        qa_by_template[name] = generate_hetionet_qa(
+            G=G, template=name, n_questions=n_questions, seed=seed,
+        )
+    _heval.QA_TEMPLATES = _orig
+
+    answer_freq = _build_answer_freq(qa_by_template, chains)
+    print("[HetionetState] Ready — all trials will skip graph build.\n")
+
+    return {
+        "graph":                graph,
+        "deriver":              deriver,
+        "qa_by_template":       qa_by_template,
+        "chains":               chains,
+        "TEMPLATE_ANSWER_TYPE": TEMPLATE_ANSWER_TYPE,
+        "TEMPLATE_HOP":         TEMPLATE_HOP,
+        "answer_freq":          answer_freq,
+        "templates":            templates,
+    }
+
+
+def run_trial_inprocess(
+    state:  dict,
+    params: dict,
+    top_k:  int = 10,
+) -> tuple[float, float, float]:
+    """
+    Run one tuner trial against a pre-built HetionetState. Returns (h1, h10, mrr).
+    Skips graph build → ~10-20x faster than the subprocess path per trial.
+    """
+    graph                = state["graph"]
+    deriver              = state["deriver"]
+    qa_by_template       = state["qa_by_template"]
+    chains               = state["chains"]
+    TEMPLATE_ANSWER_TYPE = state["TEMPLATE_ANSWER_TYPE"]
+    TEMPLATE_HOP         = state["TEMPLATE_HOP"]
+    answer_freq          = state["answer_freq"]
+    templates            = state["templates"]
+
+    # beam_width is stored as _beam_width on CerebrumGraph; set per-trial
+    graph._beam_width = params.get("beam_width", graph._beam_width)
+
+    boost_map = deriver.boost_map(params["gamma"], params["beta"]) if deriver.is_built else {}
+
+    total_h1 = total_h10 = total_mrr = 0.0
+    total_n  = 0
+
+    for template in templates:
+        qa_pairs = qa_by_template.get(template, [])
+        if not qa_pairs:
+            continue
+        result = _eval_template_serial(
+            graph, template, qa_pairs,
+            boost_map, answer_freq, chains,
+            TEMPLATE_ANSWER_TYPE, TEMPLATE_HOP,
+            trb_factor   = params["trb_factor"],
+            r2_boost     = params["r2_boost"],
+            idf_weight   = params["idf_weight"],
+            vote_weight  = params["vote_weight"],
+            branch_bonus = params["branch_bonus"],
+            fhrb_factor  = params["fhrb_factor"],
+            top_k        = top_k,
+            max_loops    = params.get("max_loops", 1),
+            hop_expand   = False,  # disabled for tuning speed; relative signal preserved
+        )
+        n = result["n_total"]
+        total_h1  += result["hits_1"]  * n
+        total_h10 += result["hits_10"] * n
+        total_mrr += result["mrr"]     * n
+        total_n   += n
+
+    if total_n == 0:
+        return 0.0, 0.0, 0.0
+    return total_h1 / total_n, total_h10 / total_n, total_mrr / total_n
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -376,6 +506,8 @@ def main() -> None:
                         help="Looped beam iterations (default 1). Use 2 for 3-hop refinement.")
     parser.add_argument("--use-cache",     action="store_true", default=True)
     parser.add_argument("--no-cache",      action="store_true")
+    parser.add_argument("--no-graphsage",  action="store_true",
+                        help="Disable GraphSAGE smoothing even when embeddings=sentence")
     parser.add_argument("--no-download",   action="store_true")
     parser.add_argument("--template",      type=str, default=None,
                         help="Single template to evaluate (default: all)")
@@ -448,6 +580,7 @@ def main() -> None:
         embeddings    = args.embeddings,
         cache_dir     = cache_dir,
         seed          = args.seed,
+        use_graphsage = False if args.no_graphsage else None,
     )
     print()
 
@@ -533,6 +666,7 @@ def main() -> None:
             "use_cache": args.use_cache, "embeddings": args.embeddings,
             "seed": args.seed, "beam_width": args.beam_width,
             "max_neighbors": args.max_neighbors, "max_loops": args.max_loops,
+            "use_graphsage": False if args.no_graphsage else None,
         }
         print(f"  Launching {args.workers} workers ({len(tasks)} tasks)...")
         ctx = mp.get_context("spawn")

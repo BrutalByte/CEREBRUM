@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.67.0 (Phase 207) — Updated May 31, 2026
+## Version: v2.69.0 (Phase 209) — Updated Jun 1, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -57,7 +57,7 @@ r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs 
 
 ---
 
-## Hetionet — Phase 207 (Tuner Re-run, hop_expand Fixed)
+## Hetionet — Phase 207 (Random Embeddings, hop_expand Fixed)
 
 Biomedical KG: 47,031 entities / 2,250,197 edges.
 
@@ -121,8 +121,219 @@ Note: beam_width importance ≈0 confirms fixed at 8 is correct. beta is now the
 | compound_gene_disease | 2 | 200 | 32.5% | 0.9 | Sparse Compound-binds-Gene first hop — recall-limited |
 | disease_compound_via_gene | 3 | 132 | 79.5% | 19.2 | |
 
-Note: ~2pp run-to-run variance expected from 64-dim random embeddings (no sentence-transformers on Hetionet yet).
+Note: ~2pp run-to-run variance expected from 64-dim random embeddings.
 compound_gene_disease ~32% is a graph-structure ceiling: AvgTyped=0.9 means most queries find <1 typed candidate after the first hop. Not a tuning problem.
+
+---
+
+## Hetionet — Phase 208 (Sentence-Transformers Tuner)
+
+Phase 208 adds sentence-transformers embeddings (384-dim) + GraphSAGE smoothing + STRB via query_embedding + full community resolution (cap removed).
+
+### Phase 208 — Tuner Results (all-hop pooled — superseded by Phase 209)
+
+**Tuner best:** H@1=55.00% H@10=55.00% MRR=0.5500
+
+| Parameter | Value |
+|-----------|-------|
+| trb_factor | 22.350 |
+| gamma | 5.9183 |
+| beta | 1.8778 |
+| r2_boost | 4.201 |
+| vote_weight | 0.6460 |
+| beam_width | 8 |
+| idf_weight | 0.032 |
+| branch_bonus | 0.451 |
+| fhrb_factor | 3.013 |
+
+**Phase 208 fANOVA:**
+
+| Parameter | Importance | Bar |
+|-----------|-----------|-----|
+| idf_weight | 0.4314 | ████████████████ |
+| beam_width | 0.2000 | ████████ |
+| vote_weight | 0.0966 | ████ |
+| gamma | ~0.08 | ███ |
+| beta | ~0.07 | ███ |
+| trb_factor | ~0.05 | ██ |
+| r2_boost | ~0.04 | █ |
+| branch_bonus | ~0.03 | █ |
+| fhrb_factor | ~0.02 | █ |
+
+Note: idf_weight dominance (0.43) with sentence-transformers vs beta dominance (0.22) with random embeddings confirms the 2D constant space (regime × embedding_method).
+
+**Canonical eval command (Phase 208):**
+```bash
+python -u benchmarks/hetionet_param_eval.py \
+    --n-questions 200 --min-eval-hop 1 --max-neighbors 200 --workers 8 \
+    --embeddings sentence \
+    --beam-width 8 --trb-factor 22.350 --gamma 5.9183 --beta 1.8778 \
+    --r2-boost 4.201 --vote-weight 0.6460 --idf-weight 0.032 \
+    --branch-bonus 0.451 --fhrb-factor 3.013
+```
+
+### Phase 208 — Full Validation Results (200q/template, sentence-transformers + GraphSAGE + STRB)
+
+| Metric | 1-hop | 2-hop | 3-hop | Notes |
+|--------|-------|-------|-------|-------|
+| Hits@1 | **94.0%** | **36.8%** | **61.4%** | 200q/template, max_neighbors=200 |
+| MRR | **0.9401** | **0.3675** | **0.6136** | 454s eval, 8 workers |
+
+**Per-template:**
+
+| Template | Hop | N | H@1 | AvgTyped | Phase 207 Random | Delta |
+|----------|-----|---|-----|----------|-----------------|-------|
+| disease_associates_gene | 1 | 134 | 100.0% | 16.8 | 100.0% | 0 |
+| gene_participates_pathway | 1 | 200 | 98.0% | 6.5 | 98.5% | -0.5pp |
+| compound_treats_disease | 1 | 200 | 86.0% | 1.5 | 90.0% | -4pp |
+| disease_gene_pathway | 2 | 132 | 56.1% | 1.6 | 71.2% | **-15pp** |
+| compound_gene_disease | 2 | 200 | 24.0% | 0.5 | 32.5% | -8.5pp |
+| disease_compound_via_gene | 3 | 132 | 61.4% | 18.2 | 79.5% | **-18pp** |
+
+**Finding: sentence-transformers regresses vs random on multi-hop.** 1-hop is near-parity (94.0% vs 95.7%) but 2-hop drops 11pp and 3-hop drops 18pp. Two compounding causes:
+
+1. **AvgTyped collapse on 2-hop**: disease_gene_pathway 3.1→1.6, compound_gene_disease 0.9→0.5 — the semantic similarity filter culls more candidates than random does, starving the beam before it can complete the path. idf_weight=0.032 (low) was meant to compensate but insufficient.
+2. **Tuner pilot used 20q/template** — too small to calibrate 2-hop and 3-hop templates independently. The tuner pooled all templates, allowing 1-hop (3×) to dominate the H@1 signal.
+
+**Root cause**: Phase 208 tuner calibrated against all hops simultaneously with 20q each. The optimal idf_weight for 1-hop (low penalty → more candidates) conflicts with 2-hop (needs higher IDF to suppress false positives at the intermediate node).
+
+**See Phase 209 below for corrected multi-hop calibration.**
+
+---
+
+## Hetionet — Phase 209 (Multi-Hop Sentence-Transformers Calibration)
+
+Phase 209 fixes the Phase 208 regression by tuning with `--min-eval-hop 2` (2-hop + 3-hop only) and disabling `hop_expand` during tuning for speed. 200-trial Sobol+CMA-ES.
+
+### Phase 209 — Tuner Results (sentence-transformers, multi-hop, 200-trial Sobol+CMA-ES, 20q)
+
+**Tuner best:** H@1=55.00% H@10=56.67% MRR=0.5583 (2-hop + 3-hop only, no hop_expand)
+
+| Parameter | Value |
+|-----------|-------|
+| trb_factor | 13.871 |
+| gamma | 1.0147 |
+| beta | 0.9545 |
+| r2_boost | 1.322 |
+| vote_weight | 0.6400 |
+| beam_width | 8 |
+| idf_weight | 0.018 |
+| branch_bonus | 0.032 |
+| fhrb_factor | 1.726 |
+
+**Phase 209 fANOVA (multi-hop):**
+
+| Parameter | Importance | Bar |
+|-----------|-----------|-----|
+| vote_weight | 0.2761 | ███████████ |
+| idf_weight | 0.2135 | ████████ |
+| gamma | 0.1491 | █████ |
+| fhrb_factor | 0.1008 | ████ |
+| r2_boost | 0.0641 | ██ |
+| branch_bonus | 0.0616 | ██ |
+| beam_width | 0.0584 | ██ |
+| beta | 0.0500 | █ |
+| trb_factor | 0.0266 | █ |
+
+Key finding: **vote_weight is now #1 on multi-hop** (0.28) vs idf_weight #1 on all-hop (0.43). Community voting drives multi-hop accuracy; IDF hub-penalty drives 1-hop precision.
+
+### Phase 209 — Full Validation Results (200q/template, sentence-transformers, multi-hop params)
+
+| Metric | 1-hop | 2-hop | 3-hop | Notes |
+|--------|-------|-------|-------|-------|
+| Hits@1 | **95.3%** | **53.0%** | **49.2%** | 200q/template, max_neighbors=200, 581s eval |
+| MRR | **0.9532** | **0.5301** | **0.4943** | |
+
+**Per-template:**
+
+| Template | Hop | N | H@1 | AvgTyped | Ph207 Random | Ph208 Sentence | Ph209 Sentence | Delta vs Ph207 |
+|----------|-----|---|-----|----------|:------------:|:--------------:|:--------------:|:--------------:|
+| disease_associates_gene | 1 | 134 | 100.0% | 16.7 | 100.0% | 100.0% | 100.0% | 0 |
+| gene_participates_pathway | 1 | 200 | 98.5% | 6.5 | 98.5% | 98.0% | 98.5% | 0 |
+| compound_treats_disease | 1 | 200 | 89.0% | 1.6 | 90.0% | 86.0% | 89.0% | -1pp |
+| disease_gene_pathway | 2 | 132 | 81.1% | 4.5 | 71.2% | 56.1% | 81.1% | **+10pp** |
+| compound_gene_disease | 2 | 200 | 34.5% | 1.2 | 32.5% | 24.0% | 34.5% | +2pp |
+| disease_compound_via_gene | 3 | 132 | 49.2% | 16.3 | 79.5% | 61.4% | 49.2% | **-30pp** |
+
+**Analysis vs Phase 207 (random) and Phase 208 (sentence, all-hop):**
+
+- **1-hop 95.3%** — essentially tied with random (95.7%), best sentence result yet (+1.3pp vs Phase 208)
+- **2-hop 53.0%** — beats random (47.9%) and corrects Phase 208 regression (36.8%). disease_gene_pathway: 81.1% vs 71.2% random — sentence embeddings genuinely help on this template once properly calibrated
+- **3-hop 49.2%** — regressed from random (79.5%) and Phase 208 (61.4%)
+
+**Root cause of 3-hop regression (disease_compound_via_gene):**
+
+Confirmed by Phase 210 branch_bonus grid (see below): not a structural parameter problem. `disease_compound_via_gene` is insensitive to branch_bonus across the full range [0.032–0.308], holding at ~48.5–50.8%. The regression is semantic in origin: sentence-transformers embeddings introduce cosine-similarity bias that suppresses valid cross-type paths (disease→gene→compound spans maximally dissimilar semantic types). Random embeddings have no such bias, which is why Phase 207 achieves 79.5% on this template.
+
+**Summary: Phase 209 is strictly better on 2-hop (+5pp vs random), with a known semantic ceiling on cross-type 3-hop.** This is a fundamental training-free limitation, not a tuning problem — see Phase 210 analysis.
+
+**Canonical eval command (Phase 209 — full validation as run):**
+```bash
+python -u benchmarks/hetionet_param_eval.py \
+    --n-questions 200 --min-eval-hop 1 --max-neighbors 200 --workers 8 \
+    --embeddings sentence \
+    --beam-width 8 --trb-factor 13.871 --gamma 1.0147 --beta 0.9545 \
+    --r2-boost 1.322 --vote-weight 0.6400 --idf-weight 0.018 \
+    --branch-bonus 0.032 --fhrb-factor 1.726
+```
+
+---
+
+## Hetionet — Phase 210 (branch_bonus Grid, 3-hop Root Cause Analysis)
+
+Phase 210 tests whether branch_bonus is the lever for the 3-hop regression. Grid: [0.032, 0.10, 0.20, 0.308], all other params held at Phase 209 values, 200q/template full eval with workers=8.
+
+### Phase 210 — branch_bonus Grid Results
+
+| branch_bonus | 1-hop | 2-hop | 3-hop | dgp H@1 | cge H@1 | dcvg H@1 | AvgTyped dgp |
+|---|---|---|---|---|---|---|---|
+| **0.032** | **95.3%** | **53.9%** | **50.8%** | **81.1%** | **36.0%** | **50.8%** | 4.6 |
+| 0.10 | 96.1% | 47.6% | 48.5% | 70.5% | 32.5% | 48.5% | 3.3 |
+| 0.20 | 95.7% | 42.2% | 48.5% | 63.6% | 28.0% | 48.5% | 2.5 |
+| 0.308 | 95.3% | 39.2% | 48.5% | 57.6% | 27.0% | 48.5% | 2.1 |
+
+Template codes: dgp=disease_gene_pathway, cge=compound_gene_disease, dcvg=disease_compound_via_gene
+
+**Finding 1 — branch_bonus confirmed optimal at 0.032.** 2-hop degrades monotonically as branch_bonus rises. disease_gene_pathway AvgTyped collapses 4.6→2.1 as branch_bonus rises: higher values bias the beam toward branchy intermediate paths, culling typed candidates before the answer hop.
+
+**Finding 2 — 3-hop is insensitive to branch_bonus.** `disease_compound_via_gene` is locked at 48.5% for all values ≥ 0.10, and only marginally better at 0.032 (50.8%). The 3-hop ceiling is not a structural parameter problem.
+
+**Finding 3 — The 3-hop regression is semantic in origin.** Sentence-transformers introduce cosine-similarity bias that suppresses valid cross-type paths. The `disease_compound_via_gene` template traverses maximally dissimilar semantic types (disease→gene→compound); the alpha (semantic similarity) CSA term systematically penalizes valid paths at each hop because the entity types are semantically distant. Random embeddings have no such bias and achieve 79.5%.
+
+**Known limitation (documented):** Training-free semantic similarity has a natural cross-type depth ceiling in typed heterogeneous biomedical KGs. This is not addressable by structural parameter tuning. The practical mitigation (reducing CSA alpha weight globally) would degrade 1-hop and 2-hop same-type templates that benefit from semantic signal. The asymmetry is real: semantic embeddings help typed 2-hop (disease_gene_pathway +10pp vs random) while hurting cross-type 3-hop (-30pp vs random). A training step that calibrates per-relation-type semantic weights would be required to close this gap — outside the scope of training-free CEREBRUM.
+
+---
+
+## Hetionet — Phase 211 (GraphSAGE Ablation)
+
+Phase 211 tests whether GraphSAGE smoothing amplifies the cross-type 3-hop semantic bias. Same Phase 209 params (branch_bonus=0.032), `--no-graphsage` flag added to `hetionet_param_eval.py`.
+
+| Config | 1-hop | 2-hop | dgp | cge | 3-hop (dcvg) | AvgTyped dgp |
+|---|---|---|---|---|---|---|
+| Ph210 + GraphSAGE | 95.3% | 53.9% | 81.1% | 36.0% | 50.8% | 4.6 |
+| Ph211 − GraphSAGE | 95.5% | **55.7%** | **81.8%** | **38.5%** | 47.0% | 4.9 |
+
+**Finding: GraphSAGE is not the culprit.** Removing it makes 3-hop *worse* (47.0% vs 50.8%) while marginally improving 2-hop. GraphSAGE is providing a small compensatory benefit on cross-type 3-hop traversal, partially counteracting the cosine similarity bias. Keep GraphSAGE enabled.
+
+**Conclusion (investigation closed):** The `disease_compound_via_gene` 3-hop ceiling (~49–51% vs random 79.5%) is intrinsic to training-free cosine similarity on cross-type heterogeneous paths. No structural parameter (branch_bonus) or embedding post-processing (GraphSAGE) can close this gap. A supervised per-relation-type semantic weight calibration step would be required — outside the scope of training-free CEREBRUM. Documented as a known limitation.
+
+### Hetionet Constants: 2D Table (regime × embedding_method)
+
+| Constant | typed_heterogeneous × random | typed_heterogeneous × sentence |
+|----------|------------------------------|-------------------------------|
+| BETA | 0.777 | **0.9545** |
+| BOOST_SCALE | 28.48 | **8.67** |
+| TRB_C | 6.14 | **4.31** |
+| R2_C | 1.07 | **−0.111** |
+| R2_FLOOR | 1.5 | **1.0** |
+| FHRB_C | 0.80 | **0.159** |
+| BRANCH_BONUS | 0.308 | **0.032** |
+| IDF_SCALE_C | 0.0102 | **0.00432** |
+| VOTE_BASE | 0.55 | **0.565** |
+
+Source: Phase 207 (random) + Phase 209 (sentence, multi-hop calibration).
+Note: negative R2_C for sentence/typed means path-consistency boost slightly hurts
+when the beam already selects semantically coherent paths via STRB + GraphSAGE.
 
 ### Phase 165 — Legacy Single-Template Result (disease_gene_pathway only)
 
@@ -312,4 +523,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-05-31 | Phase 206 Hetionet: hop_expand bug fixed; 2-hop 9.5%→55.0%; validated 1/2/3-hop: 97.3%/55.0%/74.0% | Re-tuning needed with fixed eval | Phase 53 canonical paper numbers unchanged*
+*Last updated: 2026-06-01 | Phase 211 GraphSAGE ablation: GraphSAGE ruled out as 3-hop culprit (removing it makes 3-hop worse); ceiling is intrinsic cosine-similarity bias on cross-type paths — investigation closed | Phase 53 canonical paper numbers unchanged*

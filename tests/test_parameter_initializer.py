@@ -121,11 +121,12 @@ def test_typed_heterogeneous_lower_trb():
            ParameterInitializer.compute(hub_p, d).trb_factor
 
 
-def test_typed_heterogeneous_beta_one():
+def test_typed_heterogeneous_beta():
+    # Phase 207: typed_heterogeneous random beta calibrated to 0.777
     p = _mock_profile(regime="typed_heterogeneous", degree_cv=0.8,
                       mean_rel_coverage=0.10)
     params = ParameterInitializer.compute(p, _mock_deriver())
-    assert params.beta == 1.0
+    assert params.beta == 0.777
     assert params.effective_regime == "typed_heterogeneous"
 
 
@@ -146,7 +147,26 @@ def test_no_override_hetionet_like():
     p.mean_rel_coverage = 0.166  # below 0.20 — real typed graph
     params = ParameterInitializer.compute(p, _mock_deriver())
     assert params.effective_regime == "typed_heterogeneous"
-    assert params.beta == 1.0
+    assert params.beta == 0.777  # Phase 207 calibrated value
+
+
+def test_sentence_transformers_overrides():
+    """Phase 209: sentence-transformers typed_heterogeneous uses multi-hop calibrated constants."""
+    p = _mock_profile(regime="typed_heterogeneous", degree_cv=4.17)
+    p.mean_rel_coverage = 0.166
+    d = _mock_deriver()
+    p_rand = ParameterInitializer.compute(p, d, embedding_method="random")
+    p_sent = ParameterInitializer.compute(p, d, embedding_method="sentence")
+    # Phase 209: beta=0.9545 (multi-hop calibration vs random 0.777)
+    assert p_sent.beta == 0.9545
+    assert p_rand.beta == 0.777
+    # idf_weight drops with sentence embeddings (semantic hub encoding)
+    assert p_sent.idf_weight < p_rand.idf_weight
+    # branch_bonus drops dramatically on sentence multi-hop
+    assert p_sent.branch_bonus < p_rand.branch_bonus
+    # effective_regime unchanged — it's the structural routing regime, not embedding
+    assert p_sent.effective_regime == "typed_heterogeneous"
+    assert p_sent.embedding_method == "sentence"
 
 
 def test_mixed_regime_mid_range():

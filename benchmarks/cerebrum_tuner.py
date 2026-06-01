@@ -65,6 +65,10 @@ _EVAL_SCRIPT          = Path(__file__).parent / "metaqa_eval.py"
 _HETIONET_EVAL_SCRIPT = Path(__file__).parent / "hetionet_param_eval.py"
 _DEFAULT_KB  = Path(__file__).parent / "data" / "metaqa" / "kb.txt"
 
+# Pre-built Hetionet state shared across all in-process trials (avoids ~66s rebuild).
+# Populated once by _init_hetionet_state() before the Optuna study starts.
+_hetionet_state: Optional[dict] = None
+
 # ── search space (Phase 1 — wide exploration) ─────────────────────────────────
 # Phase 203: two-parameter SDRB — gamma ceiling raised to 16.0 (hit 7.93/8.0 in
 # Phase 202); beta added [0.5, 3.0] to control fan_out shaping.
@@ -476,6 +480,22 @@ def _run_eval(
     )
 
 
+def _init_hetionet_state(n_questions: int = 20, max_neighbors: int = 50) -> None:
+    """Build Hetionet graph + QA pairs once; stored in _hetionet_state for in-process trials."""
+    global _hetionet_state
+    if _hetionet_state is not None:
+        return  # already initialised
+    from hetionet_param_eval import build_hetionet_state
+    _hetionet_state = build_hetionet_state(
+        n_questions   = n_questions,
+        max_neighbors = max_neighbors,
+        embeddings    = "sentence",
+        seed          = 42,
+        use_cache     = True,
+        min_eval_hop  = 2,
+    )
+
+
 def _run_eval_logged(
     log_file: Path,
     run_id:   str,
@@ -483,7 +503,41 @@ def _run_eval_logged(
     **kwargs,
 ) -> tuple[float, float, float, float]:
     dataset = kwargs.get("dataset", "metaqa")
+    if dataset == "hetionet" and _hetionet_state is not None:
+        # In-process path: graph already built — skip ~66s rebuild per trial
+        import traceback as _tb
+        from hetionet_param_eval import run_trial_inprocess
+        t0 = time.time()
+        try:
+            h1, h10, mrr = run_trial_inprocess(_hetionet_state, {
+                "trb_factor":   kwargs["trb_factor"],
+                "r2_boost":     kwargs["r2_boost"],
+                "vote_weight":  kwargs["vote_weight"],
+                "beam_width":   kwargs["beam_width"],
+                "idf_weight":   kwargs["idf_weight"],
+                "branch_bonus": kwargs["branch_bonus"],
+                "fhrb_factor":  kwargs["fhrb_factor"],
+                "gamma":        kwargs["gamma"],
+                "beta":         kwargs["beta"],
+                "max_loops":    1,
+            })
+        except Exception:
+            print(f"\n[INPROCESS-ERR trial {trial_id}]\n{_tb.format_exc()}", file=sys.stderr, flush=True)
+            raise
+        elapsed = time.time() - t0
+        _write_log(log_file, {
+            "type":      "trial_stdout",
+            "run_id":    run_id,
+            "trial_id":  trial_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "lines":     [f"inprocess h1={h1:.4f} h10={h10:.4f} mrr={mrr:.4f}"],
+            "exit_code": 0,
+            "elapsed_s": round(elapsed, 1),
+        })
+        return h1, h10, mrr, elapsed
+
     if dataset == "hetionet":
+        # Fallback subprocess path (state not yet initialised)
         n_questions = kwargs.get("sample", 50)
         cmd = [
             sys.executable, "-u", str(_HETIONET_EVAL_SCRIPT),
@@ -498,10 +552,10 @@ def _run_eval_logged(
             "--gamma",        str(kwargs["gamma"]),
             "--beta",         str(kwargs["beta"]),
             "--embeddings",   "sentence",
-            "--max-loops",    "1",   # keep 1 during tuning for speed
+            "--max-loops",    "1",
             "--workers",      str(kwargs.get("workers", 1)),
-            "--min-eval-hop", "2",   # skip near-ceiling 1-hop in tuning
-            "--max-neighbors","50",  # tuning needs relative signal, not absolute accuracy
+            "--min-eval-hop", "2",
+            "--max-neighbors","50",
         ]
     else:
         sample = kwargs["sample"]
@@ -682,6 +736,10 @@ def run_tuner(
         print(f"  Resuming  : {resume_file.name}  ({phase1_trials} Phase 1 trials loaded)")
 
     total_trials = phase1_trials + phase2_trials
+
+    # ── Hetionet: build graph once before trials start ────────────────────
+    if dataset == "hetionet":
+        _init_hetionet_state(n_questions=sample, max_neighbors=50)
 
     # ── log file setup ────────────────────────────────────────────────────
     run_id   = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
