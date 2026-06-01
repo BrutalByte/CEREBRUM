@@ -67,11 +67,10 @@ def build_graph(embeddings: str = "sentence") -> tuple:
 
     graph = CerebrumGraph(adapter=adapter, embedding_engine=engine)
     graph.build(
-        cache_dir        = str(CACHE_DIR),
-        n_trials         = 1,
-        seed             = 42,
-        use_graphsage    = True,    # Phase 130: 2-layer neighborhood smoothing
-        coarsen_target   = 5568,    # Preserve all Hetionet communities (vs default 2000 cap)
+        cache_dir     = str(CACHE_DIR),
+        n_trials      = 1,
+        seed          = 42,
+        use_graphsage = True,   # Phase 130: 2-layer neighborhood smoothing
     )
     print(f"  CerebrumGraph built.\n")
     return adapter, graph, node_type_map

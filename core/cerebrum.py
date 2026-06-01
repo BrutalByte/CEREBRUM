@@ -863,15 +863,9 @@ class CerebrumGraph:
         # ----------------------------------------------------------
         # 3. Optional coarsening
         # ----------------------------------------------------------
-        # Auto-coarsen only when coarsen_target is not explicitly set.
-        # Default cap is 2000 for memory safety on general graphs; pass
-        # coarsen_target=N explicitly to preserve more communities (e.g.
-        # Hetionet: coarsen_target=5568 keeps full community resolution).
-        _AUTO_CAP = 2000
-        if n_raw > _AUTO_CAP and coarsen_target is None and min_community_size == 0:
-            coarsen_target = _AUTO_CAP
-            logger.warning("Community count %d exceeds %d. Auto-coarsening to %d.",
-                           n_raw, _AUTO_CAP, _AUTO_CAP)
+        # No automatic coarsening. The community map is {node: community_id}
+        # so memory is O(nodes), not O(communities²). Pass coarsen_target=N
+        # explicitly if you need to limit communities on constrained hardware.
 
         if min_community_size > 0:
             from core.structural_encoder import coarsen_communities as _size_coarsen
@@ -895,7 +889,17 @@ class CerebrumGraph:
         # ----------------------------------------------------------
         if callback: callback(0.8, "Step 4/5: Building CSA Attention Engine...")
         logger.info("Building CSA engine...")
-        distances = build_community_distance_matrix(G_und, cm)
+        _dist_cache = cache / f"community_distances_{community_engine}.pkl" if cache else None
+        if not force_rebuild and _dist_cache and _dist_cache.exists():
+            logger.info("Loading cached community distances from %s", _dist_cache)
+            with open(_dist_cache, "rb") as _f:
+                distances = pickle.load(_f)
+        else:
+            distances = build_community_distance_matrix(G_und, cm)
+            if _dist_cache:
+                with open(_dist_cache, "wb") as _f:
+                    pickle.dump(distances, _f)
+                logger.info("Cached community distances to %s", _dist_cache)
         adj       = adjacent_community_pairs(G_und, cm)
         cg        = build_community_graph(G_und, cm)
 

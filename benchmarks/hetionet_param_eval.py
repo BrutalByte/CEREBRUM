@@ -57,15 +57,30 @@ _OVERFETCH = {1: 2, 2: 3, 3: 5}
 
 
 # ---------------------------------------------------------------------------
+# Template query text for STRB (semantic terminal relation boost).
+# Encoding these with sentence-transformers lets query() infer the correct
+# terminal relation semantically rather than relying on structural SRI alone.
+# ---------------------------------------------------------------------------
+TEMPLATE_QUERY_TEXT = {
+    "compound_treats_disease":    "What disease does this compound treat?",
+    "disease_associates_gene":    "What gene does this disease associate with?",
+    "gene_participates_pathway":  "What pathway does this gene participate in?",
+    "disease_gene_pathway":       "What pathway is associated with this disease via a gene?",
+    "compound_gene_disease":      "What disease does this compound affect through a gene?",
+    "disease_compound_via_gene":  "What compound treats this disease through a gene?",
+}
+
+# ---------------------------------------------------------------------------
 # Worker-side globals (populated by _worker_init in each spawn'd process)
 # ---------------------------------------------------------------------------
 
-_W_GRAPH = None
+_W_GRAPH     = None
+_W_MAX_LOOPS = 1
 
 
 def _worker_init(graph_args: dict) -> None:
     """Load CerebrumGraph from cache inside each worker process."""
-    global _W_GRAPH
+    global _W_GRAPH, _W_MAX_LOOPS
     from benchmarks.hetionet_eval import load_hetionet
     from benchmarks.hetionet_cerebrum_eval import CACHE_DIR
     from core.cerebrum import CerebrumGraph
@@ -77,11 +92,13 @@ def _worker_init(graph_args: dict) -> None:
         if node in G.nodes:
             G.nodes[node]["type"] = ntype
 
-    if graph_args.get("embeddings") == "sentence":
+    _use_sentence = graph_args.get("embeddings") == "sentence"
+    if _use_sentence:
         try:
             engine = SentenceEngine()
         except ImportError:
             engine = RandomEngine(dim=64)
+            _use_sentence = False
     else:
         engine = RandomEngine(dim=64)
 
@@ -93,9 +110,15 @@ def _worker_init(graph_args: dict) -> None:
         max_neighbors   = graph_args.get("max_neighbors", 50),
     )
     cache_dir = str(CACHE_DIR / "cerebrum") if graph_args.get("use_cache", True) else None
-    graph.build(cache_dir=cache_dir, n_trials=1, seed=graph_args.get("seed", 42),
-                community_engine="dscf")
-    _W_GRAPH = graph
+    graph.build(
+        cache_dir        = cache_dir,
+        n_trials         = 1,
+        seed             = graph_args.get("seed", 42),
+        community_engine = "dscf",
+        use_graphsage    = _use_sentence,
+    )
+    _W_GRAPH     = graph
+    _W_MAX_LOOPS = graph_args.get("max_loops", 1)
 
 
 def _worker_process_question(task: tuple) -> tuple:
@@ -113,6 +136,9 @@ def _worker_process_question(task: tuple) -> tuple:
     overfetch = _OVERFETCH.get(hop, 5) * top_k
 
     try:
+        _qtext = TEMPLATE_QUERY_TEXT.get(template, "")
+        _qemb  = (_W_GRAPH._embedding_engine.encode_one(_qtext)
+                  if _qtext and hasattr(_W_GRAPH._embedding_engine, "encode_one") else None)
         answers_obj = _W_GRAPH.query(
             seeds                   = [seed],
             top_k                   = overfetch,
@@ -123,6 +149,8 @@ def _worker_process_question(task: tuple) -> tuple:
             branch_bonus_weight     = branch_bonus,
             hop_expand              = (hop >= 3),
             initial_relation_boost  = fhrb,
+            query_embedding         = _qemb,
+            max_loops               = _W_MAX_LOOPS,
         )
     except Exception:
         return (q_idx, template, 0.0, 0.0, 0.0, False, 0)
@@ -225,10 +253,11 @@ def _build_graph(adapter, *, beam_width: int, max_neighbors: int,
         cache_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     graph.build(
-        cache_dir      = str(cache_dir) if cache_dir else None,
-        n_trials       = 1,
-        seed           = seed,
+        cache_dir        = str(cache_dir) if cache_dir else None,
+        n_trials         = 1,
+        seed             = seed,
         community_engine = "dscf",
+        use_graphsage    = embeddings == "sentence",
     )
     print(f"  CerebrumGraph built in {time.time()-t0:.1f}s")
     return graph
@@ -245,6 +274,7 @@ def _eval_template_serial(
     TEMPLATE_ANSWER_TYPE: Dict, TEMPLATE_HOP: Dict,
     *, trb_factor: float, r2_boost: float, idf_weight: float,
     vote_weight: float, branch_bonus: float, fhrb_factor: float, top_k: int,
+    max_loops: int = 1,
 ) -> Dict:
     from benchmarks.metaqa_eval import hits_at_k, reciprocal_rank
 
@@ -270,6 +300,9 @@ def _eval_template_serial(
             print(f"    [{template}] {i+1}/{len(qa_pairs)} ({time.time()-t0:.1f}s)",
                   end="\r", flush=True)
 
+        _qtext = TEMPLATE_QUERY_TEXT.get(template, "")
+        _qemb  = (graph._embedding_engine.encode_one(_qtext)
+                  if _qtext and hasattr(graph._embedding_engine, "encode_one") else None)
         answers_obj = graph.query(
             seeds                   = [seed],
             top_k                   = overfetch,
@@ -280,6 +313,8 @@ def _eval_template_serial(
             branch_bonus_weight     = branch_bonus,
             hop_expand              = (hop >= 3),
             initial_relation_boost  = fhrb,
+            query_embedding         = _qemb,
+            max_loops               = max_loops,
         )
         answers_obj = [a for a in answers_obj if a.entity_id.startswith(f"{answer_type}::")]
         n_typed_total += len(answers_obj)
@@ -337,6 +372,8 @@ def main() -> None:
     parser.add_argument("--top-k",         type=int, default=10)
     parser.add_argument("--seed",          type=int, default=42)
     parser.add_argument("--embeddings",    choices=["random", "sentence"], default="random")
+    parser.add_argument("--max-loops",     type=int, default=1,
+                        help="Looped beam iterations (default 1). Use 2 for 3-hop refinement.")
     parser.add_argument("--use-cache",     action="store_true", default=True)
     parser.add_argument("--no-cache",      action="store_true")
     parser.add_argument("--no-download",   action="store_true")
@@ -495,7 +532,7 @@ def main() -> None:
         graph_args = {
             "use_cache": args.use_cache, "embeddings": args.embeddings,
             "seed": args.seed, "beam_width": args.beam_width,
-            "max_neighbors": args.max_neighbors,
+            "max_neighbors": args.max_neighbors, "max_loops": args.max_loops,
         }
         print(f"  Launching {args.workers} workers ({len(tasks)} tasks)...")
         ctx = mp.get_context("spawn")
@@ -551,6 +588,7 @@ def main() -> None:
                 branch_bonus= args.branch_bonus,
                 fhrb_factor = args.fhrb_factor,
                 top_k       = args.top_k,
+                max_loops   = args.max_loops,
             ))
 
     # ------------------------------------------------------------------

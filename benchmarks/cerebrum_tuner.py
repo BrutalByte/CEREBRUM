@@ -498,6 +498,7 @@ def _run_eval_logged(
             "--gamma",        str(kwargs["gamma"]),
             "--beta",         str(kwargs["beta"]),
             "--embeddings",   "sentence",
+            "--max-loops",    "1",   # keep 1 during tuning for speed
             "--workers",      str(kwargs.get("workers", 1)),
             "--min-eval-hop", "2",   # skip near-ceiling 1-hop in tuning
             "--max-neighbors","50",  # tuning needs relative signal, not absolute accuracy

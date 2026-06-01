@@ -382,7 +382,7 @@ def coarsen_communities(
 def build_community_distance_matrix(
     G: nx.Graph,
     community_map: Dict[str, int],
-    max_communities: int = 2000,
+    max_communities: int = 0,
 ) -> Dict[tuple, float]:
     """
     Precompute the shortest-path distance between every pair of communities
@@ -394,25 +394,19 @@ def build_community_distance_matrix(
     Used by CSAEngine.community_score() for the exp(-lambda * d) decay term.
     Returns a dict: {(cid_i, cid_j): hop_distance, ...} for all pairs.
 
-    Parameters
-    ----------
-    max_communities : int
-        If the number of unique communities exceeds this threshold, skip the
-        all-pairs BFS and return an empty dict. CSAEngine falls back to its
-        built-in default distance (d=5.0) for non-adjacent pairs.
-        This avoids O(K²) blowup on large graphs.
-
-        When this fires it usually means the community detection over-partitioned
-        the graph (many singleton communities).  Call coarsen_communities() before
-        this function to merge small communities and restore a meaningful signal.
+    BFS is bounded at depth 5 (exp(-λ*5) ≈ 0.007 — negligible beyond that),
+    so the result is sparse and memory is O(K * reachable_within_5_hops),
+    not O(K²). The former 2000-community cap was overcautious and has been
+    removed. Pass max_communities > 0 to re-enable it on memory-constrained
+    hardware.
     """
     communities = set(community_map.values())
 
-    if len(communities) > max_communities:
+    if max_communities > 0 and len(communities) > max_communities:
         import logging
         logging.getLogger("cerebrum.structural").warning(
             "build_community_distance_matrix: %d communities exceeds cap of %d. "
-            "Call coarsen_communities() first to restore full CSA signal.",
+            "Returning empty dict — CSAEngine will use default distance d=5.0.",
             len(communities), max_communities,
         )
         return {}
