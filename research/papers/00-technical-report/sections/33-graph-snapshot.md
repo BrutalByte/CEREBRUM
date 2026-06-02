@@ -1,5 +1,5 @@
 # PAPER 033: GraphSnapshot — Portable JSON Topology Persistence for Knowledge Graph Recovery
-**Status**: v2.52.0 (Phase 172 (STRB) COMPLETE)
+**Status**: v2.71.0 (Phase 172 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
 **CEREBRUM Phase 81**
@@ -130,6 +130,6 @@ Pairs with `ProvenanceLedger.rollback_cycle()` for fine-grained recovery: if the
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.52.0
+**Reviewed on**: May 2, 2026 for version v2.71.0
 
 

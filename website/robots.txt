@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://brutalbyte.github.io/CEREBRUM/sitemap.xml

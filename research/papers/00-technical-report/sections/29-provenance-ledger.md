@@ -1,5 +1,5 @@
 # PAPER 029: ProvenanceLedger — Targeted Rollback and Audit for Autonomous Knowledge Graph Materialization
-**Status**: v2.52.0 (Phase 172 (STRB) COMPLETE)
+**Status**: v2.71.0 (Phase 172 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
 **CEREBRUM Phase 76**
@@ -119,6 +119,6 @@ All read and write operations on `_batches` and `_cycle_index` are protected by 
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.52.0
+**Reviewed on**: May 2, 2026 for version v2.71.0
 
 

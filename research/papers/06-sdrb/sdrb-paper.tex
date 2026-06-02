@@ -32,7 +32,7 @@ Hyperparameter Initialization for Training-Free\\
 Multi-Hop Knowledge Graph Reasoning}}
 
 \input{../shared/author-block}
-\date{May 2026}
+\date{June 2026}
 
 \begin{document}
 \maketitle
@@ -641,6 +641,13 @@ is a system where a practitioner loads any KG, receives competitive starting
 parameters derived from the graph's own statistics, and treats further tuning
 as optional refinement rather than a deployment prerequisite.
 
+\textbf{Subsequent results (post-submission).} Phase 212 zero-config validation
+(all 39,093 MetaQA questions) establishes canonical zero-config H@1 of 83.2\%
+(1-hop), 63.3\% (2-hop), and 56.8\% (3-hop) with H@10 reaching 99.0\%, 94.3\%,
+and 90.7\%. Phase 213 (sentence-transformer embeddings, hub-homogeneous regime)
+achieves 66.8\% H@1 on 3-hop. Full results are in
+\texttt{docs/BENCHMARK\_CANONICAL.md} in the repository.
+
 Code, benchmark harnesses, and tuner are available at
 \url{https://github.com/BrutalByte/CEREBRUM}.
 
@@ -713,7 +720,7 @@ YAGO3: A Knowledge Base from Multilingual Wikipedias.
 
 \bibitem{buchorn2026report}
 Buchorn, B.A. (2026).
-CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning.
+CEREBRUM v2.71.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning.
 arXiv preprint \CEREBRUMReportID{}.
 
 \end{thebibliography}

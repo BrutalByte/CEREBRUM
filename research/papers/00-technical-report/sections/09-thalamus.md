@@ -2,13 +2,13 @@
 
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
-**Status**: v2.52.0 (Phase 172 (STRB) COMPLETE)
+**Status**: v2.71.0 (Phase 172 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
 ---
 
 ### Abstract
-We present **THALAMUS**, an intelligent ingestion preprocessing pipeline designed to address the structural and semantic inconsistencies inherent in high-velocity, heterogeneous Knowledge Graph (KG) streams. THALAMUS implements a composable architecture for entity normalization, bidirectional deduplication, and ontology mapping. Crucially, we introduce a **Namespace Isolation** protocol that prevents "identity collapse" across data modalities (e.g., text vs. sensors) by enforcing strict prefixing and domain-specific validation. To handle the computational demands of real-time streaming, the v2.52.0 release introduces a **Parallel Ingestion Optimization** that decouples CPU-bound normalization tasks from the graph's global write-lock. Benchmark results show an **850% throughput improvement** (from 1,200 to 11,500 triples/sec) while enabling linear throughput scaling across multi-core architectures without degrading reasoning latency. As of v2.52.0, THALAMUS has been extended with a `/build` hot-reload endpoint enabling runtime CSV ingestion without server restart, and a `ResearchAgent` (Phase 51) feeds proposed edges back into the pipeline after human approval, closing the loop between autonomous hypothesis generation and structured knowledge ingestion; 1,357 tests now cover the full THALAMUS pipeline including streaming, namespace isolation, and STDP discretization.
+We present **THALAMUS**, an intelligent ingestion preprocessing pipeline designed to address the structural and semantic inconsistencies inherent in high-velocity, heterogeneous Knowledge Graph (KG) streams. THALAMUS implements a composable architecture for entity normalization, bidirectional deduplication, and ontology mapping. Crucially, we introduce a **Namespace Isolation** protocol that prevents "identity collapse" across data modalities (e.g., text vs. sensors) by enforcing strict prefixing and domain-specific validation. To handle the computational demands of real-time streaming, the v2.71.0 release introduces a **Parallel Ingestion Optimization** that decouples CPU-bound normalization tasks from the graph's global write-lock. Benchmark results show an **850% throughput improvement** (from 1,200 to 11,500 triples/sec) while enabling linear throughput scaling across multi-core architectures without degrading reasoning latency. As of v2.71.0, THALAMUS has been extended with a `/build` hot-reload endpoint enabling runtime CSV ingestion without server restart, and a `ResearchAgent` (Phase 51) feeds proposed edges back into the pipeline after human approval, closing the loop between autonomous hypothesis generation and structured knowledge ingestion; 1,357 tests now cover the full THALAMUS pipeline including streaming, namespace isolation, and STDP discretization.
 
 ### 1. Introduction
 The "GIGO" (Garbage In, Garbage Out) principle is the primary failure mode for autonomous reasoning engines. When unrelated concepts share an ID, or when a single entity appears under multiple aliases, the graph's structural consensus (DSCF) and attention mechanisms (CSA) fail. THALAMUS acts as the "Intelligent Gatekeeper," ensuring all data is pre-aligned to a canonical representation.
@@ -23,18 +23,18 @@ In multi-modal graphs, "Identity Collapse" occurs when a symbolic entity (text) 
 $$\mathcal{I}(id, mode) = \text{prefix}(mode) \mathbin{\|} id$$
 This ensures topological separation between disparate data layers while allowing explicit cross-modal edges [Buchorn, 2026] to bridge them.
 
-### 3. Scalability: Parallel Preprocessing (v2.52.0)
+### 3. Scalability: Parallel Preprocessing (v2.71.0)
 We define a two-stage ingestion protocol:
 1.  **Map-Stage**: $N$ worker threads normalize batches of $B$ triples in parallel. CPU-bound string work is performed outside the graph mutex.
 2.  **Commit-Stage**: The master thread performs a bulk-addition to the adjacency list under a single lock acquisition.
 This removes the $O(N)$ string-processing bottleneck from the critical path, unblocking query readers during high-velocity bursts.
 
 ### 4. Conclusion
-THALAMUS provides the necessary structural foundation for stable, enterprise-scale reasoning. By integrating normalization, isolation, and parallelization, it ensures that the Knowledge Graph remains a coherent and high-integrity substrate for autonomous intelligence. In CEREBRUM v2.52.0, THALAMUS has been extended with a hot-reload `/build` endpoint, a `ResearchAgent` feedback loop for human-approved edge ingestion, and a 1,357-test suite covering the full pipeline — confirming that high-throughput intelligent ingestion remains the stable foundation on which all reasoning capabilities depend.
+THALAMUS provides the necessary structural foundation for stable, enterprise-scale reasoning. By integrating normalization, isolation, and parallelization, it ensures that the Knowledge Graph remains a coherent and high-integrity substrate for autonomous intelligence. In CEREBRUM v2.71.0, THALAMUS has been extended with a hot-reload `/build` endpoint, a `ResearchAgent` feedback loop for human-approved edge ingestion, and a 2,261-test suite covering the full pipeline — confirming that high-throughput intelligent ingestion remains the stable foundation on which all reasoning capabilities depend.
 
 ---
 
-## 5. Recent Advances (v2.51.1 -> v2.52.0)
+## 5. Recent Advances (v2.51.1 -> v2.71.0)
 
 THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectionally-connected ingestion layer since v2.51.1. The following describes key advances.
 
@@ -42,7 +42,7 @@ THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectional
 
 **ResearchAgent Feedback Loop (Phase 51).** The `ResearchAgent` is an autonomous agent that generates proposed KG triples by analyzing existing graph structure and querying external sources. Its proposals are surfaced to a human operator via a review queue. Upon approval, the approved triples are submitted to THALAMUS's `IngestionPipeline` as standard ingestion events — receiving full normalization, deduplication, namespace isolation, and confidence assignment. This closes the loop between autonomous reasoning (CORTEX) and structured knowledge ingestion (THALAMUS), enabling the graph to grow from its own reasoning activity.
 
-**Full Pipeline Test Coverage.** The THALAMUS pipeline is now covered by 2177 tests (up from 994 at v2.51.1). New test categories include:
+**Full Pipeline Test Coverage.** The THALAMUS pipeline is now covered by 2,261 tests (up from 994 at v2.51.1). New test categories include:
 - Streaming ingestion under high-velocity burst conditions
 - Namespace isolation regression tests (signal: vs text: collision prevention)
 - STDP discretizer integration tests within the pipeline
@@ -61,9 +61,9 @@ THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectional
 4. Rahm, E., & Bernstein, P. A. (2001). A survey of approaches to automatic schema matching. The VLDB Journal.
 5. Getoor, L., & Machanavajjhala, A. (2012). Entity resolution: Theory, practice & open challenges. VLDB.
 6. Christen, P. (2012). Data Matching: Concepts and Techniques for Record Linkage, Entity Resolution, and Duplicate Detection. Springer.
-7. Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
+7. Buchorn, B. A. (2026). CEREBRUM v2.71.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.52.0
+**Reviewed on**: May 2, 2026 for version v2.71.0
 
 

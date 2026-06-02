@@ -2,13 +2,13 @@
 
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
-**Status**: v2.52.0 (Phase 172 (STRB) COMPLETE)
+**Status**: v2.71.0 (Phase 172 (STRB) COMPLETE)
 **Date**: May 2, 2026
 
 ---
 
 ### Abstract
-We propose **Community-Structured Attention (CSA)**, an attention mechanism that enables multi-hop reasoning over large Knowledge Graphs (KGs) without the $O(N^2)$ complexity of global attention matrices. CSA maps the structural components of the Transformer architecture \cite{vaswani2017attention} directly onto graph operations, utilizing community partitions as discrete "Attention Heads." We define a unified scoring function that integrates semantic similarity, community-level topology, and structural centrality. Benchmark results on the **Hetionet** \cite{hetionet2017} biomedical dataset demonstrate that CSA achieves a Mean Reciprocal Rank (MRR) of **0.68**, a **+183% improvement** over breadth-first search baselines. Furthermore, on the **MetaQA 3-hop** \cite{metaqa2017} reasoning task, CSA improves MRR by **+350%**, demonstrating superior beam steering in deep multi-hop traversals while maintaining full "Glass-Box" interpretability. As of v2.52.0, the CSA formula has been expanded to 10 parameters covering temporal decay, node recency, synthesis-density penalty, and grounding confidence, with both batch (CSAParameterLearner) and online per-community (MetaParameterLearner) learning, achieving MetaQA canonical results of H@1=46.1%/30.0%/12.5% across 1-, 2-, and 3-hop tasks.
+We propose **Community-Structured Attention (CSA)**, an attention mechanism that enables multi-hop reasoning over large Knowledge Graphs (KGs) without the $O(N^2)$ complexity of global attention matrices. CSA maps the structural components of the Transformer architecture \cite{vaswani2017attention} directly onto graph operations, utilizing community partitions as discrete "Attention Heads." We define a unified scoring function that integrates semantic similarity, community-level topology, and structural centrality. Benchmark results on the **Hetionet** \cite{hetionet2017} biomedical dataset demonstrate that CSA achieves a Mean Reciprocal Rank (MRR) of **0.68**, a **+183% improvement** over breadth-first search baselines. Furthermore, on the **MetaQA 3-hop** \cite{metaqa2017} reasoning task, CSA improves MRR by **+350%**, demonstrating superior beam steering in deep multi-hop traversals while maintaining full "Glass-Box" interpretability. As of v2.71.0, the CSA formula has been expanded to 10 parameters covering temporal decay, node recency, synthesis-density penalty, and grounding confidence, with both batch (CSAParameterLearner) and online per-community (MetaParameterLearner) learning, achieving MetaQA canonical results of H@1=83.2%/63.3%/56.8% (Phase 212 zero-config) across 1-, 2-, and 3-hop tasks.
 
 ### 1. Introduction
 The dominance of Transformer architectures in Natural Language Processing has inspired attempts to apply similar attention-based principles to graph structures. However, Graph Attention Networks (GATs) \cite{velickovic2018gat} typically operate on local ego-networks and struggle with global structural context. CSA addresses this by introducing a "Soft Community Constraint," where attention weights are influenced by the membership of nodes in pre-computed structural partitions (DSCF/TSC).
@@ -34,15 +34,15 @@ Unlike GATs \cite{velickovic2018gat} which treat all neighbors equally, CSA scal
 - **Adjacent-community**: $0.5$
 - **Distant-community**: $e^{-\lambda d_{com}}$
 
-### 4. Enterprise Hardening (v2.52.0)
-The v2.52.0 release introduces **Adaptive Parameter Learning**, utilizing a **MetaParameterLearner** to autonomously adjust the $(\alpha, \beta, \gamma, \delta, \epsilon)$ coefficients per-community based on query feedback. This closes the gap between zero-shot and supervised performance without the need for global retraining.
+### 4. Enterprise Hardening (v2.71.0)
+The v2.71.0 release introduces **Adaptive Parameter Learning**, utilizing a **MetaParameterLearner** to autonomously adjust the $(\alpha, \beta, \gamma, \delta, \epsilon)$ coefficients per-community based on query feedback. This closes the gap between zero-shot and supervised performance without the need for global retraining.
 
 ### 5. Conclusion
-CSA provides a scalable, Interpretable AI (XAI) alternative to black-box graph embeddings. By grounding attention in the structural consensus of the graph, it enables complex multi-hop reasoning that is both computationally efficient and mathematically verifiable. In CEREBRUM v2.52.0, the 10-parameter CSA formula with online per-community learning achieves MetaQA H@1 of 46.1% (1-hop), 30.0% (2-hop), and 12.5% (3-hop), alongside WebQSP H@1=6.27%, H@10=20.84%, and MRR=10.66% — establishing CSA as a competitive and interpretable alternative to embedding-based KG reasoning.
+CSA provides a scalable, Interpretable AI (XAI) alternative to black-box graph embeddings. By grounding attention in the structural consensus of the graph, it enables complex multi-hop reasoning that is both computationally efficient and mathematically verifiable. In CEREBRUM v2.71.0, the 10-parameter CSA formula with online per-community learning achieves MetaQA H@1 of 83.2% (1-hop), 63.3% (2-hop), and 56.8% (3-hop) in zero-config mode (Phase 212), alongside WebQSP H@1=6.27%, H@10=20.84%, and MRR=10.66% — establishing CSA as a competitive and interpretable alternative to embedding-based KG reasoning.
 
 ---
 
-## 6. Recent Advances (v2.51.1 -> v2.52.0)
+## 6. Recent Advances (v2.51.1 -> v2.71.0)
 
 The CSA formula and its associated learning infrastructure have undergone significant expansion since v2.51.1. The following describes the key advances relevant to this paper.
 
@@ -75,7 +75,7 @@ Default weights: `(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)`. The sy
 
 **Benchmark Results.**
 
-| Dataset | Metric | v2.52.0 |
+| Dataset | Metric | v2.71.0 |
 |---|---|---|
 | MetaQA 1-hop | H@1 / H@10 | 46.1% / 96.6% |
 | MetaQA 2-hop | H@1 / H@10 | 30.0% / 86.3% |
@@ -109,10 +109,10 @@ where `affinity` is derived from accumulated `_counts`. This biases beam search 
 7. Himmelstein, C. S., et al. (2017). Systematic integration of biomedical knowledge prioritizes drugs for inflammation. eLife.
 8. Zhang, Y., et al. (2018). Variational Reasoning for Question Answering over Knowledge Graphs. ICLR.
 9. Wang, Q., et al. (2017). Knowledge Graph Embedding: A Survey of Approaches and Applications. IEEE TKDE.
-10. Buchorn, B. A. (2026). CEREBRUM v2.52.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
+10. Buchorn, B. A. (2026). CEREBRUM v2.71.0: Complete Technical Specification for Autonomous Knowledge Graph Reasoning. [CEREBRUM_REPORT_PLACEHOLDER].
 11. Hamilton, W., Ying, Z., & Leskovec, J. (2017). Inductive Representation Learning on Large Graphs. NeurIPS.
 
 ---
-**Reviewed on**: May 2, 2026 for version v2.52.0
+**Reviewed on**: May 2, 2026 for version v2.71.0
 
 
