@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CEREBRUM — Training-Free Knowledge Graph Reasoning</title>
+  <meta name="description" content="Crystal-box knowledge graph reasoning — 60.4% H@1 on MetaQA 3-hop, zero training data, zero hallucinations. Open source.">
+  <meta property="og:title" content="CEREBRUM — Training-Free Knowledge Graph Reasoning">
+  <meta property="og:description" content="Every answer is a traceable graph path. Zero hallucinations. 1000× cheaper than GPT-4o.">
+  <meta property="og:image" content="./assets/og-image.png">
+  <meta property="og:url" content="https://brutalbyte.github.io/CEREBRUM/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CEREBRUM — Zero Hallucination KG Reasoning">
+  <meta name="twitter:description" content="60.4% H@1 on MetaQA 3-hop. Zero training. Zero hallucinations. Open source.">
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./assets/apple-touch-icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg:        '#0a0a0f',
+            surface:   '#111118',
+            border:    '#1e1e2e',
+            indigo:    '#6366f1',
+            cyan:      '#22d3ee',
+            emerald:   '#10b981',
+            amber:     '#f59e0b',
+            codebg:    '#0f172a',
+          },
+          fontFamily: {
+            sans:  ['Inter', 'sans-serif'],
+            mono:  ['JetBrains Mono', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #0a0a0f; color: #f1f5f9; font-family: 'Inter', sans-serif; }
+
+    /* Nav */
+    #navbar {
+      background: rgba(10, 10, 15, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid #1e1e2e;
+    }
+
+    /* Hero graph animation */
+    .node { animation: nodePulse 3s ease-in-out infinite; }
+    .node:nth-child(1)  { animation-delay: 0s; }
+    .node:nth-child(2)  { animation-delay: 0.4s; }
+    .node:nth-child(3)  { animation-delay: 0.8s; }
+    .node:nth-child(4)  { animation-delay: 1.2s; }
+    .node:nth-child(5)  { animation-delay: 1.6s; }
+    .node:nth-child(6)  { animation-delay: 2.0s; }
+    .node:nth-child(7)  { animation-delay: 2.4s; }
+    .node:nth-child(8)  { animation-delay: 0.2s; }
+    .node:nth-child(9)  { animation-delay: 0.6s; }
+    .node:nth-child(10) { animation-delay: 1.0s; }
+    .node:nth-child(11) { animation-delay: 1.4s; }
+    .node:nth-child(12) { animation-delay: 1.8s; }
+    .node:nth-child(13) { animation-delay: 2.2s; }
+    .node:nth-child(14) { animation-delay: 2.6s; }
+    .node:nth-child(15) { animation-delay: 0.3s; }
+
+    @keyframes nodePulse {
+      0%, 100% { opacity: 0.3; r: 5; }
+      50%       { opacity: 0.7; r: 7; }
+    }
+
+    /* Active path animation */
+    .path-node-1 { animation: pathLight 4s ease-in-out infinite; animation-delay: 0s; }
+    .path-node-2 { animation: pathLight 4s ease-in-out infinite; animation-delay: 0.6s; }
+    .path-node-3 { animation: pathLight 4s ease-in-out infinite; animation-delay: 1.2s; }
+    .path-node-4 { animation: pathLight 4s ease-in-out infinite; animation-delay: 1.8s; }
+    .path-node-5 { animation: pathLight 4s ease-in-out infinite; animation-delay: 2.4s; }
+
+    .path-edge { animation: edgeLight 4s ease-in-out infinite; }
+    .path-edge:nth-child(1) { animation-delay: 0.3s; }
+    .path-edge:nth-child(2) { animation-delay: 0.9s; }
+    .path-edge:nth-child(3) { animation-delay: 1.5s; }
+    .path-edge:nth-child(4) { animation-delay: 2.1s; }
+
+    @keyframes pathLight {
+      0%, 15%, 85%, 100% { opacity: 0.2; }
+      30%, 70%            { opacity: 1; }
+    }
+    @keyframes edgeLight {
+      0%, 15%, 85%, 100% { opacity: 0.05; }
+      30%, 70%            { opacity: 0.7; }
+    }
+
+    /* Code blocks */
+    .code-block {
+      background: #0f172a;
+      border: 1px solid #1e1e2e;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      line-height: 1.6;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+    }
+    .code-block .kw  { color: #818cf8; }
+    .code-block .str { color: #34d399; }
+    .code-block .cmt { color: #475569; }
+    .code-block .num { color: #22d3ee; }
+    .code-block .key { color: #f472b6; }
+
+    /* Stat dividers */
+    .stat-divider { border-left: 1px solid #1e1e2e; }
+
+    /* Bar chart */
+    .bar-fill { transition: width 1s ease-out; }
+
+    /* Gradient text */
+    .grad-text {
+      background: linear-gradient(135deg, #6366f1, #22d3ee);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Cards */
+    .card {
+      background: #111118;
+      border: 1px solid #1e1e2e;
+      border-radius: 12px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover {
+      border-color: #6366f1;
+      transform: translateY(-2px);
+    }
+
+    /* Section */
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #22d3ee;
+    }
+
+    /* Table */
+    .bench-table th { background: #111118; color: #94a3b8; font-size: 0.8rem; font-weight: 500; }
+    .bench-table td { border-bottom: 1px solid #1e1e2e; }
+    .bench-table tr.highlight td { background: rgba(99,102,241,0.08); color: #f1f5f9; }
+    .bench-table tr.dimmed td { color: #475569; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0a0a0f; }
+    ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 1: NAVIGATION
+══════════════════════════════════════════════════ -->
+<nav id="navbar" class="fixed top-0 left-0 right-0 z-50">
+  <div class="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+    <!-- Wordmark -->
+    <div class="flex items-center gap-3">
+      <span class="font-mono font-semibold text-white tracking-tight text-lg">CEREBRUM</span>
+      <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/30">v2.66</span>
+    </div>
+    <!-- Nav links (desktop) -->
+    <div class="hidden md:flex items-center gap-8">
+      <a href="#research"    class="text-sm text-slate-400 hover:text-white transition-colors">Research</a>
+      <a href="#benchmarks"  class="text-sm text-slate-400 hover:text-white transition-colors">Benchmarks</a>
+      <a href="#references"  class="text-sm text-slate-400 hover:text-white transition-colors">References</a>
+      <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" class="text-sm text-slate-400 hover:text-white transition-colors">Docs</a>
+      <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" class="text-sm text-slate-400 hover:text-white transition-colors">GitHub</a>
+      <a href="#install" class="text-sm px-4 py-1.5 rounded-lg bg-indigo text-white font-medium hover:bg-indigo/80 transition-colors">Get Started →</a>
+    </div>
+    <!-- Mobile menu button -->
+    <button x-data @click="$dispatch('toggle-menu')" class="md:hidden text-slate-400 hover:text-white">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+  <!-- Mobile menu -->
+  <div x-data="{ open: false }" @toggle-menu.window="open = !open" x-show="open" x-transition class="md:hidden px-6 pb-4 flex flex-col gap-3 border-t border-border">
+    <a href="#research"   class="text-sm text-slate-400 hover:text-white py-1">Research</a>
+    <a href="#benchmarks" class="text-sm text-slate-400 hover:text-white py-1">Benchmarks</a>
+    <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" class="text-sm text-slate-400 hover:text-white py-1">Docs</a>
+    <a href="https://github.com/BrutalByte/CEREBRUM"  target="_blank" rel="noopener" class="text-sm text-slate-400 hover:text-white py-1">GitHub</a>
+    <a href="#install" class="text-sm text-white font-medium py-1">Get Started →</a>
+  </div>
+</nav>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 2: HERO
+══════════════════════════════════════════════════ -->
+<section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-14">
+
+  <!-- Animated SVG graph background -->
+  <svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <!-- Static edges -->
+    <line x1="12%" y1="20%" x2="28%" y2="35%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="28%" y1="35%" x2="45%" y2="22%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="45%" y1="22%" x2="62%" y2="30%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="62%" y1="30%" x2="78%" y2="18%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="78%" y1="18%" x2="88%" y2="35%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="28%" y1="35%" x2="38%" y2="55%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="38%" y1="55%" x2="55%" y2="48%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="55%" y1="48%" x2="70%" y2="55%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="70%" y1="55%" x2="85%" y2="45%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="15%" y1="65%" x2="30%" y2="75%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="30%" y1="75%" x2="50%" y2="70%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="50%" y1="70%" x2="65%" y2="80%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="65%" y1="80%" x2="82%" y2="72%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="38%" y1="55%" x2="30%" y2="75%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="55%" y1="48%" x2="50%" y2="70%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="8%"  y1="42%" x2="15%" y2="65%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="12%" y1="20%" x2="8%"  y2="42%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="92%" y1="60%" x2="85%" y2="45%" stroke="#1e1e2e" stroke-width="1"/>
+
+    <!-- Active path edges (cyan) -->
+    <g class="path-edges">
+      <line class="path-edge" x1="15%" y1="65%" x2="38%" y2="55%" stroke="#22d3ee" stroke-width="1.5"/>
+      <line class="path-edge" x1="38%" y1="55%" x2="55%" y2="48%" stroke="#22d3ee" stroke-width="1.5"/>
+      <line class="path-edge" x1="55%" y1="48%" x2="70%" y2="55%" stroke="#22d3ee" stroke-width="1.5"/>
+      <line class="path-edge" x1="70%" y1="55%" x2="85%" y2="45%" stroke="#22d3ee" stroke-width="1.5"/>
+    </g>
+
+    <!-- Static nodes -->
+    <circle class="node" cx="12%" cy="20%" r="6" fill="#6366f1"/>
+    <circle class="node" cx="28%" cy="35%" r="6" fill="#6366f1"/>
+    <circle class="node" cx="45%" cy="22%" r="6" fill="#6366f1"/>
+    <circle class="node" cx="62%" cy="30%" r="6" fill="#6366f1"/>
+    <circle class="node" cx="78%" cy="18%" r="6" fill="#6366f1"/>
+    <circle class="node" cx="88%" cy="35%" r="6" fill="#6366f1"/>
+    <circle class="node" cx="8%"  cy="42%" r="5" fill="#475569"/>
+    <circle class="node" cx="30%" cy="75%" r="5" fill="#475569"/>
+    <circle class="node" cx="50%" cy="70%" r="5" fill="#475569"/>
+    <circle class="node" cx="65%" cy="80%" r="5" fill="#475569"/>
+    <circle class="node" cx="82%" cy="72%" r="5" fill="#475569"/>
+    <circle class="node" cx="92%" cy="60%" r="5" fill="#475569"/>
+
+    <!-- Active path nodes (cyan) -->
+    <circle class="path-node-1" cx="15%" cy="65%" r="7" fill="#22d3ee"/>
+    <circle class="path-node-2" cx="38%" cy="55%" r="7" fill="#22d3ee"/>
+    <circle class="path-node-3" cx="55%" cy="48%" r="7" fill="#22d3ee"/>
+    <circle class="path-node-4" cx="70%" cy="55%" r="7" fill="#22d3ee"/>
+    <circle class="path-node-5" cx="85%" cy="45%" r="7" fill="#22d3ee"/>
+  </svg>
+
+  <!-- Radial gradient overlay -->
+  <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse 60% 50% at 50% 50%, transparent 40%, #0a0a0f 100%);"></div>
+
+  <!-- Hero content -->
+  <div class="relative z-10 text-center max-w-4xl mx-auto px-6 py-20">
+    <div class="section-label mb-6">Training-Free Knowledge Graph Reasoning</div>
+
+    <h1 class="text-5xl md:text-7xl font-bold text-white leading-tight tracking-tight mb-6">
+      Every answer.<br>
+      <span class="grad-text">Fully explained.</span><br>
+      Zero hallucinations.
+    </h1>
+
+    <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+      CEREBRUM reasons over any knowledge graph through deterministic path traversal.
+      No LLM. No training data. No black box. Every conclusion is a verifiable chain
+      of edges you can inspect, audit, and trust.
+    </p>
+
+    <!-- Stat bar -->
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-0 mb-10 bg-surface rounded-xl border border-border overflow-hidden">
+      <div class="flex-1 px-6 py-5 text-center">
+        <div class="font-mono text-4xl font-bold text-white">60.4%</div>
+        <div class="text-xs text-slate-400 mt-1">3-hop H@1</div>
+        <div class="text-xs text-slate-600 mt-0.5">MetaQA</div>
+      </div>
+      <div class="hidden sm:block w-px h-16 bg-border"></div>
+      <div class="block sm:hidden h-px w-full bg-border"></div>
+      <div class="flex-1 px-6 py-5 text-center">
+        <div class="font-mono text-4xl font-bold text-white">88.3%</div>
+        <div class="text-xs text-slate-400 mt-1">3-hop H@10</div>
+        <div class="text-xs text-slate-600 mt-0.5">MetaQA</div>
+      </div>
+      <div class="hidden sm:block w-px h-16 bg-border"></div>
+      <div class="block sm:hidden h-px w-full bg-border"></div>
+      <div class="flex-1 px-6 py-5 text-center">
+        <div class="font-mono text-4xl font-bold text-cyan">$0.001</div>
+        <div class="text-xs text-slate-400 mt-1">per 1K queries</div>
+        <div class="text-xs text-slate-600 mt-0.5">vs $5–15 GPT-4o</div>
+      </div>
+      <div class="hidden sm:block w-px h-16 bg-border"></div>
+      <div class="block sm:hidden h-px w-full bg-border"></div>
+      <div class="flex-1 px-6 py-5 text-center">
+        <div class="font-mono text-4xl font-bold text-emerald">0%</div>
+        <div class="text-xs text-slate-400 mt-1">Hallucination risk</div>
+        <div class="text-xs text-slate-600 mt-0.5">Guaranteed</div>
+      </div>
+    </div>
+
+    <!-- CTAs -->
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="#" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-indigo text-white font-semibold hover:bg-indigo/80 transition-colors">
+        Read the Paper →
+        <span class="text-xs px-1.5 py-0.5 rounded bg-white/20">Coming Soon</span>
+      </a>
+      <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener"
+         class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-border text-white font-semibold hover:border-indigo/50 transition-colors">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce text-slate-600">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 3: THE PROBLEM
+══════════════════════════════════════════════════ -->
+<section class="py-24 px-6">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="section-label mb-4">The Problem</div>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">The problem with AI answers</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <!-- Column 1: LLMs -->
+      <div class="card p-6 border-amber/40">
+        <div class="text-2xl mb-4">⚠️</div>
+        <h3 class="text-lg font-semibold text-white mb-3">Language models hallucinate</h3>
+        <p class="text-sm text-slate-400 leading-relaxed mb-4">
+          GPT-4, Claude, and similar models generate answers by predicting likely token sequences.
+          They can produce confident, fluent, completely wrong answers with no indication of error —
+          and no way to verify the source.
+        </p>
+        <p class="text-sm text-slate-400 mb-4">
+          Cost: <span class="text-amber font-mono">$5–15</span> per 1,000 queries.
+          Hallucination rate: <span class="text-amber font-mono">5–20%</span>.
+        </p>
+        <div class="flex flex-wrap gap-1.5">
+          <span class="text-xs px-2 py-0.5 rounded-full bg-amber/10 text-amber border border-amber/20">Black-box</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-amber/10 text-amber border border-amber/20">Cannot audit</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-amber/10 text-amber border border-amber/20">Hallucination risk</span>
+        </div>
+      </div>
+
+      <!-- Column 2: Supervised KG -->
+      <div class="card p-6 border-amber/40">
+        <div class="text-2xl mb-4">🔒</div>
+        <h3 class="text-lg font-semibold text-white mb-3">Trained methods need your data</h3>
+        <p class="text-sm text-slate-400 leading-relaxed mb-4">
+          <a href="https://aclanthology.org/2020.acl-main.412" target="_blank" rel="noopener" class="text-slate-300 hover:text-indigo underline decoration-dotted">EmbedKGQA</a>,
+          <a href="https://doi.org/10.1145/3437963.3441753" target="_blank" rel="noopener" class="text-slate-300 hover:text-indigo underline decoration-dotted">NSM</a>,
+          <a href="https://openreview.net/forum?id=Z63RvyAZ2Vh" target="_blank" rel="noopener" class="text-slate-300 hover:text-indigo underline decoration-dotted">UniKGQA</a>
+          achieve near-perfect scores on
+          <a href="https://arxiv.org/abs/1709.04071" target="_blank" rel="noopener" class="text-slate-300 hover:text-indigo underline decoration-dotted">MetaQA</a>
+          — but only after training on thousands of labeled question-answer pairs from that specific dataset.
+          Load a new knowledge graph and you start over.
+        </p>
+        <p class="text-sm text-slate-400 mb-4">
+          No transfer. No transparency. No path trace.
+        </p>
+        <div class="flex flex-wrap gap-1.5">
+          <span class="text-xs px-2 py-0.5 rounded-full bg-amber/10 text-amber border border-amber/20">Black-box</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-amber/10 text-amber border border-amber/20">Requires retraining</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-amber/10 text-amber border border-amber/20">Not transferable</span>
+        </div>
+      </div>
+
+      <!-- Column 3: CEREBRUM -->
+      <div class="card p-6 border-emerald/40" style="border-color: rgba(16,185,129,0.4);">
+        <div class="text-2xl mb-4">🔷</div>
+        <h3 class="text-lg font-semibold text-white mb-3">CEREBRUM traces every step</h3>
+        <p class="text-sm text-slate-400 leading-relaxed mb-4">
+          Every answer is produced by walking explicit edges in your graph. The full
+          traversal path — every hop, every relation, every score — is returned with
+          the result. If the answer is wrong, you can see exactly why.
+        </p>
+        <p class="text-sm text-slate-400 mb-4">
+          Zero training. Zero hallucinations. Works on any knowledge graph.
+        </p>
+        <div class="flex flex-wrap gap-1.5">
+          <span class="text-xs px-2 py-0.5 rounded-full bg-emerald/10 text-emerald border border-emerald/20">Crystal-box</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-emerald/10 text-emerald border border-emerald/20">Fully auditable</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-emerald/10 text-emerald border border-emerald/20">Zero training</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 4: HOW IT WORKS
+══════════════════════════════════════════════════ -->
+<section class="py-24 px-6 border-t border-border">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="section-label mb-4">How It Works</div>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">How CEREBRUM reasons</h2>
+      <p class="text-slate-400 mt-3">Three steps. No training. Full traceability.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+      <!-- Connecting arrows (desktop) -->
+      <div class="hidden md:flex absolute top-10 left-1/3 -translate-x-1/2 items-center" style="width: calc(33.33% - 2rem); left: calc(33.33% + 1rem);">
+        <div class="flex-1 h-px bg-indigo/30"></div>
+        <svg class="w-4 h-4 text-indigo/50" fill="currentColor" viewBox="0 0 20 20"><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/></svg>
+      </div>
+      <div class="hidden md:flex absolute top-10 items-center" style="left: calc(66.66% + 1rem); width: calc(33.33% - 2rem);">
+        <div class="flex-1 h-px bg-indigo/30"></div>
+        <svg class="w-4 h-4 text-indigo/50" fill="currentColor" viewBox="0 0 20 20"><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"/></svg>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="card p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-indigo/20 border border-indigo/30 flex items-center justify-center">
+            <span class="font-mono text-indigo font-bold text-sm">1</span>
+          </div>
+          <span class="text-slate-400 text-sm">Load</span>
+        </div>
+        <h3 class="text-lg font-semibold text-white mb-3">Load your graph</h3>
+        <div class="code-block mb-3">
+          <span class="cmt"># Any CSV with head, relation, tail</span><br>
+          python -m cli.cerebrum serve \<br>
+          &nbsp;&nbsp;<span class="kw">--csv</span> my_graph.csv \<br>
+          &nbsp;&nbsp;<span class="kw">--port</span> <span class="num">8200</span>
+        </div>
+        <p class="text-xs text-slate-500 leading-relaxed">
+          CEREBRUM profiles the graph automatically and configures itself. No schema definition required.
+        </p>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="card p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-indigo/20 border border-indigo/30 flex items-center justify-center">
+            <span class="font-mono text-indigo font-bold text-sm">2</span>
+          </div>
+          <span class="text-slate-400 text-sm">Query</span>
+        </div>
+        <h3 class="text-lg font-semibold text-white mb-3">Ask a question</h3>
+        <div class="code-block mb-3">
+          curl -X POST localhost:<span class="num">8200</span>/v1/query \<br>
+          &nbsp;&nbsp;-d <span class="str">'{"query": "What treats</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">Diabetes?",</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"max_hop": 3}'</span>
+        </div>
+        <p class="text-xs text-slate-500 leading-relaxed">
+          Beam search traverses the graph, scoring each candidate path with the 10-parameter CSA formula.
+        </p>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="card p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-cyan/20 border border-cyan/30 flex items-center justify-center">
+            <span class="font-mono text-cyan font-bold text-sm">3</span>
+          </div>
+          <span class="text-slate-400 text-sm">Trace</span>
+        </div>
+        <h3 class="text-lg font-semibold text-white mb-3">Inspect the trace</h3>
+        <div class="code-block mb-3">
+          {<br>
+          &nbsp;&nbsp;<span class="key">"answer"</span>: <span class="str">"Metformin"</span>,<br>
+          &nbsp;&nbsp;<span class="key">"score"</span>: <span class="num">0.91</span>,<br>
+          &nbsp;&nbsp;<span class="key">"path"</span>: [<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;{<span class="key">"entity"</span>: <span class="str">"Diabetes"</span>,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"relation"</span>: <span class="str">"treated_by"</span>},<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;{<span class="key">"entity"</span>: <span class="str">"Metformin"</span>}<br>
+          &nbsp;&nbsp;]<br>
+          }
+        </div>
+        <p class="text-xs text-slate-500 leading-relaxed">
+          Every answer includes the complete edge-chain. Auditable. Reproducible. Provable.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 5: BENCHMARKS
+══════════════════════════════════════════════════ -->
+<section id="benchmarks" class="py-24 px-6 border-t border-border">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="section-label mb-4">Benchmarks</div>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">Validated on standard benchmarks</h2>
+      <p class="text-slate-400 mt-3">Training-free. Zero labeled data. Zero hardcoded relation names.</p>
+    </div>
+
+    <!-- MetaQA table -->
+    <div class="card p-6 md:p-8 mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <h3 class="text-lg font-semibold text-white">MetaQA — 3-hop</h3>
+        <div class="flex flex-wrap gap-2 text-xs text-slate-500">
+          <span>43,234 entities</span>
+          <span>·</span>
+          <span>124,680 edges</span>
+          <span>·</span>
+          <span>14,274 test questions</span>
+        </div>
+      </div>
+      <p class="text-xs text-slate-500 mb-4">
+        <span class="text-amber">⚠ †</span> Black-box model: no auditable reasoning path; can produce confident wrong answers.
+      </p>
+      <div class="overflow-x-auto">
+        <table class="bench-table w-full text-sm">
+          <thead>
+            <tr class="text-left">
+              <th class="py-3 px-4 rounded-tl-lg">System</th>
+              <th class="py-3 px-4 text-center">3-hop H@1</th>
+              <th class="py-3 px-4 text-center">3-hop H@10</th>
+              <th class="py-3 px-4 rounded-tr-lg">Training required</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="highlight">
+              <td class="py-3 px-4 font-semibold text-indigo">CEREBRUM v2.66 (full pipeline)</td>
+              <td class="py-3 px-4 text-center font-mono font-bold text-white">60.4%</td>
+              <td class="py-3 px-4 text-center font-mono font-bold text-white">88.3%</td>
+              <td class="py-3 px-4"><span class="text-emerald font-medium">None</span></td>
+            </tr>
+            <tr>
+              <td class="py-3 px-4 text-slate-400">CEREBRUM (search only)</td>
+              <td class="py-3 px-4 text-center font-mono text-slate-400">12.5%</td>
+              <td class="py-3 px-4 text-center font-mono text-slate-400">50.3%</td>
+              <td class="py-3 px-4 text-slate-400">None</td>
+            </tr>
+            <tr class="dimmed">
+              <td class="py-3 px-4">
+                <span class="text-amber mr-1">⚠</span>
+                <a href="https://openreview.net/forum?id=Z63RvyAZ2Vh" target="_blank" rel="noopener" class="hover:text-slate-300 underline decoration-dotted">UniKGQA</a> (ICLR 2023) <sup class="text-amber">†</sup>
+              </td>
+              <td class="py-3 px-4 text-center font-mono">99.1%</td>
+              <td class="py-3 px-4 text-center font-mono">—</td>
+              <td class="py-3 px-4 text-amber/70 text-xs">Yes — labeled QA pairs</td>
+            </tr>
+            <tr class="dimmed">
+              <td class="py-3 px-4">
+                <span class="text-amber mr-1">⚠</span>
+                <a href="https://aclanthology.org/2020.acl-main.412" target="_blank" rel="noopener" class="hover:text-slate-300 underline decoration-dotted">EmbedKGQA</a> (ACL 2020) <sup class="text-amber">†</sup>
+              </td>
+              <td class="py-3 px-4 text-center font-mono">~94%</td>
+              <td class="py-3 px-4 text-center font-mono">—</td>
+              <td class="py-3 px-4 text-amber/70 text-xs">Yes — labeled QA pairs</td>
+            </tr>
+            <tr class="dimmed" style="border-bottom: none;">
+              <td class="py-3 px-4">
+                <span class="text-amber mr-1">⚠</span>
+                <a href="https://openreview.net/forum?id=Syg-YfWCW" target="_blank" rel="noopener" class="hover:text-slate-300 underline decoration-dotted">MINERVA</a> (Das et al., 2018) <sup class="text-amber">†</sup>
+              </td>
+              <td class="py-3 px-4 text-center font-mono">—</td>
+              <td class="py-3 px-4 text-center font-mono">45.6%</td>
+              <td class="py-3 px-4 text-amber/70 text-xs">Yes — RL training</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Callout box -->
+      <div class="mt-6 p-4 rounded-lg bg-indigo/10 border border-indigo/20">
+        <p class="text-sm text-slate-300 leading-relaxed">
+          <span class="text-indigo font-semibold">The gap to supervised H@1</span> (99% vs 60.4%) is a ranking challenge, not a retrieval failure.
+          CEREBRUM finds the correct answer in its top 10 candidates <strong class="text-white">88.3%</strong> of the time —
+          matching supervised H@1 performance on recall while requiring <strong class="text-emerald">zero training data</strong>.
+        </p>
+      </div>
+    </div>
+
+    <!-- Metrics explainer table -->
+    <div class="card p-6 md:p-8">
+      <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-4">What the metrics mean</h3>
+      <div class="overflow-x-auto">
+        <table class="bench-table w-full text-sm">
+          <thead>
+            <tr class="text-left">
+              <th class="py-2 px-4">Metric</th>
+              <th class="py-2 px-4">What it means</th>
+              <th class="py-2 px-4">CEREBRUM</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="py-2.5 px-4 font-mono text-indigo">H@1</td>
+              <td class="py-2.5 px-4 text-slate-400">Correct answer ranked #1</td>
+              <td class="py-2.5 px-4 font-mono text-white">60.4% on 3-hop</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-4 font-mono text-indigo">H@10</td>
+              <td class="py-2.5 px-4 text-slate-400">Correct answer in top 10</td>
+              <td class="py-2.5 px-4 font-mono text-white">88.3% on 3-hop</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-4 font-mono text-indigo">MRR</td>
+              <td class="py-2.5 px-4 text-slate-400">Average rank of correct answer</td>
+              <td class="py-2.5 px-4 font-mono text-white">0.693</td>
+            </tr>
+            <tr style="border-bottom: none;">
+              <td class="py-2.5 px-4 font-mono text-cyan">"3-hop"</td>
+              <td class="py-2.5 px-4 text-slate-400">Question requires 3 reasoning steps</td>
+              <td class="py-2.5 px-4 text-slate-400 text-sm">Hardest standard test</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 6: COST COMPARISON
+══════════════════════════════════════════════════ -->
+<section class="py-24 px-6 border-t border-border">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="section-label mb-4">Cost</div>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">1,000× cheaper than GPT-4o</h2>
+    </div>
+
+    <div class="card p-6 md:p-10">
+      <!-- Bar chart -->
+      <div class="space-y-6 mb-10">
+
+        <!-- CEREBRUM -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-center gap-3">
+              <span class="font-semibold text-white text-sm w-36">CEREBRUM</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-emerald/10 text-emerald border border-emerald/20">0% hallucination</span>
+            </div>
+            <span class="font-mono text-emerald text-sm">$0.001</span>
+          </div>
+          <div class="h-7 bg-surface rounded-lg overflow-hidden border border-border">
+            <div class="bar-fill h-full bg-emerald/70 rounded-lg" style="width: 0.5%;"></div>
+          </div>
+        </div>
+
+        <!-- GPT-4o mini -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-center gap-3">
+              <span class="font-semibold text-slate-300 text-sm w-36">GPT-4o mini</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-amber/10 text-amber border border-amber/20">8–18% hallucination</span>
+            </div>
+            <span class="font-mono text-amber text-sm">$0.15–0.60</span>
+          </div>
+          <div class="h-7 bg-surface rounded-lg overflow-hidden border border-border">
+            <div class="bar-fill h-full rounded-lg" style="width: 8%; background: rgba(245,158,11,0.5);"></div>
+          </div>
+        </div>
+
+        <!-- RAG + LLM -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-center gap-3">
+              <span class="font-semibold text-slate-300 text-sm w-36">RAG + LLM</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-amber/10 text-amber border border-amber/20">10–20% hallucination</span>
+            </div>
+            <span class="font-mono text-amber text-sm">$1–20</span>
+          </div>
+          <div class="h-7 bg-surface rounded-lg overflow-hidden border border-border">
+            <div class="bar-fill h-full rounded-lg" style="width: 45%; background: rgba(245,158,11,0.5);"></div>
+          </div>
+        </div>
+
+        <!-- GPT-4o -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <div class="flex items-center gap-3">
+              <span class="font-semibold text-slate-300 text-sm w-36">GPT-4o</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">5–15% hallucination</span>
+            </div>
+            <span class="font-mono text-red-400 text-sm">$5–15</span>
+          </div>
+          <div class="h-7 bg-surface rounded-lg overflow-hidden border border-border">
+            <div class="bar-fill h-full bg-red-500/50 rounded-lg" style="width: 90%;"></div>
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-600 text-right">Cost per 1,000 queries (approximate)</p>
+      </div>
+
+      <!-- Copy below chart -->
+      <div class="border-t border-border pt-6 space-y-3">
+        <p class="text-sm text-slate-400 leading-relaxed">
+          At 100,000 queries/month, CEREBRUM pays for a consumer GPU in under 3 months compared
+          to GPT-4o pricing. After that: <span class="text-white font-medium">effectively free</span>.
+        </p>
+        <p class="text-sm text-slate-400 leading-relaxed">
+          Every answer includes a full hop-by-hop reasoning trace — the exact path through
+          the graph that produced the result. This trace is auditable, exportable, and
+          reproducible. GPT-4o offers none of this.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 7: RESEARCH & PAPERS
+══════════════════════════════════════════════════ -->
+<section id="research" class="py-24 px-6 border-t border-border">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="section-label mb-4">Research</div>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">Novel research</h2>
+      <p class="text-slate-400 mt-3">CEREBRUM introduces 5 original algorithmic contributions.</p>
+    </div>
+
+    <!-- Research cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+
+      <div class="card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <h3 class="text-base font-semibold text-white">Community-Structured Attention</h3>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/20 ml-2 whitespace-nowrap">Core engine</span>
+        </div>
+        <p class="text-sm text-slate-400 leading-relaxed">
+          A 10-parameter scoring formula that uses graph community topology as discrete attention heads —
+          the structural analogue of Transformer attention, requiring no training.
+        </p>
+      </div>
+
+      <div class="card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <h3 class="text-base font-semibold text-white">Schema-Derived Relation Boost</h3>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-cyan/20 text-cyan border border-cyan/20 ml-2 whitespace-nowrap">Novel</span>
+        </div>
+        <p class="text-sm text-slate-400 leading-relaxed mb-2">
+          Derives per-relation scoring weights analytically from the graph's own triple statistics.
+          Eliminates KB-specific tuning parameters entirely.
+        </p>
+        <code class="text-xs font-mono text-cyan/80">boost(r) = γ × fan_out(r)^β</code>
+      </div>
+
+      <div class="card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <h3 class="text-base font-semibold text-white">Principled Hyperparameter Init</h3>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-cyan/20 text-cyan border border-cyan/20 ml-2 whitespace-nowrap">Novel</span>
+        </div>
+        <p class="text-sm text-slate-400 leading-relaxed">
+          Maps all 9 scoring parameters to measurable graph statistics via Bayesian evidence
+          combination, IDF theory, and <a href="https://doi.org/10.1103/PhysRevE.69.026113" target="_blank" rel="noopener" class="text-slate-300 hover:text-indigo underline decoration-dotted">Newman-Girvan modularity</a>. Zero-config on any KB.
+        </p>
+      </div>
+
+      <div class="card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <h3 class="text-base font-semibold text-white">Experience-Dependent Graph Plasticity</h3>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/20 ml-2 whitespace-nowrap">Novel</span>
+        </div>
+        <p class="text-sm text-slate-400 leading-relaxed">
+          Relay nodes form automatically on frequently-traversed inter-community paths,
+          mimicking synaptic potentiation. The graph strengthens paths that work.
+        </p>
+      </div>
+
+      <div class="card p-5 md:col-span-2">
+        <div class="flex items-start justify-between mb-3">
+          <h3 class="text-base font-semibold text-white">Branch Diversity is the Dominant Signal</h3>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-emerald/20 text-emerald border border-emerald/20 ml-2 whitespace-nowrap">Empirical finding</span>
+        </div>
+        <p class="text-sm text-slate-400 leading-relaxed mb-3">
+          <a href="https://proceedings.mlr.press/v32/hutter14.html" target="_blank" rel="noopener" class="text-slate-300 hover:text-indigo underline decoration-dotted">Functional ANOVA</a> analysis of 200 tuner trials reveals <code class="font-mono text-cyan/80 text-xs">branch_bonus</code> accounts
+          for <strong class="text-white">46.2%</strong> of scoring variance — 39× more than beam width, which is near-irrelevant.
+          Per-relation tuning was masking this signal entirely.
+        </p>
+        <div class="flex flex-wrap gap-3 text-xs font-mono">
+          <span class="text-slate-500">beam_width: <span class="text-slate-400">1.2%</span></span>
+          <span class="text-slate-500">→</span>
+          <span class="text-slate-500">branch_bonus: <span class="text-emerald font-bold">46.2%</span></span>
+          <span class="text-slate-500">when SDRB replaces per-relation flags</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Papers -->
+    <h3 class="text-lg font-semibold text-white mb-5">Papers</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+      <div class="card p-5 flex flex-col">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span class="text-xs text-slate-500 uppercase tracking-wide">Technical Report</span>
+        </div>
+        <h4 class="text-sm font-semibold text-white mb-2 flex-1">CEREBRUM v2.52: Complete Technical Specification</h4>
+        <a href="#" class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo transition-colors mt-3">
+          <span class="px-1.5 py-0.5 rounded bg-surface border border-border">arXiv</span>
+          <span>Coming Soon 🔒</span>
+        </a>
+      </div>
+
+      <div class="card p-5 flex flex-col">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span class="text-xs text-slate-500 uppercase tracking-wide">Flagship Paper</span>
+        </div>
+        <h4 class="text-sm font-semibold text-white mb-2 flex-1">CEREBRUM: Training-Free KG Reasoning via Community-Structured Graph Attention</h4>
+        <a href="#" class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo transition-colors mt-3">
+          <span class="px-1.5 py-0.5 rounded bg-surface border border-border">arXiv</span>
+          <span>Coming Soon 🔒</span>
+        </a>
+      </div>
+
+      <div class="card p-5 flex flex-col">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span class="text-xs text-slate-500 uppercase tracking-wide">SDRB Paper</span>
+        </div>
+        <h4 class="text-sm font-semibold text-white mb-2 flex-1">Schema-Derived Relation Boost and Principled Hyperparameter Initialization</h4>
+        <a href="#" class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo transition-colors mt-3">
+          <span class="px-1.5 py-0.5 rounded bg-surface border border-border">arXiv</span>
+          <span>Coming Soon 🔒</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 8: INSTALL / QUICK START
+══════════════════════════════════════════════════ -->
+<section id="install" class="py-24 px-6 border-t border-border">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="section-label mb-4">Quick Start</div>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">Get started in 5 minutes</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+
+      <!-- Left: Install -->
+      <div>
+        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Install</h3>
+        <div class="code-block mb-4">
+          <span class="cmt"># Core engine with API + embeddings</span><br>
+          pip install cerebrum-kg-core[api,embeddings]<br>
+          <br>
+          <span class="cmt"># Or install everything including Studio UI</span><br>
+          pip install cerebrum-kg-core[all]<br>
+          pip install cerebrum-kg-studio
+        </div>
+        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Start the server</h3>
+        <div class="code-block">
+          python -m cli.cerebrum serve \<br>
+          &nbsp;&nbsp;<span class="kw">--csv</span> my_graph.csv \<br>
+          &nbsp;&nbsp;<span class="kw">--port</span> <span class="num">8200</span>
+        </div>
+      </div>
+
+      <!-- Right: First query -->
+      <div>
+        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">First query</h3>
+        <div class="code-block mb-4">
+          curl -X POST http://localhost:<span class="num">8200</span>/v1/query \<br>
+          &nbsp;&nbsp;-H <span class="str">"Content-Type: application/json"</span> \<br>
+          &nbsp;&nbsp;-d <span class="str">'{'</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"query"</span>: <span class="str">"What compound treats Diabetes?"</span>,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"max_hop"</span>: <span class="num">3</span><br>
+          &nbsp;&nbsp;<span class="str">'}'</span>
+        </div>
+        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Response</h3>
+        <div class="code-block">
+          {<br>
+          &nbsp;&nbsp;<span class="key">"answer_entity"</span>: <span class="str">"Metformin"</span>,<br>
+          &nbsp;&nbsp;<span class="key">"score"</span>: <span class="num">0.91</span>,<br>
+          &nbsp;&nbsp;<span class="key">"path"</span>: [<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;{<span class="key">"entity"</span>: <span class="str">"Diabetes"</span>,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"relation"</span>: <span class="str">"treated_by"</span>},<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;{<span class="key">"entity"</span>: <span class="str">"Metformin"</span>,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="key">"relation"</span>: <span class="num">null</span>}<br>
+          &nbsp;&nbsp;]<br>
+          }
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CTA cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener"
+         class="card p-5 flex items-center gap-4 hover:border-indigo/50 transition-all">
+        <div class="text-2xl">📖</div>
+        <div>
+          <div class="text-sm font-semibold text-white">Full Documentation</div>
+          <div class="text-xs text-slate-500 mt-0.5">API reference, guides, examples</div>
+        </div>
+      </a>
+      <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener"
+         class="card p-5 flex items-center gap-4 hover:border-indigo/50 transition-all">
+        <div class="text-2xl">⚡</div>
+        <div>
+          <div class="text-sm font-semibold text-white">Quickstart Guide</div>
+          <div class="text-xs text-slate-500 mt-0.5">Up and running in 5 minutes</div>
+        </div>
+      </a>
+      <a href="https://github.com/BrutalByte/CEREBRUM/discussions" target="_blank" rel="noopener"
+         class="card p-5 flex items-center gap-4 hover:border-indigo/50 transition-all">
+        <div class="text-2xl">💬</div>
+        <div>
+          <div class="text-sm font-semibold text-white">GitHub Discussions</div>
+          <div class="text-xs text-slate-500 mt-0.5">Ask questions, share ideas</div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 9: REFERENCES
+══════════════════════════════════════════════════ -->
+<section id="references" class="py-16 px-6 border-t border-border">
+  <div class="max-w-5xl mx-auto">
+    <div class="mb-10">
+      <div class="section-label mb-4">References</div>
+      <h2 class="text-2xl font-bold text-white">Works Cited</h2>
+    </div>
+    <ol class="space-y-4 text-sm text-slate-400 leading-relaxed list-none" style="counter-reset: ref-counter;">
+      <li class="flex gap-4">
+        <span class="font-mono text-slate-600 text-xs pt-0.5 shrink-0 w-6">[1]</span>
+        <span>Bordes, A., Usunier, N., Garcia-Duran, A., Weston, J., &amp; Yakhnenko, O. (2013). Translating embeddings for modeling multi-relational data. In <em>Advances in Neural Information Processing Systems 26</em> (pp. 2787–2795). Curran Associates. <a href="https://proceedings.neurips.cc/paper/2013/hash/1cecc7a77928ca8133fa24680a88d2f9-Abstract.html" target="_blank" rel="noopener" class="text-indigo/70 hover:text-indigo">https://proceedings.neurips.cc/paper/2013/hash/1cecc7a77928ca8133fa24680a88d2f9-Abstract.html</a></span>
+      </li>
+      <li class="flex gap-4">
+        <span class="font-mono text-slate-600 text-xs pt-0.5 shrink-0 w-6">[2]</span>
+        <span>Das, R., Dhuliawala, S., Zaheer, M., Vilnis, L., Durugkar, I., Krishnamurthy, A., Smola, A., &amp; McCallum, A. (2018). Go for a walk and arrive at the answer: Reasoning over paths in knowledge bases using reinforcement learning. In <em>Proceedings of the 6th International Conference on Learning Representations (ICLR 2018)</em>. OpenReview. <a href="https://openreview.net/forum?id=Syg-YfWCW" target="_blank" rel="noopener" class="text-indigo/70 hover:text-indigo">https://openreview.net/forum?id=Syg-YfWCW</a></span>
+      </li>
+      <li class="flex gap-4">
+        <span class="font-mono text-slate-600 text-xs pt-0.5 shrink-0 w-6">[3]</span>
+        <span>He, G., Lan, Y., Jiang, J., Zhao, W. X., &amp; Wen, J. R. (2021). Improving multi-hop knowledge base question answering by learning intermediate supervision signals. In <em>Proceedings of the 14th ACM International Conference on Web Search and Data Mining</em> (pp. 553–561). ACM. <a href="https://doi.org/10.1145/3437963.3441753" target="_blank" rel="noopener" class="text-indigo/70 hover:text-indigo">https://doi.org/10.1145/3437963.3441753</a></span>
+      </li>
+      <li class="flex gap-4">
+        <span class="font-mono text-slate-600 text-xs pt-0.5 shrink-0 w-6">[4]</span>
+        <span>Himmelstein, D. S., Lizee, A., Hessler, C., Brueggeman, L., Chen, S. L., Hadley, D., Green, A., Khankhanian, P., &amp; Baranzini, S. E. (2017). Systematic integration of biomedical knowledge prioritizes drugs for repurposing. <em>eLife, 6</em>, e26726. <a href="https://doi.org/10.7554/eLife.26726" target="_blank" rel="noopener" class="text-indigo/70 hover:text-indigo">https://doi.org/10.7554/eLife.26726</a></span>
+      </li>
+      <li class="flex gap-4">
+        <span class="font-mono text-slate-600 text-xs pt-0.5 shrink-0 w-6">[5]</span>
+        <span>Hutter, F., Hoos, H., &amp; Leyton-Brown, K. (2014). An efficient approach for assessing hyperparameter importance. In <em>Proceedings of the 31st International Conference on Machine Learning (ICML 2014)</em> (Vol. 32, pp. 754–762). PMLR. <a href="https://proceedings.mlr.press/v32/hutter14.html" target="_blank" rel="noopener" class="text-indigo/70 hover:text-indigo">https://proceedings.mlr.press/v32/hutter14.html</a></span>
+      </li>
+      <li class="flex gap-4">
+        <span class="font-mono text-slate-600 text-xs pt-0.5 shrink-0 w-6">[6]</span>
+        <span>Jiang, J., Zhou, K., Dong, Z., Ye, K., Zhao, W. X., &amp; Wen, J. R. (2023). UniKGQA: Unified retrieval and reasoning for solving multi-hop question answering over knowledge graph. In <em>Proceedings of the 11th International Conference on Learning Representations (ICLR 2023)</em>. OpenReview. <a href="https://openreview.net/forum?id=Z63RvyAZ2Vh" target="_blank" rel="noopener" class="text-indigo/70 hover:text-indigo">https://openreview.net/forum?id=Z63RvyAZ2Vh</a></span>
+      </li>
+      <li class="flex gap-4">
+        <span class="font-mono text-slate-600 text-xs pt-0.5 shrink-0 w-6">[7]</span>
+        <span>Newman, M. E. J., &amp; Girvan, M. (2004). Finding and evaluating community structure in networks. <em>Physical Review E, 69</em>(2), 026113. <a href="https://doi.org/10.1103/PhysRevE.69.026113" target="_blank" rel="noopener" class="text-indigo/70 hover:text-indigo">https://doi.org/10.1103/PhysRevE.69.026113</a></span>
+      </li>
+      <li class="flex gap-4">
+        <span class="font-mono text-slate-600 text-xs pt-0.5 shrink-0 w-6">[8]</span>
+        <span>OpenAI. (2023). <em>GPT-4 technical report</em>. arXiv. <a href="https://arxiv.org/abs/2303.08774" target="_blank" rel="noopener" class="text-indigo/70 hover:text-indigo">https://arxiv.org/abs/2303.08774</a></span>
+      </li>
+      <li class="flex gap-4">
+        <span class="font-mono text-slate-600 text-xs pt-0.5 shrink-0 w-6">[9]</span>
+        <span>Saxena, A., Tripathi, A., &amp; Talukdar, P. (2020). Improving multi-hop question answering over knowledge graphs using knowledge base embeddings. In <em>Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics</em> (pp. 4498–4507). ACL. <a href="https://aclanthology.org/2020.acl-main.412" target="_blank" rel="noopener" class="text-indigo/70 hover:text-indigo">https://aclanthology.org/2020.acl-main.412</a></span>
+      </li>
+      <li class="flex gap-4">
+        <span class="font-mono text-slate-600 text-xs pt-0.5 shrink-0 w-6">[10]</span>
+        <span>Sun, H., Dhingra, B., Zaheer, M., Mazaitis, K., Salakhutdinov, R., &amp; Cohen, W. W. (2018). Open domain question answering using early fusion of knowledge bases and text. In <em>Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing</em> (pp. 4231–4242). ACL. <a href="https://aclanthology.org/D18-1455" target="_blank" rel="noopener" class="text-indigo/70 hover:text-indigo">https://aclanthology.org/D18-1455</a></span>
+      </li>
+      <li class="flex gap-4">
+        <span class="font-mono text-slate-600 text-xs pt-0.5 shrink-0 w-6">[11]</span>
+        <span>Sun, Z., Deng, Z. H., Nie, J. Y., &amp; Tang, J. (2019). RotatE: Knowledge graph embedding by relational rotation in complex space. In <em>Proceedings of the 7th International Conference on Learning Representations (ICLR 2019)</em>. OpenReview. <a href="https://openreview.net/forum?id=HkgEQnRqYQ" target="_blank" rel="noopener" class="text-indigo/70 hover:text-indigo">https://openreview.net/forum?id=HkgEQnRqYQ</a></span>
+      </li>
+      <li class="flex gap-4">
+        <span class="font-mono text-slate-600 text-xs pt-0.5 shrink-0 w-6">[12]</span>
+        <span>Traag, V. A., Waltman, L., &amp; van Eck, N. J. (2019). From Louvain to Leiden: Guaranteeing well-connected communities. <em>Scientific Reports, 9</em>, 5233. <a href="https://doi.org/10.1038/s41598-019-41695-z" target="_blank" rel="noopener" class="text-indigo/70 hover:text-indigo">https://doi.org/10.1038/s41598-019-41695-z</a></span>
+      </li>
+      <li class="flex gap-4">
+        <span class="font-mono text-slate-600 text-xs pt-0.5 shrink-0 w-6">[13]</span>
+        <span>Xiong, W., Hoang, T., &amp; Wang, W. Y. (2017). DeepPath: A reinforcement learning method for knowledge graph reasoning. In <em>Proceedings of the 2017 Conference on Empirical Methods in Natural Language Processing</em> (pp. 564–573). ACL. <a href="https://aclanthology.org/D17-1060" target="_blank" rel="noopener" class="text-indigo/70 hover:text-indigo">https://aclanthology.org/D17-1060</a></span>
+      </li>
+      <li class="flex gap-4">
+        <span class="font-mono text-slate-600 text-xs pt-0.5 shrink-0 w-6">[14]</span>
+        <span>Yih, W., Richardson, M., Meek, C., Chang, M. W., &amp; Suh, J. (2016). The value of semantic parse labeling for knowledge base question answering. In <em>Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics</em> (Vol. 2, pp. 201–206). ACL. <a href="https://aclanthology.org/P16-2033" target="_blank" rel="noopener" class="text-indigo/70 hover:text-indigo">https://aclanthology.org/P16-2033</a></span>
+      </li>
+      <li class="flex gap-4">
+        <span class="font-mono text-slate-600 text-xs pt-0.5 shrink-0 w-6">[15]</span>
+        <span>Zhang, Y., Dai, H., Kozareva, Z., Smola, A., &amp; Song, L. (2018). Variational reasoning for question answering with knowledge graphs. In <em>Proceedings of the 32nd AAAI Conference on Artificial Intelligence</em> (Vol. 32, No. 1). AAAI Press. <a href="https://arxiv.org/abs/1709.04071" target="_blank" rel="noopener" class="text-indigo/70 hover:text-indigo">https://arxiv.org/abs/1709.04071</a></span>
+      </li>
+    </ol>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 10: FOOTER
+══════════════════════════════════════════════════ -->
+<footer class="border-t border-border py-16 px-6">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mb-12">
+
+      <!-- Column 1: Brand -->
+      <div>
+        <div class="font-mono font-semibold text-white text-lg mb-3">CEREBRUM</div>
+        <p class="text-sm text-slate-500 leading-relaxed mb-4">
+          Crystal-box knowledge graph reasoning.<br>
+          Zero training. Zero hallucinations.
+        </p>
+        <p class="text-xs text-slate-600">
+          © 2026 Bryan Alexander Buchorn<br>
+          <a href="https://www.gnu.org/licenses/agpl-3.0" target="_blank" rel="noopener" class="hover:text-slate-400 transition-colors">GNU AGPL v3</a>
+        </p>
+      </div>
+
+      <!-- Column 2: Links -->
+      <div>
+        <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Links</h4>
+        <ul class="space-y-2.5">
+          <li><a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" class="text-sm text-slate-500 hover:text-white transition-colors">Documentation</a></li>
+          <li><a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" class="text-sm text-slate-500 hover:text-white transition-colors">GitHub Repository</a></li>
+          <li><a href="#research" class="text-sm text-slate-500 hover:text-white transition-colors">Research Papers</a></li>
+          <li><a href="#install" class="text-sm text-slate-500 hover:text-white transition-colors">Quickstart</a></li>
+          <li><a href="#benchmarks" class="text-sm text-slate-500 hover:text-white transition-colors">Benchmarks</a></li>
+        </ul>
+      </div>
+
+      <!-- Column 3: Research -->
+      <div>
+        <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Research</h4>
+        <ul class="space-y-2.5">
+          <li>
+            <a href="#" class="text-sm text-slate-500 hover:text-white transition-colors flex items-center gap-2">
+              arXiv — Technical Report
+              <span class="text-xs text-slate-600">🔒</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="text-sm text-slate-500 hover:text-white transition-colors flex items-center gap-2">
+              arXiv — Flagship Paper
+              <span class="text-xs text-slate-600">🔒</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="text-sm text-slate-500 hover:text-white transition-colors flex items-center gap-2">
+              arXiv — SDRB Paper
+              <span class="text-xs text-slate-600">🔒</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="text-sm text-slate-500 hover:text-white transition-colors flex items-center gap-2">
+              Papers With Code
+              <span class="text-xs text-slate-600">🔒</span>
+            </a>
+          </li>
+          <li>
+            <a href="#research" class="text-sm text-slate-500 hover:text-white transition-colors">Novel Contributions</a>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <p class="text-sm text-slate-600 italic">Built by one person. Open to the world.</p>
+      <div class="flex items-center gap-4">
+        <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" class="text-slate-600 hover:text-white transition-colors">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── 1. CURSOR SPOTLIGHT ──────────────────────────────────────────────────────
+const spotlight = document.createElement('div');
+spotlight.style.cssText = `
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 0.3s;
+  opacity: 0;
+`;
+document.body.appendChild(spotlight);
+
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
+let spotX = mouseX;
+let spotY = mouseY;
+let rafSpotlight;
+
+function updateSpotlight() {
+  spotX += (mouseX - spotX) * 0.08;
+  spotY += (mouseY - spotY) * 0.08;
+  spotlight.style.background =
+    `radial-gradient(600px circle at ${spotX}px ${spotY}px,
+      rgba(99,102,241,0.07) 0%,
+      rgba(34,211,238,0.03) 35%,
+      transparent 70%)`;
+  rafSpotlight = requestAnimationFrame(updateSpotlight);
+}
+
+document.addEventListener('mousemove', e => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+  spotlight.style.opacity = '1';
+  if (!rafSpotlight) updateSpotlight();
+});
+
+document.addEventListener('mouseleave', () => {
+  spotlight.style.opacity = '0';
+});
+
+updateSpotlight();
+
+// ── 2. HERO GRAPH PARALLAX ───────────────────────────────────────────────────
+const heroSection = document.querySelector('section');
+const heroSvg = heroSection ? heroSection.querySelector('svg') : null;
+const allNodes = heroSvg ? heroSvg.querySelectorAll('circle') : [];
+const allEdges = heroSvg ? heroSvg.querySelectorAll('line') : [];
+
+const nodeOrigins = Array.from(allNodes).map(n => ({
+  cx: parseFloat(n.getAttribute('cx')),
+  cy: parseFloat(n.getAttribute('cy')),
+  el: n,
+}));
+
+const edgeOrigins = Array.from(allEdges).map(l => ({
+  x1: parseFloat(l.getAttribute('x1')),
+  y1: parseFloat(l.getAttribute('y1')),
+  x2: parseFloat(l.getAttribute('x2')),
+  y2: parseFloat(l.getAttribute('y2')),
+  el: l,
+}));
+
+let heroRaf;
+let parallaxX = 0, parallaxY = 0;
+let targetParallaxX = 0, targetParallaxY = 0;
+
+function updateParallax() {
+  parallaxX += (targetParallaxX - parallaxX) * 0.05;
+  parallaxY += (targetParallaxY - parallaxY) * 0.05;
+
+  nodeOrigins.forEach((n, i) => {
+    const depth = 0.012 + (i % 5) * 0.004;
+    const nx = parseFloat(n.cx) + parallaxX * depth;
+    const ny = parseFloat(n.cy) + parallaxY * depth;
+    n.el.setAttribute('cx', nx + '%');
+    n.el.setAttribute('cy', ny + '%');
+  });
+
+  edgeOrigins.forEach((l, i) => {
+    const depth = 0.008 + (i % 4) * 0.003;
+    l.el.setAttribute('x1', (parseFloat(l.x1) + parallaxX * depth) + '%');
+    l.el.setAttribute('y1', (parseFloat(l.y1) + parallaxY * depth) + '%');
+    l.el.setAttribute('x2', (parseFloat(l.x2) + parallaxX * depth) + '%');
+    l.el.setAttribute('y2', (parseFloat(l.y2) + parallaxY * depth) + '%');
+  });
+
+  heroRaf = requestAnimationFrame(updateParallax);
+}
+
+if (heroSection) {
+  heroSection.addEventListener('mousemove', e => {
+    const rect = heroSection.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    targetParallaxX = (e.clientX - cx) / rect.width  * 100;
+    targetParallaxY = (e.clientY - cy) / rect.height * 100;
+  });
+
+  heroSection.addEventListener('mouseleave', () => {
+    targetParallaxX = 0;
+    targetParallaxY = 0;
+  });
+
+  updateParallax();
+}
+
+// ── 3. CARD 3D TILT ──────────────────────────────────────────────────────────
+document.querySelectorAll('.card').forEach(card => {
+  card.style.transformStyle = 'preserve-3d';
+  card.style.willChange = 'transform';
+
+  card.addEventListener('mousemove', e => {
+    const rect = card.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width  - 0.5;
+    const y = (e.clientY - rect.top)  / rect.height - 0.5;
+    const tiltX = y * -8;
+    const tiltY = x *  8;
+    card.style.transform =
+      `perspective(800px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(-2px)`;
+    card.style.borderColor = `rgba(99,102,241,${0.3 + Math.abs(x + y) * 0.4})`;
+  });
+
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) translateY(0)';
+    card.style.borderColor = '';
+    card.style.transition = 'transform 0.4s ease, border-color 0.4s ease';
+    setTimeout(() => { card.style.transition = ''; }, 400);
+  });
+});
+
+// ── 4. STAT BAR COUNTER ANIMATION ────────────────────────────────────────────
+const stats = [
+  { selector: null, target: 60.4, suffix: '%', decimals: 1 },
+  { selector: null, target: 88.3, suffix: '%', decimals: 1 },
+  { selector: null, target: 0.001, prefix: '$', decimals: 3 },
+  { selector: null, target: 0, suffix: '%', decimals: 0 },
+];
+
+const statEls = document.querySelectorAll('.font-mono.text-4xl');
+let animated = false;
+
+function animateCounters() {
+  if (animated) return;
+  animated = true;
+  statEls.forEach((el, i) => {
+    const s = stats[i];
+    if (!s) return;
+    const start = performance.now();
+    const duration = 1200;
+    const startVal = 0;
+    const endVal = s.target;
+    function tick(now) {
+      const t = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      const val = startVal + (endVal - startVal) * ease;
+      el.textContent = (s.prefix || '') + val.toFixed(s.decimals) + (s.suffix || '');
+      if (t < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
+const heroObserver = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting) animateCounters();
+}, { threshold: 0.5 });
+
+const statBar = document.querySelector('.font-mono.text-4xl');
+if (statBar) heroObserver.observe(statBar.closest('section') || statBar);
+</script>
+
+</body>
+</html>
