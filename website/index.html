@@ -721,78 +721,165 @@
 ══════════════════════════════════════════════════ -->
 <section id="research" class="py-24 px-6 border-t border-border">
   <div class="max-w-7xl mx-auto">
+
     <div class="text-center mb-16">
       <div class="section-label mb-4">Research</div>
-      <h2 class="text-3xl md:text-4xl font-bold text-white">Novel research</h2>
-      <p class="text-slate-400 mt-3">CEREBRUM introduces 5 original algorithmic contributions.</p>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">30+ original contributions</h2>
+      <p class="text-slate-400 mt-3 max-w-2xl mx-auto">
+        Each contribution has a documented novelty statement and prior-art analysis.
+        Six headline algorithms are featured below — the full catalog is in the
+        <a href="https://brutalbyte.github.io/CEREBRUM/NOVEL_CONTRIBUTIONS/" target="_blank" rel="noopener"
+           class="text-indigo hover:text-cyan transition-colors underline decoration-dotted">IP documentation</a>.
+      </p>
     </div>
 
-    <!-- Research cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+    <!-- ── 6 Featured contributions ── -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
 
       <div class="card p-5">
         <div class="flex items-start justify-between mb-3">
-          <h3 class="text-base font-semibold text-white">Community-Structured Attention</h3>
-          <span class="text-xs px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/20 ml-2 whitespace-nowrap">Core engine</span>
+          <h3 class="text-base font-semibold text-white">Community-Structured Attention (CSA)</h3>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/20 ml-2 whitespace-nowrap">CORTEX</span>
         </div>
         <p class="text-sm text-slate-400 leading-relaxed">
-          A 10-parameter scoring formula that uses graph community topology as discrete attention heads —
-          the structural analogue of Transformer attention, requiring no training.
+          10-parameter scoring formula using graph community topology as discrete attention heads —
+          the structural analogue of Transformer attention, requiring zero training.
+          First attention formula to include global community co-membership as a term.
         </p>
       </div>
 
       <div class="card p-5">
         <div class="flex items-start justify-between mb-3">
-          <h3 class="text-base font-semibold text-white">Schema-Derived Relation Boost</h3>
-          <span class="text-xs px-2 py-0.5 rounded-full bg-cyan/20 text-cyan border border-cyan/20 ml-2 whitespace-nowrap">Novel</span>
+          <h3 class="text-base font-semibold text-white">Dual-Signal Community Fusion (DSCF)</h3>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/20 ml-2 whitespace-nowrap">CORTEX</span>
+        </div>
+        <p class="text-sm text-slate-400 leading-relaxed">
+          First community detection algorithm that applies all structural signals to every node
+          simultaneously — not sequentially or on disjoint subsets. Produces communities with
+          richer multi-signal character than any prior method.
+        </p>
+      </div>
+
+      <div class="card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <h3 class="text-base font-semibold text-white">Schema-Derived Relation Boost (SDRB)</h3>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-cyan/20 text-cyan border border-cyan/20 ml-2 whitespace-nowrap">CORTEX</span>
         </div>
         <p class="text-sm text-slate-400 leading-relaxed mb-2">
           Derives per-relation scoring weights analytically from the graph's own triple statistics.
-          Eliminates KB-specific tuning parameters entirely.
+          Eliminates KB-specific tuning entirely.
+          fANOVA confirmed <strong class="text-white">branch_bonus</strong> as the dominant scoring signal (46.2% variance).
         </p>
         <code class="text-xs font-mono text-cyan/80">boost(r) = γ × fan_out(r)^β</code>
       </div>
 
       <div class="card p-5">
         <div class="flex items-start justify-between mb-3">
-          <h3 class="text-base font-semibold text-white">Principled Hyperparameter Init</h3>
-          <span class="text-xs px-2 py-0.5 rounded-full bg-cyan/20 text-cyan border border-cyan/20 ml-2 whitespace-nowrap">Novel</span>
+          <h3 class="text-base font-semibold text-white">ParameterInitializer (Zero-Config)</h3>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-cyan/20 text-cyan border border-cyan/20 ml-2 whitespace-nowrap">CORTEX</span>
         </div>
         <p class="text-sm text-slate-400 leading-relaxed">
-          Maps all 9 scoring parameters to measurable graph statistics via Bayesian evidence
-          combination, IDF theory, and <a href="https://doi.org/10.1103/PhysRevE.69.026113" target="_blank" rel="noopener" class="text-slate-300 hover:text-indigo underline decoration-dotted">Newman-Girvan modularity</a>. Zero-config on any KB.
+          Maps all 9 scoring hyperparameters to measurable graph statistics via IDF theory,
+          Bayesian evidence combination, and Newman-Girvan modularity. A 2D calibration table
+          (regime × embedding method) covers any knowledge base out-of-the-box.
+          Validated: 56.8% H@1 3-hop with zero tuning.
         </p>
       </div>
 
       <div class="card p-5">
         <div class="flex items-start justify-between mb-3">
           <h3 class="text-base font-semibold text-white">Experience-Dependent Graph Plasticity</h3>
-          <span class="text-xs px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/20 ml-2 whitespace-nowrap">Novel</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/20 ml-2 whitespace-nowrap">REM Engine</span>
         </div>
         <p class="text-sm text-slate-400 leading-relaxed">
           Relay nodes form automatically on frequently-traversed inter-community paths,
-          mimicking synaptic potentiation. The graph strengthens paths that work.
+          mimicking synaptic long-term potentiation. First KG system where the graph
+          itself strengthens the paths that work — no external agent required.
         </p>
       </div>
 
-      <div class="card p-5 md:col-span-2">
+      <div class="card p-5">
         <div class="flex items-start justify-between mb-3">
-          <h3 class="text-base font-semibold text-white">Branch Diversity is the Dominant Signal</h3>
-          <span class="text-xs px-2 py-0.5 rounded-full bg-emerald/20 text-emerald border border-emerald/20 ml-2 whitespace-nowrap">Empirical finding</span>
+          <h3 class="text-base font-semibold text-white">Training-Free Abductive Reasoning</h3>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-emerald/20 text-emerald border border-emerald/20 ml-2 whitespace-nowrap">HypothesisEngine</span>
         </div>
-        <p class="text-sm text-slate-400 leading-relaxed mb-3">
-          <a href="https://proceedings.mlr.press/v32/hutter14.html" target="_blank" rel="noopener" class="text-slate-300 hover:text-indigo underline decoration-dotted">Functional ANOVA</a> analysis of 200 tuner trials reveals <code class="font-mono text-cyan/80 text-xs">branch_bonus</code> accounts
-          for <strong class="text-white">46.2%</strong> of scoring variance — 39× more than beam width, which is near-irrelevant.
-          Per-relation tuning was masking this signal entirely.
+        <p class="text-sm text-slate-400 leading-relaxed">
+          Given an effect, infer the most plausible cause via multi-path reverse traversal
+          with Noisy-OR path fusion — entirely without training data.
+          Prior abductive KG work requires trained neural models; CEREBRUM uses graph structure alone.
         </p>
-        <div class="flex flex-wrap gap-3 text-xs font-mono">
-          <span class="text-slate-500">beam_width: <span class="text-slate-400">1.2%</span></span>
-          <span class="text-slate-500">→</span>
-          <span class="text-slate-500">branch_bonus: <span class="text-emerald font-bold">46.2%</span></span>
-          <span class="text-slate-500">when SDRB replaces per-relation flags</span>
-        </div>
       </div>
 
+    </div>
+
+    <!-- ── Full contribution catalog ── -->
+    <div class="card p-6 mb-10">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-base font-semibold text-white">All 30+ contributions</h3>
+        <a href="https://brutalbyte.github.io/CEREBRUM/NOVEL_CONTRIBUTIONS/"
+           target="_blank" rel="noopener"
+           class="text-xs text-indigo hover:text-cyan transition-colors flex items-center gap-1">
+          Full IP documentation
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        </a>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-1 text-sm">
+
+        <div>
+          <p class="text-xs font-semibold text-indigo uppercase tracking-wide mb-2">CORTEX — Core Reasoning</p>
+          <ul class="space-y-1 text-slate-400 text-xs">
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">▸</span>Community-Structured Attention (CSA, 10-param)</li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">▸</span>Dual/Triple Signal Community Fusion (DSCF/TSC)</li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">▸</span>Schema-Derived Relation Boost (SDRB)</li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">▸</span>Terminal Relation Boost (TRB)</li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">▸</span>First-Hop Relation Boost (FHRB)</li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">▸</span>Penultimate Relation Boost (PRB)</li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">▸</span>Path-Consistency Boost (r²)</li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">▸</span>Semantic Terminal Relation Boost (STRB)</li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">▸</span>Hop-1 Seed Expansion (H1SE)</li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">▸</span>ParameterInitializer — zero-config 2D table</li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">▸</span>GraphProfiler — automatic regime detection</li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">▸</span>Bayesian Beam Search with path-level Beta dist.</li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="text-xs font-semibold text-cyan uppercase tracking-wide mb-2">THALAMUS — Ingestion &amp; Encoding</p>
+          <ul class="space-y-1 text-slate-400 text-xs mb-5">
+            <li class="flex gap-2"><span class="text-cyan mt-0.5">▸</span>STDP-based causal edge discovery</li>
+            <li class="flex gap-2"><span class="text-cyan mt-0.5">▸</span>Cross-modal signal encoder (Procrustes SVD)</li>
+            <li class="flex gap-2"><span class="text-cyan mt-0.5">▸</span>Holographic Index (privacy-preserving federation)</li>
+            <li class="flex gap-2"><span class="text-cyan mt-0.5">▸</span>Training-free single-pass GraphSAGE inference</li>
+            <li class="flex gap-2"><span class="text-cyan mt-0.5">▸</span>Federated sub-path delegation + embedding alignment</li>
+          </ul>
+
+          <p class="text-xs font-semibold text-emerald uppercase tracking-wide mb-2">REM Engine — Autonomous Maintenance</p>
+          <ul class="space-y-1 text-slate-400 text-xs">
+            <li class="flex gap-2"><span class="text-emerald mt-0.5">▸</span>Experience-dependent graph plasticity (Bridge Twins)</li>
+            <li class="flex gap-2"><span class="text-emerald mt-0.5">▸</span>REM Cycle — 3-phase KG maintenance (prune/consolidate/synthesize)</li>
+            <li class="flex gap-2"><span class="text-emerald mt-0.5">▸</span>ProvenanceLedger — per-edge materialization rollback</li>
+            <li class="flex gap-2"><span class="text-emerald mt-0.5">▸</span>DiscoveryCalibrator — EMA community scan weighting</li>
+          </ul>
+        </div>
+
+        <div>
+          <p class="text-xs font-semibold text-amber uppercase tracking-wide mb-2">Autonomous Reasoning Systems</p>
+          <ul class="space-y-1 text-slate-400 text-xs mb-5">
+            <li class="flex gap-2"><span class="text-amber mt-0.5">▸</span>Training-free abductive reasoning (HypothesisEngine)</li>
+            <li class="flex gap-2"><span class="text-amber mt-0.5">▸</span>LoopedBeamTraversal (LoopLM-style iterative refinement)</li>
+            <li class="flex gap-2"><span class="text-amber mt-0.5">▸</span>Engram + SpeedTalk phonemic pattern cache</li>
+            <li class="flex gap-2"><span class="text-amber mt-0.5">▸</span>Cerebellar error correction (training-free CEC)</li>
+            <li class="flex gap-2"><span class="text-amber mt-0.5">▸</span>AutoApprover — 16-feature online logistic SGD</li>
+            <li class="flex gap-2"><span class="text-amber mt-0.5">▸</span>TriangulationEngine — 4-perspective validation</li>
+            <li class="flex gap-2"><span class="text-amber mt-0.5">▸</span>Per-community CSA parameter learning (online+batch)</li>
+            <li class="flex gap-2"><span class="text-amber mt-0.5">▸</span>Epistemic-adaptive beam width</li>
+            <li class="flex gap-2"><span class="text-amber mt-0.5">▸</span>Counterfactual answer re-ranking</li>
+            <li class="flex gap-2"><span class="text-amber mt-0.5">▸</span>ResearchAgent — training-free structural gap detection</li>
+            <li class="flex gap-2"><span class="text-amber mt-0.5">▸</span>Platt-scaled confidence calibration (training-free)</li>
+          </ul>
+        </div>
+
+      </div>
     </div>
 
     <!-- Papers -->
@@ -804,10 +891,10 @@
           <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span class="text-xs text-slate-500 uppercase tracking-wide">Technical Report</span>
         </div>
-        <h4 class="text-sm font-semibold text-white mb-2 flex-1">CEREBRUM v2.52: Complete Technical Specification</h4>
+        <h4 class="text-sm font-semibold text-white mb-2 flex-1">CEREBRUM v2.71: Complete Technical Specification</h4>
         <a href="#" class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo transition-colors mt-3">
           <span class="px-1.5 py-0.5 rounded bg-surface border border-border">arXiv</span>
-          <span>Coming Soon 🔒</span>
+          <span>Coming Soon</span>
         </a>
       </div>
 
@@ -819,19 +906,19 @@
         <h4 class="text-sm font-semibold text-white mb-2 flex-1">CEREBRUM: Training-Free KG Reasoning via Community-Structured Graph Attention</h4>
         <a href="#" class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo transition-colors mt-3">
           <span class="px-1.5 py-0.5 rounded bg-surface border border-border">arXiv</span>
-          <span>Coming Soon 🔒</span>
+          <span>Coming Soon</span>
         </a>
       </div>
 
       <div class="card p-5 flex flex-col">
         <div class="flex items-center gap-2 mb-3">
           <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          <span class="text-xs text-slate-500 uppercase tracking-wide">SDRB Paper</span>
+          <span class="text-xs text-slate-500 uppercase tracking-wide">SDRB + ParameterInitializer</span>
         </div>
-        <h4 class="text-sm font-semibold text-white mb-2 flex-1">Schema-Derived Relation Boost and Principled Hyperparameter Initialization</h4>
+        <h4 class="text-sm font-semibold text-white mb-2 flex-1">Schema-Derived Relation Boost and Principled Zero-Config Hyperparameter Initialization</h4>
         <a href="#" class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo transition-colors mt-3">
           <span class="px-1.5 py-0.5 rounded bg-surface border border-border">arXiv</span>
-          <span>Coming Soon 🔒</span>
+          <span>Coming Soon</span>
         </a>
       </div>
 
