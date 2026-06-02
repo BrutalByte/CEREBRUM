@@ -160,6 +160,16 @@
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #0a0a0f; }
     ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 3px; }
+
+    /* Marquee */
+    @keyframes marquee {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .animate-marquee {
+      animation: marquee 38s linear infinite;
+      min-width: 200%;
+    }
   </style>
 </head>
 <body>
@@ -324,6 +334,100 @@
   <!-- Scroll indicator -->
   <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce text-slate-600">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 2.5: HYPE
+══════════════════════════════════════════════════ -->
+<section class="py-0 overflow-hidden border-y border-border bg-surface">
+  <!-- Scrolling ticker -->
+  <div class="relative flex overflow-hidden py-4 group">
+    <div class="flex animate-marquee whitespace-nowrap gap-12 group-hover:[animation-play-state:paused]">
+      <span class="text-sm font-mono text-indigo/70">It doesn't guess. It traces.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-cyan/70">Every answer is a proof, not a prediction.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-indigo/70">No model. No training. No BS.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-cyan/70">1000× cheaper than GPT-4o. 0× the hallucinations.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-indigo/70">From CSV to 83% accuracy. One command.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-cyan/70">If the edge doesn't exist, CEREBRUM won't claim it does.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-indigo/70">Self-calibrating. Self-configuring. Just add data.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-cyan/70">Sue the algorithm. The path is in the response.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-indigo/70">Reasoning you can read. Answers you can trust.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-cyan/70">The only reasoning engine your infra team will approve.</span>
+      <span class="text-slate-600 select-none">·</span>
+    </div>
+    <!-- Duplicate for seamless loop -->
+    <div class="flex animate-marquee whitespace-nowrap gap-12 absolute top-4 group-hover:[animation-play-state:paused]" aria-hidden="true">
+      <span class="text-sm font-mono text-indigo/70">It doesn't guess. It traces.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-cyan/70">Every answer is a proof, not a prediction.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-indigo/70">No model. No training. No BS.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-cyan/70">1000× cheaper than GPT-4o. 0× the hallucinations.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-indigo/70">From CSV to 83% accuracy. One command.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-cyan/70">If the edge doesn't exist, CEREBRUM won't claim it does.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-indigo/70">Self-calibrating. Self-configuring. Just add data.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-cyan/70">Sue the algorithm. The path is in the response.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-indigo/70">Reasoning you can read. Answers you can trust.</span>
+      <span class="text-slate-600 select-none">·</span>
+      <span class="text-sm font-mono text-cyan/70">The only reasoning engine your infra team will approve.</span>
+      <span class="text-slate-600 select-none">·</span>
+    </div>
+    <!-- Fade edges -->
+    <div class="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-surface to-transparent"></div>
+    <div class="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-surface to-transparent"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 2.6: BIG CLAIMS
+══════════════════════════════════════════════════ -->
+<section class="py-20 px-6 bg-bg">
+  <div class="max-w-5xl mx-auto space-y-16">
+
+    <!-- Claim 1 -->
+    <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
+      <div class="flex-shrink-0 w-1 h-16 bg-gradient-to-b from-indigo to-indigo/0 rounded-full"></div>
+      <div>
+        <p class="text-3xl md:text-4xl font-bold text-white leading-tight">GPT-4o hallucinates.<br><span class="text-indigo">CEREBRUM shows its work.</span></p>
+        <p class="text-slate-500 mt-3 text-sm max-w-lg">Every response includes the complete edge chain — every hop, every relation, every score. You can verify any answer against the source data in seconds.</p>
+      </div>
+    </div>
+
+    <!-- Claim 2 -->
+    <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
+      <div class="flex-shrink-0 w-1 h-16 bg-gradient-to-b from-cyan to-cyan/0 rounded-full"></div>
+      <div>
+        <p class="text-3xl md:text-4xl font-bold text-white leading-tight">The first training-free system<br><span class="text-cyan">to beat supervised baselines</span><br>on multi-hop reasoning.</p>
+        <p class="text-slate-500 mt-3 text-sm max-w-lg">56.8% H@1 zero-config. 66.8% with sentence-transformer calibration. No labels. No gradient descent. No GPU cluster required.</p>
+      </div>
+    </div>
+
+    <!-- Claim 3 -->
+    <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
+      <div class="flex-shrink-0 w-1 h-16 bg-gradient-to-b from-indigo via-cyan to-cyan/0 rounded-full"></div>
+      <div>
+        <p class="text-3xl md:text-4xl font-bold text-white leading-tight">Knowledge graphs were<br>always the answer.<br><span class="bg-gradient-to-r from-indigo to-cyan bg-clip-text text-transparent">We just made them work.</span></p>
+        <p class="text-slate-500 mt-3 text-sm max-w-lg">30+ original algorithmic contributions. Community detection, Bayesian beam search, ParameterInitializer, SDRB, H1SE, STRB, GraphProfiler — all working together, on any knowledge base, out of the box.</p>
+      </div>
+    </div>
+
   </div>
 </section>
 
