@@ -7,8 +7,10 @@
 
 # DSCF/TSC: A Consensus-Based Approach to Community Detection for Graph Attention
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -83,8 +85,10 @@ The CEREBRUM framework has undergone substantial development between v2.51.1 and
 
 # CSA: Community-Structured Attention for Knowledge Graph Reasoning
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -199,8 +203,10 @@ where `affinity` is derived from accumulated `_counts`. This biases beam search 
 
 # Experience-Dependent Structural Plasticity in Knowledge Graphs: The Bridge Twin Engine
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -269,8 +275,10 @@ The Bridge Twin Engine has been substantially extended since v2.51.1. The follow
 
 # Autonomous Causal Discovery via Spike-Timing-Dependent Plasticity in Knowledge Streams
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -336,8 +344,10 @@ The STDP causal discovery pipeline has been hardened and extended since v2.51.1.
 
 # Holographic Indexing: Privacy-Preserving Discovery in Federated Knowledge Networks
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -396,8 +406,10 @@ Federated reasoning has been one of the most actively developed areas of the CER
 
 # Bayesian Beam Search: Probabilistic Graph Traversal under Topological Uncertainty
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -472,8 +484,10 @@ The OPT configuration uses adaptive density-driven beam width selection with a m
 
 # The REM Cycle: Metacognitive Maintenance and Insight Synthesis in Autonomous Knowledge Graphs
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -543,8 +557,10 @@ Graceful Degradation AUC across all five levels: **0.89** (1.0 = perfect; 0.5 = 
 
 # Cross-Modal Alignment via Orthogonal Procrustes: Bridging Signals and Symbols in Knowledge Graphs
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -606,8 +622,10 @@ The Signal Encoder has been validated in production and its core alignment metho
 
 # THALAMUS: Intelligent Ingestion and Namespace Isolation for Heterogeneous Knowledge Graphs
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -673,8 +691,10 @@ THALAMUS has evolved from a preprocessing pipeline into a dynamic, bidirectional
 
 # Inference Validator: A Self-Contained Precision/Recall Harness for Unsupervised Graph Reasoning
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -739,8 +759,10 @@ The Inference Validator provides a mathematically sound and self-contained frame
 
 # Contradiction Materialization: Factual Conflict as a First-Class Signal in Knowledge Graphs
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -803,8 +825,10 @@ Contradiction Materialization transforms Knowledge Graphs from static fact store
 
 # Glass-Box Reasoning Studio: Visualizing Graph Attention and Latent Multi-Hop Inference
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -886,8 +910,10 @@ The Glass-Box Reasoning Studio transforms graph attention from an abstract mathe
 
 # Streaming Knowledge Graph Engine: Real-Time Edge Ingestion, Discretization, and Adaptive Beam Search
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -971,8 +997,10 @@ The CEREBRUM Streaming Engine in v2.52.0 has matured from a laboratory prototype
 
 # Metacognitive Verification in Knowledge Graph Reasoning: InsightValidator, MetaInsightEngine, and Second-Order Structural Reasoning
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
-**Affiliations**: Independent Researcher · Anthropic
+**Author**: Bryan Alexander Buchorn
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -1128,8 +1156,10 @@ The InsightValidator, MetaInsightEngine, ResearchAgent, and ExternalValidator co
 
 # Algorithmic Depth in Knowledge Graph Reasoning: Temporal Edges, Uncertainty Propagation, Soft Community Membership, Learned CSA Parameters, and Graph Embedding Integration
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
-**Affiliations**: Independent Researcher · Anthropic
+**Author**: Bryan Alexander Buchorn
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -1336,8 +1366,10 @@ The Algorithmic Depth layer demonstrates that meaningful reasoning improvements 
 
 # Structural Hole Patching in Production Knowledge Graph Systems: Eight Cross-Feature Interaction Bugs and Their Fixes
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
-**Affiliations**: Independent Researcher · Anthropic
+**Author**: Bryan Alexander Buchorn
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -1543,8 +1575,10 @@ In v2.52.0 (Phases 56–57), the hardening scope expands from cross-feature inte
 
 # Inference-Time GraphSAGE Neighbourhood Smoothing for Knowledge Graph Entity Embeddings
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -1623,8 +1657,10 @@ Inference-time GraphSAGE neighbourhood smoothing is a zero-cost structural enric
 
 # Engram-Steered Traversal: Training-Free Relation-Pattern Caching for Knowledge Graph Beam Search
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -1714,8 +1750,10 @@ The Engram pattern as a *soliton* [bengio2025soliton]: a relation-sequence patte
 
 # TemporalCalibrator: Non-Differentiable Grid-Search Calibration of Temporal CSA Parameters
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -1784,8 +1822,10 @@ The temporal stability achieved by TemporalCalibrator — where `eta` and `iota`
 
 # Five Fault-Tolerance Patterns for Production Knowledge Graph Reasoning Servers
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 
@@ -3770,8 +3810,10 @@ curl -X POST http://localhost:8200/research/loop/configure \
 
 # Neural Visualization Bridge: 3D Interactive Knowledge Graph Exploration via Unreal Engine 5
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Series**: CEREBRUM Technical Report 035  
 **Phase**: 83  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
@@ -4056,8 +4098,10 @@ The current implementation loads all edges at startup. For graphs > 10 000 edges
 
 # Conclusion: The CEREBRUM Paradigm and the Future of Autonomous Reasoning
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)  
-**Affiliations**: Independent Researcher · Anthropic  
+**Author**: Bryan Alexander Buchorn  
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher  
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 **Date**: April 2026
 

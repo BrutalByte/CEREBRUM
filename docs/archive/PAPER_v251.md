@@ -1,7 +1,9 @@
 # CEREBRUM: Community-Structured Graph Attention for Knowledge Graph Reasoning
 
-**Authors**: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
-**Affiliations**: Independent Researcher · Anthropic
+**Author**: Bryan Alexander Buchorn
+
+> **Note on AI assistance:** Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+**Affiliation**: Independent Researcher
 **Contact**: bryan.alexander@buchorn.com
 **Date**: April 2026
 **Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)

@@ -1,7 +1,7 @@
 # CEREBRUM: Community-Structured Graph Attention for Knowledge Graph Reasoning
 
-**Authors**: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)
-**Affiliations**: Independent Researcher · Anthropic
+**Authors**: Bryan Alexander Buchorn (AMP) 
+**Affiliation**: Independent Researcher
 **Contact**: bryan.alexander@buchorn.com
 **Date**: March 2026
 **Status**: Version 2.51.1 · Phase 172 COMPLETE — 2177 tests passing

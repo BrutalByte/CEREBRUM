@@ -115,7 +115,7 @@ Each one stands alone. Each one references the flagship paper. Submit to arXiv w
 
 ## Authorship — The Non-Negotiable Fix
 
-**Current:** "Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)" with "Anthropic" as affiliation.
+**Current:** "Bryan Alexander Buchorn " with "Anthropic" as affiliation.
 
 **Problem:** arXiv requires authors to be human individuals who take legal and intellectual responsibility. Listing an AI model as co-author will get flagged. Listing Anthropic as affiliation without their approval creates a separate legal issue.
 

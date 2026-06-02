@@ -1134,7 +1134,15 @@ the "no training data" invariant of the CEREBRUM framework.
 
 ---
 
-**Reviewed on**: May 9, 2026 for version v2.52.0
+**Reviewed on**: June 2026 for version v2.71.0
+
+---
+
+## Acknowledgments
+
+All conceptual contributions, algorithmic designs, architectural decisions, experimental design, and intellectual property claims in this document are solely the work of **Bryan Alexander Buchorn**.
+
+[Claude](https://claude.ai) (Anthropic) was used as a pivotal tool throughout the development of CEREBRUM — for mathematical formalization, code generation, manuscript drafting, and research iteration. Claude did not originate any of the novel ideas described here; it served as an extraordinarily capable implementation and writing instrument in service of the author's original vision.
 
 ---
 
