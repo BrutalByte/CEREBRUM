@@ -88,3 +88,6 @@ cerebrum-site/
 
 # Tuner trial logs (large, generated — keep summaries in benchmarks/results/ instead)
 benchmarks/tuner_*.jsonl
+
+# Unpublished paper manuscripts (submit to arXiv first, then re-add with citable ID)
+research/papers/
