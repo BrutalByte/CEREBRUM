@@ -54,7 +54,30 @@ r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs 
 | **201** | **+SchemaAwareRelationDetector (SRD)** | **58.90%** | **88.32%** | **0.6930** |
 | **202** | **+SDRB gamma (RelationBoostDeriver, 8-param tuner)** | **~62.55%** | — | — |
 | **203/204** | **+SDRB beta power-law (full 14,274-question validation)** | **60.36%** | — | — |
-| **213** | **hub_homogeneous × sentence constants (ParameterInitializer)** | **61.75%** | — | — |
+| **212** | **zero-config (ParameterInitializer, random, all hops)** | **56.8%** | **90.7%** | **0.692** |
+| **213** | **hub_homogeneous × sentence constants (ParameterInitializer)** | **66.8%*** | — | — |
+
+---
+
+## MetaQA — Phase 212 Zero-Config Full Validation (All 39,093 Questions)
+
+**Zero-config = ParameterInitializer auto-derives all params from graph statistics. No tuning.**
+
+Run date: 2026-06-02. Command: `python benchmarks/metaqa_eval.py --zero-config --workers 8`
+
+| Hop | N | H@1 | H@10 | MRR | Answered | Time |
+|-----|---|-----|------|-----|----------|------|
+| 1-hop | 9,947 | **83.2%** | **99.0%** | **0.884** | 9,936/9,947 | 3.7s |
+| 2-hop | 14,872 | **63.3%** | **94.3%** | **0.733** | 14,865/14,872 | 31.7s |
+| 3-hop | 14,274 | **56.8%** | **90.7%** | **0.692** | 14,268/14,274 | 782.6s |
+
+**Auto-derived params (hub_homogeneous × random):**
+trb_factor=21.48, gamma=0.5, beta=2.0, r2_boost=8.18, fhrb_factor=3.26,
+idf_weight=0.058, vote_weight=0.758, branch_bonus=0.48, beam_width=12.
+
+**Finding:** Zero-config (no tuning) lands 3.5pp below Phase 204 tuned (60.4% 3-hop H@1).
+H@10=90.7% confirms the system *finds* the answer in top-10 the vast majority of the time —
+the gap to supervised methods is primarily a ranking problem, not a reasoning failure.
 
 ---
 
@@ -524,4 +547,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-06-01 | Phase 211 GraphSAGE ablation: GraphSAGE ruled out as 3-hop culprit (removing it makes 3-hop worse); ceiling is intrinsic cosine-similarity bias on cross-type paths — investigation closed | Phase 53 canonical paper numbers unchanged*
+*Last updated: 2026-06-02 | Phase 212: zero-config full validation (83.2%/63.3%/56.8% H@1, all 39,093 questions) — 3.5pp below tuned, H@10=90.7% confirms reasoning not ranking is the gap | Phase 213: hub_homogeneous × sentence H@1=66.8% (500-sample, 3-hop) — 2D calibration table complete | Phase 53 canonical paper numbers unchanged*
