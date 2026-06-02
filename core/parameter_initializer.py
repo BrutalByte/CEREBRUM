@@ -164,8 +164,23 @@ _SENTENCE_OVERRIDES: dict[str, dict] = {
         "idf_scale_c":   0.00432,# 0.018 / 4.17 = 0.00432 (Hetionet degree_cv=4.17)
         "vote_base":     0.565,  # 0.6400 − 0.15×0.5 = 0.565 (vote is now #1 fANOVA driver)
     },
-    # hub_homogeneous × sentence: pending Phase 210 MetaQA sentence tuner run
-    # mixed × sentence: pending Phase 211 ConceptNet tuner run
+    "hub_homogeneous": {
+        # Phase 213 MetaQA sentence tuner (60-trial Sobol + 10-trial CMA-ES, 2000q sample)
+        # Best config: gamma=8.7319, beta=2.0846, trb=21.486, r2=8.185,
+        #   vote=0.7640, idf=0.0582, branch=0.482, fhrb=3.260  → H@1=61.75%
+        # hub_homogeneous × sentence constants converge to ≈ random-embedding values;
+        # the only meaningful shift is vote_base (0.689 vs 0.72) — sentence embeddings
+        # already encode hub-ness, so community votes carry slightly less weight.
+        "boost_scale":  21.8,    # 8.7319 × 1.55^2.0846 ≈ 21.8
+        "beta":          2.0846, # unchanged vs random — MetaQA hub structure is dominant
+        "trb_c":         9.33,   # 21.486 / ln(10) — same as random
+        "branch_bonus":  0.482,  # same as random
+        "r2_c":         13.49,   # (8.185−1.5) / ln(5.77/9+1) — same as random
+        "fhrb_c":        1.18,   # (3.260−1.0) / ln(6.77) — same as random
+        "idf_scale_c":   0.0102, # 0.0582 / 5.68 — matches global IDF_SCALE_C
+        "vote_base":     0.689,  # 0.764 − 0.15×0.5 (lower than random 0.72)
+    },
+    # mixed × sentence: pending Phase 215 ConceptNet tuner run
 }
 
 

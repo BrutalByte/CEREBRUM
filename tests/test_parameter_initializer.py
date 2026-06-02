@@ -169,6 +169,20 @@ def test_sentence_transformers_overrides():
     assert p_sent.embedding_method == "sentence"
 
 
+def test_sentence_hub_homogeneous_overrides():
+    """Phase 213: sentence hub_homogeneous uses vote_base=0.689 (lower than random 0.72)."""
+    p = _mock_profile(regime="hub_homogeneous", degree_cv=5.68)
+    p.mean_rel_coverage = 0.261  # MetaQA-like: triggers hub override from typed
+    d = _mock_deriver()
+    p_rand = ParameterInitializer.compute(p, d, embedding_method="random")
+    p_sent = ParameterInitializer.compute(p, d, embedding_method="sentence", modularity_Q=0.5)
+    # vote_weight is the primary difference: sentence vote_base=0.689 vs random 0.72
+    assert p_sent.vote_weight < p_rand.vote_weight
+    assert p_sent.vote_weight == pytest.approx(0.689 + 0.15 * 0.5, abs=1e-4)
+    assert p_sent.effective_regime == "hub_homogeneous"
+    assert p_sent.embedding_method == "sentence"
+
+
 def test_mixed_regime_mid_range():
     hub_p   = _mock_profile(regime="hub_homogeneous", degree_cv=5.0)
     mixed_p = _mock_profile(regime="mixed", degree_cv=2.0, mean_rel_coverage=0.15)

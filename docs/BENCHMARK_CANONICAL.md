@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.69.0 (Phase 209) — Updated Jun 1, 2026
+## Version: v2.71.0 (Phase 213) — Updated Jun 2, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -54,6 +54,7 @@ r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs 
 | **201** | **+SchemaAwareRelationDetector (SRD)** | **58.90%** | **88.32%** | **0.6930** |
 | **202** | **+SDRB gamma (RelationBoostDeriver, 8-param tuner)** | **~62.55%** | — | — |
 | **203/204** | **+SDRB beta power-law (full 14,274-question validation)** | **60.36%** | — | — |
+| **213** | **hub_homogeneous × sentence constants (ParameterInitializer)** | **61.75%** | — | — |
 
 ---
 

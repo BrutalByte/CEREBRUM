@@ -5,6 +5,20 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.71.0] - 2026-06-02
+### Added
+- **Phase 213: hub_homogeneous × sentence constants (ParameterInitializer)**:
+  - Adds `"hub_homogeneous"` entry to `_SENTENCE_OVERRIDES` in `core/parameter_initializer.py`,
+    completing the 2×2 (regime × embedding) calibration table for MetaQA/Hetionet regimes
+  - Source: Phase 213 MetaQA sentence tuner (`tuner_20260530T162706.jsonl`), 60-trial Sobol +
+    10-trial CMA-ES, 2000q sample; best config H@1=61.75% (gamma=8.7319, beta=2.0846,
+    trb=21.486, r2=8.185, vote=0.764, idf=0.058, branch=0.482, fhrb=3.260)
+  - Key finding: hub_homogeneous constants are nearly identical between random and sentence
+    embeddings; the only meaningful difference is vote_base (0.689 vs 0.72), since sentence
+    embeddings encode hub-ness semantically and reduce reliance on community votes
+  - `mixed × sentence` remains pending Phase 215 ConceptNet tuner run
+  - New unit test `test_sentence_hub_homogeneous_overrides` in `tests/test_parameter_initializer.py`
+
 ## [2.66.0] - 2026-05-29
 ### Changed
 - **Phase 204: Sobol + CMA-ES tuner — faster convergence** (`benchmarks/cerebrum_tuner.py`):
