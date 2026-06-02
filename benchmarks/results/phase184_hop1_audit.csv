@@ -1,0 +1,72 @@
+q_idx,seed,question_text,correct_answer,detected_relation,n_total_h1,k_eff,first_viable_rank,viable_score,top1_score,score_ratio,category
+3,The Devil at 4 O'Clock,who directed the films written by the writer of The Devil at 4 O'Clock,Henry Hathaway,directed_by,7,20,4,0.008353,2.01777,0.0041,in_topk_stage2_fail
+7,Camp Nowhere,which person wrote the films acted by the actors in Camp Nowhere,Jacquelyn Mitchard,written_by,6,20,3,0.025106,0.416171,0.0603,in_topk_stage2_fail
+15,Dancing Lady,the movies that share directors with the movie Dancing Lady are written by who,John Meehan,written_by,8,20,2,0.008433,2.005679,0.0042,in_topk_stage2_fail
+29,Fahrenhype 9/11,who is listed as screenwriter of the films starred by Fahrenhype 9/11 actors,Avery Corman,written_by,6,20,6,0.000404,0.000841,0.48,in_topk_stage2_fail
+52,2001 Maniacs,the movies that share actors with the movie 2001 Maniacs are written by who,Stephen King,written_by,7,20,3,0.004073,4.175312,0.001,in_topk_stage2_fail
+53,American Heart,what languages are the films that share actors with American Heart in,English,in_language,4,20,2,0.012159,0.025017,0.486,in_topk_stage2_fail
+55,Coriolanus,when did the films release whose directors also directed Coriolanus,2013,release_year,5,20,1,6.056703,6.056703,1.0,in_topk_stage2_fail
+57,Tonight and Every Night,who directed films that share actors with the film Tonight and Every Night,George Sidney,directed_by,7,20,2,0.008374,4.15792,0.002,in_topk_stage2_fail
+65,Libertarias,the movies that share actors with the movie Libertarias are directed by who,Manuel Gómez Pereira,directed_by,7,20,4,0.00405,0.008354,0.4848,in_topk_stage2_fail
+74,A Bright Shining Lie,who wrote films that share actors with the film A Bright Shining Lie,Dan Gilroy,written_by,5,20,3,0.004051,4.18004,0.001,in_topk_stage2_fail
+75,Nick of Time,who starred in the films whose directors also directed Nick of Time,David Marshall Grant,starred_actors,10,20,3,0.201955,0.416196,0.4852,in_topk_stage2_fail
+78,The Man Who Never Was,which person wrote the films directed by the director of The Man Who Never Was,Brian Garfield,written_by,10,20,3,0.008407,4.163547,0.002,in_topk_stage2_fail
+110,The Stig-Helmer Story,what were the release dates of movies directed by the director of The Stig-Helmer Story,1991,release_year,4,20,2,0.000838,0.201866,0.0042,in_topk_stage2_fail
+115,Extreme Movie,what were the release years of the films that share writers with the film Extreme Movie,2010,release_year,9,20,4,0.012134,0.418854,0.029,in_topk_stage2_fail
+132,A Grand Day Out,when did the movies written by A Grand Day Out writers release,2008,release_year,14,20,2,0.000841,6.102215,0.0001,in_topk_stage2_fail
+137,The Anniversary,who are the actors in the movies written by the writer of The Anniversary,John Hannah,starred_actors,7,20,1,0.201971,0.201971,1.0,in_topk_stage2_fail
+157,Rebel Without a Cause,who are the screenwriters that the actors in their movies also appear in the movie Rebel Without a Cause,Ivan Moffat,written_by,10,20,4,0.008356,4.175618,0.002,in_topk_stage2_fail
+162,Men Without Women,what are the languages spoken in the films whose directors also directed Men Without Women,Welsh,in_language,7,20,7,0.000405,0.000837,0.4835,in_topk_stage2_fail
+168,Anthony Adverse,who are the writers that the actors in their films also appear in the film Anthony Adverse,Mark Twain,written_by,8,20,3,0.025116,0.417193,0.0602,in_topk_stage2_fail
+175,Psycho Beach Party,when did the movies release whose writers also wrote Psycho Beach Party,2003,release_year,5,20,2,0.000832,6.063588,0.0001,in_topk_stage2_fail
+181,Stealth,who acted in the films directed by the director of Stealth,Leslie Bibb,starred_actors,9,20,5,0.025131,0.419445,0.0599,in_topk_stage2_fail
+199,Anthony Adverse,who starred in the films whose screenwriters also wrote Anthony Adverse,Paul Muni,starred_actors,8,20,4,0.012049,0.418601,0.0288,in_topk_stage2_fail
+201,Jane Eyre,who are the actors in the films written by the screenwriter of Jane Eyre,Leonard Nimoy,starred_actors,28,20,1,0.419531,0.419531,1.0,in_topk_stage2_fail
+202,The Man Who Laughs,the films that share directors with the film The Man Who Laughs were released in which years,1921,release_year,13,20,4,0.000408,6.068155,0.0001,in_topk_stage2_fail
+205,Georgia,what are the languages spoken in the films starred by Georgia actors,English,in_language,6,20,2,0.012018,0.012083,0.9947,in_topk_stage2_fail
+222,The Caiman,which person wrote the movies starred by the actors in The Caiman,Maria Sole Tognazzi,written_by,7,20,2,0.025129,0.200703,0.1252,in_topk_stage2_fail
+223,Branded,what were the release years of the films that share writers with the film Branded,1943,release_year,11,20,5,0.012329,0.420185,0.0293,in_topk_stage2_fail
+224,L.A. Without a Map,who are the screenwriters that the actors in their movies also appear in the movie L.A. Without a Map,Michael Almereyda,written_by,6,20,3,0.008302,4.157688,0.002,in_topk_stage2_fail
+227,Games,when did the films release whose directors also directed Games,1965,release_year,6,20,2,0.000833,6.045049,0.0001,in_topk_stage2_fail
+230,The Dance of Reality,what were the release years of the films that share directors with the film The Dance of Reality,1970,release_year,7,20,2,0.008365,2.030435,0.0041,in_topk_stage2_fail
+244,The Odessa File,when did the films release whose directors also directed The Odessa File,1969,release_year,9,20,3,0.000841,6.076999,0.0001,in_topk_stage2_fail
+248,Monsieur Ibrahim,the movies that share actors with the movie Monsieur Ibrahim are directed by who,J. Lee Thompson,directed_by,5,20,3,0.004067,0.008386,0.485,in_topk_stage2_fail
+252,Love Jones,what are the languages spoken in the films starred by Love Jones actors,Italian,in_language,7,20,2,0.025088,0.025123,0.9986,in_topk_stage2_fail
+253,Canyon Passage,the films that share directors with the films Canyon Passage are written by who,Cornell Woolrich,written_by,5,20,2,0.00836,4.173748,0.002,in_topk_stage2_fail
+262,India Song,what were the release years of the movies that share actors with the movie India Song,1969,release_year,7,20,3,0.012014,0.419841,0.0286,in_topk_stage2_fail
+274,Straight to Hell,who are the actors in the movies written by the writer of Straight to Hell,Gary Oldman,starred_actors,9,20,5,0.012098,0.420179,0.0288,in_topk_stage2_fail
+281,Tyson,the films that share actors with the film Tyson were in which languages,French,in_language,13,20,7,0.000406,0.000853,0.4766,in_topk_stage2_fail
+290,The City of Lost Children,the movies that share actors with the movie The City of Lost Children are directed by who,John Milius,directed_by,8,20,6,0.004037,0.008373,0.4822,in_topk_stage2_fail
+292,The Field,what are the languages spoken in the films whose writers also wrote The Field,Irish,in_language,7,20,2,0.012116,0.025014,0.4844,in_topk_stage2_fail
+312,One Tough Cop,who is listed as screenwriter of the movies starred by One Tough Cop actors,E. Max Frye,written_by,10,20,6,0.000406,12.537622,0.0,in_topk_stage2_fail
+315,The Terrorist,which person wrote the movies starred by the actors in The Terrorist,Manish Acharya,written_by,6,20,2,0.025152,0.416818,0.0603,in_topk_stage2_fail
+317,Ten,who starred in the films whose screenwriters also wrote Ten,Val Kilmer,starred_actors,4,20,2,0.012041,0.41707,0.0289,in_topk_stage2_fail
+320,Love Is Eternal While It Lasts,when did the movies release whose writers also wrote Love Is Eternal While It Lasts,1981,release_year,5,20,1,6.065833,6.065833,1.0,in_topk_stage2_fail
+321,At the Circus,who wrote films that share actors with the film At the Circus,Morrie Ryskind,written_by,6,20,1,0.008355,0.008355,1.0,in_topk_stage2_fail
+325,Newsfront,which person wrote the films acted by the actors in Newsfront,Mick Molloy,written_by,10,20,6,0.025036,0.417128,0.06,in_topk_stage2_fail
+335,Donovan's Brain,the films that share actors with the film Donovan's Brain are written by who,Philip Barry,written_by,6,20,2,0.0084,2.01528,0.0042,in_topk_stage2_fail
+339,Love Comes Softly,when did the films written by Love Comes Softly writers release,2005,release_year,5,20,2,0.00084,6.06594,0.0001,in_topk_stage2_fail
+341,The Flowers of War,who wrote films that share actors with the film The Flowers of War,Robert Louis Stevenson,written_by,10,20,8,0.004036,4.17666,0.001,in_topk_stage2_fail
+344,Strait-Jacket,who is listed as screenwriter of the films starred by Strait-Jacket actors,Edward Barry Roberts,written_by,9,20,2,0.000838,12.535703,0.0001,in_topk_stage2_fail
+348,Leviathan,what were the release dates of films written by the screenwriter of Leviathan,2011,release_year,9,20,3,0.011992,0.202688,0.0592,in_topk_stage2_fail
+350,"Guns, Girls and Gambling","who is listed as screenwriter of the movies starred by Guns, Girls and Gambling actors",Stephen King,written_by,7,20,2,0.000834,12.492093,0.0001,in_topk_stage2_fail
+369,The Nanny Diaries,which person wrote the films acted by the actors in The Nanny Diaries,Éva Gárdos,written_by,12,20,5,0.012094,0.417459,0.029,in_topk_stage2_fail
+373,Rendezvous,what were the release years of the movies that share screenwriters with the movie Rendezvous,1948,release_year,8,20,2,0.012085,0.418648,0.0289,in_topk_stage2_fail
+382,Felidae,the films that share actors with the film Felidae are directed by who,Martin Provost,directed_by,7,20,2,0.008413,4.149661,0.002,in_topk_stage2_fail
+387,Mephisto,when did the movies starred by Mephisto actors release,1991,release_year,6,20,3,0.000835,6.052531,0.0001,in_topk_stage2_fail
+401,Postcards from the Edge,the films that share directors with the film Postcards from the Edge were released in which years,1991,release_year,10,20,1,6.099983,6.099983,1.0,in_topk_stage2_fail
+403,The Detonator,which person directed the movies starred by the actors in The Detonator,John Badham,directed_by,6,20,3,0.012105,0.025069,0.4829,in_topk_stage2_fail
+415,Open Season,when did the movies release whose directors also directed Open Season,2014,release_year,18,20,2,0.000846,6.113543,0.0001,in_topk_stage2_fail
+416,Enthiran,what types are the movies starred by actors in Enthiran,Drama,has_genre,5,20,3,0.012092,0.025209,0.4797,in_topk_stage2_fail
+418,Blade Runner,the movies that share directors with the movie Blade Runner were in which languages,Japanese,in_language,29,20,1,0.000848,0.000848,1.0,in_topk_stage2_fail
+439,Trial by Jury,what were the release dates of movies directed by the director of Trial by Jury,1991,release_year,6,20,2,0.000835,0.202244,0.0041,in_topk_stage2_fail
+446,Every Girl Should Be Married,what are the languages spoken in the movies starred by Every Girl Should Be Married actors,Swedish,in_language,6,20,3,0.012065,0.024997,0.4827,in_topk_stage2_fail
+447,Opportunity Knocks,who is listed as director of the movies starred by Opportunity Knocks actors,Penelope Spheeris,directed_by,4,20,4,0.000404,6.03559,0.0001,in_topk_stage2_fail
+457,The Day the Earth Caught Fire,the films that share writers with the film The Day the Earth Caught Fire were in which genres,Drama,has_genre,6,20,3,0.000405,0.000835,0.4855,in_topk_stage2_fail
+470,Forget Paris,the films that share directors with the film Forget Paris were released in which years,1992,release_year,9,20,2,0.000835,6.05828,0.0001,in_topk_stage2_fail
+488,China Seas,who is listed as screenwriter of the movies directed by the China Seas director,John Meehan,written_by,11,20,7,0.000832,12.470143,0.0001,in_topk_stage2_fail
+491,Murder by Death,what were the release years of the films that share directors with the film Murder by Death,1979,release_year,16,20,3,0.008443,2.027939,0.0042,in_topk_stage2_fail
+493,Mitchell,who are the actors in the movies directed by the director of Mitchell,Dominique Dunne,starred_actors,6,20,5,0.012067,0.417971,0.0289,in_topk_stage2_fail
+496,Breathing Fire,who are the directors that the actors in their films also appear in the film Breathing Fire,Paul Thomas Anderson,directed_by,5,20,3,0.025017,0.417208,0.06,in_topk_stage2_fail
+497,Love Field,the movies that share actors with the movie Love Field are written by who,John Updike,written_by,6,20,3,0.004064,2.01251,0.002,in_topk_stage2_fail
+499,Up in Smoke,what were the release years of the films that share writers with the film Up in Smoke,1990,release_year,9,20,3,0.008356,2.029549,0.0041,in_topk_stage2_fail

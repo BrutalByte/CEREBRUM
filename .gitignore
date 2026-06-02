@@ -75,3 +75,16 @@ validation/
 # MLflow / Optuna experiment tracking artifacts
 mlruns/
 optuna_studies/
+
+# Caches
+.mypy_cache/
+.ruff_cache/
+
+# Recovered/backup doc directories
+docs_recovered/
+
+# Marketing site (separate deployment — not part of MkDocs site/)
+cerebrum-site/
+
+# Tuner trial logs (large, generated — keep summaries in benchmarks/results/ instead)
+benchmarks/tuner_*.jsonl

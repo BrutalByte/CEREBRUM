@@ -1,0 +1,71 @@
+
+=== CEREBRUM MetaQA Benchmark ===
+
+Loading knowledge graph...
+  43,217 entities, 124,616 edges (0.3s)
+Computing/loading community structure...
+  15422 communities
+
+[zero-config] ParameterInitializer (hub_homogeneous × random) auto-derived params:
+  trb_factor     = 21.4831
+  gamma          = 0.5
+  beta           = 2.0
+  r2_boost       = 8.1848
+  fhrb_factor    = 3.2562
+  idf_weight     = 0.0579
+  vote_weight    = 0.7584
+  branch_bonus   = 0.48
+  beam_width     = 12
+
+  r3->r2 template map: {'directed_by': 'written_by', 'written_by': 'written_by', 'starred_actors': 'written_by', 'release_year': 'has_genre', 'has_genre': 'has_genre', 'in_language': 'written_by'}
+
+Spawning 4 worker processes...
+  Workers ready.
+
+--- 1-hop evaluation ---
+  1,000 (sample) test questions
+  Running traversal (beam_width=12, max_hop=1)...
+    500/1,000 questions (0.7s elapsed)    1,000/1,000 questions (0.9s elapsed)
+  Hits@1  : 0.8230  (82.3%)
+  Hits@10 : 0.9870  (98.7%)
+  MRR     : 0.8760
+  Answered: 998/1,000  (skipped: 2)
+  Time    : 0.9s
+
+--- 2-hop evaluation ---
+  1,000 (sample) test questions
+  Running traversal (beam_width=12, max_hop=2)...
+    500/1,000 questions (1.7s elapsed)    1,000/1,000 questions (2.9s elapsed)
+  Hits@1  : 0.6320  (63.2%)
+  Hits@10 : 0.9610  (96.1%)
+  MRR     : 0.7379
+  Answered: 998/1,000  (skipped: 2)
+  Time    : 2.9s
+
+--- 3-hop evaluation ---
+  1,000 (sample) test questions
+  Running traversal (beam_width=12, max_hop=3)...
+    500/1,000 questions (33.6s elapsed)    1,000/1,000 questions (67.3s elapsed)
+  Hits@1  : 0.5790  (57.9%)
+  Hits@10 : 0.9260  (92.6%)
+  MRR     : 0.7041
+  Answered: 999/1,000  (skipped: 1)
+  Time    : 67.3s
+
+=== Results Summary ===
+
+  Model     : CEREBRUM CSA + DSCF
+  Embeddings: random
+  Beam width: 12
+  Top-K     : 10
+  Prior     : no
+  VoteWt(3h): 0.7584  TRB-factor(3h): 21.4831  hop2-bw: 12 (flat)
+  Sample    : 1000 per hop
+
+  Hop          N   Hits@1   Hits@10      MRR
+  ------ ------- -------- --------- --------
+  1-hop    1,000   0.8230    0.9870   0.8760
+  2-hop    1,000   0.6320    0.9610   0.7379
+  3-hop    1,000   0.5790    0.9260   0.7041
+
+  Results saved to E:\Development\Cerebrum\benchmarks\data\metaqa\cache\metaqa_results.csv

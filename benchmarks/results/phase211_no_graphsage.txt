@@ -1,0 +1,67 @@
+
+=== CEREBRUM Phase 206: Parametric Hetionet Benchmark ===
+
+  beam_width=8  max_neighbors=200  trb_factor=13.871
+  gamma=1.0147  beta=0.9545  r2_boost=1.322
+  vote_weight=0.64  branch_bonus=0.032  idf_weight=0.018  fhrb_factor=1.726
+  n_questions=200  min_eval_hop=1  workers=8  embeddings=sentence
+
+Loading Hetionet graph...
+  Loading cached NetworkX graph from hetionet_graph.pkl...
+  Loaded in 1.6s
+  47,031 nodes, 2,107,709 edges
+
+Building CerebrumGraph (max_neighbors=200)...
+  Using SentenceEngine (384-dim)
+  CerebrumGraph built in 12.5s
+
+Building RelationBoostDeriver...
+  24 relations  mean_fo=9.46  max_fo=33.59
+
+Templates to evaluate (6): compound_treats_disease, disease_associates_gene, gene_participates_pathway, disease_gene_pathway, compound_gene_disease, disease_compound_via_gene
+
+Generating QA pairs...
+  compound_treats_disease: 200 pairs
+  disease_associates_gene: 134 pairs
+  gene_participates_pathway: 200 pairs
+  disease_gene_pathway: 132 pairs
+  compound_gene_disease: 200 pairs
+  disease_compound_via_gene: 132 pairs
+
+  Launching 8 workers (998 tasks)...
+  Loading cached NetworkX graph from hetionet_graph.pkl...
+  Loaded in 1.8s
+  Loading cached NetworkX graph from hetionet_graph.pkl...
+  Loaded in 1.7s
+  Loading cached NetworkX graph from hetionet_graph.pkl...
+  Loaded in 1.8s
+  Loading cached NetworkX graph from hetionet_graph.pkl...
+  Loaded in 1.8s
+  Loading cached NetworkX graph from hetionet_graph.pkl...
+  Loaded in 1.8s
+  Loading cached NetworkX graph from hetionet_graph.pkl...
+  Loaded in 1.8s
+  Loading cached NetworkX graph from hetionet_graph.pkl...
+  Loaded in 1.8s
+  Loading cached NetworkX graph from hetionet_graph.pkl...
+  Loaded in 1.8s
+  Workers done in 545.6s
+
+
+=== Results Summary  (546s eval) ===
+
+  Hop          N   Hits@1   Hits@10      MRR
+  ------ ------- -------- --------- --------
+  1-hop      534   0.9551    0.9551   0.9551
+  2-hop      332   0.5572    0.5572   0.5572
+  3-hop      132   0.4697    0.4697   0.4697
+
+  Per-template breakdown:
+  Template                         Hop     N     H@1    H@10     MRR  AvgTyped
+  -------------------------------- --- ----- ------- ------- ------- ---------
+  compound_treats_disease            1   200   90.0%   90.0%   90.0%      1.6
+  disease_associates_gene            1   134  100.0%  100.0%  100.0%     16.9
+  gene_participates_pathway          1   200   98.0%   98.0%   98.0%      6.4
+  compound_gene_disease              2   200   38.5%   38.5%   38.5%      1.4
+  disease_gene_pathway               2   132   81.8%   81.8%   81.8%      4.9
+  disease_compound_via_gene          3   132   47.0%   47.0%   47.0%     13.8

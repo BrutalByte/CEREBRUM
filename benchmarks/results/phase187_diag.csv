@@ -1,0 +1,501 @@
+q_idx,seed,correct_answer,in_beam_top100,beam_rank,detected_rel,n_filtered,correct_in_filtered,final_rank
+0,Billy Budd,German,True,1,in_language,4,True,1
+1,Desperate Hours,Franklin J. Schaffner,True,3,directed_by,18,True,1
+2,Sheitan,Drama,True,1,has_genre,10,True,1
+3,The Devil at 4 O'Clock,Henry Hathaway,False,0,directed_by,17,False,0
+4,Identity Thief,Michael Markowitz,True,5,written_by,24,True,2
+5,Princess Caraboo,English,True,14,in_language,8,True,2
+6,Body of Lies,1953,True,1,release_year,21,True,1
+7,Camp Nowhere,Jacquelyn Mitchard,True,47,written_by,64,True,0
+8,You Ain't Seen Nothin' Yet,Peter Glenville,True,5,directed_by,27,True,2
+9,Equinox,Mystery,True,1,has_genre,8,True,1
+10,Forever Mine,Paul Schrader,True,1,written_by,25,True,1
+11,The Great Santini,English,True,15,in_language,5,True,1
+12,Sherlock Holmes Faces Death,Mystery,True,7,has_genre,11,True,1
+13,The Texas Chain Saw Massacre,Tobe Hooper,True,1,directed_by,23,True,1
+14,Endangered Species,Mystery,True,1,has_genre,11,True,1
+15,Dancing Lady,John Meehan,True,30,written_by,28,True,9
+16,The Balloonatic,Short,True,1,has_genre,13,True,1
+17,Duplicity,1992,True,6,release_year,18,True,1
+18,Cloudy with a Chance of Meatballs,2014,True,32,release_year,14,True,9
+19,The Artist,Russian,True,2,in_language,6,True,1
+20,Providence,1953,True,1,release_year,29,True,1
+21,White Men Can't Jump,William Friedkin,True,16,directed_by,29,True,3
+22,Invasion of the Body Snatchers,1993,True,22,release_year,32,True,4
+23,Night Moves,1988,True,6,release_year,29,True,1
+24,Ride Along,1998,True,1,release_year,24,True,1
+25,Falling Down,Drama,True,1,has_genre,12,True,1
+26,Caesar Must Die,Claudio Bigagli,True,2,starred_actors,45,True,1
+27,King of New York,John Badham,True,3,directed_by,12,True,1
+28,Finding Nemo,Ron Peer,True,30,written_by,26,True,8
+29,Fahrenhype 9/11,Avery Corman,True,55,written_by,68,True,0
+30,Gentlemen Broncos,Drama,True,1,has_genre,10,True,1
+31,Across the Pacific,James Agee,True,5,written_by,23,True,1
+32,Blackball,2003,True,28,release_year,29,True,0
+33,A Midsummer Night's Sex Comedy,Mickey Rose,True,1,written_by,13,True,1
+34,Bronson,Danish,True,2,in_language,5,True,1
+35,The Clock,French,True,13,in_language,2,True,1
+36,Poetic Justice,Samuel L. Jackson,True,3,directed_by,7,False,0
+37,Meet the Parents,1999,True,2,release_year,21,True,2
+38,The Hundred-Foot Journey,David Cronenberg,True,2,directed_by,8,True,2
+39,Little Odessa,James Gray,True,1,written_by,22,True,1
+40,Barocco,Gilles Perrault,True,1,written_by,21,True,1
+41,Deep Red,Drama,True,2,has_genre,11,True,1
+42,Along Came Polly,Paul Rudd,True,5,starred_actors,70,True,3
+43,The Long Goodbye,Mystery,True,1,has_genre,11,True,1
+44,Birthday Girl,Mystery,True,1,has_genre,11,True,1
+45,Cape Fear,Swedish,True,41,in_language,3,True,1
+46,The Last Circus,Armando De Razza,True,3,starred_actors,42,True,1
+47,The Pirate,Charles Walters,True,2,directed_by,17,True,1
+48,Casablanca,1960,True,4,release_year,24,True,1
+49,Raid on Rommel,French,True,6,in_language,9,True,2
+50,"Count Yorga, Vampire",Horror,True,1,has_genre,8,True,1
+51,The Shining,Japanese,True,78,in_language,2,True,1
+52,2001 Maniacs,Stephen King,True,21,written_by,19,True,7
+53,American Heart,English,False,0,in_language,1,False,0
+54,Bowfinger,English,True,26,in_language,2,True,1
+55,Coriolanus,2013,False,0,release_year,23,False,0
+56,Caramel,Nadine Labaki,True,3,written_by,42,True,2
+57,Tonight and Every Night,George Sidney,True,7,directed_by,24,True,2
+58,Hulk,Mandarin,True,47,in_language,2,True,1
+59,Novocaine,Mystery,True,1,has_genre,15,True,1
+60,Tea with Mussolini,Russian,True,9,in_language,8,True,1
+61,Can't Hardly Wait,Comedy,True,1,has_genre,12,True,1
+62,Down to the Sea in Ships,Jean Peters,True,4,starred_actors,58,True,1
+63,Brother Orchid,Welsh,True,57,in_language,5,True,1
+64,Fired Up!,Drama,True,1,has_genre,10,True,1
+65,Libertarias,Manuel Gómez Pereira,True,18,directed_by,26,True,9
+66,The Vanishing American,George Waggner,True,5,directed_by,40,True,3
+67,Jumpin' Jack Flash,English,True,17,in_language,4,True,1
+68,The Peacemaker,Mystery,True,1,has_genre,11,True,1
+69,Quality Street,Mystery,True,1,has_genre,12,True,1
+70,The Brothers Grimm,Mystery,True,3,has_genre,13,True,3
+71,Cold Sweat,1986,True,4,release_year,24,True,1
+72,Seven Pounds,Atom Egoyan,True,5,directed_by,14,True,1
+73,The Golden Compass,Robert Iscove,True,10,directed_by,13,True,1
+74,A Bright Shining Lie,Dan Gilroy,False,0,written_by,52,False,0
+75,Nick of Time,David Marshall Grant,False,0,starred_actors,65,False,0
+76,Armageddon,1995,True,9,release_year,23,True,2
+77,Bettie Page Reveals All,Drama,True,42,has_genre,8,True,4
+78,The Man Who Never Was,Brian Garfield,True,23,written_by,32,True,7
+79,The Girl in the Red Velvet Swing,1953,True,2,release_year,18,True,1
+80,Midnight Express,German,True,31,in_language,7,True,1
+81,Ginger Snaps,Ingmar Bergman,False,0,written_by,29,False,0
+82,Blue Car,Karen Moncrieff,True,2,written_by,62,True,1
+83,Law Abiding Citizen,1986,True,1,release_year,15,True,1
+84,Yellow Submarine,Comedy,True,1,has_genre,11,True,1
+85,Lucy,Larry Gelbart,True,7,written_by,9,True,1
+86,Only Angels Have Wings,William Faulkner,True,4,written_by,21,True,1
+87,Frenchman's Creek,English,True,9,in_language,8,True,1
+88,The Beast with Five Fingers,Arthur Levinson,True,2,written_by,24,True,1
+89,The Best Man Holiday,Drama,True,1,has_genre,9,True,1
+90,Beau Travail,French,True,6,in_language,4,True,1
+91,The Biggest Bundle of Them All,Romance,True,1,has_genre,12,True,1
+92,R100,Hitoshi Matsumoto,True,2,directed_by,33,True,1
+93,Bad Day at Black Rock,German,True,17,in_language,1,True,1
+94,The Boy with Green Hair,Neil Young,True,6,directed_by,25,True,2
+95,Yojimbo,Ingmar Bergman,True,2,written_by,8,True,1
+96,Among Giants,Thriller,True,3,has_genre,12,True,3
+97,Keeping Up with the Steins,Comedy,True,2,has_genre,9,True,2
+98,Teorema,Ugo Gregoretti,True,3,directed_by,9,True,1
+99,Paint Your Wagon,1980,True,1,release_year,25,True,1
+100,Monkey Shines,Leslie Nielsen,True,10,starred_actors,33,True,2
+101,The Normal Heart,Frank Capra,True,11,written_by,34,True,5
+102,Philomena,Andrew Fleming,True,6,written_by,24,True,3
+103,Saawariya,Peter Lorre,False,0,starred_actors,40,False,0
+104,The Tingler,William Prince,True,1,starred_actors,50,True,1
+105,I'm Gonna Git You Sucka,Action,True,1,has_genre,13,True,1
+106,The Go-Getter,Romance,True,1,has_genre,12,True,1
+107,"Edison, the Man",Joan Crawford,True,3,starred_actors,39,True,2
+108,The Public Enemy,Mystery,True,1,has_genre,11,True,1
+109,Destroyer,S. Sylvan Simon,True,4,directed_by,29,True,1
+110,The Stig-Helmer Story,1991,True,70,release_year,26,True,0
+111,Inside Moves,Horror,True,1,has_genre,13,True,1
+112,BURN-E,John Lasseter,True,3,written_by,27,True,1
+113,Dragonwyck,Gregory Peck,True,1,starred_actors,54,True,1
+114,The Descent,Neil Marshall,True,1,written_by,29,True,1
+115,Extreme Movie,2010,True,1,release_year,9,True,1
+116,Lenny,Joel Hopkins,True,1,directed_by,22,True,1
+117,The Black Watch,Ben Johnson,True,9,written_by,19,False,0
+118,Close Encounters of the Third Kind,Roger L. Simon,True,10,written_by,33,True,2
+119,The Trigger Effect,Al Pacino,True,14,written_by,23,True,0
+120,Brave,Action,True,2,has_genre,8,True,2
+121,Ski Party,Walter Newman,True,5,written_by,54,True,1
+122,World Traveler,1997,True,1,release_year,16,True,1
+123,Some Like It Hot,Drama,True,1,has_genre,13,True,1
+124,The Specials,Howard Zieff,True,6,written_by,22,True,1
+125,The Muse,Kathryn Harrold,True,6,written_by,32,True,1
+126,The Sheik,Drama,True,1,has_genre,13,True,1
+127,One Deadly Summer,Gérard Depardieu,True,1,starred_actors,46,True,1
+128,Encino Man,French,True,20,in_language,1,True,1
+129,Moon 44,German,True,16,in_language,8,True,1
+130,The Backyard,Paul Hough,True,4,written_by,65,True,2
+131,The Laughing Policeman,Horror,True,1,has_genre,14,True,1
+132,A Grand Day Out,2008,True,2,release_year,19,True,1
+133,5 Fingers,Mystery,True,1,has_genre,13,True,1
+134,CrissCross,Terence Frisby,True,5,written_by,56,True,2
+135,All Mine to Give,1953,False,0,release_year,17,False,0
+136,Susannah of the Mounties,William Keighley,True,3,directed_by,19,True,1
+137,The Anniversary,John Hannah,True,7,starred_actors,46,True,2
+138,Heights,Jessica Postigo,True,1,written_by,36,True,1
+139,Biloxi Blues,Russian,True,78,in_language,3,True,3
+140,Little Shop of Horrors,Family,True,1,has_genre,13,True,1
+141,Flight,Phillip Noyce,True,1,directed_by,11,True,1
+142,Law of Desire,Spanish,True,2,in_language,4,True,1
+143,Walk Like a Man,Jack Rose,True,3,written_by,32,True,1
+144,Brooklyn Bridge,Animation,True,1,has_genre,15,True,1
+145,The Girl He Left Behind,Marlon Brando,True,19,written_by,39,False,0
+146,10 Rillington Place,Mako,True,3,starred_actors,35,True,1
+147,The Exorcist,Jason Miller,True,22,starred_actors,21,True,9
+148,The Graduate,Crime,True,1,has_genre,14,True,1
+149,The Last Days on Mars,German,True,26,in_language,12,True,1
+150,The Story of Us,John Landis,True,12,directed_by,11,True,3
+151,Aaltra,French,True,3,in_language,3,True,1
+152,Hotel Rwanda,Terry George,True,6,directed_by,16,True,1
+153,Warlock,Victor Hugo,True,50,written_by,18,True,0
+154,The Man in the Iron Mask,Sean McGinly,True,8,directed_by,11,True,2
+155,The Jungle Book 2,Sport,True,1,has_genre,9,True,1
+156,Sex Drive,Jay Baruchel,False,0,starred_actors,49,False,0
+157,Rebel Without a Cause,Ivan Moffat,True,72,written_by,25,True,0
+158,Badman's Territory,War,True,1,has_genre,8,True,1
+159,Spencer's Mountain,Jeff Chandler,True,1,starred_actors,39,True,1
+160,Trois,2005,True,26,release_year,13,True,9
+161,Blood Glacier,Horror,True,1,has_genre,10,True,1
+162,Men Without Women,Welsh,True,45,in_language,5,True,1
+163,Household Saints,1991,True,8,release_year,25,True,2
+164,Salvador,Stephen King,True,1,written_by,23,True,1
+165,The Las Vegas Story,Irish,True,24,in_language,3,True,1
+166,Iris,1949,True,3,release_year,11,True,1
+167,Blood Work,Jay Hernandez,True,1,starred_actors,41,True,1
+168,Anthony Adverse,Mark Twain,True,16,written_by,34,True,5
+169,One Man Up,Thriller,False,0,has_genre,13,False,0
+170,Blow Out,Nicolas Cage,True,4,starred_actors,38,True,1
+171,The Numbers Station,Mystery,True,1,has_genre,11,True,1
+172,Calle 54,Danny Aiello,True,4,starred_actors,23,True,1
+173,Storyville,Walter Hill,True,17,directed_by,34,True,4
+174,I See a Dark Stranger,Anthony Page,True,2,written_by,27,True,1
+175,Psycho Beach Party,2003,True,49,release_year,24,True,0
+176,Human Resources,Drama,True,1,has_genre,10,True,1
+177,Things to Do in Denver When You're Dead,English,True,19,in_language,4,True,1
+178,How the West Was Won,Ernest Pascal,True,1,written_by,22,True,1
+179,Only When I Laugh,English,True,7,in_language,3,True,1
+180,Deadly Circuit,French,True,1,in_language,6,True,1
+181,Stealth,Leslie Bibb,True,75,starred_actors,53,True,0
+182,Hannah Arendt,German,True,4,in_language,7,True,2
+183,Superstar,Bruce McCulloch,True,9,written_by,28,True,3
+184,Original Sin,Tony Cinciripini,True,27,written_by,34,True,10
+185,But I'm a Cheerleader,Romance,True,1,has_genre,14,True,1
+186,In Country,Stirling Silliphant,True,4,written_by,23,True,4
+187,The Emerald Forest,1987,True,4,release_year,15,True,2
+188,Russian Roulette,1991,True,1,release_year,20,True,1
+189,Fight Club,Ben Mezrich,True,32,written_by,26,True,4
+190,Come See the Paradise,1997,True,1,release_year,28,True,1
+191,4 for Texas,Cesar Romero,True,7,directed_by,30,True,5
+192,Miss Julie,Swedish,True,3,in_language,11,True,1
+193,The Purple Rose of Cairo,Mickey Rose,True,1,written_by,8,True,1
+194,The Last Wave,Drama,True,1,has_genre,7,True,1
+195,My Man,French,True,3,in_language,6,True,1
+196,The Package,1990,True,1,release_year,24,True,1
+197,Blue Collar,Mystery,True,1,has_genre,12,True,1
+198,Blood Alley,Nehemiah Persoff,True,1,starred_actors,51,True,1
+199,Anthony Adverse,Paul Muni,True,4,starred_actors,46,True,1
+200,Outlaw,German,True,12,in_language,5,True,1
+201,Jane Eyre,Leonard Nimoy,True,32,starred_actors,48,True,0
+202,The Man Who Laughs,1921,False,0,release_year,19,False,0
+203,Jimmy's Hall,Jeremy Sandford,True,2,written_by,60,True,1
+204,The Unfaithful Wife,Jennifer Jones,True,2,starred_actors,45,True,1
+205,Georgia,English,True,18,in_language,8,True,1
+206,The Mask of Fu Manchu,Swedish,True,24,in_language,3,True,1
+207,B.F.'s Daughter,1935,True,1,release_year,24,True,1
+208,Miss Sadie Thompson,1967,True,1,release_year,19,True,1
+209,Father and Guns,English,True,8,in_language,6,True,2
+210,The Man Who Knew Too Little,Daniel Vigne,True,23,written_by,36,True,7
+211,Om Shanti Om,Sushmita Sen,True,1,starred_actors,48,True,1
+212,Booty Call,Jeff Pollack,True,3,written_by,33,True,3
+213,Chalet Girl,2009,True,33,release_year,23,True,0
+214,Bullet,Julie Brown,True,4,written_by,23,True,2
+215,Fear and Loathing in Las Vegas,Terry Gilliam,True,16,directed_by,12,True,3
+216,Triple Cross,Comedy,True,1,has_genre,11,True,1
+217,America America,Richard Boone,True,14,starred_actors,69,True,5
+218,The Broken Circle Breakdown,Felix van Groeningen,True,2,directed_by,27,True,1
+219,We're Not Dressing,1946,True,1,release_year,24,True,1
+220,Smoking/No Smoking,Daniel Auteuil,True,1,directed_by,16,True,1
+221,Arabesque,German,True,9,in_language,4,True,1
+222,The Caiman,Maria Sole Tognazzi,False,0,written_by,27,False,0
+223,Branded,1943,False,0,release_year,17,False,0
+224,L.A. Without a Map,Michael Almereyda,True,20,written_by,23,True,5
+225,Yojimbo,Drama,True,1,has_genre,12,True,1
+226,How Green Was My Valley,Robert Stevenson,True,1,directed_by,10,True,1
+227,Games,1965,True,25,release_year,26,True,0
+228,Lord of the Flies,1967,False,0,release_year,30,False,0
+229,Labor Day,German,True,23,in_language,4,True,1
+230,The Dance of Reality,1970,True,10,release_year,5,True,3
+231,The Squeeze,Romance,True,1,has_genre,8,True,1
+232,My House in Umbria,Michael Sheen,True,7,starred_actors,57,True,3
+233,School Ties,Action,True,1,has_genre,15,True,1
+234,New Waterford Girl,Drama,True,1,has_genre,13,True,1
+235,The River Why,Drama,True,1,has_genre,14,True,1
+236,The Quiet Man,John Wayne,True,1,starred_actors,56,True,1
+237,Tanguy,Comedy,True,2,has_genre,9,True,2
+238,Shaolin Soccer,Stephen Chow,True,4,directed_by,14,True,1
+239,The Rum Diary,Romance,True,1,has_genre,14,True,1
+240,Boom Town,James Edward Grant,True,4,written_by,25,True,1
+241,Suite Française,2008,True,64,release_year,47,True,0
+242,Cast a Deadly Spell,Mystery,True,1,has_genre,9,True,1
+243,Honor Among Lovers,1933,True,5,release_year,20,True,3
+244,The Odessa File,1969,True,10,release_year,21,True,2
+245,Flight of Fury,Andrew Davis,True,3,directed_by,23,True,2
+246,The Immigrant,James Gray,True,19,directed_by,24,True,4
+247,The Comfort of Strangers,1987,True,10,release_year,27,True,3
+248,Monsieur Ibrahim,J. Lee Thompson,True,11,directed_by,33,True,3
+249,Two Evil Eyes,German,True,3,in_language,3,True,1
+250,The General's Daughter,Romance,True,1,has_genre,14,True,1
+251,Marianne and Juliane,Drama,True,1,has_genre,14,True,1
+252,Love Jones,Italian,True,14,in_language,11,True,1
+253,Canyon Passage,Cornell Woolrich,True,30,written_by,17,True,4
+254,Johnny English Reborn,Suzanne Cloutier,True,13,directed_by,14,True,5
+255,Too Late the Hero,Lukas Heller,True,4,written_by,14,True,1
+256,Hope Springs,Mystery,True,1,has_genre,13,True,1
+257,Reunion,Elia Kazan,True,2,directed_by,33,True,1
+258,The Verdict,Vicente Aranda,True,18,directed_by,9,True,3
+259,The Clowns,Leopoldo Trieste,True,2,starred_actors,30,True,1
+260,Children of Heaven,Persian,True,10,in_language,7,True,1
+261,Shrek,Cameron Crowe,True,16,written_by,25,True,2
+262,India Song,1969,True,56,release_year,17,True,0
+263,Happy Endings,Drama,True,1,has_genre,8,True,1
+264,The Pursuit of Happyness,Barry Sonnenfeld,True,3,directed_by,19,True,1
+265,Once Upon a Time in China,John Fusco,True,1,written_by,14,True,1
+266,Moving Out,Drama,True,2,has_genre,9,True,2
+267,Buying the Cow,1993,True,1,release_year,19,True,1
+268,16 Blocks,Gregory Peck,True,20,starred_actors,62,True,0
+269,Invaders from Mars,Fantasy,True,1,has_genre,8,True,1
+270,The Lord of the Rings,Frank Frazetta,True,13,written_by,33,True,4
+271,Watchers,2000,True,1,release_year,12,True,1
+272,Her Alibi,Mystery,True,1,has_genre,13,True,1
+273,Three Smart Girls Grow Up,Irving Pichel,True,1,directed_by,10,True,1
+274,Straight to Hell,Gary Oldman,True,1,starred_actors,34,True,1
+275,Some Kind of Hero,Michael Pressman,True,1,directed_by,23,True,1
+276,Minnie and Moskowitz,Hungarian,True,80,in_language,4,True,3
+277,The Cider House Rules,1991,True,1,release_year,26,True,1
+278,10,John Derek,True,9,directed_by,16,True,2
+279,The Pentagon Papers,German,True,28,in_language,12,True,2
+280,Moulin Rouge,1948,True,15,release_year,23,True,3
+281,Tyson,French,True,14,in_language,6,True,1
+282,City for Conquest,Joan Crawford,False,0,starred_actors,40,False,0
+283,Iron Man 2,David Berenbaum,True,12,written_by,15,True,1
+284,Paradise Canyon,1989,True,2,release_year,18,True,1
+285,La Vie en Rose,French,True,1,in_language,6,True,1
+286,Shamus,2011,True,3,release_year,19,True,2
+287,Crossfire,Elia Kazan,True,5,directed_by,20,True,1
+288,That Uncertain Feeling,Peter Straub,True,2,written_by,34,True,1
+289,The Match Factory Girl,Sport,True,1,has_genre,12,True,1
+290,The City of Lost Children,John Milius,True,12,directed_by,14,True,2
+291,Inferno,Drama,True,1,has_genre,12,True,1
+292,The Field,Irish,True,10,in_language,4,True,1
+293,The Incredible Petrified World,French,True,10,in_language,1,True,1
+294,Looking for Comedy in the Muslim World,Monica Mcgowan Johnson,True,4,written_by,63,True,1
+295,28 Weeks Later,Juan Carlos Fresnadillo,True,1,written_by,41,True,1
+296,La Bête Humaine,George Sessions Perry,True,1,written_by,25,True,1
+297,FM,1984,True,1,release_year,4,True,1
+298,The Best Man Holiday,Romance,True,1,has_genre,8,True,1
+299,The Entertainer,Valerie Perrine,True,8,starred_actors,37,True,4
+300,They,Eric Red,True,57,written_by,36,True,0
+301,Inspector Clouseau,Comedy,True,1,has_genre,13,True,1
+302,The Godless Girl,Drama,True,1,has_genre,13,True,1
+303,The Boy with Green Hair,1968,True,3,release_year,32,True,2
+304,Three on a Match,Romance,True,1,has_genre,12,True,1
+305,Wonderland,Romance,True,1,has_genre,11,True,1
+306,Wizards,Barry White,False,0,starred_actors,30,False,0
+307,Double Suicide,Koji Nakada,True,1,written_by,42,True,1
+308,A Smile Like Yours,Romance,True,1,has_genre,12,True,1
+309,The Pest,Spike Lee,True,8,directed_by,33,True,2
+310,Second Skin,Alejandro González Iñárritu,True,11,directed_by,47,True,3
+311,Oculus,Courtney Bell,True,4,written_by,64,False,0
+312,One Tough Cop,E. Max Frye,False,0,written_by,18,False,0
+313,The Molly Maguires,Herschel Bernardi,True,10,directed_by,13,True,2
+314,Serena,Anders Thomas Jensen,True,4,written_by,39,True,2
+315,The Terrorist,Manish Acharya,True,26,written_by,43,True,0
+316,Date Night,Drama,True,1,has_genre,13,True,1
+317,Ten,Val Kilmer,True,1,starred_actors,55,True,1
+318,I'm Not Rappaport,Mystery,True,1,has_genre,15,True,1
+319,The Darkest Hour,Chris Gorak,True,2,written_by,53,True,1
+320,Love Is Eternal While It Lasts,1981,True,32,release_year,21,True,0
+321,At the Circus,Morrie Ryskind,True,15,written_by,23,True,3
+322,The Big Combo,Randolph Scott,True,4,starred_actors,75,True,1
+323,Toomorrow,Emlyn Williams,True,2,starred_actors,61,True,1
+324,After the Sunset,Greek,False,0,in_language,6,False,0
+325,Newsfront,Mick Molloy,False,0,written_by,29,False,0
+326,This Boy's Life,Romance,True,1,has_genre,11,True,1
+327,Pursued,Jerry Wald,True,1,written_by,25,True,1
+328,Uncovered,English,True,4,in_language,7,True,1
+329,Mercy,Frank Langella,True,1,starred_actors,42,True,1
+330,Blue Chips,1986,True,1,release_year,30,True,1
+331,Wilder Napalm,Craig Brewer,True,4,written_by,27,True,1
+332,Total Recall,Phillip Noyce,True,19,directed_by,10,True,3
+333,The Gods Must Be Crazy,Comedy,True,2,has_genre,16,True,2
+334,Walk of Shame,Adam Sandler,True,31,written_by,31,True,0
+335,Donovan's Brain,Philip Barry,True,40,written_by,21,True,10
+336,A Haunted House 2,Paris Barclay,True,2,written_by,27,True,3
+337,Gotcha!,David Fincher,True,1,directed_by,17,True,1
+338,The Five Heartbeats,Robert Townsend,True,2,directed_by,40,True,1
+339,Love Comes Softly,2005,True,30,release_year,27,True,0
+340,Hobo with a Shotgun,Simon Barrett,True,40,starred_actors,42,True,0
+341,The Flowers of War,Robert Louis Stevenson,True,11,written_by,15,True,2
+342,Regular Lovers,Drama,True,1,has_genre,10,True,1
+343,Dare,2002,True,19,release_year,13,True,0
+344,Strait-Jacket,Edward Barry Roberts,True,42,written_by,26,True,0
+345,The Social Network,Drama,True,1,has_genre,10,True,1
+346,Saw VI,William Kaufman,True,2,directed_by,12,True,1
+347,"Amanece, que no es poco",José Luis Cuerda,True,1,directed_by,14,True,1
+348,Leviathan,2011,True,4,release_year,27,True,4
+349,Rosa Luxemburg,Rudy Wurlitzer,True,1,written_by,42,True,1
+350,"Guns, Girls and Gambling",Stephen King,True,11,written_by,26,True,2
+351,Boyz n the Hood,Gordon Parks,True,4,directed_by,16,True,1
+352,Like Someone in Love,Val Kilmer,True,1,starred_actors,31,True,1
+353,Bottle Rocket,1998,True,4,release_year,22,True,2
+354,The Gaucho,Russell Crowe,True,4,starred_actors,57,True,2
+355,Midnight in Paris,Estelle Parsons,True,1,starred_actors,43,True,1
+356,Black Dragons,Mystery,True,1,has_genre,9,True,1
+357,The Third Wave,Jakob Eklund,True,1,starred_actors,55,True,1
+358,Hearts Divided,Japanese,True,22,in_language,2,True,1
+359,Alien Autopsy,Yves Simoneau,True,1,directed_by,36,True,1
+360,The Girl Who Kicked the Hornets' Nest,David Fincher,True,4,directed_by,14,True,1
+361,The Butcher's Wife,Mitchell Lichtenstein,True,7,written_by,39,True,1
+362,"I, Frankenstein",Bernie Goldmann,True,20,directed_by,9,True,2
+363,Birdy,1989,True,44,release_year,30,True,0
+364,The Terminal Man,1991,True,1,release_year,16,True,1
+365,Good Will Hunting,Matt Damon,True,1,starred_actors,49,True,1
+366,The Lost Missile,Sport,True,1,has_genre,12,True,1
+367,Spider-Man 2,Curtis Hanson,True,8,directed_by,10,True,2
+368,The Shepherd of the Hills,Romance,True,1,has_genre,15,True,1
+369,The Nanny Diaries,Éva Gárdos,True,45,written_by,17,True,0
+370,The Four Feathers,French,True,30,in_language,3,True,2
+371,One Night Stand,1991,True,1,release_year,28,True,1
+372,And Now a Word from Our Sponsor,Romance,True,1,has_genre,15,True,1
+373,Rendezvous,1948,True,15,release_year,18,True,5
+374,The Great Ziegfeld,Morrie Ryskind,True,11,written_by,21,True,1
+375,Psycho III,Rocky Morton,True,8,directed_by,39,True,2
+376,The Bellboy,Drama,True,1,has_genre,13,True,1
+377,Hell Is for Heroes,Short,True,1,has_genre,14,True,1
+378,Tangled,Sarah Dessen,True,24,written_by,22,True,3
+379,Baby Take a Bow,Drama,True,2,has_genre,15,True,2
+380,Room for One More,1965,True,9,release_year,17,True,4
+381,Experiment Perilous,Drama,True,1,has_genre,11,True,1
+382,Felidae,Martin Provost,False,0,directed_by,44,False,0
+383,Salsa,Guy Moshe,True,6,directed_by,42,True,1
+384,Jar City,Icelandic,True,1,in_language,8,True,1
+385,Fitzcarraldo,Bruce Chatwin,True,1,written_by,11,True,1
+386,Firestorm,Robert Rodat,False,0,written_by,16,False,0
+387,Mephisto,1991,True,10,release_year,8,True,4
+388,Desperate Journey,German,True,22,in_language,6,True,1
+389,Steel Magnolias,1991,True,26,release_year,29,True,0
+390,Shadows and Fog,1984,True,3,release_year,19,True,1
+391,True Lies,1986,True,18,release_year,29,True,10
+392,The Bride Wore Red,1953,True,2,release_year,22,True,1
+393,A Foreign Affair,1953,True,4,release_year,19,True,1
+394,Arthur and the Invisibles,Italian,True,3,in_language,13,True,1
+395,Rembrandt,Romance,True,1,has_genre,11,True,1
+396,Les Mistons,Ray Bradbury,True,1,written_by,15,True,1
+397,The Long Voyage Home,John Twist,True,6,written_by,22,True,2
+398,Doctor Zhivago,Glenn Close,True,21,starred_actors,28,True,6
+399,Kill!,Kihachi Okamoto,True,1,written_by,49,True,1
+400,The Headless Woman,2004,True,23,release_year,10,True,8
+401,Postcards from the Edge,1991,True,1,release_year,35,True,1
+402,Shark in Venice,Danny Lerner,True,1,written_by,65,True,1
+403,The Detonator,John Badham,True,11,directed_by,25,True,2
+404,Viva Maria!,1976,True,8,release_year,28,True,5
+405,Dear Brigitte,1952,True,18,release_year,35,True,0
+406,"20,000 Years in Sing Sing",Italian,True,26,in_language,3,True,1
+407,The Possession of Joel Delaney,Romance,True,1,has_genre,13,True,1
+408,Drum,Italian,True,39,in_language,4,True,2
+409,The Song of Sparrows,Persian,True,4,in_language,6,True,1
+410,Innocence,Paul Cox,True,5,written_by,35,True,5
+411,Manhunter,1990,True,1,release_year,26,True,1
+412,The Road,Drama,True,1,has_genre,11,True,1
+413,Confidentially Yours,French,True,3,in_language,5,True,1
+414,Without Love,1942,True,15,release_year,21,True,3
+415,Open Season,2014,True,15,release_year,23,True,10
+416,Enthiran,Drama,True,1,has_genre,9,True,1
+417,Passage to Marseille,English,True,26,in_language,4,True,1
+418,Blade Runner,Japanese,False,0,in_language,1,False,0
+419,Charley Varrick,German,True,22,in_language,6,True,2
+420,Lightspeed,1986,True,8,release_year,9,True,2
+421,Fail Safe,Mystery,True,1,has_genre,14,True,1
+422,When Will I Be Loved,José Torres,True,5,written_by,33,True,3
+423,Two Bits,John Grisham,True,5,written_by,27,True,2
+424,Rashomon,Russian,True,2,in_language,5,True,1
+425,West of Zanzibar,1920,True,2,release_year,22,True,1
+426,The New Land,Swedish,True,8,in_language,12,True,1
+427,The Ninth Configuration,Horror,True,1,has_genre,11,True,1
+428,Where's Poppa?,Mystery,True,1,has_genre,14,True,1
+429,The Awful Truth,Drama,True,2,has_genre,10,True,2
+430,Tin Cup,Wesley Snipes,True,2,starred_actors,47,True,1
+431,Let's Make Love,1953,True,2,release_year,26,True,2
+432,Cold Prey 2,Horror,True,1,has_genre,12,True,1
+433,Welcome to Sarajevo,English,True,31,in_language,5,True,2
+434,Fire Over England,French,True,19,in_language,5,True,2
+435,The Convent,Catherine Deneuve,True,1,starred_actors,62,True,1
+436,The Reef,Diana Glenn,True,2,starred_actors,76,True,1
+437,There's Always Tomorrow,Leigh Jason,True,4,directed_by,17,True,1
+438,Route 666,Horror,True,3,has_genre,9,True,3
+439,Trial by Jury,1991,True,22,release_year,20,True,10
+440,Waiting for Guffman,French,True,23,in_language,6,True,1
+441,Simon Birch,Action,True,2,has_genre,11,True,2
+442,Reunion,1987,True,22,release_year,18,True,0
+443,Death in Love,Drama,True,1,has_genre,14,True,1
+444,Stanley Kubrick's Boxes,Ewan McGregor,True,4,starred_actors,63,True,2
+445,The Tenant,Bruno Nuytten,True,6,directed_by,14,True,1
+446,Every Girl Should Be Married,Swedish,True,17,in_language,3,True,1
+447,Opportunity Knocks,Penelope Spheeris,True,50,directed_by,34,True,0
+448,A Touch of Class,Comedy,True,1,has_genre,11,True,1
+449,Let's Go to Prison,Comedy,True,1,has_genre,14,True,1
+450,Tootsie,Elia Kazan,True,2,directed_by,11,True,1
+451,Raiders of the Lost Ark,Mystery,True,1,has_genre,9,True,1
+452,At Sword's Point,Phyllis Calvert,True,23,starred_actors,49,True,0
+453,Wimbledon,Deric Longden,True,44,written_by,22,True,0
+454,The Amazing Spider-Man 2,2009,True,4,release_year,15,True,2
+455,Blaze,Romance,True,1,has_genre,14,True,1
+456,Hearts Divided,1948,True,1,release_year,18,True,1
+457,The Day the Earth Caught Fire,Drama,True,1,has_genre,10,True,1
+458,Possession,Renée Zellweger,True,5,directed_by,12,False,0
+459,Assault on a Queen,1945,True,1,release_year,21,True,1
+460,The Wolf of Wall Street,Irish,True,42,in_language,1,True,1
+461,Central Station,1996,True,1,release_year,20,True,1
+462,Caro diario,Latin,True,3,in_language,6,True,1
+463,The World Is Not Enough,Mystery,True,4,has_genre,6,True,2
+464,The Beaver,Michael Goetz,False,0,directed_by,17,False,0
+465,Goodbye Charlie,1985,True,4,release_year,29,True,3
+466,Inland Empire,Naomi Watts,True,1,starred_actors,26,True,1
+467,Rocky V,Chinese,True,21,in_language,3,True,1
+468,Whatever Works,Mystery,True,1,has_genre,14,True,1
+469,Outlaw Blues,Michael Almereyda,True,3,written_by,47,True,2
+470,Forget Paris,1992,True,19,release_year,25,True,0
+471,The Exorcist,Blake Edwards,True,16,directed_by,12,True,2
+472,Guy and Madeline on a Park Bench,Drama,True,2,has_genre,6,True,2
+473,The Return of the Musketeers,Gene Kelly,True,8,written_by,31,True,6
+474,Mike's Murder,Drama,True,1,has_genre,12,True,1
+475,A High Wind in Jamaica,Mystery,True,1,has_genre,13,True,1
+476,The Brothers McMullen,Edward Burns,True,1,written_by,12,True,1
+477,The Spiral Staircase,Barry Sullivan,True,6,starred_actors,33,True,1
+478,Dirty Pretty Things,Romance,True,1,has_genre,12,True,1
+479,Wild Wild West,Roland Emmerich,True,3,directed_by,11,True,1
+480,Mr. Bean's Holiday,English,True,8,in_language,9,True,1
+481,The King Is Alive,2002,True,56,release_year,9,True,8
+482,Psych-Out,James Caan,True,2,starred_actors,71,True,1
+483,The League of Gentlemen,1948,True,2,release_year,21,True,1
+484,Little Man Tate,Robert Zemeckis,True,2,directed_by,20,True,1
+485,Deterrence,Gary Oldman,True,24,written_by,26,False,0
+486,Fat City,Gregory Peck,True,2,directed_by,7,True,1
+487,The Curse of the Cat People,Romance,True,3,has_genre,10,True,1
+488,China Seas,John Meehan,False,0,written_by,26,False,0
+489,Cassandra's Dream,1994,True,1,release_year,28,True,1
+490,Force of Evil,Drama,True,1,has_genre,8,True,1
+491,Murder by Death,1979,True,33,release_year,29,True,0
+492,The Deadly Trackers,Romance,True,1,has_genre,9,True,1
+493,Mitchell,Dominique Dunne,True,7,starred_actors,57,True,5
+494,Belle Starr,John Ford,True,1,directed_by,16,True,1
+495,Diggers,Comedy,True,3,has_genre,2,True,1
+496,Breathing Fire,Paul Thomas Anderson,True,56,directed_by,28,True,0
+497,Love Field,John Updike,True,29,written_by,13,True,5
+498,Kill the Irishman,Dolph Lundgren,True,2,starred_actors,25,True,1
+499,Up in Smoke,1990,True,26,release_year,22,True,0

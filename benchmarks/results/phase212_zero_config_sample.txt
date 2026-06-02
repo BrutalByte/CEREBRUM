@@ -1,0 +1,299 @@
+
+=== CEREBRUM MetaQA Benchmark ===
+
+Loading knowledge graph...
+  43,217 entities, 124,616 edges (0.3s)
+Computing/loading community structure...
+  15422 communities
+
+[zero-config] ParameterInitializer (hub_homogeneous × random) auto-derived params:
+  trb_factor     = 21.4831
+  gamma          = 0.5
+  beta           = 2.0
+  r2_boost       = 8.1848
+  fhrb_factor    = 3.2562
+  idf_weight     = 0.0579
+  vote_weight    = 0.7584
+  branch_bonus   = 0.48
+  beam_width     = 12
+
+  r3->r2 template map: {'directed_by': 'written_by', 'written_by': 'written_by', 'starred_actors': 'written_by', 'release_year': 'has_genre', 'has_genre': 'has_genre', 'in_language': 'written_by'}
+
+Spawning 8 worker processes...
+  Workers ready.
+
+--- 3-hop evaluation ---
+  1,000 (sample) test questions
+  Running traversal (beam_width=12, max_hop=3)...
+Process SpawnPoolWorker-7:
+Traceback (most recent call last):
+  File "C:\Python314\Lib\multiprocessing\process.py", line 320, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "C:\Python314\Lib\multiprocessing\process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\multiprocessing\pool.py", line 109, in worker
+    initializer(*initargs)
+    ~~~~~~~~~~~^^^^^^^^^^^
+  File "E:\Development\Cerebrum\benchmarks\metaqa_eval.py", line 375, in _worker_init
+    _W_GRAPH.build(
+    ~~~~~~~~~~~~~~^
+        cache_dir=graph_args["cache_dir"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+        community_engine=graph_args["community_engine"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\Development\Cerebrum\core\cerebrum.py", line 896, in build
+    distances = pickle.load(_f)
+MemoryError
+Process SpawnPoolWorker-2:
+Traceback (most recent call last):
+  File "C:\Python314\Lib\multiprocessing\process.py", line 320, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "C:\Python314\Lib\multiprocessing\process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\multiprocessing\pool.py", line 109, in worker
+    initializer(*initargs)
+    ~~~~~~~~~~~^^^^^^^^^^^
+  File "E:\Development\Cerebrum\benchmarks\metaqa_eval.py", line 375, in _worker_init
+    _W_GRAPH.build(
+    ~~~~~~~~~~~~~~^
+        cache_dir=graph_args["cache_dir"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+        community_engine=graph_args["community_engine"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\Development\Cerebrum\core\cerebrum.py", line 896, in build
+    distances = pickle.load(_f)
+MemoryError
+Process SpawnPoolWorker-4:
+Traceback (most recent call last):
+  File "C:\Python314\Lib\multiprocessing\process.py", line 320, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "C:\Python314\Lib\multiprocessing\process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\multiprocessing\pool.py", line 109, in worker
+    initializer(*initargs)
+    ~~~~~~~~~~~^^^^^^^^^^^
+  File "E:\Development\Cerebrum\benchmarks\metaqa_eval.py", line 375, in _worker_init
+    _W_GRAPH.build(
+    ~~~~~~~~~~~~~~^
+        cache_dir=graph_args["cache_dir"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+        community_engine=graph_args["community_engine"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\Development\Cerebrum\core\cerebrum.py", line 896, in build
+    distances = pickle.load(_f)
+MemoryError
+Process SpawnPoolWorker-8:
+Traceback (most recent call last):
+  File "C:\Python314\Lib\multiprocessing\process.py", line 320, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "C:\Python314\Lib\multiprocessing\process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\multiprocessing\pool.py", line 109, in worker
+    initializer(*initargs)
+    ~~~~~~~~~~~^^^^^^^^^^^
+  File "E:\Development\Cerebrum\benchmarks\metaqa_eval.py", line 375, in _worker_init
+    _W_GRAPH.build(
+    ~~~~~~~~~~~~~~^
+        cache_dir=graph_args["cache_dir"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+        community_engine=graph_args["community_engine"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\Development\Cerebrum\core\cerebrum.py", line 896, in build
+    distances = pickle.load(_f)
+MemoryError
+Process SpawnPoolWorker-5:
+Traceback (most recent call last):
+  File "C:\Python314\Lib\multiprocessing\process.py", line 320, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "C:\Python314\Lib\multiprocessing\process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\multiprocessing\pool.py", line 109, in worker
+    initializer(*initargs)
+    ~~~~~~~~~~~^^^^^^^^^^^
+  File "E:\Development\Cerebrum\benchmarks\metaqa_eval.py", line 375, in _worker_init
+    _W_GRAPH.build(
+    ~~~~~~~~~~~~~~^
+        cache_dir=graph_args["cache_dir"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+        community_engine=graph_args["community_engine"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\Development\Cerebrum\core\cerebrum.py", line 896, in build
+    distances = pickle.load(_f)
+MemoryError
+Process SpawnPoolWorker-11:
+Traceback (most recent call last):
+  File "C:\Python314\Lib\multiprocessing\process.py", line 320, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "C:\Python314\Lib\multiprocessing\process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\multiprocessing\pool.py", line 109, in worker
+    initializer(*initargs)
+    ~~~~~~~~~~~^^^^^^^^^^^
+  File "E:\Development\Cerebrum\benchmarks\metaqa_eval.py", line 375, in _worker_init
+    _W_GRAPH.build(
+    ~~~~~~~~~~~~~~^
+        cache_dir=graph_args["cache_dir"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+        community_engine=graph_args["community_engine"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\Development\Cerebrum\core\cerebrum.py", line 896, in build
+    distances = pickle.load(_f)
+MemoryError
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    from multiprocessing.spawn import spawn_main; spawn_main(parent_pid=178660, pipe_handle=1004)
+                                                  ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\multiprocessing\spawn.py", line 122, in spawn_main
+    exitcode = _main(fd, parent_sentinel)
+  File "C:\Python314\Lib\multiprocessing\spawn.py", line 131, in _main
+    prepare(preparation_data)
+    ~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\multiprocessing\spawn.py", line 246, in prepare
+    _fixup_main_from_path(data['init_main_from_path'])
+    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\multiprocessing\spawn.py", line 297, in _fixup_main_from_path
+    main_content = runpy.run_path(main_path,
+                                  run_name="__mp_main__")
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "E:\Development\Cerebrum\benchmarks\metaqa_eval.py", line 76, in <module>
+    from core.cerebrum import CerebrumGraph
+  File "E:\Development\Cerebrum\core\__init__.py", line 2, in <module>
+    from core.community_engine import dscf_communities, leiden_communities, lpa_communities, hybrid_communities, tsc_communities, tsc_quality_metrics
+  File "E:\Development\Cerebrum\core\community_engine.py", line 13, in <module>
+    from core.hardware import HAS_RAPIDS, to_gpu_graph, get_xp
+  File "E:\Development\Cerebrum\core\hardware.py", line 33, in <module>
+    import torch
+  File "C:\Python314\Lib\site-packages\torch\__init__.py", line 285, in <module>
+    _load_dll_libraries()
+    ~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Python314\Lib\site-packages\torch\__init__.py", line 268, in _load_dll_libraries
+    raise err
+OSError: [WinError 1455] The paging file is too small for this operation to complete. Error loading "C:\Python314\Lib\site-packages\torch\lib\cufft64_11.dll" or one of its dependencies.
+Process SpawnPoolWorker-10:
+Traceback (most recent call last):
+  File "C:\Python314\Lib\multiprocessing\process.py", line 320, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "C:\Python314\Lib\multiprocessing\process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\multiprocessing\pool.py", line 109, in worker
+    initializer(*initargs)
+    ~~~~~~~~~~~^^^^^^^^^^^
+  File "E:\Development\Cerebrum\benchmarks\metaqa_eval.py", line 375, in _worker_init
+    _W_GRAPH.build(
+    ~~~~~~~~~~~~~~^
+        cache_dir=graph_args["cache_dir"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+        community_engine=graph_args["community_engine"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\Development\Cerebrum\core\cerebrum.py", line 896, in build
+    distances = pickle.load(_f)
+MemoryError
+Process SpawnPoolWorker-9:
+Traceback (most recent call last):
+  File "C:\Python314\Lib\multiprocessing\process.py", line 320, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "C:\Python314\Lib\multiprocessing\process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\multiprocessing\pool.py", line 109, in worker
+    initializer(*initargs)
+    ~~~~~~~~~~~^^^^^^^^^^^
+  File "E:\Development\Cerebrum\benchmarks\metaqa_eval.py", line 375, in _worker_init
+    _W_GRAPH.build(
+    ~~~~~~~~~~~~~~^
+        cache_dir=graph_args["cache_dir"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+        community_engine=graph_args["community_engine"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\Development\Cerebrum\core\cerebrum.py", line 896, in build
+    distances = pickle.load(_f)
+MemoryError
+Process SpawnPoolWorker-12:
+Traceback (most recent call last):
+  File "C:\Python314\Lib\multiprocessing\process.py", line 320, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "C:\Python314\Lib\multiprocessing\process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\multiprocessing\pool.py", line 109, in worker
+    initializer(*initargs)
+    ~~~~~~~~~~~^^^^^^^^^^^
+  File "E:\Development\Cerebrum\benchmarks\metaqa_eval.py", line 375, in _worker_init
+    _W_GRAPH.build(
+    ~~~~~~~~~~~~~~^
+        cache_dir=graph_args["cache_dir"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+        community_engine=graph_args["community_engine"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\Development\Cerebrum\core\cerebrum.py", line 896, in build
+    distances = pickle.load(_f)
+MemoryError
+Process SpawnPoolWorker-13:
+Traceback (most recent call last):
+  File "C:\Python314\Lib\multiprocessing\process.py", line 320, in _bootstrap
+    self.run()
+    ~~~~~~~~^^
+  File "C:\Python314\Lib\multiprocessing\process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\multiprocessing\pool.py", line 109, in worker
+    initializer(*initargs)
+    ~~~~~~~~~~~^^^^^^^^^^^
+  File "E:\Development\Cerebrum\benchmarks\metaqa_eval.py", line 375, in _worker_init
+    _W_GRAPH.build(
+    ~~~~~~~~~~~~~~^
+        cache_dir=graph_args["cache_dir"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+        community_engine=graph_args["community_engine"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "E:\Development\Cerebrum\core\cerebrum.py", line 896, in build
+    distances = pickle.load(_f)
+MemoryError

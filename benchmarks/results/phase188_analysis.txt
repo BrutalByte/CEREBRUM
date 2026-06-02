@@ -1,0 +1,374 @@
+============================================================
+  MetaQA 3-hop Diagnostic Analysis
+============================================================
+
+  Questions analyzed : 14,274
+  H@1               : 51.4%  (7,331 correct)
+  H@10              : 90.1%  (12,868 in top-10)
+  Total misses (H@1): 6,943
+
+============================================================
+  MISS BREAKDOWN
+============================================================
+
+  Category                   N  % total  % misses  Description
+  ---------------------- -----  -------  --------  -----------------------------------
+  beam_coverage            675     4.7%      9.7%  correct answer never in top-100 beam
+  vote_convergence        6118    42.9%     88.1%  in beam, ranked below top-1
+  filter_miss              150     1.1%      2.2%  in beam, removed by type filter
+  H@1 correct             7331    51.4%
+
+============================================================
+  BEAM COVERAGE MISSES  (N=675, 4.7% of total)
+============================================================
+
+  The correct answer never appears in the top-100 candidate pool.
+  Traversal either missed the hop chain or the stitched score was too
+  low to survive the global top-100 cutoff window.
+
+  ── By detected relation ──
+    written_by                    186 misses  (6.9% of written_by questions)
+    release_year                  163 misses  (5.3% of release_year questions)
+    directed_by                   134 misses  (6.3% of directed_by questions)
+    in_language                    94 misses  (5.2% of in_language questions)
+    starred_actors                 85 misses  (5.5% of starred_actors questions)
+    has_genre                      13 misses  (0.4% of has_genre questions)
+
+  ── Top question templates (top 15) ──
+     19x  the movies written by the screenwriter of [ENTITY] starred who
+     18x  the films written by the writer of [ENTITY] starred who
+     15x  who is listed as screenwriter of the movies starred by [ENTITY] actors
+     15x  who is listed as screenwriter of the films directed by the [ENTITY] director
+     14x  the films directed by the director of [ENTITY] starred who
+     14x  the movies directed by the director of [ENTITY] starred who
+     13x  when did the films directed by the [ENTITY] director release
+     13x  who is listed as director of the movies starred by [ENTITY] actors
+     13x  the films that share actors with the film [ENTITY] are written by who
+     12x  who is listed as director of the films starred by [ENTITY] actors
+     12x  when did the films release whose directors also directed [ENTITY]
+     12x  the movies written by the screenwriter of [ENTITY] were directed by who
+     11x  who acted in the films directed by the director of [ENTITY]
+     10x  the movies that share directors with the movie [ENTITY] are written by who
+     10x  when did the movies release whose writers also wrote [ENTITY]
+
+  ── Seeds with 2+ beam misses ──
+    2x  'Pretty Maids All in a Row'
+    2x  'Passchendaele'
+    2x  'Street Scene'
+    2x  'Tales from the Crypt'
+    2x  'Everlasting Moments'
+    2x  'Pet Sematary'
+    2x  'Thor'
+    2x  'Fantastic Voyage'
+    2x  'Million Dollar Arm'
+    2x  'The Normal Heart'
+
+  ── SUGGESTED FIXES ──
+
+    Priority: HIGH — every beam miss is an unrecoverable loss.
+
+    1. Increase expansion_k (default 20 → 25-30):
+       More hop-1 entities enter stage-2, giving the GlobalBeamBarrier
+       more candidates to guarantee. Low risk, ~15% memory increase.
+       Code: reasoning/expanded_traversal.py → _h1se_expand()
+       CLI:  --expansion-k 25
+
+    2. Widen stage-2 beam for guaranteed branches:
+       Top-10 hop-1 branches currently share the same beam=30 as the rest.
+       Give each guaranteed branch beam=50 while others keep 30.
+       Targets the in_topk_stage2_fail subcase.
+       Code: reasoning/expanded_traversal.py → HopExpandedTraversal.query()
+
+    3. Raise _raw_top_k from 100 → 150 (collection window):
+       Previously caused H@10 regression via filter interaction.
+       Re-test ONLY on beam_coverage cases: if they now rank 101-150,
+       the fix is valid and filter interaction was a separate bug.
+       Code: benchmarks/metaqa_eval.py → _raw_top_k
+
+    4. Score floor for guaranteed branches:
+       If hop-1 score is very low (~0.001), sqrt(parent*child) is still
+       tiny. Add a minimum stitched score for barrier-guaranteed paths
+       so they can't fall below the top-100 cutoff.
+       Code: reasoning/expanded_traversal.py → _stitch()
+
+============================================================
+  VOTE CONVERGENCE MISSES  (N=6118, 42.9% of total)
+============================================================
+
+  Correct answer is in the top-100 pool but loses to a wrong answer
+  during scoring and re-ranking.
+
+  ── Final rank of correct answer ──
+    not-in-top10    581  ██░░░░░░░░░░░░░░░░░░
+    rank=2         2085  ███████░░░░░░░░░░░░░
+    rank=3         1121  ████░░░░░░░░░░░░░░░░
+    rank=4          708  ██░░░░░░░░░░░░░░░░░░
+    rank=5          565  ██░░░░░░░░░░░░░░░░░░
+    rank=6          345  █░░░░░░░░░░░░░░░░░░░
+    rank=7          238  █░░░░░░░░░░░░░░░░░░░
+    rank=8          186  █░░░░░░░░░░░░░░░░░░░
+    rank=9          156  █░░░░░░░░░░░░░░░░░░░
+    rank=10         133  ░░░░░░░░░░░░░░░░░░░░
+
+    Low-hanging fruit (rank=2, one nudge away): 2085 questions
+
+  ── Wrong answer type breakdown ──
+    2268  (37.1%)  person/other beats person/other
+    1016  (16.6%)  person/other beats year
+     961  (15.7%)  year beats year
+     704  (11.5%)  genre beats genre
+     602  ( 9.8%)  year beats person/other
+     228  ( 3.7%)  genre beats language
+     200  ( 3.3%)  language beats person/other
+      80  ( 1.3%)  person/other beats genre
+      32  ( 0.5%)  person/other beats language
+      10  ( 0.2%)  year beats language
+       8  ( 0.1%)  language beats language
+       5  ( 0.1%)  language beats genre
+       4  ( 0.1%)  year beats genre
+
+  ── Score gap  (top1_score − correct_answer_score) ──
+    Mean gap    : 1.13639
+    Median gap  : 0.71628
+    Max gap     : 3.87708
+    Mean correct/top1 ratio : 0.382
+    ≥75% of top1 (near-tie) :  568  (9.3%)
+    25-75% of top1          : 3611  (59.0%)
+    <25% of top1 (far miss) : 1939  (31.7%)
+
+    Interpretation:
+    - Near-ties (568) respond well to small parameter tuning
+    - Far misses (1939) need structural fixes (new penalty type or scoring term)
+
+  ── Most frequent wrong top-1 answers (top 15) ──
+    954x  'bd-r'                              [person/other]
+    382x  'Drama'                             [genre]
+    310x  'Comedy'                            [genre]
+    167x  'r'                                 [person/other]
+     88x  '2011'                              [year]
+     85x  '2008'                              [year]
+     84x  'French'                            [language]
+     84x  '2009'                              [year]
+     80x  '1998'                              [year]
+     77x  '2007'                              [year]
+     71x  '2005'                              [year]
+     68x  '2002'                              [year]
+     67x  '2013'                              [year]
+     65x  '2006'                              [year]
+     60x  '2012'                              [year]
+
+  ── Genre/language entities winning over correct answer (1145 cases) ──
+    382x  'Drama'  [genre]
+    310x  'Comedy'  [genre]
+     84x  'French'  [language]
+     53x  'Action'  [genre]
+     38x  'Crime'  [genre]
+     34x  'Thriller'  [genre]
+     32x  'English'  [language]
+     27x  'Horror'  [genre]
+     27x  'Japanese'  [language]
+     25x  'Italian'  [language]
+
+    → Check if these are in _pure_genre in metaqa_eval.py.
+      If not, add them to the penalty set or _FORMAT_TAG_BLOCKLIST.
+
+  ── Vote misses by detected relation ──
+    release_year                 1977 misses  (64.5% of release_year questions)
+    written_by                   1285 misses  (47.5% of written_by questions)
+    directed_by                  1062 misses  (50.3% of directed_by questions)
+    has_genre                     793 misses  (26.2% of has_genre questions)
+    starred_actors                723 misses  (47.0% of starred_actors questions)
+    in_language                   278 misses  (15.2% of in_language questions)
+
+  ── Top failing question templates (top 15) ──
+     96x  the movies that share directors with the movie [ENTITY] were released in which years
+     95x  which person wrote the films acted by the actors in [ENTITY]
+     93x  what were the release dates of films directed by the director of [ENTITY]
+     92x  when did the movies directed by the [ENTITY] director release
+     90x  what were the release years of the movies that share directors with the movie [ENTITY]
+     85x  what were the release years of the films that share directors with the film [ENTITY]
+     82x  who are the writers that the actors in their films also appear in the film [ENTITY]
+     81x  the films that share directors with the film [ENTITY] were released in which years
+     80x  when did the movies release whose directors also directed [ENTITY]
+     79x  when did the films directed by the [ENTITY] director release
+     79x  who are the screenwriters that the actors in their movies also appear in the movie [ENTITY]
+     78x  the movies that share writers with the movie [ENTITY] were released in which years
+     77x  when did the films release whose directors also directed [ENTITY]
+     77x  what were the release dates of movies written by the writer of [ENTITY]
+     77x  the movies that share actors with the movie [ENTITY] are written by who
+
+  ── SUGGESTED FIXES ──
+
+    1. EXTEND CROSS-TYPE PENALTY  (~8 potential H@1 gains)
+       200 genre/language entities are beating the correct answer.
+       Check the list above: any entity NOT already in _pure_genre should
+       be added, OR add it to _FORMAT_TAG_BLOCKLIST (applies the same 0.10x
+       penalty). These entities are definitionally not people or years, so
+       penalizing them for person/year relation queries is safe.
+       Code: benchmarks/metaqa_eval.py → _pure_genre, _FORMAT_TAG_BLOCKLIST
+    2. YEAR-vs-YEAR DISAMBIGUATION  (961 cases)
+       Both candidates are years; the wrong year wins by accumulating more
+       undirected KB paths (popular release years like 2011 appear in
+       thousands of movies). Attempted fixes:
+         ✗ Global IDF weight — regressed (penalizes correct popular years too)
+       Untried approaches:
+         → Release-year-specific IDF floor: apply idf_weight ONLY when
+           detected_rel == 'release_year' AND entity type is 'year'.
+           This is more targeted than the global IDF that regressed.
+         → Path-length tiebreaker: when scores are within 5%, prefer the
+           year with fewer total KB occurrences.
+         → Directed-path count: count only forward-direction traversals
+           (subject→release_year) instead of undirected paths.
+    3. WRONG-PERSON DISAMBIGUATION  (2268 cases)
+       Wrong person accumulates more multi-hop paths than the correct one.
+       Current state: r2_boost=3.0 is confirmed optimal via sweep.
+       Untried approaches:
+         → Relation-specific r2_boost: higher boost for written_by/directed_by
+           (currently a single global value).
+         → Path uniqueness penalty: entities reachable via many DIFFERENT
+           hop-2 relations are likely hub nodes, not specific answers.
+         → Anchor bonus: if seed→hop1 score is high, boost hop1-rooted paths.
+    4. NEAR-TIE TUNING  (2085 rank-2 + 568 near-tie score cases)
+       Correct answer is rank=2 or scores ≥75% of top-1. Small parameter
+       adjustments could flip these without disrupting H@1 hits.
+         → Run Optuna re-tune with a tighter search space:
+             vote_weight: [0.82, 0.88]  r2_boost: [2.5, 3.5]
+         → Test branch_bonus_weight (default 0.25, currently underexplored):
+             rewards entities that appear across multiple hop-1 branches.
+
+============================================================
+  FILTER MISSES  (N=150, 1.1% of total)
+============================================================
+
+  Correct answer was in the top-100 beam but was removed by the
+  answer-type filter (the TRB-detected relation's valid-answer set
+  did not include the correct answer).
+
+  ── By detected relation ──
+    written_by                     88  (3.3% of written_by questions)
+    directed_by                    62  (2.9% of directed_by questions)
+
+  ── n_filtered (candidates surviving type filter when miss occurred) ──
+    filtered to 3-5        : 4
+    filtered to >5         : 146
+
+  ── Sample filter miss questions ──
+    rel='written_by'  n_filtered=34  correct='Rachel McAdams'
+      Q: the films written by the writer of [ENTITY] starred who
+    rel='written_by'  n_filtered=25  correct='John Phillip Law'
+      Q: the movies written by the screenwriter of [ENTITY] starred who
+    rel='written_by'  n_filtered=22  correct='Ray Wise'
+      Q: the films written by the writer of [ENTITY] starred who
+    rel='directed_by'  n_filtered=32  correct='Iain Glen'
+      Q: the films directed by the director of [ENTITY] starred who
+    rel='directed_by'  n_filtered=23  correct='Matt Czuchry'
+      Q: the movies directed by the director of [ENTITY] starred who
+
+  ── SUGGESTED FIXES ──
+
+    1. INCREASE --min-filter-size (currently 1):
+       Only apply hard filter when ≥N valid-type answers exist.
+       If n_filtered=0 is common above, the filter is always cutting
+       everything — raising to 2-3 would force fallback to unfiltered.
+       0 of 150 filter misses had n_filtered=0.
+       CLI: --min-filter-size 3
+
+    2. CHECK TRB DETECTION ACCURACY:
+       If the wrong relation is detected, the filter uses the wrong answer set.
+       Run with --verbose to see which relation is detected per question and
+       compare against the question text manually.
+
+    3. REVIEW KB ANSWER SETS:
+       If a correct answer entity is reachable via multiple relations, it may
+       not be in the detected relation's answer set. Consider expanding the
+       answer set to include entities within 1 hop of the relation's objects.
+
+============================================================
+  RELATION-LEVEL PERFORMANCE
+============================================================
+
+  Relation                      N     H@1    H@10    Beam    Vote  Filter
+  ------------------------- -----  ------  ------  ------  ------  ------
+  release_year               3064   30.2%   85.0%   163( 5.3%)  1977(64.5%)       0
+  has_genre                  3028   73.4%   98.9%    13( 0.4%)   793(26.2%)       0
+  written_by                 2707   42.4%   83.8%   186( 6.9%)  1285(47.5%)      88
+  directed_by                2112   40.4%   88.5%   134( 6.3%)  1062(50.3%)      62
+  in_language                1824   79.6%   94.8%    94( 5.2%)   278(15.2%)       0
+  starred_actors             1539   47.5%   91.0%    85( 5.5%)   723(47.0%)       0
+
+============================================================
+  QUESTION TEMPLATE ANALYSIS
+============================================================
+
+   Miss%  Misses   Total  Template
+  ------  ------  ------  -------------------------------------------------------
+   94.1%      95     101  the films written by the writer of [ENTITY] starred who
+   93.7%      89      95  the movies written by the screenwriter of [ENTITY] starred who
+   92.1%      58      63  when did the films written by [ENTITY] writers release
+   87.9%      87      99  the movies that share writers with the movie [ENTITY] were released in which years
+   87.5%      70      80  when did the films release whose screenwriters also wrote [ENTITY]
+   87.4%      76      87  what were the release dates of films written by the screenwriter of [ENTITY]
+   86.8%      99     114  the movies that share directors with the movie [ENTITY] were released in which years
+   86.8%      79      91  what were the release dates of movies directed by the director of [ENTITY]
+   86.7%      78      90  what were the release dates of movies written by the writer of [ENTITY]
+   85.9%      73      85  when did the movies release whose writers also wrote [ENTITY]
+   85.6%      89     104  when did the films release whose directors also directed [ENTITY]
+   85.4%      70      82  what were the release years of the films that share writers with the film [ENTITY]
+   85.2%      92     108  the movies directed by the director of [ENTITY] starred who
+   84.8%      89     105  what were the release years of the films that share directors with the film [ENTITY]
+   84.4%      76      90  the films that share screenwriters with [ENTITY] were released in which years
+
+============================================================
+  SEED ENTITY HOTSPOTS
+============================================================
+
+  Seed entities appearing in 3+ misses (all miss categories):
+      5x  'Alex Cross'
+      4x  'Snitch'
+      4x  'The Man Who Laughs'
+      4x  'The Wave'
+      4x  "Sharky's Machine"
+      4x  'Kahaani'
+      4x  'Belle Starr'
+      4x  'Gremlins'
+      4x  'A Night to Remember'
+      4x  'C.O.G.'
+      4x  'Rat Race'
+      4x  'The King and I'
+      4x  'An American Carol'
+      4x  'In Country'
+      4x  'Salt'
+
+  Total hotspot seeds: 209
+
+  These entities have many outgoing KB edges, creating traversal noise.
+  SUGGESTED FIX:
+    → IDF-style seed-entity penalty: reduce scores for candidates
+      reachable from very high-degree seed entities.
+    → Anchor bonus: if seed→hop1 cosine score is high, boost that branch.
+
+============================================================
+  PRIORITY ACTION SUMMARY
+============================================================
+
+  Ranked by estimated H@1 impact:
+
+  1. vote_convergence (6118 cases, 42.9%):
+       type penalties for unpenalized genre/lang entities + r2_boost re-tuning
+
+  2. beam_coverage (675 cases, 4.7%):
+       expansion_k↑, beam widening for guaranteed branches, or score floor
+
+  3. filter_miss (150 cases, 1.1%):
+       min_filter_size↑ or TRB detection review
+
+  Quick wins: 2085 rank-2 misses — correct answer is #2,
+    a small score nudge could flip them. Run Optuna with tight bounds first.
+
+  ── Upper bounds ──
+  If beam_coverage fixed:    H@1 ceiling = 56.1% (currently 51.4%)
+  If vote+filter fixed:      H@1 ceiling = 95.3%
+  If all misses fixed:       H@1 ceiling = 100.0%
+
+  Interpretation: scoring improvements are capped at 43.9pp gain;
+  traversal improvements (beam) unlock an additional 4.7pp.
