@@ -1,0 +1,108 @@
+\section{PAPER 031: Loop-Provenance Recovery — Automatic Rollback on Circuit Breaker Trip in Autonomous KG Discovery}
+
+\textbf{Author}: Bryan Alexander Buchorn  
+\textbf{Affiliation}: Independent Researcher, Las Vegas, NV, USA  
+\textbf{Status}: v2.52.0 (Phase 172 (STRB) COMPLETE)
+\textbf{Date}: May 2, 2026
+
+\textbf{CEREBRUM Phase 79}
+
+---
+
+\subsection{Abstract}
+
+We present \textbf{Loop-Provenance Recovery}, an integration between \texttt{AutonomousDiscoveryLoop} (Phase 74) and \texttt{ProvenanceLedger} (Phase 76) that autom\-atically undoes graph mater\-ializations when the circuit breaker fires. Prior to Phase 79, a circuit breaker trip paused future mater\-ialization but left already-mater\-ialized edges from the failed cycle in the graph. These edges may represent low-quality discoveries that degraded graph precision. Loop-Provenance Recovery addresses this by wiring \texttt{LoopConfig.auto\_rollback\_on\_trip=True} to an automatic call to \texttt{ProvenanceLedger.rollback\_cycle()} at trip time. \texttt{CycleRecord.edges\_rolled\_back} records how many edges were removed, providing obser\-vability. The combined system achieves \textbf{fail-safe mater\-ialization}: if a discovery cycle degrades below quality thresholds, both future mater\-ializations pause \textit{and} past mater\-ializations are undone — returning the graph to its pre-cycle state.
+
+---
+
+\subsection{1. Motivation: Incomplete Recovery}
+
+The Phase 74 circuit breaker addresses the \textit{forward} problem: when approval rate drops below \texttt{min\_approval\_rate}, future mater\-ialization pauses. However, the cycle that triggered the trip has already mater\-ialized some edges. If those edges are low-quality (e.g., confidences just above threshold on marginally-approved findings), they remain in the graph indef\-initely.
+
+In a production deployment with continuous discovery, a single degraded cycle can introduce dozens of noisy edges before the circuit breaker fires. Manual cleanup requires identifying the exact edges from that cycle — a non-trivial task without provenance tracking.
+
+---
+
+\subsection{2. Recovery Protocol}
+
+When the circuit breaker trips:
+
+\begin{lstlisting}
+1. circuit_breaker_tripped = True → pause future materializations
+2. if auto_rollback_on_trip and provenance_ledger is not None:
+       rolled_back = provenance_ledger.rollback_cycle(cycle_number, adapter)
+       cycle_record.edges_rolled_back = rolled_back
+3. log: "Circuit breaker tripped. Rolled back {rolled_back} edges from cycle {N}."
+4. sleep(next_interval)
+5. Next cycle: check if approval rate has recovered
+\end{lstlisting}
+
+\subsubsection{Prereq\-uisite: ProvenanceLedger Attachment}
+
+\begin{lstlisting}
+ledger = ProvenanceLedger(max_batches=500)
+research_agent.set_provenance_ledger(ledger)
+loop = AutonomousDiscoveryLoop(
+    agent=research_agent,
+    config=LoopConfig(auto_rollback_on_trip=True),
+    auto_approver=approver
+)
+\end{lstlisting}
+
+If \texttt{provenance\_ledger} is \texttt{None}, the auto-rollback silently skips (backward-compatible behavior).
+
+---
+
+\subsection{3. CycleRecord Fields}
+
+\begin{lstlisting}
+@dataclass
+class CycleRecord:
+    ...
+    circuit_breaker_tripped: bool
+    edges_rolled_back: int = 0   # 0 if not tripped or rollback not configured
+\end{lstlisting}
+
+The Studio v2 cycle history panel (Phase 75) renders \texttt{edges\_rolled\_back} in the cycle table, making rollback events visible to operators without requiring log inspection.
+
+---
+
+\subsection{4. GraphAdapter Prereq\-uisite}
+
+\texttt{rollback\_cycle()} calls \texttt{adapter.remove\_edge(u, v, relation)} for each edge in the cycle's batches. This requires the adapter to implement the Phase 80 \texttt{remove\_edge()} protocol. All built-in adapters support this. Custom adapters must implement it or raise \texttt{NotImplementedError} explicitly.
+
+---
+
+\subsection{5. Failure Modes and Mitigations}
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Failure & Behavior & Mitigation \\ \hline
+Partial rollback (adapter exception mid-cycle) & \texttt{rollback\_cycle} catches exception, logs warning, continues with remaining edges & Idempotent: re-running \texttt{rollback\_batch} on completed batches is a no-op \\ \hline
+ProvenanceLedger evicted cycle batches (LRU cap) & Rollback is incomplete — only unevicted batches are removed & Tune \texttt{max\_batches} to retain at least \texttt{circuit\_breaker\_window} cycles \\ \hline
+Adapter does not implement \texttt{remove\_edge} & \texttt{NotImplementedError} propagates, trip still recorded & Implement \texttt{remove\_edge} or disable \texttt{auto\_rollback\_on\_trip} \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+---
+
+\subsection{6. References}
+
+\begin{itemize}
+\item Phase 74 (PAPER\_027): AutonomousDiscoveryLoop circuit breaker
+\item Phase 76 (PAPER\_029): ProvenanceLedger data model and rollback API
+\item Phase 80 (PAPER\_032): GraphAdapter \texttt{remove\_edge} protocol
+
+\end{itemize}
+---
+\textbf{Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.}
+
+---
+\subsection{Acknow\-ledgments}
+
+The author gratefully ackno\-wledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathe\-matical forma\-lization, code generation, manuscript preparation, and technical writing. All conceptual contr\-ibutions, archi\-tectural decisions, exper\-imental design, and intel\-lectual claims are solely the author's.
+
+\textbf{Reviewed on}: May 2, 2026 for version v2.52.0

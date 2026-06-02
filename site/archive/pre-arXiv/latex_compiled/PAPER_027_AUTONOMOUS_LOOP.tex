@@ -1,0 +1,145 @@
+\section{PAPER 027: AutonomousDiscoveryLoop — Closing the Discover-Validate-Approve-Materialize Loop for Knowledge Graph Self-Improvement}
+
+\textbf{Author}: Bryan Alexander Buchorn  
+\textbf{Affiliation}: Independent Researcher, Las Vegas, NV, USA  
+\textbf{Status}: v2.52.0 (Phase 172 (STRB) COMPLETE)
+\textbf{Date}: May 2, 2026
+
+\textbf{CEREBRUM Phase 74}
+
+---
+
+\subsection{Abstract}
+
+We present \textbf{AutonomousDiscoveryLoop}, the orche\-stration component that closes the end-to-end autonomous knowledge graph improvement loop in CEREBRUM. The loop runs \texttt{ResearchAgent.scan\_once()} on a confi\-gurable timer, processes each finding through \texttt{AutoApprover} (Phase 71), and applies a \textbf{circuit breaker} — a sliding-window approval-rate monitor that pauses mater\-ialization when quality degrades below a threshold. A \textbf{per-cycle cap} (\texttt{max\_materializations\_per\_cycle}) prevents runaway edge insertion during anomalous discovery bursts. A \textbf{dry\_run} mode allows safe production trials without writing any edges. \texttt{AutoApprover} state is check\-pointed to disk after every cycle, enabling warm restart. The loop exposes a structured REST API for monitoring, confi\-guration, and lifecycle management, making it suitable for embedding in production CEREBRUM deployments without operator inter\-vention.
+
+---
+
+\subsection{1. Archit\-ecture}
+
+\subsubsection{1.1 Loop Lifecycle}
+
+\begin{lstlisting}
+start() → background thread
+    ↓
+while running:
+    scan_once() → findings
+    for finding in findings[:cap]:
+        decide = approver.decide(finding)
+        if decide == APPROVE: approve(finding)
+        if decide == REJECT:  reject(finding)
+    record_cycle()
+    checkpoint_approver()
+    check_circuit_breaker()
+    sleep(next_interval)
+stop() → graceful shutdown
+\end{lstlisting}
+
+\subsubsection{1.2 LoopConfig Dataclass}
+
+\begin{lstlisting}
+@dataclass
+class LoopConfig:
+    cycle_interval: float = 300.0
+    max_materializations_per_cycle: int = 10
+    min_approval_rate: float = 0.5
+    circuit_breaker_window: int = 20
+    dry_run: bool = False
+    auto_rollback_on_trip: bool = False   # Phase 79
+    adaptive_tuning: bool = False          # Phase 82
+    adaptive_min_cap: int = 1
+    adaptive_max_cap: int = 20
+    adaptive_min_interval: float = 60.0
+    adaptive_max_interval: float = 7200.0
+    approver_checkpoint_path: Optional[str] = None
+\end{lstlisting}
+
+\subsubsection{1.3 CycleRecord Dataclass}
+
+\begin{lstlisting}
+@dataclass
+class CycleRecord:
+    cycle_number: int
+    started_at: float
+    findings_scanned: int
+    materializations: int
+    approvals: int
+    rejections: int
+    reviews: int
+    circuit_breaker_tripped: bool
+    edges_rolled_back: int = 0    # Phase 79
+    effective_cap: int = 0        # Phase 82
+\end{lstlisting}
+
+---
+
+\subsection{2. Circuit Breaker}
+
+The circuit breaker computes approval rate over a sliding window of the last N decisions (approvals + rejections):
+
+\begin{lstlisting}
+approval_rate = approvals_in_window / (approvals + rejections)_in_window
+\end{lstlisting}
+
+If \texttt{approval\_rate \textless  min\_approval\_rate}:
+\begin{itemize}
+\item \texttt{circuit\_breaker\_tripped = True}
+\item Materi\-alization pauses for the current cycle
+\item If \texttt{auto\_rollback\_on\_trip=True} (Phase 79): \texttt{ProvenanceLedger.rollback\_cycle()} is called
+\item Loop continues sleeping; next cycle attempts recovery
+
+\end{itemize}
+The circuit breaker resets when the approval rate recovers above threshold over a fresh window.
+
+---
+
+\subsection{3. Per-Cycle Cap}
+
+\texttt{max\_materializations\_per\_cycle} acts as a hard upper bound on approved findings per cycle. Even if \texttt{AutoApprover} would approve 100 findings in a single scan, only the first N are mater\-ialized. This prevents:
+\begin{itemize}
+\item Burst mater\-ialization that overwhelms downstream systems
+\item Runaway edge accum\-ulation during transient high-discovery phases
+
+\end{itemize}
+Combined with \texttt{adaptive\_tuning} (Phase 82), the cap is dynamically scaled per cycle based on \texttt{DiscoveryCalibrator} community weights.
+
+---
+
+\subsection{4. Dry Run Mode}
+
+\texttt{LoopConfig(dry\_run=True)} makes the loop execute all phases (scan, validate, decide) but skips \texttt{approve()} / \texttt{reject()} calls. The loop records what \textit{would} have been mater\-ialized in \texttt{CycleRecord}, enabling safe production trials to measure expected impact before enabling writes.
+
+---
+
+\subsection{5. REST API}
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Endpoint & Method & Description \\ \hline
+\texttt{/research/loop/start} & POST & Start loop (idempotent) \\ \hline
+\texttt{/research/loop/stop} & POST & Graceful stop \\ \hline
+\texttt{/research/loop/status} & GET & Running state, cycle history, approval rate, circuit breaker \\ \hline
+\texttt{/research/loop/configure} & POST & Partial update: \texttt{cycle\_interval}, \texttt{max\_materializations\_per\_cycle}, \texttt{min\_approval\_rate}, \texttt{dry\_run}, \texttt{auto\_rollback\_on\_trip}, \texttt{adaptive\_tuning} \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+---
+
+\subsection{6. References}
+
+\begin{itemize}
+\item [dean\-2008\-mapreduce] Dean, J. \& Ghemawat, S. (2008). MapReduce: Simplified data processing on large clusters. \textit{CACM}, 51(1), 107–113.
+
+\end{itemize}
+---
+\textbf{Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.}
+
+---
+\subsection{Acknow\-ledgments}
+
+The author gratefully ackno\-wledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathe\-matical forma\-lization, code generation, manuscript preparation, and technical writing. All conceptual contr\-ibutions, archi\-tectural decisions, exper\-imental design, and intel\-lectual claims are solely the author's.
+
+\textbf{Reviewed on}: May 2, 2026 for version v2.52.0

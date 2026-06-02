@@ -1,0 +1,148 @@
+\section{PAPER 033: GraphSnapshot — Portable JSON Topology Persistence for Knowledge Graph Recovery}
+
+\textbf{Author}: Bryan Alexander Buchorn  
+\textbf{Affiliation}: Independent Researcher, Las Vegas, NV, USA  
+\textbf{Status}: v2.52.0 (Phase 172 (STRB) COMPLETE)
+\textbf{Date}: May 2, 2026
+
+\textbf{CEREBRUM Phase 81}
+
+---
+
+\subsection{Abstract}
+
+We present \textbf{GraphSnapshot}, a portable JSON-based topology persistence mechanism for CEREBRUM Knowledge Graph adapters. Prior to Phase 81, graph state was saved via Python pickle, which is fragile across Python versions, adapter class renames, and dependency updates. \texttt{GraphSnapshot.save(adapter, path)} serializes the full edge list (source, target, relation, weight, metadata) to a portable JSON file that survives class changes. \texttt{GraphSnapshot.restore(path, adapter, skip\_existing=True)} re-adds only new edges — idempotent and safe to run on every pod restart. \texttt{GraphSnapshot.diff(path\_a, path\_b)} computes the edge delta between two snapshots, enabling change auditing between any two checkpoints. GraphSnapshot is the recommended mechanism for disaster recovery in Kubernetes deployments, replacing manual graph CSV exports and pickle-based state files.
+
+---
+
+\subsection{1. Motivation: Fragile Persistence}
+
+CEREBRUM's \texttt{save\_state()} / \texttt{load\_state()} (Phase 55) persisted graph topology via \texttt{pickle.dump()}. Pickle is convenient but fragile:
+
+\begin{enumerate}
+\item \textbf{Class renames}: If \texttt{GraphAdapter} or \texttt{Edge} class names change (as happened with the Parallax $\to$ CEREBRUM rename), pickled files are unloadable.
+\item \textbf{Python version changes}: Pickle protocol versions differ across Python releases. A file pickled on Python 3.10 may fail on 3.12.
+\item \textbf{Dependency changes}: Pickling \texttt{networkx.DiGraph} embeds the networkx version; a dependency upgrade can break loading.
+\item \textbf{No diff semantics}: Pickle files are binary blobs; computing what changed between two states requires unpickling both and diffing in Python.
+
+\end{enumerate}
+---
+
+\subsection{2. File Format}
+
+GraphSnapshot files are UTF-8 JSON with a stand\-ardized schema:
+
+\begin{lstlisting}
+{
+  "cerebrum_snapshot": "1.0",
+  "saved_at": "2026-04-14T12:00:00Z",
+  "adapter_type": "NetworkXAdapter",
+  "node_count": 21,
+  "edge_count": 30,
+  "edges": [
+    {
+      "u": "marie_curie",
+      "v": "radium",
+      "relation": "discovered",
+      "weight": 0.95,
+      "metadata": {"source": "wikipedia", "confidence": 0.99}
+    },
+    ...
+  ]
+}
+\end{lstlisting}
+
+The \texttt{metadata} field captures any arbitrary per-edge metadata written at ingest time (confidence, source, provenance batch\_id, etc.).
+
+---
+
+\subsection{3. API}
+
+\subsubsection{Save}
+
+\begin{lstlisting}
+from core.persistence import GraphSnapshot
+
+GraphSnapshot.save(adapter, "/data/snapshots/graph_2026-04-14.json")
+# Writes full edge list to JSON
+\end{lstlisting}
+
+\subsubsection{Restore}
+
+\begin{lstlisting}
+result = GraphSnapshot.restore(
+    "/data/snapshots/graph_2026-04-14.json",
+    adapter,
+    skip_existing=True    # default: don't re-add edges already in the graph
+)
+print(f"Added: {result['added']}, Skipped: {result['skipped']}")
+\end{lstlisting}
+
+\texttt{skip\_existing=True} makes restore idempotent — calling it multiple times on the same adapter is safe. \texttt{skip\_existing=False} forces all edges to be re-added (useful after a full graph wipe).
+
+\subsubsection{Diff}
+
+\begin{lstlisting}
+diff = GraphSnapshot.diff(
+    "/data/snapshots/before.json",
+    "/data/snapshots/after.json"
+)
+# {
+#   "edge_delta": +12,
+#   "added_edges": [...],
+#   "removed_edges": [...],
+#   "node_delta": +3,
+# }
+\end{lstlisting}
+
+Diff does not require a live adapter — it compares two snapshot files directly.
+
+---
+
+\subsection{4. Integration with AutonomousDiscoveryLoop}
+
+For disaster recovery in production deployments:
+
+\begin{lstlisting}
+# Cron: save snapshot every hour
+0 * * * * python -c "
+from core.persistence import GraphSnapshot
+from core.cerebrum import CerebrumGraph
+graph = CerebrumGraph.load_from_db()
+GraphSnapshot.save(graph.adapter, f'/data/snapshots/graph_{date}.json')
+"
+\end{lstlisting}
+
+On pod restart:
+\begin{lstlisting}
+result = GraphSnapshot.restore("/data/snapshots/graph_latest.json", adapter)
+\end{lstlisting}
+
+Pairs with \texttt{ProvenanceLedger.rollback\_cycle()} for fine-grained recovery: if the loop mater\-ialized bad edges after the last snapshot, roll them back via provenance rather than restoring the full snapshot.
+
+---
+
+\subsection{5. Comparison to Altern\-atives}
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Mechanism & Portable & Diffable & Idempotent restore & Survives class changes \\ \hline
+\texttt{pickle} & No & No & No & No \\ \hline
+CSV export & Yes & Manual & Partial & Yes \\ \hline
+\textbf{GraphSnapshot} & Yes & Yes & Yes & Yes \\ \hline
+Neo4j native backup & Yes & No & Yes & N/A \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+---
+\textbf{Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.}
+
+---
+\subsection{Acknow\-ledgments}
+
+The author gratefully ackno\-wledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathe\-matical forma\-lization, code generation, manuscript preparation, and technical writing. All conceptual contr\-ibutions, archi\-tectural decisions, exper\-imental design, and intel\-lectual claims are solely the author's.
+
+\textbf{Reviewed on}: May 2, 2026 for version v2.52.0

@@ -1,0 +1,261 @@
+\documentclass[11pt,article,oneside]{memoir}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage[hidelinks,colorlinks=true,linkcolor=blue]{hyperref}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{libertine}
+
+\geometry{margin=1in}
+
+\titleformat{\section}{\Large\bfseries\color{darkgray}}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries\color{blue!80!black}}{\thesubsection}{1em}{}
+
+\lstset{
+  basicstyle=\small\ttfamily,
+  breaklines=true,
+  frame=lines,
+  backgroundcolor=\color{gray!10}
+}
+
+\begin{document}
+
+\begin{center}
+    \Huge \textbf{Reasoning Studio Guide} \\
+    \vspace{0.5em}
+    \large \textit{A CEREBRUM Research Publication (v1.2.4)} \\
+    \vspace{1em}
+    \large \textbf{Bryan Alexander Buchorn} \\
+    Independent Researcher \\
+    \vspace{2em}
+\end{center}
+
+\begin{abstract}
+\textbf{Overview:} This guide provides a conceptual entry point into the CEREBRUM framework. It is designed for practitioners and researchers seeking to understand the core reasoning signals of Framework Implementation Guide.
+\end{abstract}
+
+\section{CEREBRUM Reasoning Studio — User Guide}
+
+\textbf{Version}: v1.1.0
+\textbf{Interface}: Gradio web UI + pyvis graph visua\-lization
+\textbf{Module}: \texttt{ui/studio.py}
+
+---
+
+\subsection{Overview}
+
+The Reasoning Studio is CEREBRUM's interactive visual interface. It lets you load a Knowledge Graph, run multi-hop reasoning queries, inspect every step of the CSA attention mechanism, and watch community structure form in real time — all without writing code.
+
+This is the "Glass-Box" in action: you can see exactly what the AI is doing at every reasoning step.
+
+---
+
+\subsection{Instal\-lation}
+
+\begin{lstlisting}
+pip install -r ui/requirements.txt
+\end{lstlisting}
+
+Depend\-encies installed:
+\begin{itemize}
+\item \texttt{gradio} — web UI framework
+\item \texttt{pyvis} — interactive graph visua\-lization
+\item \texttt{networkx} — graph backend (already in core)
+
+\end{itemize}
+---
+
+\subsection{Starting the Studio}
+
+\begin{lstlisting}
+python ui/studio.py
+\end{lstlisting}
+
+The Studio opens at \texttt{http://localhost:7860} in your browser. No API server is required — the Studio embeds the full CEREBRUM engine directly.
+
+\subsubsection{Command-line options}
+
+\begin{lstlisting}
+# Specify a graph file to load on startup
+python ui/studio.py --csv path/to/graph.csv
+
+# Use semantic embeddings (requires sentence-transformers)
+python ui/studio.py --embeddings sentence
+
+# Change port
+python ui/studio.py --port 8080
+
+# Share publicly (Gradio tunnel — for demos)
+python ui/studio.py --share
+\end{lstlisting}
+
+---
+
+\subsection{Interface Overview}
+
+The Studio has four main panels:
+
+\subsubsection{1. Graph Panel (left)}
+An interactive force-directed visua\-lization of the loaded Knowledge Graph powered by pyvis.
+
+\begin{itemize}
+\item \textbf{Nodes} are colored by community (each community gets a distinct color)
+\item \textbf{Edges} show relation types as labels
+\item \textbf{Node size} reflects PageRank centrality — important nodes appear larger
+\item \textbf{Click any node} to set it as the query start entity
+\item \textbf{Hover} over an edge to see its CSA attention weight
+
+\end{itemize}
+\subsubsection{2. Query Panel (top center)}
+Controls for running reasoning queries:
+
+\begin{center}
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Control & Description \\ \hline
+\textbf{Entity} & Starting node for traversal \\ \hline
+\textbf{Max Hops} & Maximum reasoning depth (1–5) \\ \hline
+\textbf{Beam Width} & Candidates per hop (1–50) \\ \hline
+\textbf{Top-K} & Number of answer paths to return \\ \hline
+\textbf{Probab\-ilistic} & Enable Bayesian beam search \\ \hline
+\textbf{Warm-Start} & Beta prior seeding strength (0–10) \\ \hline
+\end{tabularx}
+\end{center}
+
+Click \textbf{Run Query} to execute. Results appear in the Answer Panel within milli\-seconds.
+
+\subsubsection{3. Answer Panel (center)}
+Displays ranked answer paths with:
+\begin{itemize}
+\item \textbf{Entity}: the terminal node of each path
+\item \textbf{Score}: composite CSA path score (0–1)
+\item \textbf{Path}: the full hop-by-hop trace (\texttt{A → rel → B → rel → C})
+\item \textbf{Confidence interval}: when proba\-bilistic mode is on
+\item \textbf{Community trace}: which communities were traversed at each hop
+
+\end{itemize}
+Click any answer row to \textbf{highlight the reasoning path} in the Graph Panel.
+
+\subsubsection{4. Attention Math Panel (right)}
+When you click an edge in the Graph Panel or an answer path in the Answer Panel, this panel shows the full CSA formula breakdown for that specific edge:
+
+\begin{lstlisting}
+a(Marie Curie → Radium, hop=1) = sigmoid(
+  0.4 × cos(e_u, e_v) = 0.4 × 0.71  =  0.284
+  0.4 × S_C(u,v)      = 0.4 × 1.00  =  0.400   ← same community
+  0.1 × w_rel         = 0.1 × 0.95  =  0.095   ← "discovered" weight
+  0.05 × d_norm       = 0.05 × 0.10 = -0.005
+  0.05 × φ(k)         = 0.05 × 1.00 =  0.050   ← hop 1
+  0.1 × PR(v)         = 0.1 × 0.43  =  0.043
+                        ─────────────────────
+                        total input           =  0.867
+  sigmoid(0.867)                              =  0.704
+)
+\end{lstlisting}
+
+This is the "Forensic Math Panel" — you see exactly why this edge received its score.
+
+---
+
+\subsection{Loading a Graph}
+
+\subsubsection{From a CSV file}
+Click \textbf{Upload CSV} in the Graph Panel toolbar. Format: \texttt{subject,predicate,object[,weight]}
+
+\subsubsection{From the toy graph (built-in)}
+Click \textbf{Load Toy Graph} to load the canonical 21-node test graph from \texttt{tests/fixtures/toy\_graph.csv}. Useful for exploring the interface before loading your own data.
+
+\subsubsection{From a URL (Remote CSV)}
+Enter a URL in the \textbf{Graph URL} field and click \textbf{Load}. The Studio fetches and parses the CSV remotely.
+
+---
+
+\subsection{Community Visual\-ization}
+
+Click the \textbf{Communities} tab to switch the Graph Panel to community-focus mode:
+\begin{itemize}
+\item Each community is shown as a convex hull overlay
+\item Community sizes and modularity Q score are displayed in the sidebar
+\item Use the \textbf{Rebalance} button to trigger a fresh DSCF run and watch communities reorganize
+
+\end{itemize}
+---
+
+\subsection{Interactive Attention Tuning (Dialectics)}
+
+The \textbf{Attention Sliders} section lets you adjust the six CSA weights ($\alpha$, $\beta$, $\gamma$, $\delta$, $\epsilon$, $\zeta$) in real time using sliders. When you move a slider, the last query autom\-atically re-runs with the new weights and the Graph Panel updates to show how the reasoning path changes.
+
+This allows you to answer questions like:
+\begin{itemize}
+\item "What if I trust community structure more than semantic similarity?" (increase $\beta$)
+\item "What if I weight relation types more heavily?" (increase $\gamma$)
+\item "What if I penalize long paths more?" (increase $\delta$)
+
+\end{itemize}
+---
+
+\subsection{Live Streaming Mode}
+
+Click the \textbf{Stream} tab to enable streaming ingest mode:
+\begin{enumerate}
+\item Select a discretizer (Threshold, STDP, Delta, Frequency, Pattern)
+\item Configure thresholds
+\item Click \textbf{Start Stream}
+\item Watch edges materialize in the Graph Panel in real time as events are processed
+\item Community structure auto-updates when modularity drift triggers a rebalance
+
+\end{enumerate}
+---
+
+\subsection{Exporting Results}
+
+\begin{itemize}
+\item \textbf{Export Path} — saves the selected reasoning trace as a JSON file including the full CSA math breakdown
+\item \textbf{Export Graph} — saves the current graph (with community assignments) as a CSV
+\item \textbf{Screenshot} — captures the current Graph Panel view as a PNG
+
+\end{itemize}
+---
+
+\subsection{Keyboard Shortcuts}
+
+\begin{center}
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Key & Action \\ \hline
+\texttt{Enter} & Run query with current settings \\ \hline
+\texttt{Esc} & Clear selection \\ \hline
+\texttt{Space} & Toggle community overlay \\ \hline
+\texttt{R} & Rebalance communities \\ \hline
+\texttt{→} & Step through reasoning path (hop by hop) \\ \hline
+\end{tabularx}
+\end{center}
+
+---
+
+\subsection{Troubl\-eshooting}
+
+\textbf{Studio won't start}: Ensure \texttt{gradio} and \texttt{pyvis} are installed: \texttt{pip install -r ui/requirements.txt}
+
+\textbf{Graph not rendering}: Large graphs (\textgreater 5,000 nodes) may take several seconds for pyvis to lay out. Use the \textbf{Limit Display} slider to show only the top-N nodes by PageRank.
+
+\textbf{No paths found}: The query entity may not exist in the loaded graph. Try the autoc\-omplete dropdown or check entity names are exact matches (case-sensitive).
+
+\textbf{Slow queries}: Reduce \texttt{beam\_width} or \texttt{max\_hops} in the Query Panel.
+
+---
+\textbf{Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.}
+
+
+\vspace{3em}
+\begin{center}
+    \small \textit{Project CEREBRUM — March 2026 — Hardened Enterprise Security (v1.2.4)}
+\end{center}
+
+\end{document}

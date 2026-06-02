@@ -1,0 +1,277 @@
+%%{init: {"theme": "dark", "flowchart": {"curve": "basis"}}}%%
+flowchart TD
+    subgraph L1["① Entry Points"]
+        REST_API["REST API\n65+ Endpoints"]
+        CLI["CLI\nquery · communities · serve"]
+        UE5_CMD["UE5 Neural Commands\nTRIGGER_QUERY · METABOLIC_SYNC"]
+    end
+
+    subgraph L2["② THALAMUS — Ingestion"]
+        INGEST["IngestionPipeline\nEntity/Relation Normalization · Dedup"]
+        NX_ADAPT["NetworkXAdapter\nIn-Memory Default"]
+        STREAM_ADAPT["StreamAdapter\nLive Mutation · Sliding-Window TTL\nBackground Ingest Thread"]
+        NEO4J_ADAPT["Neo4jAdapter\nLive Neo4j Backend"]
+        RDF_ADAPT["RDFAdapter\nSPARQL Endpoint"]
+        REMOTE_ADAPT["RemoteCerebrumAdapter\nFederated REST Proxy\nHMAC-SHA256 Signature Verification"]
+        FED_ADAPT["FederatedAdapter\nMulti-Adapter Coordinator\nProcrustes Embedding Alignment"]
+        DIST_CEREBRUM["DistributedCEREBRUM\nCluster Coordinator\nZero Local Graph State"]
+        SHARD_MGR["ShardManager\nEntity → Worker Shard Index\nCommunity · Hash · Range Strategies"]
+        QUERY_ROUTER["QueryRouter\nPer-Shard Sub-Query Decomposition"]
+        PATH_STITCHER["PathStitcher\nCross-Shard Path Assembly"]
+        ALIGN_IDX["AlignmentIndex\nCross-Graph Entity Resolution"]
+        HOLO_IDX["HolographicIndex\nBloom Filter + Centroid\nBlind Discovery"]
+        EMBED_ENG["EmbeddingEngine\nRandom / SentenceTransformer"]
+        STRUCT_ENC["StructuralEncoder\nPageRank · Betweenness · Degree · Recency"]
+        STDP["STDPDiscretizer\nCausal Edge Inference from Spike Timing\nCausalSignificanceFilter"]
+        SIG_ENC["SignalEncoder\nStatistical + Spectral\nCross-Modal Procrustes SVD"]
+        GRAPHSAGE["GraphSAGE Smoother\nOne-Pass Neighbourhood Aggregation"]
+    end
+
+    subgraph L3["③ CORTEX — Reasoning Engine"]
+        COMM_ENG["CommunityEngine\nDSCF · TSC · Leiden · LPA\nHierarchical + GPU Hybrid"]
+        CSA_ENG["CSAEngine\nα·sim + β·cs + γ·etw − δ·nd\n+ ε·hd + ζ·pr + η·td + ι·nr − μ·sd + θ·grounding"]
+        LOGIT["ReasoningLogit\nUnified 10-Feature Vector\nscore(params)"]
+        BEAM["BeamTraversal\nProbabilistic · Bayesian Beta · Quantized\nLateral Inhibition · node_priming · Valence"]
+        ASYNC_BEAM["AsyncBeamTraversal\nAsync Streaming hop-by-hop\ntraverse_stream()"]
+        LOOPED_BEAM["LoopedBeamTraversal\nLoopLM T-Loop Refinement\nSemantic · Metabolic · Mnemonic Channels\nAdaptive PE Exit Gate"]
+        DIST_BEAM["DistributedBeamTraversal\nFederated Boundary Delegation\nget_reasoning_branches()"]
+        PATH_SCORE["PathScorer\nAttention × Coherence × Confidence\n× Grounding × Engram Affinity"]
+        ANS_EXTRACT["AnswerExtractor\nTerminal Entity Ranking\nType-2 Contradiction Detection"]
+    end
+
+    subgraph L4["④ Trace & Explainability (ERT)"]
+        REASON_TRACE["ReasoningTrace\nPer-Hop Winners · Competitors\n10-Param Attention Radar · Prior · PE"]
+        LOOP_TRACE["LoopTrace\nPer-Loop PE · Seed Expansion\nAnswer Set Jaccard"]
+    end
+
+    subgraph L5["⑤ Neuro-Symbolic Regulation"]
+        CHEM_MOD["ChemicalModulator\nDopamine · Norepinephrine · Acetylcholine\nOxytocin · Vasopressin · Homeostatic Decay"]
+        PRED_CODE["PredictiveCodingEngine\nEngram Prior Path + Jaccard PE\nSoliton Index = 1 − mean(PE)"]
+        CEREBEL["CerebellarEngine\nDissonance Detection\nHigh CSA Score + Low Consensus → Error Seeds"]
+        VALENCE["ValenceEngine\nAversive / Appetitive Edge Conditioning\nrecord_outcome() · get_valence()"]
+        THAL_GATE["Thalamic Gating\nBuild WM-Derived node_priming Map\n_build_priming_map()"]
+        LAT_INH["Lateral Inhibition\nCommunity-Grouped NMS\n_prune_candidates()"]
+        DMN["DefaultModeEngine\nIdle Audits: Isolation · Dead Zone\nUnanswered · Frontier → auto-push Goals"]
+        TEMP_CAL["TemporalCalibrator\nGrid-Search η + ι\nfor Recall@K Maximization"]
+        MOD_LRN["Modulator→Learner Bridge\nstep_metabolic_system()\nLR Scale from Modulator Scalars"]
+    end
+
+    subgraph L6["⑥ Memory & Pattern Systems"]
+        WM["WorkingMemory\nWorkingMemoryBuffer\nRecent Query + Path Edges"]
+        ENGRAM["Engram Cache\nRelation-Pattern Prior\nAffinity Boost on Beam Pruning"]
+        SPEEDTALK["SpeedTalkEngram\nHeinlein Phonemic Compression 8-20×\nPrefix Queries · Graph-Adaptive Alphabet"]
+        ENGRAM_CONS["EngramConsolidator\nThreshold-Based Promotion\n→ Canonical Engrams"]
+        REL_PRIOR["RelationPathPrior\nRelation Sequence Frequency\nOptional Bonus in PathScorer"]
+        QUERY_LOG["QueryLog\nNDJSON Append-Only History\nreplay_into_cache() on Restart"]
+        GRAPH_SNAP["GraphSnapshot\nPortable JSON Topology\nsave · restore · diff"]
+    end
+
+    subgraph L7["⑦ Self-Organization"]
+        REM["REMEngine\nPrune Low-Confidence Edges\nConsolidate · Synthesize Wormhole Bridges"]
+        SYN_DECAY["SynapticDecayEngine\nLTD Homeostasis\nresistance = freq/(freq+k)\nSource-Weighted Frequency"]
+        SYN_PRUNE["SynapticPruner (SPQT)\nLow-Utility Synthetic Edge Removal\nConfidence × Age × Usage"]
+        REBALANCER["GlobalRebalancer\nModularity Q Drift Detection\n→ Full DSCF Re-Run"]
+        BRIDGE_TWIN["BridgeTwinEngine\nCross-Community Traversal Relay\nBRIDGE_TWIN Edge Materialization"]
+        GRAPH_BRIDGE["GraphBridgeEngine\nProactive Structural Hole Detection\nBridge Edge Synthesis"]
+        GOAL_STACK["GoalStack\nStanding Homeostasis Goals\n+ User Goals · make_goal() Factory"]
+    end
+
+    subgraph L8["⑧ Research & Discovery Pipeline"]
+        RES_AGENT["ResearchAgent\nAutonomous Missing-Link Daemon\n4 Sources: ANN · Structural Holes · Insight · Manual"]
+        CAND_REG["CandidateRegistry\nTTL-Aware Dedup\nnomination_count → Log-Scale Boost"]
+        HYPO_ENG["HypothesisEngine\nAbductive Noisy-OR Reasoning\nMulti-Path Composition · Independence Scores"]
+        TRIANG["TriangulationEngine\n4-Perspective Validation\nReverse · Strategy · Independence · Semantic Type"]
+        EXT_VAL["ExternalValidator\nPubMed · arXiv\nClinicalTrials · OpenAlex\nliterature_status · recency_score"]
+        CONTRA_RES["ContradictionResolver\nEvidence-Weight Classifier\nclean · revision_candidate · contested · discardable"]
+        DISC_CAL["DiscoveryCalibrator\nPer-Community EMA Scan Rate\nInverse-Rate Multiplier · Cold-Start max_weight=5"]
+        AUTO_APP["AutoApprover\nHard Gates → Online Logistic SGD\n16 Features → LLM Fallback\nfit() · to_dict()"]
+        AUTO_LOOP["AutonomousDiscoveryLoop\nTimed Cycles · Circuit Breaker\nPer-Cycle Cap · Dry-Run · Auto-Rollback\nPhases 74 + 97-102"]
+        PROV_LED["ProvenanceLedger\nEdgeRecord · BatchRecord\nrollback_batch() · rollback_cycle()\nLRU Eviction · Thread-Safe"]
+        INF_VAL["InferenceValidator\nBilateral Reverse Traversal\nCorroboration Check"]
+        INSIGHT["InsightEngine\nBoundary Scan\nNovel Cross-Community Connections"]
+        META_INSIGHT["MetaInsightEngine\n2nd-Order Reasoning\nover InsightEvent Patterns"]
+        TRANSITIVE["TransitiveInferenceEngine\nTransitive Relation Composition\nMaterialization · Rollback"]
+    end
+
+    subgraph L9["⑨ Consensus & Federated Verification"]
+        MULTI_STRAT["MultiStrategyConsensus (MACH L1)\n3-Config Traversal Voting\nIntegrated with LoopedBeamTraversal"]
+        CONSENSUS_H["ConsensusHierarchyEngine\nL1 Local Strategy Voting\nL2 Federated Cross-Node\nL3 Literature Gold Standard"]
+    end
+
+    subgraph L10["⑩ Adaptive Learning"]
+        META_LEARN["MetaParameterLearner\nOnline SGD per-Community\nPOST /feedback · Checkpoint"]
+        PARAM_LEARN["CSAParameterLearner\nBatch Gradient Descent Global Prior\nPOST /retrain · --params-file"]
+    end
+
+    subgraph L11["⑪ Optional Extensions"]
+        KGE["KGEEngine\nTransE / RotatE\nGraph-Native Embedding Training"]
+        STUDIO["StudioEngine\n6-Panel Monitoring Dashboard\nAutoApprover · Modulator · Loop · Provenance"]
+        CONV_MGR["ConversationManager\nEntity Trail Across Chat Turns\nSession Context Tracking"]
+        TEXT_ING["TextIngestor\nNLP Triple Extraction\n→ adapter.add_edge()"]
+        LLM_BRIDGE["LLM Bridge\nAnthropic · OpenAI\nOllama · HuggingFace\ngenerate(answers, query, llm_fn)"]
+        NEURAL_COUP["NeuralCouplingEngine\nPhase 87 Swarm Synchronization\nCross-Peer Parameter Coupling"]
+        PEER_DISC["PeerDiscovery\nFederated Peer Registry\nPhase 87"]
+    end
+
+    subgraph L12["⑫ Telemetry & Visualization"]
+        TEL_BRIDGE["TelemetryBridge\nWebSocket Multiplexer\nbroadcast(NeuralEvent)"]
+        NEURAL_EVT["NeuralEvents\nSYNAPTIC_PULSE · SYNAPTOGENESIS\nSYNAPTIC_PRUNE · DISSONANCE · FLUX"]
+        UE5_PLUGIN["UE5 C++ Plugin\nANeuronNodeActor · ASynapseActor\nUCerebrumLink"]
+        ACB["ACerebrumBrain\nFibonacci Sphere Layout\ngraph_layout.json Pre-Load"]
+    end
+
+    %% ── ① Entry → THALAMUS ──────────────────────────────────────────────────
+    REST_API --> INGEST
+    CLI --> INGEST
+    INGEST --> NX_ADAPT
+    REST_API -->|POST /stream/ingest| STREAM_ADAPT
+    REST_API -->|POST /ingest/text| TEXT_ING
+    REST_API -->|POST /chat| CONV_MGR
+
+    %% ── THALAMUS internal ────────────────────────────────────────────────────
+    NX_ADAPT --> EMBED_ENG
+    STREAM_ADAPT -->|mutation event| COMM_ENG
+    STDP --> NX_ADAPT
+    SIG_ENC --> EMBED_ENG
+    EMBED_ENG --> STRUCT_ENC
+    STRUCT_ENC --> GRAPHSAGE
+    GRAPHSAGE -->|fused embeddings| COMM_ENG
+    REMOTE_ADAPT -->|HMAC verify| FED_ADAPT
+    FED_ADAPT --> ALIGN_IDX
+    FED_ADAPT --> HOLO_IDX
+    DIST_CEREBRUM --> SHARD_MGR
+    SHARD_MGR --> QUERY_ROUTER
+    QUERY_ROUTER --> REMOTE_ADAPT
+    QUERY_ROUTER --> PATH_STITCHER
+    KGE -.->|trained embeddings| EMBED_ENG
+
+    %% ── THALAMUS → CORTEX ────────────────────────────────────────────────────
+    COMM_ENG --> CSA_ENG
+    CSA_ENG --> LOGIT
+    LOGIT --> BEAM
+
+    %% ── CORTEX internal ──────────────────────────────────────────────────────
+    BEAM --> LOOPED_BEAM
+    BEAM --> ASYNC_BEAM
+    BEAM --> DIST_BEAM
+    DIST_BEAM --> FED_ADAPT
+    BEAM --> PATH_SCORE
+    LOOPED_BEAM --> PATH_SCORE
+    ASYNC_BEAM --> PATH_SCORE
+    PATH_SCORE --> ANS_EXTRACT
+    ASYNC_BEAM -->|traverse_stream()| REST_API
+
+    %% ── ERT / Trace ──────────────────────────────────────────────────────────
+    BEAM -->|add_hop()| REASON_TRACE
+    LOOPED_BEAM -->|loop state| LOOP_TRACE
+    LOOP_TRACE -->|embedded| REASON_TRACE
+    REASON_TRACE -->|POST /query/trace| REST_API
+
+    %% ── Neuro-Symbolic → CORTEX ──────────────────────────────────────────────
+    THAL_GATE -->|node_priming| BEAM
+    THAL_GATE -->|node_priming| LOOPED_BEAM
+    THAL_GATE -->|node_priming| ASYNC_BEAM
+    LAT_INH -->|inhibition ratio| BEAM
+    VALENCE -.->|aversive edge penalty| BEAM
+    VALENCE -.->|aversive edge penalty| ASYNC_BEAM
+    CHEM_MOD -.->|modulate α/β at query time| CSA_ENG
+    CHEM_MOD -.->|beam width / depth scale| BEAM
+    TEMP_CAL -.->|calibrate η + ι| CSA_ENG
+
+    %% ── Active Inference loop ────────────────────────────────────────────────
+    ENGRAM -->|prior path| PRED_CODE
+    PRED_CODE -->|prior → seed| LOOPED_BEAM
+    ANS_EXTRACT -->|actual paths| PRED_CODE
+    PRED_CODE -->|PE drives arousal/novelty| CHEM_MOD
+    PRED_CODE -->|dissonant seeds| CEREBEL
+    CEREBEL -->|error seeds| RES_AGENT
+    CEREBEL -->|DISSONANCE event| TEL_BRIDGE
+    CHEM_MOD --> MOD_LRN
+    MOD_LRN -.->|LR scale| META_LEARN
+
+    %% ── Working Memory ───────────────────────────────────────────────────────
+    ANS_EXTRACT --> WM
+    WM -->|recent paths| THAL_GATE
+    WM -->|frequency map| SYN_DECAY
+    WM -->|idle gap| DMN
+    WM -->|query timestamps| AUTO_LOOP
+
+    %% ── Memory & Pattern ─────────────────────────────────────────────────────
+    ANS_EXTRACT -->|record patterns| ENGRAM
+    ENGRAM --> SPEEDTALK
+    SPEEDTALK -->|prefix_query boost| BEAM
+    ENGRAM -.->|affinity| PATH_SCORE
+    ENGRAM --> ENGRAM_CONS
+    ENGRAM_CONS -->|promote canonical| ENGRAM
+    REL_PRIOR -.->|frequency bonus| PATH_SCORE
+    ANS_EXTRACT --> QUERY_LOG
+    QUERY_LOG -->|replay on restart| ENGRAM
+    NX_ADAPT --> GRAPH_SNAP
+
+    %% ── Self-Organization ────────────────────────────────────────────────────
+    REM -->|SYNAPTIC_PRUNE| TEL_BRIDGE
+    REM --> SYN_PRUNE
+    SYN_DECAY -->|weight delta| NX_ADAPT
+    SYN_PRUNE -->|remove edges| NX_ADAPT
+    SYN_PRUNE --> PROV_LED
+    REBALANCER -.->|drift trigger| COMM_ENG
+    REBALANCER -.->|prune stale hook| BRIDGE_TWIN
+    BRIDGE_TWIN -->|relay edges| NX_ADAPT
+    GRAPH_BRIDGE -->|bridge edges| NX_ADAPT
+    DMN -->|auto-push| GOAL_STACK
+    AUTO_LOOP -->|homeostasis goals| GOAL_STACK
+
+    %% ── Research Pipeline ────────────────────────────────────────────────────
+    INSIGHT -->|novel seeds| CAND_REG
+    META_INSIGHT -->|2nd-order seeds| INSIGHT
+    RES_AGENT --> CAND_REG
+    DISC_CAL -->|weight boost| CAND_REG
+    CAND_REG --> HYPO_ENG
+    HYPO_ENG --> TRIANG
+    EXT_VAL -->|literature_status| TRIANG
+    TRIANG --> EXT_VAL
+    TRIANG --> CONTRA_RES
+    CONTRA_RES --> AUTO_APP
+    INF_VAL -->|bilateral check| RES_AGENT
+    TRANSITIVE --> NX_ADAPT
+    AUTO_APP --> AUTO_LOOP
+    AUTO_LOOP -->|approved edges| PROV_LED
+    AUTO_LOOP -.->|circuit breaker rollback| PROV_LED
+    PROV_LED -.->|rollback| REM
+    DISC_CAL -->|adaptive cap + interval| AUTO_LOOP
+    AUTO_APP -->|materialize| NX_ADAPT
+    AUTO_APP -->|SYNAPTOGENESIS| TEL_BRIDGE
+    HYPO_ENG -->|materialize| NX_ADAPT
+
+    %% ── Consensus & Federated ────────────────────────────────────────────────
+    LOOPED_BEAM --> MULTI_STRAT
+    MULTI_STRAT --> CONSENSUS_H
+    CONSENSUS_H -->|L2 cross-node verify| REMOTE_ADAPT
+    CONSENSUS_H -->|L3 literature gold| EXT_VAL
+
+    %% ── Adaptive Learning ────────────────────────────────────────────────────
+    ANS_EXTRACT -->|path + reward| META_LEARN
+    META_LEARN -->|per-community params| CSA_ENG
+    META_LEARN -->|buffer pairs| PARAM_LEARN
+    PARAM_LEARN -->|global prior| CSA_ENG
+
+    %% ── Optional Extensions ──────────────────────────────────────────────────
+    STUDIO -.->|attach| RES_AGENT
+    STUDIO -.->|attach| CHEM_MOD
+    STUDIO -.->|attach| AUTO_LOOP
+    STUDIO -.->|attach| PROV_LED
+    CONV_MGR -->|entity trail seeds| BEAM
+    TEXT_ING --> NX_ADAPT
+    ANS_EXTRACT --> LLM_BRIDGE
+    LLM_BRIDGE -->|GenerationResult| REST_API
+    PEER_DISC --> NEURAL_COUP
+    NEURAL_COUP --> REMOTE_ADAPT
+
+    %% ── Telemetry ────────────────────────────────────────────────────────────
+    BEAM -->|SYNAPTIC_PULSE per hop| TEL_BRIDGE
+    TEL_BRIDGE --> NEURAL_EVT
+    NEURAL_EVT --> UE5_PLUGIN
+    UE5_PLUGIN --> ACB
+    ACB -->|REST GET /graph/edges pre-load| REST_API
+    UE5_CMD -->|NeuralCommand| TEL_BRIDGE
+    CHEM_MOD -->|FLUX event| TEL_BRIDGE

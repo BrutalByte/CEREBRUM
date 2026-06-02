@@ -1,0 +1,2671 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Crystal-box knowledge graph reasoning — traceable, deterministic, zero hallucination">
+      
+      
+      
+        <link rel="canonical" href="https://brutalbyte.github.io/CEREBRUM/concepts/hyperparameter-analysis/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Hyperparameter Sensitivity Analysis for CEREBRUM MetaQA 3-Hop Beam Traversal - CEREBRUM</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config",""),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#hyperparameter-sensitivity-analysis-for-cerebrum-metaqa-3-hop-beam-traversal" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="CEREBRUM" class="md-header__button md-logo" aria-label="CEREBRUM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CEREBRUM
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Hyperparameter Sensitivity Analysis for CEREBRUM MetaQA 3-Hop Beam Traversal
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/BrutalByte/CEREBRUM" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BrutalByte/CEREBRUM
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/quickstart/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../crystal-box/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../connectors/overview/" class="md-tabs__link">
+          
+  
+  
+  Data Connectors
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../sdk/python/" class="md-tabs__link">
+          
+  
+  
+  SDK Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../integrations/langchain/" class="md-tabs__link">
+          
+  
+  
+  Integrations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/overview/" class="md-tabs__link">
+          
+  
+  
+  REST API
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deployment/docker/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/architecture/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="CEREBRUM" class="md-nav__button md-logo" aria-label="CEREBRUM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    CEREBRUM
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/BrutalByte/CEREBRUM" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BrutalByte/CEREBRUM
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/first-kb/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First KB
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../crystal-box/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Crystal-Box Reasoning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../crystal-box-whitepaper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Crystal-Box Whitepaper
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How CEREBRUM Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Connectors
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Data Connectors
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/csv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CSV
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/sql/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/parquet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parquet & Arrow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/graph-databases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Neo4j & Neptune
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDK Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    SDK Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sdk/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python SDK
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sdk/typescript/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TypeScript SDK
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/langchain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LangChain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/llamaindex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LlamaIndex
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/jupyter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jupyter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    REST API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/endpoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compliance Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/multi-tenant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Tenant API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/hardware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#abstract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Abstract
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-methodology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Methodology
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Methodology">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-system-description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 System Description
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-search-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Search Space
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-optimization-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Optimization Protocol
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-fanova-importance-estimation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 fANOVA Importance Estimation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Results
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Results">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-best-configurations-by-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Best Configurations by Run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-fanova-parameter-importance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 fANOVA Parameter Importance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-overfitting-as-a-function-of-sample-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Overfitting as a Function of Sample Size
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-key-findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Key Findings
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Key Findings">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-1-terminal-relation-boost-is-the-primary-determinant-of-3-hop-h1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding 1: Terminal Relation Boost Is the Primary Determinant of 3-Hop H@1
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finding-2-first-hop-relation-boost-was-a-significant-undiscovered-parameter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding 2: First-Hop Relation Boost Was a Significant Undiscovered Parameter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finding-3-release-year-questions-exhibit-structural-path-consistency-asymmetry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding 3: Release Year Questions Exhibit Structural Path-Consistency Asymmetry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finding-4-beam-width-has-negligible-impact-on-h1-in-this-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding 4: Beam Width Has Negligible Impact on H@1 in This Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#finding-5-500-question-samples-are-insufficient-for-reliable-11-parameter-tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding 5: 500-Question Samples Are Insufficient for Reliable 11-Parameter Tuning
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-implications-for-future-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Implications for Future Work
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Conclusion
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="hyperparameter-sensitivity-analysis-for-cerebrum-metaqa-3-hop-beam-traversal">Hyperparameter Sensitivity Analysis for CEREBRUM MetaQA 3-Hop Beam Traversal</h1>
+<p><strong>Document type:</strong> Scientific analysis<br />
+<strong>Benchmark:</strong> MetaQA 3-hop (14,274 questions)<br />
+<strong>Metric:</strong> H@1 (Hits@1 — correct answer at rank 1)<br />
+<strong>Optimization method:</strong> Optuna TPE with fANOVA importance estimation<br />
+<strong>CEREBRUM version at time of study:</strong> Phases 196–198</p>
+<hr />
+<h2 id="abstract">Abstract</h2>
+<p>We present a systematic hyperparameter sensitivity analysis for the CEREBRUM beam traversal scoring system evaluated on the MetaQA 3-hop benchmark. Using the Tree-structured Parzen Estimator (TPE) sampler in Optuna across four independent optimization runs, we searched 11 scoring parameters and computed functional ANOVA (fANOVA) importance scores to quantify each parameter's marginal contribution to H@1 variance. The dominant finding is that <code>trb_factor</code> (Terminal Relation Boost) accounts for 60.2% of explained H@1 variance — more than all other parameters combined — with an apparent optimum above the tested search ceiling of 8.0. A previously unused parameter, <code>fhrb_factor</code> (First-Hop Relation Boost), was discovered to be the second most important parameter at 10.7% importance, despite being set to 0.0 in all prior evaluations. We further identify a structural asymmetry in release-year questions caused by an incompatible r3→r2 path-consistency template, and demonstrate that beam width — conventionally treated as a primary KGQA tuning target — explains only 0.4% of performance variance in this architecture. These results provide a principled basis for prioritizing future engineering effort and establishing recommended parameter values for downstream users of the CEREBRUM framework.</p>
+<hr />
+<h2 id="1-introduction">1. Introduction</h2>
+<p>Knowledge graph question answering (KGQA) systems that perform multi-hop beam traversal over entity-relation graphs involve numerous scoring decisions at each traversal hop. For CEREBRUM, the scoring function at each candidate accumulates contributions from path-consistency rewards, type-alignment boosts, vote convergence, hub-entity penalties, and diversity bonuses. With 11 tunable parameters, manual grid search is computationally intractable, and the interactions between parameters make intuitive tuning unreliable.</p>
+<p>The MetaQA 3-hop benchmark provides 14,274 questions requiring traversal across exactly three relation hops in the MovieLens-derived knowledge graph. The primary metric, H@1, measures the fraction of questions for which the correct answer entity appears at rank 1 in the scored candidate list. The 3-hop variant is substantially harder than 1-hop or 2-hop variants due to the compounding effect of traversal errors and the larger candidate spaces at each intermediate hop.</p>
+<p>Prior to this study, CEREBRUM had been tuned by hand or by coarse grid search, with several parameters — most notably <code>fhrb_factor</code> — held at zero because they had not yet been incorporated into the search space. This analysis was motivated by the need to (1) quantify which parameters actually drive 3-hop accuracy, (2) determine reliable operating values that generalize beyond a small evaluation sample, and (3) identify structural weaknesses in the current scoring design that explain systematic failure modes.</p>
+<hr />
+<h2 id="2-methodology">2. Methodology</h2>
+<h3 id="21-system-description">2.1 System Description</h3>
+<p>CEREBRUM performs beam search over a knowledge graph, retaining a fixed-width set of candidate entities at each hop. At the conclusion of traversal, candidates are ranked by a composite score that integrates the following components:</p>
+<ul>
+<li><strong>Terminal Relation Boost (TRB):</strong> A multiplicative boost applied to candidates whose last traversal hop matched the detected answer-type relation (e.g., <code>directed_by</code> for director questions).</li>
+<li><strong>Path-consistency boost (r2_boost):</strong> A reward for candidates whose best path passes through the expected hop-2 relation, as determined by an r3→r2 template map derived from training data.</li>
+<li><strong>Vote convergence weight:</strong> Controls how aggressively agreement across multiple traversal paths amplifies candidate scores.</li>
+<li><strong>IDF penalty:</strong> Penalizes hub entities that appear as correct answers for many training questions, reducing over-prediction of high-frequency entities.</li>
+<li><strong>Branch diversity bonus:</strong> A log(branch_count) reward for candidates reached via multiple independent traversal branches.</li>
+<li><strong>First-Hop Relation Boost (FHRB):</strong> Boosts entities at hop-1 whose connecting relation matches the detected first-hop relation type, biasing the beam toward structurally relevant paths from the first step.</li>
+<li><strong>Per-relation r2 overrides:</strong> Separate r2_boost values for each of the four major relation types (written_by, directed_by, release_year, starred_actors), allowing the path-consistency signal to be calibrated per relation.</li>
+</ul>
+<h3 id="22-search-space">2.2 Search Space</h3>
+<p>The full 11-parameter search space is defined as follows:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Range / Choices</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>trb_factor</code></td>
+<td>Continuous</td>
+<td>[2.0, 8.0]</td>
+<td>Terminal Relation Boost multiplier</td>
+</tr>
+<tr>
+<td><code>r2_boost</code></td>
+<td>Continuous</td>
+<td>[0.0, 10.0]</td>
+<td>Global path-consistency boost</td>
+</tr>
+<tr>
+<td><code>vote_weight</code></td>
+<td>Continuous</td>
+<td>[0.85, 0.99]</td>
+<td>Vote convergence weight</td>
+</tr>
+<tr>
+<td><code>beam_width</code></td>
+<td>Categorical</td>
+<td>{8, 10, 12, 15}</td>
+<td>Candidates retained per hop</td>
+</tr>
+<tr>
+<td><code>idf_weight</code></td>
+<td>Continuous</td>
+<td>[0.0, 0.3]</td>
+<td>Hub-entity IDF penalty</td>
+</tr>
+<tr>
+<td><code>branch_bonus</code></td>
+<td>Continuous</td>
+<td>[0.0, 1.5]</td>
+<td>Branch diversity log-multiplier</td>
+</tr>
+<tr>
+<td><code>fhrb_factor</code></td>
+<td>Continuous</td>
+<td>[0.0, 3.0]</td>
+<td>First-Hop Relation Boost multiplier</td>
+</tr>
+<tr>
+<td><code>wb_r2_boost</code></td>
+<td>Continuous</td>
+<td>[0.0, 10.0]</td>
+<td>r2 override for written_by questions</td>
+</tr>
+<tr>
+<td><code>db_r2_boost</code></td>
+<td>Continuous</td>
+<td>[0.0, 10.0]</td>
+<td>r2 override for directed_by questions</td>
+</tr>
+<tr>
+<td><code>ry_r2_boost</code></td>
+<td>Continuous</td>
+<td>[0.0, 10.0]</td>
+<td>r2 override for release_year questions</td>
+</tr>
+<tr>
+<td><code>sa_r2_boost</code></td>
+<td>Continuous</td>
+<td>[0.0, 10.0]</td>
+<td>r2 override for starred_actors questions</td>
+</tr>
+</tbody>
+</table>
+<p>Note that <code>fhrb_factor</code> and the four per-relation r2 overrides were not present in the Phase 196 (Run 1) search space, which used only the first six parameters.</p>
+<h3 id="23-optimization-protocol">2.3 Optimization Protocol</h3>
+<p>All runs used Optuna's TPE sampler with 15 random warm-up trials before switching to exploitation-driven sampling. TPE models the distribution of high-performing configurations by fitting separate densities over the top quantile (l(x)) and remainder (g(x)) of observed trials, drawing new candidates from the ratio l(x)/g(x).</p>
+<p>Four independent runs were conducted across two phases, varying both sample size and parameter count:</p>
+<table>
+<thead>
+<tr>
+<th>Run</th>
+<th>Phase</th>
+<th>Sample Size</th>
+<th>Trial Budget</th>
+<th>Parameters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Run 1</td>
+<td>196</td>
+<td>500</td>
+<td>100</td>
+<td>6</td>
+</tr>
+<tr>
+<td>Run 2</td>
+<td>197</td>
+<td>500</td>
+<td>200</td>
+<td>11</td>
+</tr>
+<tr>
+<td>Run 3</td>
+<td>198 (first)</td>
+<td>2000</td>
+<td>100</td>
+<td>11</td>
+</tr>
+<tr>
+<td>Run 4</td>
+<td>198 (second)</td>
+<td>2000</td>
+<td>100</td>
+<td>11</td>
+</tr>
+</tbody>
+</table>
+<p>Sample sizes refer to the number of MetaQA 3-hop questions randomly drawn from the full 14,274-question set for each objective evaluation within Optuna. Full-dataset validation was performed on the configurations from Runs 1 and 2 to quantify overfitting.</p>
+<h3 id="24-fanova-importance-estimation">2.4 fANOVA Importance Estimation</h3>
+<p>Parameter importance scores were computed using <code>optuna.importance.get_param_importances()</code>, which implements the functional ANOVA (fANOVA) method of Hutter et al. (2014). fANOVA fits a random forest over the (hyperparameter configuration, objective score) pairs from all completed trials, then decomposes the predicted performance variance into contributions from each parameter and their interactions. The importance score for parameter i represents the fraction of total predicted variance attributable to marginal changes in that parameter, averaged over all other parameters.</p>
+<p>Importance scores were computed from Run 4, the 2000-sample 11-parameter run, which provides the most reliable signal: a larger sample reduces objective noise, and 100 trials provide sufficient coverage for fANOVA estimation.</p>
+<hr />
+<h2 id="3-results">3. Results</h2>
+<h3 id="31-best-configurations-by-run">3.1 Best Configurations by Run</h3>
+<p>The best-observed configuration from each run, as evaluated on the optimization sample, is summarized below.</p>
+<p><strong>Run 1 (Phase 196 — 6 parameters, 500-sample, 100 trials)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>trb_factor</code></td>
+<td>4.500</td>
+</tr>
+<tr>
+<td><code>r2_boost</code></td>
+<td>4.983</td>
+</tr>
+<tr>
+<td><code>vote_weight</code></td>
+<td>0.9656</td>
+</tr>
+<tr>
+<td><code>beam_width</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>idf_weight</code></td>
+<td>0.011</td>
+</tr>
+<tr>
+<td><code>branch_bonus</code></td>
+<td>0.587</td>
+</tr>
+<tr>
+<td><strong>Sample H@1</strong></td>
+<td><strong>60.80%</strong></td>
+</tr>
+<tr>
+<td><strong>Full-dataset H@1</strong></td>
+<td><strong>56.59%</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Run 2 (Phase 197 — 11 parameters, 500-sample, 200 trials)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>trb_factor</code></td>
+<td>7.605</td>
+</tr>
+<tr>
+<td><code>r2_boost</code></td>
+<td>6.299</td>
+</tr>
+<tr>
+<td><code>vote_weight</code></td>
+<td>0.8907</td>
+</tr>
+<tr>
+<td><code>beam_width</code></td>
+<td>8</td>
+</tr>
+<tr>
+<td><code>idf_weight</code></td>
+<td>0.070</td>
+</tr>
+<tr>
+<td><code>branch_bonus</code></td>
+<td>0.283</td>
+</tr>
+<tr>
+<td><code>fhrb_factor</code></td>
+<td>0.804</td>
+</tr>
+<tr>
+<td><code>wb_r2_boost</code></td>
+<td>5.401</td>
+</tr>
+<tr>
+<td><code>db_r2_boost</code></td>
+<td>5.878</td>
+</tr>
+<tr>
+<td><code>ry_r2_boost</code></td>
+<td>1.313</td>
+</tr>
+<tr>
+<td><code>sa_r2_boost</code></td>
+<td>4.989</td>
+</tr>
+<tr>
+<td><strong>Sample H@1</strong></td>
+<td><strong>62.20%</strong></td>
+</tr>
+<tr>
+<td><strong>Full-dataset H@1</strong></td>
+<td><strong>56.59%</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Run 3 (Phase 198, first — 11 parameters, 2000-sample, 100 trials)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>trb_factor</code></td>
+<td>7.397</td>
+</tr>
+<tr>
+<td><code>r2_boost</code></td>
+<td>3.422</td>
+</tr>
+<tr>
+<td><code>vote_weight</code></td>
+<td>0.9690</td>
+</tr>
+<tr>
+<td><code>beam_width</code></td>
+<td>15</td>
+</tr>
+<tr>
+<td><code>idf_weight</code></td>
+<td>0.026</td>
+</tr>
+<tr>
+<td><code>branch_bonus</code></td>
+<td>0.995</td>
+</tr>
+<tr>
+<td><code>fhrb_factor</code></td>
+<td>0.090</td>
+</tr>
+<tr>
+<td><code>wb_r2_boost</code></td>
+<td>7.219</td>
+</tr>
+<tr>
+<td><code>db_r2_boost</code></td>
+<td>6.007</td>
+</tr>
+<tr>
+<td><code>ry_r2_boost</code></td>
+<td>2.204</td>
+</tr>
+<tr>
+<td><code>sa_r2_boost</code></td>
+<td>8.352</td>
+</tr>
+<tr>
+<td><strong>Sample H@1</strong></td>
+<td><strong>57.25%</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Run 4 (Phase 198, second — 11 parameters, 2000-sample, 100 trials)</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>trb_factor</code></td>
+<td>6.397</td>
+</tr>
+<tr>
+<td><code>r2_boost</code></td>
+<td>3.604</td>
+</tr>
+<tr>
+<td><code>vote_weight</code></td>
+<td>0.8779</td>
+</tr>
+<tr>
+<td><code>beam_width</code></td>
+<td>8</td>
+</tr>
+<tr>
+<td><code>idf_weight</code></td>
+<td>0.024</td>
+</tr>
+<tr>
+<td><code>branch_bonus</code></td>
+<td>0.288</td>
+</tr>
+<tr>
+<td><code>fhrb_factor</code></td>
+<td>0.668</td>
+</tr>
+<tr>
+<td><code>wb_r2_boost</code></td>
+<td>6.202</td>
+</tr>
+<tr>
+<td><code>db_r2_boost</code></td>
+<td>8.257</td>
+</tr>
+<tr>
+<td><code>ry_r2_boost</code></td>
+<td>1.951</td>
+</tr>
+<tr>
+<td><code>sa_r2_boost</code></td>
+<td>6.055</td>
+</tr>
+<tr>
+<td><strong>Sample H@1</strong></td>
+<td><strong>57.60%</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="32-fanova-parameter-importance">3.2 fANOVA Parameter Importance</h3>
+<p>The importance scores computed from Run 4 are shown below. These represent fractional contribution to H@1 variance over the 11-dimensional search space.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Importance Score</th>
+<th>Percent of Total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>trb_factor</code></td>
+<td>0.6017</td>
+<td>60.2%</td>
+</tr>
+<tr>
+<td><code>fhrb_factor</code></td>
+<td>0.1065</td>
+<td>10.7%</td>
+</tr>
+<tr>
+<td><code>sa_r2_boost</code></td>
+<td>0.0619</td>
+<td>6.2%</td>
+</tr>
+<tr>
+<td><code>r2_boost</code></td>
+<td>0.0563</td>
+<td>5.6%</td>
+</tr>
+<tr>
+<td><code>vote_weight</code></td>
+<td>0.0556</td>
+<td>5.6%</td>
+</tr>
+<tr>
+<td><code>wb_r2_boost</code></td>
+<td>0.0349</td>
+<td>3.5%</td>
+</tr>
+<tr>
+<td><code>db_r2_boost</code></td>
+<td>0.0287</td>
+<td>2.9%</td>
+</tr>
+<tr>
+<td><code>idf_weight</code></td>
+<td>0.0283</td>
+<td>2.8%</td>
+</tr>
+<tr>
+<td><code>branch_bonus</code></td>
+<td>0.0119</td>
+<td>1.2%</td>
+</tr>
+<tr>
+<td><code>ry_r2_boost</code></td>
+<td>0.0098</td>
+<td>1.0%</td>
+</tr>
+<tr>
+<td><code>beam_width</code></td>
+<td>0.0043</td>
+<td>0.4%</td>
+</tr>
+</tbody>
+</table>
+<p>The top two parameters, <code>trb_factor</code> and <code>fhrb_factor</code>, together account for 70.9% of total variance. The bottom four parameters (<code>branch_bonus</code>, <code>ry_r2_boost</code>, <code>beam_width</code>, and the implied residual interaction terms) collectively account for less than 3% of variance.</p>
+<h3 id="33-overfitting-as-a-function-of-sample-size">3.3 Overfitting as a Function of Sample Size</h3>
+<p>Full-dataset validation was performed on the best configurations from Runs 1 and 2. The pre-study baseline (default parameters) achieved 56.36% H@1 on the full 14,274-question set.</p>
+<table>
+<thead>
+<tr>
+<th>Run</th>
+<th>Sample H@1</th>
+<th>Full H@1</th>
+<th>Overfitting Gap</th>
+<th>vs. Baseline</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Run 1 (500 sample, 100 trials)</td>
+<td>60.80%</td>
+<td>56.59%</td>
+<td>4.2 pp</td>
+<td>+0.23 pp</td>
+</tr>
+<tr>
+<td>Run 2 (500 sample, 200 trials)</td>
+<td>62.20%</td>
+<td>56.59%</td>
+<td>5.6 pp</td>
+<td>+0.23 pp</td>
+</tr>
+</tbody>
+</table>
+<p>Despite Run 2 reporting a 1.4 pp improvement on its sample over Run 1, both configurations produced identical full-dataset H@1 of 56.59%. The additional 100 trials in Run 2 exclusively reduced the within-sample evaluation noise rather than discovering genuinely superior configurations, and the broader parameter search (11 vs. 6 parameters) offered no generalization benefit at 500-sample resolution. The identical full-dataset outcomes from two substantially different sample-optimal configurations indicate that 500-question samples produce sufficient noise (±~2 pp) for Optuna to identify spuriously high-scoring configurations over extended trial budgets.</p>
+<hr />
+<h2 id="4-key-findings">4. Key Findings</h2>
+<h3 id="finding-1-terminal-relation-boost-is-the-primary-determinant-of-3-hop-h1">Finding 1: Terminal Relation Boost Is the Primary Determinant of 3-Hop H@1</h3>
+<p>The <code>trb_factor</code> parameter, which applies a multiplicative boost to candidates whose final traversal hop matched the detected answer-type relation, accounts for 60.2% of H@1 variance — more than all other 10 parameters combined. This result is unambiguous across both importance estimation and the raw optimization trajectories: Runs 2, 3, and 4 (the three runs with access to the full search range) all converge to values at or near the upper bound of the search space (7.605, 7.397, and 6.397 respectively).</p>
+<p>The interpretation is clear: correctly identifying the answer entity type from the question and then heavily weighting candidates that arrive via a type-consistent final hop is, by a large margin, the most important scoring decision in the system. The convergence toward the search ceiling of 8.0 in three independent runs strongly suggests that the true optimum lies above this bound. The ceiling was set at 8.0 to avoid numerical instability at extreme boost values; future work should evaluate configurations in the [8.0, 12.0] range with care taken to verify score normalization remains stable.</p>
+<p>This finding has a direct architectural implication: any engineering effort aimed at improving 3-hop H@1 that does not address the quality of the answer-type relation detection mechanism is unlikely to be cost-effective relative to addressing TRB.</p>
+<h3 id="finding-2-first-hop-relation-boost-was-a-significant-undiscovered-parameter">Finding 2: First-Hop Relation Boost Was a Significant Undiscovered Parameter</h3>
+<p>The <code>fhrb_factor</code> parameter was not part of the original CEREBRUM scoring design and was held at 0.0 in all evaluations prior to Phase 197. Its role is to bias the beam at hop-1 toward entities reachable via the detected first-hop relation type, effectively providing structural guidance at the earliest stage of traversal rather than only at the final hop (as TRB does).</p>
+<p>fANOVA importance of 10.7% — second only to <code>trb_factor</code> — establishes that this is not a marginal parameter. For a system operating near 57% H@1, a parameter responsible for approximately one-tenth of performance variance represents a substantial latent improvement opportunity. The best-observed values across Runs 3 and 4 (0.090 and 0.668) show more variance than the convergent parameters, suggesting the 2000-sample budget may still be insufficient to fully characterize the FHRB landscape, or that the parameter's effect is partially mediated by question-type distribution in any given sample.</p>
+<p>The practical lesson is that parameters excluded from tuning by design assumption — rather than by measured importance — can conceal significant performance. A complete search over all tuneable parameters at adequate sample size should be treated as a prerequisite before concluding that a system has been well-tuned.</p>
+<h3 id="finding-3-release-year-questions-exhibit-structural-path-consistency-asymmetry">Finding 3: Release Year Questions Exhibit Structural Path-Consistency Asymmetry</h3>
+<p>Across the two independent 2000-sample runs (Runs 3 and 4), all per-relation r2 overrides converged to high values with one consistent exception: <code>ry_r2_boost</code> converged to 2.204 and 1.951, while <code>wb_r2_boost</code>, <code>db_r2_boost</code>, and <code>sa_r2_boost</code> converged to values in the range 6.0–8.4. This 3×–4× difference is not attributable to random variation; the same asymmetry appears in both independent runs.</p>
+<p>The structural explanation is as follows. The r2 boost rewards candidates whose best path passes through the hop-2 relation predicted by the r3→r2 template map. For questions with relation type <code>written_by</code>, <code>directed_by</code>, and <code>starred_actors</code>, the r3→r2 map points to another person-type relation, and the template-predicted hop-2 relation is consistent with the typical path structure (movie → person → [another person relation] → movie). For <code>release_year</code> questions, however, the r3→r2 template maps to <code>has_genre</code>, a structurally distinct relation that connects a movie to a categorical label rather than to a person entity. The path-consistency signal for release-year questions is therefore weaker by design: a high <code>ry_r2_boost</code> would reward passage through a genre hop that is less reliably present in the 3-hop traversal paths leading to year entities.</p>
+<p>This asymmetry is consistent with the Phase 195 diagnostic data, which identified approximately 62% failure rate for release-year questions — substantially worse than other relation types. The appropriate remediation is not continued parameter tuning but rather a redesign of the r3→r2 template for release-year questions, or a dedicated traversal path for year-type answers that does not rely on genre-hop consistency.</p>
+<h3 id="finding-4-beam-width-has-negligible-impact-on-h1-in-this-architecture">Finding 4: Beam Width Has Negligible Impact on H@1 in This Architecture</h3>
+<p><code>beam_width</code> — the number of candidates retained at each traversal hop — explains only 0.4% of H@1 variance and shows no consistent preferred value across runs (the best-observed beam widths were 10, 8, 15, and 8 across Runs 1–4). This finding directly contradicts the conventional assumption in beam-search literature that wider beams improve accuracy by reducing the probability of pruning the correct answer path at intermediate hops.</p>
+<p>Two explanations are consistent with the CEREBRUM architecture. First, the MetaQA knowledge graph has bounded fan-out: most entities connect to a small number of relations, and the key answer entities are reachable via short paths even at beam_width=8. Second, and more importantly, the dominant scoring signal (TRB) operates at the final hop after all intermediate candidates have been accumulated. Even if the correct answer entity is demoted at hop-1 or hop-2 due to a narrower beam, TRB aggressively re-weights it at hop-3 if it arrives via a type-consistent relation. The terminal scoring step partially compensates for pruning errors in intermediate hops, making the width of those intermediate beams relatively inconsequential.</p>
+<p>From a systems engineering perspective, this result has significant implications: the computation cost scales super-linearly with beam_width due to the branching factor of graph traversal. The 0.4% importance score indicates that using beam_width=8 (the minimum tested value) is indistinguishable from beam_width=15 in terms of H@1, while providing a material reduction in traversal cost.</p>
+<h3 id="finding-5-500-question-samples-are-insufficient-for-reliable-11-parameter-tuning">Finding 5: 500-Question Samples Are Insufficient for Reliable 11-Parameter Tuning</h3>
+<p>The complete failure of 500-sample optimization to produce generalizing configurations — both runs yielded identical full-dataset H@1 despite substantially different sample-optimal parameter values — establishes a concrete lower bound on sample size requirements for this parameter count and search space.</p>
+<p>The underlying issue is straightforward. With 11 continuous parameters and a sample of 500 questions, the standard deviation of the H@1 estimator is approximately ±2 pp (estimated from the variance between Run 1 and Run 2 sample H@1 at matched configurations). Over 200 trials, TPE can identify configurations that consistently fall 2–4 pp above the true mean by exploiting favorable question compositions in the fixed sample. These configurations are not better in expectation; they are configurations that happen to be well-matched to the questions that were sampled.</p>
+<p>The 2000-question runs (Runs 3 and 4) show cross-run consistency that the 500-question runs do not. Parameters with stable convergence across both independent 2000-sample runs are:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Run 3 Value</th>
+<th>Run 4 Value</th>
+<th>Cross-Run Difference</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>r2_boost</code></td>
+<td>3.422</td>
+<td>3.604</td>
+<td>0.18</td>
+</tr>
+<tr>
+<td><code>idf_weight</code></td>
+<td>0.026</td>
+<td>0.024</td>
+<td>0.002</td>
+</tr>
+<tr>
+<td><code>ry_r2_boost</code></td>
+<td>2.204</td>
+<td>1.951</td>
+<td>0.25</td>
+</tr>
+</tbody>
+</table>
+<p>These three parameters exhibit within-run variation well below the single-parameter sensitivity threshold and should be treated as reliably determined at their converged values. Parameters with larger cross-run differences (particularly <code>fhrb_factor</code>, <code>wb_r2_boost</code>, <code>sa_r2_boost</code>) require either more trials, a larger sample, or both before their optima can be trusted for deployment.</p>
+<hr />
+<h2 id="5-implications-for-future-work">5. Implications for Future Work</h2>
+<p><strong>Parameter priority.</strong> Given that <code>trb_factor</code> and <code>fhrb_factor</code> together account for 70.9% of H@1 variance, any future tuning study that omits or constrains these parameters will produce results of limited utility. Conversely, studies that do not include <code>beam_width</code> as a free parameter lose essentially nothing in explanatory power.</p>
+<p><strong>Search ceiling extension.</strong> The consistent convergence of <code>trb_factor</code> to the upper bound of its search range (8.0) across three independent runs is strong evidence that the true optimum has not been found. A follow-up study should extend the search range to at least [8.0, 15.0] while verifying that extreme TRB values do not produce score overflow or degenerate rankings for questions where TRB is not applicable (i.e., questions where the detected answer-type relation is uncertain or absent).</p>
+<p><strong>Release year path redesign.</strong> The <code>ry_r2_boost</code> asymmetry and associated diagnostic failure rate point to a structural flaw in the r3→r2 template for year-type answers. A dedicated hop-2 consistency mechanism for release-year questions — one that does not rely on genre-hop passage — is likely to produce a larger H@1 gain for this question type than any amount of parameter tuning can achieve within the current scoring framework.</p>
+<p><strong>FHRB characterization.</strong> The relatively high cross-run variance in <code>fhrb_factor</code> (0.090 vs. 0.668) despite its high importance warrants further investigation. The FHRB mechanism boosts hop-1 candidates based on first-hop relation detection, and the reliability of this detection may vary across question types and phrasings. A diagnostic breakdown of FHRB effect by relation type (analogous to the Phase 195 per-relation failure analysis) would clarify whether the inconsistency reflects genuine per-question-type variation or simply insufficient sample coverage.</p>
+<p><strong>Sample size scaling.</strong> Extending the Optuna sample from 2000 to 4000–5000 questions would further reduce estimator variance and should enable stable identification of parameters currently showing cross-run inconsistency (<code>fhrb_factor</code>, <code>wb_r2_boost</code>, <code>sa_r2_boost</code>). The marginal cost of doubling the sample is bounded by the evaluation cost per question, which for CEREBRUM's inference mode is low relative to trial overhead.</p>
+<hr />
+<h2 id="6-conclusion">6. Conclusion</h2>
+<p>This study provides the first systematic parameter sensitivity analysis for the CEREBRUM beam traversal scoring system on the MetaQA 3-hop benchmark. The central finding is that answer-type relation alignment — instantiated via <code>trb_factor</code> at the final traversal hop — is the dominant driver of H@1 accuracy, accounting for 60.2% of performance variance. A previously excluded parameter, <code>fhrb_factor</code>, was found to be the second most important parameter, underscoring the cost of excluding parameters from tuning on assumption rather than evidence.</p>
+<p>Three parameters converge reliably across independent 2000-sample runs and can be treated as well-determined: <code>r2_boost</code> ≈ 3.5, <code>idf_weight</code> ≈ 0.025, and <code>ry_r2_boost</code> ≈ 2.0. The suppressed value of <code>ry_r2_boost</code> relative to other per-relation r2 overrides reflects a structural incompatibility in the hop-2 template map for release-year questions, which connects through a genre relation rather than a person relation, and is not a tuning artifact.</p>
+<p><code>beam_width</code> contributes negligibly to H@1 variance in this architecture, suggesting that the terminal relation boost's role in recovering pruned candidates at the final hop partially compensates for intermediate beam narrowing. This has a practical implication: beam_width=8 should be preferred for production deployments to minimize traversal cost without measurable accuracy degradation.</p>
+<p>Future work should prioritize extending the <code>trb_factor</code> search ceiling, redesigning the release-year path-consistency mechanism, and conducting FHRB characterization by relation type. The parameter rankings and convergent values documented here provide a principled starting point for all subsequent tuning and architectural modifications to the CEREBRUM scoring system.</p>
+<hr />
+<p><em>Analysis conducted during CEREBRUM development Phases 196–198. fANOVA importance computed via Optuna's built-in importance estimator using the random forest surrogate model.</em></p>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

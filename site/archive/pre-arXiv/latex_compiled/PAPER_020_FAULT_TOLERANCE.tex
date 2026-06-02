@@ -1,0 +1,170 @@
+\section{Five Fault-Tolerance Patterns for Production Knowledge Graph Reasoning Servers}
+
+\textbf{Author}: Bryan Alexander Buchorn  
+\textbf{Affiliation}: Independent Researcher, Las Vegas, NV, USA  
+\textbf{Status}: v2.52.0 (Phase 172 (STRB) COMPLETE)
+\textbf{Date}: May 2, 2026
+
+---
+
+\subsubsection{Abstract}
+Production Knowledge Graph reasoning servers face five distinct failure classes: traversal failures mid-hop, persistence write failures during query logging, stream inter\-ruptions visible to connected clients, process spawning failures during community detection, and state loss across server restarts. We document five corre\-sponding fault-tolerance patterns implemented in CEREBRUM v2.52.0 (Phases 56–57): \textbf{partial-result HTTP 200 degradation} (\texttt{QueryResponse.partial}, \texttt{\_partial\_paths}), \textbf{write-failure isolation} (QueryLog, Engram, GlobalRebalancer worker), \textbf{streaming error signalling} (terminal NDJSON error chunk), \textbf{ProcessPoolExecutor sequential fallback} (\texttt{best\_of\_n\_dscf}), and \textbf{durable Engram persistence} (save/load/two-tier startup). Together, these patterns guarantee that no single failure class can crash a running CEREBRUM server, corrupt an in-flight query, or silently drop accumulated reasoning experience. Each pattern is backward-compatible and adds no new required parameters to existing APIs.
+
+\subsubsection{1. Introd\-uction}
+Production distributed systems face a fundamental asymmetry: failures are rare but their conse\-quences are dispr\-oportionate. A single traversal crash that returns HTTP 500 may abort a client's multi-step reasoning workflow. A disk-full condition that propagates from a log write to a query response degrades system avail\-ability unnec\-essarily. A stream client that receives a TCP disconnect mid-stream has no way to distinguish a deliberate completion from a server crash.
+
+Lamport \cite{lamport1978} established that distributed systems cannot distinguish a crashed component from a slow one without timeouts. Bernstein \& Goodman \cite{bernstein1983} formalized concurrency control as the discipline of maintaining database consistency in the presence of concurrent failures. CEREBRUM's fault tolerance archi\-tecture applies these principles to the specific failure modes of a KG reasoning server: it identifies the five failure classes, bounds their blast radius, and provides clients with the information they need to recover gracefully.
+
+This paper documents the five failure classes, the pattern applied to each, and the invariant each pattern preserves.
+
+\subsubsection{2. Pattern 1 — Partial-Result HTTP 200 (Phase 56)}
+
+\textbf{Failure class}: Traversal failure mid-hop.
+
+\textbf{Scenario}: \texttt{BeamTraversal.traverse()} completes hops 1–3 succe\-ssfully but raises an exception at hop 4. Without inter\-vention, the exception propagates to the FastAPI route handler, which returns HTTP 500. The client receives no answers, even though three hops of valid reasoning were completed.
+
+\textbf{Pattern}: \texttt{BeamTraversal} maintains a \texttt{\_partial\_paths: List[Path]} list. After each hop completes, the current best paths are check\-pointed into \texttt{\_partial\_paths}. If a later hop raises, the exception is caught by the route handler and \texttt{\_partial\_paths} is returned as the answer set.
+
+\texttt{QueryResponse} gains two optional fields:
+\begin{itemize}
+\item \texttt{partial: bool = False} — set to \texttt{True} when the response contains partial rather than full results.
+\item \texttt{error: Optional[str] = None} — the exception message, for client-side logging and retry decisions.
+
+\end{itemize}
+The route handler returns HTTP 200 in both cases. Clients distinguish partial from full results by checking \texttt{response.partial}, not by parsing HTTP status codes.
+
+\textbf{Invariant preserved}: A traversal failure never returns fewer results than the last completed hop. Clients always receive the best available answer, with explicit metadata indicating whether the result is complete.
+
+\subsubsection{3. Pattern 2 — Write Failure Isolation (Phase 56)}
+
+\textbf{Failure class}: Persistence write failures during query logging.
+
+\textbf{Scenario}: \texttt{QueryLog.record()} or \texttt{Engram.record()} raises \texttt{OSError} (disk full) or \texttt{MemoryError} (OOM) during a live query. Without isolation, the exception propagates from the write call to the query route handler, converting a persistence failure into a query failure.
+
+\textbf{Pattern}: All write calls in the hot query path are wrapped in \texttt{try/except Exception}:
+
+\begin{lstlisting}
+try:
+    query_log.record(seeds, answers, rel_seq)
+except Exception as exc:
+    logger.warning("QueryLog write failed: %s", exc)
+\end{lstlisting}
+
+The exception is logged at WARNING (not ERROR, since it does not affect the query result) and swallowed. The query response proceeds normally.
+
+A parallel isolation is applied to \texttt{GlobalRebalancer}: \texttt{\_rebalance\_worker\_inner()} is extracted as a separate method containing the actual rebalance work. The outer \texttt{\_rebalance\_worker()} calls \texttt{\_rebalance\_worker\_inner()} inside \texttt{try/except} and logs any exception at ERROR. This prevents an exception in the rebalance algorithm from crashing the rebalancer thread silently — it is logged and the thread remains alive for the next scheduled rebalance.
+
+\textbf{Invariant preserved}: A write failure never degrades query avail\-ability. The persistence layer is a best-effort side channel, not a reliability dependency for core reasoning.
+
+\subsubsection{4. Pattern 3 — Stream Error Signalling (Phase 57)}
+
+\textbf{Failure class}: Stream inter\-ruptions visible to connected clients.
+
+\textbf{Scenario}: A client connects to \texttt{/query/stream} and begins receiving NDJSON hop chunks. The traversal raises mid-stream. Without inter\-vention, the HTTP response stream closes with a TCP disconnect. The client cannot distinguish this from a deliberate end-of-stream.
+
+\textbf{Pattern}: The async generator that implements \texttt{/query/stream} wraps the traversal loop in \texttt{try/except}:
+
+\begin{lstlisting}
+try:
+    async for chunk in traversal.traverse_stream(seeds):
+        yield json.dumps(chunk) + "\n"
+except Exception as exc:
+    yield json.dumps({
+        "status": "error",
+        "partial": True,
+        "error": str(exc)
+    }) + "\n"
+\end{lstlisting}
+
+The terminal error chunk is a valid NDJSON line. Clients that parse the stream line-by-line can detect failure by checking \texttt{chunk["status"] == "error"} on the final line, without inspecting HTTP trailers or catching TCP exceptions.
+
+\textbf{Invariant preserved}: Stream clients always receive an explicit terminal signal, whether the traversal completed normally or failed. The distinction between completion and failure is always observable from stream content alone.
+
+\subsubsection{5. Pattern 4 — ProcessPoolExecutor Sequential Fallback (Phase 57)}
+
+\textbf{Failure class}: Process spawning failures during parallel community detection.
+
+\textbf{Scenario}: \texttt{best\_of\_n\_dscf} uses a \texttt{ProcessPoolExecutor} to run multiple DSCF community detection trials in parallel. On Windows hosts with restricted paging file sizes, or on containers with \texttt{fork()} restr\-ictions, \texttt{ProcessPoolExecutor} submission raises \texttt{BrokenProcessPool} or \texttt{concurrent.futures.BrokenExecutor}. Without fallback, server startup fails.
+
+\textbf{Pattern}: The \texttt{ProcessPoolExecutor} block is wrapped in \texttt{try/except}:
+
+\begin{lstlisting}
+try:
+    with ProcessPoolExecutor() as executor:
+        results = list(executor.map(dscf_communities, configs))
+except Exception as exc:
+    logger.warning("ProcessPoolExecutor failed (%s); falling back to sequential", exc)
+    results = [dscf_communities(cfg) for cfg in configs]
+\end{lstlisting}
+
+Sequential execution is slower but produces identical results. The WARNING log makes the fallback observable in the \texttt{/logs} endpoint without surfacing as an error to the client.
+
+\textbf{Invariant preserved}: Server startup succeeds on any host that can run Python, regardless of process spawning constraints.
+
+\subsubsection{6. Pattern 5 — Durable Engram Persistence (Phase 57)}
+
+\textbf{Failure class}: State loss across server restarts.
+
+\textbf{Scenario}: The \texttt{Engram} accumulates relation-sequence success counts during a server run. On planned or unplanned shutdown, these counts are lost. The next server run starts with a cold cache, discarding all learned reasoning experience.
+
+\textbf{Pattern}: \texttt{Engram} implements \texttt{save(path)} / \texttt{load(path)} / \texttt{save\_if\_path(path)}:
+
+\begin{itemize}
+\item \texttt{save(path)}: Serializes \texttt{\_counts} as \texttt{[[seq\_tuple, count], ...]} inside a \texttt{{"version": 1, ...}} JSON envelope.
+\item \texttt{load(path)}: Deseri\-alizes and restores \texttt{\_counts}; recomputes \texttt{\_max\_count} from the loaded values.
+\item \texttt{save\_if\_path(path)}: Null-safe wrapper — silently returns if \texttt{path is None}.
+
+\end{itemize}
+The FastAPI lifespan context manager integrates persistence:
+
+\begin{lstlisting}
+@asynccontextmanager
+async def lifespan(app):
+    # Startup: two-tier warm-up
+    engram.load(cache_path)               # Tier 1: saved JSON
+    query_log.replay_into_cache(engram)   # Tier 2: QueryLog entries
+    try:
+        yield
+    finally:
+        engram.save_if_path(cache_path)   # Shutdown: persist counts
+\end{lstlisting}
+
+The \texttt{try/finally} in the lifespan guarantees that \texttt{save\_if\_path} is called even on unhandled exceptions during the application lifetime. Save failures are isolated with \texttt{try/except} and logged at WARNING.
+
+\textbf{Invariant preserved}: No productive reasoning trace is lost across planned restarts. On unplanned restarts, at most the traces since the last explicit \texttt{save()} call are lost — bounded by the QueryLog replay that closes this gap at the next startup.
+
+\subsubsection{7. Fault-Tolerance Taxonomy}
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Pattern & Failure Class & Blast Radius Without Pattern & Invariant Preserved \\ \hline
+Partial-Result HTTP 200 & Traversal failure mid-hop & HTTP 500, zero answers & Best available answers always returned \\ \hline
+Write Failure Isolation & Disk-full / OOM during logging & HTTP 500, query aborted & Write failures never degrade query avail\-ability \\ \hline
+Stream Error Signalling & Traversal failure mid-stream & Silent TCP disconnect & Stream failure always explicitly signalled \\ \hline
+ProcessPoolExecutor Fallback & Process spawn failure at startup & Server fails to start & Startup succeeds on any Python-capable host \\ \hline
+Engram Persistence & Server restart & All learned patterns lost & Productive traces survive planned restarts \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+The five patterns are orthogonal: each addresses a distinct failure class and can be applied indep\-endently. Together, they provide defense-in-depth against the full set of operational failure modes observed in production KG reasoning deployments.
+
+\subsubsection{8. Conclusion}
+Fault tolerance in production systems is not a single feature but a taxonomy of patterns, each matched to a specific failure class and preserving a specific invariant. The five patterns documented here — partial-result degradation, write-failure isolation, stream error signalling, executor fallback, and durable cache persistence — together ensure that no single operational failure can crash a CEREBRUM server, corrupt an in-flight query, or silently discard accumulated reasoning experience. All five are backward-compatible with existing APIs and add no new required confi\-guration. They represent the engineering discipline that disti\-nguishes a research prototype from a production-ready system.
+
+---
+\subsection{Acknow\-ledgments}
+
+The author gratefully ackno\-wledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathe\-matical forma\-lization, code generation, manuscript preparation, and technical writing. All conceptual contr\-ibutions, archi\-tectural decisions, exper\-imental design, and intel\-lectual claims are solely the author's.
+
+\textbf{References}
+\begin{enumerate}
+\item Lamport, L. (1978). Time, Clocks, and the Ordering of Events in a Distributed System. Commun\-ications of the ACM, 21(7), 558–565.
+\item Bernstein, P. A., \& Goodman, N. (1983). Multiv\-ersion Concurrency Control — Theory and Algorithms. ACM Transa\-ctions on Database Systems, 8(4), 465–483.
+\item Vaswani, A., et al. (2017). Attention is All You Need. NIPS.
+
+\end{enumerate}
+---
+\textbf{Reviewed on}: May 2, 2026 for version v2.52.0

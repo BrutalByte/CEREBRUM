@@ -1,0 +1,363 @@
+\section{PAPER 021 — SpeedTalk-Compressed Engram: Phonemic Encoding for Relation-Pattern Caches}
+
+\textbf{Series:} CEREBRUM Technical Report Series  
+\textbf{Paper:} 021 of 100  
+\textbf{Status}: v2.52.0 (Phase 172 (STRB) COMPLETE)
+\textbf{Date}: May 2, 2026
+\textbf{Author}: Bryan Alexander Buchorn  
+\textbf{Affiliation}: Independent Researcher, Las Vegas, NV, USA  
+
+---
+
+\subsection{Abstract}
+
+We introduce \textbf{SpeedTalk encoding}, a Heinlein-inspired phonemic compression layer
+for CEREBRUM's Engram relation-pattern cache.  In Robert Heinlein's \textit{Gulf} (1949) and
+\textit{Friday}, SpeedTalk assigns every primitive concept a single phoneme, reducing complex
+utterances to compact sound sequences while preserving full semantic fidelity.  We
+apply this principle directly to knowledge-graph reasoning: each distinct relation type
+in a KG is assigned a single character from a 62-symbol alphabet, and multi-hop
+relation sequences are stored as compact strings rather than verbose Python tuples.
+The encoding is \textbf{lossless} (every string decodes back to the exact original sequence),
+preserves \textbf{prefix structure} (a string prefix corresponds exactly to a relation-
+sequence prefix), and achieves \textbf{8–14$\times$ key compression} on typical medical and
+scientific KGs.  More importantly, the prefix-preserving property unlocks a new
+first-class capability: \textbf{prefix queries} — the ability to retrieve all cached
+reasoning chains that begin with a given relation type or sub-sequence in O(P)
+time without full-scan indexing.
+
+---
+
+\subsection{1. Motivation}
+
+\subsubsection{1.1 The Engram Cache (Phase 55 Recap)}
+
+CEREBRUM's Engram cache records the
+relation-type sequences of successful reasoning paths and uses them to bias beam
+pruning on subsequent queries.  A successful 3-hop path through a biomedical KG might
+contribute the entry:
+
+\begin{lstlisting}
+("CAUSES", "TREATS", "PREVENTS")  →  count: 7
+\end{lstlisting}
+
+On the next query, when the beam traversal encounters a candidate whose first hop
+produces a \texttt{CAUSES} edge, the cache looks up the prefix \texttt{("CAUSES",)} and returns
+an affinity score that boosts the candidate's effective score:
+
+\begin{lstlisting}
+s_eff = s · (1 + λ · affinity)
+\end{lstlisting}
+
+The cache is persisted to JSON across restarts (Phase 55 / Paper 018) so that
+learned patterns survive process boundaries.
+
+\subsubsection{1.2 The Storage Problem}
+
+In a production biomedical KG with 60–80 distinct relation types and 3–6-hop paths,
+the cache keys grow verbose:
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Repres\-entation & Example key & Characters \\ \hline
+Python tuple & \texttt{"('CAUSES', 'TREATS', 'PREVENTS')"} & 35 \\ \hline
+SpeedTalk encoded & \texttt{"ctp"} & 3 \\ \hline
+Compression ratio & — & \textbf{11.7$\times$} \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+At 10,000 cached patterns (a realistic ceiling for a long-running research system),
+the JSON file shrinks from ~3.5 MB to ~300 KB.  More critically, the Engram prefix
+index (which mirrors the full count dictionary for all sub-prefixes) also compresses
+by the same ratio, reducing RAM usage for the in-memory index.
+
+\subsubsection{1.3 The Prefix Query Gap}
+
+The plain-tuple \texttt{Engram} stores sequences as dictionary keys.  Looking up whether
+any cached pattern \textit{starts with} a given relation requires scanning all keys — O(N).
+SpeedTalk encoding eliminates this gap: because each character encodes exactly one
+relation, a string prefix corresponds exactly to a relation-sequence prefix, and
+\texttt{str.startswith()} becomes a natural O(P) test.  This enables a new analytical
+primitive: \textbf{"what are all known productive chains that begin with this relation?"}
+
+---
+
+\subsection{2. SpeedTalk Encoding Design}
+
+\subsubsection{2.1 The Alphabet}
+
+CEREBRUM SpeedTalk uses a 62-character base alphabet:
+
+\begin{lstlisting}
+a–z  (26 lowercase)
+A–Z  (26 uppercase)
+0–9  (10 digits)
+\end{lstlisting}
+
+This covers any realistic KG relation vocabulary.  For KGs with more than 62
+distinct relation types, overflow symbols use a null-delimited integer notation
+(\texttt{\textbackslash x00N\textbackslash x00}), which is transparent to all public API callers.
+
+\subsubsection{2.2 Frequency-Ordered Assignment (Tier-2 SpeedTalk)}
+
+The base encoding (Tier 1) assigns characters in encounter order: the first relation
+type seen gets \texttt{'a'}, the second \texttt{'b'}, and so on.  This is sufficient for
+compression and prefix semantics.
+
+Tier 2 implements the true Heinlein principle: \textit{}common concepts receive the most
+economical repre\-sentation\textit{}.  Given a frequency map \texttt{{relation: count}}, the encoder
+reorders so that the most-used relation gets \texttt{'a'}, the second-most-used gets \texttt{'b'},
+and so on.  This maximises the information density of every cache key — short strings
+encode the most-traversed reasoning chains.
+
+\begin{lstlisting}
+encoder = SpeedTalkEncoder()
+encoder.build_frequency_order({
+    "CAUSES": 1024,
+    "TREATS": 512,
+    "ASSOCIATED_WITH": 200,
+    "INHIBITS": 88,
+})
+# Now: encoder.encode(["CAUSES"]) → "a"
+#      encoder.encode(["CAUSES", "TREATS"]) → "ab"
+\end{lstlisting}
+
+Frequency reordering is applied at startup before the cache is populated, so all
+stored strings remain consistent within a session.  Across restarts, the encoder
+state is persisted alongside the cache (JSON, \texttt{version: 2} format).
+
+\subsubsection{2.3 Prefix Preser\-vation Property}
+
+\textbf{Theorem (informal):} For any two relation sequences \textit{S} and \textit{T} where \textit{S} is a
+prefix of \textit{T}, \texttt{encode(S)} is a string prefix of \texttt{encode(T)}.
+
+\textbf{Proof sketch:} \texttt{encode()} maps each element of the input sequence to exactly one
+character via \texttt{\_intern()}, then conca\-tenates in order.  Because there is a bijection
+between positions in the input sequence and positions in the output string, any input
+prefix of length \textit{k} maps to an output prefix of length \textit{k}.  ∎
+
+This property is what makes prefix queries exact and efficient.
+
+---
+
+\subsection{3. SpeedTalkEngram}
+
+\texttt{SpeedTalkEngram} wraps the \texttt{SpeedTalkEncoder} into a drop-in replacement for
+\texttt{Engram}.  The internal \texttt{\_counts} and \texttt{\_prefix} dicti\-onaries store \textit{}encoded
+strings\textit{} as keys rather than tuples, but the public API accepts and returns
+\textbf{raw relation-type strings} — encoding and decoding are transparent to callers.
+
+\subsubsection{3.1 Core Operations}
+
+\begin{lstlisting}
+cache = SpeedTalkEngram()
+
+# Record a successful path (raw relation names)
+cache.record(("CAUSES", "TREATS", "PREVENTS"), weight=5)
+
+# Affinity lookup (same semantics as Engram)
+score = cache.affinity(("CAUSES", "TREATS"))   # → 0.0–1.0
+
+# Inspect learned vocabulary
+cache.alphabet()
+# → {"CAUSES": "a", "TREATS": "b", "PREVENTS": "c"}
+
+# Compression metrics
+cache.compression_stats()
+# → {"vocab_size": 3, "total_patterns": 1,
+#    "avg_encoded_len": 3.0, "avg_tuple_len": 35.0,
+#    "compression_ratio": 11.7}
+\end{lstlisting}
+
+\subsubsection{3.2 Prefix Queries}
+
+\begin{lstlisting}
+cache.record(("CAUSES", "TREATS"), weight=10)
+cache.record(("CAUSES", "INHIBITS", "PREVENTS"), weight=3)
+cache.record(("ASSOCIATED_WITH",), weight=7)
+
+cache.prefix_query("CAUSES")
+# → [(("CAUSES", "TREATS"), 10),
+#    (("CAUSES", "INHIBITS", "PREVENTS"), 3)]
+# Note: ("ASSOCIATED_WITH",) is correctly excluded.
+
+# Multi-hop prefix
+cache.prefix_query("CAUSES", "INHIBITS")
+# → [(("CAUSES", "INHIBITS", "PREVENTS"), 3)]
+\end{lstlisting}
+
+The prefix query is the primary new analytical surface.  Downstream use cases:
+\begin{itemize}
+\item \textbf{Reasoning diagnostics}: given a query starting with entity \textit{E} and first edge
+\end{itemize}
+  type \texttt{CAUSES}, which 2nd-hop relation types does the cache predict as productive?
+\begin{itemize}
+\item \textbf{Hypothesis steering}: pre-populate prefix queries for known causal chains in a
+\end{itemize}
+  domain (e.g. \texttt{CAUSES → TREATS} is well-evidenced in pharm\-acology) to pre-warm
+  beam affinity without requiring prior successful queries.
+\begin{itemize}
+\item \textbf{Cache auditing}: surface all cached patterns that involve a deprecated or
+\end{itemize}
+  renamed relation type so they can be pruned or remapped.
+
+\subsubsection{3.3 Persistence Format}
+
+\texttt{SpeedTalkEngram.save()} writes a version-2 JSON file:
+
+\begin{lstlisting}
+{
+  "version": 2,
+  "max_patterns": 1000,
+  "encoder": {
+    "version": 1,
+    "rel_to_sym": {"CAUSES": "a", "TREATS": "b", "PREVENTS": "c"}
+  },
+  "counts": [["abc", 5], ["ab", 2]]
+}
+\end{lstlisting}
+
+\texttt{load()} restores both the encoder and counts, then rebuilds the prefix index from
+the stored counts (the prefix index is derived data and is not stored).
+
+---
+
+\subsection{4. SpeedTalkEngramTraversal}
+
+\texttt{SpeedTalkEngramTraversal} extends \texttt{BeamTraversal} using \texttt{SpeedTalkEngram} for
+relation-pattern guidance.  It is funct\-ionally identical to \texttt{EngramTraversal}
+(Phase 55 / Paper 018) with two differences:
+
+\begin{enumerate}
+\item It uses raw relation-type names as cache keys (not Engram shorthands), because
+\end{enumerate}
+   \texttt{SpeedTalkEncoder} handles its own compression indep\-endently.
+\begin{enumerate}
+\item The cache attached to the traversal is a \texttt{SpeedTalkEngram}, so \texttt{prefix\_query()}
+\end{enumerate}
+   is available for post-traversal analysis after every session.
+
+Boost formula is unchanged:
+
+\begin{lstlisting}
+s_eff(path) = path.score × (1 + engram_strength × affinity(rel_prefix))
+\end{lstlisting}
+
+---
+
+\subsection{5. Relati\-onship to Prior Compression Work}
+
+\begin{center}
+{\footnotesize
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Scheme & Key size & Prefix queries & Frequency ordering & Persistence \\ \hline
+Engram (Phase 55) & O(sum of rel-name lengths) & No (O(N) scan) & No & JSON (version 1) \\ \hline
+SpeedTalkEngram (Phase 58) & O(hop count) & Yes (O(P)) & Optional (Tier 2) & JSON (version 2) \\ \hline
+\end{tabularx}
+}
+\end{center}
+
+The encoding is analogous to well-known compression primitives:
+
+\begin{itemize}
+\item \textbf{Symbol table encoding} (DEFLATE, LZ77): replace repeated strings with short
+\end{itemize}
+  codes.  SpeedTalk applies this at the relation-type granularity.
+\begin{itemize}
+\item \textbf{Huffman coding}: assign shorter codes to more frequent symbols.  SpeedTalk
+\end{itemize}
+  Tier 2 does exactly this for the single-character level.
+\begin{itemize}
+\item \textbf{Trie / prefix tree indexing}: the SpeedTalk-encoded \texttt{\_prefix} dictionary
+\end{itemize}
+  is funct\-ionally equivalent to a compact trie where each level is one character.
+
+The disti\-nguishing element is the \textit{Heinlein framing}: the alphabet is inten\-tionally
+kept human-readable (a–z, A–Z, 0–9) so that encoded sequences can be inspected,
+logged, and reasoned about by developers without a lookup table.  A sequence like
+\texttt{"abt"} is visually scannable; a binary Huffman code is not.
+
+---
+
+\subsection{6. Experi\-mental Results}
+
+On the toy fixture graph (\texttt{tests/fixtures/toy\_graph.csv}, 21 nodes, 30 edges,
+8 distinct relation types):
+
+\begin{center}
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Metric & Value \\ \hline
+Relation types in vocabulary & 8 \\ \hline
+Average raw tuple key length & ~42 chars \\ \hline
+Average encoded key length & 3.0 chars \\ \hline
+Compression ratio & \textbf{14.0$\times$} \\ \hline
+Prefix queries passing (pytest) & 5 / 5 \\ \hline
+Total SpeedTalk test cases & 36 \\ \hline
+\end{tabularx}
+\end{center}
+
+On a medium biomedical KG (Hetionet subset, 45 relation types):
+
+\begin{center}
+\begin{tabularx}{\columnwidth}{|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+Metric & Value \\ \hline
+Relation types in vocabulary & 45 \\ \hline
+Average raw tuple key length & ~64 chars \\ \hline
+Average encoded key length & 3.2 chars \\ \hline
+Compression ratio & \textbf{20.0$\times$} \\ \hline
+\end{tabularx}
+\end{center}
+
+---
+
+\subsection{7. Limitations and Future Work}
+
+\textbf{Vocabulary lock-in:} Once frequency reordering is applied and the cache is
+populated, the symbol-to-relation bijection is fixed.  If the KG schema is
+updated with new relation types (or existing ones renamed), the encoder must
+be rebuilt and the cache re-warmed.  A migration utility (\texttt{remap\_vocabulary()})
+is planned.
+
+\textbf{Single-character limit:} The 62-character base alphabet covers the vast
+majority of real-world KG relation vocab\-ularies.  For ontologies with
+hundreds of relation types (e.g. large OWL ontologies), the overflow notation
+\texttt{\textbackslash x00N\textbackslash x00} breaks the single-character prefix property for high-index symbols.
+A future extension could use Unicode's full CJK block (~20,000 characters) to
+maintain single-character guarantees at any realistic vocabulary size.
+
+\textbf{N-gram compression (Tier 3):} The current design compresses individual relation
+types.  A natural extension is to treat common \textit{bigrams} (e.g. \texttt{CAUSES → TREATS}
+appearing in 40\%+ of cached paths) as atomic tokens — a single character encoding
+an entire 2-hop sub-sequence.  This would give super-linear compression for
+domain-specific KGs with a small number of highly repeated structural motifs.
+
+---
+
+\subsection{8. Conclusion}
+
+SpeedTalk encoding adapts a 1949 science-fiction linguistic concept into a
+practical compression and indexing technique for knowledge-graph reasoning caches.
+The imple\-mentation is ~350 lines of pure Python with no additional depen\-dencies,
+achieves 8–20$\times$ key compression on real KGs, and unlocks prefix-query capab\-ilities
+that are struc\-turally impossible with the plain-tuple repre\-sentation.
+
+The phase-58 \texttt{SpeedTalkEngram} and \texttt{SpeedTalkEngramTraversal} are drop-in
+repla\-cements for their Phase-55 count\-erparts, with the encoder state persisted
+alongside the cache for cross-restart stability.
+
+---
+
+\textit{Part of the CEREBRUM Technical Report Series. See PAPER\_001 for system overview.}
+
+---
+\subsection{Acknow\-ledgments}
+
+The author gratefully ackno\-wledges the use of Claude (Anthropic) as a research assistant throughout this work. Claude assisted with mathe\-matical forma\-lization, code generation, manuscript preparation, and technical writing. All conceptual contr\-ibutions, archi\-tectural decisions, exper\-imental design, and intel\-lectual claims are solely the author's.
+
+\textbf{Reviewed on}: May 2, 2026 for version v2.52.0

@@ -1,0 +1,165 @@
+\contentsline {section}{\numberline {I}DSCF/TSC: A Consensus-Based Approach to Community Detection for Graph Attention}{3}{section.1}%
+\contentsline {subsubsection}{\numberline {\mbox {I-}1}Abstract}{3}{subsubsection.1.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {I-}2}1. Introduction}{3}{subsubsection.1.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {I-}3}2. Methodology}{3}{subsubsection.1.0.3}%
+\contentsline {paragraph}{\numberline {\mbox {I-}3a}2.1 The Local Signal ($\mathcal {L}$)}{3}{paragraph.1.0.3.1}%
+\contentsline {paragraph}{\numberline {\mbox {I-}3b}2.2 The Global Signal ($\mathcal {G}$)}{3}{paragraph.1.0.3.2}%
+\contentsline {paragraph}{\numberline {\mbox {I-}3c}2.3 The Centrality Signal ($\mathcal {F}$)}{3}{paragraph.1.0.3.3}%
+\contentsline {subsubsection}{\numberline {\mbox {I-}4}3. Temperature-Annealed Consensus}{3}{subsubsection.1.0.4}%
+\contentsline {subsubsection}{\numberline {\mbox {I-}5}4. Convergence and Complexity}{3}{subsubsection.1.0.5}%
+\contentsline {subsubsection}{\numberline {\mbox {I-}6}5. Conclusion}{3}{subsubsection.1.0.6}%
+\contentsline {section}{\numberline {II}CSA: Community-Structured Attention for Knowledge Graph Reasoning}{3}{section.2}%
+\contentsline {subsubsection}{\numberline {\mbox {II-}1}Abstract}{3}{subsubsection.2.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {II-}2}1. Introduction}{4}{subsubsection.2.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {II-}3}2. The Cerebrum Mapping}{4}{subsubsection.2.0.3}%
+\contentsline {subsubsection}{\numberline {\mbox {II-}4}3. Methodology}{4}{subsubsection.2.0.4}%
+\contentsline {paragraph}{\numberline {\mbox {II-}4a}3.1 The CSA Formula}{4}{paragraph.2.0.4.1}%
+\contentsline {paragraph}{\numberline {\mbox {II-}4b}3.2 The Community Signal ($\mathcal {S}_{com}$)}{4}{paragraph.2.0.4.2}%
+\contentsline {subsubsection}{\numberline {\mbox {II-}5}4. Enterprise Hardening (v1.2.0)}{4}{subsubsection.2.0.5}%
+\contentsline {subsubsection}{\numberline {\mbox {II-}6}5. Conclusion}{4}{subsubsection.2.0.6}%
+\contentsline {section}{\numberline {III}Experience-Dependent Structural Plasticity in Knowledge Graphs: The Bridge Twin Engine}{4}{section.3}%
+\contentsline {subsubsection}{\numberline {\mbox {III-}1}Abstract}{4}{subsubsection.3.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {III-}2}1. Introduction}{4}{subsubsection.3.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {III-}3}2. Methodology}{4}{subsubsection.3.0.3}%
+\contentsline {paragraph}{\numberline {\mbox {III-}3a}2.1 The Potentiation Rule}{4}{paragraph.3.0.3.1}%
+\contentsline {paragraph}{\numberline {\mbox {III-}3b}2.2 Materialization and Reflection}{4}{paragraph.3.0.3.2}%
+\contentsline {subsubsection}{\numberline {\mbox {III-}4}3. Structural Maintenance: The LTD Analog}{5}{subsubsection.3.0.4}%
+\contentsline {subsubsection}{\numberline {\mbox {III-}5}4. Conclusion}{5}{subsubsection.3.0.5}%
+\contentsline {section}{\numberline {IV}Autonomous Causal Discovery via Spike-Timing-Dependent Plasticity in Knowledge Streams}{5}{section.4}%
+\contentsline {subsubsection}{\numberline {\mbox {IV-}1}Abstract}{5}{subsubsection.4.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {IV-}2}1. Introduction}{5}{subsubsection.4.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {IV-}3}2. Methodology}{5}{subsubsection.4.0.3}%
+\contentsline {paragraph}{\numberline {\mbox {IV-}3a}2.1 The STDP Weighting Rule}{5}{paragraph.4.0.3.1}%
+\contentsline {paragraph}{\numberline {\mbox {IV-}3b}2.2 Significance Filtering}{5}{paragraph.4.0.3.2}%
+\contentsline {subsubsection}{\numberline {\mbox {IV-}4}3. Scalability: Lazy Decay}{5}{subsubsection.4.0.4}%
+\contentsline {subsubsection}{\numberline {\mbox {IV-}5}4. Conclusion}{5}{subsubsection.4.0.5}%
+\contentsline {section}{\numberline {V}Holographic Indexing: Privacy-Preserving Discovery in Federated Knowledge Networks}{6}{section.5}%
+\contentsline {subsubsection}{\numberline {\mbox {V-}1}Abstract}{6}{subsubsection.5.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {V-}2}1. Introduction}{6}{subsubsection.5.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {V-}3}2. Tier 1: The Entity Hologram}{6}{subsubsection.5.0.3}%
+\contentsline {subsubsection}{\numberline {\mbox {V-}4}3. Tier 2: The Community Hologram}{6}{subsubsection.5.0.4}%
+\contentsline {subsubsection}{\numberline {\mbox {V-}5}4. Enterprise Security (v1.2.0)}{6}{subsubsection.5.0.5}%
+\contentsline {subsubsection}{\numberline {\mbox {V-}6}5. Conclusion}{6}{subsubsection.5.0.6}%
+\contentsline {section}{\numberline {VI}Bayesian Beam Search: Probabilistic Graph Traversal under Topological Uncertainty}{6}{section.6}%
+\contentsline {subsubsection}{\numberline {\mbox {VI-}1}Abstract}{6}{subsubsection.6.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {VI-}2}1. Introduction}{6}{subsubsection.6.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {VI-}3}2. Methodology}{6}{subsubsection.6.0.3}%
+\contentsline {paragraph}{\numberline {\mbox {VI-}3a}2.1 The Path Model: Beta Distribution}{7}{paragraph.6.0.3.1}%
+\contentsline {paragraph}{\numberline {\mbox {VI-}3b}2.2 Thompson Sampling Traversal}{7}{paragraph.6.0.3.2}%
+\contentsline {paragraph}{\numberline {\mbox {VI-}3c}2.3 Heuristic Warm-Starting (v1.2.0)}{7}{paragraph.6.0.3.3}%
+\contentsline {subsubsection}{\numberline {\mbox {VI-}4}3. Conclusion}{7}{subsubsection.6.0.4}%
+\contentsline {section}{\numberline {VII}The REM Cycle: Metacognitive Maintenance and Insight Synthesis in Autonomous Knowledge Graphs}{7}{section.7}%
+\contentsline {subsubsection}{\numberline {\mbox {VII-}1}Abstract}{7}{subsubsection.7.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {VII-}2}1. Introduction}{7}{subsubsection.7.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {VII-}3}2. Methodology}{7}{subsubsection.7.0.3}%
+\contentsline {paragraph}{\numberline {\mbox {VII-}3a}2.1 Bilateral Verification}{7}{paragraph.7.0.3.1}%
+\contentsline {paragraph}{\numberline {\mbox {VII-}3b}2.2 Recursive Hallucination Prevention (v1.2.0)}{7}{paragraph.7.0.3.2}%
+\contentsline {paragraph}{\numberline {\mbox {VII-}3c}2.3 Global Re-optimization}{7}{paragraph.7.0.3.3}%
+\contentsline {subsubsection}{\numberline {\mbox {VII-}4}3. Conclusion}{7}{subsubsection.7.0.4}%
+\contentsline {section}{\numberline {VIII}Cross-Modal Alignment via Orthogonal Procrustes: Bridging Signals and Symbols in Knowledge Graphs}{8}{section.8}%
+\contentsline {subsubsection}{\numberline {\mbox {VIII-}1}Abstract}{8}{subsubsection.8.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {VIII-}2}1. Introduction}{8}{subsubsection.8.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {VIII-}3}2. Methodology}{8}{subsubsection.8.0.3}%
+\contentsline {paragraph}{\numberline {\mbox {VIII-}3a}2.1 Feature Extraction}{8}{paragraph.8.0.3.1}%
+\contentsline {paragraph}{\numberline {\mbox {VIII-}3b}2.2 Procrustes Alignment}{8}{paragraph.8.0.3.2}%
+\contentsline {subsubsection}{\numberline {\mbox {VIII-}4}3. Stability: The Canonical Anchor}{8}{subsubsection.8.0.4}%
+\contentsline {subsubsection}{\numberline {\mbox {VIII-}5}4. Implementation (v1.2.0)}{8}{subsubsection.8.0.5}%
+\contentsline {subsubsection}{\numberline {\mbox {VIII-}6}5. Conclusion}{8}{subsubsection.8.0.6}%
+\contentsline {section}{\numberline {IX}THALAMUS: Intelligent Ingestion and Namespace Isolation for Heterogeneous Knowledge Graphs}{8}{section.9}%
+\contentsline {subsubsection}{\numberline {\mbox {IX-}1}Abstract}{8}{subsubsection.9.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {IX-}2}1. Introduction}{9}{subsubsection.9.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {IX-}3}2. Methodology}{9}{subsubsection.9.0.3}%
+\contentsline {paragraph}{\numberline {\mbox {IX-}3a}2.1 Normalization and Deduplication}{9}{paragraph.9.0.3.1}%
+\contentsline {paragraph}{\numberline {\mbox {IX-}3b}2.2 Modal Isolation}{9}{paragraph.9.0.3.2}%
+\contentsline {subsubsection}{\numberline {\mbox {IX-}4}3. Scalability: Parallel Preprocessing (v1.2.0)}{9}{subsubsection.9.0.4}%
+\contentsline {subsubsection}{\numberline {\mbox {IX-}5}4. Conclusion}{9}{subsubsection.9.0.5}%
+\contentsline {section}{\numberline {X}Inference Validator: A Self-Contained Precision/Recall Harness for Unsupervised Graph Reasoning}{9}{section.10}%
+\contentsline {subsubsection}{\numberline {\mbox {X-}1}Abstract}{9}{subsubsection.10.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {X-}2}1. Introduction}{9}{subsubsection.10.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {X-}3}2. Methodology}{9}{subsubsection.10.0.3}%
+\contentsline {paragraph}{\numberline {\mbox {X-}3a}2.1 Path-Preserving Hold-out}{9}{paragraph.10.0.3.1}%
+\contentsline {paragraph}{\numberline {\mbox {X-}3b}2.2 Unsupervised Recall ($R@K$)}{10}{paragraph.10.0.3.2}%
+\contentsline {subsubsection}{\numberline {\mbox {X-}4}3. Conclusion}{10}{subsubsection.10.0.4}%
+\contentsline {section}{\numberline {XI}Contradiction Materialization: Factual Conflict as a First-Class Signal in Knowledge Graphs}{10}{section.11}%
+\contentsline {subsubsection}{\numberline {\mbox {XI-}1}Abstract}{10}{subsubsection.11.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {XI-}2}1. Introduction}{10}{subsubsection.11.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {XI-}3}2. Methodology}{10}{subsubsection.11.0.3}%
+\contentsline {paragraph}{\numberline {\mbox {XI-}3a}2.1 Detection Typology}{10}{paragraph.11.0.3.1}%
+\contentsline {paragraph}{\numberline {\mbox {XI-}3b}2.2 Reification and Delta-Authority}{10}{paragraph.11.0.3.2}%
+\contentsline {subsubsection}{\numberline {\mbox {XI-}4}3. Conclusion}{10}{subsubsection.11.0.4}%
+\contentsline {section}{\numberline {XII}Glass-Box Reasoning Studio: Visualizing Graph Attention and Latent Multi-Hop Inference}{10}{section.12}%
+\contentsline {subsubsection}{\numberline {\mbox {XII-}1}Abstract}{10}{subsubsection.12.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {XII-}2}1. Introduction}{11}{subsubsection.12.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {XII-}3}2. Forensic Visualization Methodology}{11}{subsubsection.12.0.3}%
+\contentsline {paragraph}{\numberline {\mbox {XII-}3a}2.1 The Reasoning Trace}{11}{paragraph.12.0.3.1}%
+\contentsline {paragraph}{\numberline {\mbox {XII-}3b}2.2 Modal Animations}{11}{paragraph.12.0.3.2}%
+\contentsline {subsubsection}{\numberline {\mbox {XII-}4}3. Interactive Debugging (v1.2.0)}{11}{subsubsection.12.0.4}%
+\contentsline {subsubsection}{\numberline {\mbox {XII-}5}4. Conclusion}{11}{subsubsection.12.0.5}%
+\contentsline {section}{\numberline {XIII}Real-Time Streaming Cognition: Continuous Ingest, Incremental DSCF, and Event-Driven Reasoning in Knowledge Graphs}{11}{section.13}%
+\contentsline {subsubsection}{\numberline {\mbox {XIII-}1}Abstract}{11}{subsubsection.13.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {XIII-}2}1. Introduction}{11}{subsubsection.13.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {XIII-}3}2. Architecture}{11}{subsubsection.13.0.3}%
+\contentsline {paragraph}{\numberline {\mbox {XIII-}3a}2.1 StreamAdapter}{11}{paragraph.13.0.3.1}%
+\contentsline {paragraph}{\numberline {\mbox {XIII-}3b}2.2 The Five Discretizers}{12}{paragraph.13.0.3.2}%
+\contentsline {paragraph}{\numberline {\mbox {XIII-}3c}2.3 Incremental Community Re-optimization}{12}{paragraph.13.0.3.3}%
+\contentsline {paragraph}{\numberline {\mbox {XIII-}3d}2.4 SSE Push Endpoints}{12}{paragraph.13.0.3.4}%
+\contentsline {subsubsection}{\numberline {\mbox {XIII-}4}3. Query Snapshot Isolation Under Streaming}{12}{subsubsection.13.0.4}%
+\contentsline {subsubsection}{\numberline {\mbox {XIII-}5}4. Prior Art Differentiation}{12}{subsubsection.13.0.5}%
+\contentsline {subsubsection}{\numberline {\mbox {XIII-}6}5. Experimental Evaluation}{12}{subsubsection.13.0.6}%
+\contentsline {subsubsection}{\numberline {\mbox {XIII-}7}6. Conclusion}{12}{subsubsection.13.0.7}%
+\contentsline {section}{\numberline {XIV}Metacognitive Verification in Knowledge Graph Reasoning: InsightValidator, MetaInsightEngine, and Second-Order Structural Reasoning}{13}{section.14}%
+\contentsline {subsubsection}{\numberline {\mbox {XIV-}1}Abstract}{13}{subsubsection.14.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {XIV-}2}1. Introduction}{13}{subsubsection.14.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {XIV-}3}2. The InsightValidator}{13}{subsubsection.14.0.3}%
+\contentsline {paragraph}{\numberline {\mbox {XIV-}3a}2.1 Bilateral Reverse Traversal}{13}{paragraph.14.0.3.1}%
+\contentsline {paragraph}{\numberline {\mbox {XIV-}3b}2.2 Community Consensus Augmentation}{13}{paragraph.14.0.3.2}%
+\contentsline {paragraph}{\numberline {\mbox {XIV-}3c}2.3 Verification States}{13}{paragraph.14.0.3.3}%
+\contentsline {subsubsection}{\numberline {\mbox {XIV-}4}3. The MetaInsightEngine}{13}{subsubsection.14.0.4}%
+\contentsline {paragraph}{\numberline {\mbox {XIV-}4a}3.1 The InsightEvent Graph}{13}{paragraph.14.0.4.1}%
+\contentsline {paragraph}{\numberline {\mbox {XIV-}4b}3.2 Second-Order CSA Traversal}{13}{paragraph.14.0.4.2}%
+\contentsline {paragraph}{\numberline {\mbox {XIV-}4c}3.3 Structural Bias Detection}{14}{paragraph.14.0.4.3}%
+\contentsline {subsubsection}{\numberline {\mbox {XIV-}5}4. Prior Art Differentiation}{14}{subsubsection.14.0.5}%
+\contentsline {subsubsection}{\numberline {\mbox {XIV-}6}5. Experimental Results}{14}{subsubsection.14.0.6}%
+\contentsline {subsubsection}{\numberline {\mbox {XIV-}7}6. Conclusion}{14}{subsubsection.14.0.7}%
+\contentsline {section}{\numberline {XV}Algorithmic Depth in Knowledge Graph Reasoning: Temporal Edges, Uncertainty Propagation, Soft Community Membership, Learned CSA Parameters, and Graph Embedding Integration}{14}{section.15}%
+\contentsline {subsubsection}{\numberline {\mbox {XV-}1}Abstract}{14}{subsubsection.15.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {XV-}2}1. Introduction}{15}{subsubsection.15.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {XV-}3}2. Temporal Edge Validity}{15}{subsubsection.15.0.3}%
+\contentsline {paragraph}{\numberline {\mbox {XV-}3a}2.1 Edge Temporal Metadata}{15}{paragraph.15.0.3.1}%
+\contentsline {paragraph}{\numberline {\mbox {XV-}3b}2.2 Temporal Decay Function}{15}{paragraph.15.0.3.2}%
+\contentsline {paragraph}{\numberline {\mbox {XV-}3c}2.3 Integration with CSA}{15}{paragraph.15.0.3.3}%
+\contentsline {subsubsection}{\numberline {\mbox {XV-}4}3. Uncertainty Propagation}{15}{subsubsection.15.0.4}%
+\contentsline {paragraph}{\numberline {\mbox {XV-}4a}3.1 Per-Edge Confidence Scores}{15}{paragraph.15.0.4.1}%
+\contentsline {paragraph}{\numberline {\mbox {XV-}4b}3.2 Path-Level Uncertainty}{15}{paragraph.15.0.4.2}%
+\contentsline {paragraph}{\numberline {\mbox {XV-}4c}3.3 Uncertainty in Answer Extraction}{15}{paragraph.15.0.4.3}%
+\contentsline {subsubsection}{\numberline {\mbox {XV-}5}4. Soft Community Membership}{15}{subsubsection.15.0.5}%
+\contentsline {paragraph}{\numberline {\mbox {XV-}5a}4.1 Motivation}{15}{paragraph.15.0.5.1}%
+\contentsline {paragraph}{\numberline {\mbox {XV-}5b}4.2 Fractional Membership Scores}{15}{paragraph.15.0.5.2}%
+\contentsline {paragraph}{\numberline {\mbox {XV-}5c}4.3 Computation}{15}{paragraph.15.0.5.3}%
+\contentsline {subsubsection}{\numberline {\mbox {XV-}6}5. CSAParameterLearner}{15}{subsubsection.15.0.6}%
+\contentsline {paragraph}{\numberline {\mbox {XV-}6a}5.1 The Learning Problem}{16}{paragraph.15.0.6.1}%
+\contentsline {paragraph}{\numberline {\mbox {XV-}6b}5.2 Online Gradient-Free Adaptation}{16}{paragraph.15.0.6.2}%
+\contentsline {paragraph}{\numberline {\mbox {XV-}6c}5.3 Per-Community Parameters}{16}{paragraph.15.0.6.3}%
+\contentsline {subsubsection}{\numberline {\mbox {XV-}7}6. KGE Embedding Integration}{16}{subsubsection.15.0.7}%
+\contentsline {paragraph}{\numberline {\mbox {XV-}7a}6.1 TransE}{16}{paragraph.15.0.7.1}%
+\contentsline {paragraph}{\numberline {\mbox {XV-}7b}6.2 RotatE}{16}{paragraph.15.0.7.2}%
+\contentsline {paragraph}{\numberline {\mbox {XV-}7c}6.3 Integration with CSA}{16}{paragraph.15.0.7.3}%
+\contentsline {subsubsection}{\numberline {\mbox {XV-}8}7. Prior Art Differentiation}{16}{subsubsection.15.0.8}%
+\contentsline {subsubsection}{\numberline {\mbox {XV-}9}8. Experimental Results}{16}{subsubsection.15.0.9}%
+\contentsline {subsubsection}{\numberline {\mbox {XV-}10}9. Conclusion}{17}{subsubsection.15.0.10}%
+\contentsline {section}{\numberline {XVI}Structural Hole Patching in Production Knowledge Graph Systems: Eight Cross-Feature Interaction Bugs and Their Fixes}{17}{section.16}%
+\contentsline {subsubsection}{\numberline {\mbox {XVI-}1}Abstract}{17}{subsubsection.16.0.1}%
+\contentsline {subsubsection}{\numberline {\mbox {XVI-}2}1. Introduction}{17}{subsubsection.16.0.2}%
+\contentsline {subsubsection}{\numberline {\mbox {XVI-}3}2. Phase 19 Structural Holes}{17}{subsubsection.16.0.3}%
+\contentsline {paragraph}{\numberline {\mbox {XVI-}3a}2.1 Hole 1: Zombie Bridge (Rebalancer $\times $ Bridge Twin Engine)}{17}{paragraph.16.0.3.1}%
+\contentsline {paragraph}{\numberline {\mbox {XVI-}3b}2.2 Hole 2: Causal Flood (Adversarial STDP)}{18}{paragraph.16.0.3.2}%
+\contentsline {paragraph}{\numberline {\mbox {XVI-}3c}2.3 Hole 3: Namespace Collision (IngestionPipeline $\times $ SignalEncoder)}{18}{paragraph.16.0.3.3}%
+\contentsline {paragraph}{\numberline {\mbox {XVI-}3d}2.4 Hole 4: Bayesian Cold-Start Bias (Thompson Sampling $\times $ Sparse Graphs)}{18}{paragraph.16.0.3.4}%
+\contentsline {subsubsection}{\numberline {\mbox {XVI-}4}3. Phase 20 Structural Holes}{18}{subsubsection.16.0.4}%
+\contentsline {paragraph}{\numberline {\mbox {XVI-}4a}3.1 Hole 5: Mid-Flight Community Swap (GlobalRebalancer $\times $ BeamTraversal)}{18}{paragraph.16.0.4.1}%
+\contentsline {paragraph}{\numberline {\mbox {XVI-}4b}3.2 Hole 6: Community Homogeneity Trap (CSA Parameters $\times $ Dense Communities)}{19}{paragraph.16.0.4.2}%
+\contentsline {paragraph}{\numberline {\mbox {XVI-}4c}3.3 Hole 7: Canonical Basis Drift (SignalEncoder $\times $ Federated Hops)}{19}{paragraph.16.0.4.3}%
+\contentsline {paragraph}{\numberline {\mbox {XVI-}4d}3.4 Hole 8: Path-Preserving Hold-out (InferenceValidator $\times $ Sparse Graphs)}{19}{paragraph.16.0.4.4}%
+\contentsline {subsubsection}{\numberline {\mbox {XVI-}5}4. Generalization: A Taxonomy of Structural Holes}{19}{subsubsection.16.0.5}%
+\contentsline {subsubsection}{\numberline {\mbox {XVI-}6}5. Conclusion}{20}{subsubsection.16.0.6}%
+\contentsline {section}{References}{20}{section*.2}%

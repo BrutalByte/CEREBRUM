@@ -1,0 +1,228 @@
+\documentclass[11pt,article,oneside]{memoir}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage[hidelinks,colorlinks=true,linkcolor=blue]{hyperref}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{libertine}
+
+\geometry{margin=1in}
+
+\titleformat{\section}{\Large\bfseries\color{darkgray}}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries\color{blue!80!black}}{\thesubsection}{1em}{}
+
+\lstset{
+  basicstyle=\small\ttfamily,
+  breaklines=true,
+  frame=lines,
+  backgroundcolor=\color{gray!10}
+}
+
+\begin{document}
+
+\begin{center}
+    \Huge \textbf{Migration Guide} \\
+    \vspace{0.5em}
+    \large \textit{A CEREBRUM Research Publication (v1.2.4)} \\
+    \vspace{1em}
+    \large \textbf{Bryan Alexander Buchorn} \\
+    Independent Researcher \\
+    \vspace{2em}
+\end{center}
+
+\begin{abstract}
+\textbf{Overview:} This guide provides a conceptual entry point into the CEREBRUM framework. It is designed for practitioners and researchers seeking to understand the core reasoning signals of Framework Implementation Guide.
+\end{abstract}
+
+\section{CEREBRUM Migration Guide}
+
+This guide covers what operators and developers need to \textbf{do} (not just what changed) when upgrading between major versions. For a list of \textit{what} changed, see \texttt{CHANGELOG.md}.
+
+---
+
+\subsection{v1.0.0 $\to$ v1.1.0 (Phase 20: Relati\-vistic Hardening)}
+
+\subsubsection{Required actions: none}
+All four Phase 20 fixes use backward-compatible defaults. No existing code breaks.
+
+\subsubsection{Recommended changes}
+
+\textbf{1. Enable Query Snapshot Isolation (Hole 5)}
+
+If your deployment uses the \texttt{GlobalRebalancer} for live graph updates alongside concurrent queries, enable snapshot isolation explicitly:
+
+\begin{lstlisting}
+# Before (v1.0.0 — no snapshot)
+traversal = BeamTraversal(adapter=adapter, csa_engine=csa, ...)
+
+# After (v1.1.0 — add snapshot at query start)
+csa.set_query_snapshot(adapter.community_map)
+traversal = BeamTraversal(adapter=adapter, csa_engine=csa, ...)
+\end{lstlisting}
+
+The \texttt{api/server.py} already does this autom\-atically for REST queries.
+
+\textbf{2. Per-community CSA parameters for homogeneous graphs (Hole 6)}
+
+If your graph has tightly-clustered domains (proteins, legal clauses, financial instruments) where intra-community similarity is uniformly high, add parameter overrides for those communities:
+
+\begin{lstlisting}
+# Identify homogeneous communities (avg intra-community S_C > 0.85)
+# Then reduce β and increase α/γ for those communities:
+csa = CSAEngine(
+    community_params={3: (0.5, 0.15, 0.25, 0.05, 0.05, 0.0)},
+    ...
+)
+\end{lstlisting}
+
+\textbf{3. Path-preserving hold-out is now the default}
+
+\texttt{InferenceValidator} now defaults to \texttt{path\_preserving=True}. On dense graphs this is a no-op. On sparse graphs (avg degree \textless  3) this will improve recall estimates. No code changes needed unless you speci\-fically want the old behavior:
+
+\begin{lstlisting}
+# To restore v1.0.0 behavior (not recommended):
+validator = InferenceValidator(adapter, traversal, path_preserving=False)
+\end{lstlisting}
+
+---
+
+\subsection{v0.4.0 $\to$ v1.0.0 (Phase 19: Production Hardening)}
+
+\subsubsection{Required actions}
+
+\textbf{1. Namespace isolation for mixed-modality deployments}
+
+If you use both \texttt{IngestionPipeline} and \texttt{SignalEncoder} in the same graph, you must now add namespace prefixes to prevent entity collisions:
+
+\begin{lstlisting}
+# Before (v0.4.0 — collision risk)
+pipeline = IngestionPipeline(adapter)
+encoder  = SignalEncoder(entity_dim=128)
+
+# After (v1.0.0 — isolated namespaces)
+pipeline = IngestionPipeline(adapter, namespace="text")
+encoder  = SignalEncoder(entity_dim=128, namespace="signal")
+\end{lstlisting}
+
+If your graph contains entities with the same name in both text and signal sources, they will now appear as separate nodes (\texttt{text:Name} and \texttt{signal:Name}). To inten\-tionally merge them, use \texttt{entity\_dedup\_map={"signal:Name": "text:Name"}} in \texttt{IngestionPipeline}.
+
+\textbf{2. Wire the Zombie Bridge hook if using GlobalRebalancer + BridgeTwinEngine}
+
+\begin{lstlisting}
+# Before (v0.4.0 — stale bridges after rebalance)
+rebalancer = GlobalRebalancer(adapter, q_drift_threshold=0.05)
+
+# After (v1.0.0 — bridges stay consistent)
+rebalancer = GlobalRebalancer(adapter, q_drift_threshold=0.05, bridge_engine=bridge_engine)
+\end{lstlisting}
+
+\subsubsection{Recommended changes}
+
+\textbf{3. Enable warm-start for proba\-bilistic traversal on sparse graphs}
+
+\begin{lstlisting}
+# Before
+traversal = BeamTraversal(adapter, csa, probabilistic=True)
+
+# After — reduce cold-start variance 85%
+traversal = BeamTraversal(adapter, csa, probabilistic=True, warm_start_strength=5.0)
+\end{lstlisting}
+
+\textbf{4. Enable causal flood protection for untrusted event streams}
+
+\begin{lstlisting}
+# Before
+discretizer = STDPDiscretizer(w_threshold=0.5, n_min=5)
+
+# After — adversarial hardening
+discretizer = STDPDiscretizer(w_threshold=0.5, n_min=5, min_causal_span=1.0, use_chi_squared=True)
+\end{lstlisting}
+
+---
+
+\subsection{v0.3.0 $\to$ v0.4.0 (Phase 18: v0.4 Horizon)}
+
+\subsubsection{New required environment variable (if using API auth)}
+\begin{lstlisting}
+export CEREBRUM_JWT_SECRET="your-secret-key"
+\end{lstlisting}
+
+The API server now requires JWT authe\-ntication on all endpoints. Anonymous access can be re-enabled for development:
+\begin{lstlisting}
+export CEREBRUM_ALLOW_ANONYMOUS=true
+\end{lstlisting}
+
+\subsubsection{IngestionPipeline replaces direct adapter.add\_edge for text ingest}
+\begin{lstlisting}
+# Before (v0.3.0)
+for subj, pred, obj in triples:
+    adapter.add_edge(subj, obj, pred)
+
+# After (v0.4.0) — preferred for text data
+pipeline = IngestionPipeline(adapter)
+for subj, pred, obj in triples:
+    pipeline.process(subj, pred, obj, confidence=0.9)
+\end{lstlisting}
+
+Direct \texttt{add\_edge} still works — the pipeline is additive.
+
+\subsubsection{LLM bridge import path changed}
+\begin{lstlisting}
+# Before
+from cerebrum.bridge import generate
+
+# After
+from llm_bridge import generate, GenerationResult
+\end{lstlisting}
+
+---
+
+\subsection{v0.2.0 $\to$ v0.3.0 (Phase 10–11: Production Hardening + Streaming)}
+
+\subsubsection{igraph / leidenalg dependency removed}
+The native Leiden reimp\-lementation (\texttt{core/leiden\_native.py}) is now the default backend. Remove these from your environment if installed:
+
+\begin{lstlisting}
+pip uninstall leidenalg python-igraph igraph
+\end{lstlisting}
+
+The native imple\-mentation is API-compatible; no code changes are needed.
+
+\subsubsection{JWT authe\-ntication added to API}
+See v0.3.0 $\to$ v0.4.0 section above (authe\-ntication was introduced in v0.3.0).
+
+\subsubsection{StreamAdapter replaces manual polling loops}
+\begin{lstlisting}
+# Before (v0.2.0 — polling)
+while True:
+    event = get_next_event()
+    adapter.add_edge(event.subject, event.object, event.predicate)
+    time.sleep(0.1)
+
+# After (v0.3.0 — StreamAdapter)
+stream = StreamAdapter(base_adapter=adapter, window_size=10_000)
+stream.push_event(subject, predicate, object, timestamp, weight)
+\end{lstlisting}
+
+---
+
+\subsection{v0.1.0 $\to$ v0.2.0 (Phase 6–9: Federated)}
+
+No breaking changes. All Phase 6–9 features (FederatedAdapter, Hologr\-aphicIndex, Handshake) are additive and do not affect single-graph deployments.
+
+---
+\textbf{Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.}
+
+
+\vspace{3em}
+\begin{center}
+    \small \textit{Project CEREBRUM — March 2026 — Hardened Enterprise Security (v1.2.4)}
+\end{center}
+
+\end{document}

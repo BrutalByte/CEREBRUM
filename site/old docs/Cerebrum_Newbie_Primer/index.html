@@ -1,0 +1,1887 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Crystal-box knowledge graph reasoning — traceable, deterministic, zero hallucination">
+      
+      
+      
+        <link rel="canonical" href="https://brutalbyte.github.io/CEREBRUM/old%20docs/Cerebrum_Newbie_Primer/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Cerebrum Newbie Primer - CEREBRUM</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config",""),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cerebrum-a-newbies-guide-what-it-is-why-it-exists-and-why-it-matters-in-plain-english-for-anyone-who-has-heard-of-ai-and-wants-to-understand-something-genuinely-new-about-it-not-required-a-technical-background-of-any-kind-bryan-alexander-buchorn-march-2026-start-here-the-problem-with-ai-that-nobody-talks-about-youve-probably-used-chatgpt-claude-or-a-similar-ai-tool-you-asked-it-a-question-and-it-gave-you-a-confident-well-written-answer-maybe-it-was-right-maybe-it-wasnt-maybe-you-couldnt-tell-that-last-part-you-couldnt-tell-is-the-real-problem-when-a-human-expert-answers-a-question-you-can-ask-how-do-you-know-they-can-point-to-a-source-a-study-a-precedent-a-procedure-manual-an-experiment-their-reasoning-is-traceable-you-can-follow-it-and-check-it-when-an-ai-gives-you-an-answer-it-genuinely-cannot-tell-you-how-it-knows-it-isnt-hiding-the-answer-it-doesnt-have-one-its-knowledge-lives-inside-billions-of-invisible-numbers-that-were-adjusted-during-training-and-there-is-no-way-to-look-inside-and-trace-a-specific-fact-back-to-a-specific-source-this-occasionally-leads-to-a-phenomenon-researchers-call-hallucination-the-ai-confidently-tells-you-something-that-is-simply-not-true-not-because-its-malfunctioning-because-it-generates-plausible-sounding-text-and-plausible-sometimes-diverges-from-correct-in-a-casual-conversation-hallucination-is-annoying-in-a-medical-diagnosis-a-legal-brief-or-a-financial-report-it-can-cause-real-harm-cerebrum-is-a-direct-attempt-to-solve-this-problem-not-by-making-llms-better-at-not-hallucinating-but-by-asking-a-different-question-entirely-what-if-the-ai-didnt-need-to-guess-in-the-first-place-the-library-and-the-librarian-imagine-two-ways-to-answer-the-question-is-there-any-connection-between-aspirin-and-colorectal-cancer-method-1-the-all-knowing-librarian-you-ask-a-librarian-who-has-read-every-book-in-the-building-she-thinks-for-a-moment-and-says-yes-i-believe-there-is-a-connection-you-ask-how-she-knows-she-says-ive-read-so-much-its-just-in-my-head-somewhere-im-quite-confident-she-might-be-right-shes-usually-right-but-she-might-also-be-misremembering-something-she-read-or-confusing-it-with-something-else-and-you-have-no-way-to-check-this-is-roughly-how-an-ai-language-model-works-it-has-read-an-enormous-amount-of-text-its-answers-come-from-patterns-in-that-reading-stored-in-a-form-that-cannot-be-directly-inspected-method-2-the-indexed-card-catalog-you-go-to-a-card-catalog-you-look-up-aspirin-it-links-you-to-cox-2-enzyme-with-a-note-inhibits-you-look-up-cox-2-enzyme-it-links-to-colorectal-cancer-with-a-note-overexpressed-in-youve-just-traced-a-two-step-path-through-verified-indexed-facts-you-didnt-need-to-trust-anyones-memory-every-step-of-the-reasoning-is-a-real-card-in-the-catalog-that-you-can-pull-out-and-verify-this-is-roughly-how-a-knowledge-graph-works-every-fact-is-stored-as-an-explicit-connection-every-connection-has-a-name-the-relationship-type-nothing-is-inferred-everything-is-stated-the-problem-the-card-catalog-is-great-for-looking-things-up-but-terrible-at-reasoning-it-can-show-you-individual-connections-but-it-cant-automatically-follow-chains-of-them-across-a-large-collection-to-answer-complex-questions-it-needs-a-human-to-do-the-walking-cerebrum-what-if-you-could-teach-the-card-catalog-to-walk-itself-what-cerebrum-actually-does-cerebrum-takes-a-knowledge-graph-a-database-of-interconnected-facts-and-gives-it-the-ability-to-reason-through-it-automatically-following-chains-of-connections-the-way-a-skilled-researcher-would-but-much-faster-and-without-any-possibility-of-inventing-a-fact-that-isnt-there-inside-cerebrum-two-named-engines-do-the-work-thalamus-the-ingestion-engine-it-receives-raw-data-spreadsheets-databases-live-sensor-feeds-converts-it-into-a-structured-graph-computes-embeddings-and-assigns-every-node-to-a-community-just-as-the-brains-thalamus-receives-and-preprocesses-all-sensory-input-before-routing-it-to-the-thinking-part-of-the-brain-the-cortex-thalamus-prepares-the-knowledge-before-any-reasoning-begins-cortex-the-reasoning-engine-it-runs-the-community-structured-attention-formula-performs-the-beam-search-traversal-and-extracts-ranked-answers-this-is-the-part-that-thinks-heres-how-it-works-in-three-plain-steps-step-1-organize-the-neighborhood-before-cerebrum-can-reason-through-a-graph-it-looks-at-the-overall-structure-and-finds-the-natural-neighborhoods-groups-of-facts-that-are-more-connected-to-each-other-than-to-the-rest-of-the-graph-think-of-it-like-a-city-a-city-wasnt-designed-in-one-day-with-neighborhoods-pre-drawn-on-a-map-neighborhoods-emerged-organically-because-people-who-share-something-in-common-work-culture-proximity-end-up-interacting-more-with-each-other-than-with-people-across-town-a-medical-knowledge-graph-naturally-develops-neighborhoods-too-all-the-nodes-about-drug-mechanisms-cluster-together-all-the-nodes-about-genetic-markers-cluster-together-all-the-nodes-about-clinical-symptoms-cluster-together-these-clusters-emerge-from-the-structure-of-the-data-itself-cerebrum-identifies-these-clusters-using-an-algorithm-called-dscf-dual-signal-community-fusion-the-dual-signal-part-means-it-looks-at-two-things-simultaneously-when-deciding-where-a-fact-belongs-the-local-signal-what-neighborhood-are-my-immediate-neighbors-in-right-now-the-global-signal-what-arrangement-makes-the-overall-structure-of-the-whole-graph-most-sensible-most-existing-algorithms-only-look-at-one-signal-dscf-looks-at-both-if-both-signals-agree-the-decision-is-made-confidently-if-they-disagree-the-system-balances-them-starting-by-trusting-the-local-view-and-gradually-shifting-toward-the-global-view-as-it-processes-more-of-the-graph-this-is-borrowed-from-a-technique-in-metallurgy-called-simulated-annealing-where-you-start-with-high-temperature-lots-of-local-flexibility-and-cool-slowly-toward-a-stable-final-state-the-inspiration-for-the-two-signals-that-must-agree-idea-came-from-aviation-aircraft-navigation-computers-dont-trust-a-single-sensor-they-run-three-sensors-simultaneously-and-take-the-middle-value-automatically-rejecting-any-single-sensor-thats-giving-an-outlier-reading-cerebrum-does-something-similar-it-requires-consensus-between-signals-before-committing-a-node-to-a-neighborhood-this-mid-level-voting-is-what-lets-it-correct-itself-the-same-way-an-aircraft-corrects-navigation-errors-these-neighborhoods-are-important-because-they-become-the-equivalent-of-attention-heads-a-concept-from-the-ai-systems-that-power-modern-language-models-each-neighborhood-specializes-on-a-domain-of-knowledge-just-like-each-attention-head-in-a-language-model-specializes-on-a-type-of-relationship-step-2-walk-the-graph-with-focus-once-the-neighborhoods-are-mapped-cerebrum-can-answer-questions-by-walking-the-graph-intelligently-suppose-you-ask-what-did-marie-curie-discover-that-is-radioactive-cerebrum-starts-at-the-marie-curie-node-it-looks-at-every-fact-directly-connected-to-marie-curie-and-scores-each-one-how-relevant-does-it-seem-is-it-in-the-same-neighborhood-how-close-is-it-to-where-the-answer-is-likely-to-be-it-keeps-the-most-promising-directions-and-follows-them-outward-one-hop-two-hops-three-hops-at-each-step-its-scoring-and-pruning-like-a-hiking-guide-who-keeps-the-ten-most-promising-trails-open-but-wont-let-you-wander-down-every-rabbit-hole-the-score-for-each-step-combines-several-things-how-similar-the-next-node-is-to-the-current-one-using-embeddings-mathematical-representations-of-meaning-what-neighborhood-the-next-node-belongs-to-same-neighborhood-gets-more-credit-different-neighborhood-gets-less-what-type-of-relationship-connects-them-some-relationship-types-are-more-informative-than-others-how-deep-into-the-graph-we-already-are-the-deeper-the-more-we-discount-additional-hops-after-a-few-hops-cerebrum-has-a-set-of-complete-paths-it-ranks-them-by-their-total-score-and-returns-the-best-ones-the-answer-for-our-question-might-look-like-marie-curie-discovered-polonium-exhibits-radioactivity-score-094-two-hops-one-neighborhood-transition-every-edge-in-that-path-is-a-real-verified-fact-in-the-graph-nothing-was-invented-nothing-was-guessed-if-you-want-to-know-why-cerebrum-ranked-this-answer-highest-you-can-look-at-the-score-at-each-step-and-understand-exactly-what-it-saw-step-3-optionally-translate-into-english-for-most-applications-you-want-a-human-readable-answer-not-a-graph-path-cerebrum-can-pass-its-verified-reasoning-path-to-a-language-model-which-then-does-something-much-simpler-and-safer-than-reasoning-it-translates-the-path-into-a-sentence-yes-marie-curie-discovered-polonium-which-is-radioactive-the-language-model-didnt-reason-here-it-didnt-guess-it-just-rendered-a-fact-that-cerebrum-had-already-verified-into-plain-english-this-dramatically-reduces-the-chance-of-hallucination-because-the-language-model-is-no-longer-responsible-for-the-logic-only-the-wording-why-this-matters-in-the-real-world-here-are-some-concrete-scenarios-where-you-can-verify-every-step-changes-everything-a-doctor-asks-about-a-drug-interaction-a-language-model-might-say-drug-a-and-drug-b-may-interact-it-sounds-confident-but-where-does-that-come-from-is-it-a-known-interaction-or-a-pattern-that-looked-like-one-with-cerebrum-the-answer-comes-with-a-path-drug-a-inhibits-enzyme-x-required-by-drug-bs-metabolism-you-can-look-up-every-edge-you-can-cite-every-step-a-physician-can-evaluate-the-chain-rather-than-just-trust-the-conclusion-a-lawyer-asks-about-regulatory-precedent-legal-reasoning-requires-citation-an-invented-connection-is-malpractice-cerebrums-answer-isnt-this-regulation-might-apply-its-this-regulation-applies-to-this-entity-type-which-this-company-is-because-of-this-case-every-edge-is-verifiable-a-security-analyst-asks-how-an-attacker-could-reach-a-critical-system-cerebrum-returns-a-chain-of-real-vulnerability-relationships-exposed-port-leads-to-unpatched-service-exploitable-by-privilege-escalation-grants-access-to-database-no-hops-in-that-chain-are-invented-the-analyst-knows-exactly-what-to-fix-a-factory-engineer-asks-why-two-sensors-keep-alarming-together-cerebrum-operating-on-a-live-stream-of-sensor-data-finds-the-path-temperature-sensor-a-co-activates-pressure-sensor-b-monitors-cooling-loop-controlled-by-valve-c-the-connection-is-structural-visible-and-traceable-to-real-equipment-relationships-what-makes-this-new-cerebrum-didnt-exist-before-the-pieces-it-uses-knowledge-graphs-graph-traversal-community-detection-algorithms-attention-mechanisms-all-existed-whats-new-is-the-specific-combination-and-the-specific-insight-that-drives-it-the-natural-neighborhoods-of-a-knowledge-graph-are-structurally-equivalent-to-the-attention-heads-of-a-transformer-model-if-thats-true-and-the-early-evidence-suggests-it-is-then-a-knowledge-graph-can-do-the-same-kind-of-sophisticated-multi-signal-reasoning-that-language-models-do-but-using-verified-facts-instead-of-probabilistic-weights-the-research-is-testing-this-claim-rigorously-if-the-claim-holds-up-across-multiple-benchmark-datasets-and-domains-it-opens-the-door-to-ai-reasoning-that-is-verifiable-you-can-check-every-step-free-of-hallucination-by-construction-not-by-luck-free-of-training-data-the-reasoning-is-structural-not-learned-cheap-to-run-no-expensive-inference-calls-to-a-large-model-for-every-question-live-it-can-reason-over-data-that-is-changing-in-real-time-self-organizing-the-graph-can-clean-and-strengthen-itself-through-rem-cycles-like-sleep-without-any-human-intervention-pruning-low-confidence-connections-re-detecting-communities-on-the-cleaned-structure-and-proposing-new-hypotheses-for-the-researcher-to-investigate-insight-learning-when-a-query-discovers-an-unexpectedly-useful-connection-the-system-recognizes-the-surprise-and-permanently-strengthens-that-connection-a-dopamine-like-reward-signal-that-makes-important-discoveries-more-accessible-next-time-self-verifying-every-discovery-is-automatically-double-checked-before-being-trusted-first-by-asking-whether-the-connection-works-in-both-directions-then-by-asking-whether-other-nodes-in-the-same-knowledge-domain-independently-reach-the-same-conclusion-discoveries-that-pass-both-checks-are-marked-as-corroborated-and-their-confidence-is-raised-those-that-dont-are-flagged-for-scrutiny-rather-than-silently-accepted-horizontally-scalable-without-architectural-limit-because-a-query-only-touches-0001-of-the-graph-and-traversal-workers-share-no-mutable-state-you-can-add-machines-and-get-proportionally-more-capacity-an-llm-touches-100-of-its-parameters-for-every-single-answer-it-generates-there-is-no-equivalent-of-only-look-at-the-relevant-part-cerebrums-parallelism-is-embarrassingly-natural-an-llms-is-structurally-constrained-metacognitive-the-system-watches-its-own-discovery-history-and-notices-when-multiple-separate-insights-are-themselves-related-to-each-other-the-same-way-a-researcher-realizes-this-new-finding-connects-two-things-i-discovered-last-month-when-three-or-more-insights-form-a-coherent-chain-the-system-generates-a-higher-order-discovery-about-its-own-discoveries-enabling-a-form-of-analogical-reasoning-that-goes-beyond-any-single-query-thats-a-genuinely-different-kind-of-ai-than-what-currently-dominates-the-field-there-is-one-more-difference-that-is-easy-to-overlook-but-may-turn-out-to-be-the-most-consequential-an-llm-cannot-do-either-of-those-last-two-things-without-being-completely-retrained-its-knowledge-is-frozen-at-the-moment-training-ended-it-does-not-get-better-from-use-it-does-not-remember-that-a-particular-path-through-its-knowledge-was-surprisingly-effective-last-tuesday-it-cannot-prune-connections-it-has-never-needed-cerebrum-by-contrast-gets-structurally-better-every-time-a-rem-cycle-runs-and-every-time-a-high-scoring-insight-fires-without-retraining-without-a-human-reviewing-individual-edges-and-without-interrupting-service-that-kind-of-continuous-autonomous-self-improvement-is-simply-not-possible-in-a-system-that-stores-knowledge-as-billions-of-opaque-numerical-weights-and-neither-is-the-self-verification-layer-when-cerebrum-discovers-something-new-it-immediately-asks-whether-the-evidence-holds-up-from-multiple-independent-angles-not-as-an-afterthought-but-as-a-built-in-structural-check-an-llm-has-no-equivalent-it-cannot-verify-its-own-outputs-against-the-structure-of-what-it-knows-it-can-only-produce-more-text-and-hope-its-consistent-the-scalability-gap-compounds-all-of-this-a-kg-query-touches-roughly-0001-of-the-graph-per-call-using-operations-that-run-in-parallel-across-every-available-processor-an-llm-touches-100-of-its-parameters-every-time-and-each-layer-must-wait-for-the-previous-one-to-finish-by-mathematical-requirement-not-by-engineering-limitation-this-means-cerebrum-can-be-sharded-across-dozens-of-machines-with-near-linear-throughput-gains-while-llm-inference-hits-a-practical-ceiling-of-roughly-816-gpus-per-call-before-communication-overhead-dominates-one-scales-like-a-database-the-other-scales-like-a-single-monolithic-computation-the-one-sentence-version-cerebrum-teaches-a-database-of-interconnected-facts-to-reason-through-itself-the-way-a-skilled-researcher-follows-a-trail-of-evidence-without-ever-making-something-up-want-to-go-deeper-the-plain-language-guide-docscerebrum_plain_language_guidemd-covers-the-same-territory-with-more-technical-detail-including-the-math-behind-the-attention-formula-and-a-full-breakdown-of-the-research-hypotheses-being-tested-the-interactive-walkthrough-examplesvalidation_walkthroughipynb-a-jupyter-notebook-you-can-run-that-shows-the-algorithm-forming-communities-scoring-edges-and-tracing-reasoning-paths-step-by-step-with-live-visualizations-the-studio-uistudiopy-the-browser-based-interface-where-you-can-load-your-own-data-and-ask-questions-directly-with-no-code-required-the-white-paper-docscerebrum_white_papermd-the-formal-research-document-with-the-full-mathematical-treatment-benchmark-methodology-and-experimental-results-questions-contact-the-author-bryan-alexander-buchorn-bryanalexanderbuchorncom-cerebrum-is-dual-licensed-free-for-personal-academic-and-non-profit-use-commercial-use-requires-a-separate-license-agreement" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="CEREBRUM" class="md-header__button md-logo" aria-label="CEREBRUM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CEREBRUM
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Cerebrum Newbie Primer
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/BrutalByte/CEREBRUM" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BrutalByte/CEREBRUM
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/quickstart/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/crystal-box/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../connectors/overview/" class="md-tabs__link">
+          
+  
+  
+  Data Connectors
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../sdk/python/" class="md-tabs__link">
+          
+  
+  
+  SDK Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../integrations/langchain/" class="md-tabs__link">
+          
+  
+  
+  Integrations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/overview/" class="md-tabs__link">
+          
+  
+  
+  REST API
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deployment/docker/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/architecture/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="CEREBRUM" class="md-nav__button md-logo" aria-label="CEREBRUM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    CEREBRUM
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/BrutalByte/CEREBRUM" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BrutalByte/CEREBRUM
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/first-kb/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First KB
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/crystal-box/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Crystal-Box Reasoning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/crystal-box-whitepaper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Crystal-Box Whitepaper
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How CEREBRUM Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Connectors
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Data Connectors
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/csv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CSV
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/sql/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/parquet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parquet & Arrow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/graph-databases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Neo4j & Neptune
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDK Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    SDK Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sdk/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python SDK
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sdk/typescript/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TypeScript SDK
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/langchain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LangChain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/llamaindex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LlamaIndex
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/jupyter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jupyter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    REST API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/endpoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compliance Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/multi-tenant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Tenant API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/hardware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<!-- NOTE: Formerly known as Parallax. Renamed to CEREBRUM for branding consistency. -->
+<h1 id="cerebrum-a-newbies-guide-what-it-is-why-it-exists-and-why-it-matters-in-plain-english-for-anyone-who-has-heard-of-ai-and-wants-to-understand-something-genuinely-new-about-it-not-required-a-technical-background-of-any-kind-bryan-alexander-buchorn-march-2026-start-here-the-problem-with-ai-that-nobody-talks-about-youve-probably-used-chatgpt-claude-or-a-similar-ai-tool-you-asked-it-a-question-and-it-gave-you-a-confident-well-written-answer-maybe-it-was-right-maybe-it-wasnt-maybe-you-couldnt-tell-that-last-part-you-couldnt-tell-is-the-real-problem-when-a-human-expert-answers-a-question-you-can-ask-how-do-you-know-they-can-point-to-a-source-a-study-a-precedent-a-procedure-manual-an-experiment-their-reasoning-is-traceable-you-can-follow-it-and-check-it-when-an-ai-gives-you-an-answer-it-genuinely-cannot-tell-you-how-it-knows-it-isnt-hiding-the-answer-it-doesnt-have-one-its-knowledge-lives-inside-billions-of-invisible-numbers-that-were-adjusted-during-training-and-there-is-no-way-to-look-inside-and-trace-a-specific-fact-back-to-a-specific-source-this-occasionally-leads-to-a-phenomenon-researchers-call-hallucination-the-ai-confidently-tells-you-something-that-is-simply-not-true-not-because-its-malfunctioning-because-it-generates-plausible-sounding-text-and-plausible-sometimes-diverges-from-correct-in-a-casual-conversation-hallucination-is-annoying-in-a-medical-diagnosis-a-legal-brief-or-a-financial-report-it-can-cause-real-harm-cerebrum-is-a-direct-attempt-to-solve-this-problem-not-by-making-llms-better-at-not-hallucinating-but-by-asking-a-different-question-entirely-what-if-the-ai-didnt-need-to-guess-in-the-first-place-the-library-and-the-librarian-imagine-two-ways-to-answer-the-question-is-there-any-connection-between-aspirin-and-colorectal-cancer-method-1-the-all-knowing-librarian-you-ask-a-librarian-who-has-read-every-book-in-the-building-she-thinks-for-a-moment-and-says-yes-i-believe-there-is-a-connection-you-ask-how-she-knows-she-says-ive-read-so-much-its-just-in-my-head-somewhere-im-quite-confident-she-might-be-right-shes-usually-right-but-she-might-also-be-misremembering-something-she-read-or-confusing-it-with-something-else-and-you-have-no-way-to-check-this-is-roughly-how-an-ai-language-model-works-it-has-read-an-enormous-amount-of-text-its-answers-come-from-patterns-in-that-reading-stored-in-a-form-that-cannot-be-directly-inspected-method-2-the-indexed-card-catalog-you-go-to-a-card-catalog-you-look-up-aspirin-it-links-you-to-cox-2-enzyme-with-a-note-inhibits-you-look-up-cox-2-enzyme-it-links-to-colorectal-cancer-with-a-note-overexpressed-in-youve-just-traced-a-two-step-path-through-verified-indexed-facts-you-didnt-need-to-trust-anyones-memory-every-step-of-the-reasoning-is-a-real-card-in-the-catalog-that-you-can-pull-out-and-verify-this-is-roughly-how-a-knowledge-graph-works-every-fact-is-stored-as-an-explicit-connection-every-connection-has-a-name-the-relationship-type-nothing-is-inferred-everything-is-stated-the-problem-the-card-catalog-is-great-for-looking-things-up-but-terrible-at-reasoning-it-can-show-you-individual-connections-but-it-cant-automatically-follow-chains-of-them-across-a-large-collection-to-answer-complex-questions-it-needs-a-human-to-do-the-walking-cerebrum-what-if-you-could-teach-the-card-catalog-to-walk-itself-what-cerebrum-actually-does-cerebrum-takes-a-knowledge-graph-a-database-of-interconnected-facts-and-gives-it-the-ability-to-reason-through-it-automatically-following-chains-of-connections-the-way-a-skilled-researcher-would-but-much-faster-and-without-any-possibility-of-inventing-a-fact-that-isnt-there-inside-cerebrum-two-named-engines-do-the-work-thalamus-the-ingestion-engine-it-receives-raw-data-spreadsheets-databases-live-sensor-feeds-converts-it-into-a-structured-graph-computes-embeddings-and-assigns-every-node-to-a-community-just-as-the-brains-thalamus-receives-and-preprocesses-all-sensory-input-before-routing-it-to-the-thinking-part-of-the-brain-the-cortex-thalamus-prepares-the-knowledge-before-any-reasoning-begins-cortex-the-reasoning-engine-it-runs-the-community-structured-attention-formula-performs-the-beam-search-traversal-and-extracts-ranked-answers-this-is-the-part-that-thinks-heres-how-it-works-in-three-plain-steps-step-1-organize-the-neighborhood-before-cerebrum-can-reason-through-a-graph-it-looks-at-the-overall-structure-and-finds-the-natural-neighborhoods-groups-of-facts-that-are-more-connected-to-each-other-than-to-the-rest-of-the-graph-think-of-it-like-a-city-a-city-wasnt-designed-in-one-day-with-neighborhoods-pre-drawn-on-a-map-neighborhoods-emerged-organically-because-people-who-share-something-in-common-work-culture-proximity-end-up-interacting-more-with-each-other-than-with-people-across-town-a-medical-knowledge-graph-naturally-develops-neighborhoods-too-all-the-nodes-about-drug-mechanisms-cluster-together-all-the-nodes-about-genetic-markers-cluster-together-all-the-nodes-about-clinical-symptoms-cluster-together-these-clusters-emerge-from-the-structure-of-the-data-itself-cerebrum-identifies-these-clusters-using-an-algorithm-called-dscf-dual-signal-community-fusion-the-dual-signal-part-means-it-looks-at-two-things-simultaneously-when-deciding-where-a-fact-belongs-the-local-signal-what-neighborhood-are-my-immediate-neighbors-in-right-now-the-global-signal-what-arrangement-makes-the-overall-structure-of-the-whole-graph-most-sensible-most-existing-algorithms-only-look-at-one-signal-dscf-looks-at-both-if-both-signals-agree-the-decision-is-made-confidently-if-they-disagree-the-system-balances-them-starting-by-trusting-the-local-view-and-gradually-shifting-toward-the-global-view-as-it-processes-more-of-the-graph-this-is-borrowed-from-a-technique-in-metallurgy-called-simulated-annealing-where-you-start-with-high-temperature-lots-of-local-flexibility-and-cool-slowly-toward-a-stable-final-state-the-inspiration-for-the-two-signals-that-must-agree-idea-came-from-aviation-aircraft-navigation-computers-dont-trust-a-single-sensor-they-run-three-sensors-simultaneously-and-take-the-middle-value-automatically-rejecting-any-single-sensor-thats-giving-an-outlier-reading-cerebrum-does-something-similar-it-requires-consensus-between-signals-before-committing-a-node-to-a-neighborhood-this-mid-level-voting-is-what-lets-it-correct-itself-the-same-way-an-aircraft-corrects-navigation-errors-these-neighborhoods-are-important-because-they-become-the-equivalent-of-attention-heads-a-concept-from-the-ai-systems-that-power-modern-language-models-each-neighborhood-specializes-on-a-domain-of-knowledge-just-like-each-attention-head-in-a-language-model-specializes-on-a-type-of-relationship-step-2-walk-the-graph-with-focus-once-the-neighborhoods-are-mapped-cerebrum-can-answer-questions-by-walking-the-graph-intelligently-suppose-you-ask-what-did-marie-curie-discover-that-is-radioactive-cerebrum-starts-at-the-marie-curie-node-it-looks-at-every-fact-directly-connected-to-marie-curie-and-scores-each-one-how-relevant-does-it-seem-is-it-in-the-same-neighborhood-how-close-is-it-to-where-the-answer-is-likely-to-be-it-keeps-the-most-promising-directions-and-follows-them-outward-one-hop-two-hops-three-hops-at-each-step-its-scoring-and-pruning-like-a-hiking-guide-who-keeps-the-ten-most-promising-trails-open-but-wont-let-you-wander-down-every-rabbit-hole-the-score-for-each-step-combines-several-things-how-similar-the-next-node-is-to-the-current-one-using-embeddings-mathematical-representations-of-meaning-what-neighborhood-the-next-node-belongs-to-same-neighborhood-gets-more-credit-different-neighborhood-gets-less-what-type-of-relationship-connects-them-some-relationship-types-are-more-informative-than-others-how-deep-into-the-graph-we-already-are-the-deeper-the-more-we-discount-additional-hops-after-a-few-hops-cerebrum-has-a-set-of-complete-paths-it-ranks-them-by-their-total-score-and-returns-the-best-ones-the-answer-for-our-question-might-look-like-marie-curie-discovered-polonium-exhibits-radioactivity-score-094-two-hops-one-neighborhood-transition-every-edge-in-that-path-is-a-real-verified-fact-in-the-graph-nothing-was-invented-nothing-was-guessed-if-you-want-to-know-why-cerebrum-ranked-this-answer-highest-you-can-look-at-the-score-at-each-step-and-understand-exactly-what-it-saw-step-3-optionally-translate-into-english-for-most-applications-you-want-a-human-readable-answer-not-a-graph-path-cerebrum-can-pass-its-verified-reasoning-path-to-a-language-model-which-then-does-something-much-simpler-and-safer-than-reasoning-it-translates-the-path-into-a-sentence-yes-marie-curie-discovered-polonium-which-is-radioactive-the-language-model-didnt-reason-here-it-didnt-guess-it-just-rendered-a-fact-that-cerebrum-had-already-verified-into-plain-english-this-dramatically-reduces-the-chance-of-hallucination-because-the-language-model-is-no-longer-responsible-for-the-logic-only-the-wording-why-this-matters-in-the-real-world-here-are-some-concrete-scenarios-where-you-can-verify-every-step-changes-everything-a-doctor-asks-about-a-drug-interaction-a-language-model-might-say-drug-a-and-drug-b-may-interact-it-sounds-confident-but-where-does-that-come-from-is-it-a-known-interaction-or-a-pattern-that-looked-like-one-with-cerebrum-the-answer-comes-with-a-path-drug-a-inhibits-enzyme-x-required-by-drug-bs-metabolism-you-can-look-up-every-edge-you-can-cite-every-step-a-physician-can-evaluate-the-chain-rather-than-just-trust-the-conclusion-a-lawyer-asks-about-regulatory-precedent-legal-reasoning-requires-citation-an-invented-connection-is-malpractice-cerebrums-answer-isnt-this-regulation-might-apply-its-this-regulation-applies-to-this-entity-type-which-this-company-is-because-of-this-case-every-edge-is-verifiable-a-security-analyst-asks-how-an-attacker-could-reach-a-critical-system-cerebrum-returns-a-chain-of-real-vulnerability-relationships-exposed-port-leads-to-unpatched-service-exploitable-by-privilege-escalation-grants-access-to-database-no-hops-in-that-chain-are-invented-the-analyst-knows-exactly-what-to-fix-a-factory-engineer-asks-why-two-sensors-keep-alarming-together-cerebrum-operating-on-a-live-stream-of-sensor-data-finds-the-path-temperature-sensor-a-co-activates-pressure-sensor-b-monitors-cooling-loop-controlled-by-valve-c-the-connection-is-structural-visible-and-traceable-to-real-equipment-relationships-what-makes-this-new-cerebrum-didnt-exist-before-the-pieces-it-uses-knowledge-graphs-graph-traversal-community-detection-algorithms-attention-mechanisms-all-existed-whats-new-is-the-specific-combination-and-the-specific-insight-that-drives-it-the-natural-neighborhoods-of-a-knowledge-graph-are-structurally-equivalent-to-the-attention-heads-of-a-transformer-model-if-thats-true-and-the-early-evidence-suggests-it-is-then-a-knowledge-graph-can-do-the-same-kind-of-sophisticated-multi-signal-reasoning-that-language-models-do-but-using-verified-facts-instead-of-probabilistic-weights-the-research-is-testing-this-claim-rigorously-if-the-claim-holds-up-across-multiple-benchmark-datasets-and-domains-it-opens-the-door-to-ai-reasoning-that-is-verifiable-you-can-check-every-step-free-of-hallucination-by-construction-not-by-luck-free-of-training-data-the-reasoning-is-structural-not-learned-cheap-to-run-no-expensive-inference-calls-to-a-large-model-for-every-question-live-it-can-reason-over-data-that-is-changing-in-real-time-self-organizing-the-graph-can-clean-and-strengthen-itself-through-rem-cycles-like-sleep-without-any-human-intervention-pruning-low-confidence-connections-re-detecting-communities-on-the-cleaned-structure-and-proposing-new-hypotheses-for-the-researcher-to-investigate-insight-learning-when-a-query-discovers-an-unexpectedly-useful-connection-the-system-recognizes-the-surprise-and-permanently-strengthens-that-connection-a-dopamine-like-reward-signal-that-makes-important-discoveries-more-accessible-next-time-self-verifying-every-discovery-is-automatically-double-checked-before-being-trusted-first-by-asking-whether-the-connection-works-in-both-directions-then-by-asking-whether-other-nodes-in-the-same-knowledge-domain-independently-reach-the-same-conclusion-discoveries-that-pass-both-checks-are-marked-as-corroborated-and-their-confidence-is-raised-those-that-dont-are-flagged-for-scrutiny-rather-than-silently-accepted-horizontally-scalable-without-architectural-limit-because-a-query-only-touches-0001-of-the-graph-and-traversal-workers-share-no-mutable-state-you-can-add-machines-and-get-proportionally-more-capacity-an-llm-touches-100-of-its-parameters-for-every-single-answer-it-generates-there-is-no-equivalent-of-only-look-at-the-relevant-part-cerebrums-parallelism-is-embarrassingly-natural-an-llms-is-structurally-constrained-metacognitive-the-system-watches-its-own-discovery-history-and-notices-when-multiple-separate-insights-are-themselves-related-to-each-other-the-same-way-a-researcher-realizes-this-new-finding-connects-two-things-i-discovered-last-month-when-three-or-more-insights-form-a-coherent-chain-the-system-generates-a-higher-order-discovery-about-its-own-discoveries-enabling-a-form-of-analogical-reasoning-that-goes-beyond-any-single-query-thats-a-genuinely-different-kind-of-ai-than-what-currently-dominates-the-field-there-is-one-more-difference-that-is-easy-to-overlook-but-may-turn-out-to-be-the-most-consequential-an-llm-cannot-do-either-of-those-last-two-things-without-being-completely-retrained-its-knowledge-is-frozen-at-the-moment-training-ended-it-does-not-get-better-from-use-it-does-not-remember-that-a-particular-path-through-its-knowledge-was-surprisingly-effective-last-tuesday-it-cannot-prune-connections-it-has-never-needed-cerebrum-by-contrast-gets-structurally-better-every-time-a-rem-cycle-runs-and-every-time-a-high-scoring-insight-fires-without-retraining-without-a-human-reviewing-individual-edges-and-without-interrupting-service-that-kind-of-continuous-autonomous-self-improvement-is-simply-not-possible-in-a-system-that-stores-knowledge-as-billions-of-opaque-numerical-weights-and-neither-is-the-self-verification-layer-when-cerebrum-discovers-something-new-it-immediately-asks-whether-the-evidence-holds-up-from-multiple-independent-angles-not-as-an-afterthought-but-as-a-built-in-structural-check-an-llm-has-no-equivalent-it-cannot-verify-its-own-outputs-against-the-structure-of-what-it-knows-it-can-only-produce-more-text-and-hope-its-consistent-the-scalability-gap-compounds-all-of-this-a-kg-query-touches-roughly-0001-of-the-graph-per-call-using-operations-that-run-in-parallel-across-every-available-processor-an-llm-touches-100-of-its-parameters-every-time-and-each-layer-must-wait-for-the-previous-one-to-finish-by-mathematical-requirement-not-by-engineering-limitation-this-means-cerebrum-can-be-sharded-across-dozens-of-machines-with-near-linear-throughput-gains-while-llm-inference-hits-a-practical-ceiling-of-roughly-816-gpus-per-call-before-communication-overhead-dominates-one-scales-like-a-database-the-other-scales-like-a-single-monolithic-computation-the-one-sentence-version-cerebrum-teaches-a-database-of-interconnected-facts-to-reason-through-itself-the-way-a-skilled-researcher-follows-a-trail-of-evidence-without-ever-making-something-up-want-to-go-deeper-the-plain-language-guide-docscerebrum_plain_language_guidemd-covers-the-same-territory-with-more-technical-detail-including-the-math-behind-the-attention-formula-and-a-full-breakdown-of-the-research-hypotheses-being-tested-the-interactive-walkthrough-examplesvalidation_walkthroughipynb-a-jupyter-notebook-you-can-run-that-shows-the-algorithm-forming-communities-scoring-edges-and-tracing-reasoning-paths-step-by-step-with-live-visualizations-the-studio-uistudiopy-the-browser-based-interface-where-you-can-load-your-own-data-and-ask-questions-directly-with-no-code-required-the-white-paper-docscerebrum_white_papermd-the-formal-research-document-with-the-full-mathematical-treatment-benchmark-methodology-and-experimental-results-questions-contact-the-author-bryan-alexander-buchorn-bryanalexanderbuchorncom-cerebrum-is-dual-licensed-free-for-personal-academic-and-non-profit-use-commercial-use-requires-a-separate-license-agreement">CEREBRUM: A Newbie's Guide  ## What it is, why it exists, and why it matters — in plain English  <strong>For:</strong> Anyone who has heard of AI and wants to understand something genuinely new about it. <strong>Not required:</strong> A technical background of any kind.  <em>Bryan Alexander Buchorn — March 2026</em>  ---  ## Start here: the problem with AI that nobody talks about  You've probably used ChatGPT, Claude, or a similar AI tool. You asked it a question and it gave you a confident, well-written answer. Maybe it was right. Maybe it wasn't. Maybe you couldn't tell.  That last part — <em>you couldn't tell</em> — is the real problem.  When a human expert answers a question, you can ask: "How do you know?" They can point to a source. A study, a precedent, a procedure manual, an experiment. Their reasoning is traceable. You can follow it and check it.  When an AI gives you an answer, it genuinely cannot tell you how it knows. It isn't hiding the answer — it doesn't have one. Its knowledge lives inside billions of invisible numbers that were adjusted during training, and there is no way to look inside and trace a specific fact back to a specific source.  This occasionally leads to a phenomenon researchers call <em>hallucination</em>: the AI confidently tells you something that is simply not true. Not because it's malfunctioning. Because it generates plausible-sounding text, and plausible sometimes diverges from correct.  In a casual conversation, hallucination is annoying. In a medical diagnosis, a legal brief, or a financial report, it can cause real harm.  <strong>CEREBRUM is a direct attempt to solve this problem</strong> — not by making LLMs better at not hallucinating, but by asking a different question entirely: <em>what if the AI didn't need to guess in the first place?</em>  ---  ## The library and the librarian  Imagine two ways to answer the question: "Is there any connection between aspirin and colorectal cancer?"  <strong>Method 1: The all-knowing librarian</strong>  You ask a librarian who has read every book in the building. She thinks for a moment and says: "Yes, I believe there is a connection." You ask how she knows. She says: "I've read so much, it's just... in my head somewhere. I'm quite confident."  She might be right. She's usually right. But she might also be misremembering something she read, or confusing it with something else. And you have no way to check.  This is roughly how an AI language model works. It has "read" an enormous amount of text. Its answers come from patterns in that reading, stored in a form that cannot be directly inspected.  <strong>Method 2: The indexed card catalog</strong>  You go to a card catalog. You look up "Aspirin." It links you to "COX-2 enzyme" with a note: "inhibits." You look up "COX-2 enzyme." It links to "colorectal cancer" with a note: "overexpressed in." You've just traced a two-step path through verified, indexed facts.  You didn't need to trust anyone's memory. Every step of the reasoning is a real card in the catalog that you can pull out and verify.  This is roughly how a Knowledge Graph works. Every fact is stored as an explicit connection. Every connection has a name (the relationship type). Nothing is inferred; everything is stated.  <strong>The problem:</strong> the card catalog is great for looking things up, but terrible at reasoning. It can show you individual connections but it can't automatically follow chains of them across a large collection to answer complex questions. It needs a human to do the walking.  <strong>CEREBRUM:</strong> what if you could teach the card catalog to walk itself?  ---  ## What CEREBRUM actually does  CEREBRUM takes a Knowledge Graph — a database of interconnected facts — and gives it the ability to reason through it automatically, following chains of connections the way a skilled researcher would, but much faster and without any possibility of inventing a fact that isn't there.  Inside CEREBRUM, two named engines do the work:  - <strong>THALAMUS</strong> — the ingestion engine. It receives raw data (spreadsheets, databases, live sensor feeds), converts it into a structured graph, computes embeddings, and assigns every node to a community. Just as the brain's thalamus receives and preprocesses all sensory input before routing it to the thinking part of the brain — the cortex — THALAMUS prepares the knowledge before any reasoning begins.  - <strong>CORTEX</strong> — the reasoning engine. It runs the community-structured attention formula, performs the beam-search traversal, and extracts ranked answers. This is the part that thinks.  Here's how it works in three plain steps.  ### Step 1: Organize the neighborhood  Before CEREBRUM can reason through a graph, it looks at the overall structure and finds the <em>natural neighborhoods</em> — groups of facts that are more connected to each other than to the rest of the graph.  Think of it like a city. A city wasn't designed in one day with neighborhoods pre-drawn on a map. Neighborhoods emerged organically because people who share something in common — work, culture, proximity — end up interacting more with each other than with people across town.  A medical knowledge graph naturally develops neighborhoods too. All the nodes about drug mechanisms cluster together. All the nodes about genetic markers cluster together. All the nodes about clinical symptoms cluster together. These clusters emerge from the structure of the data itself.  CEREBRUM identifies these clusters using an algorithm called DSCF — Dual-Signal Community Fusion. The "dual signal" part means it looks at two things simultaneously when deciding where a fact belongs:  - <strong>The local signal:</strong> "What neighborhood are my immediate neighbors in right now?" - <strong>The global signal:</strong> "What arrangement makes the overall structure of the whole graph most sensible?"  Most existing algorithms only look at one signal. DSCF looks at both. If both signals agree, the decision is made confidently. If they disagree, the system balances them — starting by trusting the local view and gradually shifting toward the global view as it processes more of the graph. This is borrowed from a technique in metallurgy called <em>simulated annealing</em>, where you start with high temperature (lots of local flexibility) and cool slowly toward a stable final state.  The inspiration for the "two signals that must agree" idea came from aviation. Aircraft navigation computers don't trust a single sensor. They run three sensors simultaneously and take the <em>middle value</em>, automatically rejecting any single sensor that's giving an outlier reading. CEREBRUM does something similar: it requires consensus between signals before committing a node to a neighborhood. This "mid-level voting" is what lets it correct itself, the same way an aircraft corrects navigation errors.  These neighborhoods are important because they become the equivalent of <em>attention heads</em> — a concept from the AI systems that power modern language models. Each neighborhood specializes on a domain of knowledge, just like each attention head in a language model specializes on a type of relationship.  ### Step 2: Walk the graph with focus  Once the neighborhoods are mapped, CEREBRUM can answer questions by walking the graph intelligently.  Suppose you ask: "What did Marie Curie discover that is radioactive?"  CEREBRUM starts at the "Marie Curie" node. It looks at every fact directly connected to Marie Curie and scores each one: how relevant does it seem? Is it in the same neighborhood? How close is it to where the answer is likely to be?  It keeps the most promising directions and follows them outward — one hop, two hops, three hops. At each step, it's scoring and pruning, like a hiking guide who keeps the ten most promising trails open but won't let you wander down every rabbit hole.  The score for each step combines several things: - <strong>How similar</strong> the next node is to the current one (using embeddings — mathematical representations of meaning) - <strong>What neighborhood</strong> the next node belongs to — same neighborhood gets more credit, different neighborhood gets less - <strong>What type of relationship</strong> connects them — some relationship types are more informative than others - <strong>How deep</strong> into the graph we already are — the deeper, the more we discount additional hops  After a few hops, CEREBRUM has a set of complete paths. It ranks them by their total score and returns the best ones.  The answer for our question might look like:  &gt; Marie Curie → <em>discovered</em> → Polonium → <em>exhibits</em> → Radioactivity  Score: 0.94. Two hops. One neighborhood transition.  Every edge in that path is a real, verified fact in the graph. Nothing was invented. Nothing was guessed. If you want to know <em>why</em> CEREBRUM ranked this answer highest, you can look at the score at each step and understand exactly what it saw.  ### Step 3: Optionally, translate into English  For most applications, you want a human-readable answer, not a graph path. CEREBRUM can pass its verified reasoning path to a language model — which then does something much simpler and safer than reasoning: it translates the path into a sentence.  "Yes. Marie Curie discovered Polonium, which is radioactive."  The language model didn't reason here. It didn't guess. It just rendered a fact that CEREBRUM had already verified into plain English. This dramatically reduces the chance of hallucination, because the language model is no longer responsible for the <em>logic</em> — only the <em>wording</em>.  ---  ## Why this matters in the real world  Here are some concrete scenarios where "you can verify every step" changes everything.  <strong>A doctor asks about a drug interaction.</strong> A language model might say: "Drug A and Drug B may interact." It sounds confident. But where does that come from? Is it a known interaction or a pattern that looked like one? With CEREBRUM, the answer comes with a path: Drug A → inhibits → Enzyme X → required by → Drug B's metabolism. You can look up every edge. You can cite every step. A physician can evaluate the chain rather than just trust the conclusion.  <strong>A lawyer asks about regulatory precedent.</strong> Legal reasoning requires citation. An invented connection is malpractice. CEREBRUM's answer isn't "this regulation might apply" — it's "this regulation applies to this entity type, which this company is, because of this case." Every edge is verifiable.  <strong>A security analyst asks how an attacker could reach a critical system.</strong> CEREBRUM returns a chain of real vulnerability relationships: Exposed Port → leads to → Unpatched Service → exploitable by → Privilege Escalation → grants access to → Database. No hops in that chain are invented. The analyst knows exactly what to fix.  <strong>A factory engineer asks why two sensors keep alarming together.</strong> CEREBRUM, operating on a live stream of sensor data, finds the path: Temperature Sensor A → co-activates → Pressure Sensor B → monitors → Cooling Loop → controlled by → Valve C. The connection is structural, visible, and traceable to real equipment relationships.  ---  ## What makes this new  CEREBRUM didn't exist before. The pieces it uses — knowledge graphs, graph traversal, community detection algorithms, attention mechanisms — all existed. What's new is the specific combination and the specific insight that drives it:  &gt; <strong>The natural neighborhoods of a knowledge graph are structurally equivalent to the attention heads of a Transformer model.</strong>  If that's true — and the early evidence suggests it is — then a knowledge graph can do the same kind of sophisticated, multi-signal reasoning that language models do, but using verified facts instead of probabilistic weights.  The research is testing this claim rigorously. If the claim holds up across multiple benchmark datasets and domains, it opens the door to AI reasoning that is:  - <strong>Verifiable:</strong> you can check every step - <strong>Free of hallucination:</strong> by construction, not by luck - <strong>Free of training data:</strong> the reasoning is structural, not learned - <strong>Cheap to run:</strong> no expensive inference calls to a large model for every question - <strong>Live:</strong> it can reason over data that is changing in real-time - <strong>Self-organizing:</strong> the graph can clean and strengthen itself through REM cycles (like sleep) without any human intervention — pruning low-confidence connections, re-detecting communities on the cleaned structure, and proposing new hypotheses for the researcher to investigate - <strong>Insight-learning:</strong> when a query discovers an unexpectedly useful connection, the system recognizes the surprise and permanently strengthens that connection — a dopamine-like reward signal that makes important discoveries more accessible next time - <strong>Self-verifying:</strong> every discovery is automatically double-checked before being trusted — first by asking whether the connection works in both directions, then by asking whether other nodes in the same knowledge domain independently reach the same conclusion. Discoveries that pass both checks are marked as corroborated and their confidence is raised; those that don't are flagged for scrutiny rather than silently accepted - <strong>Horizontally scalable without architectural limit:</strong> because a query only touches ~0.001% of the graph and traversal workers share no mutable state, you can add machines and get proportionally more capacity. An LLM touches 100% of its parameters for every single answer it generates — there is no equivalent of "only look at the relevant part." CEREBRUM's parallelism is embarrassingly natural; an LLM's is structurally constrained - <strong>Metacognitive:</strong> the system watches its own discovery history and notices when multiple separate insights are themselves related to each other — the same way a researcher realizes "this new finding connects two things I discovered last month." When three or more insights form a coherent chain, the system generates a higher-order discovery about its own discoveries, enabling a form of analogical reasoning that goes beyond any single query  That's a genuinely different kind of AI than what currently dominates the field.  There is one more difference that is easy to overlook but may turn out to be the most consequential: an LLM cannot do either of those last two things without being completely retrained. Its knowledge is frozen at the moment training ended. It does not get better from use. It does not remember that a particular path through its knowledge was surprisingly effective last Tuesday. It cannot prune connections it has never needed. CEREBRUM, by contrast, gets structurally better every time a REM cycle runs and every time a high-scoring insight fires — without retraining, without a human reviewing individual edges, and without interrupting service. That kind of continuous, autonomous self-improvement is simply not possible in a system that stores knowledge as billions of opaque numerical weights. And neither is the self-verification layer: when CEREBRUM discovers something new, it immediately asks whether the evidence holds up from multiple independent angles — not as an afterthought, but as a built-in structural check. An LLM has no equivalent. It cannot verify its own outputs against the structure of what it knows; it can only produce more text and hope it's consistent.  The scalability gap compounds all of this. A KG query touches roughly 0.001% of the graph per call, using operations that run in parallel across every available processor. An LLM touches 100% of its parameters every time, and each layer must wait for the previous one to finish — by mathematical requirement, not by engineering limitation. This means CEREBRUM can be sharded across dozens of machines with near-linear throughput gains, while LLM inference hits a practical ceiling of roughly 8–16 GPUs per call before communication overhead dominates. One scales like a database. The other scales like a single monolithic computation.  ---  ## The one-sentence version  <strong>CEREBRUM teaches a database of interconnected facts to reason through itself, the way a skilled researcher follows a trail of evidence — without ever making something up.</strong>  ---  ## Want to go deeper?  - <strong>The Plain Language Guide</strong> (<code>docs/CEREBRUM_Plain_Language_Guide.md</code>) — covers the same territory with more technical detail, including the math behind the attention formula and a full breakdown of the research hypotheses being tested. - <strong>The Interactive Walkthrough</strong> (<code>examples/Validation_Walkthrough.ipynb</code>) — a Jupyter Notebook you can run that shows the algorithm forming communities, scoring edges, and tracing reasoning paths step by step, with live visualizations. - <strong>The Studio</strong> (<code>ui/studio.py</code>) — the browser-based interface where you can load your own data and ask questions directly, with no code required. - <strong>The White Paper</strong> (<code>docs/CEREBRUM_White_Paper.md</code>) — the formal research document with the full mathematical treatment, benchmark methodology, and experimental results.  ---  <em>Questions? Contact the author: Bryan Alexander Buchorn — bryan.alexander@buchorn.com</em>  <em>CEREBRUM is dual-licensed. Free for personal, academic, and non-profit use. Commercial use requires a separate license agreement.</em></h1>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

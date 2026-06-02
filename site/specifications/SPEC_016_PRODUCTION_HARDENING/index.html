@@ -1,0 +1,2430 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Crystal-box knowledge graph reasoning — traceable, deterministic, zero hallucination">
+      
+      
+      
+        <link rel="canonical" href="https://brutalbyte.github.io/CEREBRUM/specifications/SPEC_016_PRODUCTION_HARDENING/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>[Buchorn, 2026]: Production Hardening - CEREBRUM</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config",""),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#buchorn-2026-production-hardening" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="CEREBRUM" class="md-header__button md-logo" aria-label="CEREBRUM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CEREBRUM
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              [Buchorn, 2026]: Production Hardening
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/BrutalByte/CEREBRUM" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BrutalByte/CEREBRUM
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/quickstart/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/crystal-box/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../connectors/overview/" class="md-tabs__link">
+          
+  
+  
+  Data Connectors
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../sdk/python/" class="md-tabs__link">
+          
+  
+  
+  SDK Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../integrations/langchain/" class="md-tabs__link">
+          
+  
+  
+  Integrations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/overview/" class="md-tabs__link">
+          
+  
+  
+  REST API
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deployment/docker/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/architecture/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="CEREBRUM" class="md-nav__button md-logo" aria-label="CEREBRUM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    CEREBRUM
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/BrutalByte/CEREBRUM" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BrutalByte/CEREBRUM
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/first-kb/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First KB
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/crystal-box/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Crystal-Box Reasoning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/crystal-box-whitepaper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Crystal-Box Whitepaper
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How CEREBRUM Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Connectors
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Data Connectors
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/csv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CSV
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/sql/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/parquet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parquet & Arrow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/graph-databases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Neo4j & Neptune
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDK Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    SDK Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sdk/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python SDK
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sdk/typescript/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TypeScript SDK
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/langchain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LangChain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/llamaindex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LlamaIndex
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/jupyter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jupyter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    REST API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/endpoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compliance Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/multi-tenant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Tenant API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/hardware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#twelve-structural-holes-root-causes-fixes-and-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Twelve Structural Holes: Root Causes, Fixes, and Validation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Twelve Structural Holes: Root Causes, Fixes, and Validation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Introduction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-phase-19-structural-holes-v2520" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Phase 19 Structural Holes (v2.52.0)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Phase 19 Structural Holes (v2.52.0)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-hole-1-zombie-bridge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Hole 1: Zombie Bridge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-hole-2-causal-flood" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Hole 2: Causal Flood
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-hole-3-namespace-collision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Hole 3: Namespace Collision
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-hole-4-bayesian-cold-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Hole 4: Bayesian Cold-Start
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-phase-20-structural-holes-v2520" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Phase 20 Structural Holes (v2.52.0)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Phase 20 Structural Holes (v2.52.0)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-hole-5-mid-flight-community-swap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Hole 5: Mid-Flight Community Swap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-hole-6-community-homogeneity-trap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Hole 6: Community Homogeneity Trap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-hole-7-canonical-basis-drift" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Hole 7: Canonical Basis Drift
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-hole-8-path-preserving-hold-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 Hole 8: Path-Preserving Hold-out
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-phase-21-structural-holes-v2520-hardened-enterprise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Phase 21 Structural Holes (v2.52.0 Hardened Enterprise)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Phase 21 Structural Holes (v2.52.0 Hardened Enterprise)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-hole-9-the-entropy-sink-stdp-complexity-trap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Hole 9: The Entropy Sink (STDP Complexity Trap)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-hole-10-the-thalamic-bottleneck-ingestion-lag" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Hole 10: The Thalamic Bottleneck (Ingestion Lag)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-hole-11-federated-signature-path-injection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Hole 11: Federated Signature (Path Injection)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-hole-12-recursive-insight-loop-hallucination-feedback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Hole 12: Recursive Insight Loop (Hallucination Feedback)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-implementation-notes-v2520" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Implementation Notes (v2.52.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-7482-production-hardening-additions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 74–82 Production Hardening Additions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase 74–82 Production Hardening Additions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#6-autonomous-discovery-loop-circuit-breaker-phase-74" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Autonomous Discovery Loop — Circuit Breaker (Phase 74)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-provenanceledger-materialisation-audit-chain-phase-76" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. ProvenanceLedger — Materialisation Audit Chain (Phase 76)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-loop-provenance-recovery-auto-rollback-on-trip-phase-79" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Loop-Provenance Recovery — Auto-Rollback on Trip (Phase 79)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-graphadapter-remove_edge-protocol-phase-80" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. GraphAdapter remove_edge Protocol (Phase 80)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-graphsnapshot-portable-topology-persistence-phase-81" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. GraphSnapshot — Portable Topology Persistence (Phase 81)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#11-adaptive-loop-tuning-phase-82" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Adaptive Loop Tuning (Phase 82)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-summary-hardening-timeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Summary: Hardening Timeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="buchorn-2026-production-hardening">[Buchorn, 2026]: Production Hardening</h1>
+<h2 id="twelve-structural-holes-root-causes-fixes-and-validation">Twelve Structural Holes: Root Causes, Fixes, and Validation</h2>
+<p><strong>Status</strong>: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
+<strong>Author</strong>: Bryan Alexander Buchorn<br />
+<strong>Affiliation</strong>: Independent Researcher, Las Vegas, NV, USA<br />
+<strong>Field</strong>: Production Systems / Correctness / Adversarial Hardening
+<strong>Modules</strong>: <code>core/bridge_engine.py</code>, <code>core/rebalancer.py</code>, <code>core/discretizer.py</code>, <code>core/thalamus.py</code>, <code>core/signal_encoder.py</code>, <code>core/attention_engine.py</code>, <code>reasoning/traversal.py</code>, <code>core/insight_validator.py</code>, <code>core/insight_engine.py</code>, <code>adapters/stream_adapter.py</code>, <code>adapters/remote_adapter.py</code></p>
+<hr />
+<h3 id="1-introduction">1. Introduction</h3>
+<p>Phases 19, 20, and 21 each identified four <strong>structural holes</strong> — cross-feature interaction bugs where independently-correct subsystems produce incorrect outcomes when combined. All twelve holes are patched in v2.52.0.</p>
+<h3 id="2-phase-19-structural-holes-v2520">2. Phase 19 Structural Holes (v2.52.0)</h3>
+<h4 id="21-hole-1-zombie-bridge">2.1 Hole 1: Zombie Bridge</h4>
+<p><strong>Components</strong>: <code>GlobalRebalancer</code> × <code>BridgeTwinEngine</code>
+<strong>Root cause</strong>: Post-rebalance community IDs are reassigned sequentially. <code>BridgeRecord.source_community</code> and <code>.destination_community</code> reference stale IDs from the previous partition.</p>
+<p><strong>Fix</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># core/bridge_engine.py</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">BridgeTwinEngine</span><span class="p">:</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">on_rebalance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_community_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Prune bridge records whose community IDs are stale. Returns count pruned.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        <span class="n">stale</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        <span class="k">for</span> <span class="n">twin_id</span><span class="p">,</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bridges</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>            <span class="n">new_src</span> <span class="o">=</span> <span class="n">new_community_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">original_id</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>            <span class="n">new_dst</span> <span class="o">=</span> <span class="n">new_community_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">twin_id</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>            <span class="k">if</span> <span class="n">new_src</span> <span class="o">!=</span> <span class="n">record</span><span class="o">.</span><span class="n">source_community</span> <span class="ow">or</span> <span class="n">new_dst</span> <span class="o">!=</span> <span class="n">record</span><span class="o">.</span><span class="n">destination_community</span><span class="p">:</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                <span class="n">stale</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">twin_id</span><span class="p">)</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        <span class="k">for</span> <span class="n">twin_id</span> <span class="ow">in</span> <span class="n">stale</span><span class="p">:</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bridges</span><span class="p">[</span><span class="n">twin_id</span><span class="p">]</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">stale</span><span class="p">)</span>
+</code></pre></div></p>
+<h4 id="22-hole-2-causal-flood">2.2 Hole 2: Causal Flood</h4>
+<p><strong>Components</strong>: <code>STDPDiscretizer</code> × adversarial event stream
+<strong>Root cause</strong>: Burst of N rapid spikes satisfies <code>w_threshold</code> + <code>n_min</code> in milliseconds; <code>weight_decay</code> is per-spike, insufficient to prevent threshold crossing during a burst.</p>
+<p><strong>Fix</strong>: <code>STDPDiscretizer(min_causal_span=0.0, use_chi_squared=False)</code> — two new optional parameters. Checks for minimum wall-clock duration between pairings and uses chi-squared uniformity test to reject rhythmic/bursty artifacts.</p>
+<h4 id="23-hole-3-namespace-collision">2.3 Hole 3: Namespace Collision</h4>
+<p><strong>Components</strong>: <code>IngestionPipeline</code> × <code>SignalEncoder</code>
+<strong>Root cause</strong>: Both systems use bare entity IDs with no prefix; identical names merge into one graph node.</p>
+<p><strong>Fix</strong>: <code>IngestionPipeline(namespace="")</code> and <code>SignalEncoder(namespace="signal")</code>. Applied after dedup, before construction. Ensures separation of text and sensor nodes.</p>
+<h4 id="24-hole-4-bayesian-cold-start">2.4 Hole 4: Bayesian Cold-Start</h4>
+<p><strong>Components</strong>: <code>BeamTraversal</code> (probabilistic) × sparse/cold graph regions
+<strong>Root cause</strong>: <code>Beta(1,1)</code> uniform prior at first hop ignores available CSA weight signal; produces high variance beam selection.</p>
+<p><strong>Fix</strong>: <code>BeamTraversal(warm_start_strength=0.0)</code>. Seeds the Beta distribution using the deterministic CSA weight scaled by strength.</p>
+<h3 id="3-phase-20-structural-holes-v2520">3. Phase 20 Structural Holes (v2.52.0)</h3>
+<h4 id="31-hole-5-mid-flight-community-swap">3.1 Hole 5: Mid-Flight Community Swap</h4>
+<p><strong>Components</strong>: <code>GlobalRebalancer</code> × <code>BeamTraversal</code>
+<strong>Root cause</strong>: Multi-hop traversal reads <code>adapter.community_map</code> at each hop; atomic rebalance between hops produces inconsistent CSA weights within one query.</p>
+<p><strong>Fix</strong>: <code>CSAEngine.set_query_snapshot(community_map)</code>. <code>BeamTraversal.traverse()</code> snapshots the map once at query start.</p>
+<h4 id="32-hole-6-community-homogeneity-trap">3.2 Hole 6: Community Homogeneity Trap</h4>
+<p><strong>Components</strong>: <code>CSAEngine</code> (global parameters) × highly-homogeneous communities
+<strong>Root cause</strong>: Saturated β term in dense communities eliminates discrimination between candidate edges.</p>
+<p><strong>Fix</strong>: <code>CSAEngine(community_params={})</code>. Parameters are looked up per community_id at edge-expansion time.</p>
+<h4 id="33-hole-7-canonical-basis-drift">3.3 Hole 7: Canonical Basis Drift</h4>
+<p><strong>Components</strong>: <code>SignalEncoder</code> × <code>FederatedAdapter</code> (multi-hop)
+<strong>Root cause</strong>: Procrustes alignment learned per-adapter; geometric drift compounds across federated hops.</p>
+<p><strong>Fix</strong>: <code>SignalEncoder(canonical_embeddings=...)</code>. All adapters in a federation share a common fixed root basis.</p>
+<h4 id="34-hole-8-path-preserving-hold-out">3.4 Hole 8: Path-Preserving Hold-out</h4>
+<p><strong>Components</strong>: <code>InferenceValidator</code> × sparse graphs
+<strong>Root cause</strong>: Holding out the only path between $(u,v)$ guarantees traversal failure; this is recorded as a recall miss.</p>
+<p><strong>Fix</strong>: <code>InferenceValidator(path_preserving=True)</code>. Only holds out edges if an alternative multi-hop path exists.</p>
+<h3 id="4-phase-21-structural-holes-v2520-hardened-enterprise">4. Phase 21 Structural Holes (v2.52.0 Hardened Enterprise)</h3>
+<h4 id="41-hole-9-the-entropy-sink-stdp-complexity-trap">4.1 Hole 9: The Entropy Sink (STDP Complexity Trap)</h4>
+<p><strong>Components</strong>: <code>STDPDiscretizer</code> × massive causal memory
+<strong>Root cause</strong>: Multiplicative <code>weight_decay</code> was applied globally to all causal pairs on every event spike. Complexity was $O(N_{pairs})$, leading to system freeze as the number of learned relationships grew.</p>
+<p><strong>Fix</strong>: <strong>Lazy Decay</strong>. Store the <code>last_update_step</code> for each pair and apply accumulated decay $\lambda^{\Delta T}$ only upon access. 
+-   Complexity: $O(1)$ per event.
+-   Threshold check: Only checks pairs updated in the current step.</p>
+<h4 id="42-hole-10-the-thalamic-bottleneck-ingestion-lag">4.2 Hole 10: The Thalamic Bottleneck (Ingestion Lag)</h4>
+<p><strong>Components</strong>: <code>StreamAdapter</code> × <code>IngestionPipeline</code> (Thalamus)
+<strong>Root cause</strong>: Normalization and deduplication were performed inside the graph's global write-lock. In high-velocity streams, CPU-bound string work blocked all query readers.</p>
+<p><strong>Fix</strong>: <strong>Unlocked Preprocessing</strong>. Refactored <code>ingest()</code> to run the pipeline process <em>before</em> acquiring the lock.
+-   Linear scaling: Ingestion throughput scales with CPU cores.
+-   Zero-block: Reasoning beams continue while data is being cleaned.</p>
+<h4 id="43-hole-11-federated-signature-path-injection">4.3 Hole 11: Federated Signature (Path Injection)</h4>
+<p><strong>Components</strong>: <code>FederatedAdapter</code> × <code>RemoteCerebrumAdapter</code>
+<strong>Root cause</strong>: Federated reasoning relied on JWT for auth but lacked data integrity verification. A malicious or hallucinating peer could return fake reasoning paths.</p>
+<p><strong>Fix</strong>: <strong>HMAC Path Provenance</strong>. Implemented HMAC-SHA256 verification for all remote adapter responses using a shared secret.
+-   <code>RemoteCerebrumAdapter(secret=...)</code>
+-   Signature: <code>HMAC(K, body)</code> verified via <code>X-Signature</code> header.</p>
+<h4 id="44-hole-12-recursive-insight-loop-hallucination-feedback">4.4 Hole 12: Recursive Insight Loop (Hallucination Feedback)</h4>
+<p><strong>Components</strong>: <code>InsightEngine</code> × <code>REMEngine</code>
+<strong>Root cause</strong>: Speculative <code>INSIGHT_LINK</code> edges were treated as grounded facts by the REM cycle, leading to permanent consolidation of spurious correlations.</p>
+<p><strong>Fix</strong>: <strong>Insight Decay</strong>. Applied a faster, skeptical decay rate to insight links.
+-   Pruning: Stale insights are aggressively deleted during the cold-path scan unless reinforced by query success.
+-   Requirement: Insights must be "triangulated" via independent reasoning paths to transition to "Grounded" status.</p>
+<h3 id="5-implementation-notes-v2520">5. Implementation Notes (v2.52.0)</h3>
+<ul>
+<li>All twelve fixes use opt-in new parameters with backward-compatible defaults.</li>
+<li><strong>Verification</strong>: All patches are covered by dedicated unit tests in <code>tests/test_*.py</code>.</li>
+<li><strong>Hardening Result</strong>: CEREBRUM v2.52.0 is the first version suitable for mission-critical, multi-tenant federated deployment.</li>
+</ul>
+<hr />
+<h2 id="phase-7482-production-hardening-additions">Phase 74–82 Production Hardening Additions</h2>
+<h3 id="6-autonomous-discovery-loop-circuit-breaker-phase-74">6. Autonomous Discovery Loop — Circuit Breaker (Phase 74)</h3>
+<p><strong>Component</strong>: <code>AutonomousDiscoveryLoop</code></p>
+<p>The loop runs <code>ResearchAgent.scan_once()</code> autonomously. Without a safety gate, a period of low-quality discoveries could continuously write noise edges to the graph.</p>
+<p><strong>Hardening</strong>: Sliding-window circuit breaker over the last N decisions. If the approval rate drops below <code>min_approval_rate</code>, <code>circuit_breaker_tripped=True</code> and materialization pauses. <code>resume()</code> requires manual intervention or automatic reset when new high-quality findings arrive.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">LoopConfig</span><span class="p">(</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">min_approval_rate</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>         <span class="c1"># 50% approval floor</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">circuit_breaker_window</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>     <span class="c1"># window size</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">)</span>
+</code></pre></div>
+<p><strong>Verification</strong>: <code>tests/test_auto_approver.py</code> — circuit breaker trip + resume scenarios.</p>
+<hr />
+<h3 id="7-provenanceledger-materialisation-audit-chain-phase-76">7. ProvenanceLedger — Materialisation Audit Chain (Phase 76)</h3>
+<p><strong>Component</strong>: <code>ProvenanceLedger</code> + <code>ResearchAgent.approve()</code></p>
+<p>Prior to Phase 76, approved findings wrote edges with no record of which approval batch produced which edges. Rollback required manual graph diffing.</p>
+<p><strong>Hardening</strong>: Every <code>approve()</code> call generates a <code>batch_id</code> (timestamp + finding hash). <code>ProvenanceLedger</code> records every <code>(u, v, relation)</code> triple under that batch. Thread-safe. LRU eviction at <code>max_batches</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">ledger</span> <span class="o">=</span> <span class="n">ProvenanceLedger</span><span class="p">(</span><span class="n">max_batches</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">research_agent</span><span class="o">.</span><span class="n">set_provenance_ledger</span><span class="p">(</span><span class="n">ledger</span><span class="p">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Targeted rollback</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">ledger</span><span class="o">.</span><span class="n">rollback_batch</span><span class="p">(</span><span class="s2">&quot;batch_20260414_001&quot;</span><span class="p">,</span> <span class="n">adapter</span><span class="p">)</span>   <span class="c1"># one approval</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">ledger</span><span class="o">.</span><span class="n">rollback_cycle</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="n">adapter</span><span class="p">)</span>                     <span class="c1"># all of cycle 12</span>
+</code></pre></div>
+<p><strong>Verification</strong>: <code>tests/test_provenance_ledger.py</code> — batch tracking, cycle rollback, LRU eviction.</p>
+<hr />
+<h3 id="8-loop-provenance-recovery-auto-rollback-on-trip-phase-79">8. Loop-Provenance Recovery — Auto-Rollback on Trip (Phase 79)</h3>
+<p><strong>Component</strong>: <code>AutonomousDiscoveryLoop</code> × <code>ProvenanceLedger</code></p>
+<p>When the circuit breaker trips (approval rate collapse), edges materialized in the failed cycle remain in the graph. Manual cleanup is error-prone.</p>
+<p><strong>Hardening</strong>: <code>LoopConfig.auto_rollback_on_trip=True</code> wires the circuit breaker trip event to <code>ProvenanceLedger.rollback_cycle()</code> automatically. <code>CycleRecord.edges_rolled_back</code> records the undo count.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">LoopConfig</span><span class="p">(</span><span class="n">auto_rollback_on_trip</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Prerequisite</strong>: <code>ProvenanceLedger</code> must be attached via <code>research_agent.set_provenance_ledger(ledger)</code>.</p>
+<p><strong>Verification</strong>: <code>tests/test_looped_traversal.py</code> — auto-rollback on trip integration test.</p>
+<hr />
+<h3 id="9-graphadapter-remove_edge-protocol-phase-80">9. GraphAdapter remove_edge Protocol (Phase 80)</h3>
+<p><strong>Component</strong>: <code>GraphAdapter</code> base class</p>
+<p>Prior to Phase 80, <code>ProvenanceLedger</code> checked <code>hasattr(adapter, "remove_edge")</code> and silently skipped rollback when the method was absent. This masked missing implementations.</p>
+<p><strong>Hardening</strong>: <code>GraphAdapter</code> base class now defines <code>remove_edge(u, v, relation)</code> as a non-abstract method that raises <code>NotImplementedError</code>. The <code>hasattr()</code> guard is removed from <code>ProvenanceLedger</code>. All six built-in adapters (NetworkX, Neo4j, RDF, CSV, Stream, Remote) implement <code>remove_edge</code>.</p>
+<p><strong>Custom adapter action required</strong>:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyAdapter</span><span class="p">(</span><span class="n">GraphAdapter</span><span class="p">):</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">remove_edge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">u</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">relation</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;MyAdapter does not support edge removal.&quot;</span><span class="p">)</span>
+</code></pre></div></p>
+<p><strong>Verification</strong>: <code>tests/test_provenance_ledger.py</code> — <code>NotImplementedError</code> propagates correctly.</p>
+<hr />
+<h3 id="10-graphsnapshot-portable-topology-persistence-phase-81">10. GraphSnapshot — Portable Topology Persistence (Phase 81)</h3>
+<p><strong>Component</strong>: <code>GraphSnapshot</code> in <code>core/persistence.py</code></p>
+<p>State was previously saved via pickle, which is fragile across Python and adapter class versions. Pod restarts in Kubernetes lost all in-memory graph state.</p>
+<p><strong>Hardening</strong>: <code>GraphSnapshot.save(adapter, path)</code> serializes the full edge list to portable JSON. <code>restore(path, adapter, skip_existing=True)</code> re-adds only new edges — safe to replay repeatedly. <code>diff(path_a, path_b)</code> shows the edge delta between two snapshots for audit.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Periodic checkpoint (e.g., in a cron job)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">GraphSnapshot</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">adapter</span><span class="p">,</span> <span class="s2">&quot;/data/snapshots/graph_2026-04-14.json&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># On pod restart</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">GraphSnapshot</span><span class="o">.</span><span class="n">restore</span><span class="p">(</span><span class="s2">&quot;/data/snapshots/graph_2026-04-14.json&quot;</span><span class="p">,</span> <span class="n">adapter</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Verification</strong>: <code>tests/test_persistence.py</code> — round-trip save/restore, skip_existing, diff.</p>
+<hr />
+<h3 id="11-adaptive-loop-tuning-phase-82">11. Adaptive Loop Tuning (Phase 82)</h3>
+<p><strong>Component</strong>: <code>AutonomousDiscoveryLoop</code> × <code>DiscoveryCalibrator</code></p>
+<p>Fixed <code>max_materializations_per_cycle</code> and <code>cycle_interval</code> cannot respond to changing graph conditions: saturated communities keep getting hammered while underexplored regions receive insufficient attention.</p>
+<p><strong>Hardening</strong>: <code>LoopConfig.adaptive_tuning=True</code> makes the loop query <code>DiscoveryCalibrator.stats()</code> at cycle start and scale cap and interval from the mean community weight. Bounds prevent runaway scaling.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">LoopConfig</span><span class="p">(</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">adaptive_tuning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">adaptive_min_cap</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">adaptive_max_cap</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">adaptive_min_interval</span><span class="o">=</span><span class="mf">60.0</span><span class="p">,</span> <span class="n">adaptive_max_interval</span><span class="o">=</span><span class="mf">7200.0</span><span class="p">,</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="p">)</span>
+</code></pre></div>
+<p><code>CycleRecord.effective_cap</code> records the actual cap used each cycle for observability.</p>
+<p><strong>Verification</strong>: <code>tests/test_auto_approver.py</code> — adaptive cap/interval scaling with mock calibrator.</p>
+<hr />
+<h3 id="12-summary-hardening-timeline">12. Summary: Hardening Timeline</h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Component</th>
+<th>Hardening addition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>19</td>
+<td>BridgeTwinEngine, STDPDiscretizer, IngestionPipeline, BeamTraversal</td>
+<td>Holes 1–4 (Zombie Bridge, Causal Flood, Namespace Collision, Bayesian Cold-Start)</td>
+</tr>
+<tr>
+<td>20</td>
+<td>CSAEngine, SignalEncoder, InferenceValidator, BeamTraversal</td>
+<td>Holes 5–8 (Mid-Flight Swap, Homogeneity Trap, Basis Drift, Path Preserving Hold-out)</td>
+</tr>
+<tr>
+<td>21</td>
+<td>STDPDiscretizer, StreamAdapter, RemoteCerebrumAdapter, InsightEngine</td>
+<td>Holes 9–12 (Entropy Sink, Thalamic Bottleneck, Federated Signature, Recursive Insight Loop)</td>
+</tr>
+<tr>
+<td>74</td>
+<td>AutonomousDiscoveryLoop</td>
+<td>Circuit breaker — pauses on low approval rate</td>
+</tr>
+<tr>
+<td>76</td>
+<td>ProvenanceLedger + ResearchAgent</td>
+<td>Materialisation audit chain + targeted rollback</td>
+</tr>
+<tr>
+<td>79</td>
+<td>AutonomousDiscoveryLoop × ProvenanceLedger</td>
+<td>Auto-rollback on circuit breaker trip</td>
+</tr>
+<tr>
+<td>80</td>
+<td>GraphAdapter</td>
+<td><code>remove_edge()</code> protocol — replaces silent <code>hasattr()</code> guard</td>
+</tr>
+<tr>
+<td>81</td>
+<td>GraphSnapshot</td>
+<td>Portable JSON topology checkpoint</td>
+</tr>
+<tr>
+<td>82</td>
+<td>AutonomousDiscoveryLoop × DiscoveryCalibrator</td>
+<td>Adaptive cap + interval from community weights</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.</strong></p>
+<hr />
+<p><strong>Reviewed on</strong>: April 21, 2026 for version v2.52.0</p>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

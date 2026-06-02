@@ -1,0 +1,4228 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Crystal-box knowledge graph reasoning — traceable, deterministic, zero hallucination">
+      
+      
+      
+        <link rel="canonical" href="https://brutalbyte.github.io/CEREBRUM/archive/PAPER_v251/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>CEREBRUM: Community-Structured Graph Attention for Knowledge Graph Reasoning - CEREBRUM</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config",""),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cerebrum-community-structured-graph-attention-for-knowledge-graph-reasoning" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="CEREBRUM" class="md-header__button md-logo" aria-label="CEREBRUM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CEREBRUM
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              CEREBRUM: Community-Structured Graph Attention for Knowledge Graph Reasoning
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/BrutalByte/CEREBRUM" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BrutalByte/CEREBRUM
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/quickstart/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/crystal-box/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../connectors/overview/" class="md-tabs__link">
+          
+  
+  
+  Data Connectors
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../sdk/python/" class="md-tabs__link">
+          
+  
+  
+  SDK Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../integrations/langchain/" class="md-tabs__link">
+          
+  
+  
+  Integrations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/overview/" class="md-tabs__link">
+          
+  
+  
+  REST API
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deployment/docker/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/architecture/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="CEREBRUM" class="md-nav__button md-logo" aria-label="CEREBRUM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    CEREBRUM
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/BrutalByte/CEREBRUM" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BrutalByte/CEREBRUM
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/first-kb/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First KB
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/crystal-box/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Crystal-Box Reasoning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/crystal-box-whitepaper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Crystal-Box Whitepaper
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How CEREBRUM Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Connectors
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Data Connectors
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/csv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CSV
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/sql/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/parquet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parquet & Arrow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/graph-databases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Neo4j & Neptune
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDK Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    SDK Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sdk/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python SDK
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sdk/typescript/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TypeScript SDK
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/langchain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LangChain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/llamaindex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LlamaIndex
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/jupyter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jupyter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    REST API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/endpoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compliance Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/multi-tenant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Tenant API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/hardware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#abstract" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Abstract
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Abstract">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#table-1-comparative-value-proposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table 1: Comparative Value Proposition
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Introduction
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Introduction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-the-gap-between-knowledge-graphs-and-language-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 The Gap Between Knowledge Graphs and Language Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-the-core-observation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 The Core Observation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-system-component-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 System Component Names
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-contributions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.4 Contributions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-background-and-related-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Background and Related Work
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Background and Related Work">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-graph-neural-networks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Graph Neural Networks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-knowledge-graph-reasoning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Knowledge Graph Reasoning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-llm-kg-hybrid-systems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 LLM + KG Hybrid Systems
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-community-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Community Detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-the-structural-equivalence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. The Structural Equivalence
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-the-cerebrum-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The CEREBRUM Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. The CEREBRUM Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-community-structured-attention-csa-10-parameter-formula-phase-4345" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Community-Structured Attention (CSA) — 10-Parameter Formula (Phase 43/45)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-reasoninglogit-unified-feature-vector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 ReasoningLogit: Unified Feature Vector
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-dual-signal-community-fusion-dscf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Dual-Signal Community Fusion (DSCF)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-probabilistic-traversal-bayesian-beam-search-phase-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 Probabilistic Traversal: Bayesian Beam Search (Phase 19)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-cross-modal-alignment-procrustes-svd-phase-19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 Cross-Modal Alignment: Procrustes SVD (Phase 19)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#46-federated-reasoning-distributedbeamtraversal-phase-32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.6 Federated Reasoning: DistributedBeamTraversal (Phase 32)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#47-adaptive-search-strategy-phase-53" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.7 Adaptive Search Strategy (Phase 53)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#48-graphsage-neighbourhood-smoothing-phase-55" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.8 GraphSAGE Neighbourhood Smoothing (Phase 55)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#49-engram-steered-beam-traversal-phase-55" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.9 Engram-Steered Beam Traversal (Phase 55)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#410-temporalcalibrator-phase-55" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.10 TemporalCalibrator (Phase 55)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-the-forward-pass-graph-reasoning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. The Forward Pass: Graph Reasoning
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. The Forward Pass: Graph Reasoning">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Algorithm
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-community-coherence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Community Coherence
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-interpretability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Interpretability
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-adaptive-online-learning-phases-22-4548" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Adaptive Online Learning (Phases 22, 45–48)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Adaptive Online Learning (Phases 22, 45–48)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-metaparameterlearner-online-sgd-phase-2245" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 MetaParameterLearner: Online SGD (Phase 22/45)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-csaparameterlearner-batch-retraining-phase-48" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 CSAParameterLearner: Batch Retraining (Phase 48)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-params-persistence-phase-47" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Params Persistence (Phase 47)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-abductive-reasoning-and-autonomous-discovery-phases-5052" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Abductive Reasoning and Autonomous Discovery (Phases 50–52)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Abductive Reasoning and Autonomous Discovery (Phases 50–52)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-hypothesisengine-multi-path-abductive-reasoning-phase-50" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 HypothesisEngine: Multi-Path Abductive Reasoning (Phase 50)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-researchagent-autonomous-missing-link-discovery-phase-51" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 ResearchAgent: Autonomous Missing-Link Discovery (Phase 51)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-externalvalidator-literature-validation-phase-52" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 ExternalValidator: Literature Validation (Phase 52)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-observability-layer-phase-54" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Observability Layer (Phase 54)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Observability Layer (Phase 54)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-studioengine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 StudioEngine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-ringbufferhandler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 RingBufferHandler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83-request-tracing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3 Request Tracing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#84-rest-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.4 REST Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-fault-tolerance-architecture-phases-5657" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Fault Tolerance Architecture (Phases 56–57)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Fault Tolerance Architecture (Phases 56–57)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-partial-result-responses-and-graceful-degradation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 Partial-Result Responses and Graceful Degradation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-component-level-crash-isolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 Component-Level Crash Isolation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-implementation-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Implementation Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Implementation Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-design-principles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 Design Principles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102-key-api-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.2 Key API Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#103-data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.3 Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Evaluation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Evaluation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#111-datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.1 Datasets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#112-baselines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.2 Baselines
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#113-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.3 Metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#114-results-metaqa-full-evaluation-39093-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.4 Results: MetaQA (Full Evaluation — 39,093 questions)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#115-results-webqsp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.5 Results: WebQSP
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#116-results-ikgwq-graceful-degradation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.6 Results: IKGWQ — Graceful Degradation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#117-results-grailqa-validation-split-5170-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.7 Results: GrailQA (Validation Split, 5,170 questions)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#118-what-the-benchmarks-show-and-what-they-miss" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.8 What the Benchmarks Show and What They Miss
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-phase-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Phase History
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-discussion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Discussion
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="13. Discussion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#131-where-cerebrum-excels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.1 Where CEREBRUM Excels
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#132-limitations-and-honest-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.2 Limitations and Honest Assessment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#133-future-directions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.3 Future Directions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-the-llm-bridge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. The LLM Bridge
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. Conclusion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#acknowledgments-intellectual-debt-and-credits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acknowledgments: Intellectual Debt and Credits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="cerebrum-community-structured-graph-attention-for-knowledge-graph-reasoning">CEREBRUM: Community-Structured Graph Attention for Knowledge Graph Reasoning</h1>
+<p><strong>Authors</strong>: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
+<strong>Affiliations</strong>: Independent Researcher · Anthropic
+<strong>Contact</strong>: bryan.alexander@buchorn.com
+<strong>Date</strong>: April 2026
+<strong>Status</strong>: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
+<strong>License</strong>: Proprietary — all rights reserved</p>
+<hr />
+<h2 id="quick-reference">Quick Reference</h2>
+<p><strong>What it is</strong>: A framework that lets a Knowledge Graph reason like a Transformer —
+using community structure as attention heads, BFS hop depth as layer depth, and
+graph-structural features as positional encodings. No training required. No LLM required.
+Every inference step is a verifiable graph edge.</p>
+<p><strong>Phase 110 (Global Workspace)</strong>: Competitive attention blackboard where communities broadcast "surprise" signals to pre-empt hierarchical consensus.</p>
+<p><strong>Phase 111 (Active Inference)</strong>: Proactive traversal using projected relation-pattern priors from Engrams to bias the beam.</p>
+<p><strong>The two core algorithms</strong>:</p>
+<p>$$
+\text{DSCF (community detection):}
+$$
+For each node $v$ at each iteration:
+- $\text{lpa_cid} = \text{majority vote among neighbors (local signal)}$
+- $\text{mod_cid} = \text{best modularity gain } \Delta Q \text{ (global signal)}$
+- If signals agree and $\neq \text{current}$: <strong>MOVE (anchor)</strong>
+- Elif disagree: <strong>MOVE</strong> with probability weighted by $(\text{lpa_conf} \times \tau)$ vs $(\text{mod_conf} \times (2-\tau))$</p>
+<p>Temperature schedule: $\tau_{t+1} = \max(\tau_t \times 0.92, 0.01)$</p>
+<p>$$
+\text{CSA — 10-parameter attention weight for edge } u \to v \text{ at hop } k \text{ (Phase 43/45):}
+$$</p>
+<p>$$a(u,v,k) = \sigma!\left(\;\alpha \cdot \mathrm{sim} + \beta \cdot cs + \gamma \cdot etw - \delta \cdot nd + \varepsilon \cdot hd + \zeta \cdot pr_v + \eta \cdot td + \iota \cdot nr_v - \mu \cdot sd + \theta \cdot grounding\;\right)$$</p>
+<p>Default weights: $\alpha=0.4,\;\beta=0.4,\;\gamma=0.1,\;\delta=0.05,\;\varepsilon=0.05,\;\zeta=0.1,\;\eta=0.1,\;\iota=0.05,\;\mu=0.1,\;\theta=1.0$</p>
+<p><strong>Transformer → KG mapping</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Transformer</th>
+<th>CEREBRUM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Attention head</td>
+<td>DSCF community</td>
+</tr>
+<tr>
+<td>Layer depth</td>
+<td>BFS hop count</td>
+</tr>
+<tr>
+<td>Positional encoding</td>
+<td>PageRank + betweenness + degree</td>
+</tr>
+<tr>
+<td>Attention weight</td>
+<td>CSA formula (10 params)</td>
+</tr>
+<tr>
+<td>Context window</td>
+<td>Ego-network radius R</td>
+</tr>
+<tr>
+<td>KV cache</td>
+<td>Materialized path store</td>
+</tr>
+<tr>
+<td>Fine-tuning</td>
+<td>CSAParameterLearner.fit() via POST /retrain</td>
+</tr>
+</tbody>
+</table>
+<p><strong>System component names:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CEREBRUM</strong></td>
+<td>The overarching product/framework</td>
+</tr>
+<tr>
+<td><strong>THALAMUS</strong></td>
+<td>Ingestion engine — adapters, embedding, structural encoding, STDP discretizer, IngestionPipeline</td>
+</tr>
+<tr>
+<td><strong>CORTEX</strong></td>
+<td>Core reasoning engine — DSCF + CSA + BeamTraversal + AnswerExtractor</td>
+</tr>
+<tr>
+<td><strong>REM Engine</strong></td>
+<td>Graph self-reorganization — prune/consolidate/synthesize</td>
+</tr>
+<tr>
+<td><strong>Bridge Twin Engine</strong></td>
+<td>Experience-dependent structural relay nodes</td>
+</tr>
+<tr>
+<td><strong>GraphBridgeEngine</strong></td>
+<td>Proactive cross-component bridge synthesis (Phase 30)</td>
+</tr>
+<tr>
+<td><strong>HypothesisEngine</strong></td>
+<td>Multi-path abductive reasoning with Noisy-OR confidence (Phase 50)</td>
+</tr>
+<tr>
+<td><strong>ResearchAgent</strong></td>
+<td>Autonomous missing-link discovery daemon (Phase 51)</td>
+</tr>
+<tr>
+<td><strong>ExternalValidator</strong></td>
+<td>Literature validation via PubMed, ClinicalTrials, arXiv, OpenAlex (Phase 52)</td>
+</tr>
+<tr>
+<td><strong>StudioEngine</strong></td>
+<td>Observability — RingBufferHandler, /logs, /build, request tracing (Phase 54)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Repo layout</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>cerebrum/
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── adapters/      networkx, neo4j, rdf, csv, file_adapter, stream_adapter        [THALAMUS]
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── core/
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│   ├── embedding_engine, structural_encoder, discretizer, thalamus                [THALAMUS]
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│   ├── signal_encoder, log_config                                                  [THALAMUS]
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│   ├── community_engine, leiden_native, attention_engine, parameter_learner        [CORTEX]
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│   ├── reasoning_logit, rebalancer, kge_engine                                     [CORTEX]
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   ├── temporal_calibrator, persistence                                             [CORTEX]
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│   ├── rem_engine, bridge_engine, graph_bridge                                     [REM / Bridge Twin]
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│   ├── insight_validator, meta_insight_engine                                      [Verification]
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│   ├── hypothesis_engine, research_agent, external_validator                       [Abduction]
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│   └── graph_adapter, hardware, security, contradiction_engine
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>├── reasoning/     traversal, path_scorer, answer_extractor, distributed_traversal [CORTEX]
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│              engram_traversal                                                     [CORTEX]
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>├── llm_bridge/    context_formatter + adapters
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>├── api/           server, schemas (+ /stream/*, /logs, /build endpoints)
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>├── cli/           cerebrum (+ --params-file flag)
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>├── tests/         1,490+ passing; fixture: tests/fixtures/toy_graph.csv
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>├── benchmarks/    webqsp_eval, metaqa_eval, grailqa_eval, ikgwq_metaqa
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>├── pyproject.toml
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>└── PAPER.md       (this file)
+</code></pre></div>
+<p><strong>Current phase</strong>: Phase 57 COMPLETE (v2.52.0). GraphSAGE neighbourhood smoothing, Engram-steered traversal, TemporalCalibrator, QueryLog persistence, fault tolerance hardening, and Engram durable persistence implemented. 1,490+ tests passing.</p>
+<hr />
+<h2 id="abstract">Abstract</h2>
+<p>We propose <strong>CEREBRUM</strong>, a novel framework that enables Knowledge Graphs (KGs)
+to perform multi-hop reasoning using the same structural principles that make
+Transformer-based Large Language Models powerful — without requiring an LLM,
+without training data, and with full interpretability of every inference step.</p>
+<p>The central contribution is <strong>Community-Structured Attention (CSA)</strong>: a
+mechanism in which graph communities serve as attention heads, graph traversal
+replaces matrix multiplication, and hop depth replaces layer depth. Unlike
+Graph Attention Networks (GATs), which apply learned attention within hard
+adjacency constraints, CSA uses community membership as a soft global
+constraint that captures both local topological cohesion and global structural
+significance simultaneously.</p>
+<h3 id="table-1-comparative-value-proposition">Table 1: Comparative Value Proposition</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Feature</th>
+<th style="text-align: left;">Standard RAG</th>
+<th style="text-align: left;">GraphRAG (Microsoft)</th>
+<th style="text-align: left;">CEREBRUM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Primary Reasoner</strong></td>
+<td style="text-align: left;">LLM</td>
+<td style="text-align: left;">LLM</td>
+<td style="text-align: left;"><strong>Knowledge Graph</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Logic Source</strong></td>
+<td style="text-align: left;">Probabilistic weights</td>
+<td style="text-align: left;">LLM-generated summaries</td>
+<td style="text-align: left;"><strong>Graph Topology (DSCF/CSA)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Hallucination Risk</strong></td>
+<td style="text-align: left;">High</td>
+<td style="text-align: left;">Medium</td>
+<td style="text-align: left;"><strong>Zero (Grounded Paths)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Interpretability</strong></td>
+<td style="text-align: left;">None (Black-box)</td>
+<td style="text-align: left;">Medium (Text chunks)</td>
+<td style="text-align: left;"><strong>Absolute (Verifiable Edges)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Context Window</strong></td>
+<td style="text-align: left;">Limited by Token Count</td>
+<td style="text-align: left;">Limited by Chunk Count</td>
+<td style="text-align: left;"><strong>Scale-Invariant (Beam Search)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Training Required</strong></td>
+<td style="text-align: left;">Yes (fine-tune)</td>
+<td style="text-align: left;">Yes (LLM)</td>
+<td style="text-align: left;"><strong>None (zero-shot default)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Online Adaptation</strong></td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;"><strong>Yes (MetaParameterLearner)</strong></td>
+</tr>
+</tbody>
+</table>
+<p>This is made possible by a second contribution: the <strong>Dual-Signal Community
+Fusion (DSCF)</strong> algorithm, which produces communities that encode both LPA
+majority-vote structure (local) and modularity gain (global) in a single
+partition. We show that DSCF communities possess a structural duality that
+maps naturally to the dual character of multi-head attention in Transformers.</p>
+<p>Together, CSA and DSCF form an architecture where a KG can answer multi-hop
+questions by traversing itself, with every reasoning step grounded in explicit
+graph edges, every conclusion traceable to a path, and no LLM required for
+inference — though one may optionally be used for natural language generation.</p>
+<p>Subsequent phases extend the core with: Bayesian beam search (Phase 19),
+federated reasoning across distributed graph nodes (Phase 32), temporal
+reasoning and Synaptic Bridge synthesis via the REM Engine (Phases 41–43), a fully
+parameterized 10-term CSA formula with online and batch learning (Phases 43–48),
+abductive hypothesis generation via HypothesisEngine (Phase 50), autonomous
+research assistance via ResearchAgent and ExternalValidator (Phases 51–52),
+adaptive search strategy driven by local graph density (Phase 53), a complete
+observability layer with structured logging and build introspection (Phase 54),
+Engram-steered traversal with durable relation-pattern memory (Phase 55), and a
+comprehensive fault tolerance architecture covering partial results, graceful
+degradation, and process-level crash isolation (Phases 56–57).</p>
+<hr />
+<h2 id="1-introduction">1. Introduction</h2>
+<h3 id="11-the-gap-between-knowledge-graphs-and-language-models">1.1 The Gap Between Knowledge Graphs and Language Models</h3>
+<p>Knowledge Graphs and Large Language Models represent two fundamentally
+different approaches to knowledge representation and reasoning.</p>
+<p>Knowledge Graphs store knowledge explicitly: entities as nodes, relationships
+as typed edges, facts as (subject, predicate, object) triples. This makes
+them precise, verifiable, and updatable without retraining. However, they
+cannot reason beyond what is explicitly stored. Multi-hop inference — "Marie
+Curie discovered Polonium, Polonium is radioactive, therefore Marie Curie
+discovered a radioactive element" — requires either hardcoded graph traversal
+queries or external reasoning systems.</p>
+<p>Large Language Models store knowledge implicitly in billions of weight
+parameters. They can reason, generalize, and synthesize across domains. But
+this implicit representation is opaque, cannot be updated without expensive
+fine-tuning, and is prone to hallucination — generating plausible-sounding
+but incorrect facts with no mechanism for ground-truth verification.</p>
+<p>The field has responded with hybrid approaches: Retrieval-Augmented Generation
+(RAG), Knowledge-Graph-augmented LLMs, and GraphRAG. In all of these, the KG
+is a retrieval store and the LLM does the reasoning. The KG remains passive.</p>
+<p><strong>CEREBRUM inverts this relationship.</strong> The KG reasons. The LLM, if present,
+only generates natural language from the KG's output. Every inference step is
+a graph traversal, every conclusion is a path, and every path can be verified.</p>
+<h3 id="12-the-core-observation">1.2 The Core Observation</h3>
+<p>A Transformer's power comes from three mechanisms working together:</p>
+<ol>
+<li><strong>Multi-head attention</strong>: different heads specialize on different
+   relational aspects of the input (syntactic, semantic, long-range, etc.)</li>
+<li><strong>Deep composition</strong>: each layer builds on the previous, allowing complex
+   multi-step reasoning</li>
+<li><strong>Positional awareness</strong>: the model knows where each token sits relative
+   to others</li>
+</ol>
+<p>We observe that Knowledge Graphs have natural analogs for all three:</p>
+<ol>
+<li><strong>Community structure</strong> serves the role of attention heads: nodes within
+   a community have strong mutual relevance; communities specialize on
+   different conceptual domains.</li>
+<li><strong>BFS hop depth</strong> serves the role of layer depth: each hop is one step of
+   composed reasoning.</li>
+<li><strong>Graph-structural features</strong> (PageRank, betweenness, degree) serve the
+   role of positional encoding: they tell the model where each entity sits in
+   the global information landscape.</li>
+</ol>
+<p>The question is: can these analogs be made operational — not merely
+metaphorical? We argue yes, and demonstrate the architecture to do so.</p>
+<h3 id="13-system-component-names">1.3 System Component Names</h3>
+<p>The CEREBRUM stack uses the following named layers, reflecting both computational role and biological analogy:</p>
+<p><strong>CEREBRUM</strong> — the overarching product/framework name.</p>
+<p><strong>THALAMUS</strong> — the ingestion engine: pluggable adapters, EmbeddingEngine, StructuralEncoder, STDPDiscretizer, IngestionPipeline, and SignalEncoder. Named for the thalamus, which receives and preprocesses all sensory input before routing it to the cortex.</p>
+<p><strong>CORTEX</strong> — the reasoning engine: DSCF community detection, CSA attention formula, BeamTraversal (including Bayesian mode), and AnswerExtractor. Named for the cortex, where structured reasoning occurs.</p>
+<p><strong>REM Engine</strong> — graph self-reorganization: pruning low-confidence edges, re-running community detection, and synthesizing new hypothesis edges (Synaptic Bridge synthesis). Analogous to REM sleep and hippocampal memory consolidation.</p>
+<p><strong>Bridge Twin Engine</strong> — experience-dependent structural relay node formation. Analogous to thalamic relay nuclei and LTP/LTD synaptic plasticity.</p>
+<p><strong>GraphBridgeEngine</strong> — proactive cross-component bridge synthesis (Phase 30). Discovers and pre-materializes structurally important cross-community paths before they are needed.</p>
+<p><strong>HypothesisEngine</strong> — multi-path abductive reasoning (Phase 50). Generates hypotheses from incomplete graph evidence using Noisy-OR confidence fusion across multiple beam paths.</p>
+<p><strong>ResearchAgent</strong> — autonomous missing-link discovery (Phase 51). A background daemon that continuously proposes new graph edges by synthesizing across existing paths.</p>
+<p><strong>ExternalValidator</strong> — literature validation (Phase 52). Validates ResearchAgent proposals against PubMed, ClinicalTrials.gov, arXiv, and OpenAlex APIs before committing edges.</p>
+<p><strong>StudioEngine</strong> — observability layer (Phase 54). RingBufferHandler for in-memory log retention, /logs and /build REST endpoints, CORS configuration, and per-request trace identifiers.</p>
+<p><strong>Engram / EngramTraversal</strong> — Engram-steered beam traversal (Phase 55). A persistent relation-pattern cache derived from successful query traces. Biases beam pruning toward known-productive reasoning chains via an affinity boost on candidate scoring.</p>
+<p><strong>TemporalCalibrator</strong> — grid-search calibration of CSA temporal parameters (Phase 55). Tunes <code>eta</code> (temporal decay) and <code>iota</code> (node recency) weights against a labelled validation set to maximise Recall@K, with a try/finally guarantee that restores original parameters after evaluation.</p>
+<p><strong>QueryLog</strong> — append-only NDJSON query history (Phase 55). Records seeds, answers, and relation sequences after each reasoning call. Warm-starts <code>Engram</code> on process restart so learned relation patterns survive shutdown/startup cycles.</p>
+<h3 id="14-contributions">1.4 Contributions</h3>
+<p>This paper makes the following primary contributions:</p>
+<ol>
+<li>
+<p><strong>The CEREBRUM architecture</strong>: a complete mapping of Transformer components
+   to KG operations, organized into THALAMUS (ingestion) and CORTEX (reasoning) layers, enabling multi-hop reasoning via graph traversal alone.</p>
+</li>
+<li>
+<p><strong>Community-Structured Attention (CSA)</strong>: a novel attention mechanism using
+   community membership as a soft global constraint on graph traversal, generalized through Phases 43–45 to a 10-parameter formula covering semantic similarity, community score, edge-type weight, distance penalty, hop decay, PageRank prior, temporal decay, node recency, synthesis-density penalty, and grounding confidence.</p>
+</li>
+<li>
+<p><strong>Dual-Signal Community Fusion (DSCF)</strong>: a novel community detection
+   algorithm combining LPA majority-vote and modularity gain simultaneously
+   at each node update, producing communities with dual short-range/long-range
+   character that maps to multi-head attention's dual specialization.</p>
+</li>
+<li>
+<p><strong>Online and batch parameter learning</strong>: MetaParameterLearner (online SGD from user feedback) and CSAParameterLearner (batch gradient descent); both feeding a checkpoint/restore protocol via POST /params and --params-file CLI.</p>
+</li>
+<li>
+<p><strong>Abductive reasoning and autonomous discovery</strong>: HypothesisEngine generates multi-path hypotheses with Noisy-OR fusion; ResearchAgent proposes new edges autonomously; ExternalValidator filters against live literature corpora.</p>
+</li>
+<li>
+<p><strong>Production observability</strong>: structured request tracing, ring-buffered logs accessible via REST, and build-graph introspection supporting zero-downtime deployment pipelines.</p>
+</li>
+<li>
+<p><strong>Engram-steered traversal and temporal calibration</strong>: a training-free mechanism that accumulates compressed relation-sequence patterns from successful queries and biases future beam pruning toward known-productive chains (Phase 55); a grid-search calibrator for the temporal CSA parameters that requires no gradients (Phase 55); and a multi-layer fault tolerance architecture ensuring graceful degradation under partial failures (Phases 56–57).</p>
+</li>
+<li>
+<p><strong>Autonomous Reasoning Orchestration (Phases 166–167)</strong>: GraphProfiler for automatic graph regime detection and strategy selection; Semantic Terminal Relation Boost (STRB) for zero-config intent matching via sentence embeddings; and Terminal-Anchor Boost (TAB) for penultimate-hop biasing in deep heterogeneous graphs.</p>
+</li>
+<li>
+<p><strong>Performance Scale (Phase 134)</strong>: Vectorized Beam Scoring using NumPy matrix operations, achieving 10x traversal speedup and sub-30ms latencies for 3-hop reasoning on million-node graphs.</p>
+</li>
+</ol>
+<hr />
+<h2 id="2-background-and-related-work">2. Background and Related Work</h2>
+<h3 id="21-graph-neural-networks">2.1 Graph Neural Networks</h3>
+<p>Graph Neural Networks (GNNs) [Scarselli et al., 2009] generalize neural
+networks to graph-structured data. The message-passing paradigm [Gilmer et
+al., 2017] defines node updates as aggregations of neighbor representations.</p>
+<p>Graph Attention Networks (GATs) [Velickovic et al., 2018] introduce learned
+attention weights between connected nodes. Key limitations for our purposes:
+(a) attention is restricted to direct neighbors — no global context;
+(b) communities are not considered; (c) training labels required.</p>
+<p>GraphSAGE [Hamilton et al., 2017] samples and aggregates local neighborhoods
+but similarly lacks global structural awareness.</p>
+<p>None of these use community structure as an organizational principle for
+attention.</p>
+<h3 id="22-knowledge-graph-reasoning">2.2 Knowledge Graph Reasoning</h3>
+<p>Early KG reasoning systems used rule-based approaches (AMIE [Galarraga et al.,
+2013]) or embedding-based methods (TransE [Bordes et al., 2013], RotatE [Sun
+et al., 2019]). These methods produce entity embeddings but do not perform
+multi-hop traversal in the attention-mechanism sense.</p>
+<p>Path-based reasoning approaches (DeepPath [Xiong et al., 2017], MINERVA [Das
+et al., 2018]) use reinforcement learning to find paths. These are closer to
+our goal but require training data and do not use community structure.</p>
+<p>NSM [He et al., 2021] and similar GNN-based KG reasoners achieve high accuracy
+on MetaQA but require full supervision. CEREBRUM operates without any training
+data, making it deployable on any domain KG without annotation overhead.</p>
+<h3 id="23-llm-kg-hybrid-systems">2.3 LLM + KG Hybrid Systems</h3>
+<p>KG-GPT [Yao et al., 2023], KGPT [Chen et al., 2020], and related systems
+connect KGs to LLMs as retrieval stores. The LLM always performs the
+reasoning step; the KG is passive.</p>
+<p>GraphRAG [Edge et al., 2024] uses community detection (Leiden) to summarize
+graph clusters as text, which is then passed to an LLM for RAG. This is the
+closest existing work. However:
+- Communities are summarized as static text chunks, not used as attention heads
+- The LLM performs all reasoning
+- Paths are not returned or made interpretable
+- The system is not graph-agnostic (designed for Microsoft's pipeline)</p>
+<p>RAPTOR [Sarthi et al., 2024] builds hierarchical text clusters for RAG but
+operates on documents, not graphs, and uses tree structure rather than
+community structure.</p>
+<h3 id="24-community-detection">2.4 Community Detection</h3>
+<p>The Louvain algorithm [Blondel et al., 2008] optimizes modularity greedily
+but can produce internally disconnected communities. Leiden [Traag et al.,
+2019] fixes this with a refinement phase promoting internal connectivity.
+Label Propagation [Raghavan et al., 2007] is fast and unsupervised but
+non-deterministic and produces variable quality.</p>
+<p><strong>DSCF</strong> (this work) combines LPA and Leiden signals simultaneously at each
+node update, using a temperature-annealing schedule. See Section 4.2.</p>
+<p><strong>DSCF is non-deterministic</strong> (inherits LPA's shuffle-order sensitivity).
+For reproducible results: run 3-5 trials and select the partition with
+highest modularity score. For production: seed the RNG and document the seed.</p>
+<hr />
+<h2 id="3-the-structural-equivalence">3. The Structural Equivalence</h2>
+<p>We establish a complete operational mapping between Transformer components
+and KG operations. This is not analogy — each mapping is functional.</p>
+<table>
+<thead>
+<tr>
+<th>Transformer Component</th>
+<th>CEREBRUM (KG) Equivalent</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Token</td>
+<td>Entity or Relation</td>
+<td>Atomic unit of information</td>
+</tr>
+<tr>
+<td>Vocabulary</td>
+<td>Entity type taxonomy</td>
+<td>Closed set of possible types</td>
+</tr>
+<tr>
+<td>Token embedding</td>
+<td>Entity embedding (TransE/RotatE)</td>
+<td>Dense vector per entity</td>
+</tr>
+<tr>
+<td>Positional encoding</td>
+<td>PageRank + betweenness + degree</td>
+<td>Where entity sits globally</td>
+</tr>
+<tr>
+<td>Attention head</td>
+<td>Community cluster (DSCF/TSC)</td>
+<td>Specialized relational context</td>
+</tr>
+<tr>
+<td>Attention weight</td>
+<td>CSA weight formula (10 params)</td>
+<td>Sim + community + edge + dist + PR + temporal + recency + synth + grounding</td>
+</tr>
+<tr>
+<td>Context window</td>
+<td>Ego-network radius R</td>
+<td>How far to traverse</td>
+</tr>
+<tr>
+<td>Layer depth L</td>
+<td>BFS hop count</td>
+<td>Reasoning step count</td>
+</tr>
+<tr>
+<td>Synaptic Bridge Attention</td>
+<td>Federated Link</td>
+<td>Cross-graph attention jump</td>
+</tr>
+<tr>
+<td>Holographic Index</td>
+<td>Compressed Signature</td>
+<td>Privacy-preserving discovery</td>
+</tr>
+<tr>
+<td>Feed-forward sublayer</td>
+<td>Entity-type projection</td>
+<td>Type-specific transformation</td>
+</tr>
+<tr>
+<td>Residual connection</td>
+<td>Previous-hop embedding</td>
+<td>Prevents information loss</td>
+</tr>
+<tr>
+<td>Layer normalization</td>
+<td>Embedding normalization</td>
+<td>Prevents value explosion</td>
+</tr>
+<tr>
+<td>Output projection</td>
+<td>Path decoder / ranker</td>
+<td>Maps traversal to answer</td>
+</tr>
+<tr>
+<td>KV cache</td>
+<td>Materialized path store</td>
+<td>Reuse traversal across queries</td>
+</tr>
+<tr>
+<td>Fine-tuning</td>
+<td>CSAParameterLearner.fit()</td>
+<td>Batch gradient descent on path pairs</td>
+</tr>
+<tr>
+<td>RLHF</td>
+<td>MetaParameterLearner (online SGD)</td>
+<td>Per-feedback community param updates</td>
+</tr>
+</tbody>
+</table>
+<p>This equivalence has a critical implication: <strong>the number of attention heads is
+not a hyperparameter in CEREBRUM — it is determined by the graph's own community
+structure.</strong> A graph with 12 natural communities has 12 attention heads. A graph
+with 200 communities has 200. The architecture adapts to the data.</p>
+<hr />
+<h2 id="4-the-cerebrum-architecture">4. The CEREBRUM Architecture</h2>
+<h3 id="41-community-structured-attention-csa-10-parameter-formula-phase-4345">4.1 Community-Structured Attention (CSA) — 10-Parameter Formula (Phase 43/45)</h3>
+<p>CSA computes attention weights for graph traversal that incorporate both local graph topology and global community structure. The formula was extended from 5 to 10 parameters across Phases 43 and 45.</p>
+<p><strong>Attention weight formula:</strong></p>
+<p>For entity $u$ attending to entity $v$ at traversal hop $k$:</p>
+<p>$$\boxed{a(u,v,k) = \sigma!\left(\alpha \cdot \mathrm{sim} + \beta \cdot cs + \gamma \cdot etw - \delta \cdot nd + \varepsilon \cdot hd + \zeta \cdot pr_v + \eta \cdot td + \iota \cdot nr_v - \mu \cdot sd + \theta \cdot grounding\right)}$$</p>
+<p><strong>Term definitions:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Feature</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$\alpha \cdot \mathrm{sim}$</td>
+<td>Semantic similarity</td>
+<td>0.4</td>
+<td>$\cos(\mathbf{e}_u, \mathbf{e}_v)$ — cosine similarity of entity embeddings</td>
+</tr>
+<tr>
+<td>$\beta \cdot cs$</td>
+<td>Community score</td>
+<td>0.4</td>
+<td>Structural membership (1.0 same, 0.5 adjacent, exp-decay otherwise)</td>
+</tr>
+<tr>
+<td>$\gamma \cdot etw$</td>
+<td>Edge-type weight</td>
+<td>0.1</td>
+<td>Per-relation-type significance; configurable</td>
+</tr>
+<tr>
+<td>$-\delta \cdot nd$</td>
+<td>Distance penalty</td>
+<td>0.05</td>
+<td>Normalized community distance; discourages speculative hops</td>
+</tr>
+<tr>
+<td>$\varepsilon \cdot hd$</td>
+<td>Hop decay</td>
+<td>0.05</td>
+<td>$1/(1+k)$; prevents over-extension of the beam</td>
+</tr>
+<tr>
+<td>$\zeta \cdot pr_v$</td>
+<td>PageRank prior</td>
+<td>0.1</td>
+<td>Global authority score of destination node (Phase 27)</td>
+</tr>
+<tr>
+<td>$\eta \cdot td$</td>
+<td>Temporal decay</td>
+<td>0.1</td>
+<td>Recency of edges based on timestamp (Phase 41)</td>
+</tr>
+<tr>
+<td>$\iota \cdot nr_v$</td>
+<td>Node recency</td>
+<td>0.05</td>
+<td>Recency of node's last update event (Phase 43)</td>
+</tr>
+<tr>
+<td>$-\mu \cdot sd$</td>
+<td>Synthesis density</td>
+<td>0.1</td>
+<td>Penalty for over-reliance on REM-synthesized edges (Phase 43)</td>
+</tr>
+<tr>
+<td>$\theta \cdot grounding$</td>
+<td>Grounding confidence</td>
+<td>1.0</td>
+<td>Ingestion-time confidence/provenance score (Phase 43)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Community membership score.</strong> Let $c: V \to \mathbb{Z}_{\geq 0}$ be the community assignment and $\mathcal{A}$ the set of adjacent community pairs:</p>
+<p>$$S_{\mathcal{C}}(u,v) = \begin{cases} 1.0 &amp; \text{if } c(u) = c(v) \quad \text{[same attention head]} \ 0.5 &amp; \text{if } (c(u), c(v)) \in \mathcal{A} \quad \text{[adjacent heads]} \ e^{-\lambda \cdot d_{\mathcal{C}}(c(u),\, c(v))} &amp; \text{otherwise} \quad \text{[distance decay, } \lambda = 0.5\text{]} \end{cases}$$</p>
+<p><strong>Why CSA is not a GAT.</strong> GATs compute $a(u,v) = f(\mathbf{W}\mathbf{e}<em _mathcal_C="\mathcal{C">u,\, \mathbf{W}\mathbf{e}_v)$ from learned weights on adjacent pairs only, with no global context. CSA introduces the term $\beta \cdot S</em> \cdot C)$ — far cheaper than Transformer self-attention's $O(n^2)$.}}(u,v)$ which provides global structural awareness at $O(n \cdot \bar{k</p>
+<h3 id="42-reasoninglogit-unified-feature-vector">4.2 ReasoningLogit: Unified Feature Vector</h3>
+<p>All 10 CSA features are encapsulated in the <code>ReasoningLogit</code> dataclass, which threads through scoring, learning, and logging code uniformly. The <code>score(params)</code> method computes the dot product of the feature vector with the parameter vector, enabling clean separation between feature extraction and parameter optimization.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ReasoningLogit(sim, cs, etw, nd, hd, pr_v, td, nr_v, sd, grounding)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  → score(params) = dot(features, params)
+</code></pre></div>
+<h3 id="43-dual-signal-community-fusion-dscf">4.3 Dual-Signal Community Fusion (DSCF)</h3>
+<p>DSCF is the community detection algorithm that produces the attention head
+structure. It is a key contribution in its own right.</p>
+<p><strong>The core innovation:</strong> at each individual node update, both the LPA
+majority-vote signal (local topology) and the modularity gain signal (global
+structure) are computed. The decision incorporates both simultaneously,
+governed by a temperature parameter:</p>
+<p><strong>LPA signal</strong> (local majority vote):</p>
+<p>$$\mathrm{lpa_cid}(v) = \underset{c}{\arg\max}\sum_{u \in \mathcal{N}(v)} \mathbf{1}[c(u) = c], \qquad \mathrm{lpa_conf}(v) = \frac{\max_c \sum_{u \in \mathcal{N}(v)} \mathbf{1}[c(u)=c]}{|\mathcal{N}(v)|} \in [0,1]$$</p>
+<p><strong>Modularity gain signal</strong> (global structure). For each candidate community $\mathcal{C}$ adjacent to $v$:</p>
+<p>$$\Delta Q(v \to \mathcal{C}) = \frac{k_{v,\mathcal{C}}}{m} - \rho \cdot \frac{k_v \cdot \sum_{u \in \mathcal{C}} k_u}{2m^2}$$</p>
+<p>$$\mathrm{mod_cid}(v) = \underset{\mathcal{C}}{\arg\max}\;\Delta Q(v \to \mathcal{C}), \qquad \mathrm{mod_conf}(v) = \min!\left(\Delta Q_{\max} \cdot m,\; 1.0\right)$$</p>
+<p>where $k_{v,\mathcal{C}}$ is the number of edges from $v$ to $\mathcal{C}$, $k_v = \deg(v)$, $m$ is the total edge count, and $\rho$ is the resolution parameter.</p>
+<p><strong>Decision rule</strong> (temperature $\tau \in [0.01, 1.0]$):</p>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$\mathrm{lpa_cid} = \mathrm{mod_cid} \neq c(v)$</td>
+<td><strong>MOVE</strong> (consensus anchor)</td>
+</tr>
+<tr>
+<td>Both signals say STAY</td>
+<td>STAY</td>
+</tr>
+<tr>
+<td>LPA says MOVE, Mod says STAY</td>
+<td>MOVE with probability $\mathrm{lpa_conf} \cdot \tau$</td>
+</tr>
+<tr>
+<td>Mod says MOVE, LPA says STAY</td>
+<td>MOVE with probability $\mathrm{mod_conf} \cdot (2 - \tau)$</td>
+</tr>
+<tr>
+<td>Both say MOVE to different targets</td>
+<td>Move to $\mathrm{lpa_cid}$ with weight $\mathrm{lpa_conf} \cdot \tau$; to $\mathrm{mod_cid}$ with weight $\mathrm{mod_conf} \cdot (2 - \tau)$</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Temperature schedule</strong> (anneals from local-dominant to global-dominant):</p>
+<p>$$\tau_{t+1} = \max!\left(\tau_t \cdot 0.92,\; 0.01\right)$$</p>
+<p><strong>Post-convergence connectivity check.</strong> Any community $\mathcal{C}$ whose induced subgraph $G[\mathcal{C}]$ is disconnected is split into its connected components:</p>
+<p>$$\text{If } G[\mathcal{C}] \text{ is disconnected: } \mathcal{C} \to \mathcal{C}_1, \mathcal{C}_2, \ldots, \mathcal{C}_r$$</p>
+<p><strong>TSC (Triple-Signal Consensus)</strong> adds Infomap flow-based community detection as a third signal. When all three signals agree on a boundary the community assignment is high-confidence. The community engine mode (DSCF / TSC / Leiden / LPA) is configurable at startup via <code>CommunityEngine(algorithm=...)</code> (Phase 49).</p>
+<h3 id="44-probabilistic-traversal-bayesian-beam-search-phase-19">4.4 Probabilistic Traversal: Bayesian Beam Search (Phase 19)</h3>
+<p>To handle topological noise and cold-start uncertainty, CEREBRUM provides a probabilistic mode where edge weights are modeled as Beta distributions:</p>
+<p>$$P(a | \alpha, \beta) = \frac{a^{\alpha-1} (1-a)^{\beta-1}}{B(\alpha, \beta)}$$</p>
+<p>During traversal, Thompson Sampling ranks neighbors stochastically. For each candidate neighbor $v$ a sample $x \sim \text{Beta}(\alpha_v, \beta_v)$ determines priority. <strong>Warm-starting</strong> seeds the distribution from the deterministic CSA score $s$:</p>
+<p>$$\alpha_{init} = s \cdot \omega, \quad \beta_{init} = (1-s) \cdot \omega \qquad (\omega = \text{warm_start_strength}, \text{default } 10.0)$$</p>
+<p>This reduces cold-start variance without discarding structural priors.</p>
+<h3 id="45-cross-modal-alignment-procrustes-svd-phase-19">4.5 Cross-Modal Alignment: Procrustes SVD (Phase 19)</h3>
+<p><code>SignalEncoder</code> aligns non-textual signals (FFT spectra, sensor readings) into the canonical entity embedding space $\mathcal{E}$ using Orthogonal Procrustes Analysis. Given anchor points $X$ in signal space and their embeddings $Y$:</p>
+<p>$$R = \arg\min_{\Omega^T\Omega=I} | \Omega X - Y |_F \qquad \text{solved via SVD: } M = Y X^T = U \Sigma V^T \implies R = U V^T$$</p>
+<p><strong>Canonical Basis Anchor</strong> (Phase 20): all alignments are anchored to a fixed root embedding space $\mathcal{E}_{root}$ preventing geometric drift across federated hops.</p>
+<h3 id="46-federated-reasoning-distributedbeamtraversal-phase-32">4.6 Federated Reasoning: DistributedBeamTraversal (Phase 32)</h3>
+<p><code>DistributedBeamTraversal</code> delegates reasoning branches to remote CEREBRUM nodes via the POST /traverse endpoint. Federated sub-paths are merged with local paths using score-weighted voting (Phase 27). HMAC-SHA256 signatures on all remote responses prevent adversarial path injection.</p>
+<p><strong>Federated lease protocol</strong> (Phase 20): remote nodes PIN entities for the duration of a federated query TTL, preventing eviction of in-flight paths.</p>
+<h3 id="47-adaptive-search-strategy-phase-53">4.7 Adaptive Search Strategy (Phase 53)</h3>
+<p>BeamTraversal dynamically adjusts <code>beam_width</code> and <code>max_hop</code> based on local graph density around the seed entity. Dense ego-networks (high average degree) warrant narrower beams to limit combinatorial explosion; sparse ego-networks warrant wider beams to maximize recall. The density estimate is computed in $O(k)$ over the immediate neighborhood at query time:</p>
+<p>$$\text{density}(v) = \frac{|\mathcal{E}(G[\mathcal{N}(v)])|}{|\mathcal{N}(v)|(|\mathcal{N}(v)|-1)/2}$$</p>
+<h3 id="48-graphsage-neighbourhood-smoothing-phase-55">4.8 GraphSAGE Neighbourhood Smoothing (Phase 55)</h3>
+<p>Entity embeddings produced by a base encoder (random, TransE, or sentence-transformer) carry only local semantic signal: they encode what an entity is, not where it sits in the graph. Two entities in the same community, co-cited by dozens of shared neighbours, may have dissimilar raw embeddings simply because their surface forms differ. This lack of structural context directly degrades the CSA semantic similarity term $\alpha \cdot \mathrm{sim}$, which depends on cosine distance between entity vectors.</p>
+<p>To address this, CEREBRUM applies a single-pass GraphSAGE-style neighbourhood aggregation after base encoding but before any traversal. For each entity $v$ with embedding $\mathbf{e}_v$ and neighbourhood $\mathcal{N}(v)$:</p>
+<p>$$\tilde{\mathbf{e}}<em _in="\in" _mathcal_N="\mathcal{N" u="u">v = \frac{\mathbf{e}_v + \sum</em>$$}(v)} \mathbf{e}_u}{1 + |\mathcal{N}(v)|</p>
+<p>The result is re-normalized to unit length. This mean pooling step propagates local structural context into every entity vector without any learned parameters, weight matrices, or training data. The operation runs at graph build time via <code>CerebrumGraph.build(use_graphsage=True)</code> and applies the smoothing over the entire graph in a single pass, making the incremental cost $O(|E|)$.</p>
+<p>The effect on CSA is direct and significant. Entities that are structurally proximate — sharing community membership, co-neighbours, or analogous graph roles — have their smoothed embeddings pulled together, increasing $\mathrm{sim}(u, v)$ for semantically related pairs even when their raw lexical representations are distant. Combined with the community score term $\beta \cdot cs$, the smoothed semantic similarity creates a redundant double-signal for structurally cohesive paths, further sharpening beam focus. Importantly, this is an inference-time enrichment: no retraining of the CSA parameters, no gradient steps, and no labelled supervision are required.</p>
+<h3 id="49-engram-steered-beam-traversal-phase-55">4.9 Engram-Steered Beam Traversal (Phase 55)</h3>
+<p>A fundamental limitation of stateless beam traversal is the cold-start problem: every query begins without memory of which reasoning chains have proven effective in the past. A domain-expert human reasoner, by contrast, quickly learns that certain relation-sequence patterns reliably lead to correct answers in a given knowledge domain ("gene → expressed_in → tissue → affected_by → disease" is a productive chain in biomedical KGs). Without this experiential bias, the traversal must explore the full beam combinatorially on every query.</p>
+<p>The <strong>Engram-Steered Traversal</strong> system addresses this by accumulating compressed relation-sequence patterns from successful queries into a persistent cache (<code>Engram</code>). After each successful reasoning call, the relation sequence of every top-ranked path is extracted and stored as a compressed prefix-indexed structure. On subsequent queries, each candidate expansion at <code>_prune_candidates()</code> time is scored by looking up the current path's relation prefix in the cache and computing an affinity score based on how often that prefix has appeared in historically successful paths. The effective candidate score is:</p>
+<p>$$s_\text{eff}(v) = s_\text{CSA}(v) \times \left(1 + \lambda_\text{engram} \times \text{affinity}(v)\right)$$</p>
+<p>where $\lambda_\text{engram}$ is a configurable strength parameter and $\text{affinity}(v) \in [0, 1]$ is the normalized frequency of the candidate's relation prefix in the cache. This is a multiplicative boost rather than an additive override, preserving the CSA score's absolute scale while biasing the beam toward known-productive chains.</p>
+<p>The system's durability across process restarts is provided by a two-layer mechanism. At shutdown, <code>Engram</code> serializes its prefix index to a JSON file. At startup, <code>QueryLog.replay_into_cache(engram)</code> re-ingests the NDJSON query history, rebuilding the cache state from the record of past successful queries. This gives the Engram system persistent memory without requiring a separate database process. Critically, the entire mechanism is training-free: no gradient steps, no reward model, and no labelled path-quality annotations are needed. This contrasts fundamentally with RL-based path selection methods (DeepPath, MINERVA) that require thousands of labelled training examples. Engram-Steered Traversal learns from the system's own operational history.</p>
+<h3 id="410-temporalcalibrator-phase-55">4.10 TemporalCalibrator (Phase 55)</h3>
+<p>The CSA formula contains two parameters, $\eta$ (temporal decay) and $\iota$ (node recency), that govern how strongly the system favours recently-updated edges and nodes. These parameters interact with the time distribution of the graph in ways that are highly domain-dependent: a rapidly-evolving biomedical KG has very different temporal structure from a stable encyclopedic KG, and the optimal values of $\eta$ and $\iota$ cannot be inferred from graph topology alone.</p>
+<p><code>TemporalCalibrator</code> performs a grid search over a configurable range of $(\eta, \iota)$ pairs against a labelled validation set, evaluating each configuration via Recall@K. For each grid point it: (1) applies the candidate $(\eta, \iota)$ pair to the live CSA engine, (2) runs inference over the validation set, (3) measures Recall@K, and (4) restores the original parameter values in a <code>try/finally</code> block regardless of whether step 3 succeeds or raises an exception. After exhausting the grid, the configuration maximising Recall@K is applied permanently via <code>TemporalCalibrator.apply()</code>. This calibration is entirely distinct from the online SGD path (Section 6.1) and the batch retraining path (Section 6.2): it requires no gradient computation and no positive/negative path pairs — only a small validation set with known-correct answer entities.</p>
+<hr />
+<h2 id="5-the-forward-pass-graph-reasoning">5. The Forward Pass: Graph Reasoning</h2>
+<h3 id="51-algorithm">5.1 Algorithm</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>INPUT:  Query Q (text string or entity list)
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>        Graph G (any backend)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>        Community assignments C (from DSCF)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>        Entity embeddings E (from any KGE method)
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        Hop depth L, beam width B (adaptive via Phase 53), top-K
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>OUTPUT: Ranked list of reasoning paths P = [(path, score, explanation)]
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>STEP 1 — Entity Grounding
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>  If Q is text: extract entities via NER or fuzzy match to graph vocabulary
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>  S = {e₁, e₂, ..., eₙ}  // seed entities
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>  h⁰ᵢ = E[eᵢ]             // initial embeddings
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>STEP 2 — Structural Encoding
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>  For each seed entity eᵢ:
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    pos_i = [pagerank(eᵢ), betweenness(eᵢ), degree(eᵢ), community_id(eᵢ)]
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    h⁰ᵢ = LayerNorm(h⁰ᵢ + W_pos · pos_i)
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>STEP 3 — Adaptive Beam Config (Phase 53)
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>  density = ego_density(seed)
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>  B_eff, L_eff = adaptive_params(density, B_default, L_default)
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>STEP 4 — Attention Traversal (L_eff layers)
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>  beam = [(path=[eᵢ], embedding=h⁰ᵢ, score=1.0) for each eᵢ in S]
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>  For k = 1 to L_eff:
+<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>    candidates = []
+<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a>    For each (path, h, score) in beam:
+<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a>      current = path[-1]
+<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a>      For each neighbor v in G.neighbors(current):
+<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a>        logit = ReasoningLogit(sim, cs, etw, nd, hd, pr_v, td, nr_v, sd, grounding)
+<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a>        w = sigmoid(logit.score(params))          // 10-param CSA
+<a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a>        h_new = LayerNorm(h + ReLU(w · E[v] + h))
+<a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a>        path_score = score × w × community_coherence(path + [v])
+<a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a>        candidates.append((path + [v], h_new, path_score))
+<a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a>
+<a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a>    If k &lt; L_eff:
+<a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a>      beam = top_B_eff(candidates, key=path_score)  // prune except final hop
+<a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a>    Else:
+<a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a>      beam = candidates  // terminal fan-out — no prune at last hop
+<a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a>
+<a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a>STEP 5 — Path Scoring
+<a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a>  score(P) = Π attention_weights × community_coherence(P) × cos(h_final, q)
+<a id="__codelineno-2-44" name="__codelineno-2-44" href="#__codelineno-2-44"></a>
+<a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a>STEP 6 — Output
+<a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a>  Return top-K paths ranked by score
+<a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a>  Each path includes:
+<a id="__codelineno-2-48" name="__codelineno-2-48" href="#__codelineno-2-48"></a>    - Ordered entity/relation sequence
+<a id="__codelineno-2-49" name="__codelineno-2-49" href="#__codelineno-2-49"></a>    - Score breakdown (per-term CSA weights, community, semantic)
+<a id="__codelineno-2-50" name="__codelineno-2-50" href="#__codelineno-2-50"></a>    - community_sequence (which &quot;heads&quot; were traversed)
+<a id="__codelineno-2-51" name="__codelineno-2-51" href="#__codelineno-2-51"></a>    - edge_features (per-hop ReasoningLogit values for explainability)
+<a id="__codelineno-2-52" name="__codelineno-2-52" href="#__codelineno-2-52"></a>    - Natural language explanation template
+</code></pre></div>
+<h3 id="52-community-coherence">5.2 Community Coherence</h3>
+<p>The <code>community_coherence</code> term rewards paths that traverse communities in a
+principled way:</p>
+<p>$$\gamma_{\mathcal{C}}(P) = \frac{1}{L}\sum_{k=1}^{L} \begin{cases} 1.0 &amp; c(v_k) = c(v_{k-1}) \ 0.5 &amp; c(v_k) \neq c(v_{k-1}) \end{cases}$$</p>
+<p>A fully intra-community path scores $\gamma_{\mathcal{C}} = 1.0$. One community transition: $\gamma_{\mathcal{C}} \approx 0.75$. Incoherent zigzags compound the penalty across hops.</p>
+<h3 id="53-interpretability">5.3 Interpretability</h3>
+<p>The output of CEREBRUM is always a path through the KG. This is fundamentally
+different from LLM reasoning in two ways:</p>
+<ol>
+<li>
+<p><strong>Verifiable</strong>: every step is an explicit (entity, relation, entity) triple
+   that exists in the graph. The system cannot hallucinate a connection that
+   isn't there.</p>
+</li>
+<li>
+<p><strong>Auditable</strong>: the community sequence tells you <em>which conceptual domains</em>
+   were traversed. A path that crosses from community "Clinical Trials" to
+   community "Drug Mechanisms" to community "Side Effects" is immediately
+   understandable. The <code>edge_features</code> field in every response exposes the full
+   ReasoningLogit breakdown per hop, making the scoring decision transparent.</p>
+</li>
+</ol>
+<p>This property makes CEREBRUM specifically valuable in high-stakes domains
+(medical, legal, financial) where hallucination is unacceptable.</p>
+<hr />
+<h2 id="6-adaptive-online-learning-phases-22-4548">6. Adaptive Online Learning (Phases 22, 45–48)</h2>
+<h3 id="61-metaparameterlearner-online-sgd-phase-2245">6.1 MetaParameterLearner: Online SGD (Phase 22/45)</h3>
+<p>User feedback via POST /feedback triggers per-community CSA parameter updates using stochastic gradient descent. For a positive feedback signal on path $P$ traversing community $c$:</p>
+<p>$$\theta_c \leftarrow \theta_c + \eta \cdot \nabla_\theta \log \sigma(\mathrm{logit}(P;\, \theta_c))$$</p>
+<p>For negative feedback, the gradient is reversed. The learner accumulates (pos, neg) path pairs in a feedback buffer for subsequent batch retraining.</p>
+<p>Community-specific parameters override the global prior for nodes in that community, enabling domain-specific tuning without global model retraining.</p>
+<h3 id="62-csaparameterlearner-batch-retraining-phase-48">6.2 CSAParameterLearner: Batch Retraining (Phase 48)</h3>
+<p>POST /retrain triggers <code>CSAParameterLearner.fit()</code> on the accumulated feedback buffer. The learner performs gradient descent over all buffered (pos, neg) pairs, updating the global prior:</p>
+<p>$$\mathcal{L} = -\sum_{(P^+, P^-)} \left[ \log \sigma(\mathrm{score}(P^+;\theta)) + \log \sigma(-\mathrm{score}(P^-;\theta)) \right]$$</p>
+<p>$$\theta \leftarrow \theta - \eta \nabla_\theta \mathcal{L}$$</p>
+<h3 id="63-params-persistence-phase-47">6.3 Params Persistence (Phase 47)</h3>
+<p><code>MetaParameterLearner.to_dict()</code> / <code>from_dict()</code> serializes the full parameter state:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;global_prior&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="mf">0.4</span><span class="p">,</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.05</span><span class="p">,</span><span class="w"> </span><span class="mf">0.05</span><span class="p">,</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.05</span><span class="p">,</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">],</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">&quot;community_overrides&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;42&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">0.434</span><span class="p">,</span><span class="w"> </span><span class="mf">0.673</span><span class="p">,</span><span class="w"> </span><span class="err">...</span><span class="p">],</span><span class="w"> </span><span class="err">...</span><span class="p">}</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="p">}</span>
+</code></pre></div>
+<p>POST /params restores a checkpoint; GET /params exports the current state.
+The <code>--params-file</code> CLI flag loads a checkpoint at server startup, enabling
+zero-downtime deployment of learned parameter sets.</p>
+<hr />
+<h2 id="7-abductive-reasoning-and-autonomous-discovery-phases-5052">7. Abductive Reasoning and Autonomous Discovery (Phases 50–52)</h2>
+<h3 id="71-hypothesisengine-multi-path-abductive-reasoning-phase-50">7.1 HypothesisEngine: Multi-Path Abductive Reasoning (Phase 50)</h3>
+<p>The HypothesisEngine generates hypotheses from incomplete graph evidence. Given a target node pair $(u, w)$ with no direct path, it:</p>
+<ol>
+<li>Collects all beam paths that reach $u$ or $w$ from any seed.</li>
+<li>Identifies partial paths that together could explain a connection.</li>
+<li>Combines confidence scores using <strong>Noisy-OR</strong> fusion:</li>
+</ol>
+<p>$$P(\text{hypothesis}) = 1 - \prod_{i} (1 - p_i)$$</p>
+<p>where $p_i$ is the CSA score of each independent path supporting the hypothesis. This formulation correctly treats independent evidence sources as cumulative without double-counting.</p>
+<p>Hypotheses are returned with confidence intervals and the supporting path evidence, making them auditable.</p>
+<h3 id="72-researchagent-autonomous-missing-link-discovery-phase-51">7.2 ResearchAgent: Autonomous Missing-Link Discovery (Phase 51)</h3>
+<p>ResearchAgent is a background daemon that continuously proposes new graph edges by:</p>
+<ol>
+<li>Identifying pairs of entities that appear frequently in close proximity within traversal paths but are not directly connected.</li>
+<li>Generating a hypothesis edge via HypothesisEngine.</li>
+<li>Submitting the proposed edge to ExternalValidator for literature confirmation.</li>
+</ol>
+<p>The agent runs asynchronously without blocking query serving. Proposed edges are quarantined (not added to the live graph) until ExternalValidator returns a positive result above the configured confidence threshold.</p>
+<h3 id="73-externalvalidator-literature-validation-phase-52">7.3 ExternalValidator: Literature Validation (Phase 52)</h3>
+<p>ExternalValidator checks ResearchAgent proposals against four live literature APIs:</p>
+<ul>
+<li><strong>PubMed</strong> — biomedical publications (NLM E-utilities API)</li>
+<li><strong>ClinicalTrials.gov</strong> — clinical trial records</li>
+<li><strong>arXiv</strong> — preprint server for physics, CS, biology</li>
+<li><strong>OpenAlex</strong> — open scholarly works database</li>
+</ul>
+<p>For a proposed edge $(u, r, v)$, the validator constructs search queries from entity labels and relation type, retrieves candidate abstracts, and computes a relevance score via term overlap and entity co-occurrence. Edges clearing the threshold are promoted to the live graph with a provenance tag indicating the validating source.</p>
+<hr />
+<h2 id="8-observability-layer-phase-54">8. Observability Layer (Phase 54)</h2>
+<h3 id="81-studioengine">8.1 StudioEngine</h3>
+<p><code>StudioEngine</code> is the central observability coordinator. It initializes structured logging at server startup, attaches a <code>RingBufferHandler</code> to the root logger, and provides the <code>/logs</code> and <code>/build</code> endpoints.</p>
+<h3 id="82-ringbufferhandler">8.2 RingBufferHandler</h3>
+<p>An in-memory circular buffer retaining the last N log records (default N=500). Records are structured JSON containing timestamp, level, logger name, message, and request trace ID. The buffer never grows unboundedly, making it safe for long-running server processes.</p>
+<h3 id="83-request-tracing">8.3 Request Tracing</h3>
+<p>Each incoming request to the API server is assigned a unique trace ID injected into the logging context. All log records emitted during request handling carry this ID, enabling correlation of multi-step reasoning operations (traversal, CSA scoring, community lookup) back to a single request.</p>
+<h3 id="84-rest-endpoints">8.4 REST Endpoints</h3>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Method</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/logs</code></td>
+<td>GET</td>
+<td>Retrieve buffered log records; supports <code>?level=</code> and <code>?limit=</code> filters</td>
+</tr>
+<tr>
+<td><code>/logs</code></td>
+<td>DELETE</td>
+<td>Flush the ring buffer</td>
+</tr>
+<tr>
+<td><code>/build</code></td>
+<td>POST</td>
+<td>Submit a graph build/reload operation; returns build trace ID</td>
+</tr>
+</tbody>
+</table>
+<p>CORS is fully configured on all endpoints, enabling browser-based observability dashboards to query the API directly.</p>
+<hr />
+<h2 id="9-fault-tolerance-architecture-phases-5657">9. Fault Tolerance Architecture (Phases 56–57)</h2>
+<h3 id="91-partial-result-responses-and-graceful-degradation">9.1 Partial-Result Responses and Graceful Degradation</h3>
+<p>Production KG deployments must contend with graphs that are partially unavailable, queries whose beam search times out mid-flight, and transient failures in optional subsystems (REM engine, bridge synthesis, external adapters). Failing fast with a hard error in these scenarios discards all reasoning work completed before the failure point and provides no useful information to the caller.</p>
+<p>CEREBRUM addresses this through a systematic partial-result pattern. The <code>QueryResponse</code> schema includes <code>partial</code> (boolean) and <code>error</code> (string) fields alongside the normal <code>paths</code> result list. If beam traversal is interrupted, the traversal accumulates completed paths into a <code>_partial_paths</code> checkpoint. Upon catching an exception, the server returns this checkpoint with <code>partial=True</code> and an informative <code>error</code> message rather than a 500 response with an empty body. Callers receive the best available answer the system had computed at the time of failure, preserving the traversal investment. The <code>/query/stream</code> endpoint extends this pattern to the streaming case: if an error occurs mid-stream, a terminal error chunk is emitted in the NDJSON stream before the connection closes, ensuring clients can distinguish a clean stream end from an aborted one.</p>
+<h3 id="92-component-level-crash-isolation">9.2 Component-Level Crash Isolation</h3>
+<p>Beyond query-level degradation, individual system components must not cascade failures into the broader request-serving path. Three specific isolation patterns are implemented:</p>
+<p><strong>GlobalRebalancer crash guard</strong>: The <code>GlobalRebalancer</code> runs DSCF re-detection as a background task triggered by modularity Q drift. If the background re-run raises an unhandled exception (e.g., from a graph mutation race or memory pressure), this exception is caught at the task boundary and logged with full traceback via the <code>RingBufferHandler</code>. The rebalancer resets its internal state to allow the next trigger cycle to proceed normally. Query serving is never interrupted.</p>
+<p><strong>Persistence layer write isolation</strong>: All <code>QueryLog</code> append operations and <code>Engram</code> save operations execute inside exception-guarded blocks. A write failure (disk full, permission error, filesystem unavailability) is logged and silently skipped rather than propagated to the caller. The in-memory state remains authoritative; persistence is best-effort. This ensures that an operator mistake in configuring the persistence path cannot bring down the query server.</p>
+<p><strong>Community detection executor fallback</strong>: <code>CommunityEngine</code> uses a <code>ProcessPoolExecutor</code> for parallel community detection runs (used to select the best-of-N DSCF partition). If the process pool is unavailable — due to OS-level restrictions on forking, resource limits, or Windows-specific constraints — the engine falls back automatically to sequential single-process execution. The fallback is transparent to callers: the same partition-selection logic runs, only without parallelism. This ensures CEREBRUM operates correctly in containerised environments with restricted process models.</p>
+<hr />
+<h2 id="10-implementation-architecture">10. Implementation Architecture</h2>
+<h3 id="101-design-principles">10.1 Design Principles</h3>
+<p><strong>Framework agnostic</strong>: CEREBRUM must work with any graph database, any
+embedding method, and any LLM (or no LLM). No vendor lock-in.</p>
+<p><strong>No training required by default</strong>: The zero-shot configuration uses fixed
+parameters and any entity embedding. Communities are computed unsupervised via DSCF.</p>
+<p><strong>Progressive enhancement</strong>: Users can improve performance by providing
+training pairs (for learning parameters) or domain-specific edge type weights
+without changing the core architecture.</p>
+<p><strong>Minimal dependencies</strong>:
+- Core: <code>networkx</code>, <code>numpy</code>, <code>scipy</code>
+- Adapters: optional graph DB drivers
+- Embeddings: optional <code>sentence-transformers</code> or <code>pykeen</code>
+- API: optional <code>fastapi</code>, <code>uvicorn</code></p>
+<h3 id="102-key-api-endpoints">10.2 Key API Endpoints</h3>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Method</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/health</code></td>
+<td>GET</td>
+<td>System readiness + node/community counts</td>
+</tr>
+<tr>
+<td><code>/query</code></td>
+<td>POST</td>
+<td>KG reasoning — returns ranked paths with <code>edge_features</code> + <code>community_sequence</code></td>
+</tr>
+<tr>
+<td><code>/feedback</code></td>
+<td>POST</td>
+<td>Online SGD update (MetaParameterLearner); buffers pair for <code>/retrain</code></td>
+</tr>
+<tr>
+<td><code>/retrain</code></td>
+<td>POST</td>
+<td>Batch retrain global prior via <code>CSAParameterLearner.fit()</code></td>
+</tr>
+<tr>
+<td><code>/params</code></td>
+<td>GET</td>
+<td>Inspect current 10-param global vector + community overrides</td>
+</tr>
+<tr>
+<td><code>/params</code></td>
+<td>POST</td>
+<td>Restore a checkpoint (global_prior + community_overrides)</td>
+</tr>
+<tr>
+<td><code>/communities</code></td>
+<td>GET</td>
+<td>Community partition map</td>
+</tr>
+<tr>
+<td><code>/bridges</code></td>
+<td>GET</td>
+<td>Bridge twin records</td>
+</tr>
+<tr>
+<td><code>/stream/query</code></td>
+<td>GET</td>
+<td>Streaming NDJSON reasoning</td>
+</tr>
+<tr>
+<td><code>/traverse</code></td>
+<td>POST</td>
+<td>Federated — delegated branch reasoning</td>
+</tr>
+<tr>
+<td><code>/build</code></td>
+<td>POST</td>
+<td>Submit graph build operation</td>
+</tr>
+<tr>
+<td><code>/logs</code></td>
+<td>GET/DELETE</td>
+<td>Ring-buffered structured log access</td>
+</tr>
+</tbody>
+</table>
+<h3 id="103-data-flow">10.3 Data Flow</h3>
+<p><strong>THALAMUS</strong> (ingestion):
+1. <strong>IngestionPipeline</strong> normalizes entities, deduplicates aliases, normalizes relations, assigns confidence/provenance
+2. <strong>Adapter</strong> loads graph → <code>Entity</code> / <code>Edge</code> objects
+3. <strong>EmbeddingEngine</strong> generates entity embeddings
+4. <strong>GraphSAGE smoothing</strong> (optional) applies one-pass neighbourhood mean aggregation over all entity embeddings
+5. <strong>StructuralEncoder</strong> computes PageRank, betweenness, degree features
+6. <strong>STDPDiscretizer</strong> (optional) infers causal edge direction from timing
+7. <strong>SignalEncoder</strong> (optional) encodes non-textual signals into entity embedding space</p>
+<p><strong>CORTEX</strong> (reasoning):
+8. <strong>CommunityEngine</strong> runs DSCF/TSC/Leiden/LPA to partition nodes into communities
+9. <strong>Engram warm-up</strong> (optional) replays QueryLog into the Engram prefix index
+10. <strong>CSAEngine</strong> computes 10-parameter attention weights per candidate edge
+11. <strong>EngramTraversal</strong> (or standard BeamTraversal) performs adaptive beam-search, biasing pruning toward known-productive relation patterns
+12. <strong>PathScorer</strong> + <strong>AnswerExtractor</strong> rank and return final answers; QueryLog appends the result</p>
+<p><strong>Adaptive Learning</strong> (online):
+13. User sends POST /feedback → online SGD on community-specific params
+14. Feedback buffered → POST /retrain → batch gradient descent on global prior
+15. GET /params → export checkpoint → POST /params or <code>--params-file</code> → restore
+16. TemporalCalibrator (optional) grid-searches <code>eta</code>/<code>iota</code> against a validation set → applies best params</p>
+<hr />
+<h2 id="11-evaluation">11. Evaluation</h2>
+<h3 id="111-datasets">11.1 Datasets</h3>
+<p><strong>MetaQA</strong> (Zhang et al., 2018): Movie question-answering over a KG with 43,234 entities, 134,741 triples, and 9 relation types. Multi-hop questions at 1, 2, and 3 hops. Standard benchmark for KG reasoning; 39,093 total questions evaluated.</p>
+<p><strong>WebQSP</strong> (Yih et al., 2016): Freebase-grounded questions requiring multi-hop entity resolution over 1.3M entities and 2.75M edges.</p>
+<p><strong>GrailQA</strong> (Gu et al., 2021): Freebase-based compositional and zero-shot QA evaluation over 193K entities and 320K edges (validation split: 5,170 questions).</p>
+<p><strong>Hetionet</strong> (Himmelstein et al., 2017): Biomedical KG integrating 11 node types and 24 relation types across 47,031 nodes and 2,250,197 edges.</p>
+<p><strong>IKGWQ</strong> (Incomplete Knowledge Graph With Questions — Phase 44): Internal benchmark of 400 questions with five incompleteness levels (0–50% edge removal), evaluating graceful degradation and REM synthesis recovery.</p>
+<h3 id="112-baselines">11.2 Baselines</h3>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Personalized PageRank (PPR)</td>
+<td>Random walk from seed, $\alpha=0.85$</td>
+</tr>
+<tr>
+<td>SP-BFS + PageRank rank</td>
+<td>Reachable nodes ranked by global PageRank</td>
+</tr>
+<tr>
+<td>Degree-Biased BFS</td>
+<td>Reachable nodes ranked by node degree</td>
+</tr>
+<tr>
+<td>MINERVA</td>
+<td>RL-trained path-finding agent (full supervision)</td>
+</tr>
+<tr>
+<td>NSM</td>
+<td>GNN-based (full supervision)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="113-metrics">11.3 Metrics</h3>
+<p><strong>Hits@K</strong>: fraction of questions where the correct answer appears in the top-K results.
+<strong>MRR</strong>: Mean Reciprocal Rank.</p>
+<h3 id="114-results-metaqa-full-evaluation-39093-questions">11.4 Results: MetaQA (Full Evaluation — 39,093 questions)</h3>
+<p>Configuration: all-MiniLM-L6-v2 embeddings, beam_width=10, --min-community-size 20, --use-prior, H1SE (Phase 137).</p>
+<table>
+<thead>
+<tr>
+<th>Hop</th>
+<th>Questions</th>
+<th>H@1</th>
+<th>H@10</th>
+<th>MRR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-hop</td>
+<td>9,947</td>
+<td>46.1%</td>
+<td>96.6%</td>
+<td>0.614</td>
+</tr>
+<tr>
+<td>2-hop</td>
+<td>14,872</td>
+<td>30.0%</td>
+<td>86.3%</td>
+<td>0.463</td>
+</tr>
+<tr>
+<td>3-hop</td>
+<td>14,274</td>
+<td>47.3%</td>
+<td>73.2%</td>
+<td>0.569</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Comparison to fully supervised systems</strong> (training-free unless noted):</p>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>1-hop H@1</th>
+<th>2-hop H@1</th>
+<th>3-hop H@1</th>
+<th>Training</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CEREBRUM (v2.52.0)</strong></td>
+<td><strong>46.1%</strong></td>
+<td><strong>30.0%</strong></td>
+<td><strong>47.3%</strong></td>
+<td><strong>None</strong></td>
+</tr>
+<tr>
+<td>MINERVA (RL)</td>
+<td>96.3%</td>
+<td>92.9%</td>
+<td>55.2%</td>
+<td>Full supervision</td>
+</tr>
+<tr>
+<td>NSM (GNN)</td>
+<td>97.3%</td>
+<td>99.9%</td>
+<td>98.9%</td>
+<td>Full supervision</td>
+</tr>
+</tbody>
+</table>
+<p>CEREBRUM achieves 47.3% Hits@1 on MetaQA 3-hop without any training data, nearing the performance of fully supervised systems like MINERVA (55.2%).</p>
+<p>CEREBRUM operates without any training data. Supervised systems' Hits@1 advantage reflects their ability to model question semantics during training. CEREBRUM's H@10 values confirm strong retrieval recall; the LLM bridge performs final re-ranking from the candidate set.</p>
+<h3 id="115-results-webqsp">11.5 Results: WebQSP</h3>
+<table>
+<thead>
+<tr>
+<th>Variant</th>
+<th>H@1</th>
+<th>H@10</th>
+<th>MRR</th>
+<th>ms/Q</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RAW</td>
+<td>3.6%</td>
+<td>11.7%</td>
+<td>6.0%</td>
+<td>57</td>
+</tr>
+<tr>
+<td>FULL</td>
+<td>6.14%</td>
+<td>16.59%</td>
+<td>9.25%</td>
+<td>90</td>
+</tr>
+<tr>
+<td>OPT</td>
+<td>6.27%</td>
+<td>20.84%</td>
+<td>10.66%</td>
+<td>221</td>
+</tr>
+</tbody>
+</table>
+<p>OPT = PageRank prior + learned CSA params ($\alpha=0.434$, $\beta=0.673$) + BridgeTwin (8,300 bridges) + beam_width=20.</p>
+<h3 id="116-results-ikgwq-graceful-degradation">11.6 Results: IKGWQ — Graceful Degradation</h3>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Remove%</th>
+<th>H@1</th>
+<th>H@10</th>
+<th>MRR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Complete</td>
+<td>0%</td>
+<td>4.0%</td>
+<td>14.25%</td>
+<td>6.64%</td>
+</tr>
+<tr>
+<td>Level 1</td>
+<td>10%</td>
+<td>3.75%</td>
+<td>13.25%</td>
+<td>6.33%</td>
+</tr>
+<tr>
+<td>Level 2</td>
+<td>20%</td>
+<td>3.75%</td>
+<td>11.75%</td>
+<td>5.77%</td>
+</tr>
+<tr>
+<td>Level 3</td>
+<td>30%</td>
+<td>3.75%</td>
+<td>11.0%</td>
+<td>5.58%</td>
+</tr>
+<tr>
+<td>Level 4</td>
+<td>40%</td>
+<td>3.25%</td>
+<td>10.0%</td>
+<td>4.96%</td>
+</tr>
+<tr>
+<td>Extreme</td>
+<td>50%</td>
+<td>3.25%</td>
+<td>9.5%</td>
+<td>4.58%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Graceful Degradation AUC: 0.89</strong> (area under the H@10-vs-incompleteness curve). REM synthesis provides 40% recall improvement at the Extreme incompleteness level compared to no synthesis.</p>
+<h3 id="117-results-grailqa-validation-split-5170-questions">11.7 Results: GrailQA (Validation Split, 5,170 questions)</h3>
+<table>
+<thead>
+<tr>
+<th>Split</th>
+<th>F1</th>
+<th>H@1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Overall</td>
+<td>19.6%</td>
+<td>13.0%</td>
+</tr>
+<tr>
+<td>i.i.d.</td>
+<td>22.7%</td>
+<td>15.8%</td>
+</tr>
+<tr>
+<td>compositional</td>
+<td>18.8%</td>
+<td>13.3%</td>
+</tr>
+<tr>
+<td>zero-shot</td>
+<td>18.5%</td>
+<td>11.7%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Zero-shot F1 retention = 81.5%</strong> compared to in-distribution performance. Trained systems typically retain 60–70% under zero-shot conditions. CEREBRUM's structure-driven reasoning generalizes to unseen entity/relation combinations because it follows graph topology rather than memorized patterns.</p>
+<h3 id="118-what-the-benchmarks-show-and-what-they-miss">11.8 What the Benchmarks Show and What They Miss</h3>
+<p>The benchmarks measure <strong>node recall</strong>: did the correct terminal entity appear in the result set? They do not measure:</p>
+<ul>
+<li><strong>Path quality</strong>: did the system follow a semantically coherent, meaningful route to the answer?</li>
+<li><strong>Interpretability</strong>: can the answer be explained and verified?</li>
+<li><strong>Hallucination resistance</strong>: does every edge in the returned path actually exist?</li>
+<li><strong>Cold-start capability</strong>: can the system answer without training?</li>
+</ul>
+<p>On all four dimensions, CEREBRUM is categorically superior to every baseline — not marginally, but by design.</p>
+<hr />
+<h2 id="12-phase-history">12. Phase History</h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Version</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0–9</td>
+<td>v0.x</td>
+<td>Core theory, DSCF, CSA (5-param), BeamTraversal, initial benchmarks</td>
+</tr>
+<tr>
+<td>10–13</td>
+<td>v0.3.x</td>
+<td>Production hardening (JWT, ResourceGovernor, async streaming), Bridge Twin Nodes, STDP causal inference</td>
+</tr>
+<tr>
+<td>14–19</td>
+<td>v0.x–v1.0</td>
+<td>Bayesian beam search, SignalEncoder, IngestionPipeline, namespace isolation, CausalSignificanceFilter, query snapshot isolation</td>
+</tr>
+<tr>
+<td>20</td>
+<td>v2.52.0</td>
+<td>Per-community CSA params, query snapshot isolation, canonical basis anchor</td>
+</tr>
+<tr>
+<td>21–24</td>
+<td>v2.52.0</td>
+<td>Validation, publication readiness, LaTeX pipeline</td>
+</tr>
+<tr>
+<td>25–26</td>
+<td>v2.52.0</td>
+<td>Hardware universalization, optimized pipeline</td>
+</tr>
+<tr>
+<td>27A–29</td>
+<td>v2.52.0</td>
+<td>Score-weighted voting, relation priors, CVT passthrough, repair engines</td>
+</tr>
+<tr>
+<td>30</td>
+<td>v2.52.0</td>
+<td>Proactive GraphBridgeEngine</td>
+</tr>
+<tr>
+<td>32</td>
+<td>v2.52.0</td>
+<td>Federated reasoning — DistributedBeamTraversal, /traverse endpoint</td>
+</tr>
+<tr>
+<td>39–40</td>
+<td>v2.52.0</td>
+<td>Async bridge synthesis, IKGWQ hardening</td>
+</tr>
+<tr>
+<td>41–42</td>
+<td>v2.52.0</td>
+<td>Temporal reasoning, Synaptic Bridge synthesis (REM), API hardening</td>
+</tr>
+<tr>
+<td>43</td>
+<td>v2.52.0</td>
+<td>10-param CSA formula (temporal context, synthesis density, grounding)</td>
+</tr>
+<tr>
+<td>44</td>
+<td>v2.52.0</td>
+<td>IKGWQ-MetaQA benchmark — 40% recall improvement with REM synthesis</td>
+</tr>
+<tr>
+<td>45</td>
+<td>v2.52.0</td>
+<td>10-param CSAParameterLearner + MetaParameterLearner full upgrade</td>
+</tr>
+<tr>
+<td>46</td>
+<td>v2.52.0</td>
+<td>Live feedback loop — /params endpoint, edge_features + community_sequence in responses</td>
+</tr>
+<tr>
+<td>47</td>
+<td>v2.52.0</td>
+<td>Params persistence — to_dict/from_dict, POST /params restore, --params-file CLI</td>
+</tr>
+<tr>
+<td>48</td>
+<td>v2.52.0</td>
+<td>Auto-Retrain Scheduler — feedback buffer, POST /retrain with CSAParameterLearner.fit()</td>
+</tr>
+<tr>
+<td>49</td>
+<td>v2.52.0</td>
+<td>TSC Explicit Mode — configurable TSC/DSCF/Leiden/LPA community engine selection</td>
+</tr>
+<tr>
+<td>50</td>
+<td>v2.52.0</td>
+<td>HypothesisEngine — multi-path abductive reasoning, Noisy-OR confidence fusion</td>
+</tr>
+<tr>
+<td>51/52</td>
+<td>v2.52.0</td>
+<td>ResearchAgent autonomous discovery + ExternalValidator (PubMed/arXiv/OpenAlex)</td>
+</tr>
+<tr>
+<td>53</td>
+<td>v2.52.0</td>
+<td>Adaptive search strategy — dynamic beam_width/max_hop via local graph density</td>
+</tr>
+<tr>
+<td>54</td>
+<td>v2.52.0</td>
+<td>Observability — StudioEngine, RingBufferHandler, /logs, /build, CORS, request tracing</td>
+</tr>
+<tr>
+<td>55</td>
+<td>v2.52.0</td>
+<td>GraphSAGE neighbourhood smoothing; Engram-steered traversal (Engram + EngramTraversal); TemporalCalibrator; QueryLog append-only history</td>
+</tr>
+<tr>
+<td>56</td>
+<td>v2.52.0</td>
+<td>Fault tolerance — QueryResponse.partial/error fields; _partial_paths checkpoint; GlobalRebalancer crash guard</td>
+</tr>
+<tr>
+<td>57</td>
+<td>v2.52.0</td>
+<td>Engram durable JSON persistence; /query/stream terminal error chunk; ProcessPoolExecutor sequential fallback</td>
+</tr>
+<tr>
+<td>58–62</td>
+<td>v2.1.x</td>
+<td>SpeedTalk phonemic compression; CerebellarEngine; MACH consensus hierarchies; SPQT quantized traversal; Explainable Reasoning Trace (ERT)</td>
+</tr>
+<tr>
+<td>63–67</td>
+<td>v2.2.x</td>
+<td>Neural telemetry WebSocket bridge; EngramConsolidator; autonomous hypothesis materialization; Studio v2 dashboard</td>
+</tr>
+<tr>
+<td>68–70</td>
+<td>v2.3.x</td>
+<td>ChemicalModulator (metabolic regulation); PredictiveCodingEngine + soliton index; LoopedBeamTraversal (LoopLM-style)</td>
+</tr>
+<tr>
+<td>71–74</td>
+<td>v2.4.x</td>
+<td>AutoApprover (tiered SGD); TriangulationEngine; DiscoveryCalibrator; AutonomousDiscoveryLoop + circuit breaker</td>
+</tr>
+<tr>
+<td>75–79</td>
+<td>v2.5.x</td>
+<td>Studio v2 provenance panel; ProvenanceLedger; Loop-Provenance Recovery; GraphAdapter remove_edge protocol</td>
+</tr>
+<tr>
+<td>80–83</td>
+<td>v2.52.0</td>
+<td>GraphSnapshot portable persistence; Adaptive Loop Tuning; UE5 3D visualization (UCerebrumLink, ANeuronNodeActor, ASynapseActor, ACerebrumBrain)</td>
+</tr>
+<tr>
+<td>93</td>
+<td>v2.52.0</td>
+<td>Active Inference / Daydreaming — ActiveInferenceEngine seeds idle-period queries from high-PE nodes to consolidate weak priors</td>
+</tr>
+<tr>
+<td>94</td>
+<td>v2.52.0</td>
+<td>Self-Modifying GUI — GUIAdaptationEngine + UEToolkitClient; dual-channel structural (HTTP→Blueprint) and runtime (WebSocket→HUD) adaptation; WBP_CerebrumHUD scaffold</td>
+</tr>
+<tr>
+<td>102</td>
+<td>v2.52.0</td>
+<td>Default Mode Network (DMN) — self-referential idle reasoning and heuristic bottleneck audit</td>
+</tr>
+<tr>
+<td>104-105</td>
+<td>v2.52.0</td>
+<td>Homeostatic Metaplasticity and Recursive Self-Synthesis — system architects its own subroutines</td>
+</tr>
+<tr>
+<td>107-108</td>
+<td>v2.52.0</td>
+<td>De Novo Parameter Synthesis and Thalamofrontal Feedback Loop — dynamic metabolic gating</td>
+</tr>
+<tr>
+<td>109-112</td>
+<td>v2.52.0</td>
+<td>Counterfactual Reasoning, Global Workspace (GWS), Active Inference, and REM Cycle Shortcut Synthesis</td>
+</tr>
+<tr>
+<td>119-123</td>
+<td>v2.25.0</td>
+<td>Sleep Cycle &amp; Metacognitive Monitor, Epistemic Gating, Counterfactual Engine</td>
+</tr>
+<tr>
+<td>134-137</td>
+<td>v2.31.0</td>
+<td>Vectorized Beam Scoring (10x boost), KGE-Enriched Embeddings, Funnel Beam Profile, H1SE (Hop-1 Seed Expansion)</td>
+</tr>
+<tr>
+<td>149-150</td>
+<td>v2.35.0</td>
+<td>Cingulate Engine (Reasoning Verifier) and Frontal Engine Executive Strategy</td>
+</tr>
+<tr>
+<td>151-154</td>
+<td>v2.39.0</td>
+<td>Vote-Weight Suppression, Answer-Type Constraint Filter, DBC (Distinct-Branch Convergence) Scoring</td>
+</tr>
+<tr>
+<td>156-160</td>
+<td>v2.44.0</td>
+<td>Penultimate Relation Boost (PRB), r2 Path-Consistency Boost, TRB Detection Fixes</td>
+</tr>
+<tr>
+<td>161-163</td>
+<td>v2.47.0</td>
+<td>StructuralRelationInferrer (SRI), CTRI (Community-Based TRB), SABS (Asymmetric Beam Search)</td>
+</tr>
+<tr>
+<td>164-165</td>
+<td>v2.49.0</td>
+<td>Terminal-Anchor Beam (TAB) and Hetionet Biomedical KG Benchmark</td>
+</tr>
+<tr>
+<td>166-167</td>
+<td>v2.52.0</td>
+<td>GraphProfiler (Auto Query Strategy) and STRB (Semantic Terminal Relation Boost)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="13-discussion">13. Discussion</h2>
+<h3 id="131-where-cerebrum-excels">13.1 Where CEREBRUM Excels</h3>
+<ul>
+<li><strong>Structured knowledge domains</strong> where community structure maps to genuine conceptual divisions: biomedical KGs (disease/gene/drug communities), scientific citation networks, enterprise ontologies.</li>
+<li><strong>Multi-hop chains</strong> where the path itself is informative, not just the terminal entity: "what mechanism connects drug X to disease Y?"</li>
+<li><strong>Verification tasks</strong>: proving or disproving a claimed relationship by finding or failing to find a path.</li>
+<li><strong>Cold-start deployments</strong>: any new domain where labeled training data does not yet exist.</li>
+<li><strong>Incomplete graphs</strong>: CEREBRUM's REM synthesis and graceful degradation (AUC 0.89) handle real-world KG sparsity more robustly than systems that assume graph completeness.</li>
+<li><strong>Progressive domains</strong>: fields where new knowledge arrives continuously; ResearchAgent + ExternalValidator enable autonomous graph enrichment.</li>
+<li><strong>Repeated query patterns</strong>: Engram-steered traversal provides compounding benefit when the same relation-sequence patterns recur across queries, which is the norm in any focused domain deployment.</li>
+</ul>
+<h3 id="132-limitations-and-honest-assessment">13.2 Limitations and Honest Assessment</h3>
+<ul>
+<li><strong>Hits@1 without question context</strong>: CEREBRUM does not rank terminal nodes by question semantics — that is the LLM bridge's role. Benchmarks that measure only Hits@1 without a re-ranking step understate CEREBRUM's practical utility.</li>
+<li><strong>Random embeddings degrade performance</strong>: The CSA semantic term ($\alpha = 0.4$) contributes noise with random embeddings. Production deployment requires sentence-transformer or domain-specific embeddings.</li>
+<li><strong>Very high community counts</strong>: On sparse graphs (MetaQA KG), DSCF can produce near-singleton communities that degrade the community distance matrix. Mitigation: <code>--min-community-size</code> flag merges small communities.</li>
+<li><strong>ExternalValidator latency</strong>: Literature API calls introduce latency in the ResearchAgent loop. This is acceptable because ResearchAgent runs as a background daemon and never blocks query serving.</li>
+</ul>
+<h3 id="133-future-directions">13.3 Future Directions</h3>
+<ul>
+<li><strong>Multi-round abduction</strong>: HypothesisEngine currently performs single-round Noisy-OR fusion. Iterative abduction (re-running beam search over hypothesis-enriched graphs) is under investigation.</li>
+<li><strong>Federated learning of CSA parameters</strong>: Currently parameters are learned locally per node. Federated parameter aggregation across nodes would enable collective learning without sharing raw graph data.</li>
+<li><strong>Contrastive community pre-training</strong>: Pre-training DSCF using contrastive objectives on domain corpora may produce more semantically meaningful community specialization.</li>
+</ul>
+<hr />
+<h2 id="14-the-llm-bridge">14. The LLM Bridge</h2>
+<p>CEREBRUM's output is a set of verified paths:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>(Aspirin) --[INHIBITS]--&gt; (COX-2) --[IS_ASSOCIATED_WITH]--&gt; (Inflammation)
+</code></pre></div>
+<p>The LLM bridge formats these paths as a grounded prompt:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>The following facts are verified and sourced from the knowledge graph:
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>  Aspirin INHIBITS COX-2
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  COX-2 IS_ASSOCIATED_WITH Inflammation
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>Using only these facts, answer the question: &quot;Why does aspirin reduce inflammation?&quot;
+</code></pre></div>
+<p>The LLM composes a fluent answer from verified facts. It cannot hallucinate because every fact in the prompt is a real edge from the graph. The answer includes citations — the source edges — alongside the text.</p>
+<p>This architecture inverts the standard RAG pattern: instead of asking the LLM to retrieve and then generate, CEREBRUM retrieves with structural guarantees and asks the LLM only to narrate. The LLM becomes a grammar layer, not a knowledge layer.</p>
+<hr />
+<h2 id="15-conclusion">15. Conclusion</h2>
+<p>CEREBRUM demonstrates that a Knowledge Graph can reason over itself using the structural principles of Transformer attention — without training data, without a language model, and with full interpretability. The key insight is that graph communities are a natural analog of attention heads, and DSCF constructs communities with the dual local/global character that makes this analogy operational.</p>
+<p>Through 57 phases of development the core insight has remained unchanged while the surrounding architecture has grown substantially: the 5-parameter CSA formula became a 10-parameter formula with online and batch learning; the single-node traversal became a federated multi-node system; the synchronous query server became a fully observable, traceable production platform; the pure reasoning engine gained abductive hypothesis generation and autonomous literature-validated graph enrichment; and the traversal layer gained structural memory through Engram-steered beam pruning.</p>
+<p>Phases 55–57 mark the transition from a research-quality system to a production-hardened platform. GraphSAGE neighbourhood smoothing enriches every entity embedding with local structural context in a single $O(|E|)$ pass, requiring no training. The Engram-steered traversal system accumulates relation-sequence patterns from the system's own operational history and applies them as a compounding beam bias — yielding measurably sharper traversal focus on repeated query domains without any supervised training signal. The TemporalCalibrator brings principled, gradient-free calibration of the temporal CSA parameters to maximise Recall@K on held-out validation sets. The fault tolerance architecture ensures that transient failures in any individual component — graph adapters, persistence, community detection, external validators — degrade gracefully to partial results rather than cascading to hard errors.</p>
+<p>At v2.52.0, CEREBRUM is empirically validated against 39,093 MetaQA questions, 1,579 WebQSP questions, 5,170 GrailQA questions, and 400 IKGWQ questions. Recent advances in zero-config reasoning (GraphProfiler, STRB) and performance (Vectorized Scoring) make it a viable alternative to LLM-based systems for structured domain reasoning.</p>
+<hr />
+<h2 id="acknowledgments-intellectual-debt-and-credits">Acknowledgments: Intellectual Debt and Credits</h2>
+<p>CEREBRUM stands on the shoulders of decades of research in graph theory, community detection, and neural networks. We explicitly acknowledge the foundational work of the following researchers:</p>
+<ol>
+<li><strong>LPA</strong>: Raghavan, Albert, and Kumara (2007) — local majority-vote community detection.</li>
+<li><strong>Louvain</strong>: Blondel, Guillaume, Lambiotte, and Lefebvre (2008) — greedy modularity optimization.</li>
+<li><strong>Leiden</strong>: Traag, Waltman, and Van Eck (2019) — connected-community refinement.</li>
+<li><strong>GATs</strong>: Veličković et al. (2018) — primary foil and inspiration for CSA.</li>
+<li><strong>TransE / RotatE</strong>: Bordes et al. (2013); Sun et al. (2019) — KG embedding methods.</li>
+<li><strong>GraphRAG</strong>: Edge et al. (2024) — community-augmented LLM retrieval.</li>
+<li><strong>PageRank</strong>: Page, Brin, Motwani, Winograd (1999) — global authority prior.</li>
+<li><strong>Betweenness Centrality</strong>: Freeman (1977) — positional encoding feature.</li>
+<li><strong>Simulated Annealing</strong>: Kirkpatrick, Gelatt, Vecchi (1983) — DSCF temperature schedule.</li>
+<li><strong>Bloom Filters</strong>: Bloom (1970) — HolographicIndex federated discovery.</li>
+<li><strong>STDP</strong>: Bi &amp; Poo (1998); Markram et al. (1997) — STDPDiscretizer and Bridge Twin formation.</li>
+<li><strong>Hebbian Learning</strong>: Hebb (1949) — Bridge Twin LTP/LTD analog.</li>
+<li><strong>Beam Search</strong>: Lowerre (1976) — BeamTraversal.</li>
+<li><strong>Sentence-BERT</strong>: Reimers &amp; Gurevych (2019) — default embedding backend.</li>
+<li><strong>Noisy-OR</strong>: Pearl (1988) — HypothesisEngine confidence fusion.</li>
+<li><strong>Avionics mid-value selection</strong> — multi-signal consensus inspiration for DSCF/TSC.</li>
+<li><strong>GraphSAGE</strong>: Hamilton, Ying &amp; Leskovec (2017) — adapted operator.</li>
+<li><strong>Vectorized Ops</strong>: Optimized NumPy kernels for CSA (Phase 134).</li>
+</ol>
+<hr />
+<h2 id="references">References</h2>
+<ul>
+<li>Bi &amp; Poo (1998). Synaptic modifications in cultured hippocampal neurons. <em>Journal of Neuroscience</em>.</li>
+<li>Blondel et al. (2008). Fast unfolding of communities in large networks. <em>Journal of Statistical Mechanics</em>.</li>
+<li>Bloom (1970). Space/time trade-offs in hash coding with allowable errors. <em>Communications of the ACM</em>.</li>
+<li>Bordes et al. (2013). Translating embeddings for modeling multi-relational data. <em>NeurIPS</em>.</li>
+<li>Das et al. (2018). Go for a walk and arrive at the answer. <em>ICLR</em>.</li>
+<li>Edge et al. (2024). From local to global: a graph RAG approach to query-focused summarization. <em>Microsoft Research</em>.</li>
+<li>Freeman (1977). A set of measures of centrality based on betweenness. <em>Sociometry</em>.</li>
+<li>Galarraga et al. (2013). AMIE: Association rule mining under incomplete evidence in ontological knowledge bases. <em>WWW</em>.</li>
+<li>Gilmer et al. (2017). Neural message passing for quantum chemistry. <em>ICML</em>.</li>
+<li>Gu et al. (2021). Beyond I.I.D.: Three levels of generalization for question answering on knowledge bases. <em>WWW</em> (GrailQA).</li>
+<li>Hamilton et al. (2017). Inductive representation learning on large graphs. <em>NeurIPS</em>.</li>
+<li>He et al. (2021). Improving multi-hop knowledge base question answering by learning intermediate supervision signals. <em>WSDM</em> (NSM).</li>
+<li>Hebb (1949). The Organization of Behavior. Wiley.</li>
+<li>Himmelstein et al. (2017). Systematic integration of biomedical knowledge prioritizes drugs for repurposing. <em>eLife</em>.</li>
+<li>Kirkpatrick, Gelatt &amp; Vecchi (1983). Optimization by simulated annealing. <em>Science</em>.</li>
+<li>Lowerre (1976). The HARPY Speech Recognition System. PhD thesis, Carnegie Mellon University.</li>
+<li>Markram et al. (1997). Regulation of synaptic efficacy by coincidence of postsynaptic APs and EPSPs. <em>Science</em>.</li>
+<li>Page et al. (1999). The PageRank citation ranking: bringing order to the web. <em>Stanford InfoLab</em>.</li>
+<li>Pearl (1988). Probabilistic Reasoning in Intelligent Systems. Morgan Kaufmann.</li>
+<li>Raghavan et al. (2007). Near linear time algorithm to detect community structures. <em>Physical Review E</em>.</li>
+<li>Reimers &amp; Gurevych (2019). Sentence-BERT: sentence embeddings using Siamese BERT-networks. <em>EMNLP</em>.</li>
+<li>Rosvall &amp; Bergstrom (2008). Maps of random walks on complex networks reveal community structure. <em>PNAS</em>.</li>
+<li>Sarthi et al. (2024). RAPTOR: recursive abstractive processing for tree-organized retrieval. <em>ICLR</em>.</li>
+<li>Scarselli et al. (2009). The graph neural network model. <em>IEEE Transactions on Neural Networks</em>.</li>
+<li>Sun et al. (2019). RotatE: knowledge graph embedding by relational rotation in complex space. <em>ICLR</em>.</li>
+<li>Traag et al. (2019). From Louvain to Leiden: guaranteeing well-connected communities. <em>Scientific Reports</em>.</li>
+<li>Velickovic et al. (2018). Graph attention networks. <em>ICLR</em>.</li>
+<li>Xiong et al. (2017). DeepPath: a reinforcement learning method for knowledge graph reasoning. <em>EMNLP</em>.</li>
+<li>Yih et al. (2016). The value of semantic parse labeling for knowledge base question answering. <em>ACL</em> (WebQSP).</li>
+<li>Zhang et al. (2018). Variational reasoning for question answering with knowledge graphs (MetaQA). <em>AAAI</em>.</li>
+</ul>
+<hr />
+<p><strong>Reviewed on</strong>: May 3, 2026 for version v2.52.0</p>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

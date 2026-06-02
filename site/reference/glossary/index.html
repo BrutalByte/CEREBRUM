@@ -1,0 +1,2886 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Crystal-box knowledge graph reasoning — traceable, deterministic, zero hallucination">
+      
+      
+      
+        <link rel="canonical" href="https://brutalbyte.github.io/CEREBRUM/reference/glossary/">
+      
+      
+        <link rel="prev" href="../architecture/">
+      
+      
+        <link rel="next" href="../changelog/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Glossary - CEREBRUM</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config",""),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#terminology-note-synaptic-bridge" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="CEREBRUM" class="md-header__button md-logo" aria-label="CEREBRUM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CEREBRUM
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Glossary
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/BrutalByte/CEREBRUM" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BrutalByte/CEREBRUM
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/quickstart/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concepts/crystal-box/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../connectors/overview/" class="md-tabs__link">
+          
+  
+  
+  Data Connectors
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../sdk/python/" class="md-tabs__link">
+          
+  
+  
+  SDK Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../integrations/langchain/" class="md-tabs__link">
+          
+  
+  
+  Integrations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/overview/" class="md-tabs__link">
+          
+  
+  
+  REST API
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../deployment/docker/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../architecture/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="CEREBRUM" class="md-nav__button md-logo" aria-label="CEREBRUM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    CEREBRUM
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/BrutalByte/CEREBRUM" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BrutalByte/CEREBRUM
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/first-kb/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First KB
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/crystal-box/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Crystal-Box Reasoning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/crystal-box-whitepaper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Crystal-Box Whitepaper
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How CEREBRUM Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Connectors
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Data Connectors
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/csv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CSV
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/sql/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/parquet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parquet & Arrow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../connectors/graph-databases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Neo4j & Neptune
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDK Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    SDK Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sdk/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python SDK
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sdk/typescript/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TypeScript SDK
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/langchain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LangChain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/llamaindex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LlamaIndex
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../integrations/jupyter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jupyter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    REST API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/endpoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compliance Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/multi-tenant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Tenant API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/hardware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#terminology-note-synaptic-bridge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Terminology Note: Synaptic Bridge
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cerebrum-glossary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CEREBRUM Glossary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CEREBRUM Glossary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        E
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#g" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        G
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#h" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        H
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        I
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#j" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        J
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        K
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#l" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        L
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#m" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        M
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#n" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        N
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        S
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#u" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        U
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#w" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        W
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#z" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Z
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Z">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#neural-coupling-formerly-gossipsync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neural Coupling (formerly GossipSync)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ue-llm-toolkit-adapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UE LLM Toolkit Adapter
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#terminology-note-synaptic-bridge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Terminology Note: Synaptic Bridge
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cerebrum-glossary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CEREBRUM Glossary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CEREBRUM Glossary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#b" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#e" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        E
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#f" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        F
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#g" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        G
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#h" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        H
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        I
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#j" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        J
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        K
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#l" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        L
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#m" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        M
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#n" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        N
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#s" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        S
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#u" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        U
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#w" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        W
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#z" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Z
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Z">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#neural-coupling-formerly-gossipsync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Neural Coupling (formerly GossipSync)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ue-llm-toolkit-adapter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UE LLM Toolkit Adapter
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h3 id="terminology-note-synaptic-bridge">Terminology Note: Synaptic Bridge</h3>
+<p>Historically referred to as 'Wormhole' in early CEREBRUM development, this mechanism for cross-community traversal is now formally known as a Synaptic Bridge to reflect its associative and biological coupling nature.</p>
+<h1 id="cerebrum-glossary">CEREBRUM Glossary</h1>
+<p>Definitions of all CEREBRUM-specific terms, algorithms, and architectural concepts.</p>
+<hr />
+<h2 id="a">A</h2>
+<p><strong>ACerebrumBrain</strong>
+The UE5 orchestrator <code>AActor</code> (Phase 92). Manages <code>ANeuronNodeActor</code> and <code>ASynapseActor</code> lifecycle: async HTTP <code>GET /communities</code> + <code>GET /graph/edges</code> pre-load via <code>FHttpModule</code>; Fibonacci sphere spatial layout; <code>LoadGraphFromLayoutFile()</code> reads pre-computed <code>graph_layout.json</code> for exact positions; <code>DisconnectAndClear()</code> tears down all actors. Exposes Blueprint events: <code>OnGraphLoaded</code>, <code>OnNewNodeSpawned</code>, <code>OnNewSynapseSpawned</code>, <code>OnDissonanceAlert</code>.</p>
+<p><strong>ANeuronNodeActor</strong>
+A UE5 <code>AActor</code> sphere mesh representing one KG entity (Phase 92). Community color is derived from the golden ratio HSV color wheel (hue = <code>(CID × 0.618...) % 1.0</code>). A <code>UPointLightComponent</code> provides ambient glow controlled by <code>SetGlowIntensity()</code>. <code>PulseFlash()</code> animates the emissive material parameter on <code>SYNAPTIC_PULSE</code>. <code>ShowDissonance()</code> tints the node orange-red for a configurable duration. <code>FadeOut()</code> scales opacity to zero then destroys the actor.</p>
+<p><strong>ASynapseActor</strong>
+A UE5 <code>AActor</code> cylinder mesh representing one KG relation edge (Phase 92). Re-oriented every tick from source to target node via <code>FQuat::FindBetweenNormals(UpVector, Delta)</code>. Relation type is encoded as a hue using a djb2 hash. Weight drives both opacity and emissive glow. <code>AnimatePulse()</code> flashes the cylinder and calls <code>PulseFlash()</code> on both endpoint nodes. <code>FadeOut()</code> linearly fades opacity to zero then self-destroys.</p>
+<p><strong>Adaptive Loop Tuning</strong>
+A Phase 92 feature of <code>AutonomousDiscoveryLoop</code>. When <code>LoopConfig.adaptive_tuning=True</code>, the loop reads <code>DiscoveryCalibrator</code>'s mean community weight at the start of each cycle and scales <code>max_materializations_per_cycle</code> (cap) and <code>_next_interval</code> (sleep time) proportionally. Underexplored graph regions receive higher caps and shorter intervals; saturated regions get lower caps and longer waits. All bounds are configurable via <code>adaptive_min_cap</code>, <code>adaptive_max_cap</code>, <code>adaptive_min_interval</code>, <code>adaptive_max_interval</code>. <code>CycleRecord.effective_cap</code> records the actual cap used.</p>
+<p><strong>Answer Extractor</strong>
+The final stage of the CORTEX reasoning pipeline. Takes ranked <code>ReasoningPath</code> objects from <code>PathScorer</code> and extracts the terminal entity of each path as a candidate answer. Returns answers with associated CSA scores, path confidence, and HMAC provenance signatures.</p>
+<p><strong>Arousal</strong>
+The functional name for the "Norepinephrine" scalar in the <code>ChemicalModulator</code> (Phase 68). Linked to cognitive dissonance frequency. High Arousal dynamically scales the <code>beam_width</code> and relaxes pruning thresholds, forcing the system to perform a more thorough, high-alert search when uncertain.</p>
+<p><strong>AsyncBeamTraversal</strong>
+An async/await variant of <code>BeamTraversal</code> (see below) that supports streaming partial results via async generators. Used by the SSE streaming endpoints.</p>
+<p><strong>Attention Head (Transformer analogy)</strong>
+In CEREBRUM, each DSCF community corresponds to one "attention head" in the Transformer analogy. Just as a Transformer's attention heads capture different semantic relationships, DSCF communities capture different structural clusters in the graph. See also: DSCF, CSA.</p>
+<p><strong>AutoApprover</strong>
+The automated decision engine for <code>ResearchFinding</code> objects (Phase 71). Operates in three tiers: (1) <strong>Hard gates</strong> — immediately reject findings with blocked <code>literature_status</code> or missing <code>ValidationReport</code>; (2) <strong>Online SGD classifier</strong> — 16-feature logistic regression (<code>confidence</code>, <code>discovery_potential</code>, <code>gap_score</code>, <code>community_distance</code>, <code>local_density</code>, <code>lit_status</code> ordinal, <code>novelty_score</code>, <code>engram_affinity</code>, <code>path_count</code>, <code>contradiction_score</code>, <code>seeded_by</code> flags, + 4 <code>TriangulationReport</code> slots); (3) <strong>Optional LLM semantic fallback</strong> for borderline cases. Online <code>fit()</code> from confirmed decisions. Checkpoint via <code>to_dict()</code> / <code>from_dict()</code>. REST: <code>GET/POST /research/auto-approver</code>.</p>
+<p><strong>AutonomousDiscoveryLoop</strong>
+The Phase 74 orchestration component that closes the discover→validate→approve→materialize loop autonomously. Runs <code>ResearchAgent.scan_once()</code> on a configurable timer, processes each finding through <code>AutoApprover</code>, and applies a <strong>circuit breaker</strong> (pauses if approval rate &lt; <code>min_approval_rate</code> over a sliding window). <strong>Per-cycle cap</strong> limits materializations per run. <strong>dry_run=True</strong> simulates cycles without writing edges. Checkpoints <code>AutoApprover</code> state after every cycle. See also: <code>LoopConfig</code>, <code>CycleRecord</code>, Adaptive Loop Tuning.</p>
+<hr />
+<h2 id="b">B</h2>
+<p><strong>Bayesian Beam Search</strong>
+<code>BeamTraversal(probabilistic=True)</code> — beam search where each candidate path maintains a Beta distribution over expected quality. Path selection uses Thompson sampling, drawing from each path's Beta distribution and selecting the highest sampled value. Produces calibrated confidence estimates alongside answers.</p>
+<p><strong>BeamTraversal</strong>
+The core multi-hop graph traversal engine in CORTEX. Uses beam search (configurable width and depth) guided by CSA attention weights. Supports both deterministic mode (greedy selection) and Bayesian mode (Thompson sampling).</p>
+<p><strong>Beta Distribution (in Beam Search)</strong>
+Each <code>TraversalPath</code> maintains <code>beta_alpha</code> and <code>beta_beta</code> parameters defining a Beta distribution over its expected quality. After each hop, the distribution is updated: <code>alpha += weight * prior_scale</code>, <code>beta += (1 - weight) * prior_scale</code>. Thompson sampling draws from this distribution for beam selection.</p>
+<p><strong>Bilateral Verification</strong>
+The <code>InsightValidator</code>'s validation protocol. A speculative edge $E_{uv}$ is probed independently in both directions: forward (start from $u$, reach $v$ without using $E_{uv}$) and reverse (start from $v$, reach $u$ without using $E_{uv}$). At least one probe must succeed with confidence ≥ 0.65 for the edge to be verified.</p>
+<p><strong>Bridge Bonus (EF-005)</strong>
+An innovation in CEREBRUM's benchmark traversal strategy: the BeamTraversal's CSA weights preferentially identify structural bridges — edges connecting otherwise-isolated communities — and use them as "shortcuts" to improve multi-hop recall. Named EF-005 in the benchmark evaluation log.</p>
+<p><strong>Bridge Twin Engine</strong>
+The system component that creates and manages Bridge Twin nodes (see below). Monitors edge crossing frequencies between communities; materializes a bridge twin node when a crossing threshold is exceeded (LTP analog). Prunes bridges when crossings decay (LTD analog).</p>
+<p><strong>Bridge Twin Node</strong>
+An experience-dependent structural relay node that forms in the graph when two entities in different communities are traversed together repeatedly. Inspired by the thalamo-cortical relay model in neuroscience. Bridge twin nodes reduce hop count for cross-community queries and are tracked by <code>BridgeTwinEngine</code>.</p>
+<p><strong>BridgeRecord</strong>
+The data structure tracking a bridge twin node: stores <code>twin_id</code>, <code>original_id</code>, <code>source_community</code>, <code>destination_community</code>, <code>crossing_count</code>, and <code>ltp_weight</code>. Pruned by <code>on_rebalance()</code> when community IDs become stale (Phase 19 fix).</p>
+<hr />
+<h2 id="c">C</h2>
+<p><strong>CandidateRegistry</strong>
+A TTL-aware registry (Phase 73 Batch B) replacing the flat <code>_evaluated_pairs</code> set in <code>ResearchAgent</code>. Tracks <code>nomination_count</code> per (source, target) pair; applies a log-scale <code>nomination_boost</code> (up to 3×) to <code>discovery_potential</code> for repeatedly-nominated candidates. A TTL gate prevents redundant <code>HypothesisEngine</code> runs within the expiry window. <code>prune()</code> evicts stale entries; LRU <code>max_entries</code> cap enforces a memory bound.</p>
+<p><strong>Canonical Basis Anchor</strong>
+<code>SignalEncoder(canonical_embeddings={...})</code> — a fixed reference embedding space used as the target for all Procrustes SVD alignment operations across a federation. Prevents geometric drift accumulation when signal encoders are aligned to different adapters across federated hops (Phase 20 fix, Hole 7).</p>
+<p><strong>Causal Flood</strong>
+An adversarial attack on the <code>STDPDiscretizer</code> where a burst of rapid spike events causes the STDP weight to exceed the materialization threshold, creating spurious <code>CAUSES</code> edges. Mitigated by <code>min_causal_span</code> and <code>use_chi_squared</code> parameters (Phase 19 fix, Hole 2).</p>
+<p><strong>CausalSignificanceFilter</strong>
+The combined protection system in <code>STDPDiscretizer</code>: <code>min_causal_span</code> (minimum temporal span) + <code>use_chi_squared</code> (statistical uniformity test). Both default to off for backward compatibility.</p>
+<p><strong>CEREBRUM</strong>
+The overarching product and framework name. <strong>C</strong>ommunity-Structur<strong>E</strong>d g<strong>R</strong>aph att<strong>E</strong>ntion for knowledge g<strong>R</strong>aph reas<strong>O</strong>ning with <strong>M</strong>ulti-hop traversal. The complete system including THALAMUS (ingestion), CORTEX (reasoning), REM Engine (maintenance), and Bridge Twin Engine.</p>
+<p><strong>Cerebellar Error Correction (CEC)</strong>
+An active error-driven meta-learning loop (Phase 59) that detects "dissonant" predictions — paths with high CSA scores but low consensus across multiple independent reasoning strategies (MACH L1). CEC triggers autonomous external validation via <code>ResearchAgent</code> to correct structural reasoning errors.</p>
+<p><strong>ChemicalModulator</strong>
+The bio-mimetic regulation system (Phase 68) that manages the global reasoning state via metabolic scalars (<strong>Reinforcement</strong>, <strong>Arousal</strong>, <strong>Novelty</strong>, <strong>Cohesion</strong>, <strong>Persistence</strong>). Implements homeostatic decay, pulling all levels back to a resting baseline after each query completion.</p>
+<p><strong>Cohesion</strong>
+The functional name for the "Oxytocin" scalar in the <code>ChemicalModulator</code> (Phase 68). Promotes community stability by scaling the community membership term ($\beta$) in the CSA formula. High Cohesion levels favor intra-community reasoning over cross-domain "leaps."</p>
+<p><strong>ContradictionResolver</strong>
+A deterministic evidence-weight classifier (Phase 73 Batch B) that runs on already-computed proposal data. Computes <code>net_evidence_score = Noisy-OR(proposed confidences) - max(contradiction_score)</code>. Classifies findings as: <strong>"clean"</strong> (approved), <strong>"revision_candidate"</strong> (queued for human review), <strong>"contested"</strong> (AutoApprover decides), or <strong>"discardable"</strong> (auto-rejected before AutoApprover). Revision candidates are queued in <code>ResearchAgent._revision_candidates</code>.</p>
+<p><strong>Community (Graph)</strong>
+A group of nodes that are more densely connected to each other than to the rest of the graph. In CEREBRUM, communities are detected by DSCF and serve as the "attention heads" for CSA reasoning. Nodes within the same community receive a bonus in the CSA formula.</p>
+<p><strong>Community Lock-In</strong>
+A reasoning pathology detected by the MetaInsightEngine: more than 70% of successful reasoning paths stay within a single community. Indicates the graph's community structure may be over-dominant or the starting entity has insufficient inter-community connections.</p>
+<p><strong>Community-Specific CSA Parameters</strong>
+<code>CSAEngine(community_params={community_id: (α, β, γ, δ, ε, ζ)})</code> — per-community overrides for the six CSA attention weights. Prevents homogeneity saturation in tightly-clustered communities (Phase 20 fix, Hole 6).</p>
+<p><strong>Community-Structured Attention (CSA)</strong>
+The core attention formula defining the weight $a(u,v,k)$ for traversing from node $u$ to node $v$ at hop $k$:
+$$a(u,v,k) = \sigma(\alpha \cdot \cos(\vec{e}<em rel="rel">u, \vec{e}_v) + \beta \cdot S_C(u,v) + \gamma \cdot w</em> + \varepsilon \cdot \phi(k) + \zeta \cdot PR(v))$$
+Six configurable weights with defaults: α=0.4, β=0.4, γ=0.1, δ=0.05, ε=0.05, ζ=0.1.} - \delta \cdot d_{norm</p>
+<p><strong>CORTEX</strong>
+The core reasoning engine subsystem. Encompasses CommunityEngine (DSCF), CSAEngine (attention), BeamTraversal (search), PathScorer, and AnswerExtractor. Operates on a prepared graph produced by THALAMUS.</p>
+<p><strong>CSAParameterLearner</strong>
+An online, gradient-free adapter that adjusts CSA attention weights from binary query feedback (correct/incorrect). Uses coordinate-wise moving averages with simplex projection. Maintains separate parameter sets per community when <code>per_community=True</code> (Phase 17 feature).</p>
+<p><strong>Consensus Scorer</strong>
+The Phase 32 component that aggregates and normalizes reasoning path scores from multiple remote agents. Uses weighted averaging and Procrustes-aligned embedding similarity to resolve score discrepancies between disparate knowledge bases.</p>
+<hr />
+<h2 id="d">D</h2>
+<p><strong>Dissonance (Cognitive)</strong>
+A state detected by the <code>CerebellarEngine</code> when different reasoning strategies or agents produce conflicting results for the same seed. Quantified as the variance between CSA scores and Consensus scores. High dissonance triggers an <strong>Arousal Surge</strong> to increase search breadth.</p>
+<p><strong>Discovery Engine</strong>
+The Phase 32 federated component that automates the dynamic discovery of remote CEREBRUM reasoning nodes. Uses the Holographic Index to identify nodes with relevant community overlaps or entity aliases.</p>
+<p><strong>Distributed Beam Traversal</strong>
+A Phase 32 extension of <code>BeamTraversal</code> that supports delegated reasoning. Instead of fetching neighbors one-by-one over the network, it requests full "Reasoning Branches" (sub-beams) from remote nodes when the traversal reaches an alias or a community boundary.</p>
+<p><strong>DSCF (Dual-Signal Community Fusion)</strong>
+The community detection algorithm at the heart of CEREBRUM. Combines local topology signal (LPA — Label Propagation Algorithm) and global modularity signal (Louvain-style modularity gain) simultaneously at each node update, rather than choosing between them. Also called TSC (Triple-Signal Consensus) when the Infomap/flow signal is included as a third signal. Produces communities with dual-signal structural character essential for high-quality CSA reasoning.</p>
+<p><strong>DiscoveryCalibrator</strong>
+The Phase 73 component that tracks per-community discovery rates via Exponential Moving Average (EMA). Computes an inverse-rate multiplier <code>weight = global_rate / (community_rate + ε)</code> for each community, boosting <code>_score_discovery_potential()</code> for understudied regions. Cold-start: unscanned communities receive <code>max_weight</code> (5.0). API: <code>record_scan(cid)</code>, <code>record_discovery(cid)</code>, <code>get_weight(cid)</code>, <code>stats()</code>. Also drives Adaptive Loop Tuning (Phase 92) when <code>LoopConfig.adaptive_tuning=True</code>.</p>
+<p><strong>Distinct-Branch Convergence (DBC)</strong>
+A Phase 154 reranking innovation. Measures structural independence of reasoning paths by tracking which hop-2 intermediate nodes reach a candidate answer. Applies a log-scale bonus for answers reached via multiple independent branches, effectively penalizing hub-flooding where many paths converge through the same hub node.</p>
+<p><strong>DeltaDiscretizer</strong>
+A streaming discretizer that emits a graph edge when the rate-of-change (|Δx/Δt|) of a continuous signal exceeds a threshold.</p>
+<p><strong>Depth Asymmetry</strong>
+A reasoning pathology detected by the MetaInsightEngine: more than 60% of successful query answers are found at hop 1, indicating the graph behaves more like a lookup table than a multi-hop reasoner. Suggests beam width or max_hops may need adjustment.</p>
+<hr />
+<h2 id="e">E</h2>
+<p><strong>EmbeddingEngine</strong>
+THALAMUS component that generates vector embeddings for graph entities. Two backends: <code>random</code> (default, reproducible random vectors) and <code>sentence-transformers</code> (semantic embeddings from text). KGE backends (TransE, RotatE) are available as optional drop-ins.</p>
+<p><strong>Engram</strong>
+Thread-safe in-memory store mapping relation-sequence tuples to success counts, used by <code>EngramTraversal</code> to bias beam pruning toward known-productive reasoning chains. Built from prior successful query paths. Persists to disk on server shutdown (<code>save_if_path()</code>) and is restored on startup (<code>load()</code>) with incremental <code>QueryLog</code> replay merged on top.</p>
+<p><strong>EngramTraversal</strong>
+A <code>BeamTraversal</code> subclass that applies a multiplicative affinity boost to candidate path scores during <code>_prune_candidates()</code>: <code>effective_score = score × (1 + engram_strength × affinity)</code>. The <code>affinity</code> is computed from the <code>Engram</code> prefix index by matching the path's emerging relation sequence against stored patterns.</p>
+<p><strong>Entity</strong>
+A node in the Knowledge Graph. Represented by a unique string identifier. Carries metadata: embedding vector, structural features (PageRank, betweenness, degree), community membership.</p>
+<p><strong>Epistemic Gating</strong>
+A Phase 122 feature that introduces a unified uncertainty model for path pruning. Traversal paths are evaluated for "epistemic surprise" relative to established engram patterns; high-surprise paths are gated unless they represent a significant discovery potential.</p>
+<p><strong>Explainable Reasoning Trace (ERT)</strong>
+A "glass-box" telemetry framework (Phase 62) that captures the per-hop decision state of the beam search. ERT logs all winners and top rejected competitors at every step, including their 10-parameter ReasoningLogit feature radars, providing a complete audit trail of the reasoning process.</p>
+<hr />
+<h2 id="f">F</h2>
+<p><strong>Fibonacci Sphere Layout</strong>
+The spatial placement algorithm used by <code>ACerebrumBrain</code> (Phase 92) and <code>setup_graph_layout.py</code> for distributing community centres in 3D space. Given community index <code>i</code> and total <code>n</code> communities: <code>θ = π(3−√5) × i</code> (golden angle), <code>y = 1 − (i/(n−1)) × 2</code>, <code>r = √(1−y²)</code>. Centre = <code>(r·cos(θ)·R, r·sin(θ)·R, y·R)</code>. Produces uniform, stable, non-overlapping placement on a sphere of radius <code>R</code>. Used for communities; nodes are placed in a smaller deterministic-seeded cluster around their community centre.</p>
+<p><strong>FederatedAdapter</strong>
+An adapter that aggregates multiple remote <code>GraphAdapter</code> instances into a single logical graph. Handles cross-graph identity alignment, community map merging, and distributed traversal coordination.</p>
+<p><strong>Federated Discovery</strong>
+The process by which a local CEREBRUM node discovers potentially-relevant remote graphs without revealing the full contents of either graph. Uses the Holographic Index (Bloom filters + centroids) for privacy-preserving overlap detection.</p>
+<hr />
+<h2 id="g">G</h2>
+<p><strong>GET /graph/edges</strong>
+A CEREBRUM REST endpoint (Phase 92) that returns up to <code>?limit=5000</code> edges from the loaded graph as a <code>GraphEdgesResponse</code> (<code>edges[]</code>, <code>total_returned</code>, <code>limit</code>). Intended for visualization pre-load; implemented via <code>GraphAdapter.get_all_edges(limit)</code> with an efficient <code>NetworkXAdapter</code> override using <code>G.edges(data=True)</code>. Used by both <code>setup_graph_layout.py</code> and <code>ACerebrumBrain</code> to populate <code>ASynapseActor</code> instances on startup.</p>
+<p><strong>Glass-Box Reasoning</strong>
+CEREBRUM's defining property: every answer is a verifiable path through graph edges with a complete mathematical trace. Contrasted with "Black-Box" probabilistic models (LLMs) where the reasoning process is opaque.</p>
+<p><strong>GlobalRebalancer</strong>
+The background component that monitors modularity drift ($\Delta Q_{cum}$) across streaming ingest events. When drift exceeds a threshold, it spawns a background DSCF re-run, then performs an atomic swap of <code>adapter.community_map</code>. Notifies <code>BridgeTwinEngine</code> via <code>on_rebalance()</code> hook (Phase 19).</p>
+<p><strong>GraphProfiler</strong>
+A Phase 172 component that performs automatic graph regime classification at build time. Analyzes topology signals (hub_score, rel_coverage, degree_cv) to classify the graph into one of three regimes: <code>hub_homogeneous</code>, <code>typed_heterogeneous</code>, or <code>mixed</code>. Automatically configures query strategies (H1SE, STRB, TAB) based on the detected regime.</p>
+<p><strong>GraphSnapshot</strong>
+A portable JSON graph topology checkpoint (Phase 81) in <code>core/persistence.py</code>. <code>GraphSnapshot.save(adapter, path)</code> serializes all edges to a JSON file (not pickle — survives adapter class changes). <code>restore(path, adapter, skip_existing=True)</code> re-adds only new edges, safe to run repeatedly for incremental restoration after pod restart. <code>diff(path_a, path_b)</code> shows edge deltas between two snapshots for audit. See also: ProvenanceLedger.</p>
+<p><strong>GraphSAGE Smoothing</strong>
+A one-pass mean neighbourhood aggregation step applied after base entity encoding. <code>smooth_with_graphsage(embeddings, G)</code> replaces each entity's embedding with a weighted average of itself and its neighbours' embeddings, making the CSA <code>alpha</code> (semantic similarity) term more effective by encoding local structural context. Enabled via <code>CerebrumGraph.build(use_graphsage=True)</code>.</p>
+<hr />
+<h2 id="h">H</h2>
+<p><strong>H@10 (Hits at 10)</strong>
+The primary evaluation metric for CEREBRUM: the fraction of test queries where the correct answer appears in the top-10 ranked paths. CEREBRUM zero-shot benchmarks: MetaQA 3-hop = 0.73+ (Phase 172).</p>
+<p><strong>H1SE (Hop-1 Intermediate Seed Expansion)</strong>
+A Phase 137 innovation to solve hub competition. Instead of a single global beam, each hop-1 entity from the seed(s) receives its own independent deep traversal. This prevents popular hubs from crowding out alternative reasoning branches early in the search.</p>
+<p><strong>Holographic Index</strong>
+A privacy-preserving federated discovery system using Bloom filters (probabilistic membership) and community centroids (structural fingerprints). Allows remote graphs to advertise their contents without revealing individual entities.</p>
+<p><strong>Hop</strong>
+One step in a multi-hop reasoning traversal: moving from node $u$ to node $v$ along edge $(u, v, r)$. Analogous to one Transformer layer depth.</p>
+<p><strong>HMAC-SHA256 Path Provenance</strong>
+A cryptographic signature applied to each reasoning path output. Computed over the canonical JSON serialization of the path using the server's <code>CEREBRUM_HMAC_KEY</code>. Allows downstream systems to verify path integrity.</p>
+<hr />
+<h2 id="i">I</h2>
+<p><strong>IngestionPipeline</strong>
+THALAMUS component that preprocesses raw entity-relation-entity triples before graph insertion. Responsibilities: entity normalization (Unicode, whitespace), alias deduplication via <code>entity_dedup_map</code>, relation normalization, confidence/provenance metadata assignment, and namespace prefixing.</p>
+<p><strong>InsightEngine</strong>
+The creative component of the Verification/Metacognition layer. Generates candidate <code>INSIGHT_LINK</code> edges by detecting latent proximity (high cosine similarity without a direct edge), community boundary bridging, and path pattern completion. All generated edges enter the InsightValidator pipeline.</p>
+<p><strong>InsightEvent</strong>
+A first-class graph node in the MetaInsightEngine's second-order graph. Represents a reasoning event (query, validation, bridge formation, rebalance) with attributes: event_type, timestamp, entities, confidence, communities_traversed, outcome.</p>
+<p><strong>InsightValidator</strong>
+Validates speculative edges using bilateral reverse traversal and community consensus scoring. Maintains an edge state machine: SPECULATIVE → CORROBORATED → VERIFIED → GROUNDED (or → REFUTED). Integrated with the REM Cycle for batch validation.</p>
+<hr />
+<h2 id="j">J</h2>
+<p><strong>JWT (JSON Web Token)</strong>
+The authentication mechanism for CEREBRUM's REST API. Bearer tokens use HMAC-SHA256 signing with the <code>CEREBRUM_JWT_SECRET</code> environment variable.</p>
+<hr />
+<h2 id="k">K</h2>
+<p><strong>KGE (Knowledge Graph Embedding)</strong>
+A family of methods that learn vector representations of entities and relations from graph triples. CEREBRUM supports TransE and RotatE as optional drop-in <code>EmbeddingEngine</code> backends. KGE embeddings upgrade the semantic similarity term in CSA without changing other reasoning components.</p>
+<p><strong>Knowledge Graph (KG)</strong>
+A directed graph where nodes represent entities and edges represent typed relationships (triples: subject, predicate, object). The primary data structure for all CEREBRUM reasoning.</p>
+<hr />
+<h2 id="l">L</h2>
+<p><strong>LoopedBeamTraversal</strong>
+A Phase 70 <code>BeamTraversal</code>-compatible wrapper implementing LoopLM-style iterative refinement (arXiv:2510.25741). Applies beam traversal T times (<code>max_loops</code>). Between loops: top-K answer entities expand seeds (semantic channel), PE→ChemicalModulator adjusts beam parameters (metabolic channel), and Engram records bias the next loop's pruning (mnemonic channel). <strong>Adaptive exit gate</strong>: stops early when <code>|ΔPE| &lt; γ</code> or answer-set Jaccard ≥ θ. All loops' paths merged — <code>best_by_tail</code> keeps the highest-score path per tail entity. <code>LoopTrace</code> is exposed via <code>ReasoningTrace.loop_trace</code> in the ERT.</p>
+<p><strong>Loop-Provenance Recovery</strong>
+The Phase 79 integration between <code>AutonomousDiscoveryLoop</code> and <code>ProvenanceLedger</code>. When <code>LoopConfig.auto_rollback_on_trip=True</code> and the circuit breaker fires, the loop automatically calls <code>ProvenanceLedger.rollback_cycle(cycle_number, adapter)</code> to undo all materializations from the failed cycle before pausing. <code>CycleRecord.edges_rolled_back</code> records how many edges were removed.</p>
+<p><strong>Lazy STDP Weight Decay</strong>
+An optimization in <code>STDPDiscretizer</code> that applies weight decay lazily (only when a pair is accessed) rather than on every clock tick, reducing time complexity from $O(N)$ to $O(1)$ per event. See also: STDP.</p>
+<p><strong>Leiden Algorithm (Native)</strong>
+CEREBRUM's GPL-free native reimplementation of the Leiden community detection algorithm in <code>core/leiden_native.py</code>. Replaces the <code>igraph</code>/<code>leidenalg</code> external dependencies removed in v2.52.0.</p>
+<p><strong>LPA (Label Propagation Algorithm)</strong>
+A local community detection method where each node adopts the most common community label among its neighbors. Represents the "local topology signal" in DSCF. Fast ($O(E)$) but can produce poor modularity. Combined with modularity gain in DSCF to achieve both speed and quality.</p>
+<p><strong>LTD (Long-Term Depression)</strong>
+The biological analog for Bridge Twin node pruning: when a bridge twin's crossing count falls below a threshold (simulating synaptic weakening from disuse), the bridge record is pruned.</p>
+<p><strong>LTP (Long-Term Potentiation)</strong>
+The biological analog for Bridge Twin node creation: when two entities in different communities are traversed together beyond a threshold (simulating synaptic strengthening from repeated co-activation), a bridge twin node is materialized.</p>
+<hr />
+<h2 id="m">M</h2>
+<p><strong>MACH (Multi-Agent Consensus Hierarchies)</strong>
+A three-tier reasoning verification framework (Phase 60):
+- <strong>L1 (Strategy)</strong>: Multi-strategy local voting (DSCF vs. BFS vs. KGE).
+- <strong>L2 (Federated)</strong>: Cross-node path verification in a cluster.
+- <strong>L3 (Gold Literature)</strong>: ResearchAgent validation against external scientific literature.</p>
+<p><strong>MetaInsightEngine</strong>
+The second-order reasoning component. Constructs a graph over <code>InsightEvent</code> nodes connected by typed edges (TRIGGERED_BY, CONTRADICTS, REINFORCES, CO_OCCURRED). Runs standard CSA traversal on this event graph to detect reasoning pathologies (community lock-in, relation starvation, depth asymmetry).</p>
+<p><strong>Modularity (Q)</strong>
+A graph quality metric measuring the fraction of edges within communities minus the expected fraction for a random graph with the same degree sequence. Higher Q indicates more modular (community-structured) graphs. CEREBRUM's GlobalRebalancer monitors modularity drift $\Delta Q_{cum}$.</p>
+<p><strong>Multi-Hop Reasoning</strong>
+Answering questions that require traversing multiple edges in sequence: e.g., "What disease is caused by the organism transmitted by the vector that bites humans in tropical regions?" requires 3+ hops through a biomedical KG.</p>
+<hr />
+<h2 id="n">N</h2>
+<p><strong>Namespace Isolation</strong>
+<code>IngestionPipeline(namespace="text")</code> and <code>SignalEncoder(namespace="signal")</code> — prefix-based entity ID separation preventing semantic collisions between different data modalities (Phase 19 fix, Hole 3).</p>
+<p><strong>Namespace (Entity ID)</strong>
+A prefix string applied to entity IDs to isolate them from other modality spaces. Format: <code>"namespace:entity_id"</code>. Example: <code>"signal:Temp_Sensor_1"</code> vs <code>"text:Temp_Sensor_1"</code>.</p>
+<p><strong>Neural Telemetry</strong>
+The real-time event-streaming protocol (Phase 63) that broadcasts reasoning pulses (<code>SYNAPTIC_PULSE</code>), node creation (<code>NEUROGENESIS</code>), and pruning (<code>SYNAPTIC_PRUNE</code>) via WebSockets. Enables 3D observability in external game engine clients.</p>
+<p><strong>Novelty</strong>
+The functional name for the "Acetylcholine" scalar in the <code>ChemicalModulator</code> (Phase 68). Mimics the biological role of sensory focus vs. prior knowledge. High Novelty boosts the semantic similarity term ($\alpha$) and suppresses the community structure term ($\beta$), allowing the system to focus on immediate data novelty over structural expectations.</p>
+<hr />
+<h2 id="p">P</h2>
+<p><strong>Prediction Error (PE)</strong>
+The Jaccard divergence between the <em>prior path</em> (predicted relation sequence from the top Engram pattern) and the <em>actual path</em> (relation sequence produced by traversal). Computed by <code>PredictiveCodingEngine.update()</code> after each traversal. PE drives <code>ChemicalModulator</code> signals: high PE → Arousal and Novelty surge; low PE → Reinforcement. Exposed in <code>ReasoningTrace.prediction_error</code>. See also: soliton_index, PredictiveCodingEngine.</p>
+<p><strong>PredictiveCodingEngine</strong>
+The Phase 69 active-inference component. Before each traversal, generates a <em>prior path</em> from the top Engram pattern. After traversal, computes <strong>Prediction Error (PE)</strong> (Jaccard divergence between prior and actual relation sequences) and propagates it to <code>ChemicalModulator</code> (Arousal, Novelty, Reinforcement). Tracks a rolling window of recent PEs to compute <code>soliton_index</code>. Activated by <code>CerebrumGraph.attach_engram(engram)</code>. Fields exposed in <code>ReasoningTrace</code>: <code>prior</code>, <code>prediction_error</code>, <code>soliton_index</code>.</p>
+<p><strong>ProvenanceLedger</strong>
+The Phase 76 audit chain for <code>ResearchAgent.approve()</code>. Records every materialized edge in <code>EdgeRecord</code> objects grouped into <code>BatchRecord</code> objects (one batch per <code>approve()</code> call), keyed by <code>batch_id</code>. <code>rollback_batch(batch_id, adapter)</code> removes exactly one batch's edges. <code>rollback_cycle(cycle_number, adapter)</code> removes all batches from a given loop cycle. Thread-safe. LRU eviction at <code>max_batches</code> cap. Requires <code>adapter.remove_edge()</code> (Phase 80 protocol). See also: GraphSnapshot, Loop-Provenance Recovery.</p>
+<p><strong>PageRank (PR)</strong>
+A graph centrality measure (part of StructuralEncoder) used as the sixth term in the CSA formula ($\zeta \cdot PR(v)$). High PageRank nodes receive a traversal bonus, reflecting their structural importance.</p>
+<p><strong>Penultimate Relation Boost (PRB)</strong>
+A Phase 156 optimization that uses a training-data r3→r2 frequency map to boost specific relation types at the penultimate hop of 3-hop queries. Enables boosting a different relation type than the terminal one, crucial for heterogeneous path templates.</p>
+<p><strong>Persistence</strong>
+The functional name for the "Vasopressin" scalar in the <code>ChemicalModulator</code> (Phase 68). Linked to long-term memory formation. High Persistence levels increase the multiplier for Engram pattern-steering and lower the threshold for promoting patterns to "Canonical Engrams" via the <code>EngramConsolidator</code>.</p>
+<p><strong>PathScorer</strong>
+CORTEX component that ranks <code>ReasoningPath</code> objects using the composite score:
+$$\text{score}(P) = \left(\prod_{k=1}^L a(u_k, v_k, k)\right) \cdot \text{coherence}<em final="final">{com}(P) \cdot \cos(\vec{h}</em>)$$}, \vec{q</p>
+<p><strong>Partial Response</strong>
+A <code>QueryResponse</code> with <code>partial=True</code> and a non-null <code>error</code> field. Returned when the traversal raises an unrecoverable exception mid-execution — the response contains whatever paths were collected in <code>_partial_paths</code> before the failure. HTTP status is 200, not 500, so clients can still consume partial results gracefully.</p>
+<p><strong>Path-Preserving Hold-out</strong>
+<code>InferenceValidator(path_preserving=True)</code> — validation methodology that skips holding out edge $(u,v)$ if no alternative path between $u$ and $v$ exists after removal. Prevents false-zero recall on sparse graphs (Phase 20 fix, Hole 8).</p>
+<p><strong>PatternDiscretizer</strong>
+A streaming discretizer that emits a graph edge when a symbolic event sequence matches a configured pattern with probability ≥ $p$.</p>
+<p><strong>ProcessPoolExecutor Fallback</strong>
+A fault tolerance pattern in <code>best_of_n_dscf</code>: if <code>ProcessPoolExecutor</code> raises any exception (e.g., <code>BrokenExecutor</code> from Windows paging file exhaustion), the function logs a WARNING and falls back to sequential <code>dscf_communities</code> calls. Ensures community detection completes even when multiprocessing is unavailable.</p>
+<p><strong>Procrustes SVD</strong>
+The mathematical core of <code>SignalEncoder</code>'s cross-modal alignment. Computes a rotation matrix $R = V U^T$ from the SVD of the cross-covariance matrix $\Sigma = Y^T X$, where $X$ are signal embeddings and $Y$ are entity embeddings. Minimizes $||Y - XR||_F$.</p>
+<hr />
+<h2 id="q">Q</h2>
+<p><strong>Quantized Traversal</strong>
+An efficiency optimization (Phase 61) that uses <code>uint8</code> fixed-point math for path scoring instead of 64-bit floats. Maps the probability range [0.0, 1.0] to the integer range [0, 255], reducing memory footprint and increasing traversal speed during large-scale beam search.</p>
+<p><strong>Query Snapshot Isolation</strong>
+<code>CSAEngine.set_query_snapshot(community_map)</code> — captures the community map at query start and uses it exclusively throughout the query. Prevents GlobalRebalancer mid-query atomic swaps from producing inconsistent CSA weights across hops (Phase 20 fix, Hole 5).</p>
+<p><strong>QueryLog</strong>
+An append-only NDJSON file (<code>data/cerebrum/query_log.ndjson</code> by default) that records seeds, answers, and relation sequences after each successful reasoning call. <code>replay_into_cache(engram)</code> reads the log at startup to re-warm <code>Engram</code> so learned relation patterns survive process restarts.</p>
+<hr />
+<h2 id="r">R</h2>
+<p><strong>Reinforcement</strong>
+The functional name for the "Dopamine" scalar in the <code>ChemicalModulator</code> (Phase 68). Tracks "Reward Prediction Error" (RPE) derived from user feedback (<code>POST /feedback</code>). Reinforcement surges amplify the semantic ($\alpha$) and edge-type ($\gamma$) weights, reinforcing successful relation sequences in the reasoner's attention formula.</p>
+<p><strong>REM Cycle (Rapid Edge Maintenance)</strong>
+Background metacognitive maintenance loop (Phase 172). Runs on three schedules: Hot Path (10 min, TTL edge pruning), Cold Path (1 hour, insight validation + decay), REM Path (daily/triggered, full DSCF re-optimization + Shortcut Synthesis). Merges Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 172) into a unified maintenance cycle.</p>
+<p><strong>Hebbian Replay (Phase 96)</strong>
+A component of the REM Cycle. During idle cycles, the system replays high-quality reasoning traces from <code>WorkingMemory</code>. It identifies successful reasoning paths and applies <strong>Hebbian weight boosts</strong> to the edges on those paths, strengthening the "synapses" of successful logic.</p>
+<p><strong>Shortcut Synthesis (Phase 172)</strong>
+A component of the REM Cycle. Analyzes the <code>QueryLog</code> to identify patterns of frequent multi-hop reasoning. If the system frequently follows a path A → B → C, it materializes a direct "reflexive" shortcut A → C (tagged as <code>REM_SHORTCUT</code>), reducing hop count and reasoning latency for frequently-asked questions.</p>
+<p><strong>ConsolidationEngine</strong>
+The system component (Phase 172) that manages the unified REM Cycle, coordinating both Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 172). Triggered by the <code>AutonomousDiscoveryLoop</code> or manually via <code>/rem/run</code>.
+ Inspired by biological sleep-cycle memory consolidation.</p>
+<p><strong>REM Engine</strong>
+The system component implementing the REM Cycle. Interfaces with InsightValidator, GlobalRebalancer, and the graph persistence layer.</p>
+<p><strong>Relation Starvation</strong>
+A reasoning pathology detected by the MetaInsightEngine: a relation type appears on fewer than 5% of successful paths despite representing more than 20% of graph edges. Indicates the CSA γ (relation weight) term may be underweighting this relation type.</p>
+<p><strong>ResourceGovernor</strong>
+Hardware-aware query throttling: monitors CPU/memory usage and enforces per-query resource budgets. Implements the "Arousal Interrupt" that pauses REM Cycle maintenance tasks when user queries arrive.</p>
+<p><strong>RotatE</strong>
+A KGE method modeling relations as rotations in complex embedding space. Supports symmetric, antisymmetric, inverse, and compositional relation patterns. Available as optional <code>EmbeddingEngine</code> backend in CEREBRUM.</p>
+<hr />
+<h2 id="s">S</h2>
+<p><strong>soliton_index</strong>
+A coherence metric computed by <code>PredictiveCodingEngine</code>: <code>soliton_index = 1 - mean(recent PEs)</code>. A value near 1.0 indicates that the Engram prior consistently predicts actual traversal paths — a self-reinforcing, self-localising pattern analogous to a soliton wave (UCFT 2025). Exposed in <code>ReasoningTrace.soliton_index</code>. Low soliton_index (high mean PE) suggests the graph is highly novel or the Engram has not yet converged.</p>
+<p><strong>SABS (Asymmetric Beam Search)</strong>
+A Phase 172 optimization where intermediate hops use an independently wider beam width than entry and exit hops. For 3-hop queries, hop-2 is widened (e.g., 20) while hop-1 and hop-3 remain tight (e.g., 10), efficiently expanding coverage where it's needed most.</p>
+<p><strong>STRB (Semantic Terminal Relation Boost)</strong>
+A Phase 172 zero-config innovation. Uses sentence-transformer embeddings to match query text against relation labels. Automatically identifies and boosts the correct terminal relation for a query (e.g., "treats" for "What treats X?") without manual configuration.</p>
+<p><strong>SignalEncoder</strong>
+THALAMUS component for cross-modal alignment. <code>StatisticalSignalEncoder</code> (time-series statistics → embeddings) and <code>SpectralSignalEncoder</code> (waveform FFT features → embeddings). Projects sensor signals into entity embedding space via Procrustes SVD. Uses <code>namespace="signal"</code> by default.</p>
+<p><strong>Skepticism Factor (ρ)</strong>
+The exponential decay multiplier applied to <code>INSIGHT_LINK</code> edges in the REM Cycle's confidence decay: $c_{t+1} = c_t \cdot (\lambda \cdot \rho)^{\Delta t}$ with $\rho = 0.8 &lt; 1$. Prevents speculative insights from becoming entrenched without independent validation.</p>
+<p><strong>Soft Community Membership</strong>
+<code>CommunityEngine(soft_membership=True)</code> — each node carries a probability distribution over communities rather than a single hard assignment. Community consensus term uses the dot product of membership distributions: $S_C^{soft}(u,v) = \sum_k p_k^{(u)} \cdot p_k^{(v)}$ (Phase 17 feature).</p>
+<p><strong>SpeedTalk Encoding</strong>
+A Heinlein-inspired phonemic compression algorithm (Phase 58) for the <code>Engram</code> cache. Maps KG relation types to single characters, achieving 8-20x compression while preserving prefix structure for O(P) pattern queries.</p>
+<p><strong>STDP (Spike-Timing-Dependent Plasticity)</strong>
+The neuroscientific mechanism inspiring <code>STDPDiscretizer</code>. In biology, a synapse strengthens if the pre-synaptic neuron fires before the post-synaptic neuron (LTP), and weakens otherwise. CEREBRUM applies this principle to event streams: if entity A's events consistently precede entity B's events, a directional <code>CAUSES</code> edge is materialized.</p>
+<p><strong>STDPDiscretizer</strong>
+THALAMUS component that materializes directional <code>CAUSES</code> edges from event timing patterns. Maintains per-pair STDP weights and event counts; emits edges when both thresholds are exceeded. Extended in Phase 19 with <code>min_causal_span</code> and <code>use_chi_squared</code> adversarial guards.</p>
+<p><strong>StreamAdapter</strong>
+A <code>GraphAdapter</code> wrapper that accepts continuous event streams via a thread-safe queue. Supports five discretizer types, a sliding-window buffer, and integration with GlobalRebalancer.</p>
+<p><strong>Structural Encoder</strong>
+THALAMUS component computing per-node structural features: PageRank, betweenness centrality, and degree. These features are used as the positional encoding analog in the Transformer/KG analogy.</p>
+<p><strong>Structural Hole</strong>
+A cross-feature interaction bug where two independently-correct subsystems produce incorrect outcomes when combined. Eight structural holes were identified and patched in Phases 19–20. See SPEC_016 for full taxonomy.</p>
+<p><strong>SYNAPTOGENESIS</strong>
+A neural telemetry event type (Phase 92) emitted by the CEREBRUM REST server when a new edge is materialized into the graph. Broadcast by <code>/research/approve/{id}</code> for each proposal approved by the ResearchAgent. Payload: <code>source_node</code>, <code>target_node</code>, <code>relation</code>, <code>weight</code>. Routed by <code>UCerebrumLink</code> through the existing <code>OnSynapticPulse</code> delegate (distinguished by <code>HopCount == -1</code>), triggering <code>ASynapseActor</code> creation in UE5. Contrasts with <code>SYNAPTIC_PRUNE</code> (edge removal) and <code>SYNAPTIC_PULSE</code> (traversal hop).</p>
+<p><strong>setup_graph_layout.py</strong>
+A stdlib-only Python CLI script (<code>ue5_project/setup_graph_layout.py</code>, Phase 92) that queries a live CEREBRUM REST API and writes a <code>graph_layout.json</code> v1.1 file containing pre-computed 3D node positions, community colours, and edge list. Queries <code>/health</code>, <code>/communities</code>, and <code>/graph/edges</code>. Positions use the Fibonacci sphere algorithm; colours use the golden ratio HSV wheel. Run once before packaging or deploying an UE5 build. Accepts <code>--api</code>, <code>--token</code>, <code>--out</code>, <code>--edge-limit</code> flags.</p>
+<p><strong>Synaptic Pruning</strong>
+The periodic removal of low-utility synthetic edges (Phase 61) based on confidence, age, and usage patterns. Mimics biological synaptic homeostasis to maintain graph sparsity and reasoning performance.</p>
+<hr />
+<h2 id="t">T</h2>
+<p><strong>TelemetryBridge</strong>
+The Python WebSocket server (<code>api/telemetry_bridge.py</code>, Phase 63 / completed Phase 92) that multiplexes CEREBRUM neural events to all connected visualization clients. Started as an asyncio background task via <code>create_app(ws_port=N)</code>. Exposes <code>broadcast(event: NeuralEvent)</code> which serializes via <code>model_dump_json()</code> and fan-outs to all live WebSocket connections. Accepts multiple simultaneous clients (e.g., UE5 editor instance + a monitoring dashboard). <code>start_server()</code> is an infinite async coroutine; <code>ensure_future()</code> prevents it from blocking the FastAPI event loop.</p>
+<p><strong>THALAMUS</strong>
+The ingestion layer subsystem. Encompasses: CSV/NetworkX/Neo4j/RDF adapters, EmbeddingEngine, StructuralEncoder, STDPDiscretizer, IngestionPipeline, SignalEncoder, and StreamAdapter.</p>
+<p><strong>Thompson Sampling</strong>
+The probabilistic path selection strategy in Bayesian Beam Search: for each candidate path, draw a sample from its Beta distribution; select the candidate with the highest sample. Balances exploration (uncertain paths) and exploitation (high-confidence paths).</p>
+<p><strong>Temporal Decay</strong>
+The time-dependent reduction in edge weight for edges with <code>valid_until</code> timestamps: $w_{temp}(t) = w_0 \cdot \exp(-\lambda \cdot \max(0, t - t_{until}))$. Decay rate $\lambda$ is configurable per relation type (Phase 17 feature).</p>
+<p><strong>TAB (Terminal-Anchor Boost)</strong>
+Also known as "Terminal-Anchor Hints" (Phase 172). A reasoning optimization for 3+ hop queries in heterogeneous graphs. It applies a score bonus to the penultimate-hop entities that are known sources of the terminal relation (the "anchor set"). This biases the search toward paths that can directly reach the target entity type in the final hop, significantly improving 3-hop recall.</p>
+<p><strong>TAB Anchor Set</strong>
+The set of entities in a KG that serve as sources for a specific relation type. For example, in a "Compound-treats-Disease" relation, the anchor set is all Compound entities that have a "treats" edge. TAB uses these sets to guide penultimate-hop expansion.</p>
+<p><strong>TemporalCalibrator</strong>
+A grid-search utility that calibrates the CSA <code>eta</code> (temporal decay) and <code>iota</code> (node recency) parameters to maximise Recall@K against a labelled validation set. <code>calibrate()</code> iterates over a grid of (eta, iota) pairs, evaluating each via <code>measure_recall()</code>; <code>apply()</code> writes the best-found parameters back to <code>CSAEngine</code>. A <code>try/finally</code> guarantee restores the original parameters if calibration raises.</p>
+<p><strong>ThresholdDiscretizer</strong>
+A streaming discretizer that emits a graph edge when a continuous float signal crosses a configured threshold value.</p>
+<p><strong>TriangulationEngine</strong>
+The Phase 72 four-perspective candidate validation component. Validates <code>ResearchCandidate</code> objects across four independent perspectives: <strong>P1 <code>reverse_confidence</code></strong> — <code>HypothesisEngine</code> run in the reverse direction (B→A); <strong>P2 <code>strategy_agreement</code></strong> — agreement fraction across 3 different reasoning configurations; <strong>P3 <code>mean_path_independence</code></strong> — Jaccard independence score across primary proposal paths; <strong>P4 <code>semantic_type_score</code></strong> — relation-type and entity-class consistency (novel relations = 0.5 neutral). Results extend the AutoApprover feature vector from 12 to 16 features. <code>is_Synaptic Bridge_candidate</code> diagnostic flag set for cross-community bridge candidates. Stored in <code>finding.metadata["triangulation"]</code>.</p>
+<p><strong>TransE</strong>
+A KGE method modeling relations as translation vectors: a triple $(h, r, t)$ is valid iff $\vec{h} + \vec{r} \approx \vec{t}$. Available as optional <code>EmbeddingEngine</code> backend in CEREBRUM.</p>
+<p><strong>Traversal Path</strong>
+A <code>dataclass</code> representing an in-progress beam search path. Carries: <code>nodes</code> (list of entities), <code>edges</code> (list of edge objects), <code>score</code> (cumulative CSA product), <code>beta_alpha</code>, <code>beta_beta</code> (Beta distribution parameters for probabilistic mode).</p>
+<p><strong>TSC (Triple-Signal Consensus)</strong>
+Extension of DSCF that adds a third signal (Infomap/flow-based community assignment) to the LPA and modularity signals. All three signals are fused simultaneously at each node update. The "aircraft navigation mid-value voting" analog: consensus of three independent signals.</p>
+<hr />
+<h2 id="u">U</h2>
+<p><strong>UCerebrumLink</strong>
+The UE5 <code>UActorComponent</code> WebSocket bridge (Phase 92). Connects to the CEREBRUM <code>TelemetryBridge</code> at a configurable <code>ws://host:port</code> URL and fires typed Blueprint dynamic delegates: <code>OnSynapticPulse</code>, <code>OnNeurogenesis</code>, <code>OnSynapticPrune</code>, <code>OnCorticalGlow</code>, <code>OnDissonance</code>, and the catch-all <code>OnNeuralEvent</code>. Routes JSON envelope <code>{event_type, payload}</code> to the correct delegate.</p>
+<p><strong>Uncertainty Propagation</strong>
+<code>BeamTraversal(propagate_uncertainty=True)</code> — computes per-path confidence as a variance-penalized product of edge confidences: $\text{conf}(P) = \prod_i c_i^\alpha \cdot (1 - \beta \cdot \text{Var}({c_i}))$ (Phase 17 feature).</p>
+<hr />
+<h2 id="w">W</h2>
+<p><strong>Warm-Start Strength</strong>
+<code>BeamTraversal(warm_start_strength=N)</code> — scales the first-hop Beta distribution prior using the CSA edge weight: $(\alpha, \beta)_{hop1} = (1 + w(1+s), 1 + (1-w)(1+s))$. Reduces cold-start variance 85% on sparse graphs (Phase 19 fix, Hole 4).</p>
+<p><strong>WindowedFrequencyDiscretizer</strong>
+A streaming discretizer that emits a graph edge when two entities co-occur more than a minimum number of times within a sliding time window.</p>
+<p><strong>Synaptic Bridge Attention</strong>
+The cross-graph attention mechanism in <code>FederatedAdapter</code> that connects structurally-analogous communities across different remote graphs. Named for the "shortcut" it provides through otherwise-disconnected graph spaces.</p>
+<hr />
+<h2 id="z">Z</h2>
+<p><strong>Zombie Bridge</strong>
+A stale <code>BridgeRecord</code> whose <code>source_community</code> or <code>destination_community</code> IDs reference a community partition that no longer exists after a GlobalRebalancer atomic swap. Pruned by <code>BridgeTwinEngine.on_rebalance()</code> (Phase 19 fix, Hole 1).</p>
+<hr />
+<p><strong>Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.</strong></p>
+<h3 id="neural-coupling-formerly-gossipsync">Neural Coupling (formerly GossipSync)</h3>
+<p>The mechanism for synchronizing community-map updates across a distributed CEREBRUM cluster, ensuring all workers maintain a consistent reasoning state.</p>
+<h3 id="ue-llm-toolkit-adapter">UE LLM Toolkit Adapter</h3>
+<p>An interface bridge that allows the CEREBRUM Brain Server to animate and communicate with Unreal Engine 5 (UE5) simulations in real-time, mapping neural telemetry events to 3D scene actions.</p>
+<hr />
+<p><strong>Reviewed on</strong>: May 9, 2026 for version v2.52.0</p>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

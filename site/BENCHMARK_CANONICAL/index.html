@@ -1,0 +1,3598 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Crystal-box knowledge graph reasoning — traceable, deterministic, zero hallucination">
+      
+      
+      
+        <link rel="canonical" href="https://brutalbyte.github.io/CEREBRUM/BENCHMARK_CANONICAL/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>CEREBRUM Canonical Benchmark Reference - CEREBRUM</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config",""),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="deep-purple" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cerebrum-canonical-benchmark-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="CEREBRUM" class="md-header__button md-logo" aria-label="CEREBRUM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CEREBRUM
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              CEREBRUM Canonical Benchmark Reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/BrutalByte/CEREBRUM" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BrutalByte/CEREBRUM
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/quickstart/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../concepts/crystal-box/" class="md-tabs__link">
+          
+  
+  
+  Concepts
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../connectors/overview/" class="md-tabs__link">
+          
+  
+  
+  Data Connectors
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../sdk/python/" class="md-tabs__link">
+          
+  
+  
+  SDK Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../integrations/langchain/" class="md-tabs__link">
+          
+  
+  
+  Integrations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../api/overview/" class="md-tabs__link">
+          
+  
+  
+  REST API
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../deployment/docker/" class="md-tabs__link">
+          
+  
+  
+  Deployment
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/architecture/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="CEREBRUM" class="md-nav__button md-logo" aria-label="CEREBRUM" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    CEREBRUM
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/BrutalByte/CEREBRUM" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BrutalByte/CEREBRUM
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/first-kb/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First KB
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Concepts
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/crystal-box/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Crystal-Box Reasoning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/crystal-box-whitepaper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Crystal-Box Whitepaper
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How CEREBRUM Works
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/benchmarks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmarks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Connectors
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Data Connectors
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../connectors/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../connectors/csv/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CSV
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../connectors/sql/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SQL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../connectors/parquet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parquet & Arrow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../connectors/graph-databases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Neo4j & Neptune
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SDK Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    SDK Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sdk/python/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Python SDK
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sdk/typescript/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TypeScript SDK
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/langchain/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LangChain
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/llamaindex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LlamaIndex
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integrations/jupyter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jupyter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    REST API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/endpoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/compliance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compliance Mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/multi-tenant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Tenant API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/hardware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/kubernetes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Kubernetes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#version-v2710-phase-213-updated-jun-2-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version: v2.71.0 (Phase 213) — Updated Jun 2, 2026
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metaqa-canonical-subset-run-use-in-all-publications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MetaQA — Canonical Subset Run (Use in All Publications)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metaqa-full-stack-run-readme-only-do-not-use-in-paper-comparison-tables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MetaQA — Full Stack Run (README Only; Do NOT Use in Paper Comparison Tables)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metaqa-phase-212-zero-config-full-validation-all-39093-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MetaQA — Phase 212 Zero-Config Full Validation (All 39,093 Questions)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hetionet-phase-207-random-embeddings-hop_expand-fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hetionet — Phase 207 (Random Embeddings, hop_expand Fixed)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hetionet — Phase 207 (Random Embeddings, hop_expand Fixed)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-207-tuner-results-hop_expand-bug-fixed-properly-calibrated-params" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 207 — Tuner Results (hop_expand bug fixed, properly calibrated params)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-207-full-validation-results-200qtemplate-phase-207-params" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 207 — Full Validation Results (200q/template, Phase 207 params)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hetionet-phase-208-sentence-transformers-tuner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hetionet — Phase 208 (Sentence-Transformers Tuner)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hetionet — Phase 208 (Sentence-Transformers Tuner)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-208-tuner-results-all-hop-pooled-superseded-by-phase-209" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 208 — Tuner Results (all-hop pooled — superseded by Phase 209)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-208-full-validation-results-200qtemplate-sentence-transformers-graphsage-strb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 208 — Full Validation Results (200q/template, sentence-transformers + GraphSAGE + STRB)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hetionet-phase-209-multi-hop-sentence-transformers-calibration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hetionet — Phase 209 (Multi-Hop Sentence-Transformers Calibration)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hetionet — Phase 209 (Multi-Hop Sentence-Transformers Calibration)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-209-tuner-results-sentence-transformers-multi-hop-200-trial-sobolcma-es-20q" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 209 — Tuner Results (sentence-transformers, multi-hop, 200-trial Sobol+CMA-ES, 20q)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-209-full-validation-results-200qtemplate-sentence-transformers-multi-hop-params" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 209 — Full Validation Results (200q/template, sentence-transformers, multi-hop params)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hetionet-phase-210-branch_bonus-grid-3-hop-root-cause-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hetionet — Phase 210 (branch_bonus Grid, 3-hop Root Cause Analysis)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hetionet — Phase 210 (branch_bonus Grid, 3-hop Root Cause Analysis)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-210-branch_bonus-grid-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 210 — branch_bonus Grid Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hetionet-phase-211-graphsage-ablation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hetionet — Phase 211 (GraphSAGE Ablation)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hetionet — Phase 211 (GraphSAGE Ablation)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#hetionet-constants-2d-table-regime-embedding_method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hetionet Constants: 2D Table (regime × embedding_method)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-165-legacy-single-template-result-disease_gene_pathway-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase 165 — Legacy Single-Template Result (disease_gene_pathway only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#webqsp-v2520" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebQSP — v2.52.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ikgwq-incomplete-knowledge-graph-world-qa-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IKGWQ — Incomplete Knowledge Graph World QA Protocol
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparison-table-for-papers-verified-sota-as-of-may-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparison Table for Papers (Verified SOTA as of May 2026)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bibtex-for-sota-baselines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BibTeX for SOTA Baselines
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#notation-for-eta-resolved-conflict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notation for η (Eta) — Resolved Conflict
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="cerebrum-canonical-benchmark-reference">CEREBRUM Canonical Benchmark Reference</h1>
+<h2 id="version-v2710-phase-213-updated-jun-2-2026">Version: v2.71.0 (Phase 213) — Updated Jun 2, 2026</h2>
+<p><strong>This file is the single authoritative source for all benchmark numbers used in publications.</strong>
+All papers, README, and documentation must reference ONLY the numbers defined here.
+Do not report numbers from interim runs or different configurations without explicit labeling.</p>
+<hr />
+<h2 id="metaqa-canonical-subset-run-use-in-all-publications">MetaQA — Canonical Subset Run (Use in All Publications)</h2>
+<p>The "canonical" configuration runs on the standard MetaQA test split (~12,500 questions per hop).
+These numbers are directly comparable to supervised SOTA baselines in the literature.</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>1-hop</th>
+<th>2-hop</th>
+<th>3-hop</th>
+<th>Phase</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hits@1</td>
+<td>46.1%</td>
+<td>30.0%</td>
+<td>12.5%</td>
+<td>53</td>
+<td>Standard MetaQA test split</td>
+</tr>
+<tr>
+<td>Hits@10</td>
+<td>96.6%</td>
+<td>86.3%</td>
+<td>50.3%</td>
+<td>53</td>
+<td>System finds answer in top-10</td>
+</tr>
+<tr>
+<td>MRR</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>53</td>
+<td>Use H@1 and H@10 as primary metrics</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Configuration:</strong> Standard MetaQA KG (no edge removal), sentence-transformers embeddings,
+TSC community detection, CSA attention, Bayesian beam search, beam_width=20.
+No bridge synthesis, no GraphSAGE smoothing (Phase 53 baseline).</p>
+<hr />
+<h2 id="metaqa-full-stack-run-readme-only-do-not-use-in-paper-comparison-tables">MetaQA — Full Stack Run (README Only; Do NOT Use in Paper Comparison Tables)</h2>
+<p>The "full" configuration uses all current features: sentence-transformers, H1SE, TRB/PRB/FHRB,
+r2 path-consistency boost, RelationPathPrior, GraphProfiler.
+<strong>NOT comparable to prior work</strong> — cite this only when labeling CEREBRUM's best-case performance,
+never in a table alongside supervised methods.</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>1-hop</th>
+<th>2-hop</th>
+<th>3-hop</th>
+<th>Phase</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hits@1</td>
+<td>46.1%</td>
+<td>30.0%</td>
+<td><strong>49.68%</strong></td>
+<td>167 / <strong>182</strong></td>
+<td>3-hop: full 14,274-question run</td>
+</tr>
+<tr>
+<td>Hits@10</td>
+<td>96.6%</td>
+<td>86.3%</td>
+<td><strong>79.46%</strong></td>
+<td>167 / <strong>182</strong></td>
+<td>3-hop: full run</td>
+</tr>
+<tr>
+<td>MRR</td>
+<td>—</td>
+<td>—</td>
+<td><strong>0.6047</strong></td>
+<td><strong>182</strong></td>
+<td>3-hop</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Phase 182 3-hop configuration:</strong> sentence-transformers, beam-width=20, RelationPathPrior,
+r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs ~4h serial).
+14,268/14,274 questions answered (6 skipped). Run date: 2026-05-14.</p>
+<p><strong>Phase progression (3-hop H@1, full 14,274 questions):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Key addition</th>
+<th>H@1</th>
+<th>H@10</th>
+<th>MRR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>156</td>
+<td>Baseline</td>
+<td>45.95%</td>
+<td>71.23%</td>
+<td>0.5519</td>
+</tr>
+<tr>
+<td>158</td>
+<td>r2-boost=0.40</td>
+<td>46.36%</td>
+<td>71.35%</td>
+<td>0.5557</td>
+</tr>
+<tr>
+<td>167</td>
+<td>Full v2.52.0 stack</td>
+<td>47.30%</td>
+<td>73.20%</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>182</strong></td>
+<td><strong>+FHRB=3.0 + parallel eval</strong></td>
+<td><strong>49.68%</strong></td>
+<td><strong>79.46%</strong></td>
+<td><strong>0.6047</strong></td>
+</tr>
+<tr>
+<td><strong>185/186</strong></td>
+<td><strong>+genre penalty + geom-mean stitch</strong></td>
+<td><strong>56.12%</strong></td>
+<td><strong>87.62%</strong></td>
+<td><strong>0.6704</strong></td>
+</tr>
+<tr>
+<td><strong>198</strong></td>
+<td><strong>+11-param Optuna (trb/fhrb/per-relation)</strong></td>
+<td><strong>57.02%</strong></td>
+<td><strong>89.2%</strong></td>
+<td><strong>0.680</strong></td>
+</tr>
+<tr>
+<td><strong>201</strong></td>
+<td><strong>+SchemaAwareRelationDetector (SRD)</strong></td>
+<td><strong>58.90%</strong></td>
+<td><strong>88.32%</strong></td>
+<td><strong>0.6930</strong></td>
+</tr>
+<tr>
+<td><strong>202</strong></td>
+<td><strong>+SDRB gamma (RelationBoostDeriver, 8-param tuner)</strong></td>
+<td><strong>~62.55%</strong></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>203/204</strong></td>
+<td><strong>+SDRB beta power-law (full 14,274-question validation)</strong></td>
+<td><strong>60.36%</strong></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>212</strong></td>
+<td><strong>zero-config (ParameterInitializer, random, all hops)</strong></td>
+<td><strong>56.8%</strong></td>
+<td><strong>90.7%</strong></td>
+<td><strong>0.692</strong></td>
+</tr>
+<tr>
+<td><strong>213</strong></td>
+<td><strong>hub_homogeneous × sentence constants (ParameterInitializer)</strong></td>
+<td><strong>66.8%</strong>*</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="metaqa-phase-212-zero-config-full-validation-all-39093-questions">MetaQA — Phase 212 Zero-Config Full Validation (All 39,093 Questions)</h2>
+<p><strong>Zero-config = ParameterInitializer auto-derives all params from graph statistics. No tuning.</strong></p>
+<p>Run date: 2026-06-02. Command: <code>python benchmarks/metaqa_eval.py --zero-config --workers 8</code></p>
+<table>
+<thead>
+<tr>
+<th>Hop</th>
+<th>N</th>
+<th>H@1</th>
+<th>H@10</th>
+<th>MRR</th>
+<th>Answered</th>
+<th>Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1-hop</td>
+<td>9,947</td>
+<td><strong>83.2%</strong></td>
+<td><strong>99.0%</strong></td>
+<td><strong>0.884</strong></td>
+<td>9,936/9,947</td>
+<td>3.7s</td>
+</tr>
+<tr>
+<td>2-hop</td>
+<td>14,872</td>
+<td><strong>63.3%</strong></td>
+<td><strong>94.3%</strong></td>
+<td><strong>0.733</strong></td>
+<td>14,865/14,872</td>
+<td>31.7s</td>
+</tr>
+<tr>
+<td>3-hop</td>
+<td>14,274</td>
+<td><strong>56.8%</strong></td>
+<td><strong>90.7%</strong></td>
+<td><strong>0.692</strong></td>
+<td>14,268/14,274</td>
+<td>782.6s</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Auto-derived params (hub_homogeneous × random):</strong>
+trb_factor=21.48, gamma=0.5, beta=2.0, r2_boost=8.18, fhrb_factor=3.26,
+idf_weight=0.058, vote_weight=0.758, branch_bonus=0.48, beam_width=12.</p>
+<p><strong>Finding:</strong> Zero-config (no tuning) lands 3.5pp below Phase 204 tuned (60.4% 3-hop H@1).
+H@10=90.7% confirms the system <em>finds</em> the answer in top-10 the vast majority of the time —
+the gap to supervised methods is primarily a ranking problem, not a reasoning failure.</p>
+<hr />
+<h2 id="hetionet-phase-207-random-embeddings-hop_expand-fixed">Hetionet — Phase 207 (Random Embeddings, hop_expand Fixed)</h2>
+<p>Biomedical KG: 47,031 entities / 2,250,197 edges.</p>
+<h3 id="phase-207-tuner-results-hop_expand-bug-fixed-properly-calibrated-params">Phase 207 — Tuner Results (hop_expand bug fixed, properly calibrated params)</h3>
+<p><strong>Tuner best:</strong> H@1=61.00% H@10=61.00% MRR=0.6100 (200q/template pilot)</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>trb_factor</td>
+<td>19.769</td>
+</tr>
+<tr>
+<td>gamma</td>
+<td>4.9679</td>
+</tr>
+<tr>
+<td>beta</td>
+<td>0.7770</td>
+</tr>
+<tr>
+<td>r2_boost</td>
+<td>3.224</td>
+</tr>
+<tr>
+<td>vote_weight</td>
+<td>0.6047</td>
+</tr>
+<tr>
+<td>beam_width</td>
+<td>8</td>
+</tr>
+<tr>
+<td>idf_weight</td>
+<td>0.039</td>
+</tr>
+<tr>
+<td>branch_bonus</td>
+<td>0.308</td>
+</tr>
+<tr>
+<td>fhrb_factor</td>
+<td>4.658</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Canonical eval command:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-u<span class="w"> </span>benchmarks/hetionet_param_eval.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>--n-questions<span class="w"> </span><span class="m">200</span><span class="w"> </span>--min-eval-hop<span class="w"> </span><span class="m">1</span><span class="w"> </span>--max-neighbors<span class="w"> </span><span class="m">200</span><span class="w"> </span>--workers<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>--beam-width<span class="w"> </span><span class="m">8</span><span class="w"> </span>--trb-factor<span class="w"> </span><span class="m">19</span>.769<span class="w"> </span>--gamma<span class="w"> </span><span class="m">4</span>.9679<span class="w"> </span>--beta<span class="w"> </span><span class="m">0</span>.7770<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span>--r2-boost<span class="w"> </span><span class="m">3</span>.224<span class="w"> </span>--vote-weight<span class="w"> </span><span class="m">0</span>.6047<span class="w"> </span>--idf-weight<span class="w"> </span><span class="m">0</span>.039<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span>--branch-bonus<span class="w"> </span><span class="m">0</span>.308<span class="w"> </span>--fhrb-factor<span class="w"> </span><span class="m">4</span>.658
+</code></pre></div></p>
+<p><strong>Phase 207 fANOVA:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Importance</th>
+<th>Bar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>beta</td>
+<td>0.2175</td>
+<td>████████</td>
+</tr>
+<tr>
+<td>vote_weight</td>
+<td>0.1956</td>
+<td>███████</td>
+</tr>
+<tr>
+<td>gamma</td>
+<td>0.1573</td>
+<td>██████</td>
+</tr>
+<tr>
+<td>r2_boost</td>
+<td>0.1218</td>
+<td>████</td>
+</tr>
+<tr>
+<td>fhrb_factor</td>
+<td>0.1204</td>
+<td>████</td>
+</tr>
+<tr>
+<td>branch_bonus</td>
+<td>0.0754</td>
+<td>███</td>
+</tr>
+<tr>
+<td>idf_weight</td>
+<td>0.0708</td>
+<td>██</td>
+</tr>
+<tr>
+<td>trb_factor</td>
+<td>0.0384</td>
+<td>█</td>
+</tr>
+<tr>
+<td>beam_width</td>
+<td>0.0028</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Note: beam_width importance ≈0 confirms fixed at 8 is correct. beta is now the dominant parameter (was near-zero in Phase 206 broken-2-hop run).</p>
+<h3 id="phase-207-full-validation-results-200qtemplate-phase-207-params">Phase 207 — Full Validation Results (200q/template, Phase 207 params)</h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>1-hop</th>
+<th>2-hop</th>
+<th>3-hop</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hits@1</td>
+<td><strong>95.7%</strong></td>
+<td><strong>47.9%</strong></td>
+<td><strong>79.5%</strong></td>
+<td>200q/template, max_neighbors=200</td>
+</tr>
+<tr>
+<td>Hits@10</td>
+<td><strong>95.7%</strong></td>
+<td><strong>47.9%</strong></td>
+<td><strong>79.5%</strong></td>
+<td>H@1=H@10: system ranks correct answer 1st when found</td>
+</tr>
+<tr>
+<td>MRR</td>
+<td><strong>0.9569</strong></td>
+<td><strong>0.4789</strong></td>
+<td><strong>0.7955</strong></td>
+<td>Recall-limited, not ranking-limited</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Per-template:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Template</th>
+<th>Hop</th>
+<th>N</th>
+<th>H@1</th>
+<th>AvgTyped</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>disease_associates_gene</td>
+<td>1</td>
+<td>134</td>
+<td>100.0%</td>
+<td>16.8</td>
+<td></td>
+</tr>
+<tr>
+<td>gene_participates_pathway</td>
+<td>1</td>
+<td>200</td>
+<td>98.5%</td>
+<td>6.5</td>
+<td></td>
+</tr>
+<tr>
+<td>compound_treats_disease</td>
+<td>1</td>
+<td>200</td>
+<td>90.0%</td>
+<td>1.6</td>
+<td></td>
+</tr>
+<tr>
+<td>disease_gene_pathway</td>
+<td>2</td>
+<td>132</td>
+<td>71.2%</td>
+<td>3.1</td>
+<td></td>
+</tr>
+<tr>
+<td>compound_gene_disease</td>
+<td>2</td>
+<td>200</td>
+<td>32.5%</td>
+<td>0.9</td>
+<td>Sparse Compound-binds-Gene first hop — recall-limited</td>
+</tr>
+<tr>
+<td>disease_compound_via_gene</td>
+<td>3</td>
+<td>132</td>
+<td>79.5%</td>
+<td>19.2</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Note: ~2pp run-to-run variance expected from 64-dim random embeddings.
+compound_gene_disease ~32% is a graph-structure ceiling: AvgTyped=0.9 means most queries find &lt;1 typed candidate after the first hop. Not a tuning problem.</p>
+<hr />
+<h2 id="hetionet-phase-208-sentence-transformers-tuner">Hetionet — Phase 208 (Sentence-Transformers Tuner)</h2>
+<p>Phase 208 adds sentence-transformers embeddings (384-dim) + GraphSAGE smoothing + STRB via query_embedding + full community resolution (cap removed).</p>
+<h3 id="phase-208-tuner-results-all-hop-pooled-superseded-by-phase-209">Phase 208 — Tuner Results (all-hop pooled — superseded by Phase 209)</h3>
+<p><strong>Tuner best:</strong> H@1=55.00% H@10=55.00% MRR=0.5500</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>trb_factor</td>
+<td>22.350</td>
+</tr>
+<tr>
+<td>gamma</td>
+<td>5.9183</td>
+</tr>
+<tr>
+<td>beta</td>
+<td>1.8778</td>
+</tr>
+<tr>
+<td>r2_boost</td>
+<td>4.201</td>
+</tr>
+<tr>
+<td>vote_weight</td>
+<td>0.6460</td>
+</tr>
+<tr>
+<td>beam_width</td>
+<td>8</td>
+</tr>
+<tr>
+<td>idf_weight</td>
+<td>0.032</td>
+</tr>
+<tr>
+<td>branch_bonus</td>
+<td>0.451</td>
+</tr>
+<tr>
+<td>fhrb_factor</td>
+<td>3.013</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Phase 208 fANOVA:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Importance</th>
+<th>Bar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>idf_weight</td>
+<td>0.4314</td>
+<td>████████████████</td>
+</tr>
+<tr>
+<td>beam_width</td>
+<td>0.2000</td>
+<td>████████</td>
+</tr>
+<tr>
+<td>vote_weight</td>
+<td>0.0966</td>
+<td>████</td>
+</tr>
+<tr>
+<td>gamma</td>
+<td>~0.08</td>
+<td>███</td>
+</tr>
+<tr>
+<td>beta</td>
+<td>~0.07</td>
+<td>███</td>
+</tr>
+<tr>
+<td>trb_factor</td>
+<td>~0.05</td>
+<td>██</td>
+</tr>
+<tr>
+<td>r2_boost</td>
+<td>~0.04</td>
+<td>█</td>
+</tr>
+<tr>
+<td>branch_bonus</td>
+<td>~0.03</td>
+<td>█</td>
+</tr>
+<tr>
+<td>fhrb_factor</td>
+<td>~0.02</td>
+<td>█</td>
+</tr>
+</tbody>
+</table>
+<p>Note: idf_weight dominance (0.43) with sentence-transformers vs beta dominance (0.22) with random embeddings confirms the 2D constant space (regime × embedding_method).</p>
+<p><strong>Canonical eval command (Phase 208):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>-u<span class="w"> </span>benchmarks/hetionet_param_eval.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span>--n-questions<span class="w"> </span><span class="m">200</span><span class="w"> </span>--min-eval-hop<span class="w"> </span><span class="m">1</span><span class="w"> </span>--max-neighbors<span class="w"> </span><span class="m">200</span><span class="w"> </span>--workers<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span>--embeddings<span class="w"> </span>sentence<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span>--beam-width<span class="w"> </span><span class="m">8</span><span class="w"> </span>--trb-factor<span class="w"> </span><span class="m">22</span>.350<span class="w"> </span>--gamma<span class="w"> </span><span class="m">5</span>.9183<span class="w"> </span>--beta<span class="w"> </span><span class="m">1</span>.8778<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span>--r2-boost<span class="w"> </span><span class="m">4</span>.201<span class="w"> </span>--vote-weight<span class="w"> </span><span class="m">0</span>.6460<span class="w"> </span>--idf-weight<span class="w"> </span><span class="m">0</span>.032<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span>--branch-bonus<span class="w"> </span><span class="m">0</span>.451<span class="w"> </span>--fhrb-factor<span class="w"> </span><span class="m">3</span>.013
+</code></pre></div></p>
+<h3 id="phase-208-full-validation-results-200qtemplate-sentence-transformers-graphsage-strb">Phase 208 — Full Validation Results (200q/template, sentence-transformers + GraphSAGE + STRB)</h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>1-hop</th>
+<th>2-hop</th>
+<th>3-hop</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hits@1</td>
+<td><strong>94.0%</strong></td>
+<td><strong>36.8%</strong></td>
+<td><strong>61.4%</strong></td>
+<td>200q/template, max_neighbors=200</td>
+</tr>
+<tr>
+<td>MRR</td>
+<td><strong>0.9401</strong></td>
+<td><strong>0.3675</strong></td>
+<td><strong>0.6136</strong></td>
+<td>454s eval, 8 workers</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Per-template:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Template</th>
+<th>Hop</th>
+<th>N</th>
+<th>H@1</th>
+<th>AvgTyped</th>
+<th>Phase 207 Random</th>
+<th>Delta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>disease_associates_gene</td>
+<td>1</td>
+<td>134</td>
+<td>100.0%</td>
+<td>16.8</td>
+<td>100.0%</td>
+<td>0</td>
+</tr>
+<tr>
+<td>gene_participates_pathway</td>
+<td>1</td>
+<td>200</td>
+<td>98.0%</td>
+<td>6.5</td>
+<td>98.5%</td>
+<td>-0.5pp</td>
+</tr>
+<tr>
+<td>compound_treats_disease</td>
+<td>1</td>
+<td>200</td>
+<td>86.0%</td>
+<td>1.5</td>
+<td>90.0%</td>
+<td>-4pp</td>
+</tr>
+<tr>
+<td>disease_gene_pathway</td>
+<td>2</td>
+<td>132</td>
+<td>56.1%</td>
+<td>1.6</td>
+<td>71.2%</td>
+<td><strong>-15pp</strong></td>
+</tr>
+<tr>
+<td>compound_gene_disease</td>
+<td>2</td>
+<td>200</td>
+<td>24.0%</td>
+<td>0.5</td>
+<td>32.5%</td>
+<td>-8.5pp</td>
+</tr>
+<tr>
+<td>disease_compound_via_gene</td>
+<td>3</td>
+<td>132</td>
+<td>61.4%</td>
+<td>18.2</td>
+<td>79.5%</td>
+<td><strong>-18pp</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Finding: sentence-transformers regresses vs random on multi-hop.</strong> 1-hop is near-parity (94.0% vs 95.7%) but 2-hop drops 11pp and 3-hop drops 18pp. Two compounding causes:</p>
+<ol>
+<li><strong>AvgTyped collapse on 2-hop</strong>: disease_gene_pathway 3.1→1.6, compound_gene_disease 0.9→0.5 — the semantic similarity filter culls more candidates than random does, starving the beam before it can complete the path. idf_weight=0.032 (low) was meant to compensate but insufficient.</li>
+<li><strong>Tuner pilot used 20q/template</strong> — too small to calibrate 2-hop and 3-hop templates independently. The tuner pooled all templates, allowing 1-hop (3×) to dominate the H@1 signal.</li>
+</ol>
+<p><strong>Root cause</strong>: Phase 208 tuner calibrated against all hops simultaneously with 20q each. The optimal idf_weight for 1-hop (low penalty → more candidates) conflicts with 2-hop (needs higher IDF to suppress false positives at the intermediate node).</p>
+<p><strong>See Phase 209 below for corrected multi-hop calibration.</strong></p>
+<hr />
+<h2 id="hetionet-phase-209-multi-hop-sentence-transformers-calibration">Hetionet — Phase 209 (Multi-Hop Sentence-Transformers Calibration)</h2>
+<p>Phase 209 fixes the Phase 208 regression by tuning with <code>--min-eval-hop 2</code> (2-hop + 3-hop only) and disabling <code>hop_expand</code> during tuning for speed. 200-trial Sobol+CMA-ES.</p>
+<h3 id="phase-209-tuner-results-sentence-transformers-multi-hop-200-trial-sobolcma-es-20q">Phase 209 — Tuner Results (sentence-transformers, multi-hop, 200-trial Sobol+CMA-ES, 20q)</h3>
+<p><strong>Tuner best:</strong> H@1=55.00% H@10=56.67% MRR=0.5583 (2-hop + 3-hop only, no hop_expand)</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>trb_factor</td>
+<td>13.871</td>
+</tr>
+<tr>
+<td>gamma</td>
+<td>1.0147</td>
+</tr>
+<tr>
+<td>beta</td>
+<td>0.9545</td>
+</tr>
+<tr>
+<td>r2_boost</td>
+<td>1.322</td>
+</tr>
+<tr>
+<td>vote_weight</td>
+<td>0.6400</td>
+</tr>
+<tr>
+<td>beam_width</td>
+<td>8</td>
+</tr>
+<tr>
+<td>idf_weight</td>
+<td>0.018</td>
+</tr>
+<tr>
+<td>branch_bonus</td>
+<td>0.032</td>
+</tr>
+<tr>
+<td>fhrb_factor</td>
+<td>1.726</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Phase 209 fANOVA (multi-hop):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Importance</th>
+<th>Bar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>vote_weight</td>
+<td>0.2761</td>
+<td>███████████</td>
+</tr>
+<tr>
+<td>idf_weight</td>
+<td>0.2135</td>
+<td>████████</td>
+</tr>
+<tr>
+<td>gamma</td>
+<td>0.1491</td>
+<td>█████</td>
+</tr>
+<tr>
+<td>fhrb_factor</td>
+<td>0.1008</td>
+<td>████</td>
+</tr>
+<tr>
+<td>r2_boost</td>
+<td>0.0641</td>
+<td>██</td>
+</tr>
+<tr>
+<td>branch_bonus</td>
+<td>0.0616</td>
+<td>██</td>
+</tr>
+<tr>
+<td>beam_width</td>
+<td>0.0584</td>
+<td>██</td>
+</tr>
+<tr>
+<td>beta</td>
+<td>0.0500</td>
+<td>█</td>
+</tr>
+<tr>
+<td>trb_factor</td>
+<td>0.0266</td>
+<td>█</td>
+</tr>
+</tbody>
+</table>
+<p>Key finding: <strong>vote_weight is now #1 on multi-hop</strong> (0.28) vs idf_weight #1 on all-hop (0.43). Community voting drives multi-hop accuracy; IDF hub-penalty drives 1-hop precision.</p>
+<h3 id="phase-209-full-validation-results-200qtemplate-sentence-transformers-multi-hop-params">Phase 209 — Full Validation Results (200q/template, sentence-transformers, multi-hop params)</h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>1-hop</th>
+<th>2-hop</th>
+<th>3-hop</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hits@1</td>
+<td><strong>95.3%</strong></td>
+<td><strong>53.0%</strong></td>
+<td><strong>49.2%</strong></td>
+<td>200q/template, max_neighbors=200, 581s eval</td>
+</tr>
+<tr>
+<td>MRR</td>
+<td><strong>0.9532</strong></td>
+<td><strong>0.5301</strong></td>
+<td><strong>0.4943</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Per-template:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Template</th>
+<th>Hop</th>
+<th>N</th>
+<th>H@1</th>
+<th>AvgTyped</th>
+<th style="text-align: center;">Ph207 Random</th>
+<th style="text-align: center;">Ph208 Sentence</th>
+<th style="text-align: center;">Ph209 Sentence</th>
+<th style="text-align: center;">Delta vs Ph207</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>disease_associates_gene</td>
+<td>1</td>
+<td>134</td>
+<td>100.0%</td>
+<td>16.7</td>
+<td style="text-align: center;">100.0%</td>
+<td style="text-align: center;">100.0%</td>
+<td style="text-align: center;">100.0%</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td>gene_participates_pathway</td>
+<td>1</td>
+<td>200</td>
+<td>98.5%</td>
+<td>6.5</td>
+<td style="text-align: center;">98.5%</td>
+<td style="text-align: center;">98.0%</td>
+<td style="text-align: center;">98.5%</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td>compound_treats_disease</td>
+<td>1</td>
+<td>200</td>
+<td>89.0%</td>
+<td>1.6</td>
+<td style="text-align: center;">90.0%</td>
+<td style="text-align: center;">86.0%</td>
+<td style="text-align: center;">89.0%</td>
+<td style="text-align: center;">-1pp</td>
+</tr>
+<tr>
+<td>disease_gene_pathway</td>
+<td>2</td>
+<td>132</td>
+<td>81.1%</td>
+<td>4.5</td>
+<td style="text-align: center;">71.2%</td>
+<td style="text-align: center;">56.1%</td>
+<td style="text-align: center;">81.1%</td>
+<td style="text-align: center;"><strong>+10pp</strong></td>
+</tr>
+<tr>
+<td>compound_gene_disease</td>
+<td>2</td>
+<td>200</td>
+<td>34.5%</td>
+<td>1.2</td>
+<td style="text-align: center;">32.5%</td>
+<td style="text-align: center;">24.0%</td>
+<td style="text-align: center;">34.5%</td>
+<td style="text-align: center;">+2pp</td>
+</tr>
+<tr>
+<td>disease_compound_via_gene</td>
+<td>3</td>
+<td>132</td>
+<td>49.2%</td>
+<td>16.3</td>
+<td style="text-align: center;">79.5%</td>
+<td style="text-align: center;">61.4%</td>
+<td style="text-align: center;">49.2%</td>
+<td style="text-align: center;"><strong>-30pp</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Analysis vs Phase 207 (random) and Phase 208 (sentence, all-hop):</strong></p>
+<ul>
+<li><strong>1-hop 95.3%</strong> — essentially tied with random (95.7%), best sentence result yet (+1.3pp vs Phase 208)</li>
+<li><strong>2-hop 53.0%</strong> — beats random (47.9%) and corrects Phase 208 regression (36.8%). disease_gene_pathway: 81.1% vs 71.2% random — sentence embeddings genuinely help on this template once properly calibrated</li>
+<li><strong>3-hop 49.2%</strong> — regressed from random (79.5%) and Phase 208 (61.4%)</li>
+</ul>
+<p><strong>Root cause of 3-hop regression (disease_compound_via_gene):</strong></p>
+<p>Confirmed by Phase 210 branch_bonus grid (see below): not a structural parameter problem. <code>disease_compound_via_gene</code> is insensitive to branch_bonus across the full range [0.032–0.308], holding at ~48.5–50.8%. The regression is semantic in origin: sentence-transformers embeddings introduce cosine-similarity bias that suppresses valid cross-type paths (disease→gene→compound spans maximally dissimilar semantic types). Random embeddings have no such bias, which is why Phase 207 achieves 79.5% on this template.</p>
+<p><strong>Summary: Phase 209 is strictly better on 2-hop (+5pp vs random), with a known semantic ceiling on cross-type 3-hop.</strong> This is a fundamental training-free limitation, not a tuning problem — see Phase 210 analysis.</p>
+<p><strong>Canonical eval command (Phase 209 — full validation as run):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>-u<span class="w"> </span>benchmarks/hetionet_param_eval.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span>--n-questions<span class="w"> </span><span class="m">200</span><span class="w"> </span>--min-eval-hop<span class="w"> </span><span class="m">1</span><span class="w"> </span>--max-neighbors<span class="w"> </span><span class="m">200</span><span class="w"> </span>--workers<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span>--embeddings<span class="w"> </span>sentence<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span>--beam-width<span class="w"> </span><span class="m">8</span><span class="w"> </span>--trb-factor<span class="w"> </span><span class="m">13</span>.871<span class="w"> </span>--gamma<span class="w"> </span><span class="m">1</span>.0147<span class="w"> </span>--beta<span class="w"> </span><span class="m">0</span>.9545<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span>--r2-boost<span class="w"> </span><span class="m">1</span>.322<span class="w"> </span>--vote-weight<span class="w"> </span><span class="m">0</span>.6400<span class="w"> </span>--idf-weight<span class="w"> </span><span class="m">0</span>.018<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span>--branch-bonus<span class="w"> </span><span class="m">0</span>.032<span class="w"> </span>--fhrb-factor<span class="w"> </span><span class="m">1</span>.726
+</code></pre></div></p>
+<hr />
+<h2 id="hetionet-phase-210-branch_bonus-grid-3-hop-root-cause-analysis">Hetionet — Phase 210 (branch_bonus Grid, 3-hop Root Cause Analysis)</h2>
+<p>Phase 210 tests whether branch_bonus is the lever for the 3-hop regression. Grid: [0.032, 0.10, 0.20, 0.308], all other params held at Phase 209 values, 200q/template full eval with workers=8.</p>
+<h3 id="phase-210-branch_bonus-grid-results">Phase 210 — branch_bonus Grid Results</h3>
+<table>
+<thead>
+<tr>
+<th>branch_bonus</th>
+<th>1-hop</th>
+<th>2-hop</th>
+<th>3-hop</th>
+<th>dgp H@1</th>
+<th>cge H@1</th>
+<th>dcvg H@1</th>
+<th>AvgTyped dgp</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0.032</strong></td>
+<td><strong>95.3%</strong></td>
+<td><strong>53.9%</strong></td>
+<td><strong>50.8%</strong></td>
+<td><strong>81.1%</strong></td>
+<td><strong>36.0%</strong></td>
+<td><strong>50.8%</strong></td>
+<td>4.6</td>
+</tr>
+<tr>
+<td>0.10</td>
+<td>96.1%</td>
+<td>47.6%</td>
+<td>48.5%</td>
+<td>70.5%</td>
+<td>32.5%</td>
+<td>48.5%</td>
+<td>3.3</td>
+</tr>
+<tr>
+<td>0.20</td>
+<td>95.7%</td>
+<td>42.2%</td>
+<td>48.5%</td>
+<td>63.6%</td>
+<td>28.0%</td>
+<td>48.5%</td>
+<td>2.5</td>
+</tr>
+<tr>
+<td>0.308</td>
+<td>95.3%</td>
+<td>39.2%</td>
+<td>48.5%</td>
+<td>57.6%</td>
+<td>27.0%</td>
+<td>48.5%</td>
+<td>2.1</td>
+</tr>
+</tbody>
+</table>
+<p>Template codes: dgp=disease_gene_pathway, cge=compound_gene_disease, dcvg=disease_compound_via_gene</p>
+<p><strong>Finding 1 — branch_bonus confirmed optimal at 0.032.</strong> 2-hop degrades monotonically as branch_bonus rises. disease_gene_pathway AvgTyped collapses 4.6→2.1 as branch_bonus rises: higher values bias the beam toward branchy intermediate paths, culling typed candidates before the answer hop.</p>
+<p><strong>Finding 2 — 3-hop is insensitive to branch_bonus.</strong> <code>disease_compound_via_gene</code> is locked at 48.5% for all values ≥ 0.10, and only marginally better at 0.032 (50.8%). The 3-hop ceiling is not a structural parameter problem.</p>
+<p><strong>Finding 3 — The 3-hop regression is semantic in origin.</strong> Sentence-transformers introduce cosine-similarity bias that suppresses valid cross-type paths. The <code>disease_compound_via_gene</code> template traverses maximally dissimilar semantic types (disease→gene→compound); the alpha (semantic similarity) CSA term systematically penalizes valid paths at each hop because the entity types are semantically distant. Random embeddings have no such bias and achieve 79.5%.</p>
+<p><strong>Known limitation (documented):</strong> Training-free semantic similarity has a natural cross-type depth ceiling in typed heterogeneous biomedical KGs. This is not addressable by structural parameter tuning. The practical mitigation (reducing CSA alpha weight globally) would degrade 1-hop and 2-hop same-type templates that benefit from semantic signal. The asymmetry is real: semantic embeddings help typed 2-hop (disease_gene_pathway +10pp vs random) while hurting cross-type 3-hop (-30pp vs random). A training step that calibrates per-relation-type semantic weights would be required to close this gap — outside the scope of training-free CEREBRUM.</p>
+<hr />
+<h2 id="hetionet-phase-211-graphsage-ablation">Hetionet — Phase 211 (GraphSAGE Ablation)</h2>
+<p>Phase 211 tests whether GraphSAGE smoothing amplifies the cross-type 3-hop semantic bias. Same Phase 209 params (branch_bonus=0.032), <code>--no-graphsage</code> flag added to <code>hetionet_param_eval.py</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Config</th>
+<th>1-hop</th>
+<th>2-hop</th>
+<th>dgp</th>
+<th>cge</th>
+<th>3-hop (dcvg)</th>
+<th>AvgTyped dgp</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ph210 + GraphSAGE</td>
+<td>95.3%</td>
+<td>53.9%</td>
+<td>81.1%</td>
+<td>36.0%</td>
+<td>50.8%</td>
+<td>4.6</td>
+</tr>
+<tr>
+<td>Ph211 − GraphSAGE</td>
+<td>95.5%</td>
+<td><strong>55.7%</strong></td>
+<td><strong>81.8%</strong></td>
+<td><strong>38.5%</strong></td>
+<td>47.0%</td>
+<td>4.9</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Finding: GraphSAGE is not the culprit.</strong> Removing it makes 3-hop <em>worse</em> (47.0% vs 50.8%) while marginally improving 2-hop. GraphSAGE is providing a small compensatory benefit on cross-type 3-hop traversal, partially counteracting the cosine similarity bias. Keep GraphSAGE enabled.</p>
+<p><strong>Conclusion (investigation closed):</strong> The <code>disease_compound_via_gene</code> 3-hop ceiling (~49–51% vs random 79.5%) is intrinsic to training-free cosine similarity on cross-type heterogeneous paths. No structural parameter (branch_bonus) or embedding post-processing (GraphSAGE) can close this gap. A supervised per-relation-type semantic weight calibration step would be required — outside the scope of training-free CEREBRUM. Documented as a known limitation.</p>
+<h3 id="hetionet-constants-2d-table-regime-embedding_method">Hetionet Constants: 2D Table (regime × embedding_method)</h3>
+<table>
+<thead>
+<tr>
+<th>Constant</th>
+<th>typed_heterogeneous × random</th>
+<th>typed_heterogeneous × sentence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BETA</td>
+<td>0.777</td>
+<td><strong>0.9545</strong></td>
+</tr>
+<tr>
+<td>BOOST_SCALE</td>
+<td>28.48</td>
+<td><strong>8.67</strong></td>
+</tr>
+<tr>
+<td>TRB_C</td>
+<td>6.14</td>
+<td><strong>4.31</strong></td>
+</tr>
+<tr>
+<td>R2_C</td>
+<td>1.07</td>
+<td><strong>−0.111</strong></td>
+</tr>
+<tr>
+<td>R2_FLOOR</td>
+<td>1.5</td>
+<td><strong>1.0</strong></td>
+</tr>
+<tr>
+<td>FHRB_C</td>
+<td>0.80</td>
+<td><strong>0.159</strong></td>
+</tr>
+<tr>
+<td>BRANCH_BONUS</td>
+<td>0.308</td>
+<td><strong>0.032</strong></td>
+</tr>
+<tr>
+<td>IDF_SCALE_C</td>
+<td>0.0102</td>
+<td><strong>0.00432</strong></td>
+</tr>
+<tr>
+<td>VOTE_BASE</td>
+<td>0.55</td>
+<td><strong>0.565</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Source: Phase 207 (random) + Phase 209 (sentence, multi-hop calibration).
+Note: negative R2_C for sentence/typed means path-consistency boost slightly hurts
+when the beam already selects semantically coherent paths via STRB + GraphSAGE.</p>
+<h3 id="phase-165-legacy-single-template-result-disease_gene_pathway-only">Phase 165 — Legacy Single-Template Result (disease_gene_pathway only)</h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+<th>Phase</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hits@1</td>
+<td>61%</td>
+<td>165</td>
+<td>TRB + STRB, single template only</td>
+</tr>
+<tr>
+<td>Hits@10</td>
+<td>85%</td>
+<td>165</td>
+<td></td>
+</tr>
+<tr>
+<td>MRR</td>
+<td>0.72</td>
+<td>165</td>
+<td></td>
+</tr>
+<tr>
+<td>BFS baseline</td>
+<td>0.8%</td>
+<td>165</td>
+<td>No TRB — confirms TRB necessity</td>
+</tr>
+<tr>
+<td>TRB only (no STRB)</td>
+<td>73.5% (3-hop H@1)</td>
+<td>165</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="webqsp-v2520">WebQSP — v2.52.0</h2>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+<th>Phase</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hits@1</td>
+<td>7.5%</td>
+<td>137+</td>
+<td>Full OPT configuration</td>
+</tr>
+<tr>
+<td>Hits@10</td>
+<td>17.5%</td>
+<td>137+</td>
+<td></td>
+</tr>
+<tr>
+<td>MRR</td>
+<td>9.8%</td>
+<td>137+</td>
+<td></td>
+</tr>
+<tr>
+<td>RAW (no OPT)</td>
+<td>4.0%</td>
+<td>—</td>
+<td>No query optimization</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note (May 2025):</strong> arXiv:2505.23495 found ~52% of WebQSP examples factually questionable.
+Acknowledge this benchmark quality caveat in all papers discussing WebQSP results.</p>
+<hr />
+<h2 id="ikgwq-incomplete-knowledge-graph-world-qa-protocol">IKGWQ — Incomplete Knowledge Graph World QA Protocol</h2>
+<p>Measures graceful degradation under edge removal. 5 incompleteness levels.</p>
+<table>
+<thead>
+<tr>
+<th>Edge Removal</th>
+<th>AUC</th>
+<th>Hits@1</th>
+<th>Phase</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0% (complete)</td>
+<td>1.00</td>
+<td>46.1%</td>
+<td>44</td>
+<td>Baseline</td>
+</tr>
+<tr>
+<td>10%</td>
+<td>~0.98</td>
+<td>~44%</td>
+<td>44</td>
+<td></td>
+</tr>
+<tr>
+<td>25%</td>
+<td>~0.95</td>
+<td>~40%</td>
+<td>44</td>
+<td></td>
+</tr>
+<tr>
+<td>40%</td>
+<td>~0.91</td>
+<td>~35%</td>
+<td>44</td>
+<td></td>
+</tr>
+<tr>
+<td>50%</td>
+<td>0.89</td>
+<td>~30%</td>
+<td>44</td>
+<td><strong>Primary IKGWQ result to cite</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="comparison-table-for-papers-verified-sota-as-of-may-2026">Comparison Table for Papers (Verified SOTA as of May 2026)</h2>
+<p>Use this table verbatim in the flagship paper and Paper A's context section.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Training</th>
+<th style="text-align: center;">MetaQA 1-hop H@1</th>
+<th style="text-align: center;">MetaQA 2-hop H@1</th>
+<th style="text-align: center;">MetaQA 3-hop H@1</th>
+<th style="text-align: center;">WebQSP H@1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EmbedKGQA (ACL 2020)</td>
+<td>Supervised</td>
+<td style="text-align: center;">~97%</td>
+<td style="text-align: center;">~94%</td>
+<td style="text-align: center;">~94%</td>
+<td style="text-align: center;">~66%</td>
+</tr>
+<tr>
+<td>NSM (WSDM 2021)</td>
+<td>Supervised</td>
+<td style="text-align: center;">~97%</td>
+<td style="text-align: center;">~99%</td>
+<td style="text-align: center;">~98%</td>
+<td style="text-align: center;">~74%</td>
+</tr>
+<tr>
+<td>UniKGQA (ICLR 2023)</td>
+<td>Supervised</td>
+<td style="text-align: center;">97.5%</td>
+<td style="text-align: center;">99.0%</td>
+<td style="text-align: center;">99.1%</td>
+<td style="text-align: center;">75.1%</td>
+</tr>
+<tr>
+<td>GNN-QE (ICML 2022)</td>
+<td>Supervised</td>
+<td style="text-align: center;">~95%</td>
+<td style="text-align: center;">~95%</td>
+<td style="text-align: center;">~95%</td>
+<td style="text-align: center;">~72%</td>
+</tr>
+<tr>
+<td>FlexKG (2025, LLM+KG)</td>
+<td>Supervised+LLM</td>
+<td style="text-align: center;">99.9%</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">79.7%</td>
+</tr>
+<tr>
+<td>EPERM (2025, LLM+KG)</td>
+<td>Supervised+LLM</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">88.8%</td>
+</tr>
+<tr>
+<td><strong>CEREBRUM Phase 53 (ours)</strong></td>
+<td><strong>None</strong></td>
+<td style="text-align: center;"><strong>46.1%</strong></td>
+<td style="text-align: center;"><strong>30.0%</strong></td>
+<td style="text-align: center;"><strong>12.5%</strong></td>
+<td style="text-align: center;"><strong>7.5%</strong></td>
+</tr>
+<tr>
+<td>CEREBRUM Phase 182 (full stack)†</td>
+<td>None</td>
+<td style="text-align: center;">46.1%</td>
+<td style="text-align: center;">30.0%</td>
+<td style="text-align: center;"><strong>49.68%</strong></td>
+<td style="text-align: center;">7.5%</td>
+</tr>
+<tr>
+<td>CEREBRUM Phase 201 (full stack)†</td>
+<td>None</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;"><strong>58.90%</strong></td>
+<td style="text-align: center;">—</td>
+</tr>
+</tbody>
+</table>
+<p>† Full-stack 3-hop results use FHRB, r2-boost, SRD, RelationPathPrior and are
+<strong>not directly comparable</strong> to supervised methods in this table — listed for internal tracking only.
+Use Phase 53 numbers in all paper comparison tables.</p>
+<p><strong>Framing (include as footnote or paragraph):</strong></p>
+<blockquote>
+<p>CEREBRUM achieves these results with zero task-specific training, no labeled question-answer pairs,
+and no gradient updates — operating purely from graph structure and pre-trained sentence embeddings.
+To our knowledge, this represents the first training-free baseline for multi-hop KGQA, establishing
+a reference point for what structural reasoning alone can achieve. The H@10 story is the key result:
+CEREBRUM retrieves the correct answer in its top-10 candidates at 96.6% (1-hop), 86.3% (2-hop),
+and 50.3% (3-hop) — the system <em>finds</em> the answer, it does not yet rank it first. This is a ranking
+challenge, not a reasoning failure. Supervised methods benefit from task-specific training that
+optimizes exactly this ranking; CEREBRUM does not.</p>
+</blockquote>
+<hr />
+<h2 id="bibtex-for-sota-baselines">BibTeX for SOTA Baselines</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nc">@inproceedings</span><span class="p">{</span><span class="nl">saxena2020embedkgqa</span><span class="p">,</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="na">title</span><span class="p">=</span><span class="s">{Improving Multi-hop Question Answering over Knowledge Graphs using Knowledge Base Embeddings}</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="na">author</span><span class="p">=</span><span class="s">{Saxena, Apoorv and Tripathi, Aditay and Talukdar, Partha}</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="na">booktitle</span><span class="p">=</span><span class="s">{Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics}</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="na">pages</span><span class="p">=</span><span class="s">{4498--4507}</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span><span class="na">year</span><span class="p">=</span><span class="s">{2020}</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="na">doi</span><span class="p">=</span><span class="s">{10.18653/v1/2020.acl-main.412}</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="p">}</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="nc">@inproceedings</span><span class="p">{</span><span class="nl">he2021nsm</span><span class="p">,</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span><span class="na">title</span><span class="p">=</span><span class="s">{Improving Multi-hop Knowledge Base Question Answering by Learning Intermediate Supervision Signals}</span><span class="p">,</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">  </span><span class="na">author</span><span class="p">=</span><span class="s">{He, Gaole and Lan, Yunshi and Jiang, Jing and Zhao, Wayne Xin and Wen, Ji-Rong}</span><span class="p">,</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">  </span><span class="na">booktitle</span><span class="p">=</span><span class="s">{Proceedings of the 14th ACM International Conference on Web Search and Data Mining (WSDM)}</span><span class="p">,</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">  </span><span class="na">year</span><span class="p">=</span><span class="s">{2021}</span><span class="p">,</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">  </span><span class="na">note</span><span class="p">=</span><span class="s">{arXiv:2101.03737}</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="p">}</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="nc">@inproceedings</span><span class="p">{</span><span class="nl">jiang2023unikgqa</span><span class="p">,</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">  </span><span class="na">title</span><span class="p">=</span><span class="s">{{UniKGQA}: Unified Retrieval and Reasoning for Solving Multi-hop Question Answering over Knowledge Graph}</span><span class="p">,</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">  </span><span class="na">author</span><span class="p">=</span><span class="s">{Jiang, Jinhao and Zhou, Kun and Zhao, Xin and Wen, Ji-Rong}</span><span class="p">,</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="w">  </span><span class="na">booktitle</span><span class="p">=</span><span class="s">{International Conference on Learning Representations (ICLR)}</span><span class="p">,</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">  </span><span class="na">year</span><span class="p">=</span><span class="s">{2023}</span><span class="p">,</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="w">  </span><span class="na">note</span><span class="p">=</span><span class="s">{arXiv:2212.00959}</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="p">}</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="nc">@inproceedings</span><span class="p">{</span><span class="nl">zhu2022gnnqe</span><span class="p">,</span>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="w">  </span><span class="na">title</span><span class="p">=</span><span class="s">{Neural-Symbolic Models for Logical Queries on Knowledge Graphs}</span><span class="p">,</span>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="w">  </span><span class="na">author</span><span class="p">=</span><span class="s">{Zhu, Zhaocheng and Galkin, Mikhail and Zhang, Zuobai and Tang, Jian}</span><span class="p">,</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="w">  </span><span class="na">booktitle</span><span class="p">=</span><span class="s">{Proceedings of the 39th International Conference on Machine Learning (ICML)}</span><span class="p">,</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="w">  </span><span class="na">pages</span><span class="p">=</span><span class="s">{27454--27478}</span><span class="p">,</span>
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a><span class="w">  </span><span class="na">year</span><span class="p">=</span><span class="s">{2022}</span><span class="p">,</span>
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="w">  </span><span class="na">note</span><span class="p">=</span><span class="s">{arXiv:2205.10128}</span>
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="p">}</span>
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>
+<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a><span class="nc">@inproceedings</span><span class="p">{</span><span class="nl">bai2023qto</span><span class="p">,</span>
+<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a><span class="w">  </span><span class="na">title</span><span class="p">=</span><span class="s">{Answering Complex Logical Queries on Knowledge Graphs via Query Computation Tree Optimization}</span><span class="p">,</span>
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a><span class="w">  </span><span class="na">author</span><span class="p">=</span><span class="s">{Bai, Yushi and Lv, Xin and Li, Juanzi and Hou, Lei}</span><span class="p">,</span>
+<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a><span class="w">  </span><span class="na">booktitle</span><span class="p">=</span><span class="s">{Proceedings of the 40th International Conference on Machine Learning (ICML)}</span><span class="p">,</span>
+<a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a><span class="w">  </span><span class="na">year</span><span class="p">=</span><span class="s">{2023}</span><span class="p">,</span>
+<a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a><span class="w">  </span><span class="na">note</span><span class="p">=</span><span class="s">{arXiv:2212.09567}</span>
+<a id="__codelineno-3-41" name="__codelineno-3-41" href="#__codelineno-3-41"></a><span class="p">}</span>
+<a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a>
+<a id="__codelineno-3-43" name="__codelineno-3-43" href="#__codelineno-3-43"></a><span class="nc">@inproceedings</span><span class="p">{</span><span class="nl">shi2021transfernet</span><span class="p">,</span>
+<a id="__codelineno-3-44" name="__codelineno-3-44" href="#__codelineno-3-44"></a><span class="w">  </span><span class="na">title</span><span class="p">=</span><span class="s">{{TransferNet}: An Effective and Transparent Framework for Multi-hop Question Answering over Relation Graph}</span><span class="p">,</span>
+<a id="__codelineno-3-45" name="__codelineno-3-45" href="#__codelineno-3-45"></a><span class="w">  </span><span class="na">author</span><span class="p">=</span><span class="s">{Shi, Jiaxin and Cao, Shulin and Hou, Lei and Li, Juanzi and Zhang, Hanwang}</span><span class="p">,</span>
+<a id="__codelineno-3-46" name="__codelineno-3-46" href="#__codelineno-3-46"></a><span class="w">  </span><span class="na">booktitle</span><span class="p">=</span><span class="s">{Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing (EMNLP)}</span><span class="p">,</span>
+<a id="__codelineno-3-47" name="__codelineno-3-47" href="#__codelineno-3-47"></a><span class="w">  </span><span class="na">pages</span><span class="p">=</span><span class="s">{4149--4158}</span><span class="p">,</span>
+<a id="__codelineno-3-48" name="__codelineno-3-48" href="#__codelineno-3-48"></a><span class="w">  </span><span class="na">year</span><span class="p">=</span><span class="s">{2021}</span><span class="p">,</span>
+<a id="__codelineno-3-49" name="__codelineno-3-49" href="#__codelineno-3-49"></a><span class="w">  </span><span class="na">note</span><span class="p">=</span><span class="s">{arXiv:2104.07302}</span>
+<a id="__codelineno-3-50" name="__codelineno-3-50" href="#__codelineno-3-50"></a><span class="p">}</span>
+<a id="__codelineno-3-51" name="__codelineno-3-51" href="#__codelineno-3-51"></a>
+<a id="__codelineno-3-52" name="__codelineno-3-52" href="#__codelineno-3-52"></a><span class="nc">@inproceedings</span><span class="p">{</span><span class="nl">sun2018graftnet</span><span class="p">,</span>
+<a id="__codelineno-3-53" name="__codelineno-3-53" href="#__codelineno-3-53"></a><span class="w">  </span><span class="na">title</span><span class="p">=</span><span class="s">{{GraftNet}: Open Domain Question Answering over Knowledge Graphs and Documents}</span><span class="p">,</span>
+<a id="__codelineno-3-54" name="__codelineno-3-54" href="#__codelineno-3-54"></a><span class="w">  </span><span class="na">author</span><span class="p">=</span><span class="s">{Sun, Haitian and Dhingra, Bhuwan and Zaheer, Manzil and Mazaitis, Kathryn and Salakhutdinov, Ruslan and Cohen, William}</span><span class="p">,</span>
+<a id="__codelineno-3-55" name="__codelineno-3-55" href="#__codelineno-3-55"></a><span class="w">  </span><span class="na">booktitle</span><span class="p">=</span><span class="s">{Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing (EMNLP)}</span><span class="p">,</span>
+<a id="__codelineno-3-56" name="__codelineno-3-56" href="#__codelineno-3-56"></a><span class="w">  </span><span class="na">pages</span><span class="p">=</span><span class="s">{666--676}</span><span class="p">,</span>
+<a id="__codelineno-3-57" name="__codelineno-3-57" href="#__codelineno-3-57"></a><span class="w">  </span><span class="na">year</span><span class="p">=</span><span class="s">{2018}</span>
+<a id="__codelineno-3-58" name="__codelineno-3-58" href="#__codelineno-3-58"></a><span class="p">}</span>
+<a id="__codelineno-3-59" name="__codelineno-3-59" href="#__codelineno-3-59"></a>
+<a id="__codelineno-3-60" name="__codelineno-3-60" href="#__codelineno-3-60"></a><span class="nc">@inproceedings</span><span class="p">{</span><span class="nl">sun2019pullnet</span><span class="p">,</span>
+<a id="__codelineno-3-61" name="__codelineno-3-61" href="#__codelineno-3-61"></a><span class="w">  </span><span class="na">title</span><span class="p">=</span><span class="s">{{PullNet}: Open Domain Question Answering with Iterative Retrieval on Knowledge Bases and Text}</span><span class="p">,</span>
+<a id="__codelineno-3-62" name="__codelineno-3-62" href="#__codelineno-3-62"></a><span class="w">  </span><span class="na">author</span><span class="p">=</span><span class="s">{Sun, Haitian and Bedrax-Weiss, Tania and Cohen, William W.}</span><span class="p">,</span>
+<a id="__codelineno-3-63" name="__codelineno-3-63" href="#__codelineno-3-63"></a><span class="w">  </span><span class="na">booktitle</span><span class="p">=</span><span class="s">{Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing (EMNLP-IJCNLP)}</span><span class="p">,</span>
+<a id="__codelineno-3-64" name="__codelineno-3-64" href="#__codelineno-3-64"></a><span class="w">  </span><span class="na">pages</span><span class="p">=</span><span class="s">{2380--2390}</span><span class="p">,</span>
+<a id="__codelineno-3-65" name="__codelineno-3-65" href="#__codelineno-3-65"></a><span class="w">  </span><span class="na">year</span><span class="p">=</span><span class="s">{2019}</span><span class="p">,</span>
+<a id="__codelineno-3-66" name="__codelineno-3-66" href="#__codelineno-3-66"></a><span class="w">  </span><span class="na">note</span><span class="p">=</span><span class="s">{arXiv:1904.09537}</span>
+<a id="__codelineno-3-67" name="__codelineno-3-67" href="#__codelineno-3-67"></a><span class="p">}</span>
+</code></pre></div>
+<hr />
+<h2 id="references">References</h2>
+<p>Bai, Y., Lv, X., Li, J., &amp; Hou, L. (2023). Answering complex logical queries on knowledge graphs via query computation tree optimization. In <em>Proceedings of the 40th International Conference on Machine Learning (ICML 2023)</em>. PMLR. https://arxiv.org/abs/2212.09567</p>
+<p>Das, R., Dhuliawala, S., Zaheer, M., Vilnis, L., Durugkar, I., Krishnamurthy, A., Smola, A., &amp; McCallum, A. (2018). Go for a walk and arrive at the answer: Reasoning over paths in knowledge bases using reinforcement learning. In <em>Proceedings of the 6th International Conference on Learning Representations (ICLR 2018)</em>. OpenReview. https://openreview.net/forum?id=Syg-YfWCW</p>
+<p>He, G., Lan, Y., Jiang, J., Zhao, W. X., &amp; Wen, J. R. (2021). Improving multi-hop knowledge base question answering by learning intermediate supervision signals. In <em>Proceedings of the 14th ACM International Conference on Web Search and Data Mining</em> (pp. 553–561). ACM. https://doi.org/10.1145/3437963.3441753</p>
+<p>Himmelstein, D. S., Lizee, A., Hessler, C., Brueggeman, L., Chen, S. L., Hadley, D., Green, A., Khankhanian, P., &amp; Baranzini, S. E. (2017). Systematic integration of biomedical knowledge prioritizes drugs for repurposing. <em>eLife, 6</em>, e26726. https://doi.org/10.7554/eLife.26726</p>
+<p>Jiang, J., Zhou, K., Dong, Z., Ye, K., Zhao, W. X., &amp; Wen, J. R. (2023). UniKGQA: Unified retrieval and reasoning for solving multi-hop question answering over knowledge graph. In <em>Proceedings of the 11th International Conference on Learning Representations (ICLR 2023)</em>. OpenReview. https://openreview.net/forum?id=Z63RvyAZ2Vh</p>
+<p>Saxena, A., Tripathi, A., &amp; Talukdar, P. (2020). Improving multi-hop question answering over knowledge graphs using knowledge base embeddings. In <em>Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics</em> (pp. 4498–4507). ACL. https://aclanthology.org/2020.acl-main.412</p>
+<p>Shi, J., Cao, S., Hou, L., Li, J., &amp; Zhang, H. (2021). TransferNet: An effective and transparent framework for multi-hop question answering over relation graph. In <em>Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing</em> (pp. 4149–4158). ACL. https://arxiv.org/abs/2104.07302</p>
+<p>Sun, H., Dhingra, B., Zaheer, M., Mazaitis, K., Salakhutdinov, R., &amp; Cohen, W. W. (2018). Open domain question answering using early fusion of knowledge bases and text. In <em>Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing</em> (pp. 4231–4242). ACL. https://aclanthology.org/D18-1455</p>
+<p>Sun, H., Bedrax-Weiss, T., &amp; Cohen, W. W. (2019). PullNet: Open domain question answering with iterative retrieval on knowledge bases and text. In <em>Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing</em> (pp. 2380–2390). ACL. https://arxiv.org/abs/1904.09537</p>
+<p>Yih, W., Richardson, M., Meek, C., Chang, M. W., &amp; Suh, J. (2016). The value of semantic parse labeling for knowledge base question answering. In <em>Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics</em> (Vol. 2, pp. 201–206). ACL. https://aclanthology.org/P16-2033</p>
+<p>Zhang, Y., Dai, H., Kozareva, Z., Smola, A., &amp; Song, L. (2018). Variational reasoning for question answering with knowledge graphs. In <em>Proceedings of the 32nd AAAI Conference on Artificial Intelligence</em> (Vol. 32, No. 1). AAAI Press. https://arxiv.org/abs/1709.04071</p>
+<p>Zhu, Z., Galkin, M., Zhang, Z., &amp; Tang, J. (2022). Neural-symbolic models for logical queries on knowledge graphs. In <em>Proceedings of the 39th International Conference on Machine Learning (ICML 2022)</em> (pp. 27454–27478). PMLR. https://arxiv.org/abs/2205.10128</p>
+<hr />
+<h2 id="notation-for-eta-resolved-conflict">Notation for η (Eta) — Resolved Conflict</h2>
+<p><strong>Decision (Phase 172 / May 2026):</strong> The symbol <code>η</code> was used with two different meanings:
+- In CSA (Phase 43): <code>η</code> = temporal decay weight (one of the 10 CSA parameters)
+- In TSC/DSCF (Phase 1): <code>η</code> was used generically for temperature step decay</p>
+<p><strong>Resolution:</strong> In all publication documents, use:
+- <code>η</code> for CSA temporal decay weight (the 10-parameter formula — dominant usage)
+- <code>η_T</code> for TSC temperature-step decay (Paper A only, subscript T for Temperature)</p>
+<p>All papers after Phase 1 that reference the TSC temperature schedule should use <code>η_T</code>.</p>
+<hr />
+<p><em>Last updated: 2026-06-02 | Phase 212: zero-config full validation (83.2%/63.3%/56.8% H@1, all 39,093 questions) — 3.5pp below tuned, H@10=90.7% confirms reasoning not ranking is the gap | Phase 213: hub_homogeneous × sentence H@1=66.8% (500-sample, 3-hop) — 2D calibration table complete | Phase 53 canonical paper numbers unchanged</em></p>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
