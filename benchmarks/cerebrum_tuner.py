@@ -345,7 +345,7 @@ class LiveDashboard:
         for r in list(reversed(self.records))[:30]:
             delta_pp = (r.h1 - self.best.h1) * 100 if self.best else 0.0
             if r.is_best:
-                delta_str = "[bold green]★best[/bold green]"
+                delta_str = "[bold green]*best[/bold green]"
             elif delta_pp < -2:
                 delta_str = f"[dim red]{delta_pp:+.1f}[/dim red]"
             elif delta_pp < 0:
@@ -806,7 +806,7 @@ def run_tuner(
             study.optimize(objective_fn, n_trials=1, catch=(Exception,))
             if dashboard.records:
                 r    = dashboard.records[-1]
-                flag = "★" if r.is_best else " "
+                flag = "*" if r.is_best else " "
                 print(
                     f"P{r.phase} {r.trial_id:>4}  {r.trb_factor:>5.2f}  {r.r2_boost:>5.2f}  "
                     f"{r.vote_weight:>6.3f}  {r.beam_width:>3}  "
@@ -983,7 +983,7 @@ def run_tuner(
         })
         _print("\nParameter importances (fANOVA):")
         for param, imp in sorted(importances.items(), key=lambda x: -x[1]):
-            bar = "█" * int(imp * 40)
+            bar = "#" * int(imp * 40)
             _print(f"  {param:<16} {imp:.4f}  {bar}")
     except Exception:
         pass
