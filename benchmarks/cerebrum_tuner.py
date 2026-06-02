@@ -339,7 +339,7 @@ class LiveDashboard:
         t.add_column("H@1",   justify="right",              no_wrap=True, width=7)
         t.add_column("H@10",  justify="right",              no_wrap=True, width=7)
         t.add_column("MRR",   justify="right",              no_wrap=True, width=6)
-        t.add_column("Δbest", justify="right",              no_wrap=True, width=7)
+        t.add_column("dBest", justify="right",              no_wrap=True, width=7)
         t.add_column("sec",   justify="right",              no_wrap=True, width=5)
 
         for r in list(reversed(self.records))[:30]:
