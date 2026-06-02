@@ -444,13 +444,14 @@ def _run_eval(
     beta:         float,
     timeout:      int = 600,
     workers:      int = 1,
+    embeddings:   str = "sentence",
 ) -> tuple[float, float, float, float]:
     cmd = [
         sys.executable, "-u", str(_EVAL_SCRIPT),
         "--hop",           "3",
         "--sample",        str(sample),
         "--beam-width",    str(beam_width),
-        "--embeddings",    "sentence",
+        "--embeddings",    embeddings,
         "--vote-weight",   str(vote_weight),
         "--trb-factor",    str(trb_factor),
         "--r2-boost",      str(r2_boost),
@@ -551,7 +552,7 @@ def _run_eval_logged(
             "--fhrb-factor",  str(kwargs["fhrb_factor"]),
             "--gamma",        str(kwargs["gamma"]),
             "--beta",         str(kwargs["beta"]),
-            "--embeddings",   "sentence",
+            "--embeddings",   kwargs.get("embeddings", "sentence"),
             "--max-loops",    "1",
             "--workers",      str(kwargs.get("workers", 1)),
             "--min-eval-hop", "2",
@@ -564,7 +565,7 @@ def _run_eval_logged(
             "--hop",           "3",
             "--sample",        str(sample),
             "--beam-width",    str(kwargs["beam_width"]),
-            "--embeddings",    "sentence",
+            "--embeddings",    kwargs.get("embeddings", "sentence"),
             "--vote-weight",   str(kwargs["vote_weight"]),
             "--trb-factor",    str(kwargs["trb_factor"]),
             "--r2-boost",      str(kwargs["r2_boost"]),
@@ -624,7 +625,7 @@ def _run_eval_logged(
 
 
 # ── ParameterInitializer warm-start ──────────────────────────────────────────
-def _compute_param_init_x0(kb_file: Path) -> Optional[dict]:
+def _compute_param_init_x0(kb_file: Path, embedding_method: str = "random") -> Optional[dict]:
     """
     Compute ParameterInitializer defaults from the KB and return as a param dict
     suitable for p1_study.enqueue_trial().  Returns None on any error (graceful
@@ -654,7 +655,7 @@ def _compute_param_init_x0(kb_file: Path) -> Optional[dict]:
             def is_directed(self): return False
 
         profile = GraphProfiler.profile(_FakeAdapter(), {})
-        init    = ParameterInitializer.compute(profile, deriver)
+        init    = ParameterInitializer.compute(profile, deriver, embedding_method=embedding_method)
         d       = init.as_dict()
         # Clamp to PARAM_SPACE_WIDE bounds so enqueue_trial doesn't error
         for name, bounds in PARAM_SPACE_WIDE.items():
@@ -688,6 +689,7 @@ def run_tuner(
     param_init:    bool           = False,
     kb_file:       Optional[Path] = None,
     dataset:       str            = "metaqa",
+    embeddings:    str            = "sentence",
 ) -> Optional[TrialRecord]:
     """
     Two-phase hyperparameter search.
@@ -781,7 +783,7 @@ def run_tuner(
             h1, h10, mrr, elapsed = _run_eval_logged(
                 log_file=log_file, run_id=run_id, trial_id=tid,
                 sample=sample, timeout=timeout_s, workers=workers,
-                dataset=dataset, **params,
+                dataset=dataset, embeddings=embeddings, **params,
             )
             rec = TrialRecord(
                 trial_id=tid, phase=phase,
@@ -821,7 +823,7 @@ def run_tuner(
 
     if param_init and not _resume_records:
         _kb = kb_file or _DEFAULT_KB
-        x0_hint = _compute_param_init_x0(_kb)
+        x0_hint = _compute_param_init_x0(_kb, embedding_method=embeddings)
         if x0_hint is not None:
             p1_study.enqueue_trial(x0_hint)
             print(f"  Param-init: warm-start trial enqueued from {_kb.name}")
@@ -954,11 +956,11 @@ def run_tuner(
         canonical = (
             f"python -u benchmarks/hetionet_param_eval.py "
             f"--n-questions 200 --min-eval-hop 1 --max-neighbors 200 --workers 8 "
-            f"--embeddings sentence {_param_flags}"
+            f"--embeddings {embeddings} {_param_flags}"
         )
     else:
         canonical = (
-            f"python -u benchmarks/metaqa_eval.py --hop 3 --embeddings sentence "
+            f"python -u benchmarks/metaqa_eval.py --hop 3 --embeddings {embeddings} "
             f"{_param_flags}"
         )
     _print(f"\nCanonical benchmark command:\n  {canonical}\n")
@@ -1003,6 +1005,7 @@ def run_tuner(
                 beta=best.beta,
                 timeout=3600,
                 workers=workers,
+                embeddings=embeddings,
             )
             _print(
                 f"  Validation:  H@1={vh1*100:.2f}%  "
@@ -1089,6 +1092,11 @@ def main() -> None:
         help="(Phase 206) KB to tune against. 'hetionet' uses hetionet_param_eval.py with "
              "PARAM_SPACE_HETIONET. Default: metaqa.",
     )
+    parser.add_argument(
+        "--embeddings", choices=["sentence", "random"], default="sentence",
+        help="Embedding method for eval subprocess and ParameterInitializer warm-start. "
+             "Default: sentence.",
+    )
     args = parser.parse_args()
 
     run_tuner(
@@ -1107,6 +1115,7 @@ def main() -> None:
         param_init=args.param_init,
         kb_file=args.kb_file,
         dataset=args.dataset,
+        embeddings=args.embeddings,
     )
 
 
