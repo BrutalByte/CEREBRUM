@@ -109,6 +109,7 @@ class CSAEngine:
         self._community_distances: Dict[Tuple[int, int], float] = {}
         self._adjacent_pairs: Set[Tuple[int, int]] = set()
         self._community_graph = None
+        self._cdist_cache: Dict[Tuple[int, int], float] = {}
         self.meta_learner = None
         self._query_snapshot: Optional[Dict[str, int]] = None
         self._query_time: Optional[float] = None
@@ -168,6 +169,27 @@ class CSAEngine:
         if 'community_graph' in kwargs: self._community_graph = kwargs['community_graph']
         if 'graph' in kwargs: self._community_graph = kwargs['graph']
 
+    def _lazy_community_distance(self, cu: int, cv: int) -> float:
+        """BFS distance between two communities using the lightweight community graph.
+
+        Falls back to 5.0 (exp(-λ*5) ≈ 0) when graph unavailable or no path.
+        Results are memoized in _cdist_cache.
+        """
+        cached = self._cdist_cache.get((cu, cv))
+        if cached is not None:
+            return cached
+        if self._community_graph is None:
+            return 5.0
+        try:
+            import networkx as nx
+            d = float(nx.shortest_path_length(self._community_graph, cu, cv))
+            d = min(d, 5.0)
+        except Exception:
+            d = 5.0
+        self._cdist_cache[(cu, cv)] = d
+        self._cdist_cache[(cv, cu)] = d
+        return d
+
     def community_score(self, u: str, v: str) -> float:
         cached = self._cs_cache.get((u, v))
         if cached is not None: return cached
@@ -186,7 +208,9 @@ class CSAEngine:
             elif cu == cv: score = 1.0
             elif (cu, cv) in self._adjacent_pairs or (cv, cu) in self._adjacent_pairs: score = 0.5
             else:
-                d = self._community_distances.get((cu, cv), self._community_distances.get((cv, cu), 5.0))
+                d = self._community_distances.get((cu, cv), self._community_distances.get((cv, cu), None))
+                if d is None:
+                    d = self._lazy_community_distance(cu, cv)
                 score = math.exp(-self.lambda_decay * d)
         
         self._cs_cache[(u, v)] = score

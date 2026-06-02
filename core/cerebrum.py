@@ -889,8 +889,21 @@ class CerebrumGraph:
         # ----------------------------------------------------------
         if callback: callback(0.8, "Step 4/5: Building CSA Attention Engine...")
         logger.info("Building CSA engine...")
+
+        # Precompute all-pairs BFS only for small community sets.
+        # MetaQA produces ~15K communities whose distances pkl reaches 3.8 GB —
+        # 8 workers × 3.8 GB = OOM.  Above the threshold we skip the pkl and rely
+        # on lazy per-pair BFS in CSAEngine._lazy_community_distance().
+        _LAZY_DIST_THRESHOLD = 5000
+        n_communities = len(set(cm.values()))
         _dist_cache = cache / f"community_distances_{community_engine}.pkl" if cache else None
-        if not force_rebuild and _dist_cache and _dist_cache.exists():
+        if n_communities > _LAZY_DIST_THRESHOLD:
+            logger.info(
+                "Community count %d > %d — using lazy BFS distances (skipping pkl)",
+                n_communities, _LAZY_DIST_THRESHOLD,
+            )
+            distances = {}
+        elif not force_rebuild and _dist_cache and _dist_cache.exists():
             logger.info("Loading cached community distances from %s", _dist_cache)
             with open(_dist_cache, "rb") as _f:
                 distances = pickle.load(_f)
@@ -987,14 +1000,18 @@ class CerebrumGraph:
             except Exception:
                 _modularity_Q = 0.5
             if self._query_profile is not None:
+                _emb_method = "random" if _is_random_engine else "sentence"
                 self._param_defaults = ParameterInitializer.compute(
-                    self._query_profile, _pi_deriver, modularity_Q=_modularity_Q
+                    self._query_profile, _pi_deriver,
+                    modularity_Q=_modularity_Q,
+                    embedding_method=_emb_method,
                 )
                 self._deriver = _pi_deriver
                 logger.info(
-                    "Phase 207: ParameterInitializer regime=%s  "
+                    "Phase 207: ParameterInitializer regime=%s emb=%s "
                     "gamma=%.3f beta=%.3f vote=%.3f trb=%.3f beam=%d  Q=%.3f",
                     self._param_defaults.effective_regime,
+                    _emb_method,
                     self._param_defaults.gamma, self._param_defaults.beta,
                     self._param_defaults.vote_weight, self._param_defaults.trb_factor,
                     self._param_defaults.beam_width, _modularity_Q,
