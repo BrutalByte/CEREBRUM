@@ -1,5 +1,5 @@
 """
-Phase 205/207/208: ParameterInitializer — principled hyperparameter defaults from graph statistics.
+Phase 205/207/208/213: ParameterInitializer — principled hyperparameter defaults from graph statistics.
 
 Replaces black-box tuning as the *required* starting point.  Given a loaded KB,
 the class analytically derives parameter values that work out-of-the-box for any
@@ -18,14 +18,19 @@ All formulas are grounded in data-science TTPs (see docs/PERFORMANCE_TUNING.md):
   beam_width   — fixed at 12; diminishing returns plateau proven by fANOVA
 
 Constants exist in a 2D space: (regime × embedding_method).
-Sentence-transformers fundamentally changes the scoring landscape — idf_weight
-dominates (fANOVA=0.43) vs beta-dominated (fANOVA=0.22) with random embeddings.
+Sentence-transformers shifts the scoring landscape vs random embeddings.
+Cross-regime pattern: beta converges (~0.96 both regimes × sentence); trb and fhrb
+dominate for hub graphs (fANOVA #1/#2), vote dominates for typed graphs.
 
-Calibration basis:
-  hub_homogeneous   × random:    Phase 204 MetaQA 3-hop  60.36% H@1 (gamma=8.73, beta=2.09)
-  typed_heterogeneous × random:  Phase 207 Hetionet multi-template 61.00% H@1 (hop_expand fixed)
-  typed_heterogeneous × sentence: Phase 208 Hetionet sentence-transformers 55.00% H@1 (tuner pilot)
-  hub_homogeneous   × sentence:  pending — using random constants as estimate
+Calibration basis (2D constant table — all cells filled for known KBs):
+  hub_homogeneous   × random:    Phase 204 MetaQA 3-hop 60.36% H@1 (gamma=8.73,  beta=2.09)
+  typed_heterogeneous × random:  Phase 207 Hetionet     61.00% H@1 (hop_expand fixed)
+  typed_heterogeneous × sentence: Phase 209 Hetionet    81.1%  H@1 (2-hop, multi-hop tuner)
+  hub_homogeneous   × sentence:  Phase 213 MetaQA 3-hop 66.8%  H@1 (gamma=10.14, beta=0.96)
+  mixed × random/sentence:       pending Phase 214 (ConceptNet calibration)
+
+Phase 213 fANOVA (hub_homogeneous × sentence): trb=0.22 (#1), fhrb=0.19 (#2),
+  gamma=0.15, beta=0.12, vote=0.12, r2=0.09, branch=0.09, idf=0.02
 """
 from __future__ import annotations
 
@@ -165,20 +170,20 @@ _SENTENCE_OVERRIDES: dict[str, dict] = {
         "vote_base":     0.565,  # 0.6400 − 0.15×0.5 = 0.565 (vote is now #1 fANOVA driver)
     },
     "hub_homogeneous": {
-        # Phase 213 MetaQA sentence tuner (60-trial Sobol + 10-trial CMA-ES, 2000q sample)
-        # Best config: gamma=8.7319, beta=2.0846, trb=21.486, r2=8.185,
-        #   vote=0.7640, idf=0.0582, branch=0.482, fhrb=3.260  → H@1=61.75%
-        # hub_homogeneous × sentence constants converge to ≈ random-embedding values;
-        # the only meaningful shift is vote_base (0.689 vs 0.72) — sentence embeddings
-        # already encode hub-ness, so community votes carry slightly less weight.
-        "boost_scale":  21.8,    # 8.7319 × 1.55^2.0846 ≈ 21.8
-        "beta":          2.0846, # unchanged vs random — MetaQA hub structure is dominant
-        "trb_c":         9.33,   # 21.486 / ln(10) — same as random
-        "branch_bonus":  0.482,  # same as random
-        "r2_c":         13.49,   # (8.185−1.5) / ln(5.77/9+1) — same as random
-        "fhrb_c":        1.18,   # (3.260−1.0) / ln(6.77) — same as random
-        "idf_scale_c":   0.0102, # 0.0582 / 5.68 — matches global IDF_SCALE_C
-        "vote_base":     0.689,  # 0.764 − 0.15×0.5 (lower than random 0.72)
+        # Phase 213 MetaQA sentence-transformers calibration (60 Sobol + CMA-ES, 500q/trial).
+        # Source: gamma=10.1379, beta=0.9616, trb=31.134, r2=3.977, vote=0.7527,
+        #   idf=0.03934, branch=0.3851, fhrb=7.572  → H@1=66.8% (3-hop, 500-sample)
+        # fANOVA: trb=0.22 (#1), fhrb=0.19 (#2) — contrast with typed where vote leads.
+        # Key shift vs random: beta drops 2.09→0.96 (consistent with typed × sentence=0.9545).
+        "boost_scale":  15.4514, # 10.1379 × 1.55^0.9616
+        "beta":          0.9616,
+        "trb_c":        13.5211, # 31.134 / log(10)
+        "branch_bonus":  0.3851,
+        "r2_c":          5.0018, # (3.977 − 1.5) / log(5.768/9 + 1)
+        "r2_floor":      1.5,
+        "fhrb_c":        3.4374, # (7.572 − 1.0) / log(6.768)
+        "idf_scale_c":   0.00693,# 0.03934 / 5.68
+        "vote_base":     0.6777, # 0.7527 − 0.15×0.5
     },
     # mixed × sentence: pending Phase 215 ConceptNet tuner run
 }
