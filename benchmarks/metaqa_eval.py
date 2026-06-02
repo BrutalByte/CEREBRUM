@@ -1223,6 +1223,10 @@ def main():
                         help="Evaluate on a random sample of N questions per hop.")
     parser.add_argument("--beam-width", type=int,   default=10)
     parser.add_argument("--top-k",      type=int,   default=10)
+    parser.add_argument("--zero-config", action="store_true", default=False,
+                        help="Override all tunable params with ParameterInitializer "
+                             "auto-derived values from graph statistics. "
+                             "Validates zero-config out-of-the-box performance.")
     parser.add_argument("--use-cache",  action="store_true", default=True)
     parser.add_argument("--no-cache",   action="store_true",
                         help="Recompute DSCF and embeddings even if cached.")
@@ -1457,6 +1461,31 @@ def main():
         community_engine    = args.community_engine,
     )
     print(f"  {graph.community_count} communities")
+
+    # ------------------------------------------------------------------
+    # Phase 212: --zero-config — override all tunable params with
+    # ParameterInitializer auto-derived values from graph statistics.
+    # ------------------------------------------------------------------
+    if args.zero_config:
+        _pd = graph.param_defaults
+        if _pd is None:
+            print("\n[zero-config] WARNING: ParameterInitializer not available "
+                  "(graph profiling failed). Running with CLI defaults.")
+        else:
+            print(f"\n[zero-config] ParameterInitializer ({_pd.effective_regime} × "
+                  f"{_pd.embedding_method}) auto-derived params:")
+            for k, v in _pd.as_dict().items():
+                print(f"  {k:14s} = {v}")
+            print()
+            args.beam_width    = _pd.beam_width
+            args.vote_weight   = _pd.vote_weight
+            args.branch_bonus  = _pd.branch_bonus
+            args.trb_factor    = _pd.trb_factor
+            args.idf_weight    = _pd.idf_weight
+            args.r2_boost      = _pd.r2_boost
+            args.fhrb_factor   = _pd.fhrb_factor
+            args.gamma         = _pd.gamma
+            args.beta          = _pd.beta
 
     # ------------------------------------------------------------------
     # Optional: sentence engine for question-text query embeddings

@@ -3,7 +3,8 @@
     "allow": [
       "Bash",
       "Edit",
-      "Write"
+      "Write",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }
