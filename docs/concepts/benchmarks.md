@@ -15,18 +15,18 @@ CEREBRUM achieves these results **with zero training data** on every benchmark.
 | Phase 185/186 | 56.12% | 87.62% | 0.670 | Prior best |
 | Phase 182 | 49.68% | — | — | |
 
-**H@1**: correct answer is the top-ranked result.  
-**H@10**: correct answer appears in the top 10.  
+\(\text{H@1}\): correct answer is the top-ranked result.  
+\(\text{H@10}\): correct answer appears in the top 10.  
 **MRR**: Mean Reciprocal Rank.
 
 ### Parameter Sensitivity
 
 Optuna fANOVA analysis (Phase 197–198) decomposed the variance in H@1 across 100+ trials with 11 scoring parameters:
 
-- **`trb_factor`** explains **60.2%** of H@1 variance — the single dominant driver of answer quality. A change from 4.0 to 6.4 accounts for the majority of improvement since Phase 189.
+- **`trb_factor`** explains **60.2%** of \(\text{H@1}\) variance — the single dominant driver of answer quality. A change from 4.0 to 6.4 accounts for the majority of improvement since Phase 189.
 - **`fhrb_factor`** explains **10.7%** — the second most important parameter, controlling first-hop relation signal strength.
-- All remaining parameters combined account for the final ~29% of variance.
-- **`beam_width`** explains only **0.4%** of H@1 variance. It is effectively irrelevant to answer quality and should be fixed at 8–10 to keep latency predictable. Do not include it in Optuna search budgets.
+- All remaining parameters combined account for the final \(\approx 29\%\) of variance.
+- **`beam_width`** explains only **0.4%** of \(\text{H@1}\) variance. It is effectively irrelevant to answer quality and should be fixed at 8–10 to keep latency predictable. Do not include it in Optuna search budgets.
 
 ## Hetionet (biomedical)
 

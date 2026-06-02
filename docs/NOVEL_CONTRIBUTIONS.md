@@ -6,8 +6,8 @@
 
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
-**Date**: April 2026
-**Status**: v2.52.0 (Phase 172 (STRB — Semantic Terminal Relation Boost) COMPLETE)
+**Date**: June 2026
+**Status**: v2.71.0 (Phase 213 COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -27,7 +27,7 @@
 - LPA (Raghavan et al., 2007): Local propagation only, no modularity signal
 - LPA-Louvain hybrids (Sun et al., 2024): Apply signals to disjoint node subsets by degree threshold - categorically different from DSCF's per-node simultaneous fusion
 
-**Key Technical Differentiator**: The specific architectural choice to compute both $\Delta Q_{modularity}(v, c)$ and $f_{LPA}(v, c)$ for every candidate community $c$ at every node $v$ in every iteration, then fuse them via: $\text{score}(v, c) = \alpha \cdot \Delta Q(v,c) + \beta \cdot f_{LPA}(v,c) + \gamma \cdot \text{flow}(v,c)$
+**Key Technical Differentiator**: The specific architectural choice to compute both \(\Delta Q_{\text{modularity}}(v, c)\) and \(f_{\text{LPA}}(v, c)\) for every candidate community \(c\) at every node \(v\) in every iteration, then fuse them via: \(\text{score}(v, c) = \alpha \cdot \Delta Q(v,c) + \beta \cdot f_{\text{LPA}}(v,c) + \gamma \cdot \text{flow}(v,c)\)
 
 **Relevant files**: `core/community_engine.py`, `core/leiden_native.py`
 **Documented in**: `docs/arxiv/PAPER_001_DSCF_TSC.md`, `docs/specifications/SPEC_001_DSCF_TSC.md`
@@ -39,23 +39,23 @@
 **Description**: A graph edge attention weight formula that incorporates community membership as a soft global constraint alongside semantic similarity, relation type, path length penalty, hop decay, PageRank centrality, temporal decay, node recency, synthesis-density penalty, and grounding confidence. The formula is training-free, computed analytically from graph topology at query time. The current formulation extends the original 6-parameter formula to 10 learnable parameters.
 
 **The Formula**:
-$$a(u,v,k) = \sigma\left(\alpha \cdot \text{sim} + \beta \cdot cs + \gamma \cdot etw - \delta \cdot nd + \varepsilon \cdot hd + \zeta \cdot PR(v) + \eta \cdot td + \iota \cdot nr_v - \mu \cdot sd + \theta \cdot grounding\right)$$
+\[a(u,v,k) = \sigma\!\left(\alpha \cdot \text{sim} + \beta \cdot cs + \gamma \cdot etw - \delta \cdot nd + \varepsilon \cdot hd + \zeta \cdot PR(v) + \eta \cdot td + \iota \cdot nr_v - \mu \cdot sd + \theta \cdot grounding\right)\]
 
 Where:
-- $\alpha \cdot \text{sim}$: Semantic similarity (cosine distance between entity embeddings)
-- $\beta \cdot cs$: Community score (live DSCF community co-membership)
-- $\gamma \cdot etw$: Edge-type weight (relation-specific strength)
-- $\delta \cdot nd$: Normalized distance penalty
-- $\varepsilon \cdot hd$: Hop decay (exponential confidence reduction per hop)
-- $\zeta \cdot PR(v)$: Global PageRank authority prior
-- $\eta \cdot td$: Temporal decay (time since edge creation)
-- $\iota \cdot nr_v$: Node recency (recency of traversal visits)
-- $\mu \cdot sd$: Synthesis-density penalty (fraction of synthetic edges in path)
-- $\theta \cdot grounding$: Grounding confidence (provenance and verification score)
+- \(\alpha \cdot \text{sim}\): Semantic similarity (cosine distance between entity embeddings)
+- \(\beta \cdot cs\): Community score (live DSCF community co-membership)
+- \(\gamma \cdot etw\): Edge-type weight (relation-specific strength)
+- \(\delta \cdot nd\): Normalized distance penalty
+- \(\varepsilon \cdot hd\): Hop decay (exponential confidence reduction per hop)
+- \(\zeta \cdot PR(v)\): Global PageRank authority prior
+- \(\eta \cdot td\): Temporal decay (time since edge creation)
+- \(\iota \cdot nr_v\): Node recency (recency of traversal visits)
+- \(\mu \cdot sd\): Synthesis-density penalty (fraction of synthetic edges in path)
+- \(\theta \cdot grounding\): Grounding confidence (provenance and verification score)
 
-Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
+Default weights: \((0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)\)
 
-**Novelty Statement**: Graph Attention Networks (GAT, HAN, HGT) compute local attention over immediate neighborhoods using learned weight matrices. CSA is the first attention formulation that includes global community membership ($S_C(u,v)$) as a term. The 10-parameter extension further adds temporal, recency, synthesis-quality, and grounding dimensions - none of which appear in any published GNN attention formula.
+**Novelty Statement**: Graph Attention Networks (GAT, HAN, HGT) compute local attention over immediate neighborhoods using learned weight matrices. CSA is the first attention formulation that includes global community membership \(S_C(u,v)\) as a term. The 10-parameter extension further adds temporal, recency, synthesis-quality, and grounding dimensions - none of which appear in any published GNN attention formula.
 
 **Closest Prior Art**:
 - GAT (Veličković et al., 2018): Local neighborhood attention, learned weights, no community term
@@ -63,7 +63,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 - HGT (Hu et al., 2020): Heterogeneous attention, learned, no community term
 - GraphRAG (Microsoft, Edge et al., 2024): Communities used for LLM summarization, not as attention weights in traversal
 
-**Key Technical Differentiator**: The $\beta \cdot S_C(u,v)$ term (community co-membership from live DSCF partitions, not learned parameters), extended with four novel dimensions: temporal decay, node recency, synthesis-density penalty, and grounding confidence - producing the first 10-dimensional analytically-computed KG attention formula.
+**Key Technical Differentiator**: The \(\beta \cdot S_C(u,v)\) term (community co-membership from live DSCF partitions, not learned parameters), extended with four novel dimensions: temporal decay, node recency, synthesis-density penalty, and grounding confidence - producing the first 10-dimensional analytically-computed KG attention formula.
 
 **Relevant files**: `core/attention_engine.py`, `core/reasoning_logit.py`
 **Documented in**: `docs/arxiv/PAPER_002_CSA.md`, `docs/specifications/SPEC_002_CSA.md`
@@ -322,7 +322,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 20: Engram-Steered Beam Traversal - Relation-Pattern-Biased Beam Pruning
 
-**Description**: `Engram` stores compressed relation-sequence tuples from prior successful reasoning paths. `EngramTraversal` biases beam pruning at each hop via: `effective_score = score x (1 + engram_strength x affinity)`, where `affinity` is computed from a prefix index over the stored patterns. The cache persists to disk across process restarts via JSON serialization.
+**Description**: `Engram` stores compressed relation-sequence tuples from prior successful reasoning paths. `EngramTraversal` biases beam pruning at each hop via: \(\text{effective\_score} = \text{score} \times (1 + \text{engram\_strength} \times \text{affinity})\), where `affinity` is computed from a prefix index over the stored patterns. The cache persists to disk across process restarts via JSON serialization.
 
 **Novelty Statement**: Reinforcement learning-based path selection (e.g., MINERVA, M-Walk) trains a policy on labelled data. CEREBRUM's Engram steering is training-free: it accumulates successful reasoning patterns from live queries and immediately biases future traversal without any training loop, labelled data, or gradient computation.
 
@@ -449,7 +449,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 32: Predictive Coding Engine with Soliton Index (Phase 69)
 
-**Description**: `PredictiveCodingEngine` generates a *prior path* from the top Engram pattern before each traversal. After traversal, a **Prediction Error (PE)** is computed as the Jaccard divergence between prior and actual relation sequences. PE drives ChemicalModulator signals. The `soliton_index = 1 − mean(recent PEs)` measures prior stability - a self-reinforcing prior that consistently yields low PE behaves as a soliton (self-localising wave).
+**Description**: `PredictiveCodingEngine` generates a *prior path* from the top Engram pattern before each traversal. After traversal, a **Prediction Error (PE)** is computed as the Jaccard divergence between prior and actual relation sequences. PE drives ChemicalModulator signals. The \(\text{soliton\_index} = 1 - \text{mean}(\text{recent PEs})\) measures prior stability - a self-reinforcing prior that consistently yields low PE behaves as a soliton (self-localising wave).
 
 **Novelty Statement**: Predictive coding has been applied to neural perception (Rao & Ballard 1999). This is the first application to symbolic KG reasoning: a training-free prior derived from empirical traversal history, with a wave-coherence metric (`soliton_index`) for prior stability monitoring.
 
@@ -459,7 +459,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 33: Looped Beam Traversal with Adaptive Exit Gate (Phase 70)
 
-**Description**: `LoopedBeamTraversal` wraps any beam engine and applies it T times. Between loops: top-K answer entities expand seeds (semantic channel), PE->ChemicalModulator adjusts beam params (metabolic channel), Engram records bias pruning (mnemonic channel). Adaptive exit gate: `|ΔPE| < γ` (primary) or answer-set Jaccard ≥ θ (fallback).
+**Description**: `LoopedBeamTraversal` wraps any beam engine and applies it T times. Between loops: top-K answer entities expand seeds (semantic channel), PE→ChemicalModulator adjusts beam params (metabolic channel), Engram records bias pruning (mnemonic channel). Adaptive exit gate: \(|\Delta\text{PE}| < \gamma\) (primary) or answer-set Jaccard \(\geq \theta\) (fallback).
 
 **Novelty Statement**: LoopLM-style iteration (arXiv:2510.25741) applies looping to neural language models. This is the first application to symbolic KG beam search, with three distinct inter-loop feedback channels (semantic, metabolic, mnemonic) and a prediction-error-driven exit condition rather than a fixed iteration count.
 
@@ -489,7 +489,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 36: EMA-Based DiscoveryCalibrator with Inverse-Rate Sampling (Phase 73)
 
-**Description**: `DiscoveryCalibrator` tracks per-community scan and discovery rates via Exponential Moving Average. An inverse-rate multiplier `weight = global_rate / (community_rate + ε)` boosts understudied communities in discovery scoring. Cold-start: unscanned communities receive `max_weight` (5.0). Temporal recency scoring added to `ValidationReport` using exponential decay with 7-year half-life.
+**Description**: `DiscoveryCalibrator` tracks per-community scan and discovery rates via Exponential Moving Average. An inverse-rate multiplier \(\text{weight} = \text{global\_rate} / (\text{community\_rate} + \varepsilon)\) boosts understudied communities in discovery scoring. Cold-start: unscanned communities receive `max_weight` (5.0). Temporal recency scoring added to `ValidationReport` using exponential decay with 7-year half-life.
 
 **Novelty Statement**: KG research agents sample uniformly or by degree. Adaptive per-community EMA-driven inverse-rate rebalancing for autonomous KG discovery, with cold-start maximum weighting and temporal evidence recency, is a novel contribution.
 
@@ -602,7 +602,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 | CEREBRUM Component | Closest Prior Art | Key Distinction |
 |---|---|---|
 | DSCF simultaneous fusion | LPA-Louvain hybrids (Sun 2024) | Per-node vs. per-population fusion |
-| CSA formula ($S_C$ term) | GAT, HAN, HGT | Community term absent from all GNN attention |
+| CSA formula (\(S_C\) term) | GAT, HAN, HGT | Community term absent from all GNN attention |
 | 10-parameter CSA extension | All GNN attention formulas | Temporal, recency, synthesis-density, grounding terms are entirely novel |
 | Zero-shot beam traversal | MINERVA, DeepPath, BeamQA | Training required vs. fully training-free |
 | Bridge Twins (LTP/LTD) | GNN shortcuts, agentic expansion | Experience-dependent vs. static/agent-added |
@@ -634,7 +634,7 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 | **Looped Beam Traversal** | LoopLM (arXiv:2510.25741) | Three inter-loop channels (semantic/metabolic/mnemonic) + PE exit gate |
 | **AutoApprover (tiered + online SGD)** | Binary accept/reject pipelines | Three-tier stack; learns online from human confirmations |
 | **TriangulationEngine (4-perspective)** | Single-direction link prediction | Simultaneous reverse, multi-strategy, path-independence, type-consistency |
-| **DiscoveryCalibrator (EMA + inverse-rate)** | Uniform or degree-weighted sampling | Per-community EMA + inverse-rate rebalancing + cold-start max weight |
+| **DiscoveryCalibrator (EMA + inverse-rate)** | Uniform or degree-weighted sampling | Per-community EMA + inverse-rate rebalancing (\(\text{weight} = \text{global\_rate}/(\text{community\_rate}+\varepsilon)\)) + cold-start max weight |
 | **Autonomous Discovery Loop + circuit breaker** | NELL, ATOMIC batch updates | Sliding-window circuit breaker + per-cycle cap + dry-run + checkpoint |
 | **ProvenanceLedger (per-batch rollback)** | Snapshot-level rollback | Fine-grained per-batch and per-cycle targeted edge removal |
 | **Loop-Provenance Recovery** | No equivalent | Circuit-breaker triggered automatic transactional rollback |
@@ -677,9 +677,9 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 49: Distinct-Branch Convergence (DBC) Reranking for Multi-Hop KG QA
 
-**Description**: After beam traversal, `extract_answers()` tracks for each terminal entity the set of distinct hop-2 intermediate nodes (second-position intermediaries, `path.nodes[2]`) from which it is reached. A multiplicative branch-diversity bonus `factor = 1.0 + w * log1p(n_branches - 1)` is applied to the combined score, where `w=0.25` empirically. This promotes entities confirmed via multiple *independent* 3-hop chains over hub entities that accumulate high vote sums via repetitive paths through the same intermediate node.
+**Description**: After beam traversal, `extract_answers()` tracks for each terminal entity the set of distinct hop-2 intermediate nodes (second-position intermediaries, `path.nodes[2]`) from which it is reached. A multiplicative branch-diversity bonus \(\text{factor} = 1.0 + w \cdot \log_1p(n_{\text{branches}} - 1)\) is applied to the combined score, where \(w = 0.25\) empirically. This promotes entities confirmed via multiple *independent* 3-hop chains over hub entities that accumulate high vote sums via repetitive paths through the same intermediate node.
 
-**Novelty Statement**: Existing ensemble-style KG reranking (e.g., PathRanker, NSM, GraftNet) aggregates path scores by count or weighted sum, without distinguishing path independence. CEREBRUM's branch key (`nodes[2]`) measures structural independence at the second hop — paths sharing the same hop-2 intermediary are treated as a single "branch" regardless of their count. A log-scale bonus rewards genuine multi-branch corroboration without over-penalizing single-branch evidence (factor=1.0 when n=1). This is distinct from vote_weight (which accumulates total path scores) and from branch_count (which counts total paths): it specifically measures the *structural diversity* of the evidence base.
+**Novelty Statement**: Existing ensemble-style KG reranking (e.g., PathRanker, NSM, GraftNet) aggregates path scores by count or weighted sum, without distinguishing path independence. CEREBRUM's branch key (`nodes[2]`) measures structural independence at the second hop — paths sharing the same hop-2 intermediary are treated as a single "branch" regardless of their count. A log-scale bonus rewards genuine multi-branch corroboration without over-penalizing single-branch evidence (\(\text{factor} = 1.0\) when \(n = 1\)). This is distinct from vote_weight (which accumulates total path scores) and from branch_count (which counts total paths): it specifically measures the *structural diversity* of the evidence base.
 
 **Key Technical Differentiator**: For a 3-hop path seed→e1→e2→answer, two paths sharing the same e2 but different e1 are considered a *single branch* (corroborating evidence from the same intermediate structure). Two paths using different e2 values (different hop-2 nodes) are independent branches. This distinction is not captured by standard path count aggregation.
 
@@ -691,12 +691,12 @@ Default weights: $(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)$
 
 ### Claim 50: Cross-Type Penultimate Relation Boost via Training-Data r3→r2 Map
 
-**Description**: The existing penultimate cascade in `BeamTraversal` fires `sqrt(TRB_factor)` at
+**Description**: The existing penultimate cascade in `BeamTraversal` fires \(\sqrt{\text{TRB\_factor}}\) at
 hop N-1 only for the same relation as r3. In MetaQA 3-hop templates, hop-2 edges are almost
 always `starred_actors` regardless of r3, making the cascade structurally dead. A new
 `penultimate_relation_boost` parameter (separate from `terminal_relation_boost`) is built by
 counting, for each r3, which r2 value appears most frequently in (seed, correct_answer) training
-walks through the KB. The top r2 per r3 is applied at hop N-1 with weight `sqrt(r3_boost)`,
+walks through the KB. The top r2 per r3 is applied at hop N-1 with weight \(\sqrt{\text{r3\_boost}}\),
 independently of what relation appears at the terminal hop.
 
 **Novelty Statement**: No prior work on KG multi-hop traversal distinguishes the penultimate
@@ -704,7 +704,7 @@ relation type from the terminal relation type when applying traversal guidance. 
 implementations (including CEREBRUM Phase 146-148) assume the most informative relation at hop
 N-1 is the same as r3. The data-driven r3→r2 map formalizes the insight that 3-hop KG templates
 have structured intermediate-hop constraints that differ from the terminal hop. The map is built
-with O(|train|×|KB|) graph walks — zero neural components, zero tuned parameters.
+with \(O(|\text{train}| \times |\text{KB}|)\) graph walks — zero neural components, zero tuned parameters.
 
 **Key Differentiator**: `penultimate_relation_boost` is orthogonal to `terminal_relation_boost`:
 the terminal boost filters wrong-type answers at hop N; the penultimate boost steers intermediate
@@ -724,7 +724,7 @@ paths), `reasoning/expanded_traversal.py` (threading), `core/cerebrum.py` (query
 
 ### Claim 51: r2 Path-Consistency Boost for Answer Re-ranking
 
-**Description**: After beam traversal, for each candidate answer, inspect `answer.best_path.nodes[1]` — the relation at hop 2 of the H1SE sub-path. If this relation matches the training-derived expected r2 for the detected terminal relation (r3→r2 map from Phase 156), multiply the answer's score by `(1 + r2_boost)` (default r2_boost=0.40). Answers are then re-sorted by the boosted score. This is a pure post-hoc re-ranking: the traversal is unchanged, no paths are pruned, and answers without a best_path or with an unknown r2 are unaffected.
+**Description**: After beam traversal, for each candidate answer, inspect `answer.best_path.nodes[1]` — the relation at hop 2 of the H1SE sub-path. If this relation matches the training-derived expected r2 for the detected terminal relation (r3→r2 map from Phase 156), multiply the answer's score by \((1 + \text{r2\_boost})\) (default r2_boost=0.40). Answers are then re-sorted by the boosted score. This is a pure post-hoc re-ranking: the traversal is unchanged, no paths are pruned, and answers without a best_path or with an unknown r2 are unaffected.
 
 **Novelty Statement**: Existing KG path-ranking methods score paths based on edge weights, entity features, or relation embeddings accumulated along the path during traversal. CEREBRUM's r2-consistency boost is applied *after* traversal and targets a single structural invariant: whether the best-scoring path's hop-2 relation matches the KB-derived canonical r2 for that query type. Because `TraversalPath.nodes` uses alternating entity/relation representation, `nodes[1]` is the first non-seed relation — a lightweight structural check requiring no additional graph operations. The approach exploits the regularity of MetaQA 3-hop templates without requiring template classifiers or additional training.
 
@@ -756,8 +756,8 @@ For commercial licensing: **bryan.alexander@buchorn.com**
 
 **Description**: A build-time component that computes per-relation structural statistics
 from the graph in one O(E) pass — no domain keywords, no LLM, no question text. For
-each relation type, SRI computes `specificity(r) = target_diversity(r) / (1 + log1p(mean_target_degree(r)))`,
-where `target_diversity = unique_targets / freq`. At query time, `to_boost_dict()` ranks
+each relation type, SRI computes \(\text{specificity}(r) = \text{target\_diversity}(r) / (1 + \log_1p(\text{mean\_target\_degree}(r)))\),
+where \(\text{target\_diversity} = \text{unique\_targets} / \text{freq}\). At query time, `to_boost_dict()` ranks
 candidate terminal relations by specificity and produces a `Dict[str, float]` in the same
 format as `terminal_relation_boost`. Hard-select mode (default) applies a boost only when
 the top-1 specificity exceeds the top-2 by a configurable confidence ratio; otherwise
@@ -798,13 +798,13 @@ search returns top-K candidate answers, CTRI:
    corrupting the vote.
 2. **Community fallback**: when path info is absent, votes via DSCF community dominant-relation
    fingerprints (built at graph load time by `build_community_fingerprints()`).
-3. **Boost when consensus is strong**: if the winning relation's vote share ≥ `min_consensus_fraction`
+3. **Boost when consensus is strong**: if the winning relation's vote share \(\geq\) `min_consensus_fraction`
    (default 0.65), boost all answers whose path uses that relation by `boost_factor`.
 
 Community fingerprints (`_community_dominant_rel`, `_community_purity`) are computed in one O(E)
 pass counting **incoming** edges per community — terminal entities receive these relation types,
 so incoming-edge counting correctly fingerprints entity type (year/genre/language communities have
-purity ≥ 0.9; actor/director communities ~0.7).
+purity \(\geq 0.9\); actor/director communities \(\approx 0.7\)).
 
 **Novelty Statement**: CTRI is the first post-traversal terminal relation inference method that
 uses the traversal's own path evidence rather than pre-computed global statistics. The distinction
@@ -845,7 +845,7 @@ purity provides reliable type-direction inference without domain vocabulary.
 
 **Description**: A beam search configuration where the intermediate hop (hop-2 in 3-hop queries)
 uses an independently wider beam width than the entry and exit hops. The key parameters are:
-- `hop2_beam_width=20` at the middle traversal step (2× the outer beam)
+- `hop2_beam_width=20` at the middle traversal step (\(2\times\) the outer beam)
 - `beam_width=10` for hop-1 (tight entry — prevents seed-adjacent noise)
 - `beam_width=10` for hop-3 (tight exit — TRB handles final-hop disambiguation)
 - `trb_factor=8.0` (recalibrated from 5.0 to compensate for richer intermediate candidates)
@@ -863,7 +863,7 @@ is widest. This is counter-intuitive because conventional wisdom suggests wideni
 maximize downstream options. The SABS finding is that for structured multi-hop KG reasoning with
 TRB-based final-hop re-ranking, widening hop-2 specifically captures the structural diversity
 needed while TRB compensates at the terminal step. The combination is synergistic: wider hop-2
-feeds more diverse intermediate entities into hop-3; stronger TRB (8.0×) then confidently selects
+feeds more diverse intermediate entities into hop-3; stronger TRB (\(8.0\times\)) then confidently selects
 among them using the known terminal relation.
 
 **Empirical results on MetaQA 3-hop** (full 14,274):
@@ -919,7 +919,7 @@ intermediate entity was pruned.
   sources of binding interactions, only drugs are sources of treatment relations), legal KGs
   (only courts are sources of judgment relations), scientific KGs (only specific entity types
   are sources of causal relations). In such graphs, TAB reduces beam coverage failure
-  proportional to `1 - |anchor_set| / |all_hop2_candidates|`.
+  proportional to \(1 - |\text{anchor\_set}| / |\text{all\_hop2\_candidates}|\).
 
 **Relevant files**: `reasoning/traversal.py` (`_anchor_hints`, anchor-aware `_prune_candidates`),
 `reasoning/expanded_traversal.py` (`_stage1_anchor`, `_rank_key` anchor bonus, `_make_traversal`
@@ -949,7 +949,7 @@ The framework introduces three methodological contributions over prior KG benchm
 
 3. **TAB anchor discrimination measurement**: Reports `|_anchor_sources[R]| / |all_nodes|`
    for each template's terminal relation. For "Compound-treats-Disease":
-   `1,145 / 47,031 = 2.4%` — a strict subset that enables genuine intermediate hop
+   \(1{,}145 / 47{,}031 = 2.4\%\) — a strict subset that enables genuine intermediate hop
    discrimination. Provides the first empirical measurement of TAB's discrimination capacity
    across different KG types.
 
@@ -962,7 +962,7 @@ structure-only community detection recovers biological taxonomy.
 47,031 nodes, 2,107,709 edges):
 
 DSCF type alignment purity: **0.6375** — 1,877/1,898 communities (98.9%) achieved purity
->=0.80. DSCF recovered biologically meaningful clusters purely from graph topology.
+\(\geq 0.80\). DSCF recovered biologically meaningful clusters purely from graph topology.
 
 | Template | Hop | BFS H@1 | DSCF+CSA | +TRB | +H1SE | +H1SE+TAB |
 |---|---|---|---|---|---|---|
@@ -1005,7 +1005,7 @@ manual per-graph configuration and enables zero-shot strategy selection on unsee
 **Key signals**:
 - `hub_score`: fraction of total edge-degree incident to top-1% nodes. Direct proxy for
   "will hub competition starve the beam?" — the triggering condition for H1SE.
-- `min_rel_coverage`: minimum `|source_nodes(R)| / |nodes|` across all relation types.
+- `min_rel_coverage`: minimum \(|\text{source\_nodes}(R)| / |\text{nodes}|\) across all relation types.
   A value < 10% flags at least one typed/selective relation — the discriminator between
   homogeneous (MetaQA) and heterogeneous (Hetionet) KGs.
 - `mean_rel_coverage`: mean coverage across all relations. Distinguishes uniform graphs
@@ -1113,7 +1113,7 @@ the "no training data" invariant of the CEREBRUM framework.
 
 ### Claim 59: Empirical Hyperparameter Sensitivity Analysis for Knowledge Graph Beam Traversal Scoring (Phase 198)
 
-**Description**: Using Optuna TPE with fANOVA importance analysis across 11 scoring parameters on MetaQA 3-hop (14,274 questions), CEREBRUM establishes that Terminal Relation Boost (TRB) explains 60.2% of H@1 variance — 150× more than beam width (0.4%). First-Hop Relation Boost (FHRB), previously unrecognized as a significant parameter, accounts for 10.7%. Release-year questions require a structurally lower path-consistency boost (~2.0) than person-type relations (~6-8), confirmed independently across two separate 2000-question tuning runs. These findings are the first systematic sensitivity analysis of beam traversal scoring parameters for KGQA and provide design guidance for future KGQA systems.
+**Description**: Using Optuna TPE with fANOVA importance analysis across 11 scoring parameters on MetaQA 3-hop (14,274 questions), CEREBRUM establishes that Terminal Relation Boost (TRB) explains 60.2% of \(\text{H@1}\) variance — \(150\times\) more than beam width (0.4%). First-Hop Relation Boost (FHRB), previously unrecognized as a significant parameter, accounts for 10.7%. Release-year questions require a structurally lower path-consistency boost (~2.0) than person-type relations (~6-8), confirmed independently across two separate 2000-question tuning runs. These findings are the first systematic sensitivity analysis of beam traversal scoring parameters for KGQA and provide design guidance for future KGQA systems.
 
 **Novelty Statement**: Prior work on KGQA hyperparameter tuning (MINERVA, BeamQA, CEREBRUM Phases 183-186) uses ablation studies or grid/random search to find good parameter values, but does not measure the *relative importance* of individual parameters to overall system performance. CEREBRUM's fANOVA sensitivity analysis is the first to quantify the variance contribution of each scoring parameter in a beam traversal system, revealing that: (1) terminal relation detection dominates all other parameters by an order of magnitude; (2) beam width — the most commonly tuned parameter in beam search systems — is essentially irrelevant once scoring is correct; (3) first-hop guidance is the second most important factor, substantially outweighing global path-consistency parameters. These findings invert common assumptions about beam search tuning and have direct implications for the design of future KGQA systems.
 

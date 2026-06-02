@@ -41,7 +41,7 @@ never in a table alongside supervised methods.
 r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs ~4h serial).
 14,268/14,274 questions answered (6 skipped). Run date: 2026-05-14.
 
-**Phase progression (3-hop H@1, full 14,274 questions):**
+**Phase progression (3-hop \(\text{H@1}\), full 14,274 questions):**
 
 | Phase | Key addition | H@1 | H@10 | MRR |
 |-------|-------------|-----|------|-----|
@@ -75,8 +75,8 @@ Run date: 2026-06-02. Command: `python benchmarks/metaqa_eval.py --zero-config -
 trb_factor=21.48, gamma=0.5, beta=2.0, r2_boost=8.18, fhrb_factor=3.26,
 idf_weight=0.058, vote_weight=0.758, branch_bonus=0.48, beam_width=12.
 
-**Finding:** Zero-config (no tuning) lands 3.5pp below Phase 204 tuned (60.4% 3-hop H@1).
-H@10=90.7% confirms the system *finds* the answer in top-10 the vast majority of the time —
+**Finding:** Zero-config (no tuning) lands 3.5pp below Phase 204 tuned (60.4% 3-hop \(\text{H@1}\)).
+\(\text{H@10} = 90.7\%\) confirms the system *finds* the answer in top-10 the vast majority of the time —
 the gap to supervised methods is primarily a ranking problem, not a reasoning failure.
 
 ---
@@ -124,7 +124,7 @@ python -u benchmarks/hetionet_param_eval.py \
 | trb_factor | 0.0384 | █ |
 | beam_width | 0.0028 | |
 
-Note: beam_width importance ≈0 confirms fixed at 8 is correct. beta is now the dominant parameter (was near-zero in Phase 206 broken-2-hop run).
+Note: beam_width importance \(\approx 0\) confirms fixed at 8 is correct. beta is now the dominant parameter (was near-zero in Phase 206 broken-2-hop run).
 
 ### Phase 207 — Full Validation Results (200q/template, Phase 207 params)
 
@@ -184,7 +184,7 @@ Phase 208 adds sentence-transformers embeddings (384-dim) + GraphSAGE smoothing 
 | branch_bonus | ~0.03 | █ |
 | fhrb_factor | ~0.02 | █ |
 
-Note: idf_weight dominance (0.43) with sentence-transformers vs beta dominance (0.22) with random embeddings confirms the 2D constant space (regime × embedding_method).
+Note: idf_weight dominance (0.43) with sentence-transformers vs beta dominance (0.22) with random embeddings confirms the 2D constant space (regime \(\times\) embedding_method).
 
 **Canonical eval command (Phase 208):**
 ```bash
@@ -217,7 +217,7 @@ python -u benchmarks/hetionet_param_eval.py \
 **Finding: sentence-transformers regresses vs random on multi-hop.** 1-hop is near-parity (94.0% vs 95.7%) but 2-hop drops 11pp and 3-hop drops 18pp. Two compounding causes:
 
 1. **AvgTyped collapse on 2-hop**: disease_gene_pathway 3.1→1.6, compound_gene_disease 0.9→0.5 — the semantic similarity filter culls more candidates than random does, starving the beam before it can complete the path. idf_weight=0.032 (low) was meant to compensate but insufficient.
-2. **Tuner pilot used 20q/template** — too small to calibrate 2-hop and 3-hop templates independently. The tuner pooled all templates, allowing 1-hop (3×) to dominate the H@1 signal.
+2. **Tuner pilot used 20q/template** — too small to calibrate 2-hop and 3-hop templates independently. The tuner pooled all templates, allowing 1-hop (\(3\times\)) to dominate the \(\text{H@1}\) signal.
 
 **Root cause**: Phase 208 tuner calibrated against all hops simultaneously with 20q each. The optimal idf_weight for 1-hop (low penalty → more candidates) conflicts with 2-hop (needs higher IDF to suppress false positives at the intermediate node).
 
@@ -320,7 +320,7 @@ Template codes: dgp=disease_gene_pathway, cge=compound_gene_disease, dcvg=diseas
 
 **Finding 1 — branch_bonus confirmed optimal at 0.032.** 2-hop degrades monotonically as branch_bonus rises. disease_gene_pathway AvgTyped collapses 4.6→2.1 as branch_bonus rises: higher values bias the beam toward branchy intermediate paths, culling typed candidates before the answer hop.
 
-**Finding 2 — 3-hop is insensitive to branch_bonus.** `disease_compound_via_gene` is locked at 48.5% for all values ≥ 0.10, and only marginally better at 0.032 (50.8%). The 3-hop ceiling is not a structural parameter problem.
+**Finding 2 — 3-hop is insensitive to branch_bonus.** `disease_compound_via_gene` is locked at 48.5% for all values \(\geq 0.10\), and only marginally better at 0.032 (50.8%). The 3-hop ceiling is not a structural parameter problem.
 
 **Finding 3 — The 3-hop regression is semantic in origin.** Sentence-transformers introduce cosine-similarity bias that suppresses valid cross-type paths. The `disease_compound_via_gene` template traverses maximally dissimilar semantic types (disease→gene→compound); the alpha (semantic similarity) CSA term systematically penalizes valid paths at each hop because the entity types are semantically distant. Random embeddings have no such bias and achieve 79.5%.
 
@@ -423,7 +423,7 @@ Use Phase 53 numbers in all paper comparison tables.
 > CEREBRUM achieves these results with zero task-specific training, no labeled question-answer pairs,
 > and no gradient updates — operating purely from graph structure and pre-trained sentence embeddings.
 > To our knowledge, this represents the first training-free baseline for multi-hop KGQA, establishing
-> a reference point for what structural reasoning alone can achieve. The H@10 story is the key result:
+> a reference point for what structural reasoning alone can achieve. The \(\text{H@10}\) story is the key result:
 > CEREBRUM retrieves the correct answer in its top-10 candidates at 96.6% (1-hop), 86.3% (2-hop),
 > and 50.3% (3-hop) — the system *finds* the answer, it does not yet rank it first. This is a ranking
 > challenge, not a reasoning failure. Supervised methods benefit from task-specific training that
@@ -533,17 +533,17 @@ Zhu, Z., Galkin, M., Zhang, Z., & Tang, J. (2022). Neural-symbolic models for lo
 
 ---
 
-## Notation for η (Eta) — Resolved Conflict
+## Notation for \(\eta\) (Eta) — Resolved Conflict
 
-**Decision (Phase 172 / May 2026):** The symbol `η` was used with two different meanings:
-- In CSA (Phase 43): `η` = temporal decay weight (one of the 10 CSA parameters)
-- In TSC/DSCF (Phase 1): `η` was used generically for temperature step decay
+**Decision (Phase 172 / May 2026):** The symbol \(\eta\) was used with two different meanings:
+- In CSA (Phase 43): \(\eta\) = temporal decay weight (one of the 10 CSA parameters)
+- In TSC/DSCF (Phase 1): \(\eta\) was used generically for temperature step decay
 
 **Resolution:** In all publication documents, use:
-- `η` for CSA temporal decay weight (the 10-parameter formula — dominant usage)
-- `η_T` for TSC temperature-step decay (Paper A only, subscript T for Temperature)
+- \(\eta\) for CSA temporal decay weight (the 10-parameter formula — dominant usage)
+- \(\eta_T\) for TSC temperature-step decay (Paper A only, subscript T for Temperature)
 
-All papers after Phase 1 that reference the TSC temperature schedule should use `η_T`.
+All papers after Phase 1 that reference the TSC temperature schedule should use \(\eta_T\).
 
 ---
 
