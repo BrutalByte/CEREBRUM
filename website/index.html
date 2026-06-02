@@ -184,7 +184,7 @@
     <!-- Wordmark -->
     <div class="flex items-center gap-3">
       <span class="font-mono font-semibold text-white tracking-tight text-lg">CEREBRUM</span>
-      <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/30">v2.66</span>
+      <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/30">v2.71</span>
     </div>
     <!-- Nav links (desktop) -->
     <div class="hidden md:flex items-center gap-8">
@@ -344,9 +344,9 @@
 
     <!-- CTAs -->
     <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <a href="#" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-indigo text-white font-semibold hover:bg-indigo/80 transition-colors">
-        Read the Paper →
-        <span class="text-xs px-1.5 py-0.5 rounded bg-white/20">Coming Soon</span>
+      <a href="https://brutalbyte.github.io/CEREBRUM/NOVEL_CONTRIBUTIONS/" target="_blank" rel="noopener"
+         class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-indigo text-white font-semibold hover:bg-indigo/80 transition-colors">
+        Read the Research →
       </a>
       <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener"
          class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-border text-white font-semibold hover:border-indigo/50 transition-colors">
@@ -362,6 +362,15 @@
   </div>
 </section>
 
+
+<!-- ── Solo researcher banner ── -->
+<div class="bg-surface border-b border-border py-3 px-6 text-center">
+  <p class="text-xs text-slate-500">
+    <span class="text-white font-medium">Built by one independent researcher.</span>
+    30+ original algorithms. 2,000+ tests. No team, no grant, no institution.
+    <a href="#solo" class="text-indigo/70 hover:text-indigo ml-1 underline decoration-dotted transition-colors">Read more ↓</a>
+  </p>
+</div>
 
 <!-- ═══════════════════════════════════════════════
      SECTION 2.5: HYPE
@@ -402,8 +411,8 @@
     <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
       <div class="flex-shrink-0 w-1 h-16 bg-gradient-to-b from-cyan to-cyan/0 rounded-full"></div>
       <div>
-        <p class="text-3xl md:text-4xl font-bold text-white leading-tight">The first training-free system<br><span class="text-cyan">to beat supervised baselines</span><br>on multi-hop reasoning.</p>
-        <p class="text-slate-500 mt-3 text-sm max-w-lg">56.8% H@1 zero-config. 66.8% with sentence-transformer calibration. No labels. No gradient descent. No GPU cluster required.</p>
+        <p class="text-3xl md:text-4xl font-bold text-white leading-tight">No labels. No training loop.<br><span class="text-cyan">56.8% H@1 out of the box.</span></p>
+        <p class="text-slate-500 mt-3 text-sm max-w-lg">Zero-config, zero tuning. Supervised systems like UniKGQA reach 99% H@1 on MetaQA — after training on thousands of labeled question-answer pairs from that exact dataset. CEREBRUM reaches 60.4% (tuned) or 56.8% (zero-config) on the same benchmark with no labels, no gradient descent, and no GPU cluster required. The retrieval gap is 88.3% H@10 — within 11 points of UniKGQA's top-1 accuracy, entirely training-free.</p>
       </div>
     </div>
 
@@ -442,7 +451,7 @@
           and no way to verify the source.
         </p>
         <p class="text-sm text-slate-400 mb-4">
-          Cost: <span class="text-amber font-mono">$5–15</span> per 1,000 queries.
+          Cost: <span class="text-amber font-mono">$5–15</span> per 1,000 queries <a href="https://arxiv.org/abs/2303.08774" target="_blank" rel="noopener" class="text-slate-600 hover:text-slate-400 text-xs">[8]</a>.
           Hallucination rate: <span class="text-amber font-mono">5–20%</span>.
         </p>
         <div class="flex flex-wrap gap-1.5">
@@ -781,7 +790,7 @@
           </thead>
           <tbody>
             <tr class="highlight">
-              <td class="py-3 px-4 font-semibold text-indigo">CEREBRUM v2.66 (full pipeline)</td>
+              <td class="py-3 px-4 font-semibold text-indigo">CEREBRUM v2.71 (full pipeline)</td>
               <td class="py-3 px-4 text-center font-mono font-bold text-white">60.4%</td>
               <td class="py-3 px-4 text-center font-mono font-bold text-white">88.3%</td>
               <td class="py-3 px-4"><span class="text-emerald font-medium">None</span></td>
@@ -953,8 +962,10 @@
       <!-- Copy below chart -->
       <div class="border-t border-border pt-6 space-y-3">
         <p class="text-sm text-slate-400 leading-relaxed">
-          At 100,000 queries/month, CEREBRUM pays for a consumer GPU in under 3 months compared
-          to frontier LLM pricing. After that: <span class="text-white font-medium">effectively free</span>.
+          CEREBRUM runs on your own hardware — a consumer GPU (RTX 3080 or better) handles typical workloads.
+          The $0.001/1K figure is the <em>compute cost</em> of running graph traversal locally, not an API price.
+          At 100,000 queries/month, the amortized hardware cost breaks even against frontier LLM API pricing in under 3 months.
+          After that: <span class="text-white font-medium">effectively free</span>.
         </p>
         <p class="text-sm text-slate-400 leading-relaxed">
           Every answer includes a full hop-by-hop reasoning trace — the exact path through
@@ -1189,7 +1200,7 @@
 <!-- ═══════════════════════════════════════════════
      SECTION 7.5: BUILT BY ONE PERSON
 ══════════════════════════════════════════════════ -->
-<section class="py-16 px-6 border-t border-border">
+<section id="solo" class="py-16 px-6 border-t border-border">
   <div class="max-w-3xl mx-auto text-center">
     <div class="inline-block px-4 py-1.5 rounded-full bg-indigo/10 border border-indigo/20 text-xs text-indigo font-mono mb-5 tracking-wide">Solo Project</div>
     <h2 class="text-2xl md:text-3xl font-bold text-white mb-4">Built by one person.</h2>
@@ -1219,12 +1230,14 @@
       <div>
         <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Install</h3>
         <div class="code-block mb-4">
-          <span class="cmt"># Core engine with API + embeddings</span><br>
-          pip install cerebrum-kg-core[api,embeddings]<br>
+          <span class="cmt"># Clone the repo and install from source</span><br>
+          git clone https://github.com/BrutalByte/CEREBRUM.git<br>
+          cd CEREBRUM<br>
           <br>
-          <span class="cmt"># Or install everything including Studio UI</span><br>
-          pip install cerebrum-kg-core[all]<br>
-          pip install cerebrum-kg-studio
+          <span class="cmt"># Core engine with API + embeddings</span><br>
+          pip install -e <span class="str">".[api,embeddings]"</span><br>
+          <br>
+          <span class="cmt"># PyPI package coming soon</span>
         </div>
         <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Start the server</h3>
         <div class="code-block">
