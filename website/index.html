@@ -6,7 +6,7 @@
   <title>CEREBRUM — Training-Free Knowledge Graph Reasoning</title>
   <meta name="description" content="Crystal-box knowledge graph reasoning — 60.4% H@1 on MetaQA 3-hop, zero training data, zero hallucinations. Open source.">
   <meta property="og:title" content="CEREBRUM — Training-Free Knowledge Graph Reasoning">
-  <meta property="og:description" content="Every answer is a traceable graph path. Zero hallucinations. 1000× cheaper than GPT-4o.">
+  <meta property="og:description" content="Every answer is a traceable graph path. Zero hallucinations. 1000× cheaper than frontier LLMs.">
   <meta property="og:image" content="./assets/og-image.png">
   <meta property="og:url" content="https://brutalbyte.github.io/CEREBRUM/">
   <meta property="og:type" content="website">
@@ -167,9 +167,11 @@
       100% { transform: translateX(-50%); }
     }
     .animate-marquee {
-      animation: marquee 38s linear infinite;
-      min-width: 200%;
+      display: inline-flex;
+      animation: marquee 42s linear infinite;
+      width: max-content;
     }
+    .animate-marquee:hover { animation-play-state: paused; }
   </style>
 </head>
 <body>
@@ -216,56 +218,57 @@
 ══════════════════════════════════════════════════ -->
 <section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-14">
 
-  <!-- Animated SVG graph background -->
+  <!-- Animated SVG graph background — nodes kept to side columns only -->
   <svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <!-- Static edges -->
-    <line x1="12%" y1="20%" x2="28%" y2="35%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="28%" y1="35%" x2="45%" y2="22%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="45%" y1="22%" x2="62%" y2="30%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="62%" y1="30%" x2="78%" y2="18%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="78%" y1="18%" x2="88%" y2="35%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="28%" y1="35%" x2="38%" y2="55%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="38%" y1="55%" x2="55%" y2="48%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="55%" y1="48%" x2="70%" y2="55%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="70%" y1="55%" x2="85%" y2="45%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="15%" y1="65%" x2="30%" y2="75%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="30%" y1="75%" x2="50%" y2="70%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="50%" y1="70%" x2="65%" y2="80%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="65%" y1="80%" x2="82%" y2="72%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="38%" y1="55%" x2="30%" y2="75%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="55%" y1="48%" x2="50%" y2="70%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="8%"  y1="42%" x2="15%" y2="65%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="12%" y1="20%" x2="8%"  y2="42%" stroke="#1e1e2e" stroke-width="1"/>
-    <line x1="92%" y1="60%" x2="85%" y2="45%" stroke="#1e1e2e" stroke-width="1"/>
+    <!-- Left cluster edges -->
+    <line x1="3%"  y1="18%" x2="12%" y2="32%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="12%" y1="32%" x2="7%"  y2="52%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="7%"  y1="52%" x2="16%" y2="65%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="16%" y1="65%" x2="5%"  y2="78%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="3%"  y1="18%" x2="7%"  y2="52%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="12%" y1="32%" x2="18%" y2="45%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="18%" y1="45%" x2="16%" y2="65%" stroke="#1e1e2e" stroke-width="1"/>
+    <!-- Right cluster edges -->
+    <line x1="97%" y1="22%" x2="88%" y2="35%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="88%" y1="35%" x2="93%" y2="55%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="93%" y1="55%" x2="84%" y2="68%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="84%" y1="68%" x2="95%" y2="80%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="97%" y1="22%" x2="93%" y2="55%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="88%" y1="35%" x2="82%" y2="48%" stroke="#1e1e2e" stroke-width="1"/>
+    <line x1="82%" y1="48%" x2="84%" y2="68%" stroke="#1e1e2e" stroke-width="1"/>
 
-    <!-- Active path edges (cyan) -->
+    <!-- Active path — left side, lit cyan -->
     <g class="path-edges">
-      <line class="path-edge" x1="15%" y1="65%" x2="38%" y2="55%" stroke="#22d3ee" stroke-width="1.5"/>
-      <line class="path-edge" x1="38%" y1="55%" x2="55%" y2="48%" stroke="#22d3ee" stroke-width="1.5"/>
-      <line class="path-edge" x1="55%" y1="48%" x2="70%" y2="55%" stroke="#22d3ee" stroke-width="1.5"/>
-      <line class="path-edge" x1="70%" y1="55%" x2="85%" y2="45%" stroke="#22d3ee" stroke-width="1.5"/>
+      <line class="path-edge" x1="7%"  y1="52%" x2="16%" y2="65%" stroke="#22d3ee" stroke-width="1.5"/>
+      <line class="path-edge" x1="16%" y1="65%" x2="18%" y2="45%" stroke="#22d3ee" stroke-width="1.5"/>
+    </g>
+    <!-- Active path — right side -->
+    <g class="path-edges">
+      <line class="path-edge" x1="82%" y1="48%" x2="93%" y2="55%" stroke="#22d3ee" stroke-width="1.5"/>
+      <line class="path-edge" x1="93%" y1="55%" x2="84%" y2="68%" stroke="#22d3ee" stroke-width="1.5"/>
     </g>
 
-    <!-- Static nodes -->
-    <circle class="node" cx="12%" cy="20%" r="6" fill="#6366f1"/>
-    <circle class="node" cx="28%" cy="35%" r="6" fill="#6366f1"/>
-    <circle class="node" cx="45%" cy="22%" r="6" fill="#6366f1"/>
-    <circle class="node" cx="62%" cy="30%" r="6" fill="#6366f1"/>
-    <circle class="node" cx="78%" cy="18%" r="6" fill="#6366f1"/>
+    <!-- Left static nodes -->
+    <circle class="node" cx="3%"  cy="18%" r="5" fill="#6366f1"/>
+    <circle class="node" cx="12%" cy="32%" r="6" fill="#6366f1"/>
+    <circle class="node" cx="7%"  cy="52%" r="5" fill="#475569"/>
+    <circle class="node" cx="18%" cy="45%" r="5" fill="#475569"/>
+    <circle class="node" cx="5%"  cy="78%" r="4" fill="#475569"/>
+    <!-- Right static nodes -->
+    <circle class="node" cx="97%" cy="22%" r="5" fill="#6366f1"/>
     <circle class="node" cx="88%" cy="35%" r="6" fill="#6366f1"/>
-    <circle class="node" cx="8%"  cy="42%" r="5" fill="#475569"/>
-    <circle class="node" cx="30%" cy="75%" r="5" fill="#475569"/>
-    <circle class="node" cx="50%" cy="70%" r="5" fill="#475569"/>
-    <circle class="node" cx="65%" cy="80%" r="5" fill="#475569"/>
-    <circle class="node" cx="82%" cy="72%" r="5" fill="#475569"/>
-    <circle class="node" cx="92%" cy="60%" r="5" fill="#475569"/>
+    <circle class="node" cx="93%" cy="55%" r="5" fill="#475569"/>
+    <circle class="node" cx="82%" cy="48%" r="5" fill="#475569"/>
+    <circle class="node" cx="95%" cy="80%" r="4" fill="#475569"/>
 
-    <!-- Active path nodes (cyan) -->
-    <circle class="path-node-1" cx="15%" cy="65%" r="7" fill="#22d3ee"/>
-    <circle class="path-node-2" cx="38%" cy="55%" r="7" fill="#22d3ee"/>
-    <circle class="path-node-3" cx="55%" cy="48%" r="7" fill="#22d3ee"/>
-    <circle class="path-node-4" cx="70%" cy="55%" r="7" fill="#22d3ee"/>
-    <circle class="path-node-5" cx="85%" cy="45%" r="7" fill="#22d3ee"/>
+    <!-- Active path nodes (cyan) left -->
+    <circle class="path-node-1" cx="7%"  cy="52%" r="7" fill="#22d3ee"/>
+    <circle class="path-node-2" cx="16%" cy="65%" r="7" fill="#22d3ee"/>
+    <circle class="path-node-3" cx="18%" cy="45%" r="7" fill="#22d3ee"/>
+    <!-- Active path nodes (cyan) right -->
+    <circle class="path-node-4" cx="82%" cy="48%" r="7" fill="#22d3ee"/>
+    <circle class="path-node-5" cx="93%" cy="55%" r="7" fill="#22d3ee"/>
+    <circle class="path-node-1" cx="84%" cy="68%" r="7" fill="#22d3ee"/>
   </svg>
 
   <!-- Radial gradient overlay -->
@@ -324,14 +327,14 @@
       <div class="flex-1 px-6 py-5 text-center">
         <div class="font-mono text-4xl font-bold text-cyan">$0.001</div>
         <div class="text-xs text-slate-400 mt-1">per 1K queries</div>
-        <div class="text-xs text-slate-600 mt-0.5">vs $5–15 GPT-4o</div>
+        <div class="text-xs text-slate-600 mt-0.5">vs $5–15 frontier LLM</div>
       </div>
       <div class="hidden sm:block w-px h-16 bg-border"></div>
       <div class="block sm:hidden h-px w-full bg-border"></div>
       <div class="flex-1 px-6 py-5 text-center">
         <div class="font-mono text-4xl font-bold text-emerald">0%</div>
         <div class="text-xs text-slate-400 mt-1">Hallucination risk</div>
-        <div class="text-xs text-slate-600 mt-0.5">Guaranteed</div>
+        <div class="text-xs text-slate-600 mt-0.5">Guaranteed†</div>
       </div>
     </div>
 
@@ -360,54 +363,49 @@
      SECTION 2.5: HYPE
 ══════════════════════════════════════════════════ -->
 <section class="py-0 overflow-hidden border-y border-border bg-surface">
-  <!-- Scrolling ticker -->
-  <div class="relative flex overflow-hidden py-4 group">
-    <div class="flex animate-marquee whitespace-nowrap gap-12 group-hover:[animation-play-state:paused]">
-      <span class="text-sm font-mono text-indigo/70">It doesn't guess. It traces.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-cyan/70">Every answer is a proof, not a prediction.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-indigo/70">No model. No training. No BS.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-cyan/70">1000× cheaper than GPT-4o. 0× the hallucinations.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-indigo/70">From CSV to 83% accuracy. One command.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-cyan/70">If the edge doesn't exist, CEREBRUM won't claim it does.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-indigo/70">Self-calibrating. Self-configuring. Just add data.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-cyan/70">Sue the algorithm. The path is in the response.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-indigo/70">Reasoning you can read. Answers you can trust.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-cyan/70">The only reasoning engine your infra team will approve.</span>
-      <span class="text-slate-600 select-none">·</span>
+  <div class="relative py-4 group">
+    <div class="flex animate-marquee whitespace-nowrap" style="animation-play-state: running;" id="ticker">
+      <span class="text-sm font-mono text-indigo/70 px-6">It doesn't guess. It traces.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-cyan/70 px-6">Every answer is a proof, not a prediction.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-indigo/70 px-6">No model. No training. No BS.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-cyan/70 px-6">1000× cheaper than frontier LLMs. 0× the hallucinations.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-indigo/70 px-6">From CSV to 83% accuracy. One command.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-cyan/70 px-6">If the edge doesn't exist, CEREBRUM won't claim it does.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-indigo/70 px-6">Self-calibrating. Self-configuring. Just add data.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-cyan/70 px-6">Sue the algorithm. The path is in the response.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-indigo/70 px-6">Reasoning you can read. Answers you can trust.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-cyan/70 px-6">The only reasoning engine your infra team will approve.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-indigo/70 px-6">It doesn't guess. It traces.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-cyan/70 px-6">Every answer is a proof, not a prediction.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-indigo/70 px-6">No model. No training. No BS.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-cyan/70 px-6">1000× cheaper than frontier LLMs. 0× the hallucinations.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-indigo/70 px-6">From CSV to 83% accuracy. One command.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-cyan/70 px-6">If the edge doesn't exist, CEREBRUM won't claim it does.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-indigo/70 px-6">Self-calibrating. Self-configuring. Just add data.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-cyan/70 px-6">Sue the algorithm. The path is in the response.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-indigo/70 px-6">Reasoning you can read. Answers you can trust.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
+      <span class="text-sm font-mono text-cyan/70 px-6">The only reasoning engine your infra team will approve.</span>
+      <span class="text-slate-700 select-none" aria-hidden="true">·</span>
     </div>
-    <!-- Duplicate for seamless loop -->
-    <div class="flex animate-marquee whitespace-nowrap gap-12 absolute top-4 group-hover:[animation-play-state:paused]" aria-hidden="true">
-      <span class="text-sm font-mono text-indigo/70">It doesn't guess. It traces.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-cyan/70">Every answer is a proof, not a prediction.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-indigo/70">No model. No training. No BS.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-cyan/70">1000× cheaper than GPT-4o. 0× the hallucinations.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-indigo/70">From CSV to 83% accuracy. One command.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-cyan/70">If the edge doesn't exist, CEREBRUM won't claim it does.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-indigo/70">Self-calibrating. Self-configuring. Just add data.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-cyan/70">Sue the algorithm. The path is in the response.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-indigo/70">Reasoning you can read. Answers you can trust.</span>
-      <span class="text-slate-600 select-none">·</span>
-      <span class="text-sm font-mono text-cyan/70">The only reasoning engine your infra team will approve.</span>
-      <span class="text-slate-600 select-none">·</span>
-    </div>
-    <!-- Fade edges -->
     <div class="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-surface to-transparent"></div>
     <div class="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-surface to-transparent"></div>
   </div>
@@ -423,7 +421,7 @@
     <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
       <div class="flex-shrink-0 w-1 h-16 bg-gradient-to-b from-indigo to-indigo/0 rounded-full"></div>
       <div>
-        <p class="text-3xl md:text-4xl font-bold text-white leading-tight">GPT-4o hallucinates.<br><span class="text-indigo">CEREBRUM shows its work.</span></p>
+        <p class="text-3xl md:text-4xl font-bold text-white leading-tight">Large language models hallucinate.<br><span class="text-indigo">CEREBRUM shows its work.</span></p>
         <p class="text-slate-500 mt-3 text-sm max-w-lg">Every response includes the complete edge chain — every hop, every relation, every score. You can verify any answer against the source data in seconds.</p>
       </div>
     </div>
@@ -467,7 +465,7 @@
         <div class="text-2xl mb-4">⚠️</div>
         <h3 class="text-lg font-semibold text-white mb-3">Language models hallucinate</h3>
         <p class="text-sm text-slate-400 leading-relaxed mb-4">
-          GPT-4, Claude, and similar models generate answers by predicting likely token sequences.
+          Large language models generate answers by predicting likely token sequences.
           They can produce confident, fluent, completely wrong answers with no indication of error —
           and no way to verify the source.
         </p>
@@ -915,7 +913,7 @@
   <div class="max-w-5xl mx-auto">
     <div class="text-center mb-16">
       <div class="section-label mb-4">Cost</div>
-      <h2 class="text-3xl md:text-4xl font-bold text-white">1,000× cheaper than GPT-4o</h2>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">1,000× cheaper than frontier LLMs</h2>
     </div>
 
     <div class="card p-6 md:p-10">
@@ -927,7 +925,7 @@
           <div class="flex items-center justify-between mb-1.5">
             <div class="flex items-center gap-3">
               <span class="font-semibold text-white text-sm w-36">CEREBRUM</span>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-emerald/10 text-emerald border border-emerald/20">0% hallucination</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-emerald/10 text-emerald border border-emerald/20">0% hallucination†</span>
             </div>
             <span class="font-mono text-emerald text-sm">$0.001</span>
           </div>
@@ -936,11 +934,11 @@
           </div>
         </div>
 
-        <!-- GPT-4o mini -->
+        <!-- LLM small -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <div class="flex items-center gap-3">
-              <span class="font-semibold text-slate-300 text-sm w-36">GPT-4o mini</span>
+              <span class="font-semibold text-slate-300 text-sm w-36">LLM (small)</span>
               <span class="text-xs px-2 py-0.5 rounded-full bg-amber/10 text-amber border border-amber/20">8–18% hallucination</span>
             </div>
             <span class="font-mono text-amber text-sm">$0.15–0.60</span>
@@ -955,7 +953,7 @@
           <div class="flex items-center justify-between mb-1.5">
             <div class="flex items-center gap-3">
               <span class="font-semibold text-slate-300 text-sm w-36">RAG + LLM</span>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-amber/10 text-amber border border-amber/20">10–20% hallucination</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-amber/10 text-amber border border-amber/20">10–20% hallucination†</span>
             </div>
             <span class="font-mono text-amber text-sm">$1–20</span>
           </div>
@@ -964,11 +962,11 @@
           </div>
         </div>
 
-        <!-- GPT-4o -->
+        <!-- LLM frontier -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <div class="flex items-center gap-3">
-              <span class="font-semibold text-slate-300 text-sm w-36">GPT-4o</span>
+              <span class="font-semibold text-slate-300 text-sm w-36">LLM (frontier)</span>
               <span class="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">5–15% hallucination</span>
             </div>
             <span class="font-mono text-red-400 text-sm">$5–15</span>
@@ -985,12 +983,12 @@
       <div class="border-t border-border pt-6 space-y-3">
         <p class="text-sm text-slate-400 leading-relaxed">
           At 100,000 queries/month, CEREBRUM pays for a consumer GPU in under 3 months compared
-          to GPT-4o pricing. After that: <span class="text-white font-medium">effectively free</span>.
+          to frontier LLM pricing. After that: <span class="text-white font-medium">effectively free</span>.
         </p>
         <p class="text-sm text-slate-400 leading-relaxed">
           Every answer includes a full hop-by-hop reasoning trace — the exact path through
           the graph that produced the result. This trace is auditable, exportable, and
-          reproducible. GPT-4o offers none of this.
+          reproducible. LLM-based systems offer none of this.
         </p>
       </div>
     </div>
@@ -1446,6 +1444,13 @@
         </ul>
       </div>
 
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="border-t border-border pt-6 mb-6">
+      <p class="text-xs text-slate-600 leading-relaxed max-w-3xl">
+        † <strong class="text-slate-500">Disclaimer:</strong> "Zero hallucinations" and "0% hallucination" refer specifically to CEREBRUM's deterministic path traversal — every answer corresponds to a verifiable edge path in the ingested knowledge base. CEREBRUM cannot invent edges or entities that do not exist in the source data. This guarantee applies only to well-formed knowledge graphs; it does not cover errors or omissions in the underlying source data, entity resolution ambiguities, or natural-language query mismatches. Benchmark numbers reflect performance on MetaQA (Zhang et al., 2018) under the configurations described in <a href="docs/BENCHMARK_CANONICAL.md" class="text-indigo/60 hover:text-indigo transition-colors">BENCHMARK_CANONICAL.md</a>. Cost estimates are approximate and based on publicly available pricing at time of writing.
+      </p>
     </div>
 
     <!-- Bottom bar -->
