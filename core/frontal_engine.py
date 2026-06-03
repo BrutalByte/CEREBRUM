@@ -10,6 +10,7 @@ cognitive control and rule-based decision making.
 from __future__ import annotations
 
 import logging
+import numpy as np
 from enum import Enum
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Any, TYPE_CHECKING
@@ -42,7 +43,9 @@ class FrontalEngine:
     def __init__(
         self,
         modulator: Optional[ChemicalModulator] = None,
-        strategy_thresholds: Optional[Dict[str, float]] = None
+        strategy_thresholds: Optional[Dict[str, float]] = None,
+        conflict_threshold: float = 0.4,
+        max_beam_width: int = 32,
     ):
         self.modulator = modulator
         # Default thresholds for strategy escalation
@@ -51,6 +54,9 @@ class FrontalEngine:
             "hybrid_novelty": 0.5,  # Escalates to HYBRID if novelty > 0.5
             "gap_entropy": 2.5      # Conflict entropy trigger
         }
+        # Phase 215-C: Conflict monitoring (ACC analog)
+        self.conflict_threshold = conflict_threshold
+        self.max_beam_width = max_beam_width
 
     def determine_strategy(
         self,
@@ -82,6 +88,38 @@ class FrontalEngine:
             return ReasoningStrategy.HYBRID
 
         return ReasoningStrategy.FAST
+
+    def detect_conflict(self, paths: List[Any], beam_width: int = 10) -> float:
+        """
+        Phase 215-C: Measure score variance across top-K paths (ACC analog).
+
+        Returns the coefficient of variation of the top beam_width path scores.
+        High CV (> conflict_threshold) signals disagreement among candidate paths —
+        the system should allocate more compute to resolve it.
+        """
+        if not paths:
+            return 0.0
+        top_scores = sorted([p.score for p in paths], reverse=True)[:beam_width]
+        arr = np.array(top_scores, dtype=np.float32)
+        mean = float(np.mean(arr))
+        if mean < 1e-9:
+            return 0.0
+        return float(np.std(arr)) / mean
+
+    def adaptive_beam_width(self, base_width: int, conflict: float) -> int:
+        """
+        Phase 215-C: Widen beam when conflict is high (more compute on hard hops).
+
+        Doubles beam width when conflict CV exceeds threshold, capped at max_beam_width.
+        """
+        if conflict > self.conflict_threshold:
+            logger.debug(
+                "FrontalEngine: conflict=%.3f > threshold=%.3f — widening beam %d→%d",
+                conflict, self.conflict_threshold, base_width,
+                min(base_width * 2, self.max_beam_width),
+            )
+            return min(base_width * 2, self.max_beam_width)
+        return base_width
 
     def detect_gaps(self, paths: List[Any]) -> List[EpistemicGap]:
         """

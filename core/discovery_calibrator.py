@@ -30,8 +30,13 @@ min_weight (default 0.2) — it is still explored, just at lower priority.
 from __future__ import annotations
 
 import logging
+import math
 import threading
-from typing import Dict, Optional, Set
+from collections import Counter
+from typing import Dict, Optional, Set, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from core.graph_adapter import GraphAdapter
 
 logger = logging.getLogger("cerebrum.discovery_calibrator")
 
@@ -62,11 +67,15 @@ class DiscoveryCalibrator:
         max_weight: float = 5.0,
         epsilon: float = 0.05,
         window: int = 20,
+        curiosity_alpha: float = 0.3,
     ) -> None:
         self.min_weight = min_weight
         self.max_weight = max_weight
         self.epsilon = epsilon
         self.window = window
+        # Phase 215-D: blend ratio for information-theoretic curiosity signal [0,1].
+        # 0.0 = pure inverse-rate (original behaviour), 1.0 = pure entropy curiosity.
+        self.curiosity_alpha = curiosity_alpha
 
         # EMA-smoothed counts per community
         self._discovery_ema: Dict[int, float] = {}  # community_id → smoothed discoveries
@@ -75,6 +84,8 @@ class DiscoveryCalibrator:
         self._total_scans: int = 0
         self._total_discoveries: int = 0
         self._lock = threading.Lock()
+        # Phase 215-D: cached entropy-based curiosity scores per community
+        self._curiosity_cache: Dict[int, float] = {}
 
     # ------------------------------------------------------------------
     # Recording API (called by ResearchAgent)
@@ -154,9 +165,68 @@ class DiscoveryCalibrator:
         community_rate = discoveries / scans
 
         # Ratio: how much below (or above) the global rate is this community?
-        weight = global_rate / (community_rate + self.epsilon)
+        inv_rate_weight = global_rate / (community_rate + self.epsilon)
+
+        # Phase 215-D: blend with information-theoretic curiosity (entropy signal)
+        alpha = self.curiosity_alpha
+        if alpha > 0.0 and community_id in self._curiosity_cache:
+            curiosity = self._curiosity_cache[community_id]
+            weight = (1.0 - alpha) * inv_rate_weight + alpha * curiosity * self.max_weight
+        else:
+            weight = inv_rate_weight
 
         return float(min(self.max_weight, max(self.min_weight, weight)))
+
+    # ------------------------------------------------------------------
+    # Phase 215-D: Information-Gain Curiosity API
+    # ------------------------------------------------------------------
+
+    def compute_curiosity(self, community_id: int, adapter: "GraphAdapter") -> float:
+        """
+        Compute an information-theoretic curiosity score for a community [0, 1].
+
+        Estimated as the normalised Shannon entropy of the relation-type distribution
+        within the community.  A uniform distribution (max entropy) means many
+        different relation types are present — the community is structurally rich and
+        worth exploring.  A peaked distribution (low entropy) means one relation type
+        dominates — less exploratory value.
+
+        High entropy → high curiosity (more to discover).
+        Low entropy  → low curiosity  (already well characterised).
+        """
+        try:
+            # Collect edges from community members via adapter's community_map
+            cmap = getattr(adapter, "community_map", None)
+            if cmap is None:
+                return 0.5  # neutral if no community map
+            members = [eid for eid, cid in cmap.items() if cid == community_id]
+            if not members:
+                return 0.5
+            # Sample up to 200 members to keep this O(1) amortised
+            sample = members[:200]
+            rel_counts: Counter = Counter()
+            for eid in sample:
+                for edge in adapter.get_neighbors(eid, max_neighbors=20):
+                    rel_counts[edge.relation_type] += 1
+            if not rel_counts:
+                return 0.5
+            total = sum(rel_counts.values())
+            probs = [c / total for c in rel_counts.values()]
+            H = -sum(p * math.log2(p + 1e-12) for p in probs)
+            H_max = math.log2(len(rel_counts) + 1)
+            return float(H / (H_max + 1e-9))
+        except Exception:
+            return 0.5
+
+    def refresh_curiosity(self, adapter: "GraphAdapter", community_ids: Set[int]) -> None:
+        """
+        Recompute curiosity scores for the given communities and cache them.
+        Called from AutonomousDiscoveryLoop between scan cycles (non-blocking intent).
+        """
+        for cid in community_ids:
+            score = self.compute_curiosity(cid, adapter)
+            with self._lock:
+                self._curiosity_cache[cid] = score
 
     def stats(self) -> dict:
         """Return a human-readable summary for monitoring."""

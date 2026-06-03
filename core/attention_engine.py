@@ -99,6 +99,10 @@ class CSAEngine:
         self.use_temporal_decay = use_temporal_decay
         self.temporal_window_size = temporal_window_size
         self.lambda_decay = lambda_decay
+        # Phase 215-B: Power-law (hyperbolic) forgetting — Ebbinghaus (1885) shows
+        # biological forgetting follows (1+t)^-λ, not exp(-λt). Exponential drops
+        # too fast early and too slowly late. use_power_law_decay=False restores old behaviour.
+        self.use_power_law_decay: bool = kwargs.get("use_power_law_decay", True)
         self.edge_type_weights = edge_type_weights or {}
         self.external_community_scores = external_community_scores or {}
         self._community_params = community_params or {}
@@ -260,7 +264,10 @@ class CSAEngine:
             time_elapsed = self._query_time - valid_to
             if time_elapsed > 0:
                 decay_rate = RELATION_DECAY_DEFAULTS.get(edge_type, self.lambda_decay)
-                td = math.exp(-decay_rate * time_elapsed)
+                if self.use_power_law_decay:
+                    td = (1.0 + decay_rate * time_elapsed) ** -1.0
+                else:
+                    td = math.exp(-decay_rate * time_elapsed)
                 if self.temporal_window_size and time_elapsed > self.temporal_window_size:
                     td *= 0.1 # Window penalty
 
@@ -335,7 +342,10 @@ class CSAEngine:
                         td = _td_cache[_td_key]
                     else:
                         decay_rate = RELATION_DECAY_DEFAULTS.get(edge_types[i], self.lambda_decay)
-                        td = math.exp(-decay_rate * time_elapsed)
+                        if self.use_power_law_decay:
+                            td = (1.0 + decay_rate * time_elapsed) ** -1.0
+                        else:
+                            td = math.exp(-decay_rate * time_elapsed)
                         if self.temporal_window_size and time_elapsed > self.temporal_window_size:
                             td *= 0.1
                         _td_cache[_td_key] = td

@@ -408,6 +408,13 @@ class BeamTraversal:
         self.gating_sensitivity: float = 0.1
         # Phase 101: Emotional Valence - aversive/appetitive edge scoring
         self._valence_engine: Optional[Any] = None
+        # Phase 215-A: Inhibition of Return — decaying suppression of nodes already
+        # visited by surviving paths in this query.  ior_decay=0 disables IOR.
+        self.ior_decay: float = float(kwargs.get("ior_decay", 0.0))
+        self._ior_counts: Dict[str, int] = {}
+        # Phase 215-C: Conflict monitoring (ACC analog) — widen beam on high-variance hops
+        from core.frontal_engine import FrontalEngine as _FrontalEngine
+        self._frontal_engine: Optional[_FrontalEngine] = kwargs.get("frontal_engine", None)
 
 
     def traverse(
@@ -427,6 +434,7 @@ class BeamTraversal:
         
         emb_dim = self._infer_dim()
         self.expansions = 0
+        self._ior_counts = {}  # Phase 215-A: reset IOR per query
         _t0 = _time.perf_counter()
 
         _log.info(
@@ -879,7 +887,19 @@ class BeamTraversal:
                 self.thalamic_threshold = avg_score * self.gating_sensitivity
 
             beam = self._prune_candidates(candidates, hop)
-            
+
+            # Phase 215-A: Update IOR counts for nodes surviving this hop
+            if self.ior_decay > 0.0:
+                for _p in beam:
+                    self._ior_counts[_p.tail] = self._ior_counts.get(_p.tail, 0) + 1
+
+            # Phase 215-C: Conflict monitoring — widen beam for next hop if needed
+            if self._frontal_engine is not None and hop < self.max_hop:
+                _conflict = self._frontal_engine.detect_conflict(beam, hop_bw)
+                _next_bw = self._frontal_engine.adaptive_beam_width(hop_bw, _conflict)
+                if _next_bw != hop_bw:
+                    self._beam_widths[hop + 1] = _next_bw
+
             # Phase 62: Explainable Reasoning Trace (ERT)
             if trace_info:
                 winners_set = set(id(p) for p in beam)
@@ -1031,11 +1051,22 @@ class BeamTraversal:
             else:
                 # Phase 172: Terminal-Anchor sort key — applies bonus to anchored entities
                 # at the specified non-terminal hop without mutating path scores.
+                # Phase 215-A: IOR suppression — nodes visited more times score lower.
                 _ah = self._anchor_hints.get(hop) if (hop < self.max_hop and self._anchor_hints) else None
-                if _ah:
+                _ior = self._ior_counts if self.ior_decay > 0.0 else None
+                _ior_d = self.ior_decay
+                if _ah and _ior:
                     _a_set, _a_bonus = _ah
                     def _sort_key(p: TraversalPath) -> float:
+                        ior_s = 1.0 / (1.0 + _ior_d * _ior.get(p.tail, 0))
+                        return p.score * (_a_bonus if p.tail in _a_set else 1.0) * ior_s
+                elif _ah:
+                    _a_set, _a_bonus = _ah
+                    def _sort_key(p: TraversalPath) -> float:  # type: ignore[misc]
                         return p.score * (_a_bonus if p.tail in _a_set else 1.0)
+                elif _ior:
+                    def _sort_key(p: TraversalPath) -> float:  # type: ignore[misc]
+                        return p.score / (1.0 + _ior_d * _ior.get(p.tail, 0))
                 else:
                     def _sort_key(p: TraversalPath) -> float:  # type: ignore[misc]
                         return p.score
