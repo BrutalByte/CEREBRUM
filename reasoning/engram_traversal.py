@@ -259,11 +259,24 @@ class EngramTraversal(BeamTraversal):
         *args,
         cache: Optional[Engram] = None,
         engram_strength: float = 0.3,
+        fast_binding: bool = True,
+        fast_novelty_threshold: float = 0.1,
+        fast_score_threshold: float = 0.7,
+        fast_weight: int = 5,
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.cache = cache or Engram()
         self.engram_strength = engram_strength
+        self._fast_binding_engine = None
+        if fast_binding:
+            from reasoning.speedtalk_cache import FastBindingEngine
+            self._fast_binding_engine = FastBindingEngine(
+                engram=self.cache,
+                novelty_threshold=fast_novelty_threshold,
+                score_threshold=fast_score_threshold,
+                fast_weight=fast_weight,
+            )
 
     def _boosted_score(self, path: TraversalPath) -> float:
         """Compute the Engram-boosted effective score for beam pruning."""
@@ -319,5 +332,11 @@ class EngramTraversal(BeamTraversal):
                 # Weight by score so high-confidence paths influence more
                 weight = max(1, int(ans.score * 10))
                 self.cache.record(rel_seq, weight=weight)
+
+                # Phase 219-A: fast binding for novel high-confidence paths
+                if self._fast_binding_engine is not None:
+                    existing_aff = self.cache.affinity(rel_seq)
+                    if self._fast_binding_engine.evaluate(rel_seq, existing_aff, ans.score):
+                        self._fast_binding_engine.bind(rel_seq)
 
 

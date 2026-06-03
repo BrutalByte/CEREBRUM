@@ -44,7 +44,6 @@ def test_temporal_window_penalty():
     logit_ab = engine.compute_weight_with_features("A", "B", hop=1, edge_type="works_at", valid_to=100.0)
     logit_ac = engine.compute_weight_with_features("A", "C", hop=1, edge_type="works_at", valid_to=190.0)
     
-    # td_ab = exp(-0.5 * 100) * 0.1
-    # td_ac = exp(-0.5 * 10)
+    # Phase 215-B power-law: td_ab = (1+0.5*100)^-1 * 0.1 ≈ 0.00196; td_ac = (1+0.5*10)^-1 ≈ 0.167
     assert logit_ac.td > logit_ab.td
-    assert logit_ab.td < 0.001 # Should be very small due to penalty + decay
+    assert logit_ab.td < 0.005  # Very small due to window penalty + power-law decay

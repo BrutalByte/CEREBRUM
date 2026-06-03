@@ -45,17 +45,18 @@ def test_temporal_decay_feature_in_logit():
     # expected_td = exp(-0.5 * 10.0) = exp(-5) approx 0.0067
     
     logit = csa.compute_weight_with_features("u", "v", hop=1, valid_to=90.0)
-    
-    expected_td = math.exp(-0.5 * 10.0)
+
+    # Phase 215-B: power-law decay (1 + λ*t)^-1  (λ=0.5, t=10 → 1/6 ≈ 0.1667)
+    expected_td = (1.0 + 0.5 * 10.0) ** -1.0
     assert pytest.approx(logit.td, rel=1e-5) == expected_td
-    
+
     # ReasoningLogit.score should apply the eta from params
     # params: (alpha, beta, gamma, delta, epsilon, zeta, eta, iota, mu, theta)
     params = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0) # Only eta=2.0, theta=0.0
     # raw_score = 2.0 * logit.td
     expected_raw = 2.0 * expected_td
     expected_sigmoid = 1.0 / (1.0 + math.exp(-expected_raw))
-    
+
     assert pytest.approx(logit.score(params), rel=1e-5) == expected_sigmoid
 
 def test_node_recency_scoring():

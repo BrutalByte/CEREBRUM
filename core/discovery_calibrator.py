@@ -249,3 +249,44 @@ class DiscoveryCalibrator:
                 "communities": community_stats,
             }
 
+    def save(self, path: str) -> None:
+        """Phase 218-B: Persist EMA state to JSON for cross-session continuity."""
+        import json
+        with self._lock:
+            data = {
+                "discovery_ema": {str(k): v for k, v in self._discovery_ema.items()},
+                "scan_ema": {str(k): v for k, v in self._scan_ema.items()},
+                "total_scans": self._total_scans,
+                "total_discoveries": self._total_discoveries,
+            }
+        with open(path, "w") as f:
+            json.dump(data, f, indent=2)
+
+    @classmethod
+    def load(
+        cls,
+        path: str,
+        decay_factor: float = 0.8,
+        **kwargs,
+    ) -> "DiscoveryCalibrator":
+        """Phase 218-B: Load persisted EMA state with regularization decay.
+
+        Older sessions are trusted less: all EMA values are multiplied by
+        ``decay_factor`` so long-running communities don't lock in stale priors.
+        """
+        import json
+        obj = cls(**kwargs)
+        try:
+            with open(path) as f:
+                data = json.load(f)
+            with obj._lock:
+                obj._discovery_ema = {int(k): v * decay_factor
+                                      for k, v in data.get("discovery_ema", {}).items()}
+                obj._scan_ema = {int(k): v * decay_factor
+                                 for k, v in data.get("scan_ema", {}).items()}
+                obj._total_scans = data.get("total_scans", 0)
+                obj._total_discoveries = data.get("total_discoveries", 0)
+        except (FileNotFoundError, KeyError, ValueError):
+            pass
+        return obj
+

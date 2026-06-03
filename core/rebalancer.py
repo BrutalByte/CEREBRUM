@@ -76,6 +76,7 @@ class GlobalRebalancer:
         dscf_seed: int = 42,
         bridge_engine=None,
         pruning_enabled: bool = True,
+        oscillation_engine=None,
     ) -> None:
         self._adapter = adapter
         self._check_every = check_every_n_events
@@ -85,6 +86,7 @@ class GlobalRebalancer:
         self._dscf_seed = dscf_seed
         self._bridge_engine = bridge_engine
         self._pruning_enabled = pruning_enabled
+        self._oscillation_engine = oscillation_engine
 
         from core.synaptic_pruner import SynapticPruner
         self._pruner = SynapticPruner(adapter)
@@ -121,12 +123,22 @@ class GlobalRebalancer:
 
         Increments the internal counter. When the counter reaches
         ``check_every_n_events``, measures Q and triggers a re-run if needed.
+        Phase 219-B: also triggers partial DSCF on hot communities at theta boundary.
         """
         with self._lock:
             self._event_counter += 1
             if self._event_counter >= self._check_every:
                 self._event_counter = 0
                 self._check_drift()
+
+        # Phase 219-B: oscillation-driven partial rebalance on hot communities
+        if self._oscillation_engine is not None:
+            if self._oscillation_engine.should_rebalance():
+                threading.Thread(
+                    target=self._oscillation_engine.partial_rebalance,
+                    args=(self._adapter,),
+                    daemon=True,
+                ).start()
 
     def _compute_q(self) -> float:
         """Measure current modularity Q from the adapter's live graph."""

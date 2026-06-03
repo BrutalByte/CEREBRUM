@@ -629,6 +629,154 @@ class SpeedTalkEngram:
 
 
 # ---------------------------------------------------------------------------
+# Phase 218-A: Cross-KB Engram Transfer Registry
+# ---------------------------------------------------------------------------
+
+class EngramTransferRegistry:
+    """
+    Phase 218-A: Carry successful reasoning patterns across knowledge bases.
+
+    When switching to a new KB, the registry re-encodes patterns from
+    previously seen KBs into the new KB's relation vocabulary and merges
+    them into the initial Engram with a configurable count decay so that
+    transferred patterns are trusted less than locally observed ones.
+
+    This closes the "every KB starts from zero" gap — CEREBRUM can seed
+    its Engram cache with structural priors from prior KBs on first launch.
+
+    Usage
+    -----
+    registry = EngramTransferRegistry()
+    # After finishing queries on KB-A:
+    registry.register("metaqa", engram_metaqa)
+    # When loading KB-B:
+    new_engram = registry.transfer_to(target_encoder=encoder_kb_b, decay=0.5)
+    """
+
+    def __init__(self) -> None:
+        self._engrams: Dict[str, "SpeedTalkEngram"] = {}
+
+    def register(self, kb_id: str, engram: "SpeedTalkEngram") -> None:
+        """Register an Engram trained on kb_id for later transfer."""
+        self._engrams[kb_id] = engram
+        _log.info("EngramTransferRegistry: registered '%s' (%d patterns)", kb_id, engram.size())
+
+    def transfer_to(
+        self,
+        target_encoder: "SpeedTalkEncoder",
+        source_kb_ids: Optional[list] = None,
+        decay: float = 0.5,
+        max_patterns: int = 1000,
+    ) -> "SpeedTalkEngram":
+        """
+        Build a new SpeedTalkEngram pre-populated with patterns from registered KBs,
+        re-encoded for the target KB's vocabulary and decayed by *decay*.
+
+        Parameters
+        ----------
+        target_encoder : SpeedTalkEncoder already adapted to the target KB
+        source_kb_ids  : which KB ids to pull from (None = all registered)
+        decay          : multiply transferred counts by this factor [0, 1]
+                         (default 0.5: transferred patterns start at half weight)
+        max_patterns   : maximum patterns in the merged Engram
+        """
+        merged = SpeedTalkEngram(max_patterns=max_patterns, encoder=target_encoder)
+        sources = source_kb_ids or list(self._engrams.keys())
+        total_transferred = 0
+        for kb_id in sources:
+            src = self._engrams.get(kb_id)
+            if src is None:
+                _log.warning("EngramTransferRegistry: unknown kb_id '%s'", kb_id)
+                continue
+            # Decode all patterns from source, re-encode in target vocab, apply decay
+            for enc_seq, cnt in src._counts.items():
+                rel_seq = src._encoder.decode(enc_seq)
+                decayed_count = max(1, int(cnt * decay))
+                merged.record(rel_seq, weight=decayed_count)
+                total_transferred += 1
+
+        _log.info(
+            "EngramTransferRegistry: transferred %d patterns from %s (decay=%.2f)",
+            total_transferred, sources, decay,
+        )
+        return merged
+
+    def save(self, path: str) -> None:
+        """Persist all registered engrams to a directory."""
+        import os
+        os.makedirs(path, exist_ok=True)
+        for kb_id, engram in self._engrams.items():
+            safe_id = kb_id.replace("/", "_").replace("\\", "_")
+            engram.save(f"{path}/{safe_id}.json")
+        _log.info("EngramTransferRegistry: saved %d engrams to %s", len(self._engrams), path)
+
+    @classmethod
+    def load(cls, path: str) -> "EngramTransferRegistry":
+        """Load all engrams from a previously saved directory."""
+        import os
+        registry = cls()
+        if not os.path.isdir(path):
+            return registry
+        for fname in os.listdir(path):
+            if fname.endswith(".json"):
+                kb_id = fname[:-5]
+                fpath = os.path.join(path, fname)
+                try:
+                    registry._engrams[kb_id] = SpeedTalkEngram.load(fpath)
+                    _log.info("EngramTransferRegistry: loaded '%s'", kb_id)
+                except Exception as e:
+                    _log.warning("EngramTransferRegistry: failed to load '%s': %s", fpath, e)
+        return registry
+
+
+# ---------------------------------------------------------------------------
+# Phase 219-A: Fast Binding Engine (one-shot episodic encoding)
+# ---------------------------------------------------------------------------
+
+class FastBindingEngine:
+    """
+    Hippocampal one-shot episodic encoding analog.
+
+    When a path is both novel (low existing affinity) and high-confidence
+    (score > score_threshold), it is bound directly into the Engram with
+    a higher initial count — equivalent to a single salient experience
+    encoding into episodic memory.
+
+    Parameters
+    ----------
+    engram          : The SpeedTalkEngram (or Engram) to bind patterns into.
+    novelty_threshold : Affinity below which a path is considered novel.
+    score_threshold   : Minimum traversal score to qualify for fast binding.
+    fast_weight       : Initial count for fast-bound patterns (equiv. to N observations).
+    """
+
+    def __init__(
+        self,
+        engram: "SpeedTalkEngram",
+        novelty_threshold: float = 0.1,
+        score_threshold: float = 0.7,
+        fast_weight: int = 5,
+    ) -> None:
+        self.engram = engram
+        self.novelty_threshold = novelty_threshold
+        self.score_threshold = score_threshold
+        self.fast_weight = fast_weight
+
+    def evaluate(self, rel_seq: Tuple[str, ...], existing_affinity: float, path_score: float) -> bool:
+        """Return True if this path qualifies for fast binding."""
+        return (
+            len(rel_seq) > 0
+            and existing_affinity < self.novelty_threshold
+            and path_score >= self.score_threshold
+        )
+
+    def bind(self, rel_seq: Tuple[str, ...]) -> None:
+        """Directly encode rel_seq into the Engram at fast_weight count."""
+        self.engram.record(rel_seq, weight=self.fast_weight)
+        _log.debug("FastBinding: encoded %s at weight=%d", rel_seq, self.fast_weight)
+
+
+# ---------------------------------------------------------------------------
 # Path helper — raw relation extraction (no Engram shorthand)
 # ---------------------------------------------------------------------------
 

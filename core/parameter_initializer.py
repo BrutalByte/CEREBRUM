@@ -36,7 +36,9 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Optional, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING
+
+import numpy as np
 
 if TYPE_CHECKING:
     from core.graph_profiler import QueryProfile
@@ -190,6 +192,32 @@ _SENTENCE_OVERRIDES: dict[str, dict] = {
 
 
 # ---------------------------------------------------------------------------
+# Phase 218-C: Known-KB profile vectors for cross-KB parameter blending
+#
+# 5-vector: [degree_cv, mean_degree, mean_fan_out, n_relation_types, mean_rel_coverage]
+# Normalised to unit-sphere so cosine similarity == dot product.
+# ---------------------------------------------------------------------------
+_KB_PROFILE_VECTORS: dict[str, np.ndarray] = {
+    # MetaQA: hub graph — high CV (5.68), low rel count (9), high coverage (0.261)
+    "metaqa": np.array([5.68, 6.77, 1.55, 9.0, 0.261], dtype=float),
+    # Hetionet: typed heterogeneous — moderate CV (4.17), 24 rels, low coverage (0.166)
+    "hetionet": np.array([4.17, 9.46, 9.46, 24.0, 0.166], dtype=float),
+}
+# Normalise once at import time
+for _kb in _KB_PROFILE_VECTORS:
+    _v = _KB_PROFILE_VECTORS[_kb]
+    _norm = float(np.linalg.norm(_v))
+    if _norm > 0:
+        _KB_PROFILE_VECTORS[_kb] = _v / _norm
+
+# Regime → best-matching known KB (used as primary blend source)
+_REGIME_TO_KB: dict[str, str] = {
+    "hub_homogeneous":     "metaqa",
+    "typed_heterogeneous": "hetionet",
+}
+
+
+# ---------------------------------------------------------------------------
 # Result dataclass
 # ---------------------------------------------------------------------------
 
@@ -278,6 +306,10 @@ class ParameterInitializer:
                 and profile.degree_cv > 3.0
                 and profile.mean_rel_coverage > 0.20):
             regime = "hub_homogeneous"
+
+        # Phase 218-C: for mixed regime, blend from known-KB calibrations
+        if regime == "mixed":
+            return ParameterInitializer._blend_params_mixed(profile, modularity_Q, embedding_method)
 
         # Sentence-transformers overrides: apply when embedding_method="sentence"
         # and regime has calibrated sentence constants. Falls back to random
@@ -373,5 +405,72 @@ class ParameterInitializer:
             branch_bonus     = round(branch_bonus, 4),
             beam_width       = BEAM_WIDTH,
             effective_regime = regime,
+            embedding_method = embedding_method,
+        )
+
+    @staticmethod
+    def _blend_params_mixed(
+        profile: "QueryProfile",
+        modularity_Q: float,
+        embedding_method: str,
+    ) -> InitialParams:
+        """Phase 218-C: Blend known-KB calibrations for unseen 'mixed' regime.
+
+        Computes cosine similarity between the new graph's 5-vector profile and
+        known KB profile vectors (MetaQA, Hetionet), then soft-mixes their
+        per-constant dicts via softmax weights instead of using hardcoded mixed defaults.
+        """
+        n_rel = max(profile.n_relation_types, 1)
+        n_nodes = max(profile.n_nodes, 1)
+        mean_degree = (2.0 * profile.n_edges / n_nodes) if profile.n_edges > 0 else 1.0
+        mean_fo = max(mean_degree / n_rel, 1e-6)
+        mean_rel_coverage = getattr(profile, "mean_rel_coverage", 0.0)
+
+        query_vec = np.array([
+            profile.degree_cv, mean_degree, mean_fo, float(n_rel), mean_rel_coverage,
+        ], dtype=float)
+        q_norm = float(np.linalg.norm(query_vec))
+        if q_norm > 0:
+            query_vec = query_vec / q_norm
+
+        # Cosine similarities against known KB vectors
+        sims = {kb: float(np.dot(query_vec, vec)) for kb, vec in _KB_PROFILE_VECTORS.items()}
+
+        # Softmax to blend weights
+        max_sim = max(sims.values())
+        exp_sims = {kb: math.exp(s - max_sim) for kb, s in sims.items()}
+        total = sum(exp_sims.values())
+        weights = {kb: v / total for kb, v in exp_sims.items()}
+
+        # Blend per-constant tables using weights
+        regime_map = {"metaqa": "hub_homogeneous", "hetionet": "typed_heterogeneous"}
+        use_sentence = embedding_method == "sentence"
+
+        def _blend_const(table: dict) -> float:
+            return sum(weights[kb] * table[regime_map[kb]] for kb in weights)
+
+        trb_factor   = _blend_const(_TRB_C) * math.log(n_rel + 1)
+        beta         = _blend_const(_BETA)
+        _bs          = _blend_const(_BOOST_SCALE)
+        gamma        = max(GAMMA_MIN, _bs / (mean_fo ** beta))
+        r2_boost     = max(1.5, 1.5 + _blend_const(_R2_C) * math.log(mean_degree / n_rel + 1))
+        fhrb_factor  = max(1.0, 1.0 + _blend_const(_FHRB_C) * math.log(mean_degree + 1))
+        idf_weight   = max(0.01, IDF_SCALE_C * profile.degree_cv)
+        vote_base    = _blend_const(_VOTE_BASE)
+        q_clamped    = max(0.0, min(1.0, modularity_Q))
+        vote_weight  = vote_base + VOTE_Q_SCALE * q_clamped
+        branch_bonus = _blend_const(_BRANCH_BONUS)
+
+        return InitialParams(
+            trb_factor       = round(trb_factor,   4),
+            gamma            = round(gamma,        4),
+            beta             = round(beta,         4),
+            r2_boost         = round(r2_boost,     4),
+            fhrb_factor      = round(fhrb_factor,  4),
+            idf_weight       = round(idf_weight,   4),
+            vote_weight      = round(vote_weight,  4),
+            branch_bonus     = round(branch_bonus, 4),
+            beam_width       = BEAM_WIDTH,
+            effective_regime = "mixed",
             embedding_method = embedding_method,
         )
