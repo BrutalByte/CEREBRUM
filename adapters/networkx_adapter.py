@@ -12,7 +12,7 @@ from typing import List, Optional, Dict, TYPE_CHECKING
 import networkx as nx
 import numpy as np
 
-from core.graph_adapter import GraphAdapter, Entity, Edge
+from core.graph_adapter import GraphAdapter, Entity, Edge, MetaEdge
 
 if TYPE_CHECKING:
     from core.thalamus import IngestionPipeline
@@ -43,6 +43,7 @@ class NetworkXAdapter(GraphAdapter):
         self._entity_types = entity_types or {}
         self.embeddings: Dict[str, np.ndarray] = {}
         self.community_map: Dict[str, int] = {}
+        self._meta_graph: Optional[nx.DiGraph] = None  # Phase 217: built lazily
 
     # ------------------------------------------------------------------
     # Required GraphAdapter methods
@@ -513,5 +514,70 @@ class NetworkXAdapter(GraphAdapter):
                 )
         return cls(G)
 
+    # ------------------------------------------------------------------
+    # Phase 217: Meta-Relation Graph
+    # ------------------------------------------------------------------
 
+    def build_meta_graph(self) -> nx.DiGraph:
+        """
+        Build and cache a meta-relation graph from co-occurrence statistics.
 
+        For every triple A→[r1]→B→[r2]→C in the entity graph, add a
+        meta-edge r1→r2 with weight = co-occurrence count.  Weights are
+        then TF-IDF normalised so ubiquitous meta-paths are downweighted.
+
+        The meta-graph is stored in self._meta_graph and returned.
+        """
+        from collections import defaultdict, Counter
+
+        # Count co-occurrences of (r1, r2) where r2 follows r1 via a shared node
+        co_occur: Dict = defaultdict(int)
+        r1_total: Counter = Counter()
+        r2_total: Counter = Counter()
+
+        for mid in self._G.nodes():
+            in_rels = [
+                d.get("relation", d.get("relation_type", ""))
+                for _, _, d in self._G.in_edges(mid, data=True)
+            ]
+            out_rels = [
+                d.get("relation", d.get("relation_type", ""))
+                for _, _, d in self._G.out_edges(mid, data=True)
+            ]
+            for r1 in in_rels:
+                if not r1:
+                    continue
+                r1_total[r1] += 1
+                for r2 in out_rels:
+                    if not r2:
+                        continue
+                    co_occur[(r1, r2)] += 1
+                    r2_total[r2] += 1
+
+        # TF-IDF normalisation: downweight r1→r2 pairs where r2 is ubiquitous
+        n_nodes = max(1, self._G.number_of_nodes())
+        meta = nx.DiGraph()
+        for (r1, r2), count in co_occur.items():
+            idf = 1.0 + (n_nodes / (r2_total[r2] + 1))
+            weight = count * idf / max(1, r1_total[r1])
+            if meta.has_edge(r1, r2):
+                meta[r1][r2]["weight"] = max(meta[r1][r2]["weight"], weight)
+            else:
+                meta.add_edge(r1, r2, weight=weight, meta_relation="precedes")
+
+        self._meta_graph = meta
+        return meta
+
+    def get_meta_neighbors(self, relation_type: str) -> List[MetaEdge]:
+        """Phase 217: Return meta-edges for this relation type."""
+        if self._meta_graph is None:
+            self.build_meta_graph()
+        result = []
+        for _, tgt, data in self._meta_graph.out_edges(relation_type, data=True):
+            result.append(MetaEdge(
+                source_relation=relation_type,
+                target_relation=tgt,
+                meta_relation=data.get("meta_relation", "precedes"),
+                weight=data.get("weight", 1.0),
+            ))
+        return result

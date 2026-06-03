@@ -229,6 +229,13 @@ class GraphAdapter(ABC):
     def get_edge_types(self) -> List[str]:
         raise NotImplementedError
 
+    def get_meta_neighbors(self, relation_type: str) -> List["MetaEdge"]:
+        """Phase 217: Return meta-edges for this relation type (default: empty).
+
+        Override in adapters that have built a meta-relation graph.
+        """
+        return []
+
     def get_all_edges(self, limit: int = 500) -> List[Edge]:
         """
         Return up to *limit* edges from the graph.
@@ -316,6 +323,25 @@ class GraphAdapter(ABC):
         if n <= 10000:
             return 1.2
         return 1.5
+
+
+@dataclass
+class MetaEdge:
+    """
+    Phase 217: A relation between relation types (meta-relation).
+
+    Captures the structural co-occurrence of relation types in the graph:
+    if triples A→[r1]→B and B→[r2]→C appear frequently, then r1 and r2
+    are linked by the meta-relation 'precedes' (or whatever is derived).
+
+    This lifts relation types to first-class graph citizens and enables
+    second-order queries: "What kinds of connections link disease to gene?"
+    """
+    source_relation: str    # e.g. "treats"
+    target_relation: str    # e.g. "causes"
+    meta_relation: str      # e.g. "precedes", "co-occurs_with", "implies"
+    weight: float = 1.0     # co-occurrence count (TF-IDF normalised)
+    confidence: float = 1.0
 
 
 class CredibilityRegistry:
