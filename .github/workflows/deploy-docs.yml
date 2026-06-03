@@ -35,7 +35,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install MkDocs
-        run: pip install mkdocs-material mkdocs-minify-plugin pymdown-extensions
+        run: pip install mkdocs-material mkdocs-minify-plugin pymdown-extensions mkdocstrings[python]
 
       - name: Build docs
         run: mkdocs build
