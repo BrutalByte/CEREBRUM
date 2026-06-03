@@ -1898,21 +1898,21 @@
 <h3 id="1-introduction">1. Introduction</h3>
 <p>Zero-shot reasoning over Knowledge Graphs requires a system to adapt to unknown topologies and relational schemas instantly. Standard multi-hop traversal methods often fail when applied to graphs with different density profiles (e.g., dense hub-and-spoke vs. sparse typed-heterogeneous). We propose a dual-layer solution: structural adaptation via GraphProfiler and semantic adaptation via STRB.</p>
 <h3 id="2-graphprofiler-build-time-topology-analysis">2. GraphProfiler: Build-Time Topology Analysis</h3>
-<p>GraphProfiler performs an $O(E)$ analysis of the graph's structural features during the <code>build()</code> phase. It computes a feature vector $\vec{\chi}$ comprising:
--   <strong>Average Degree ($\bar{k}$)</strong>: Measures local density.
--   <strong>Community Density ($\rho_C$)</strong>: Measures the strength of the TSC-detected partitions.
--   <strong>Graph Diameter ($D$)</strong>: Inferred from sampling, used to set <code>max_hop</code>.
--   <strong>Hub Gini Coefficient ($G_k$)</strong>: Measures degree inequality.</p>
-<p>Based on $\vec{\chi}$, the system classifies the graph into a <strong>Reasoning Regime</strong>:
+<p>GraphProfiler performs an <span class="arithmatex">\(O(E)\)</span> analysis of the graph's structural features during the <code>build()</code> phase. It computes a feature vector <span class="arithmatex">\(\vec{\chi}\)</span> comprising:
+-   <strong>Average Degree (<span class="arithmatex">\(\bar{k}\)</span>)</strong>: Measures local density.
+-   <strong>Community Density (<span class="arithmatex">\(\rho_C\)</span>)</strong>: Measures the strength of the TSC-detected partitions.
+-   <strong>Graph Diameter (<span class="arithmatex">\(D\)</span>)</strong>: Inferred from sampling, used to set <code>max_hop</code>.
+-   <strong>Hub Gini Coefficient (<span class="arithmatex">\(G_k\)</span>)</strong>: Measures degree inequality.</p>
+<p>Based on <span class="arithmatex">\(\vec{\chi}\)</span>, the system classifies the graph into a <strong>Reasoning Regime</strong>:
 1.  <strong>Regime A (Dense/Homogeneous)</strong>: Narrow beam, high pruning, focus on semantic similarity.
 2.  <strong>Regime B (Sparse/Heterogeneous)</strong>: Wide beam, terminal-anchor biasing (TAB enabled), focus on community coherence.
 3.  <strong>Regime C (Hybrid)</strong>: Dynamic beam profile (Funnel Beam).</p>
 <h3 id="3-strb-semantic-terminal-relation-boost">3. STRB: Semantic Terminal Relation Boost</h3>
-<p>STRB addresses the "Terminal Ambiguity" problem in deep reasoning. Given a query $Q$ and its embedding $\vec{e}<em rel="rel">Q$, STRB calculates a boost factor $B</em>$ for each relation $R$ in the graph:
-$$B_{rel} = \text{softmax}(\cos(\vec{e}<em R_95_label="R_label">Q, \vec{e}</em>))$$
-where $\vec{e}_{R_label}$ is the embedding of the relation's semantic label.</p>
-<p>At the final hop ($k = L$), the CSA score is modified:
-$$a(u,v,L) = \sigma(\dots + \omega \cdot B_{type(u \to v)})$$
+<p>STRB addresses the "Terminal Ambiguity" problem in deep reasoning. Given a query <span class="arithmatex">\(Q\)</span> and its embedding <span class="arithmatex">\(\vec{e}_Q\)</span>, STRB calculates a boost factor <span class="arithmatex">\(B_{rel}\)</span> for each relation <span class="arithmatex">\(R\)</span> in the graph:
+$<span class="arithmatex">\(B_{rel} = \text{softmax}(\cos(\vec{e}_Q, \vec{e}_{R\_label}))\)</span>$
+where <span class="arithmatex">\(\vec{e}_{R\_label}\)</span> is the embedding of the relation's semantic label.</p>
+<p>At the final hop (<span class="arithmatex">\(k = L\)</span>), the CSA score is modified:
+$<span class="arithmatex">\(a(u,v,L) = \sigma(\dots + \omega \cdot B_{type(u \to v)})\)</span>$
 This ensures that the attention beam is "pulled" toward relations that semantically match the query's intent (e.g., a query about "treatments" will boost <code>TREATS</code> or <code>MAY_TREAT</code> relations).</p>
 <h3 id="4-results">4. Results</h3>
 <p>On the MetaQA 3-hop benchmark, STRB alone improves Hits@1 by <strong>8.4%</strong>, as it correctly identifies the concluding relation in the reasoning chain. GraphProfiler ensures that 1-hop queries on dense graphs use 10x less compute than 3-hop queries on sparse graphs, maintaining sub-millisecond latency across all regimes.</p>
@@ -1999,6 +1999,10 @@ This ensures that the attention beam is "pulled" toward relations that semantica
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

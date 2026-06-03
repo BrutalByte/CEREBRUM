@@ -1947,7 +1947,7 @@
 <strong>Module</strong>: <code>core/attention_engine.py</code></p>
 <hr />
 <h3 id="1-introduction">1. Introduction</h3>
-<p>Knowledge Graph (KG) reasoning has historically faced a trade-off between the interpretability of heuristic search (BFS) and the predictive power of dense Knowledge Graph Embeddings (KGEs). Global attention mechanisms, such as those in Graph Attention Networks (GATs), scale poorly ($O(N^2)$) and often lack structural grounding.</p>
+<p>Knowledge Graph (KG) reasoning has historically faced a trade-off between the interpretability of heuristic search (BFS) and the predictive power of dense Knowledge Graph Embeddings (KGEs). Global attention mechanisms, such as those in Graph Attention Networks (GATs), scale poorly (<span class="arithmatex">\(O(N^2)\)</span>) and often lack structural grounding.</p>
 <p><strong>Community-Structured Attention (CSA)</strong> solves this by adapting the attention mechanism from Transformer architectures to graph traversals. It treats community partitions (from [Buchorn, 2026]) as "Attention Heads," allowing the system to steer a beam search using structural and semantic signals without global matrix operations.</p>
 <h3 id="2-the-functional-mapping-cerebrum-analogy">2. The Functional Mapping (Cerebrum Analogy)</h3>
 <p>CSA is designed as a structural equivalent to the Transformer architecture:</p>
@@ -1982,45 +1982,45 @@
 </tbody>
 </table>
 <h3 id="3-the-csa-formula">3. The CSA Formula</h3>
-<p>For a candidate next-hop edge from node $u$ to node $v$ at traversal hop $k$, the attention weight $a(u,v,k)$ is:</p>
-<p>$$
-a(u,v,k) = \sigma\left( \alpha \cdot \mathcal{S}<em com="com">{sem}(u,v) + \beta \cdot \mathcal{S}</em>(u,v) + \epsilon \cdot \phi(k) \right)
-$$}(u,v) + \gamma \cdot w_{rel} - \delta \cdot d_{norm</p>
+<p>For a candidate next-hop edge from node <span class="arithmatex">\(u\)</span> to node <span class="arithmatex">\(v\)</span> at traversal hop <span class="arithmatex">\(k\)</span>, the attention weight <span class="arithmatex">\(a(u,v,k)\)</span> is:</p>
+<div class="arithmatex">\[
+a(u,v,k) = \sigma\left( \alpha \cdot \mathcal{S}_{sem}(u,v) + \beta \cdot \mathcal{S}_{com}(u,v) + \gamma \cdot w_{rel} - \delta \cdot d_{norm}(u,v) + \epsilon \cdot \phi(k) \right)
+\]</div>
 <h4 id="31-term-definitions">3.1 Term Definitions</h4>
 <ul>
-<li><strong>$\alpha$ (Semantic Similarity)</strong>: $\cos(\vec{e}_u, \vec{e}_v)$. Measures the latent alignment of concepts.</li>
-<li><strong>$\beta$ (Community Score)</strong>: The "Head Guidance."<ul>
-<li>$\mathcal{S}_{com} = 1.0$ if $\text{comm}(u) = \text{comm}(v)$</li>
-<li>$\mathcal{S}_{com} = 0.5$ if adjacent ($\exists$ edge between $\text{comm}(u), \text{comm}(v)$)</li>
-<li>$\mathcal{S}<em com="com">{com} = e^{-\lambda d</em>$ otherwise (exponential decay over community distance).}</li>
+<li><strong><span class="arithmatex">\(\alpha\)</span> (Semantic Similarity)</strong>: <span class="arithmatex">\(\cos(\vec{e}_u, \vec{e}_v)\)</span>. Measures the latent alignment of concepts.</li>
+<li><strong><span class="arithmatex">\(\beta\)</span> (Community Score)</strong>: The "Head Guidance."<ul>
+<li><span class="arithmatex">\(\mathcal{S}_{com} = 1.0\)</span> if <span class="arithmatex">\(\text{comm}(u) = \text{comm}(v)\)</span></li>
+<li><span class="arithmatex">\(\mathcal{S}_{com} = 0.5\)</span> if adjacent (<span class="arithmatex">\(\exists\)</span> edge between <span class="arithmatex">\(\text{comm}(u), \text{comm}(v)\)</span>)</li>
+<li><span class="arithmatex">\(\mathcal{S}_{com} = e^{-\lambda d_{com}}\)</span> otherwise (exponential decay over community distance).</li>
 </ul>
 </li>
-<li><strong>$\gamma$ (Relational Prior)</strong>: The weight of the edge type. Materializes the <strong>Bridge Bonus</strong> for cross-type reasoning.</li>
-<li><strong>$\delta$ (Structural Bias)</strong>: Normalized distance of $v$ from query seeds. Prevents "hub-trapping" by penalizing excessive centrality.</li>
-<li><strong>$\epsilon$ (Temporal/Depth Decay)</strong>: Penalizes very deep paths to favor concise reasoning.</li>
+<li><strong><span class="arithmatex">\(\gamma\)</span> (Relational Prior)</strong>: The weight of the edge type. Materializes the <strong>Bridge Bonus</strong> for cross-type reasoning.</li>
+<li><strong><span class="arithmatex">\(\delta\)</span> (Structural Bias)</strong>: Normalized distance of <span class="arithmatex">\(v\)</span> from query seeds. Prevents "hub-trapping" by penalizing excessive centrality.</li>
+<li><strong><span class="arithmatex">\(\epsilon\)</span> (Temporal/Depth Decay)</strong>: Penalizes very deep paths to favor concise reasoning.</li>
 </ul>
 <h3 id="4-adaptive-parameter-learning">4. Adaptive Parameter Learning</h3>
-<p>The five coefficients $(\alpha, \beta, \gamma, \delta, \epsilon)$ are not fixed. The <strong>CSAParameterLearner</strong> optimizes them for a specific graph using a set of training pairs ${(q, a_{pos}, a_{neg})}$ where $a_{pos}$ is a known correct answer and $a_{neg}$ is a noise node.</p>
+<p>The five coefficients <span class="arithmatex">\((\alpha, \beta, \gamma, \delta, \epsilon)\)</span> are not fixed. The <strong>CSAParameterLearner</strong> optimizes them for a specific graph using a set of training pairs <span class="arithmatex">\(\{(q, a_{pos}, a_{neg})\}\)</span> where <span class="arithmatex">\(a_{pos}\)</span> is a known correct answer and <span class="arithmatex">\(a_{neg}\)</span> is a noise node.</p>
 <h4 id="41-loss-function-pairwise-margin-ranking">4.1 Loss Function: Pairwise Margin Ranking</h4>
-<p>We minimize the ranking loss $\mathcal{L}$:</p>
-<p>$$
+<p>We minimize the ranking loss <span class="arithmatex">\(\mathcal{L}\)</span>:</p>
+<div class="arithmatex">\[
 \mathcal{L} = \sum_{i} \max(0, \mu - (\text{score}(a_{pos}) - \text{score}(a_{neg})))
-$$</p>
-<p>Where $\mu$ is the ranking margin (default 0.1).</p>
+\]</div>
+<p>Where <span class="arithmatex">\(\mu\)</span> is the ranking margin (default 0.1).</p>
 <h4 id="42-numerical-gradient-descent">4.2 Numerical Gradient Descent</h4>
 <p>Since the CSA formula is differentiable with respect to its coefficients, we use a numerical gradient update:</p>
-<p>$$
+<div class="arithmatex">\[
 \theta_{t+1} = \theta_t - \eta \cdot \nabla_{\theta} \mathcal{L}
-$$</p>
-<p>Where $\theta = [\alpha, \beta, \gamma, \delta, \epsilon]$. This allows the system to learn, for example, that a "Biomedical" graph requires high $\alpha$ (similarity), while a "Legal" graph requires high $\gamma$ (provenance).</p>
+\]</div>
+<p>Where <span class="arithmatex">\(\theta = [\alpha, \beta, \gamma, \delta, \epsilon]\)</span>. This allows the system to learn, for example, that a "Biomedical" graph requires high <span class="arithmatex">\(\alpha\)</span> (similarity), while a "Legal" graph requires high <span class="arithmatex">\(\gamma\)</span> (provenance).</p>
 <h3 id="5-snapshot-isolation-stability">5. Snapshot Isolation &amp; Stability</h3>
 <p>To ensure mathematical consistency during high-velocity streaming, CSA employs <strong>Query Snapshot Isolation</strong>:
-1.  At the start of a query $Q$, the current <code>community_map</code> is cloned.
-2.  All $k$-hops of $Q$ use this static snapshot.
+1.  At the start of a query <span class="arithmatex">\(Q\)</span>, the current <code>community_map</code> is cloned.
+2.  All <span class="arithmatex">\(k\)</span>-hops of <span class="arithmatex">\(Q\)</span> use this static snapshot.
 3.  If a background <code>GlobalRebalancer</code> update completes, it does not affect active queries, preventing "Mid-Flight Community Swaps" (Hole Fix 1.1.0).</p>
 <h3 id="6-implementation-notes-v2520">6. Implementation Notes (v2.52.0)</h3>
 <ul>
-<li><strong>Complexity</strong>: $O(B \cdot D)$ per hop ($B$=beam width, $D$=degree).</li>
+<li><strong>Complexity</strong>: <span class="arithmatex">\(O(B \cdot D)\)</span> per hop (<span class="arithmatex">\(B\)</span>=beam width, <span class="arithmatex">\(D\)</span>=degree).</li>
 <li><strong>Explainability</strong>: Every result returned via the API includes a <code>score_breakdown</code> mapping the exact contribution of all five terms.</li>
 <li><strong>Precision</strong>: Uses <code>float16</code> for embeddings and <code>float32</code> for attention weights to optimize memory throughput.</li>
 </ul>
@@ -2108,6 +2108,10 @@ $$</p>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

@@ -1881,7 +1881,7 @@
 <h3 id="the-solution-epistemic-gating">The Solution: Epistemic Gating</h3>
 <p>CEREBRUM v2.52.0 introduces the <strong>Epistemic Gate</strong>, a unified uncertainty model that acts as a cognitive filter for the attention beam. Instead of just scoring paths by their semantic strength, the Epistemic Gate measures their <strong>Epistemic Entropy</strong>.</p>
 <p><strong>How it Works</strong>:
-1.  <strong>Confidence Propagation</strong>: The system tracks a "Grounding Score" ($\theta$) for every edge, representing its source reliability (e.g., peer-reviewed vs. inferred).
+1.  <strong>Confidence Propagation</strong>: The system tracks a "Grounding Score" (<span class="arithmatex">\(\theta\)</span>) for every edge, representing its source reliability (e.g., peer-reviewed vs. inferred).
 2.  <strong>Path Entropy Measurement</strong>: The Gate calculates the cumulative uncertainty along the reasoning chain.
 3.  <strong>Threshold Gating</strong>: If a path's cumulative uncertainty exceeds a dynamically set threshold (the "Gate"), the path is immediately pruned, even if its attention score is high.</p>
 <h3 id="impact-on-reliability">Impact on Reliability</h3>
@@ -1972,6 +1972,10 @@
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

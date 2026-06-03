@@ -1927,7 +1927,7 @@
 <p>The 10-parameter CSA formula \cite{vaswani2017attention} includes two terms that encode temporal information:</p>
 <ul>
 <li><code>eta * td</code>: temporal decay, where <code>td</code> measures how recently an edge was created. High <code>eta</code> strongly penalizes old edges; low <code>eta</code> treats all edges equally regardless of age.</li>
-<li><code>iota * nr_v</code>: node recency, where <code>nr_v</code> measures how recently node $v$ was accessed or updated. High <code>iota</code> biases traversal toward recently-active nodes.</li>
+<li><code>iota * nr_v</code>: node recency, where <code>nr_v</code> measures how recently node <span class="arithmatex">\(v\)</span> was accessed or updated. High <code>iota</code> biases traversal toward recently-active nodes.</li>
 </ul>
 <p>Both <code>eta</code> and <code>iota</code> have dataset-specific optimal values. On a streaming news graph, edges from yesterday are far more relevant than edges from last year, and <code>eta</code> should be large. On a biomedical ontology built from decades of publications, temporal recency is a weak signal, and <code>eta</code> should be small. The same asymmetry applies to <code>iota</code>.</p>
 <p>The <code>MetaParameterLearner</code> (Paper 2) can adapt CSA parameters online from feedback signals, but Recall@K — the primary evaluation metric for multi-hop KG reasoning — is not differentiable with respect to <code>eta</code> or <code>iota</code>. A single-point change in <code>eta</code> affects the pruning decisions of the beam search in a combinatorial, non-smooth way. Gradient-based optimization is therefore inapplicable to this problem.</p>
@@ -1948,16 +1948,16 @@
 </ol>
 <p>The separation of <code>calibrate()</code> (which finds the best params) and <code>apply()</code> (which commits them) allows the operator to inspect the grid-search results before committing.</p>
 <h4 id="22-recall-measurement">2.2 Recall Measurement</h4>
-<p><code>measure_recall(validation_set, k)</code> runs <code>BeamTraversal.traverse(seeds)</code> for each (seeds, expected_answer) pair in the validation set and checks whether the expected answer appears in the top-$k$ results. Recall@K is the fraction of validation pairs for which the answer is found:</p>
-<p>$$\text{Recall@K} = \frac{1}{|V|} \sum_{(q, a) \in V} \mathbf{1}[\text{rank}(a, \text{traverse}(q)) \leq K]$$</p>
+<p><code>measure_recall(validation_set, k)</code> runs <code>BeamTraversal.traverse(seeds)</code> for each (seeds, expected_answer) pair in the validation set and checks whether the expected answer appears in the top-<span class="arithmatex">\(k\)</span> results. Recall@K is the fraction of validation pairs for which the answer is found:</p>
+<div class="arithmatex">\[\text{Recall@K} = \frac{1}{|V|} \sum_{(q, a) \in V} \mathbf{1}[\text{rank}(a, \text{traverse}(q)) \leq K]\]</div>
 <p>The validation set must be labelled (ground-truth answers known) and held out from the graph during calibration. Path-preserving hold-out (Paper 10) is recommended to avoid false negatives on sparse graphs.</p>
 <h4 id="23-parameter-grid">2.3 Parameter Grid</h4>
-<p>The default grid is defined by the <code>eta_grid</code> and <code>iota_grid</code> constructor parameters. A $5 \times 5$ grid over <code>eta ∈ {0.0, 0.05, 0.1, 0.2, 0.4}</code> and <code>iota ∈ {0.0, 0.025, 0.05, 0.1, 0.2}</code> covers the practical range of temporal sensitivity in 25 evaluations. Total calibration cost: $O(25 \times |V| \times T_\text{traverse})$ where $T_\text{traverse}$ is the mean traversal time per query.</p>
+<p>The default grid is defined by the <code>eta_grid</code> and <code>iota_grid</code> constructor parameters. A <span class="arithmatex">\(5 \times 5\)</span> grid over <code>eta ∈ {0.0, 0.05, 0.1, 0.2, 0.4}</code> and <code>iota ∈ {0.0, 0.025, 0.05, 0.1, 0.2}</code> covers the practical range of temporal sensitivity in 25 evaluations. Total calibration cost: <span class="arithmatex">\(O(25 \times |V| \times T_\text{traverse})\)</span> where <span class="arithmatex">\(T_\text{traverse}\)</span> is the mean traversal time per query.</p>
 <h3 id="3-results">3. Results</h3>
-<p>Grid-search over a $5 \times 5$ grid finds optimal <code>eta</code> and <code>iota</code> in 25 evaluations. On a streaming news graph with 10,000 nodes and a validation set of 500 pairs, calibration completes in under 3 minutes on a single CPU core. The best-found parameters improve Recall@10 by an average of 8–14% compared to the global defaults (<code>eta=0.1</code>, <code>iota=0.05</code>) on temporally non-uniform graphs.</p>
+<p>Grid-search over a <span class="arithmatex">\(5 \times 5\)</span> grid finds optimal <code>eta</code> and <code>iota</code> in 25 evaluations. On a streaming news graph with 10,000 nodes and a validation set of 500 pairs, calibration completes in under 3 minutes on a single CPU core. The best-found parameters improve Recall@10 by an average of 8–14% compared to the global defaults (<code>eta=0.1</code>, <code>iota=0.05</code>) on temporally non-uniform graphs.</p>
 <p>The <code>try/finally</code> restoration guarantee is particularly important in interactive deployments: if a calibration run is cancelled mid-grid (e.g., by a keyboard interrupt or timeout), the CSAEngine continues operating with its pre-calibration parameters rather than with whichever intermediate <code>(eta, iota)</code> point happened to be active when the interrupt arrived.</p>
 <h3 id="4-conclusion">4. Conclusion</h3>
-<p>TemporalCalibrator closes the parameter optimization gap for temporal CSA features that cannot be addressed by gradient-based learning. By combining grid search over a small parameter space with a <code>try/finally</code> restoration guarantee and a clean <code>calibrate()/apply()</code> API, it enables production operators to tune temporal sensitivity for their specific dataset without risking CSAEngine state corruption. The 25-evaluation cost for a $5 \times 5$ grid is acceptable for infrequent calibration runs (e.g., on dataset refresh or after significant graph growth).</p>
+<p>TemporalCalibrator closes the parameter optimization gap for temporal CSA features that cannot be addressed by gradient-based learning. By combining grid search over a small parameter space with a <code>try/finally</code> restoration guarantee and a clean <code>calibrate()/apply()</code> API, it enables production operators to tune temporal sensitivity for their specific dataset without risking CSAEngine state corruption. The 25-evaluation cost for a <span class="arithmatex">\(5 \times 5\)</span> grid is acceptable for infrequent calibration runs (e.g., on dataset refresh or after significant graph growth).</p>
 <p>The temporal stability achieved by TemporalCalibrator — where <code>eta</code> and <code>iota</code> converge to values that maintain consistent Recall@K across graph updates — is analogous to the soliton framing introduced in Phase 69 [bengio2025soliton]: a calibration state that consistently yields low prediction error can be considered soliton-like, a localized reasoning model that maintains its shape through propagation. TemporalCalibrator finds the parameter point that maximises this stability for the temporal dimension specifically.</p>
 <hr />
 <h2 id="acknowledgments">Acknowledgments</h2>
@@ -2045,6 +2045,10 @@
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

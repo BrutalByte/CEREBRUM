@@ -1955,21 +1955,21 @@
 <strong>Date</strong>: May 2, 2026</p>
 <hr />
 <h3 id="abstract">Abstract</h3>
-<p>Classical beam search over Knowledge Graphs treats each query independently, discarding all information about which relation sequences led to successful answers in previous queries. We present <strong>Engram-Steered Traversal</strong>, a training-free mechanism that accumulates successful relation-sequence patterns in a persistent <code>Engram</code> and biases future beam pruning toward known-productive reasoning chains. The affinity boost is applied multiplicatively in <code>EngramTraversal._prune_candidates()</code>: $s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{engram} \cdot \text{affinity}(\text{rel_seq}))$. No gradient descent is required — patterns are accumulated through frequency counting alone. The cache is durable across process restarts via JSON serialization, and two-tier warm-up on startup (saved JSON + <code>QueryLog</code> replay) ensures that learned patterns are immediately available after server restart.</p>
+<p>Classical beam search over Knowledge Graphs treats each query independently, discarding all information about which relation sequences led to successful answers in previous queries. We present <strong>Engram-Steered Traversal</strong>, a training-free mechanism that accumulates successful relation-sequence patterns in a persistent <code>Engram</code> and biases future beam pruning toward known-productive reasoning chains. The affinity boost is applied multiplicatively in <code>EngramTraversal._prune_candidates()</code>: <span class="arithmatex">\(s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{engram} \cdot \text{affinity}(\text{rel\_seq}))\)</span>. No gradient descent is required — patterns are accumulated through frequency counting alone. The cache is durable across process restarts via JSON serialization, and two-tier warm-up on startup (saved JSON + <code>QueryLog</code> replay) ensures that learned patterns are immediately available after server restart.</p>
 <h3 id="1-introduction">1. Introduction</h3>
 <p>Knowledge Graph reasoning systems learn from feedback through two established mechanisms: online parameter updates (MetaParameterLearner, Paper 2) and batch retraining (CSAParameterLearner, Paper 2). Both adjust numerical weights in the CSA attention formula. Neither captures the relational structure of successful reasoning paths — the specific sequences of edge types that, when followed, reliably connect a seed entity to a correct answer.</p>
-<p>Classical beam search \cite{vaswani2017attention} is a stateless algorithm: the beam at hop $k$ depends only on the current graph state and the CSA scores computed from that state. Every query starts from the same initial conditions, regardless of how many similar queries have been answered successfully before. This statelessness is correct in principle but wasteful in practice: a KG reasoning server that has answered thousands of protein-disease queries should be biased toward the relation sequences that previously reached disease nodes from protein nodes.</p>
+<p>Classical beam search \cite{vaswani2017attention} is a stateless algorithm: the beam at hop <span class="arithmatex">\(k\)</span> depends only on the current graph state and the CSA scores computed from that state. Every query starts from the same initial conditions, regardless of how many similar queries have been answered successfully before. This statelessness is correct in principle but wasteful in practice: a KG reasoning server that has answered thousands of protein-disease queries should be biased toward the relation sequences that previously reached disease nodes from protein nodes.</p>
 <p>Engram-steered traversal addresses this by maintaining a persistent, query-accumulated cache of relation-sequence success counts. The cache requires no training, no labels, and no gradient computation — it is updated after each successful query by recording the relation sequence of the winning path.</p>
 <h3 id="2-methodology">2. Methodology</h3>
 <h4 id="21-engram-structure">2.1 Engram Structure</h4>
 <p><code>Engram</code> maintains a count dictionary <code>_counts: Dict[Tuple[str, ...], int]</code> mapping relation sequences (tuples of relation type strings) to their accumulated success counts. A <code>_max_count: int</code> tracks the maximum count across all sequences, used for normalization.</p>
 <p>The affinity of a relation sequence <code>seq</code> is:</p>
-<p>$$\text{affinity}(\text{seq}) = \frac{\texttt{_counts}[\text{seq}]}{\texttt{_max_count}}$$</p>
+<div class="arithmatex">\[\text{affinity}(\text{seq}) = \frac{\texttt{\_counts}[\text{seq}]}{\texttt{\_max\_count}}\]</div>
 <p>For sequences not present in <code>_counts</code>, <code>affinity = 0</code> and no boost is applied — the cache degrades gracefully to unsteered beam search on unseen relation sequences.</p>
 <h4 id="22-beam-pruning-integration">2.2 Beam Pruning Integration</h4>
-<p><code>EngramTraversal</code> extends <code>BeamTraversal</code> and overrides <code>_prune_candidates()</code>. For each candidate path $c$ at each hop, the current partial relation sequence <code>rel_seq</code> is extracted from the path history. The effective score is:</p>
-<p>$$s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{engram} \cdot \text{affinity}(\text{rel_seq}))$$</p>
-<p>where $\lambda_\text{engram}$ (<code>engram_strength</code>) is a configurable scalar (default: 1.0). This multiplicative form ensures that a zero-CSA-score candidate is never promoted by the cache (it remains zero), and that high-CSA candidates receive proportionally larger boosts from high-affinity sequences.</p>
+<p><code>EngramTraversal</code> extends <code>BeamTraversal</code> and overrides <code>_prune_candidates()</code>. For each candidate path <span class="arithmatex">\(c\)</span> at each hop, the current partial relation sequence <code>rel_seq</code> is extracted from the path history. The effective score is:</p>
+<div class="arithmatex">\[s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{engram} \cdot \text{affinity}(\text{rel\_seq}))\]</div>
+<p>where <span class="arithmatex">\(\lambda_\text{engram}\)</span> (<code>engram_strength</code>) is a configurable scalar (default: 1.0). This multiplicative form ensures that a zero-CSA-score candidate is never promoted by the cache (it remains zero), and that high-CSA candidates receive proportionally larger boosts from high-affinity sequences.</p>
 <h4 id="23-cache-persistence">2.3 Cache Persistence</h4>
 <p><code>Engram.save(path)</code> serializes <code>_counts</code> to a JSON file with a versioned envelope:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;counts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="s2">&quot;rel_seq_tuple&quot;</span><span class="p">,</span><span class="w"> </span><span class="err">cou</span><span class="kc">nt</span><span class="p">],</span><span class="w"> </span><span class="err">...</span><span class="p">]}</span>
@@ -2085,6 +2085,10 @@
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

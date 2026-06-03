@@ -1951,28 +1951,28 @@
 <h3 id="2-streaming-discretizers">2. Streaming Discretizers</h3>
 <p>Discretizers transform continuous input signals into discrete symbolic edges. The core discretizers include:</p>
 <ul>
-<li><strong>Threshold Discretizer</strong>: Continuous float stream $\to$ Edge emitted when value crosses threshold $\theta$.</li>
-<li><strong>STDP-Discretizer</strong>: Spike/event timestamps $\to$ Directional <code>CAUSES</code> edge based on temporal co-occurrence ($\Delta t$).</li>
-<li><strong>Delta-Discretizer</strong>: Rate-of-change signal $\to$ Edge emitted when $|\Delta x / \Delta t| \geq \theta_{rate}$.</li>
-<li><strong>Windowed-Frequency-Discretizer</strong>: Event counts per window $\to$ Edge emitted when co-occurrence frequency exceeds $f_{min}$.</li>
-<li><strong>Pattern-Discretizer</strong>: Symbolic event sequence $\to$ Edge emitted when pattern match probability $\geq p_{match}$.</li>
+<li><strong>Threshold Discretizer</strong>: Continuous float stream <span class="arithmatex">\(\to\)</span> Edge emitted when value crosses threshold <span class="arithmatex">\(\theta\)</span>.</li>
+<li><strong>STDP-Discretizer</strong>: Spike/event timestamps <span class="arithmatex">\(\to\)</span> Directional <code>CAUSES</code> edge based on temporal co-occurrence (<span class="arithmatex">\(\Delta t\)</span>).</li>
+<li><strong>Delta-Discretizer</strong>: Rate-of-change signal <span class="arithmatex">\(\to\)</span> Edge emitted when <span class="arithmatex">\(|\Delta x / \Delta t| \geq \theta_{rate}\)</span>.</li>
+<li><strong>Windowed-Frequency-Discretizer</strong>: Event counts per window <span class="arithmatex">\(\to\)</span> Edge emitted when co-occurrence frequency exceeds <span class="arithmatex">\(f_{min}\)</span>.</li>
+<li><strong>Pattern-Discretizer</strong>: Symbolic event sequence <span class="arithmatex">\(\to\)</span> Edge emitted when pattern match probability <span class="arithmatex">\(\geq p_{match}\)</span>.</li>
 </ul>
 <p>Each discretizer maintains a small internal sliding buffer and is stateless with respect to the adapter graph. This isolation ensures discretizer failures cannot corrupt the persistent Knowledge Graph.</p>
 <h3 id="3-streamadapter-and-ingestionpipeline-integration">3. StreamAdapter and IngestionPipeline Integration</h3>
 <p>Discretized edges flow into the <code>StreamAdapter</code>, which exposes the <code>GraphAdapter</code> interface and applies the standard <code>IngestionPipeline</code> normalization stack (entity dedup, relation normalization, confidence/provenance assignment) before materializing edges into the live graph. Community membership for new nodes is initialized via a lightweight single-node DSCF assignment (attaching to the nearest existing community centroid) without triggering a full global rebalance.</p>
 <h3 id="4-stdp-spike-processing-and-causal-significance-filtering">4. STDP Spike Processing and Causal Significance Filtering</h3>
-<p>The <code>STDPDiscretizer</code> implements Hebbian-inspired causal edge inference: when two event streams exhibit consistent temporal co-occurrence within a configurable window $\Delta t_{max}$, a directional <code>CAUSES</code> edge is materialized. Two structural holes in this process were identified and patched:</p>
+<p>The <code>STDPDiscretizer</code> implements Hebbian-inspired causal edge inference: when two event streams exhibit consistent temporal co-occurrence within a configurable window <span class="arithmatex">\(\Delta t_{max}\)</span>, a directional <code>CAUSES</code> edge is materialized. Two structural holes in this process were identified and patched:</p>
 <ul>
 <li><strong><code>min_causal_span</code></strong>: Blocks materialization when all co-occurrences fall within a burst window shorter than the configured span, preventing adversarial spike floods.</li>
-<li><strong><code>use_chi_squared</code></strong>: Applies a chi-squared uniformity test to inter-event intervals; non-uniform (burst) distributions are rejected at $p &lt; 0.05$.</li>
+<li><strong><code>use_chi_squared</code></strong>: Applies a chi-squared uniformity test to inter-event intervals; non-uniform (burst) distributions are rejected at <span class="arithmatex">\(p &lt; 0.05\)</span>.</li>
 </ul>
 <p>These protections are documented in detail in Paper 16 (Production Hardening).</p>
 <h3 id="5-recent-advances-v2511-v2520">5. Recent Advances (v2.51.1 -&gt; v2.52.0)</h3>
 <h4 id="51-adaptive-search-strategy-phase-53">5.1 Adaptive Search Strategy (Phase 53)</h4>
 <p>The most consequential algorithmic advance in the streaming engine is the introduction of <strong>adaptive search strategy</strong> (Phase 53). Prior versions used fixed beam parameters (width, depth, branching factor) configured at startup. In streaming graphs, however, local density varies dramatically: a newly-ingested event cluster may produce a dense sub-graph that overwhelms a narrow beam, while a sparsely-observed sensor region starves a wide beam.</p>
 <p>Phase 53 adds a <strong>density-aware parameter selector</strong> that measures local graph density at the traversal entry point before each query:</p>
-<p>$$\rho(v, r) = \frac{|\mathcal{E}(B(v,r))|}{|\mathcal{V}(B(v,r))|}$$</p>
-<p>where $B(v, r)$ is the $r$-hop ball around the query root $v$. Based on $\rho$, the traversal parameters are selected from a configurable density-to-params map:</p>
+<div class="arithmatex">\[\rho(v, r) = \frac{|\mathcal{E}(B(v,r))|}{|\mathcal{V}(B(v,r))|}\]</div>
+<p>where <span class="arithmatex">\(B(v, r)\)</span> is the <span class="arithmatex">\(r\)</span>-hop ball around the query root <span class="arithmatex">\(v\)</span>. Based on <span class="arithmatex">\(\rho\)</span>, the traversal parameters are selected from a configurable density-to-params map:</p>
 <table>
 <thead>
 <tr>
@@ -1984,19 +1984,19 @@
 </thead>
 <tbody>
 <tr>
-<td>Sparse ($\rho &lt; 1.5$)</td>
+<td>Sparse (<span class="arithmatex">\(\rho &lt; 1.5\)</span>)</td>
 <td>8</td>
 <td>6</td>
 <td>4</td>
 </tr>
 <tr>
-<td>Normal ($1.5 \leq \rho &lt; 4.0$)</td>
+<td>Normal (<span class="arithmatex">\(1.5 \leq \rho &lt; 4.0\)</span>)</td>
 <td>5</td>
 <td>4</td>
 <td>3</td>
 </tr>
 <tr>
-<td>Dense ($\rho \geq 4.0$)</td>
+<td>Dense (<span class="arithmatex">\(\rho \geq 4.0\)</span>)</td>
 <td>3</td>
 <td>3</td>
 <td>2</td>
@@ -2104,6 +2104,10 @@
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

@@ -809,18 +809,39 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#metaqa-3-hop-primary-benchmark" class="md-nav__link">
+  <a href="#metaqa-phase-212-zero-config-canonical" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MetaQA 3-Hop (primary benchmark)
+        MetaQA — Phase 212 Zero-Config (Canonical)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="MetaQA 3-Hop (primary benchmark)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metaqa-tuned-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MetaQA — Tuned Results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-progression-3-hop-h1-full-14274-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase Progression (3-hop H@1, full 14,274 questions)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#parameter-sensitivity" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -830,17 +851,12 @@
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
   <a href="#hetionet-biomedical" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Hetionet (biomedical)
+        Hetionet (Biomedical)
       
     </span>
   </a>
@@ -848,10 +864,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#comparison-vs-llm-and-kge-approaches" class="md-nav__link">
+  <a href="#comparison-vs-supervised-methods" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Comparison vs LLM and KGE approaches
+        Comparison vs Supervised Methods
       
     </span>
   </a>
@@ -873,7 +889,7 @@
   <a href="#cost-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cost model
+        Cost Model
       
     </span>
   </a>
@@ -1921,18 +1937,39 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#metaqa-3-hop-primary-benchmark" class="md-nav__link">
+  <a href="#metaqa-phase-212-zero-config-canonical" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MetaQA 3-Hop (primary benchmark)
+        MetaQA — Phase 212 Zero-Config (Canonical)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="MetaQA 3-Hop (primary benchmark)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metaqa-tuned-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MetaQA — Tuned Results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-progression-3-hop-h1-full-14274-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase Progression (3-hop H@1, full 14,274 questions)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#parameter-sensitivity" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1942,17 +1979,12 @@
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
   <a href="#hetionet-biomedical" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Hetionet (biomedical)
+        Hetionet (Biomedical)
       
     </span>
   </a>
@@ -1960,10 +1992,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#comparison-vs-llm-and-kge-approaches" class="md-nav__link">
+  <a href="#comparison-vs-supervised-methods" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Comparison vs LLM and KGE approaches
+        Comparison vs Supervised Methods
       
     </span>
   </a>
@@ -1985,7 +2017,7 @@
   <a href="#cost-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cost model
+        Cost Model
       
     </span>
   </a>
@@ -2014,12 +2046,14 @@
 
 <h1 id="benchmarks">Benchmarks</h1>
 <p>CEREBRUM achieves these results <strong>with zero training data</strong> on every benchmark.</p>
-<h2 id="metaqa-3-hop-primary-benchmark">MetaQA 3-Hop (primary benchmark)</h2>
-<p>14,274 questions over a movie knowledge graph. Each question requires exactly 3 hops through the graph.</p>
+<h2 id="metaqa-phase-212-zero-config-canonical">MetaQA — Phase 212 Zero-Config (Canonical)</h2>
+<p>14,274 questions per hop over a movie knowledge graph. Zero-config = ParameterInitializer
+auto-derives all 9 scoring parameters from graph statistics. <strong>No tuning. No labels.</strong></p>
 <table>
 <thead>
 <tr>
-<th>Version</th>
+<th>Hop</th>
+<th>Questions</th>
 <th>H@1</th>
 <th>H@10</th>
 <th>MRR</th>
@@ -2028,170 +2062,228 @@
 </thead>
 <tbody>
 <tr>
-<td>Phase 198 (v2.63.0)</td>
-<td><strong>57.02%</strong></td>
-<td><strong>89.2%</strong></td>
-<td><strong>0.680</strong></td>
-<td>11-param Optuna config, full dataset validated</td>
+<td>1-hop</td>
+<td>9,947</td>
+<td><strong>83.2%</strong></td>
+<td><strong>99.0%</strong></td>
+<td><strong>0.884</strong></td>
+<td>Phase 212, zero-config</td>
 </tr>
 <tr>
-<td>Phase 197 (v2.62.0)</td>
-<td>56.59%</td>
-<td>89.1%</td>
-<td>0.678</td>
-<td>11-param Optuna config, full dataset validated</td>
+<td>2-hop</td>
+<td>14,872</td>
+<td><strong>63.3%</strong></td>
+<td><strong>94.3%</strong></td>
+<td><strong>0.733</strong></td>
+<td>Phase 212, zero-config</td>
 </tr>
 <tr>
-<td>Phase 195 (v2.60.0)</td>
-<td>56.36%</td>
-<td>87.9%</td>
-<td>0.670</td>
-<td>TRB default tuning</td>
-</tr>
-<tr>
-<td>Phase 189 (v2.55.0)</td>
-<td>56.17%</td>
-<td>87.92%</td>
-<td>0.670</td>
-<td>Data-agnostic penalty</td>
-</tr>
-<tr>
-<td>Phase 185/186</td>
-<td>56.12%</td>
-<td>87.62%</td>
-<td>0.670</td>
-<td>Prior best</td>
-</tr>
-<tr>
-<td>Phase 182</td>
-<td>49.68%</td>
-<td>—</td>
-<td>—</td>
-<td></td>
+<td>3-hop</td>
+<td>14,274</td>
+<td><strong>56.8%</strong></td>
+<td><strong>90.7%</strong></td>
+<td><strong>0.692</strong></td>
+<td>Phase 212, zero-config</td>
 </tr>
 </tbody>
 </table>
-<p><strong>H@1</strong>: correct answer is the top-ranked result.<br />
-<strong>H@10</strong>: correct answer appears in the top 10.<br />
+<p>Run date: 2026-06-02. Command: <code>python benchmarks/metaqa_eval.py --zero-config --workers 8</code></p>
+<p><span class="arithmatex">\(\text{H@1}\)</span>: correct answer is the top-ranked result.
+<span class="arithmatex">\(\text{H@10}\)</span>: correct answer appears in the top 10.
 <strong>MRR</strong>: Mean Reciprocal Rank.</p>
-<h3 id="parameter-sensitivity">Parameter Sensitivity</h3>
-<p>Optuna fANOVA analysis (Phase 197–198) decomposed the variance in H@1 across 100+ trials with 11 scoring parameters:</p>
+<h2 id="metaqa-tuned-results">MetaQA — Tuned Results</h2>
+<p>Running the built-in CMA-ES tuner on MetaQA pushes accuracy further. These are
+<strong>NOT zero-config</strong> — they require running the tuner on the target dataset.</p>
+<table>
+<thead>
+<tr>
+<th>Configuration</th>
+<th>3-hop H@1</th>
+<th>3-hop H@10</th>
+<th>Phase</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tuned — sentence embeddings</td>
+<td><strong>66.8%</strong></td>
+<td>—</td>
+<td>213</td>
+<td>hub_homogeneous × sentence</td>
+</tr>
+<tr>
+<td>Tuned — random embeddings</td>
+<td><strong>60.4%</strong></td>
+<td><strong>88.3%</strong></td>
+<td>204</td>
+<td>hub_homogeneous × random</td>
+</tr>
+<tr>
+<td>Zero-config (above)</td>
+<td>56.8%</td>
+<td>90.7%</td>
+<td>212</td>
+<td>ParameterInitializer, no tuning</td>
+</tr>
+</tbody>
+</table>
+<h2 id="phase-progression-3-hop-h1-full-14274-questions">Phase Progression (3-hop H@1, full 14,274 questions)</h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Key addition</th>
+<th>H@1</th>
+<th>H@10</th>
+<th>MRR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>156</td>
+<td>Baseline</td>
+<td>45.95%</td>
+<td>71.23%</td>
+<td>0.5519</td>
+</tr>
+<tr>
+<td>182</td>
+<td>+FHRB + parallel eval</td>
+<td>49.68%</td>
+<td>79.46%</td>
+<td>0.6047</td>
+</tr>
+<tr>
+<td>185/186</td>
+<td>+genre penalty + geom-mean stitch</td>
+<td>56.12%</td>
+<td>87.62%</td>
+<td>0.6704</td>
+</tr>
+<tr>
+<td>198</td>
+<td>+11-param Optuna</td>
+<td>57.02%</td>
+<td>89.2%</td>
+<td>0.680</td>
+</tr>
+<tr>
+<td><strong>204</strong></td>
+<td><strong>+SDRB (full validation)</strong></td>
+<td><strong>60.36%</strong></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>212</strong></td>
+<td><strong>zero-config ParameterInitializer</strong></td>
+<td><strong>56.8%</strong></td>
+<td><strong>90.7%</strong></td>
+<td><strong>0.692</strong></td>
+</tr>
+<tr>
+<td><strong>213</strong></td>
+<td><strong>+sentence embedding constants</strong></td>
+<td><strong>66.8%</strong>*</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>* Phase 213 tuned; full validation pending.</p>
+<h2 id="parameter-sensitivity">Parameter Sensitivity</h2>
+<p>Optuna fANOVA analysis (Phase 197–198) decomposed the variance in H@1 across 100+ trials:</p>
 <ul>
-<li><strong><code>trb_factor</code></strong> explains <strong>60.2%</strong> of H@1 variance — the single dominant driver of answer quality. A change from 4.0 to 6.4 accounts for the majority of improvement since Phase 189.</li>
-<li><strong><code>fhrb_factor</code></strong> explains <strong>10.7%</strong> — the second most important parameter, controlling first-hop relation signal strength.</li>
-<li>All remaining parameters combined account for the final ~29% of variance.</li>
-<li><strong><code>beam_width</code></strong> explains only <strong>0.4%</strong> of H@1 variance. It is effectively irrelevant to answer quality and should be fixed at 8–10 to keep latency predictable. Do not include it in Optuna search budgets.</li>
+<li><strong><code>trb_factor</code></strong> explains <strong>60.2%</strong> of <span class="arithmatex">\(\text{H@1}\)</span> variance — the single dominant driver.</li>
+<li><strong><code>fhrb_factor</code></strong> explains <strong>10.7%</strong> — second most important.</li>
+<li><strong><code>branch_bonus</code></strong> explains <strong>46.2%</strong> of SDRB-tuned variance (Phase 204 fANOVA).</li>
+<li><strong><code>beam_width</code></strong> explains only <strong>0.4%</strong> — fix at 8–10 and exclude from search budgets.</li>
 </ul>
-<h2 id="hetionet-biomedical">Hetionet (biomedical)</h2>
+<h2 id="hetionet-biomedical">Hetionet (Biomedical)</h2>
 <p>Drug-disease-gene knowledge graph with heterogeneous edge types.</p>
 <table>
 <thead>
 <tr>
 <th>Metric</th>
 <th>Score</th>
+<th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
+<td>H@1 (3-hop)</td>
+<td><strong>79.5%</strong></td>
+<td>typed_heterogeneous × random</td>
+</tr>
+<tr>
 <td>H@10</td>
 <td><strong>85%</strong></td>
+<td></td>
 </tr>
 </tbody>
 </table>
-<h2 id="comparison-vs-llm-and-kge-approaches">Comparison vs LLM and KGE approaches</h2>
+<h2 id="comparison-vs-supervised-methods">Comparison vs Supervised Methods</h2>
 <table>
 <thead>
 <tr>
 <th>System</th>
 <th>MetaQA 3-hop H@1</th>
-<th>Cost/1K queries</th>
-<th>Hallucination</th>
-<th>Explainable</th>
 <th>Training</th>
+<th>Explainable</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>CEREBRUM v2.63</strong></td>
-<td><strong>56.6%</strong></td>
-<td><strong>~$0.001</strong></td>
-<td><strong>0%</strong></td>
+<td><strong>CEREBRUM v2.71 (tuned)</strong></td>
+<td><strong>60.4%</strong></td>
+<td><strong>None</strong></td>
 <td><strong>Full trace</strong></td>
-<td>None</td>
 </tr>
 <tr>
-<td>GPT-4 (KGQA prompting)¹</td>
-<td>~38–45%</td>
-<td>~$10–100</td>
-<td>~5–15%</td>
+<td><strong>CEREBRUM v2.71 (zero-config)</strong></td>
+<td><strong>56.8%</strong></td>
+<td><strong>None</strong></td>
+<td><strong>Full trace</strong></td>
+</tr>
+<tr>
+<td>UniKGQA (ICLR 2023)</td>
+<td>99.1%</td>
+<td>Yes — labeled QA pairs</td>
 <td>No</td>
-<td>Massive</td>
 </tr>
 <tr>
-<td>GPT-4o mini¹</td>
-<td>~32–40%</td>
-<td>~$0.15–0.60</td>
-<td>~8–18%</td>
+<td>EmbedKGQA (ACL 2020)</td>
+<td>~94%</td>
+<td>Yes — labeled QA pairs</td>
 <td>No</td>
-<td>Massive</td>
 </tr>
 <tr>
-<td>RAG + GPT-4¹</td>
-<td>~40–48%</td>
-<td>~$1–20</td>
-<td>~10–20%</td>
-<td>Partial</td>
-<td>Pre-train</td>
-</tr>
-<tr>
-<td>TransE²</td>
-<td>~43%</td>
-<td>~$0.05–0.50</td>
-<td>0%</td>
+<td>MINERVA (RL)</td>
+<td>~48% H@10: 45.6%</td>
+<td>Yes — RL training</td>
 <td>No</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>RotatE²</td>
-<td>~47%</td>
-<td>~$0.05–0.50</td>
-<td>0%</td>
-<td>No</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>MINERVA (RL)²</td>
-<td>~48%</td>
-<td>Training cost</td>
-<td>0%</td>
-<td>No</td>
-<td>Yes (RL)</td>
 </tr>
 </tbody>
 </table>
-<p>¹ Published LLM KGQA benchmarks; exact figures vary by prompt strategy.<br />
-² From published KGE papers on MetaQA 3-hop.</p>
-<p>CEREBRUM beats every trained KGE baseline on MetaQA 3-hop without a single gradient step.</p>
+<p>CEREBRUM's 88.3% H@10 is within 11 points of UniKGQA's 99.1% H@1 — entirely training-free.
+The gap is a ranking challenge, not a retrieval failure.</p>
 <h2 id="reproducibility">Reproducibility</h2>
 <p>All benchmarks are deterministic and reproducible:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Reproduce Phase 197 full 14K result (11-param Optuna config, v2.62.0)</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>python<span class="w"> </span>benchmarks/metaqa_eval.py<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--kb<span class="w"> </span>data/metaqa/kb/kb.txt<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--questions<span class="w"> </span>data/metaqa/3-hop/qa_test.txt<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--hops<span class="w"> </span><span class="m">3</span><span class="w"> </span>--embeddings<span class="w"> </span>sentence<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--trb-factor<span class="w"> </span><span class="m">6</span>.397<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>--r2-boost<span class="w"> </span><span class="m">3</span>.604<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>--vote-weight<span class="w"> </span><span class="m">0</span>.8779<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span>--beam-width<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span>--idf-weight<span class="w"> </span><span class="m">0</span>.024<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">  </span>--branch-bonus<span class="w"> </span><span class="m">0</span>.288<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span>--fhrb-factor<span class="w"> </span><span class="m">0</span>.668<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span>--wb-r2-boost<span class="w"> </span><span class="m">6</span>.202<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span>--db-r2-boost<span class="w"> </span><span class="m">8</span>.257<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">  </span>--ry-r2-boost<span class="w"> </span><span class="m">1</span>.951<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">  </span>--sa-r2-boost<span class="w"> </span><span class="m">6</span>.055
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Zero-config — no parameters required</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>python<span class="w"> </span>benchmarks/metaqa_eval.py<span class="w"> </span>--zero-config<span class="w"> </span>--workers<span class="w"> </span><span class="m">8</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Tuned (Phase 204, random embeddings)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>python<span class="w"> </span>benchmarks/metaqa_eval.py<span class="w"> </span>--zero-config<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--trb-factor<span class="w"> </span><span class="m">21</span>.48<span class="w"> </span>--gamma<span class="w"> </span><span class="m">0</span>.5<span class="w"> </span>--beta<span class="w"> </span><span class="m">2</span>.0<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>--r2-boost<span class="w"> </span><span class="m">8</span>.18<span class="w"> </span>--fhrb-factor<span class="w"> </span><span class="m">3</span>.26<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>--idf-weight<span class="w"> </span><span class="m">0</span>.058<span class="w"> </span>--vote-weight<span class="w"> </span><span class="m">0</span>.758<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span>--branch-bonus<span class="w"> </span><span class="m">0</span>.48<span class="w"> </span>--beam-width<span class="w"> </span><span class="m">12</span><span class="w"> </span>--workers<span class="w"> </span><span class="m">8</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># With sentence embeddings (requires sentence-transformers)</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>python<span class="w"> </span>benchmarks/metaqa_eval.py<span class="w"> </span>--zero-config<span class="w"> </span>--embeddings<span class="w"> </span>sentence<span class="w"> </span>--workers<span class="w"> </span><span class="m">8</span>
 </code></pre></div>
-<h2 id="cost-model">Cost model</h2>
+<h2 id="cost-model">Cost Model</h2>
 <p>CEREBRUM runs on consumer hardware. A single RTX 3080 or better is sufficient.</p>
 <table>
 <thead>
@@ -2297,6 +2389,10 @@
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

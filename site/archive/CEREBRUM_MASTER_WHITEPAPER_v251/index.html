@@ -1860,7 +1860,7 @@
 <li><strong>100% Traceability</strong>: Every reasoning step is returned with a <code>score_breakdown</code>, showing exactly which factors contributed to the result.</li>
 <li><strong>Regulatory Compliance</strong>: Meets the requirements for "Right to Explanation" in automated decision-making.</li>
 <li><strong>Adaptive Meta-Learning (v2.52.0)</strong>: The engine autonomously adapts its attention weights per-community based on user feedback, closing the performance gap between zero-shot and supervised reasoning.</li>
-<li><strong>Infrastructure Efficiency</strong>: Optimized for standard hardware, eliminating the $O(N^2)$ memory explosion of traditional attention.</li>
+<li><strong>Infrastructure Efficiency</strong>: Optimized for standard hardware, eliminating the <span class="arithmatex">\(O(N^2)\)</span> memory explosion of traditional attention.</li>
 </ul>
 <h3 id="conclusion_1">Conclusion</h3>
 <p>The CSA Engine moves AI from "Predictive" to "Reasonable." It provides the mathematical rigor and transparency required for enterprise-scale Knowledge Graph intelligence.</p>
@@ -1912,7 +1912,7 @@
 <strong>Target Audience</strong>: Data Scientists, IoT Architects, Cybersecurity Analysts, Fintech Leads</p>
 <hr />
 <h3 id="executive-summary_3">Executive Summary</h3>
-<p>In high-velocity data environments (IoT, Finance, Cyber), the ability to understand <em>why</em> something is happening is just as important as knowing <em>what</em> is happening. Most AI systems are good at correlation but fail at causation. The <strong>STDP Causal Engine</strong> introduces a breakthrough in unsupervised causal inference. By analyzing the temporal "spikes" of events, it autonomously discovers directional causal relationships in real-time, allowing your graph to "learn" the hidden logic of your data streams without human labeling. In v2.52.0, the engine implements <strong>Lazy Decay</strong>, enabling constant-time ($O(1)$) performance even on massive graphs tracking millions of simultaneous causal pairs.</p>
+<p>In high-velocity data environments (IoT, Finance, Cyber), the ability to understand <em>why</em> something is happening is just as important as knowing <em>what</em> is happening. Most AI systems are good at correlation but fail at causation. The <strong>STDP Causal Engine</strong> introduces a breakthrough in unsupervised causal inference. By analyzing the temporal "spikes" of events, it autonomously discovers directional causal relationships in real-time, allowing your graph to "learn" the hidden logic of your data streams without human labeling. In v2.52.0, the engine implements <strong>Lazy Decay</strong>, enabling constant-time (<span class="arithmatex">\(O(1)\)</span>) performance even on massive graphs tracking millions of simultaneous causal pairs.</p>
 <h3 id="the-problem-the-causality-gap-in-big-data">The Problem: The Causality Gap in Big Data</h3>
 <p>Modern enterprise data is a flood of events. Traditional analytics can tell you that "Event A" and "Event B" often happen together (Correlation), but they cannot tell you if A <em>causes</em> B. 
 1.  <strong>Static Bias</strong>: Most causal models require fixed datasets and cannot run on live streams.
@@ -1922,11 +1922,11 @@
 <p><strong>How it works:</strong>
 *   <strong>Temporal Analysis</strong>: If "Source A" consistently fires just before "Target B," the system strengthens the <code>CAUSES</code> connection.
 *   <strong>Error Correction</strong>: If B fires before A, or if A fires without B following, the connection is weakened.
-*   <strong>Lazy Decay ($O(1)$) (v2.52.0)</strong>: A proprietary optimization ensures that the CPU cost of "forgetting" old data remains constant, even if you are tracking millions of causal pairs simultaneously.</p>
+*   <strong>Lazy Decay (<span class="arithmatex">\(O(1)\)</span>) (v2.52.0)</strong>: A proprietary optimization ensures that the CPU cost of "forgetting" old data remains constant, even if you are tracking millions of causal pairs simultaneously.</p>
 <h3 id="key-enterprise-benefits_3">Key Enterprise Benefits</h3>
 <ul>
 <li><strong>Unsupervised Learning</strong>: No need for expensive data labeling; the system learns causality purely from the timing of your events.</li>
-<li><strong>Cybersecurity Defense</strong>: Automatically identifies attack chains (e.g., "Login Failure" $\rightarrow$ "Registry Change") by recognizing them as emergent causal patterns.</li>
+<li><strong>Cybersecurity Defense</strong>: Automatically identifies attack chains (e.g., "Login Failure" <span class="arithmatex">\(\rightarrow\)</span> "Registry Change") by recognizing them as emergent causal patterns.</li>
 <li><strong>Industrial Predictive Maintenance</strong>: Detects subtle causal links between sensor fluctuations and equipment failure before they become critical.</li>
 <li><strong>Enterprise Scaling</strong>: Built for production throughput, handling thousands of events per second with sub-millisecond causal updates.</li>
 </ul>
@@ -2528,6 +2528,10 @@ For deployments that require maximum semantic precision, CEREBRUM can be upgrade
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

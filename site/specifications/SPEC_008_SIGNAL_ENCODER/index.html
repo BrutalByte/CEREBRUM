@@ -1947,10 +1947,10 @@
 <strong>Module</strong>: <code>core/signal_encoder.py</code></p>
 <hr />
 <h3 id="1-introduction">1. Introduction</h3>
-<p>Knowledge Graphs (KGs) are traditionally restricted to symbolic data (text, IDs). To enable reasoning over live sensor feeds, telemetry, and non-symbolic streams, CEREBRUM requires a mechanism to project unstructured signals into the symbolic entity embedding space $\mathcal{E}$.</p>
+<p>Knowledge Graphs (KGs) are traditionally restricted to symbolic data (text, IDs). To enable reasoning over live sensor feeds, telemetry, and non-symbolic streams, CEREBRUM requires a mechanism to project unstructured signals into the symbolic entity embedding space <span class="arithmatex">\(\mathcal{E}\)</span>.</p>
 <p>The <strong>Signal Encoder</strong> implements cross-modal alignment using <strong>Orthogonal Procrustes Analysis (OPA)</strong>. It allows raw wave-forms (Spectral) or telemetry vectors (Statistical) to be treated as first-class graph entities, enabling multi-hop reasoning that bridges physical sensors and conceptual knowledge.</p>
 <h3 id="2-encoding-modalities">2. Encoding Modalities</h3>
-<p>The engine supports two primary encoding strategies to transform raw data into a candidate feature vector $\vec{x}$.</p>
+<p>The engine supports two primary encoding strategies to transform raw data into a candidate feature vector <span class="arithmatex">\(\vec{x}\)</span>.</p>
 <h4 id="21-statistical-encoding">2.1 Statistical Encoding</h4>
 <p>For low-frequency telemetry (e.g., Temperature, Pressure), the engine computes a 16-dimensional descriptor:
 *   <strong>Moments</strong>: Mean, variance, skewness, kurtosis.
@@ -1962,22 +1962,22 @@
 2.  Apply log-scaling to compress dynamic range.
 3.  Interpolate/Truncate to the target <code>entity_dim</code>.</p>
 <h3 id="3-the-procrustes-alignment-protocol">3. The Procrustes Alignment Protocol</h3>
-<p>Once a signal is encoded into feature vector $\vec{x}$, it must be rotated into the latent space of the KG. We learn an optimal rotation matrix $R$.</p>
+<p>Once a signal is encoded into feature vector <span class="arithmatex">\(\vec{x}\)</span>, it must be rotated into the latent space of the KG. We learn an optimal rotation matrix <span class="arithmatex">\(R\)</span>.</p>
 <h4 id="31-training-phase">3.1 Training Phase</h4>
-<p>Given a set of $n$ anchor points $X$ (Signal space) and their known symbolic equivalents $Y$ (Entity embedding space), we solve the Procrustes problem:</p>
-<p>$$
-R = \arg\min_{\Omega^T\Omega=I} | \Omega X - Y |_F
-$$</p>
+<p>Given a set of <span class="arithmatex">\(n\)</span> anchor points <span class="arithmatex">\(X\)</span> (Signal space) and their known symbolic equivalents <span class="arithmatex">\(Y\)</span> (Entity embedding space), we solve the Procrustes problem:</p>
+<div class="arithmatex">\[
+R = \arg\min_{\Omega^T\Omega=I} \| \Omega X - Y \|_F
+\]</div>
 <h4 id="32-svd-solution">3.2 SVD Solution</h4>
-<p>The solution is obtained by performing Singular Value Decomposition on the covariance matrix $M = Y X^T$:</p>
+<p>The solution is obtained by performing Singular Value Decomposition on the covariance matrix <span class="arithmatex">\(M = Y X^T\)</span>:</p>
 <ol>
-<li>Compute $M = U \Sigma V^T$.</li>
-<li>Calculate the optimal rotation: $R = U V^T$.</li>
-<li>Project any new signal $\vec{x}<em signal="signal">{new}$ into $\mathcal{E}$:
-    $$\vec{e}</em>$$} = R \vec{x}_{new</li>
+<li>Compute <span class="arithmatex">\(M = U \Sigma V^T\)</span>.</li>
+<li>Calculate the optimal rotation: <span class="arithmatex">\(R = U V^T\)</span>.</li>
+<li>Project any new signal <span class="arithmatex">\(\vec{x}_{new}\)</span> into <span class="arithmatex">\(\mathcal{E}\)</span>:
+    $<span class="arithmatex">\(\vec{e}_{signal} = R \vec{x}_{new}\)</span>$</li>
 </ol>
 <h3 id="4-enterprise-stability-the-canonical-anchor">4. Enterprise Stability: The Canonical Anchor</h3>
-<p>In federated reasoning [Buchorn, 2026], multiple graphs may have different local embedding spaces. Chaining SVD projections ($A \to B \to C$) introduces "Geometric Drift," where semantic fidelity is lost.</p>
+<p>In federated reasoning [Buchorn, 2026], multiple graphs may have different local embedding spaces. Chaining SVD projections (<span class="arithmatex">\(A \to B \to C\)</span>) introduces "Geometric Drift," where semantic fidelity is lost.</p>
 <p>To prevent this, CEREBRUM enforces a <strong>Canonical Basis Anchor</strong>:
 *   A single "Root Space" (e.g., from the primary Sentence-Transformer) is designated as the anchor.
 *   All <code>SignalEncoders</code> and <code>FederatedAdapters</code> must align directly to the anchor.
@@ -1985,8 +1985,8 @@ $$</p>
 <h3 id="5-implementation-notes-v2520">5. Implementation Notes (v2.52.0)</h3>
 <ul>
 <li><strong>Namespace Isolation</strong>: Encoded signals are automatically prefixed with <code>signal:</code> to prevent ID collisions with text entities (Hole Fix 1.1.0).</li>
-<li><strong>Performance</strong>: Signal projection is a single matrix-vector multiplication $O(D^2)$, enabling sub-millisecond encoding of live streams.</li>
-<li><strong>Learnability</strong>: The <code>learn_alignment()</code> method can be triggered by the <strong>REM Cycle</strong> if the alignment error $| RX - Y |$ exceeds a drift threshold.</li>
+<li><strong>Performance</strong>: Signal projection is a single matrix-vector multiplication <span class="arithmatex">\(O(D^2)\)</span>, enabling sub-millisecond encoding of live streams.</li>
+<li><strong>Learnability</strong>: The <code>learn_alignment()</code> method can be triggered by the <strong>REM Cycle</strong> if the alignment error <span class="arithmatex">\(\| RX - Y \|\)</span> exceeds a drift threshold.</li>
 </ul>
 <blockquote>
 <p><strong>Note</strong>: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see <code>CHANGELOG.md</code> and <code>docs/ARCHITECTURE.md</code>.</p>
@@ -2072,6 +2072,10 @@ $$</p>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

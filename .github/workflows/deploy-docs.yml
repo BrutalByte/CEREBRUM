@@ -6,7 +6,6 @@ on:
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
-      - 'site/**'
       - 'website/**'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
@@ -30,11 +29,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install MkDocs
+        run: pip install mkdocs-material mkdocs-minify-plugin pymdown-extensions
+
+      - name: Build docs
+        run: mkdocs build
 
       - name: Copy marketing site into docs root
         run: cp -r website/* site/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3

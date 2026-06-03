@@ -2249,7 +2249,7 @@
 
 
 <h1 id="cerebrum-performance-tuning-guide">CEREBRUM Performance Tuning Guide</h1>
-<p><strong>Status</strong>: v2.66.0 (Phase 204)</p>
+<p><strong>Status</strong>: v2.71.0 (Phase 213)</p>
 <p>This guide covers the key parameters affecting query latency, throughput, reasoning quality, and memory usage — and how to tune them for your specific workload.</p>
 <hr />
 <h2 id="the-performance-levers-quick-reference">The Performance Levers (Quick Reference)</h2>
@@ -2822,7 +2822,7 @@
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">min_interval_s</span><span class="o">=</span><span class="mf">30.0</span><span class="p">,</span>      <span class="c1"># minimum seconds between rebalances</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="p">)</span>
 </code></pre></div>
-<p>Rebalancing is expensive ($O(N \log N)$). For high-ingest deployments, set <code>min_interval_s=120</code> to prevent rebalance storms during burst traffic.</p>
+<p>Rebalancing is expensive (<span class="arithmatex">\(O(N \log N)\)</span>). For high-ingest deployments, set <code>min_interval_s=120</code> to prevent rebalance storms during burst traffic.</p>
 <hr />
 <h2 id="7-probabilistic-mode-bayesian-beam-search">7. Probabilistic Mode (Bayesian Beam Search)</h2>
 <p>Probabilistic mode adds Thompson sampling overhead (~15% latency increase) but improves quality on sparse graphs and provides confidence intervals.</p>
@@ -2874,7 +2874,7 @@
 </tr>
 </tbody>
 </table>
-<p>For pure structural reasoning (graphs where entity names are opaque IDs), <code>RandomEngine</code> achieves the same H@10 as <code>SentenceEngine</code> because the community consensus term ($\beta$) dominates over semantic similarity ($\alpha$).</p>
+<p>For pure structural reasoning (graphs where entity names are opaque IDs), <code>RandomEngine</code> achieves the same H@10 as <code>SentenceEngine</code> because the community consensus term (<span class="arithmatex">\(\beta\)</span>) dominates over semantic similarity (<span class="arithmatex">\(\alpha\)</span>).</p>
 <hr />
 <h2 id="9-resourcegovernor-budgets">9. ResourceGovernor Budgets</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">core.hardware</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResourceGovernor</span>
@@ -3057,7 +3057,7 @@
 <hr />
 <p><strong>Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.</strong></p>
 <hr />
-<p><strong>Reviewed on</strong>: May 29, 2026 for version v2.66.0</p>
+<p><strong>Reviewed on</strong>: Jun 2, 2026 for version v2.71.0</p>
 
 
 
@@ -3135,6 +3135,10 @@
     
     
       <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

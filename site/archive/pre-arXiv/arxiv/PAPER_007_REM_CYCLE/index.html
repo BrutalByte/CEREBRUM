@@ -1927,15 +1927,15 @@
 <p>The longevity of an autonomous reasoning system depends on its ability to forget as much as its ability to learn \cite{diekelmann2010memory}. In the absence of periodic pruning and consolidation, Knowledge Graphs accumulate spurious causal links (from STDP) and false discoveries (from the InsightEngine). The REM cycle provides the necessary "System 2" maintenance layer to govern these emergent structures.</p>
 <h3 id="2-methodology">2. Methodology</h3>
 <h4 id="21-bilateral-verification">2.1 Bilateral Verification</h4>
-<p>An edge $E_{uv}$ is considered "Verified" if it satisfies a triangulation rule $\mathcal{T}$:
-$$\mathcal{T}(E_{uv}) = \mathbb{I}(\text{Inference}(u,v) \geq \sigma) \land \mathbb{I}(\text{Comm}(u) \approx \text{Comm}(v))$$
+<p>An edge <span class="arithmatex">\(E_{uv}\)</span> is considered "Verified" if it satisfies a triangulation rule <span class="arithmatex">\(\mathcal{T}\)</span>:
+$<span class="arithmatex">\(\mathcal{T}(E_{uv}) = \mathbb{I}(\text{Inference}(u,v) \geq \sigma) \land \mathbb{I}(\text{Comm}(u) \approx \text{Comm}(v))\)</span>$
 This ensures that every "AHA moment" is backed by both local topology and transitive reasoning.</p>
 <h4 id="22-recursive-hallucination-prevention-v2520">2.2 Recursive Hallucination Prevention (v2.52.0)</h4>
-<p>To prevent the system from reinforcing its own unverified discoveries, we implement a skeptical decay rate $\rho$:
-$$c_{t+1} = c_t \cdot (\lambda \cdot \rho)^{\Delta t}$$
-where $\rho &lt; 1.0$ for all edges with the <code>INSIGHT_LINK</code> relation. Edges only transition to a "Grounded" state if they are validated by independent user queries.</p>
+<p>To prevent the system from reinforcing its own unverified discoveries, we implement a skeptical decay rate <span class="arithmatex">\(\rho\)</span>:
+$<span class="arithmatex">\(c_{t+1} = c_t \cdot (\lambda \cdot \rho)^{\Delta t}\)</span>$
+where <span class="arithmatex">\(\rho &lt; 1.0\)</span> for all edges with the <code>INSIGHT_LINK</code> relation. Edges only transition to a "Grounded" state if they are validated by independent user queries.</p>
 <h4 id="23-global-re-optimization">2.3 Global Re-optimization</h4>
-<p>The REM cycle monitors the <strong>Modularity Drift</strong> $\Delta Q_{total}$. When the partition stability falls below a threshold, it spawns a background DSCF/TSC task [Buchorn, 2026] and performs an atomic swap of the community map, ensuring the graph's "Attention Heads" remain aligned with the latest data.</p>
+<p>The REM cycle monitors the <strong>Modularity Drift</strong> <span class="arithmatex">\(\Delta Q_{total}\)</span>. When the partition stability falls below a threshold, it spawns a background DSCF/TSC task [Buchorn, 2026] and performs an atomic swap of the community map, ensuring the graph's "Attention Heads" remain aligned with the latest data.</p>
 <h3 id="3-conclusion">3. Conclusion</h3>
 <p>The REM Cycle provides a robust architectural solution for the "Entropy Problem" in self-optimizing graphs. By integrating verification, pruning, and re-balancing into a unified background loop, it ensures that CEREBRUM remains a stable and reliable foundation for long-term autonomous intelligence. In CEREBRUM v2.52.0, the IKGWQ benchmark quantifies REM's contribution at a 40% recall improvement at Level 4 (50% edge removal) with a Graceful Degradation AUC of 0.89, while the HypothesisEngine extends REM's role from maintenance to active knowledge construction via abductive reasoning.</p>
 <hr />
@@ -2085,6 +2085,10 @@ where $\rho &lt; 1.0$ for all edges with the <code>INSIGHT_LINK</code> relation.
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

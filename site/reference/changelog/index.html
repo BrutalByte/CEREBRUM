@@ -9610,7 +9610,7 @@ beam, directly reducing the 22.7% pure-miss rate from undiscriminating beam prun
 <h3 id="added_25">Added</h3>
 <ul>
 <li><strong>Phase 141: Autonomous H1SE Tuning</strong>: Specialized research harness for parameter self-optimization.</li>
-<li>identified <code>expansion_k=5</code> with adaptive scaling as the optimal Efficiency ($Hits@10 / \log(Latency)$) configuration for MetaQA.</li>
+<li>identified <code>expansion_k=5</code> with adaptive scaling as the optimal Efficiency (<span class="arithmatex">\(Hits@10 / \log(Latency)\)</span>) configuration for MetaQA.</li>
 <li><strong>Phase 140: Multi-Seed Relational Interaction</strong>: Enabled H1SE to handle multiple seed entities simultaneously.</li>
 <li>Implemented <strong>Intersection Bonus</strong>: priority expansion for neighbors reached by &gt;1 seed.</li>
 <li><strong>Phase 139: Cross-Branch Path Pruning</strong>: Implemented <code>GlobalBeamBarrier</code> to terminate weak H1SE branches mid-flight.</li>
@@ -10256,7 +10256,7 @@ beam, directly reducing the 22.7% pure-miss rate from undiscriminating beam prun
 <h3 id="added_73">Added</h3>
 <ul>
 <li><strong>Phase 41: Temporal Reasoning &amp; REM Synthesis</strong>:<ul>
-<li><strong>Temporal Bias Correction</strong>: Corrected the recency formula in <code>CSAEngine</code> to properly favor newer edges ($+\exp(-\lambda t)$).</li>
+<li><strong>Temporal Bias Correction</strong>: Corrected the recency formula in <code>CSAEngine</code> to properly favor newer edges (<span class="arithmatex">\(+\exp(-\lambda t)\)</span>).</li>
 <li><strong>Node Recency Integration</strong>: Added <code>nr_v</code> (Node Recency) to <code>ReasoningLogit</code> framework (9-feature vector).</li>
 <li><strong>Wormhole Detection</strong>: Implemented similarity-based bridging of disconnected components in <code>REMEngine</code>.</li>
 </ul>
@@ -11156,7 +11156,7 @@ OPT Hits@1 at 3-hop: 16.93% vs FULL's 13.50% â OPT is precision-optimised; 
 <h2 id="121-a-2026-03-27-a-phase-22-publication-readiness">[1.2.1] â 2026-03-27 â Phase 22: Publication Readiness</h2>
 <h3 id="added_89">Added</h3>
 <ul>
-<li><strong>Adaptive Community Granularity</strong>: Implemented <code>adaptive_resolution_search()</code> in <code>core/community_engine.py</code> to recursively target $K \approx \sqrt{N}$ communities.</li>
+<li><strong>Adaptive Community Granularity</strong>: Implemented <code>adaptive_resolution_search()</code> in <code>core/community_engine.py</code> to recursively target <span class="arithmatex">\(K \approx \sqrt{N}\)</span> communities.</li>
 <li><strong>GPU DSCF Tests</strong>: Added high-coverage test suite for <code>GPUDSCFEngine</code> in <code>tests/test_dscf_gpu.py</code>.</li>
 <li><strong>Documentation Refresh</strong>: Updated README and AI-context files to reflect v1.2.1 test coverage standard.</li>
 </ul>
@@ -11372,6 +11372,10 @@ OPT Hits@1 at 3-hop: 16.93% vs FULL's 13.50% â OPT is precision-optimised; 
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

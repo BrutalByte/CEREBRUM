@@ -2039,17 +2039,17 @@
 <p>The InsightValidator addresses failure mode (1) by applying reverse traversal to validate speculative edges. The MetaInsightEngine addresses failure mode (2) by treating every reasoning event as a first-class graph citizen and running CSA traversal over the resulting event graph.</p>
 <h3 id="2-the-insightvalidator">2. The InsightValidator</h3>
 <h4 id="21-bilateral-reverse-traversal">2.1 Bilateral Reverse Traversal</h4>
-<p>For a candidate speculative edge $E_{uv}$ with relation $r$, the InsightValidator runs two independent traversals:</p>
+<p>For a candidate speculative edge <span class="arithmatex">\(E_{uv}\)</span> with relation <span class="arithmatex">\(r\)</span>, the InsightValidator runs two independent traversals:</p>
 <ol>
-<li><strong>Forward probe</strong>: Start from $u$, traverse without using $E_{uv}$, determine if $v$ is reachable with confidence $\geq \sigma_{fwd}$.</li>
-<li><strong>Reverse probe</strong>: Start from $v$, traverse without using $E_{uv}$, determine if $u$ is reachable with confidence $\geq \sigma_{rev}$.</li>
+<li><strong>Forward probe</strong>: Start from <span class="arithmatex">\(u\)</span>, traverse without using <span class="arithmatex">\(E_{uv}\)</span>, determine if <span class="arithmatex">\(v\)</span> is reachable with confidence <span class="arithmatex">\(\geq \sigma_{fwd}\)</span>.</li>
+<li><strong>Reverse probe</strong>: Start from <span class="arithmatex">\(v\)</span>, traverse without using <span class="arithmatex">\(E_{uv}\)</span>, determine if <span class="arithmatex">\(u\)</span> is reachable with confidence <span class="arithmatex">\(\geq \sigma_{rev}\)</span>.</li>
 </ol>
-<p><strong>Verification criterion</strong>: $E_{uv}$ is verified iff at least one probe succeeds with $\sigma \geq 0.65$ AND the path uses at most $h_{max}$ hops.</p>
-<p>The bilateral design is critical: a single forward probe could be satisfied by a trivially short path ($u \to w \to v$) that doesn't provide independent structural support. The reverse probe requires that the topology is consistent in both directions, which is a significantly stricter constraint on undirected or weakly-directed graphs.</p>
+<p><strong>Verification criterion</strong>: <span class="arithmatex">\(E_{uv}\)</span> is verified iff at least one probe succeeds with <span class="arithmatex">\(\sigma \geq 0.65\)</span> AND the path uses at most <span class="arithmatex">\(h_{max}\)</span> hops.</p>
+<p>The bilateral design is critical: a single forward probe could be satisfied by a trivially short path (<span class="arithmatex">\(u \to w \to v\)</span>) that doesn't provide independent structural support. The reverse probe requires that the topology is consistent in both directions, which is a significantly stricter constraint on undirected or weakly-directed graphs.</p>
 <h4 id="22-community-consensus-augmentation">2.2 Community Consensus Augmentation</h4>
 <p>The validator augments the traversal confidence with a <strong>community consensus term</strong>:</p>
-<p>$$S_{val}(E_{uv}) = \alpha C_{fwd} + \beta C_{rev} + \gamma \cdot \delta(c_u, c_v)$$</p>
-<p>with default weights $\alpha=0.45$, $\beta=0.45$, $\gamma=0.10$. Here $C$ represents traversal confidence and $\delta$ is the Kronecker delta for community membership ($c_u, c_v$). This ensures that edges connecting nodes from different communities require higher traversal confidence to be verified, reflecting the structural implausibility of cross-community speculative links.</p>
+<div class="arithmatex">\[S_{val}(E_{uv}) = \alpha C_{fwd} + \beta C_{rev} + \gamma \cdot \delta(c_u, c_v)\]</div>
+<p>with default weights <span class="arithmatex">\(\alpha=0.45\)</span>, <span class="arithmatex">\(\beta=0.45\)</span>, <span class="arithmatex">\(\gamma=0.10\)</span>. Here <span class="arithmatex">\(C\)</span> represents traversal confidence and <span class="arithmatex">\(\delta\)</span> is the Kronecker delta for community membership (<span class="arithmatex">\(c_u, c_v\)</span>). This ensures that edges connecting nodes from different communities require higher traversal confidence to be verified, reflecting the structural implausibility of cross-community speculative links.</p>
 <h4 id="23-verification-states">2.3 Verification States</h4>
 <p>Each tracked edge transitions through states:</p>
 <table>
@@ -2084,15 +2084,15 @@
 </table>
 <h3 id="3-the-metainsightengine">3. The MetaInsightEngine</h3>
 <h4 id="31-the-insightevent-graph">3.1 The InsightEvent Graph</h4>
-<p>Every reasoning event — a query execution, a new edge validation, a community rebalance, a bridge formation — is materialized as an <code>InsightEvent</code> node in a second-order graph $G_{meta}$. Events are connected by typed edges:</p>
+<p>Every reasoning event — a query execution, a new edge validation, a community rebalance, a bridge formation — is materialized as an <code>InsightEvent</code> node in a second-order graph <span class="arithmatex">\(G_{meta}\)</span>. Events are connected by typed edges:</p>
 <ul>
-<li><code>TRIGGERED_BY</code>: $E_{validation}$ triggered by $E_{query}$</li>
+<li><code>TRIGGERED_BY</code>: <span class="arithmatex">\(E_{validation}\)</span> triggered by <span class="arithmatex">\(E_{query}\)</span></li>
 <li><code>CONTRADICTS</code>: Two <code>InsightEvent</code> nodes reach conflicting conclusions about the same entity</li>
 <li><code>REINFORCES</code>: An event validates a conclusion reached by a prior event</li>
 <li><code>CO_OCCURRED</code>: Two events fired within a configurable time window</li>
 </ul>
 <h4 id="32-second-order-csa-traversal">3.2 Second-Order CSA Traversal</h4>
-<p>The MetaInsightEngine runs the standard CSA traversal [Buchorn, 2026] on $G_{meta}$ using <code>InsightEvent</code> attributes as embeddings. Specifically, each event node is embedded with:
+<p>The MetaInsightEngine runs the standard CSA traversal [Buchorn, 2026] on <span class="arithmatex">\(G_{meta}\)</span> using <code>InsightEvent</code> attributes as embeddings. Specifically, each event node is embedded with:
 - Relation-type distribution of edges in the primary reasoning path
 - Community IDs traversed
 - Confidence scores at each hop
@@ -2100,15 +2100,15 @@
 <p>This allows the MetaInsightEngine to answer questions like: <em>"Which entity types consistently appear at the end of high-confidence 3-hop paths?"</em> or <em>"Which communities are never traversed despite being structurally central?"</em></p>
 <h4 id="33-structural-bias-detection">3.3 Structural Bias Detection</h4>
 <p>The MetaInsightEngine identifies three classes of reasoning pathology:
-1. <strong>Community Lock-In</strong>: $&gt; 70\%$ of successful paths stay within a single community.
-2. <strong>Relation Starvation</strong>: One or more relation types appear on $&lt; 5\%$ of successful paths despite representing $&gt; 20\%$ of graph edges.
+1. <strong>Community Lock-In</strong>: <span class="arithmatex">\(&gt; 70\%\)</span> of successful paths stay within a single community.
+2. <strong>Relation Starvation</strong>: One or more relation types appear on <span class="arithmatex">\(&lt; 5\%\)</span> of successful paths despite representing <span class="arithmatex">\(&gt; 20\%\)</span> of graph edges.
 3. <strong>Depth Asymmetry</strong>: High-confidence answers are found disproportionately at hop 1, indicating the graph is behaving like a lookup table rather than a multi-hop reasoner.</p>
-<p>When detected, these patterns are surfaced as <code>STRUCTURAL_BIAS</code> events in $G_{meta}$, triggering alerts for human review.</p>
+<p>When detected, these patterns are surfaced as <code>STRUCTURAL_BIAS</code> events in <span class="arithmatex">\(G_{meta}\)</span>, triggering alerts for human review.</p>
 <h3 id="4-recent-advances-v2511-v2520">4. Recent Advances (v2.51.1 -&gt; v2.52.0)</h3>
 <h4 id="41-researchagent-autonomous-missing-link-discovery-phase-51">4.1 ResearchAgent: Autonomous Missing-Link Discovery (Phase 51)</h4>
 <p>The <strong>ResearchAgent</strong> (Phase 51) extends the InsightEngine paradigm from reactive validation to proactive discovery. It operates as a background daemon that continuously analyzes the graph for structural "missing links" — pairs of nodes that are strongly connected via multi-hop bridges but lack a direct edge that structural evidence suggests should exist.</p>
 <p>The ResearchAgent algorithm:
-1. Identifies node pairs $(u, v)$ where $\text{BeamTraversal}(u, v)$ returns high-confidence paths through multiple intermediate communities.
+1. Identifies node pairs <span class="arithmatex">\((u, v)\)</span> where <span class="arithmatex">\(\text{BeamTraversal}(u, v)\)</span> returns high-confidence paths through multiple intermediate communities.
 2. Filters candidates using the InsightValidator bilateral criterion — only pairs with corroborated indirect connectivity are proposed.
 3. Queues proposed edges for human review via a priority queue sorted by structural confidence.
 4. Integrates with ExternalValidator (Phase 52) to pre-screen proposals against scientific literature before they enter the review queue.</p>
@@ -2122,7 +2122,7 @@
 <li><strong>ClinicalTrials.gov</strong>: Trial-phase evidence for clinical relationship edges</li>
 </ul>
 <p>For each ResearchAgent proposal, ExternalValidator computes an <strong>external corroboration score</strong>:
-$$S_{ext}(E_{uv}) = \text{Noisy-OR}({P_{db}(u \leftrightarrow v)}_{db \in \mathcal{D}})$$</p>
+$<span class="arithmatex">\(S_{ext}(E_{uv}) = \text{Noisy-OR}(\{P_{db}(u \leftrightarrow v)\}_{db \in \mathcal{D}})\)</span>$</p>
 <p>Only proposals exceeding a configurable threshold (default: 0.3) are forwarded to the human review queue; the rest are logged but not proposed.</p>
 <h4 id="43-metainsightengine-analysis-of-researchagent-findings">4.3 MetaInsightEngine Analysis of ResearchAgent Findings</h4>
 <p>In v2.52.0, the MetaInsightEngine's <code>InsightEvent</code> graph is extended to include <code>ResearchAgent</code> proposal events and <code>ExternalValidator</code> corroboration events as first-class nodes. This allows MetaInsightEngine to detect second-order patterns in the ResearchAgent's behavior — for example:</p>
@@ -2288,6 +2288,10 @@ $$S_{ext}(E_{uv}) = \text{Noisy-OR}({P_{db}(u \leftrightarrow v)}_{db \in \mathc
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

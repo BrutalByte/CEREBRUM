@@ -1927,18 +1927,18 @@
 <p>The efficiency of multi-hop reasoning in graphs is fundamentally constrained by the diameter and sparsity of the network. In large-scale KGs, semantically related concepts often reside in disparate community partitions, necessitating high-latency "Bridge" traversals. We propose that a graph should not be a static artifact, but a plastic entity that reshapes its topology to favor successful reasoning chains.</p>
 <h3 id="2-methodology">2. Methodology</h3>
 <h4 id="21-the-potentiation-rule">2.1 The Potentiation Rule</h4>
-<p>A structural relay node $v'<em dest="dest">{twin}$ is materialized for node $v$ in destination community $C</em>$ if:
-1.  <strong>Frequency</strong>: Traversal $(u \to v)$ occurs $\geq n_{min}$ times.
-2.  <strong>Alignment</strong>: $\cos(\vec{e}<em dest="dest">v, \vec{c}</em>$ is the community centroid.}) \geq \sigma$, where $\vec{c}_{dest</p>
+<p>A structural relay node <span class="arithmatex">\(v'_{twin}\)</span> is materialized for node <span class="arithmatex">\(v\)</span> in destination community <span class="arithmatex">\(C_{dest}\)</span> if:
+1.  <strong>Frequency</strong>: Traversal <span class="arithmatex">\((u \to v)\)</span> occurs <span class="arithmatex">\(\geq n_{min}\)</span> times.
+2.  <strong>Alignment</strong>: <span class="arithmatex">\(\cos(\vec{e}_v, \vec{c}_{dest}) \geq \sigma\)</span>, where <span class="arithmatex">\(\vec{c}_{dest}\)</span> is the community centroid.</p>
 <h4 id="22-materialization-and-reflection">2.2 Materialization and Reflection</h4>
 <p>Upon potentiation, the engine performs a "Reflection" operation:
--   Assign $v'<em dest="dest">{twin}$ to $C</em>$.
--   Establish a <code>BRIDGE_TWIN</code> binding edge $(v, v'<em dest="dest">{twin})$.
--   Mirror all of $v$'s edges that terminate in $C</em>$.}$ onto $v'_{twin</p>
+-   Assign <span class="arithmatex">\(v'_{twin}\)</span> to <span class="arithmatex">\(C_{dest}\)</span>.
+-   Establish a <code>BRIDGE_TWIN</code> binding edge <span class="arithmatex">\((v, v'_{twin})\)</span>.
+-   Mirror all of <span class="arithmatex">\(v\)</span>'s edges that terminate in <span class="arithmatex">\(C_{dest}\)</span> onto <span class="arithmatex">\(v'_{twin}\)</span>.</p>
 <h3 id="3-structural-maintenance-the-ltd-analog">3. Structural Maintenance: The LTD Analog</h3>
 <p>To prevent the "Informational Sprawl" of materialized nodes, we implement a temporal decay function:
-$$c_t = c_0 \cdot \lambda^{\Delta t}$$
-where $\lambda$ is the decay constant and $\Delta t$ is the time since last usage. Edges falling below a confidence threshold $c_{min}$ are pruned during the <strong>REM Cycle</strong> [Buchorn, 2026].</p>
+$<span class="arithmatex">\(c_t = c_0 \cdot \lambda^{\Delta t}\)</span>$
+where <span class="arithmatex">\(\lambda\)</span> is the decay constant and <span class="arithmatex">\(\Delta t\)</span> is the time since last usage. Edges falling below a confidence threshold <span class="arithmatex">\(c_{min}\)</span> are pruned during the <strong>REM Cycle</strong> [Buchorn, 2026].</p>
 <h3 id="4-conclusion">4. Conclusion</h3>
 <p>The Bridge Twin Engine provides a biologically-inspired framework for self-optimizing Knowledge Graphs. By transforming reasoning history into physical graph structure, it enables sub-millisecond multi-hop reasoning on increasingly complex network topologies. In CEREBRUM v2.52.0, proactive bridge synthesis scales to 8,300 active bridges in the WebQSP OPT configuration, contributing directly to a H@10 improvement from 16.59% to 20.84% — a concrete, quantified demonstration of experience-dependent structural plasticity improving reasoning recall.</p>
 <hr />
@@ -2061,6 +2061,10 @@ where $\lambda$ is the decay constant and $\Delta t$ is the time since last usag
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

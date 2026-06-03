@@ -1968,8 +1968,8 @@
 <p><em>No prior algorithm applies both signals to every node simultaneously. All existing hybrid methods apply signals to disjoint node subsets.</em></p>
 <h3 id="2-csa-community-structured-attention">2. CSA — Community-Structured Attention</h3>
 <p>The edge attention formula that guides beam search:</p>
-<p>$$a(u,v,k) = \sigma\bigl(\alpha\cos(\vec{e}<em rel="rel">u,\vec{e}_v) + \beta S_C(u,v) + \gamma w</em> + \varepsilon\phi(k) + \zeta \cdot PR(v)\bigr)$$} - \delta d_{norm</p>
-<p>The $\beta S_C(u,v)$ community consensus term is absent from every published GNN attention method. It encodes the global structural observation that entities in the same community are more likely to be meaningfully connected — a constraint that local neighborhood attention cannot express.</p>
+<div class="arithmatex">\[a(u,v,k) = \sigma\bigl(\alpha\cos(\vec{e}_u,\vec{e}_v) + \beta S_C(u,v) + \gamma w_{rel} - \delta d_{norm} + \varepsilon\phi(k) + \zeta \cdot PR(v)\bigr)\]</div>
+<p>The <span class="arithmatex">\(\beta S_C(u,v)\)</span> community consensus term is absent from every published GNN attention method. It encodes the global structural observation that entities in the same community are more likely to be meaningfully connected — a constraint that local neighborhood attention cannot express.</p>
 <h3 id="3-glass-box-reasoning">3. Glass-Box Reasoning</h3>
 <p>Every answer is a traceable path through verified edges. The complete mathematical justification for every reasoning step is available on demand: which communities were traversed, what semantic similarity score was computed, what relation weight was applied, what the final attention weight was.</p>
 <hr />
@@ -2079,7 +2079,7 @@
 <h2 id="novel-contributions-ip-claims">Novel Contributions (IP Claims)</h2>
 <ol>
 <li>DSCF simultaneous per-node dual-signal fusion</li>
-<li>CSA formula with community consensus term $S_C(u,v)$</li>
+<li>CSA formula with community consensus term <span class="arithmatex">\(S_C(u,v)\)</span></li>
 <li>Zero-shot multi-hop beam traversal via structural attention</li>
 <li>Bridge Twin LTP/LTD structural plasticity analog for KGs</li>
 <li>STDP-derived directional causal edge materialization in KGs</li>
@@ -2178,6 +2178,10 @@
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

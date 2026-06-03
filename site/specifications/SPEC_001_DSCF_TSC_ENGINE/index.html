@@ -1840,7 +1840,7 @@
   <a href="#22-global-signal-modularity-gain-delta-q" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2.2 Global Signal: Modularity Gain ($\Delta Q$)
+        2.2 Global Signal: Modularity Gain (\(\Delta Q\))
       
     </span>
   </a>
@@ -2000,67 +2000,67 @@
 <p>Traditional community detection algorithms typically optimize for a single structural signal—either local (Label Propagation) or global (Modularity). This leads to a "Resolution Limit" where small, coherent clusters are either overlooked or prematurely merged.</p>
 <p><strong>Dual-Signal Community Fusion (DSCF)</strong> and its evolution, <strong>Triple-Signal Consensus (TSC)</strong>, introduce a consensus-based decision rule that fuses local, global, and flow-based signals at the individual node update level. This specification formalizes the mathematics of this fusion, the temperature-annealing schedule, and the lock-free parallel implementation.</p>
 <h3 id="2-the-three-consensus-signals">2. The Three Consensus Signals</h3>
-<p>For a node $v$ considering a move to community $C$, the Total Consensus Score $S(v, C)$ is a weighted sum of three distinct topological signals.</p>
+<p>For a node <span class="arithmatex">\(v\)</span> considering a move to community <span class="arithmatex">\(C\)</span>, the Total Consensus Score <span class="arithmatex">\(S(v, C)\)</span> is a weighted sum of three distinct topological signals.</p>
 <h4 id="21-local-signal-label-propagation-lpa">2.1 Local Signal: Label Propagation (LPA)</h4>
-<p>The local signal $\mathcal{L}(v, C)$ represents the topological consensus of node $v$'s immediate neighbors. It is the fraction of neighbors $\mathcal{N}(v)$ that currently belong to community $C$.</p>
-<p>$$
+<p>The local signal <span class="arithmatex">\(\mathcal{L}(v, C)\)</span> represents the topological consensus of node <span class="arithmatex">\(v\)</span>'s immediate neighbors. It is the fraction of neighbors <span class="arithmatex">\(\mathcal{N}(v)\)</span> that currently belong to community <span class="arithmatex">\(C\)</span>.</p>
+<div class="arithmatex">\[
 \mathcal{L}(v, C) = \frac{\sum_{u \in \mathcal{N}(v)} \delta(\text{label}(u), C)}{|\mathcal{N}(v)|}
-$$</p>
+\]</div>
 <ul>
-<li><strong>Range</strong>: $[0, 1]$</li>
+<li><strong>Range</strong>: <span class="arithmatex">\([0, 1]\)</span></li>
 <li><strong>Behavior</strong>: High pressure to conform to the local majority. Stabilizes dense micro-clusters.</li>
 </ul>
-<h4 id="22-global-signal-modularity-gain-delta-q">2.2 Global Signal: Modularity Gain ($\Delta Q$)</h4>
-<p>The global signal $\mathcal{G}(v, C)$ represents the change in the graph's total modularity $Q$ if node $v$ moves to community $C$. We use the standard Newman-Girvan definition generalized for weighted graphs:</p>
-<p>$$
+<h4 id="22-global-signal-modularity-gain-delta-q">2.2 Global Signal: Modularity Gain (<span class="arithmatex">\(\Delta Q\)</span>)</h4>
+<p>The global signal <span class="arithmatex">\(\mathcal{G}(v, C)\)</span> represents the change in the graph's total modularity <span class="arithmatex">\(Q\)</span> if node <span class="arithmatex">\(v\)</span> moves to community <span class="arithmatex">\(C\)</span>. We use the standard Newman-Girvan definition generalized for weighted graphs:</p>
+<div class="arithmatex">\[
 \Delta Q(v, C) = \left[ \frac{\Sigma_{in}(C) + 2k_{v,in}(C)}{2m} - \left( \frac{\Sigma_{tot}(C) + k_v}{2m} \right)^2 \right] - \left[ \frac{\Sigma_{in}(C)}{2m} - \left( \frac{\Sigma_{tot}(C)}{2m} \right)^2 - \left( \frac{k_v}{2m} \right)^2 \right]
-$$</p>
+\]</div>
 <p>Where:
-*   $\Sigma_{in}(C)$: Sum of weights of edges inside $C$.
-*   $\Sigma_{tot}(C)$: Sum of weights of edges incident to nodes in $C$.
-*   $k_v$: Degree of node $v$.
-*   $k_{v,in}(C)$: Sum of weights of edges from $v$ to nodes in $C$.
-*   $m$: Total graph weight.</p>
+*   <span class="arithmatex">\(\Sigma_{in}(C)\)</span>: Sum of weights of edges inside <span class="arithmatex">\(C\)</span>.
+*   <span class="arithmatex">\(\Sigma_{tot}(C)\)</span>: Sum of weights of edges incident to nodes in <span class="arithmatex">\(C\)</span>.
+*   <span class="arithmatex">\(k_v\)</span>: Degree of node <span class="arithmatex">\(v\)</span>.
+*   <span class="arithmatex">\(k_{v,in}(C)\)</span>: Sum of weights of edges from <span class="arithmatex">\(v\)</span> to nodes in <span class="arithmatex">\(C\)</span>.
+*   <span class="arithmatex">\(m\)</span>: Total graph weight.</p>
 <ul>
-<li><strong>Range</strong>: Approx $[-0.5, 0.5]$ (Normalized to $[0, 1]$ via min-max scaling during iteration).</li>
+<li><strong>Range</strong>: Approx <span class="arithmatex">\([-0.5, 0.5]\)</span> (Normalized to <span class="arithmatex">\([0, 1]\)</span> via min-max scaling during iteration).</li>
 <li><strong>Behavior</strong>: High pressure to separate distinct clusters and penalize large, amorphous blobs.</li>
 </ul>
 <h4 id="23-flow-signal-pagerank-weighted-centrality-tsc-only">2.3 Flow Signal: PageRank-Weighted Centrality (TSC Only)</h4>
-<p>The third signal $\mathcal{F}(v, C)$ anchors communities to their most structurally significant members. Standard LPA suffers from "Hub Drift" where a central node frequently switches labels, destabilizing its neighbors. TSC weights the local consensus by the PageRank centrality $PR(u)$ of the neighbors:</p>
-<p>$$
+<p>The third signal <span class="arithmatex">\(\mathcal{F}(v, C)\)</span> anchors communities to their most structurally significant members. Standard LPA suffers from "Hub Drift" where a central node frequently switches labels, destabilizing its neighbors. TSC weights the local consensus by the PageRank centrality <span class="arithmatex">\(PR(u)\)</span> of the neighbors:</p>
+<div class="arithmatex">\[
 \mathcal{F}(v, C) = \frac{\sum_{u \in \mathcal{N}(v)} PR(u) \cdot \delta(\text{label}(u), C)}{\sum_{u \in \mathcal{N}(v)} PR(u)}
-$$</p>
+\]</div>
 <ul>
-<li><strong>Range</strong>: $[0, 1]$</li>
+<li><strong>Range</strong>: <span class="arithmatex">\([0, 1]\)</span></li>
 <li><strong>Behavior</strong>: Ensures that a node considers the "opinion" of a high-centrality neighbor (like a hub) more valuable than a peripheral leaf node.</li>
 </ul>
 <h3 id="3-the-temperature-annealed-consensus-rule">3. The Temperature-Annealed Consensus Rule</h3>
-<p>The core innovation of DSCF/TSC is the dynamic weighting of these signals governed by a system temperature $\tau$.</p>
+<p>The core innovation of DSCF/TSC is the dynamic weighting of these signals governed by a system temperature <span class="arithmatex">\(\tau\)</span>.</p>
 <h4 id="31-the-fusion-equation">3.1 The Fusion Equation</h4>
-<p>At iteration $t$, node $v$ computes the score for every candidate community $C$ present in its neighborhood:</p>
-<p>$$
+<p>At iteration <span class="arithmatex">\(t\)</span>, node <span class="arithmatex">\(v\)</span> computes the score for every candidate community <span class="arithmatex">\(C\)</span> present in its neighborhood:</p>
+<div class="arithmatex">\[
 S_t(v, C) = \mathcal{L}(v, C) \cdot \tau_t + \widehat{\mathcal{G}}(v, C) \cdot (2 - \tau_t) + \mathcal{F}(v, C) \cdot \gamma
-$$</p>
+\]</div>
 <ul>
-<li>$\widehat{\mathcal{G}}$ is the min-max normalized modularity gain.</li>
-<li>$\gamma$ is the fixed centrality weight (default $0.2$).</li>
+<li><span class="arithmatex">\(\widehat{\mathcal{G}}\)</span> is the min-max normalized modularity gain.</li>
+<li><span class="arithmatex">\(\gamma\)</span> is the fixed centrality weight (default <span class="arithmatex">\(0.2\)</span>).</li>
 </ul>
 <h4 id="32-the-annealing-schedule">3.2 The Annealing Schedule</h4>
-<p>The temperature $\tau_t$ decays from a high "exploration" value to a low "exploitation" value over $T_{max}$ iterations.</p>
-<p>$$
+<p>The temperature <span class="arithmatex">\(\tau_t\)</span> decays from a high "exploration" value to a low "exploitation" value over <span class="arithmatex">\(T_{max}\)</span> iterations.</p>
+<div class="arithmatex">\[
 \tau_t = \tau_{start} \cdot \left( \frac{\tau_{end}}{\tau_{start}} \right)^{\frac{t}{T_{max}}}
-$$</p>
+\]</div>
 <ul>
-<li><strong>Phase 1 (High $\tau$)</strong>: The system behaves like LPA. Nodes rapidly form small, locally coherent micro-clusters.</li>
-<li><strong>Phase 2 (Medium $\tau$)</strong>: Modularity begins to exert influence, merging micro-clusters that maximize global structure.</li>
-<li><strong>Phase 3 (Low $\tau$)</strong>: The system "freezes," optimizing strictly for modularity boundaries while respecting the established local topology.</li>
+<li><strong>Phase 1 (High <span class="arithmatex">\(\tau\)</span>)</strong>: The system behaves like LPA. Nodes rapidly form small, locally coherent micro-clusters.</li>
+<li><strong>Phase 2 (Medium <span class="arithmatex">\(\tau\)</span>)</strong>: Modularity begins to exert influence, merging micro-clusters that maximize global structure.</li>
+<li><strong>Phase 3 (Low <span class="arithmatex">\(\tau\)</span>)</strong>: The system "freezes," optimizing strictly for modularity boundaries while respecting the established local topology.</li>
 </ul>
 <h3 id="4-algorithm-implementation">4. Algorithm Implementation</h3>
 <h4 id="41-data-structures">4.1 Data Structures</h4>
 <ul>
-<li><code>community_map</code>: Shared array/map of <code>node_id</code> $\rightarrow$ <code>community_id</code>.</li>
+<li><code>community_map</code>: Shared array/map of <code>node_id</code> <span class="arithmatex">\(\rightarrow\)</span> <code>community_id</code>.</li>
 <li><code>neighbor_cache</code>: Adjacency list optimized for fast iteration.</li>
-<li><code>modularity_cache</code>: Stores $\Sigma_{in}$ and $\Sigma_{tot}$ for each community, updated atomically.</li>
+<li><code>modularity_cache</code>: Stores <span class="arithmatex">\(\Sigma_{in}\)</span> and <span class="arithmatex">\(\Sigma_{tot}\)</span> for each community, updated atomically.</li>
 </ul>
 <h4 id="42-the-update-loop-pseudocode">4.2 The Update Loop (Pseudocode)</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">Initialize</span> <span class="n">each</span> <span class="n">node</span> <span class="n">to</span> <span class="n">its</span> <span class="n">own</span> <span class="n">community</span> <span class="p">(</span><span class="n">C_v</span> <span class="o">=</span> <span class="n">v</span><span class="p">)</span>
@@ -2103,15 +2103,15 @@ $$</p>
 </code></pre></div>
 <h3 id="5-performance-characteristics">5. Performance Characteristics</h3>
 <ul>
-<li><strong>Time Complexity</strong>: $O(I \cdot E \cdot \bar{d})$, where $I$ is iterations, $E$ is edges, and $\bar{d}$ is average degree (number of candidates).</li>
-<li><strong>Space Complexity</strong>: $O(N)$ for the map + $O(E)$ for the graph.</li>
+<li><strong>Time Complexity</strong>: <span class="arithmatex">\(O(I \cdot E \cdot \bar{d})\)</span>, where <span class="arithmatex">\(I\)</span> is iterations, <span class="arithmatex">\(E\)</span> is edges, and <span class="arithmatex">\(\bar{d}\)</span> is average degree (number of candidates).</li>
+<li><strong>Space Complexity</strong>: <span class="arithmatex">\(O(N)\)</span> for the map + <span class="arithmatex">\(O(E)\)</span> for the graph.</li>
 <li><strong>Convergence</strong>: Guaranteed convergence to a local maximum of the modularity function, bounded by the LPA constraint. The annealing schedule prevents getting trapped in low-quality local optima typical of pure greedy modularity optimization.</li>
 </ul>
 <h3 id="6-novelty-claims">6. Novelty Claims</h3>
 <ol>
 <li><strong>Per-Node Signal Fusion</strong>: Unlike algorithms that alternate phases (e.g., LPA then Modularity), DSCF fuses signals <em>per atomic update</em>.</li>
-<li><strong>Flow Anchoring</strong>: The integration of PageRank ($\mathcal{F}$) into the clustering decision explicitly prevents the "floating hub" problem in scale-free graphs.</li>
-<li><strong>Variable Resolution</strong>: The temperature $\tau$ acts as a continuous slider between "Resolution Limit" (Modularity) and "Over-segmentation" (LPA).</li>
+<li><strong>Flow Anchoring</strong>: The integration of PageRank (<span class="arithmatex">\(\mathcal{F}\)</span>) into the clustering decision explicitly prevents the "floating hub" problem in scale-free graphs.</li>
+<li><strong>Variable Resolution</strong>: The temperature <span class="arithmatex">\(\tau\)</span> acts as a continuous slider between "Resolution Limit" (Modularity) and "Over-segmentation" (LPA).</li>
 </ol>
 <blockquote>
 <p><strong>Note</strong>: This specification covers foundational CEREBRUM architecture. For current implementation status and Phase 69-82 additions, see <code>CHANGELOG.md</code> and <code>docs/ARCHITECTURE.md</code>.</p>
@@ -2197,6 +2197,10 @@ $$</p>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

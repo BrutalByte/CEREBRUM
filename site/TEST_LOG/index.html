@@ -6709,11 +6709,11 @@ eliminates this variation. This is a non-obvious but reproducible finding.</p>
 <h3 id="architectural-improvements">Architectural Improvements</h3>
 <ol>
 <li><strong>Triple-Signal Consensus (TSC)</strong>: Upgraded DSCF to include a third, centrality-weighted signal (PageRank-based). This improves community anchoring on scale-free graphs by allowing high-centrality nodes to exert more gravitational pull during the consensus phase.</li>
-<li><strong>Optimized Community Engine</strong>: Refactored <code>dscf_communities</code> to compute neighbor membership counts in $O(k)$ (single pass) rather than $O(k^2)$, significantly reducing runtime for high-degree nodes.</li>
+<li><strong>Optimized Community Engine</strong>: Refactored <code>dscf_communities</code> to compute neighbor membership counts in <span class="arithmatex">\(O(k)\)</span> (single pass) rather than <span class="arithmatex">\(O(k^2)\)</span>, significantly reducing runtime for high-degree nodes.</li>
 <li><strong>State Persistence</strong>: Implemented <code>core/persistence.py</code> and updated <code>api/server.py</code> to save/load the full graph state (aadapter, communities, embeddings, CSA metadata) to disk. This enables instant API restarts and eliminates the "cold start" penalty for large graphs.</li>
 <li><strong>Sparse Fuzzy Search</strong>: Replaced <code>difflib</code> (O(N*M)) with an N-gram inverted index in <code>NetworkXAadapter</code>, enabling O(1)-ish entity grounding.</li>
 <li><strong>Positional Encoding</strong>: Switched to a random uniform projection matrix for structural features, ensuring better signal mixing while maintaining non-negative values for compatibility.</li>
-<li><strong>Traversal Refinement</strong>: Added $O(1)$ cycle detection (via <code>seen_entities</code> set) and <code>heapq</code>-based beam pruning to <code>BeamTraversal</code>.</li>
+<li><strong>Traversal Refinement</strong>: Added <span class="arithmatex">\(O(1)\)</span> cycle detection (via <code>seen_entities</code> set) and <code>heapq</code>-based beam pruning to <code>BeamTraversal</code>.</li>
 </ol>
 <h3 id="test-suite-validation">Test Suite Validation</h3>
 <p><strong>Command</strong>: <code>python -m pytest tests/ -v</code>
@@ -6808,7 +6808,7 @@ eliminates this variation. This is a non-obvious but reproducible finding.</p>
 <h3 id="technical-evaluation">Technical Evaluation</h3>
 <ol>
 <li><strong>Precision Collapse at 2-Hop</strong>: The near-zero Hits@1 at 2-hop (0.04%) confirms the <strong>Type Alignment Trap (EF-005)</strong>. In MetaQA, 2-hop paths (Movie → Director → Movie) traverse multiple communities. Without a specific Metaedge Bridge Bonus for these cross-type jumps, the system finds the correct answer in the beam (69.7% recall) but fails to rank it #1 against same-community noise.</li>
-<li><strong>Scalability</strong>: The system processed 39,093 multi-hop reasoning paths in <strong>61.6 seconds</strong> (throughput: ~634 queries/sec). This validates the $O(k)$ optimization and $O(1)$ cycle detection as production-ready.</li>
+<li><strong>Scalability</strong>: The system processed 39,093 multi-hop reasoning paths in <strong>61.6 seconds</strong> (throughput: ~634 queries/sec). This validates the <span class="arithmatex">\(O(k)\)</span> optimization and <span class="arithmatex">\(O(1)\)</span> cycle detection as production-ready.</li>
 <li><strong>Semantic Signal</strong>: Compared to Run 017 (RandomEngine), SentenceEngine improved 3-hop recall by +0.3% and 3-hop MRR by +0.01. While marginal, this confirms that semantic similarity provides a real—though secondary—guidance signal compared to the dominant topological community structure.</li>
 </ol>
 <h3 id="conclusion_1">Conclusion</h3>
@@ -6898,7 +6898,7 @@ eliminates this variation. This is a non-obvious but reproducible finding.</p>
 </table>
 <h3 id="engineering-findings-analysis">Engineering Findings &amp; Analysis</h3>
 <ol>
-<li><strong>Confirmation of EF-004 (Structural Mismatch)</strong>: BFS consistently outperforms both CSA variants on MetaQA. This reinforces the finding that MetaQA's cross-type reasoning paths (Movie $\rightarrow$ Actor) are naturally penalized by community-based attention that favors Conceptual Neighborhoods.</li>
+<li><strong>Confirmation of EF-004 (Structural Mismatch)</strong>: BFS consistently outperforms both CSA variants on MetaQA. This reinforces the finding that MetaQA's cross-type reasoning paths (Movie <span class="arithmatex">\(\rightarrow\)</span> Actor) are naturally penalized by community-based attention that favors Conceptual Neighborhoods.</li>
 <li><strong>TSC Stability</strong>: Variant A (TSC) showed significantly more stable community counts (14,976) and performance metrics compared to previous DSCF runs (Run 006), validating the <strong>Consensus Stay check</strong> logic.</li>
 <li><strong>The Mesoscale Gap</strong>: The 3-hop recall gap between TSC (28.8%) and BFS (45.8%) illustrates the cost of over-segmentation. TSC's finer granularity (14k communities) provides high precision for local lookups but requires the Federated Reasoning extensions (Phase 6) to bridge large topological distances effectively.</li>
 </ol>
@@ -7164,8 +7164,8 @@ The CSAEngine refactor modified the constructor to require an explicit adapter 
 - 12 new tests (<code>tests/test_federated_security.py</code>)</p>
 <p><strong>Hole 4 — Lazy STDP Decay (<code>core/discretizer.py</code>)</strong>
 - Implemented <strong>O(1) Lazy Decay</strong> for <code>STDPDiscretizer</code>.
-- Replaced global $O(N)$ weight-decay loops with per-pair <code>last_update_step</code> tracking.
-- Decay $\lambda^{(T - t_{last})}$ is applied only when a specific pair is updated or queried.
+- Replaced global <span class="arithmatex">\(O(N)\)</span> weight-decay loops with per-pair <code>last_update_step</code> tracking.
+- Decay <span class="arithmatex">\(\lambda^{(T - t_{last})}\)</span> is applied only when a specific pair is updated or queried.
 - Threshold check optimization: only checks pairs potentiated in the current step.
 - 10 new tests (<code>tests/test_lazy_stdp.py</code>)</p>
 <h3 id="final-status_2">Final Status</h3>
@@ -7811,7 +7811,7 @@ The CSAEngine refactor modified the constructor to require an explicit adapter 
 | <strong>Operator</strong>      | Gemini 3.1 Pro |</p>
 <h3 id="summary-of-actions_12">Summary of Actions</h3>
 <ul>
-<li><strong>Adaptive Community Granularity</strong>: Implemented <code>adaptive_resolution_search()</code> in <code>core/community_engine.py</code> with full test suite <code>tests/test_adaptive_resolution.py</code>. Targets the $\sqrt{N}$ heuristic from whitepaper §8.2.</li>
+<li><strong>Adaptive Community Granularity</strong>: Implemented <code>adaptive_resolution_search()</code> in <code>core/community_engine.py</code> with full test suite <code>tests/test_adaptive_resolution.py</code>. Targets the <span class="arithmatex">\(\sqrt{N}\)</span> heuristic from whitepaper §8.2.</li>
 <li><strong>GPU DSCF Tests</strong>: Added comprehensive test suite <code>tests/test_dscf_gpu.py</code> for vectorized PyTorch implementation.</li>
 <li><strong>Documentation Refresh</strong>: Audited and updated stale documentation (README.md, CLAUDE.md, GEMINI.md) to reflect actual test metrics and v1.2.1 status.</li>
 </ul>
@@ -8623,9 +8623,9 @@ RL policy implicitly does this via multiple trajectory sampling.</p>
 </table>
 <h3 id="summary-of-actions_17">Summary of Actions</h3>
 <ol>
-<li><strong>Fixed Temporal Bias</strong>: Corrected the recency formula in <code>CSAEngine</code> to properly favor newer edges ($+\exp(-\lambda t)$).</li>
+<li><strong>Fixed Temporal Bias</strong>: Corrected the recency formula in <code>CSAEngine</code> to properly favor newer edges (<span class="arithmatex">\(+\exp(-\lambda t)\)</span>).</li>
 <li><strong>Integrated Node Recency</strong>: Added <code>nr_v</code> (Node Recency) to <code>ReasoningLogit</code>, expanding the unified feature vector to 9 dimensions.</li>
-<li><strong>Cross-Component Synthesis</strong>: Implemented "Wormhole" detection in <code>REMEngine</code> to bridge disconnected components based on high embedding similarity ($&gt;0.85$ default).</li>
+<li><strong>Cross-Component Synthesis</strong>: Implemented "Wormhole" detection in <code>REMEngine</code> to bridge disconnected components based on high embedding similarity (<span class="arithmatex">\(&gt;0.85\)</span> default).</li>
 <li><strong>Traversal Sync</strong>: Updated both sync and async <code>BeamTraversal</code> to handle 9-element feature vectors.</li>
 </ol>
 <h3 id="benchmarks_2">Benchmarks</h3>
@@ -9700,6 +9700,10 @@ RL policy implicitly does this via multiple trajectory sampling.</p>
     
     
       <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

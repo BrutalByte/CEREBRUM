@@ -1909,16 +1909,16 @@
 <h3 id="1-introduction">1. Introduction</h3>
 <p>The expansion of decentralized Knowledge Graphs necessitates a protocol for inter-graph discovery that respects the data sovereignty of individual nodes. Traditional federated search methods often require a central index or the exchange of full node lists, both of which are unacceptable in privacy-sensitive domains (e.g., healthcare or defense). Holographic Indexing addresses this by exchanging compressed, non-reversible topological signatures.</p>
 <h3 id="2-tier-1-the-entity-hologram">2. Tier 1: The Entity Hologram</h3>
-<p>Each node $\mathcal{G}_i$ generates a Bloom Filter $B_i$ of its entity set $\mathcal{E}_i$. This allows a peer $\mathcal{G}_j$ to verify the existence of a specific entity $e$ with a configurable false-positive rate $p$, while ensuring that the full set $\mathcal{E}_i$ cannot be enumerated via the filter.</p>
+<p>Each node <span class="arithmatex">\(\mathcal{G}_i\)</span> generates a Bloom Filter <span class="arithmatex">\(B_i\)</span> of its entity set <span class="arithmatex">\(\mathcal{E}_i\)</span>. This allows a peer <span class="arithmatex">\(\mathcal{G}_j\)</span> to verify the existence of a specific entity <span class="arithmatex">\(e\)</span> with a configurable false-positive rate <span class="arithmatex">\(p\)</span>, while ensuring that the full set <span class="arithmatex">\(\mathcal{E}_i\)</span> cannot be enumerated via the filter.</p>
 <h3 id="3-tier-2-the-community-hologram">3. Tier 2: The Community Hologram</h3>
-<p>To support fuzzy, semantic discovery, we introduce the Community Centroid Signature. For every community $C_k \in \mathcal{G}_i$, the node computes:
--   <strong>Centroid</strong>: $\vec{c}_k = \text{mean}({\vec{e} : e \in C_k})$
--   <strong>Radius</strong>: $\rho_k = \max |\vec{e} - \vec{c}_k|$</p>
-<p>The set of all centroids forms the "Semantic Hologram." A remote reasoning beam looking for concept $\vec{x}$ can compute the "Synaptic Bridge Score":
-$$\text{score}(C_k) = \cos(\vec{x}, \vec{c}_k)$$
-Peers exceeding a threshold $\sigma$ (default 0.75) are flagged as relevant reasoning destinations.</p>
+<p>To support fuzzy, semantic discovery, we introduce the Community Centroid Signature. For every community <span class="arithmatex">\(C_k \in \mathcal{G}_i\)</span>, the node computes:
+-   <strong>Centroid</strong>: <span class="arithmatex">\(\vec{c}_k = \text{mean}(\{\vec{e} : e \in C_k\})\)</span>
+-   <strong>Radius</strong>: <span class="arithmatex">\(\rho_k = \max \|\vec{e} - \vec{c}_k\|\)</span></p>
+<p>The set of all centroids forms the "Semantic Hologram." A remote reasoning beam looking for concept <span class="arithmatex">\(\vec{x}\)</span> can compute the "Synaptic Bridge Score":
+$<span class="arithmatex">\(\text{score}(C_k) = \cos(\vec{x}, \vec{c}_k)\)</span>$
+Peers exceeding a threshold <span class="arithmatex">\(\sigma\)</span> (default 0.75) are flagged as relevant reasoning destinations.</p>
 <h3 id="4-enterprise-security-v2520">4. Enterprise Security (v2.52.0)</h3>
-<p>To prevent adversarial path injection in federated networks, v2.52.0 implements <strong>HMAC-SHA256 Path Provenance</strong>. Every reasoning response from a remote adapter is cryptographically signed using a shared secret $\mathcal{K}$. This ensures that "Synaptic Bridge" paths are both semantically valid and structurally authentic.</p>
+<p>To prevent adversarial path injection in federated networks, v2.52.0 implements <strong>HMAC-SHA256 Path Provenance</strong>. Every reasoning response from a remote adapter is cryptographically signed using a shared secret <span class="arithmatex">\(\mathcal{K}\)</span>. This ensures that "Synaptic Bridge" paths are both semantically valid and structurally authentic.</p>
 <h3 id="5-conclusion">5. Conclusion</h3>
 <p>Holographic Indexing provides a mathematically robust and privacy-preserving framework for federated graph reasoning. By decoupling exact membership from semantic relevance, it enables secure, decentralized intelligence at scale. In CEREBRUM v2.52.0, full federated beam execution is operational via <code>DistributedBeamTraversal</code> and the <code>/traverse</code> delegation endpoint, while the <code>ExternalValidator</code> extends the federation concept beyond peer KG nodes to open scientific literature, demonstrating that the Holographic discovery protocol generalizes naturally to heterogeneous federated knowledge sources.</p>
 <hr />
@@ -2018,6 +2018,10 @@ Peers exceeding a threshold $\sigma$ (default 0.75) are flagged as relevant reas
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

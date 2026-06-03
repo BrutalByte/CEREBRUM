@@ -1879,7 +1879,7 @@
 <h3 id="introduction-beyond-raw-traversal">Introduction: Beyond Raw Traversal</h3>
 <p>Reasoning is more than just following edges; it requires the ability to monitor one's own logic, detect errors, and switch strategies when a path is failing. In CEREBRUM, this supervisory role is performed by the <strong>Executive Engines</strong>: the <strong>Frontal Engine</strong> and the <strong>Cingulate Engine</strong>.</p>
 <h3 id="the-cingulate-engine-error-detection">The Cingulate Engine: Error Detection</h3>
-<p>The Cingulate Engine acts as a real-time "Sanity Check" for the attention beam. It monitors the <strong>Path-Consistency</strong> ($r^2$) of every reasoning chain.
+<p>The Cingulate Engine acts as a real-time "Sanity Check" for the attention beam. It monitors the <strong>Path-Consistency</strong> (<span class="arithmatex">\(r^2\)</span>) of every reasoning chain.
 -   <strong>Dissonance Detection</strong>: If a reasoning path begins to jump incoherently across unrelated semantic domains, the Cingulate Engine flags it as "Dissonant."
 -   <strong>Dynamic Pruning</strong>: High-dissonance paths are immediately pruned from the beam, even if their individual edge scores are high.</p>
 <h3 id="the-frontal-engine-strategic-oversight">The Frontal Engine: Strategic Oversight</h3>
@@ -1967,6 +1967,10 @@
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

@@ -1951,20 +1951,20 @@
 <h3 id="2-the-hold-out-methodology">2. The Hold-out Methodology</h3>
 <p>The validator simulates a "missing knowledge" scenario to test the engine's predictive power.</p>
 <h4 id="21-edge-sampling">2.1 Edge Sampling</h4>
-<p>The system selects a fraction $\theta$ (default 0.2) of existing edges from the graph. For each sampled edge $E_{uv}$ (the target), the engine attempts to "re-derive" the connection.</p>
+<p>The system selects a fraction <span class="arithmatex">\(\theta\)</span> (default 0.2) of existing edges from the graph. For each sampled edge <span class="arithmatex">\(E_{uv}\)</span> (the target), the engine attempts to "re-derive" the connection.</p>
 <h4 id="22-path-preserving-constraint-hole-fix-110">2.2 Path-Preserving Constraint (Hole Fix 1.1.0)</h4>
-<p>Random hold-out can "shatter" sparse graphs, making reasoning impossible. The <strong>Path-Preserving Hold-out</strong> rule ensures that an edge $E_{uv}$ is only held out if:
-1.  There exists at least one alternative path $P = {u \to w_1 \dots \to v}$ in the graph.
-2.  The length of $P$ is $\geq 2$ (multi-hop).
-3.  $P$ does not contain the edge $E_{uv}$.</p>
+<p>Random hold-out can "shatter" sparse graphs, making reasoning impossible. The <strong>Path-Preserving Hold-out</strong> rule ensures that an edge <span class="arithmatex">\(E_{uv}\)</span> is only held out if:
+1.  There exists at least one alternative path <span class="arithmatex">\(P = \{u \to w_1 \dots \to v\}\)</span> in the graph.
+2.  The length of <span class="arithmatex">\(P\)</span> is <span class="arithmatex">\(\geq 2\)</span> (multi-hop).
+3.  <span class="arithmatex">\(P\)</span> does not contain the edge <span class="arithmatex">\(E_{uv}\)</span>.</p>
 <p>This ensures that the "Reasoning Task" is valid—the answer <em>is</em> discoverable from the remaining structure.</p>
 <h3 id="3-metric-calculation">3. Metric Calculation</h3>
-<p>For each hold-out trial, the reasoning engine is queried for $u \to ?$ or $? \to v$.</p>
+<p>For each hold-out trial, the reasoning engine is queried for <span class="arithmatex">\(u \to ?\)</span> or <span class="arithmatex">\(? \to v\)</span>.</p>
 <h4 id="31-unsupervised-recall">3.1 Unsupervised Recall</h4>
-<p>Recall is the fraction of trials where the held-out target $v$ is present in the top-$K$ answers returned by the <strong>BeamTraversal</strong> [Buchorn, 2026]:
-$$R@K = \frac{|\text{Rediscovered Edges}|}{|\text{Total Hold-outs}|}$$</p>
+<p>Recall is the fraction of trials where the held-out target <span class="arithmatex">\(v\)</span> is present in the top-<span class="arithmatex">\(K\)</span> answers returned by the <strong>BeamTraversal</strong> [Buchorn, 2026]:
+$<span class="arithmatex">\(R@K = \frac{|\text{Rediscovered Edges}|}{|\text{Total Hold-outs}|}\)</span>$</p>
 <h4 id="32-unsupervised-precision">3.2 Unsupervised Precision</h4>
-<p>Precision is measured by the <strong>Confidence Calibration Error</strong>. We compare the system's predicted confidence score $s_{pred}$ for the re-derived edge with the actual presence of the edge in the hold-out set. A well-calibrated system should exhibit high $s_{pred}$ for successfully rediscovered edges and low $s_{pred}$ for noise.</p>
+<p>Precision is measured by the <strong>Confidence Calibration Error</strong>. We compare the system's predicted confidence score <span class="arithmatex">\(s_{pred}\)</span> for the re-derived edge with the actual presence of the edge in the hold-out set. A well-calibrated system should exhibit high <span class="arithmatex">\(s_{pred}\)</span> for successfully rediscovered edges and low <span class="arithmatex">\(s_{pred}\)</span> for noise.</p>
 <h3 id="4-implementation-the-validation-harness">4. Implementation: The Validation Harness</h3>
 <p>The <code>InferenceValidator</code> class executes the following workflow:
 1.  <strong>Clone</strong>: Create a transient copy of the <code>GraphAdapter</code>.
@@ -2062,6 +2062,10 @@ $$R@K = \frac{|\text{Rediscovered Edges}|}{|\text{Total Hold-outs}|}$$</p>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

@@ -1828,7 +1828,7 @@
   <a href="#21-the-local-signal-mathcall" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2.1 The Local Signal ($\mathcal{L}$)
+        2.1 The Local Signal (\(\mathcal{L}\))
       
     </span>
   </a>
@@ -1839,7 +1839,7 @@
   <a href="#22-the-global-signal-mathcalg" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2.2 The Global Signal ($\mathcal{G}$)
+        2.2 The Global Signal (\(\mathcal{G}\))
       
     </span>
   </a>
@@ -1850,7 +1850,7 @@
   <a href="#23-the-centrality-signal-mathcalf" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2.3 The Centrality Signal ($\mathcal{F}$)
+        2.3 The Centrality Signal (\(\mathcal{F}\))
       
     </span>
   </a>
@@ -1948,20 +1948,20 @@
 <h3 id="1-introduction">1. Introduction</h3>
 <p>The identification of community structures in large Knowledge Graphs (KGs) is essential for efficient multi-hop reasoning. In the CEREBRUM framework, these communities serve as discrete attention heads, guiding a beam search through semantically related regions. However, standard algorithms often fluctuate between over-fragmentation (local-only) and over-merging (global-only). DSCF/TSC addresses this by treating community assignment as a consensus problem.</p>
 <h3 id="2-methodology">2. Methodology</h3>
-<h4 id="21-the-local-signal-mathcall">2.1 The Local Signal ($\mathcal{L}$)</h4>
+<h4 id="21-the-local-signal-mathcall">2.1 The Local Signal (<span class="arithmatex">\(\mathcal{L}\)</span>)</h4>
 <p>We utilize a modified Label Propagation (LPA) \cite{raghavan2007lpa} signal to capture immediate topological consensus:
-$$\mathcal{L}(v, C) = \frac{|{u \in \mathcal{N}(v) : \text{label}(u) = C}|}{|\mathcal{N}(v)|}$$</p>
-<h4 id="22-the-global-signal-mathcalg">2.2 The Global Signal ($\mathcal{G}$)</h4>
-<p>We define the global signal as the modularity gain $\Delta Q$ resulting from node $v$'s movement to community $C$. This ensures the partition maximizes the Newman-Girvan modularity index.</p>
-<h4 id="23-the-centrality-signal-mathcalf">2.3 The Centrality Signal ($\mathcal{F}$)</h4>
-<p>To address "Hub Drift," TSC introduces a flow-based signal weighted by PageRank ($PR$) \cite{page1999pagerank}:
-$$\mathcal{F}(v, C) = \frac{\sum_{u \in \mathcal{N}(v), \text{label}(u)=C} PR(u)}{\sum_{u \in \mathcal{N}(v)} PR(u)}$$</p>
+$<span class="arithmatex">\(\mathcal{L}(v, C) = \frac{|\{u \in \mathcal{N}(v) : \text{label}(u) = C\}|}{|\mathcal{N}(v)|}\)</span>$</p>
+<h4 id="22-the-global-signal-mathcalg">2.2 The Global Signal (<span class="arithmatex">\(\mathcal{G}\)</span>)</h4>
+<p>We define the global signal as the modularity gain <span class="arithmatex">\(\Delta Q\)</span> resulting from node <span class="arithmatex">\(v\)</span>'s movement to community <span class="arithmatex">\(C\)</span>. This ensures the partition maximizes the Newman-Girvan modularity index.</p>
+<h4 id="23-the-centrality-signal-mathcalf">2.3 The Centrality Signal (<span class="arithmatex">\(\mathcal{F}\)</span>)</h4>
+<p>To address "Hub Drift," TSC introduces a flow-based signal weighted by PageRank (<span class="arithmatex">\(PR\)</span>) \cite{page1999pagerank}:
+$<span class="arithmatex">\(\mathcal{F}(v, C) = \frac{\sum_{u \in \mathcal{N}(v), \text{label}(u)=C} PR(u)}{\sum_{u \in \mathcal{N}(v)} PR(u)}\)</span>$</p>
 <h3 id="3-temperature-annealed-consensus">3. Temperature-Annealed Consensus</h3>
-<p>The primary contribution of this work is the fusion equation governed by temperature $\tau$:
-$$C^* = \arg\max_{C} ( \tau \mathcal{L}(v, C) + (2 - \tau) \widehat{\mathcal{G}}(v, C) + \gamma \mathcal{F}(v, C) )$$
-As $\tau$ is annealed from 2.0 to 0.5, the system transitions from exploratory local clustering to stable global optimization.</p>
+<p>The primary contribution of this work is the fusion equation governed by temperature <span class="arithmatex">\(\tau\)</span>:
+$<span class="arithmatex">\(C^* = \arg\max_{C} ( \tau \mathcal{L}(v, C) + (2 - \tau) \widehat{\mathcal{G}}(v, C) + \gamma \mathcal{F}(v, C) )\)</span>$
+As <span class="arithmatex">\(\tau\)</span> is annealed from 2.0 to 0.5, the system transitions from exploratory local clustering to stable global optimization.</p>
 <h3 id="4-convergence-and-complexity">4. Convergence and Complexity</h3>
-<p>The algorithm operates in $O(E \cdot I)$ time, where $E$ is edges and $I$ is iterations. The vectorized implementation utilizes bulk-matrix assignment updates, enabling GPU-accelerated partitioning for large-scale enterprise graphs.</p>
+<p>The algorithm operates in <span class="arithmatex">\(O(E \cdot I)\)</span> time, where <span class="arithmatex">\(E\)</span> is edges and <span class="arithmatex">\(I\)</span> is iterations. The vectorized implementation utilizes bulk-matrix assignment updates, enabling GPU-accelerated partitioning for large-scale enterprise graphs.</p>
 <h3 id="5-conclusion">5. Conclusion</h3>
 <p>DSCF/TSC provides a mathematically rigorous framework for generating attention-ready graph partitions. By fusing local, global, and flow-based signals, it creates a stable structural foundation for multi-hop graph attention mechanisms. Current results in CEREBRUM v2.52.0 confirm that community partitions produced by TSC underpin an adaptive reasoning pipeline achieving MetaQA H@1 of 46.1% (1-hop), 30.0% (2-hop), and 12.5% (3-hop), with H@10 reaching 96.6%, 86.3%, and 50.3% respectively — validating that stable structural attention heads are a prerequisite for high-recall multi-hop reasoning.</p>
 <hr />
@@ -2091,6 +2091,10 @@ As $\tau$ is annealed from 2.0 to 0.5, the system transitions from exploratory l
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

@@ -1901,7 +1901,7 @@
   <a href="#43-chi2-uniformity-test" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4.3 $\chi^2$ Uniformity Test
+        4.3 \(\chi^2\) Uniformity Test
       
     </span>
   </a>
@@ -1959,41 +1959,41 @@
 <hr />
 <h3 id="1-introduction">1. Introduction</h3>
 <p>Inferring causal relationships from unstructured event streams traditionally requires massive labeled datasets and supervised training. The <strong>STDPDiscretizer</strong> provides an autonomous, unsupervised alternative by adapting the biological principle of <strong>Spike-Timing-Dependent Plasticity (STDP)</strong> to temporal knowledge streams.</p>
-<p>By tracking the relative timing of entity "spikes" (mentions/events in a stream), the engine infers directional <code>CAUSES</code> edges. This specification formalizes the causal weighting rule, the significance filters, and the <strong>Lazy Decay</strong> optimization that enables $O(1)$ real-time processing at scale.</p>
+<p>By tracking the relative timing of entity "spikes" (mentions/events in a stream), the engine infers directional <code>CAUSES</code> edges. This specification formalizes the causal weighting rule, the significance filters, and the <strong>Lazy Decay</strong> optimization that enables <span class="arithmatex">\(O(1)\)</span> real-time processing at scale.</p>
 <h3 id="2-the-stdp-causal-rule">2. The STDP Causal Rule</h3>
-<p>When an entity $v$ "spikes" (occurs in the stream) at time $t_{post}$, the causal weight $w_{uv}$ between $v$ and any prior spike $u$ (at time $t_{pre}$) within a sliding window $W$ is updated according to the Bi &amp; Poo (1998) rule.</p>
+<p>When an entity <span class="arithmatex">\(v\)</span> "spikes" (occurs in the stream) at time <span class="arithmatex">\(t_{post}\)</span>, the causal weight <span class="arithmatex">\(w_{uv}\)</span> between <span class="arithmatex">\(v\)</span> and any prior spike <span class="arithmatex">\(u\)</span> (at time <span class="arithmatex">\(t_{pre}\)</span>) within a sliding window <span class="arithmatex">\(W\)</span> is updated according to the Bi &amp; Poo (1998) rule.</p>
 <h4 id="21-potentiation-ltp">2.1 Potentiation (LTP)</h4>
-<p>If $u$ occurs before $v$ ($t_{post} &gt; t_{pre}$), the directional hypothesis $u \rightarrow v$ is strengthened:</p>
-<p>$$
+<p>If <span class="arithmatex">\(u\)</span> occurs before <span class="arithmatex">\(v\)</span> (<span class="arithmatex">\(t_{post} &gt; t_{pre}\)</span>), the directional hypothesis <span class="arithmatex">\(u \rightarrow v\)</span> is strengthened:</p>
+<div class="arithmatex">\[
 \Delta w_{uv} = A_+ \cdot e^{-(t_{post} - t_{pre}) / \tau_+}
-$$</p>
+\]</div>
 <ul>
-<li>$A_+$: Maximum potentiation (default $0.1$).</li>
-<li>$\tau_+$: Potentiation time constant (default $20.0s$).</li>
+<li><span class="arithmatex">\(A_+\)</span>: Maximum potentiation (default <span class="arithmatex">\(0.1\)</span>).</li>
+<li><span class="arithmatex">\(\tau_+\)</span>: Potentiation time constant (default <span class="arithmatex">\(20.0s\)</span>).</li>
 </ul>
 <h4 id="22-depression-ltd">2.2 Depression (LTD)</h4>
-<p>If $u$ occurs after $v$ ($t_{pre} &gt; t_{post}$), or if $v$ is a repeat spike without a cause, the hypothesis is weakened:</p>
-<p>$$
+<p>If <span class="arithmatex">\(u\)</span> occurs after <span class="arithmatex">\(v\)</span> (<span class="arithmatex">\(t_{pre} &gt; t_{post}\)</span>), or if <span class="arithmatex">\(v\)</span> is a repeat spike without a cause, the hypothesis is weakened:</p>
+<div class="arithmatex">\[
 \Delta w_{uv} = -A_- \cdot e^{-(t_{pre} - t_{post}) / \tau_-}
-$$</p>
+\]</div>
 <ul>
-<li>$A_-$: Maximum depression (default $0.05$).</li>
-<li>$\tau_-$: Depression time constant (default $40.0s$).</li>
+<li><span class="arithmatex">\(A_-\)</span>: Maximum depression (default <span class="arithmatex">\(0.05\)</span>).</li>
+<li><span class="arithmatex">\(\tau_-\)</span>: Depression time constant (default <span class="arithmatex">\(40.0s\)</span>).</li>
 </ul>
 <h3 id="3-enterprise-optimization-lazy-decay">3. Enterprise Optimization: Lazy Decay</h3>
-<p>In a graph with $N$ potential causal pairs, applying a global weight decay ($w = w \cdot \lambda$) on every event is $O(N)$, which leads to a "Performance Ceiling" as the graph grows. CEREBRUM implements <strong>Lazy Decay</strong>, turning this into a local $O(1)$ operation.</p>
-<p>For each pair $(u, v)$, the system stores the weight $w_{uv}$ and the global step counter $t_{last}$ at which that specific pair was last touched.</p>
-<p>Given a current global step $T$ and decay rate $\lambda \in [0, 1]$:
-1.  <strong>On Access</strong>: Compute adjusted weight $w'<em uv="uv">{uv} = w</em>$.
-2.  } \cdot \lambda^{(T - t_{last})<strong>Update</strong>: Apply the STDP delta $\Delta w$ to $w'<em last="last">{uv}$.
-3.  <strong>Store</strong>: Save the new weight and update $t</em> = T$.</p>
+<p>In a graph with <span class="arithmatex">\(N\)</span> potential causal pairs, applying a global weight decay (<span class="arithmatex">\(w = w \cdot \lambda\)</span>) on every event is <span class="arithmatex">\(O(N)\)</span>, which leads to a "Performance Ceiling" as the graph grows. CEREBRUM implements <strong>Lazy Decay</strong>, turning this into a local <span class="arithmatex">\(O(1)\)</span> operation.</p>
+<p>For each pair <span class="arithmatex">\((u, v)\)</span>, the system stores the weight <span class="arithmatex">\(w_{uv}\)</span> and the global step counter <span class="arithmatex">\(t_{last}\)</span> at which that specific pair was last touched.</p>
+<p>Given a current global step <span class="arithmatex">\(T\)</span> and decay rate <span class="arithmatex">\(\lambda \in [0, 1]\)</span>:
+1.  <strong>On Access</strong>: Compute adjusted weight <span class="arithmatex">\(w'_{uv} = w_{uv} \cdot \lambda^{(T - t_{last})}\)</span>.
+2.  <strong>Update</strong>: Apply the STDP delta <span class="arithmatex">\(\Delta w\)</span> to <span class="arithmatex">\(w'_{uv}\)</span>.
+3.  <strong>Store</strong>: Save the new weight and update <span class="arithmatex">\(t_{last} = T\)</span>.</p>
 <p>This ensures the CPU cost of "forgetting" does not scale with the size of the causal memory.</p>
 <h3 id="4-causal-significance-filtering">4. Causal Significance Filtering</h3>
 <p>To prevent "Causal Floods" from high-frequency noise or adversarial jitter, an edge is only materialized as a <code>CAUSES</code> triple if it survives a four-stage validation harness.</p>
 <h4 id="41-threshold-count">4.1 Threshold &amp; Count</h4>
 <ul>
-<li>$w_{uv} \geq w_{threshold}$ (default $0.5$).</li>
-<li>Pairing count $n \geq n_{min}$ (default $5$).</li>
+<li><span class="arithmatex">\(w_{uv} \geq w_{threshold}\)</span> (default <span class="arithmatex">\(0.5\)</span>).</li>
+<li>Pairing count <span class="arithmatex">\(n \geq n_{min}\)</span> (default <span class="arithmatex">\(5\)</span>).</li>
 </ul>
 <h4 id="42-temporal-span-filter">4.2 Temporal Span Filter</h4>
 <p>The time between the first and last observed pairings must exceed a threshold:
@@ -2001,12 +2001,12 @@ $$
 (t_{last_pair} - t_{first_pair}) \geq T_{span} \quad (\text{default } 1.0s)
 $$
 This blocks instantaneous adversarial bursts.</p>
-<h4 id="43-chi2-uniformity-test">4.3 $\chi^2$ Uniformity Test</h4>
-<p>The inter-spike intervals between $u$ and $v$ are binned and tested against a uniform distribution. If the distribution is highly clustered (low p-value), it is rejected as a non-causal coincidence or a rhythmic artifact.</p>
+<h4 id="43-chi2-uniformity-test">4.3 <span class="arithmatex">\(\chi^2\)</span> Uniformity Test</h4>
+<p>The inter-spike intervals between <span class="arithmatex">\(u\)</span> and <span class="arithmatex">\(v\)</span> are binned and tested against a uniform distribution. If the distribution is highly clustered (low p-value), it is rejected as a non-causal coincidence or a rhythmic artifact.</p>
 <h3 id="5-implementation-notes-v2520">5. Implementation Notes (v2.52.0)</h3>
 <ul>
-<li><strong>Directionality</strong>: Emitted edges are strictly directional: <code>source</code> $\xrightarrow{CAUSES}$ <code>target</code>.</li>
-<li><strong>Memory Eviction</strong>: Causal pairs whose weights decay below $0.05$ are automatically evicted from the weight map to prevent memory bloat.</li>
+<li><strong>Directionality</strong>: Emitted edges are strictly directional: <code>source</code> <span class="arithmatex">\(\xrightarrow{CAUSES}\)</span> <code>target</code>.</li>
+<li><strong>Memory Eviction</strong>: Causal pairs whose weights decay below <span class="arithmatex">\(0.05\)</span> are automatically evicted from the weight map to prevent memory bloat.</li>
 <li><strong>Real-time Integration</strong>: Discretized edges are pushed into the <code>StreamAdapter</code> buffer with a TTL (Time-to-Live), allowing the Reasoning Engine to follow "Active Causal Chains."</li>
 </ul>
 <blockquote>
@@ -2093,6 +2093,10 @@ This blocks instantaneous adversarial bursts.</p>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

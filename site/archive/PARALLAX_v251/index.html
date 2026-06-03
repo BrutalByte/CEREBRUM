@@ -2016,8 +2016,8 @@
 
 
 <h1 id="cerebrum-community-structured-graph-attention-for-knowledge-graph-reasoning">CEREBRUM: Community-Structured Graph Attention for Knowledge Graph Reasoning</h1>
-<p><strong>Authors</strong>: Bryan Alexander Buchorn (AMP) · Claude Sonnet 4.6 (Research Collaborator)
-<strong>Affiliations</strong>: Independent Researcher · Anthropic
+<p><strong>Authors</strong>: Bryan Alexander Buchorn (AMP) 
+<strong>Affiliation</strong>: Independent Researcher
 <strong>Contact</strong>: bryan.alexander@buchorn.com
 <strong>Date</strong>: March 2026
 <strong>Status</strong>: Version 2.51.1 · Phase 172 COMPLETE — 2177 tests passing
@@ -2215,17 +2215,17 @@ metaphorical? We argue yes, and demonstrate the architecture to do so.</p>
 3.  <strong>Flow Signal (Centrality)</strong>: PageRank-based authority weighting.</p>
 <p>These communities serve as "Attention Heads," allowing the system to focus its search on high-density, semantically consistent clusters of knowledge.</p>
 <h3 id="22-csa-the-10-parameter-scoring-function">2.2 CSA: The 10-Parameter Scoring Function</h3>
-<p>The core of CEREBRUM is the <strong>Community-Structured Attention (CSA)</strong> formula. For any given edge $u \to v$ at hop $k$, the attention score $a(u,v,k)$ is calculated as:</p>
-<p>$$
+<p>The core of CEREBRUM is the <strong>Community-Structured Attention (CSA)</strong> formula. For any given edge <span class="arithmatex">\(u \to v\)</span> at hop <span class="arithmatex">\(k\)</span>, the attention score <span class="arithmatex">\(a(u,v,k)\)</span> is calculated as:</p>
+<div class="arithmatex">\[
 a(u,v,k) = \sigma \left(
   \alpha \cdot \text{sim}(u,v) + \beta \cdot \text{CommScore} + \gamma \cdot w_{\text{rel}} - \delta \cdot \text{dist} + \epsilon \cdot \text{hopDecay}(k) + \zeta \cdot \text{PR}(v) + \eta \cdot \text{tempDecay} + \iota \cdot \text{recency} - \mu \cdot \text{synthDensity} + \theta \cdot \text{grounding}
 \right)
-$$</p>
+\]</div>
 <p>This formula allows the system to balance semantic similarity, structural authority, and operational recency, enabling precise beam steering across complex, multi-hop trajectories.</p>
 <h3 id="23-phase-172-innovations-strb-graphprofiler">2.3 Phase 172 Innovations: STRB &amp; GraphProfiler</h3>
 <p>The latest breakthroughs eliminate the need for manual hyperparameter tuning:
 -   <strong>STRB (Semantic Terminal Relation Boost)</strong>: Uses query embeddings to automatically identify and weight the intended terminal relations, significantly improving precision in deep reasoning tasks.
--   <strong>GraphProfiler</strong>: Performs $O(E)$ build-time analysis of graph topology (average degree, diameter, community density) to automatically select the optimal reasoning strategy (e.g., beam width, pruning thresholds) for the specific graph instance.</p>
+-   <strong>GraphProfiler</strong>: Performs <span class="arithmatex">\(O(E)\)</span> build-time analysis of graph topology (average degree, diameter, community density) to automatically select the optimal reasoning strategy (e.g., beam width, pruning thresholds) for the specific graph instance.</p>
 <hr />
 <h2 id="3-implementation-architecture">3. Implementation Architecture</h2>
 <h3 id="31-design-principles">3.1 Design Principles</h3>
@@ -2244,7 +2244,7 @@ $$</p>
 - <strong>Global Workspace (GWS)</strong>: Blackboard-based coordination for multi-agent reasoning.</p>
 <p><strong>The Autonomous Reasoning Era (Phases 160–167)</strong>:
 - <strong>STRB (Semantic Terminal Relation Boost)</strong>: Automatic query-driven terminal relation weighting.
-- <strong>GraphProfiler</strong>: $O(E)$ build-time topology analysis for automatic regime selection.
+- <strong>GraphProfiler</strong>: <span class="arithmatex">\(O(E)\)</span> build-time topology analysis for automatic regime selection.
 - <strong>TAB (Terminal-Anchor Boost)</strong>: Penultimate-hop biasing for deep heterogeneous graphs.
 - <strong>Vectorized Beam Scoring</strong>: 10x performance boost via NumPy-vectorized scoring.</p>
 <h3 id="33-future-roadmap-phase-168">3.3 Future Roadmap (Phase 168+)</h3>
@@ -2358,6 +2358,10 @@ $$</p>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

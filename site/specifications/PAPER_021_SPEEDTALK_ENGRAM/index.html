@@ -1946,17 +1946,17 @@
 <h2 id="2-speedtalk-encoding">2. SpeedTalk Encoding</h2>
 <h3 id="21-alphabet-mapping">2.1 Alphabet Mapping</h3>
 <p>We map each unique relation type found in the KG schema to a character in a 62-symbol alphabet: <code>A-Z</code>, <code>a-z</code>, <code>0-9</code>. </p>
-<p>The mapping <code>RelationID: Char</code> is persistent and stored alongside the Engram itself. For a KG with $|R|$ relation types where $|R| \leq 62$, mapping is trivial. For larger schemata, we use a simple two-character overflow mapping (e.g., <code>RelationID</code> 63 $\to$ <code>AA</code>).</p>
+<p>The mapping <code>RelationID: Char</code> is persistent and stored alongside the Engram itself. For a KG with <span class="arithmatex">\(|R|\)</span> relation types where <span class="arithmatex">\(|R| \leq 62\)</span>, mapping is trivial. For larger schemata, we use a simple two-character overflow mapping (e.g., <code>RelationID</code> 63 <span class="arithmatex">\(\to\)</span> <code>AA</code>).</p>
 <h3 id="22-encodingdecoding">2.2 Encoding/Decoding</h3>
-<p>Encoding sequence $S = (r_1, r_2, \dots, r_k)$ is:
-$$\text{SpeedTalk}(S) = \text{Map}(r_1) \mathbin{|} \text{Map}(r_2) \mathbin{|} \dots \mathbin{|} \text{Map}(r_k)$$</p>
+<p>Encoding sequence <span class="arithmatex">\(S = (r_1, r_2, \dots, r_k)\)</span> is:
+$<span class="arithmatex">\(\text{SpeedTalk}(S) = \text{Map}(r_1) \mathbin{\|} \text{Map}(r_2) \mathbin{\|} \dots \mathbin{\|} \text{Map}(r_k)\)</span>$</p>
 <p>Because each character uniquely corresponds to one relation ID, this is inherently lossless.</p>
 <hr />
 <h2 id="3-benefits">3. Benefits</h2>
 <h3 id="31-compression">3.1 Compression</h3>
 <p>Python tuple objects are memory-heavy. A tuple of 3 strings might consume 200+ bytes in RAM. The equivalent SpeedTalk string consumes ~3 bytes + overhead. Total cache memory reduction is typically 8–14×.</p>
 <h3 id="32-prefix-querying">3.2 Prefix Querying</h3>
-<p>Since SpeedTalk preserves the sequence order, a relation sequence $(r_1, r_2)$ is encoded as <code>R1R2</code>. Any path starting with $(r_1, r_2)$ will begin with the prefix <code>R1R2</code>. We can now use standard string-based prefix filtering to retrieve all cached paths for a query:</p>
+<p>Since SpeedTalk preserves the sequence order, a relation sequence <span class="arithmatex">\((r_1, r_2)\)</span> is encoded as <code>R1R2</code>. Any path starting with <span class="arithmatex">\((r_1, r_2)\)</span> will begin with the prefix <code>R1R2</code>. We can now use standard string-based prefix filtering to retrieve all cached paths for a query:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># O(P) Prefix search (where P is sequence length)</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">relevant_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">path</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">engram</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)]</span>
 </code></pre></div>
@@ -2042,6 +2042,10 @@ $$\text{SpeedTalk}(S) = \text{Map}(r_1) \mathbin{|} \text{Map}(r_2) \mathbin{|} 
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

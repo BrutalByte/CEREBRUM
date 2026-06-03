@@ -1839,7 +1839,7 @@
   <a href="#22-unsupervised-recall-rk" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2.2 Unsupervised Recall ($R@K$)
+        2.2 Unsupervised Recall (\(R@K\))
       
     </span>
   </a>
@@ -1961,17 +1961,17 @@
 <strong>Date</strong>: May 2, 2026</p>
 <hr />
 <h3 id="abstract">Abstract</h3>
-<p>We present <strong>Inference Validator</strong>, a methodology for evaluating the performance of unsupervised graph reasoning engines without external ground-truth labels. The framework operates by treating the Knowledge Graph's (KG) own topology as a proxy for truth through a specialized hold-out strategy. We introduce the <strong>Path-Preserving Hold-out</strong> constraint, which ensures that held-out edges are only selected if an alternative multi-hop path exists, thereby guaranteeing that the reasoning task is solvable from the remaining structure. We define metrics for <strong>Unsupervised Recall ($R@K$)</strong> and <strong>Confidence Calibration Error</strong>, providing a rigorous benchmark for assessing attention-steered traversals (CSA). In v2.52.0, we utilize this harness to validate that <strong>quantized float16 embeddings</strong> maintain an MRR loss of $&lt; 0.002$ while reducing memory footprint by <strong>48%</strong>. We benchmark performance using the <strong>MetaQA</strong> \cite{metaqa2017} dataset. In v2.52.0, the <strong>ExternalValidator</strong> (Phase 52) extends validation to scientific literature databases, and the IKGWQ benchmark demonstrates graceful degradation with AUC=0.89 under 50% edge incompleteness. Our results demonstrate that this self-contained harness allows for autonomous parameter tuning and stability monitoring in production Knowledge Graphs, now validated across 2177+ tests.</p>
+<p>We present <strong>Inference Validator</strong>, a methodology for evaluating the performance of unsupervised graph reasoning engines without external ground-truth labels. The framework operates by treating the Knowledge Graph's (KG) own topology as a proxy for truth through a specialized hold-out strategy. We introduce the <strong>Path-Preserving Hold-out</strong> constraint, which ensures that held-out edges are only selected if an alternative multi-hop path exists, thereby guaranteeing that the reasoning task is solvable from the remaining structure. We define metrics for <strong>Unsupervised Recall (<span class="arithmatex">\(R@K\)</span>)</strong> and <strong>Confidence Calibration Error</strong>, providing a rigorous benchmark for assessing attention-steered traversals (CSA). In v2.52.0, we utilize this harness to validate that <strong>quantized float16 embeddings</strong> maintain an MRR loss of <span class="arithmatex">\(&lt; 0.002\)</span> while reducing memory footprint by <strong>48%</strong>. We benchmark performance using the <strong>MetaQA</strong> \cite{metaqa2017} dataset. In v2.52.0, the <strong>ExternalValidator</strong> (Phase 52) extends validation to scientific literature databases, and the IKGWQ benchmark demonstrates graceful degradation with AUC=0.89 under 50% edge incompleteness. Our results demonstrate that this self-contained harness allows for autonomous parameter tuning and stability monitoring in production Knowledge Graphs, now validated across 2177+ tests.</p>
 <h3 id="1-introduction">1. Introduction</h3>
 <p>The evaluation of reasoning in KGs is typically constrained by the scarcity of gold-standard datasets. In autonomous or proprietary environments, external validation is often unavailable. We propose that a reasoning engine's quality can be measured by its ability to rediscover "hidden" facts that are structurally supported by the surrounding network topology.</p>
 <h3 id="2-methodology">2. Methodology</h3>
 <h4 id="21-path-preserving-hold-out">2.1 Path-Preserving Hold-out</h4>
-<p>Given a graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$, we select a hold-out set $\mathcal{H} \subset \mathcal{E}$. An edge $E_{uv} \in \mathcal{E}$ is eligible for $\mathcal{H}$ if and only if:
-$$\exists P \subseteq \mathcal{E} \setminus {E_{uv}} \text{ such that } P \text{ connects } u \text{ and } v \text{ and } |P| \geq 2$$
+<p>Given a graph <span class="arithmatex">\(\mathcal{G} = (\mathcal{V}, \mathcal{E})\)</span>, we select a hold-out set <span class="arithmatex">\(\mathcal{H} \subset \mathcal{E}\)</span>. An edge <span class="arithmatex">\(E_{uv} \in \mathcal{E}\)</span> is eligible for <span class="arithmatex">\(\mathcal{H}\)</span> if and only if:
+$<span class="arithmatex">\(\exists P \subseteq \mathcal{E} \setminus \{E_{uv}\} \text{ such that } P \text{ connects } u \text{ and } v \text{ and } |P| \geq 2\)</span>$
 This prevents the "shattering" of the graph and ensures that the evaluation measures reasoning (multi-hop) rather than simple retrieval.</p>
-<h4 id="22-unsupervised-recall-rk">2.2 Unsupervised Recall ($R@K$)</h4>
-<p>The engine is tasked with predicting $v$ given $u$ on the pruned graph $\mathcal{G} \setminus \mathcal{H}$. Recall is defined as:
-$$R@K = \frac{1}{|\mathcal{H}|} \sum_{E_{uv} \in \mathcal{H}} \mathbb{I}(v \in \text{TopK}(\text{BeamTraversal}(u)))$$</p>
+<h4 id="22-unsupervised-recall-rk">2.2 Unsupervised Recall (<span class="arithmatex">\(R@K\)</span>)</h4>
+<p>The engine is tasked with predicting <span class="arithmatex">\(v\)</span> given <span class="arithmatex">\(u\)</span> on the pruned graph <span class="arithmatex">\(\mathcal{G} \setminus \mathcal{H}\)</span>. Recall is defined as:
+$<span class="arithmatex">\(R@K = \frac{1}{|\mathcal{H}|} \sum_{E_{uv} \in \mathcal{H}} \mathbb{I}(v \in \text{TopK}(\text{BeamTraversal}(u)))\)</span>$</p>
 <h3 id="3-recent-advances-v2511-v2520">3. Recent Advances (v2.51.1 -&gt; v2.52.0)</h3>
 <h4 id="31-path-preserving-hold-out-as-default">3.1 Path-Preserving Hold-out as Default</h4>
 <p>The path-preserving hold-out strategy introduced in Phase 20 is now the <strong>default</strong> for all benchmarks in v2.52.0. Previously an opt-in parameter (<code>InferenceValidator(path_preserving=True)</code>), it is now universally enforced. This eliminates the systematic recall underestimation (up to 40% on sparse graphs) that afflicted earlier evaluation runs.</p>
@@ -2110,6 +2110,10 @@ $$R@K = \frac{1}{|\mathcal{H}|} \sum_{E_{uv} \in \mathcal{H}} \mathbb{I}(v \in \
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

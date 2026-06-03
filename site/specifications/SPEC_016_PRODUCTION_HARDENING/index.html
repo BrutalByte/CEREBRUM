@@ -2182,14 +2182,14 @@
 <p><strong>Fix</strong>: <code>SignalEncoder(canonical_embeddings=...)</code>. All adapters in a federation share a common fixed root basis.</p>
 <h4 id="34-hole-8-path-preserving-hold-out">3.4 Hole 8: Path-Preserving Hold-out</h4>
 <p><strong>Components</strong>: <code>InferenceValidator</code> × sparse graphs
-<strong>Root cause</strong>: Holding out the only path between $(u,v)$ guarantees traversal failure; this is recorded as a recall miss.</p>
+<strong>Root cause</strong>: Holding out the only path between <span class="arithmatex">\((u,v)\)</span> guarantees traversal failure; this is recorded as a recall miss.</p>
 <p><strong>Fix</strong>: <code>InferenceValidator(path_preserving=True)</code>. Only holds out edges if an alternative multi-hop path exists.</p>
 <h3 id="4-phase-21-structural-holes-v2520-hardened-enterprise">4. Phase 21 Structural Holes (v2.52.0 Hardened Enterprise)</h3>
 <h4 id="41-hole-9-the-entropy-sink-stdp-complexity-trap">4.1 Hole 9: The Entropy Sink (STDP Complexity Trap)</h4>
 <p><strong>Components</strong>: <code>STDPDiscretizer</code> × massive causal memory
-<strong>Root cause</strong>: Multiplicative <code>weight_decay</code> was applied globally to all causal pairs on every event spike. Complexity was $O(N_{pairs})$, leading to system freeze as the number of learned relationships grew.</p>
-<p><strong>Fix</strong>: <strong>Lazy Decay</strong>. Store the <code>last_update_step</code> for each pair and apply accumulated decay $\lambda^{\Delta T}$ only upon access. 
--   Complexity: $O(1)$ per event.
+<strong>Root cause</strong>: Multiplicative <code>weight_decay</code> was applied globally to all causal pairs on every event spike. Complexity was <span class="arithmatex">\(O(N_{pairs})\)</span>, leading to system freeze as the number of learned relationships grew.</p>
+<p><strong>Fix</strong>: <strong>Lazy Decay</strong>. Store the <code>last_update_step</code> for each pair and apply accumulated decay <span class="arithmatex">\(\lambda^{\Delta T}\)</span> only upon access. 
+-   Complexity: <span class="arithmatex">\(O(1)\)</span> per event.
 -   Threshold check: Only checks pairs updated in the current step.</p>
 <h4 id="42-hole-10-the-thalamic-bottleneck-ingestion-lag">4.2 Hole 10: The Thalamic Bottleneck (Ingestion Lag)</h4>
 <p><strong>Components</strong>: <code>StreamAdapter</code> × <code>IngestionPipeline</code> (Thalamus)
@@ -2424,6 +2424,10 @@
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

@@ -1927,19 +1927,19 @@
 <p>Multi-hop reasoning in KGs involves navigating a sequence of edges to connect a query seed to an answer entity. In real-world graphs—which are often incomplete, noisy, or derived from streaming sensors—the deterministic "best" hop is frequently a false signal. Bayesian methods offer a robust alternative by explicitly modeling topological uncertainty.</p>
 <h3 id="2-methodology">2. Methodology</h3>
 <h4 id="21-the-path-model-beta-distribution">2.1 The Path Model: Beta Distribution</h4>
-<p>Each reasoning path $P$ maintains an internal state $(\alpha, \beta)$ representing the system's belief in its validity. The score $s$ is modeled as:
-$$P(s | \alpha, \beta) = \frac{s^{\alpha-1} (1-s)^{\beta-1}}{B(\alpha, \beta)}$$
-where $\alpha$ and $\beta$ track "success" and "failure" evidence, respectively.</p>
+<p>Each reasoning path <span class="arithmatex">\(P\)</span> maintains an internal state <span class="arithmatex">\((\alpha, \beta)\)</span> representing the system's belief in its validity. The score <span class="arithmatex">\(s\)</span> is modeled as:
+$<span class="arithmatex">\(P(s | \alpha, \beta) = \frac{s^{\alpha-1} (1-s)^{\beta-1}}{B(\alpha, \beta)}\)</span>$
+where <span class="arithmatex">\(\alpha\)</span> and <span class="arithmatex">\(\beta\)</span> track "success" and "failure" evidence, respectively.</p>
 <h4 id="22-thompson-sampling-traversal">2.2 Thompson Sampling Traversal</h4>
-<p>During the beam expansion at hop $k$, for each candidate neighbor $v$, we:
-1.  Draw a sample $x_v \sim \text{Beta}(\alpha_v, \beta_v)$.
-2.  Rank all candidates by $x_v$.
-3.  Retain the top-$B$ paths for hop $k+1$.</p>
+<p>During the beam expansion at hop <span class="arithmatex">\(k\)</span>, for each candidate neighbor <span class="arithmatex">\(v\)</span>, we:
+1.  Draw a sample <span class="arithmatex">\(x_v \sim \text{Beta}(\alpha_v, \beta_v)\)</span>.
+2.  Rank all candidates by <span class="arithmatex">\(x_v\)</span>.
+3.  Retain the top-<span class="arithmatex">\(B\)</span> paths for hop <span class="arithmatex">\(k+1\)</span>.</p>
 <p>This allows "speculative" paths with high variance to occasionally outrank "certain" paths with mediocre averages, enabling deep discovery in complex topologies.</p>
 <h4 id="23-heuristic-warm-starting-v2520">2.3 Heuristic Warm-Starting (v2.52.0)</h4>
-<p>To avoid the random-walk behavior of uninitialized Beta priors, we seed the distribution using the deterministic CSA score $w_{uv}$:
-$$\alpha_{init} = w_{uv} \cdot \omega, \quad \beta_{init} = (1-w_{uv}) \cdot \omega$$
-where $\omega$ is the <code>warm_start_strength</code> (default 10.0).</p>
+<p>To avoid the random-walk behavior of uninitialized Beta priors, we seed the distribution using the deterministic CSA score <span class="arithmatex">\(w_{uv}\)</span>:
+$<span class="arithmatex">\(\alpha_{init} = w_{uv} \cdot \omega, \quad \beta_{init} = (1-w_{uv}) \cdot \omega\)</span>$
+where <span class="arithmatex">\(\omega\)</span> is the <code>warm_start_strength</code> (default 10.0).</p>
 <h3 id="3-conclusion">3. Conclusion</h3>
 <p>Bayesian Beam Search provides a rigorous foundation for reasoning under uncertainty. By treating graph attention as a probabilistic decision process, it enables higher recall and more robust discovery in the face of incomplete or contradictory knowledge. In CEREBRUM v2.52.0, the adaptive search strategy (Phase 53) eliminates manual beam hyperparameter selection by deriving <code>beam_width</code> and <code>max_hop</code> from local graph density, with the WebQSP OPT configuration (beam_width=20) achieving H@1=6.27%, H@10=20.84%, and MRR=10.66% — demonstrating that density-adaptive probabilistic search generalizes across both sparse and dense knowledge graph regions.</p>
 <hr />
@@ -2070,6 +2070,10 @@ where $\omega$ is the <code>warm_start_strength</code> (default 10.0).</p>
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

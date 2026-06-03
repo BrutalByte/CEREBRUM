@@ -2046,7 +2046,7 @@
 <h4 id="21-glass-box-interpretability-absolute-provenance">2.1 Glass-Box Interpretability (Absolute Provenance)</h4>
 <p>In CEREBRUM, every answer is a <strong>verified path</strong>. Unlike an LLM which generates a response based on statistical probability, the <strong>Reasoning Studio</strong> (Paper 12) allows any operator to inspect the precise community signals, semantic similarity scores, and structural centrality weights that led to a conclusion. This "Glass-Box" nature is the only path to AI adoption in regulated industries (Healthcare, Finance, Intelligence).</p>
 <h4 id="22-extreme-resource-efficiency">2.2 Extreme Resource Efficiency</h4>
-<p>CEREBRUM's <strong>Community-Structured Attention (CSA)</strong> (Paper 2) eliminates the quadratic complexity of global attention. This allows $10^5$-node graphs to be reasoned over on commodity laptop hardware. By substituting "parameter count" with "topological structure" (DSCF/TSC), the framework democratizes high-depth reasoning for edge devices and distributed sensor networks.</p>
+<p>CEREBRUM's <strong>Community-Structured Attention (CSA)</strong> (Paper 2) eliminates the quadratic complexity of global attention. This allows <span class="arithmatex">\(10^5\)</span>-node graphs to be reasoned over on commodity laptop hardware. By substituting "parameter count" with "topological structure" (DSCF/TSC), the framework democratizes high-depth reasoning for edge devices and distributed sensor networks.</p>
 <h4 id="23-zero-shot-reasoning-no-training-required">2.3 Zero-Shot Reasoning (No Training Required)</h4>
 <p>Traditional GNNs and LLM-Retrieval-Augmented designs require expensive "warm-up" periods or fine-tuning on domain data. CEREBRUM's <strong>Streaming Engine</strong> (Paper 13) and <strong>Signal Encoder</strong> (Paper 8) allow it to ingest and reason over new knowledge namespaces in real-time, zero-shot. There is no gradient descent; there is only topological discovery.</p>
 <h4 id="24-biological-integrity-stdp-bridge-twins">2.4 Biological Integrity (STDP &amp; Bridge Twins)</h4>
@@ -2056,7 +2056,7 @@
 <h4 id="26-namespace-isolation-for-federated-autonomy">2.6 Namespace Isolation for Federated Autonomy</h4>
 <p>The <strong>Production Hardening</strong> suite (Paper 16) ensures that multi-modal data from heterogeneous sources can be integrated without "Identity Collapse." This architecture enables the first truly <strong>Federated AI</strong> — where organizations can share reasoning paths across isolated namespaces without exposing raw data or compromising security.</p>
 <h4 id="27-durable-memory-engram-steered-traversal">2.7 Durable Memory (Engram-Steered Traversal)</h4>
-<p>Successful reasoning patterns are accumulated in <code>Engram</code> (Paper 18) and persist across restarts via JSON serialization. The beam search learns from experience without any gradient descent — purely through structural pattern frequency. On each query, <code>EngramTraversal._prune_candidates()</code> applies an affinity boost to relation sequences that have appeared in previous successful traces: $s_\text{eff}(c) = s(c) \times (1 + \lambda \cdot \text{affinity}(\text{rel_seq}))$. The FastAPI lifespan manager saves the cache on shutdown and performs two-tier warm-up on startup (saved JSON first, then QueryLog replay), so no productive reasoning trace is lost across process boundaries.</p>
+<p>Successful reasoning patterns are accumulated in <code>Engram</code> (Paper 18) and persist across restarts via JSON serialization. The beam search learns from experience without any gradient descent — purely through structural pattern frequency. On each query, <code>EngramTraversal._prune_candidates()</code> applies an affinity boost to relation sequences that have appeared in previous successful traces: <span class="arithmatex">\(s_\text{eff}(c) = s(c) \times (1 + \lambda \cdot \text{affinity}(\text{rel\_seq}))\)</span>. The FastAPI lifespan manager saves the cache on shutdown and performs two-tier warm-up on startup (saved JSON first, then QueryLog replay), so no productive reasoning trace is lost across process boundaries.</p>
 <h4 id="28-fault-tolerant-by-design-phases-5657">2.8 Fault-Tolerant by Design (Phases 56–57)</h4>
 <p>Every failure mode is isolated. Traversal crashes return partial results at HTTP 200 via <code>QueryResponse.partial</code> and <code>_partial_paths</code>. Write failures (<code>QueryLog</code>, <code>Engram</code>) are swallowed at WARNING and never kill queries. Streams emit terminal error NDJSON chunks so clients detect failure without polling HTTP status. The <code>ProcessPoolExecutor</code> in <code>best_of_n_dscf</code> falls back to sequential execution on <code>BrokenExecutor</code>, allowing server startup on memory-constrained hosts. <code>GlobalRebalancer._rebalance_worker_inner()</code> isolates inner work from the exception handler so rebalancer thread crashes are contained. No single point of failure can crash a running server.</p>
 <h4 id="29-speedtalk-compression-phase-58">2.9 SpeedTalk Compression (Phase 58)</h4>
@@ -2157,6 +2157,10 @@
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

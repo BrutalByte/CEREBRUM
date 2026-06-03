@@ -1840,7 +1840,7 @@
   <a href="#31-usage-rule-n_min" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.1 Usage Rule ($n_{min}$)
+        3.1 Usage Rule (\(n_{min}\))
       
     </span>
   </a>
@@ -1851,7 +1851,7 @@
   <a href="#32-semantic-salience-rule-sigma" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.2 Semantic Salience Rule ($\sigma$)
+        3.2 Semantic Salience Rule (\(\sigma\))
       
     </span>
   </a>
@@ -1862,7 +1862,7 @@
   <a href="#33-structural-utility-rule-k" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.3 Structural Utility Rule ($k$)
+        3.3 Structural Utility Rule (\(k\))
       
     </span>
   </a>
@@ -1978,43 +1978,43 @@
 <li><strong>LTD (Long-Term Depression)</strong>: Weakening and pruning idle paths.</li>
 </ul>
 <h3 id="3-potentiation-bridge-formation">3. Potentiation: Bridge Formation</h3>
-<p>A Bridge Twin $v'$ is materialized for node $v$ (resident in $C_{src}$) within a destination community $C_{dest}$ when a three-part validation rule is satisfied.</p>
-<h4 id="31-usage-rule-n_min">3.1 Usage Rule ($n_{min}$)</h4>
-<p>The path $(u \to v)$ where $\text{comm}(u) = C_{dest}$ and $\text{comm}(v) = C_{src}$ must be traversed by the <code>BeamTraversal</code> engine at least $n_{min}$ times (default 5).</p>
-<h4 id="32-semantic-salience-rule-sigma">3.2 Semantic Salience Rule ($\sigma$)</h4>
-<p>Node $v$ must be semantically representative of the destination community. We compute the cosine similarity between $v$ and the community centroid $\vec{c}_{dest}$:</p>
-<p>$$
-\cos(\vec{e}<em dest="dest">v, \vec{c}</em> 0.65)
-$$}) \geq \sigma \quad (\text{default </p>
-<h4 id="33-structural-utility-rule-k">3.3 Structural Utility Rule ($k$)</h4>
-<p>Node $v$ must provide meaningful connectivity to $C_{dest}$. It must have at least $k$ existing edges into $C_{dest}$.</p>
+<p>A Bridge Twin <span class="arithmatex">\(v'\)</span> is materialized for node <span class="arithmatex">\(v\)</span> (resident in <span class="arithmatex">\(C_{src}\)</span>) within a destination community <span class="arithmatex">\(C_{dest}\)</span> when a three-part validation rule is satisfied.</p>
+<h4 id="31-usage-rule-n_min">3.1 Usage Rule (<span class="arithmatex">\(n_{min}\)</span>)</h4>
+<p>The path <span class="arithmatex">\((u \to v)\)</span> where <span class="arithmatex">\(\text{comm}(u) = C_{dest}\)</span> and <span class="arithmatex">\(\text{comm}(v) = C_{src}\)</span> must be traversed by the <code>BeamTraversal</code> engine at least <span class="arithmatex">\(n_{min}\)</span> times (default 5).</p>
+<h4 id="32-semantic-salience-rule-sigma">3.2 Semantic Salience Rule (<span class="arithmatex">\(\sigma\)</span>)</h4>
+<p>Node <span class="arithmatex">\(v\)</span> must be semantically representative of the destination community. We compute the cosine similarity between <span class="arithmatex">\(v\)</span> and the community centroid <span class="arithmatex">\(\vec{c}_{dest}\)</span>:</p>
+<div class="arithmatex">\[
+\cos(\vec{e}_v, \vec{c}_{dest}) \geq \sigma \quad (\text{default } 0.65)
+\]</div>
+<h4 id="33-structural-utility-rule-k">3.3 Structural Utility Rule (<span class="arithmatex">\(k\)</span>)</h4>
+<p>Node <span class="arithmatex">\(v\)</span> must provide meaningful connectivity to <span class="arithmatex">\(C_{dest}\)</span>. It must have at least <span class="arithmatex">\(k\)</span> existing edges into <span class="arithmatex">\(C_{dest}\)</span>.</p>
 <h3 id="4-materialization-mechanics">4. Materialization Mechanics</h3>
 <p>When potentiated, the engine performs an atomic graph expansion:</p>
 <ol>
-<li><strong>Node Creation</strong>: Create $v'_{twin}$ with label <code>[v] (Bridge)</code>.</li>
-<li><strong>Community Assignment</strong>: $\text{comm}(v'<em dest="dest">{twin}) = C</em>$.</li>
-<li><strong>Relay Edge</strong>: Add a <code>BRIDGE_TWIN</code> edge between $v$ and $v'_{twin}$ with weight $1.0$ and confidence $1.0$.</li>
-<li><strong>Neighborhood Reflection</strong>: For every $w \in \mathcal{N}(v)$ where $\text{comm}(w) = C_{dest}$, add an edge $(v'_{twin}, w)$ mirroring the original relation.</li>
+<li><strong>Node Creation</strong>: Create <span class="arithmatex">\(v'_{twin}\)</span> with label <code>[v] (Bridge)</code>.</li>
+<li><strong>Community Assignment</strong>: <span class="arithmatex">\(\text{comm}(v'_{twin}) = C_{dest}\)</span>.</li>
+<li><strong>Relay Edge</strong>: Add a <code>BRIDGE_TWIN</code> edge between <span class="arithmatex">\(v\)</span> and <span class="arithmatex">\(v'_{twin}\)</span> with weight <span class="arithmatex">\(1.0\)</span> and confidence <span class="arithmatex">\(1.0\)</span>.</li>
+<li><strong>Neighborhood Reflection</strong>: For every <span class="arithmatex">\(w \in \mathcal{N}(v)\)</span> where <span class="arithmatex">\(\text{comm}(w) = C_{dest}\)</span>, add an edge <span class="arithmatex">\((v'_{twin}, w)\)</span> mirroring the original relation.</li>
 </ol>
-<p><strong>Result</strong>: Subsequent traversals starting in $C_{dest}$ can reach $v$ in 1 hop (via the twin) instead of navigating complex cross-community boundaries.</p>
+<p><strong>Result</strong>: Subsequent traversals starting in <span class="arithmatex">\(C_{dest}\)</span> can reach <span class="arithmatex">\(v\)</span> in 1 hop (via the twin) instead of navigating complex cross-community boundaries.</p>
 <h3 id="5-depression-pruning-zombie-management">5. Depression: Pruning &amp; "Zombie" Management</h3>
 <p>To maintain graph sanity, the engine implements two maintenance loops during the <strong>REM Cycle</strong> [Buchorn, 2026].</p>
 <h4 id="51-temporal-decay-ltd">5.1 Temporal Decay (LTD)</h4>
-<p>Every <code>BRIDGE_TWIN</code> edge has a confidence $c$ that decays over time $t$:</p>
-<p>$$
+<p>Every <code>BRIDGE_TWIN</code> edge has a confidence <span class="arithmatex">\(c\)</span> that decays over time <span class="arithmatex">\(t\)</span>:</p>
+<div class="arithmatex">\[
 c_t = c_0 \cdot \lambda^{\Delta t} \quad (\lambda = 0.95 \text{ per cycle})
-$$</p>
-<p>If $c_t &lt; c_{min}$ (default 0.2), the twin node and all its reflected edges are deleted.</p>
+\]</div>
+<p>If <span class="arithmatex">\(c_t &lt; c_{min}\)</span> (default 0.2), the twin node and all its reflected edges are deleted.</p>
 <h4 id="52-the-zombie-bridge-patch">5.2 The "Zombie Bridge" Patch</h4>
 <p>When the <code>GlobalRebalancer</code> [Buchorn, 2026] shuffles community IDs, existing bridge records become "Zombies" (pointing to stale IDs). The engine implements an <code>on_rebalance</code> hook:
-1.  Verify if $v$ and $v'_{twin}$ still reside in different communities.
+1.  Verify if <span class="arithmatex">\(v\)</span> and <span class="arithmatex">\(v'_{twin}\)</span> still reside in different communities.
 2.  If they are now in the same community, the bridge is redundant; <strong>Delete</strong>.
 3.  If the destination community ID has changed but the cluster is still semantically similar, <strong>Update Record</strong>.
 4.  Otherwise, <strong>Prune</strong>.</p>
 <h3 id="6-implementation-notes-v2520">6. Implementation Notes (v2.52.0)</h3>
 <ul>
 <li><strong>Storage</strong>: Bridge records are stored in a sidecar <code>bridge_store.json</code> to ensure persistence across restarts.</li>
-<li><strong>Performance</strong>: Querying a twin is $O(1)$ during the neighbor expansion phase of the beam search.</li>
+<li><strong>Performance</strong>: Querying a twin is <span class="arithmatex">\(O(1)\)</span> during the neighbor expansion phase of the beam search.</li>
 <li><strong>Integration</strong>: Bridge Twins are automatically recognized by the <code>CSAEngine</code> as high-priority "Internal" edges, significantly increasing the beam's focus on successful historical paths.</li>
 </ul>
 <blockquote>
@@ -2101,6 +2101,10 @@ $$</p>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

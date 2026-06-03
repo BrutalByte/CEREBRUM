@@ -1966,21 +1966,21 @@
 <p>Knowledge representation has long prioritized consistency. However, in scientific research and intelligence analysis, consistency is often an artifact of premature filtering. True intelligence requires the ability to maintain multiple conflicting hypotheses. We demonstrate that reifying conflict as a topological feature—rather than a data quality error—enables more sophisticated multi-hop reasoning.</p>
 <h3 id="2-methodology">2. Methodology</h3>
 <h4 id="21-detection-typology">2.1 Detection Typology</h4>
-<p>We define a conflict operator $\mathcal{C}(t_1, t_2)$ that evaluates pairs of triples $(s, r, o)$.
--   <strong>Functional Conflict</strong>: $r \in \mathcal{R}<em event1="event1">{func} \land o_1 \neq o_2$.
--   <strong>Temporal Sequence</strong>: $t</em>$ where logical order is $1 \to 2$.
--   } \gg t_{event2<strong>Structural Cycle</strong>: Violation of DAG constraints in hierarchical relations.</p>
+<p>We define a conflict operator <span class="arithmatex">\(\mathcal{C}(t_1, t_2)\)</span> that evaluates pairs of triples <span class="arithmatex">\((s, r, o)\)</span>.
+-   <strong>Functional Conflict</strong>: <span class="arithmatex">\(r \in \mathcal{R}_{func} \land o_1 \neq o_2\)</span>.
+-   <strong>Temporal Sequence</strong>: <span class="arithmatex">\(t_{event1} \gg t_{event2}\)</span> where logical order is <span class="arithmatex">\(1 \to 2\)</span>.
+-   <strong>Structural Cycle</strong>: Violation of DAG constraints in hierarchical relations.</p>
 <h4 id="22-reification-and-delta-authority">2.2 Reification and Delta-Authority</h4>
-<p>When $\mathcal{C}(t_1, t_2) = \text{True}$, we materialize edge $E_{o1,o2}$ with relation <code>CONTRADICTS</code>. The edge is assigned an authority delta $\Delta A$:
-$$\Delta A = | \mathcal{T}(source_1) - \mathcal{T}(source_2) |$$
-where $\mathcal{T}$ is the trust function.</p>
+<p>When <span class="arithmatex">\(\mathcal{C}(t_1, t_2) = \text{True}\)</span>, we materialize edge <span class="arithmatex">\(E_{o1,o2}\)</span> with relation <code>CONTRADICTS</code>. The edge is assigned an authority delta <span class="arithmatex">\(\Delta A\)</span>:
+$<span class="arithmatex">\(\Delta A = | \mathcal{T}(source_1) - \mathcal{T}(source_2) |\)</span>$
+where <span class="arithmatex">\(\mathcal{T}\)</span> is the trust function.</p>
 <h3 id="3-recent-advances-v2511-v2520">3. Recent Advances (v2.51.1 -&gt; v2.52.0)</h3>
 <h4 id="31-hypothesisengine-abductive-reasoning-as-contradiction-precursor-phase-50">3.1 HypothesisEngine: Abductive Reasoning as Contradiction Precursor (Phase 50)</h4>
 <p>The <strong>HypothesisEngine</strong> (Phase 50) implements multi-path abductive reasoning: given an observed fact that cannot be reached via standard forward traversal, it generates a set of candidate hypotheses (latent explanatory edges or entity relationships) that, if true, would make the observation reachable. These hypotheses are then subjected to contradiction detection as a first-order validation step. If a generated hypothesis is structurally inconsistent with existing graph facts — producing a cycle violation, temporal anachronism, or functional conflict — the hypothesis is immediately classified as a <code>CONTRADICTS</code> edge rather than a candidate edge. This creates a tight integration loop where abductive creativity is bounded by contradiction-aware skepticism.</p>
 <h4 id="32-noisy-or-fusion-over-reverse-paths">3.2 Noisy-OR Fusion Over Reverse Paths</h4>
 <p>Contradiction confidence was previously a binary signal (detected vs. not detected). In v2.52.0, the system uses <strong>Noisy-OR fusion</strong> over all reverse paths that could corroborate or refute a contradiction:</p>
-<p>$$P(\text{contradiction valid}) = 1 - \prod_{p \in \mathcal{P}_{rev}} (1 - P_p)$$</p>
-<p>where $\mathcal{P}_{rev}$ is the set of reverse traversal paths and $P_p$ is the path confidence. This provides a probabilistic confidence score for each <code>CONTRADICTS</code> edge, enabling more nuanced downstream handling — high-confidence contradictions trigger immediate review, while low-confidence ones are tagged for monitoring.</p>
+<div class="arithmatex">\[P(\text{contradiction valid}) = 1 - \prod_{p \in \mathcal{P}_{rev}} (1 - P_p)\]</div>
+<p>where <span class="arithmatex">\(\mathcal{P}_{rev}\)</span> is the set of reverse traversal paths and <span class="arithmatex">\(P_p\)</span> is the path confidence. This provides a probabilistic confidence score for each <code>CONTRADICTS</code> edge, enabling more nuanced downstream handling — high-confidence contradictions trigger immediate review, while low-confidence ones are tagged for monitoring.</p>
 <h4 id="33-externalvalidator-for-temporal-anachronism-resolution-phase-52">3.3 ExternalValidator for Temporal Anachronism Resolution (Phase 52)</h4>
 <p>The <strong>ExternalValidator</strong> (Phase 52) connects the contradiction engine to external literature databases (PubMed, arXiv, OpenAlex, ClinicalTrials). For temporal anachronism contradictions — where the graph claims event A preceded event B but external evidence suggests the reverse — ExternalValidator queries publication dates and citation graphs from primary sources. This allows the system to resolve ambiguous temporal orderings that internal graph topology alone cannot adjudicate.</p>
 <p>For example, a contradiction of the form <code>(Drug_A, APPROVED_BEFORE, Drug_B)</code> where internal evidence suggests the reverse can be verified against ClinicalTrials trial start dates and FDA approval records via ExternalValidator's API connectors.</p>
@@ -2078,6 +2078,10 @@ where $\mathcal{T}$ is the trust function.</p>
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

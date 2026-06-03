@@ -1939,7 +1939,7 @@
 <h3 id="22-formula-components-gpu-implementation">2.2 Formula Components (GPU Implementation)</h3>
 <p>The scoring engine must compute the 10-parameter formula using GPU primitives:
 -   <strong>Cosine Similarity</strong>: Torch-native <code>cosine_similarity</code>.
--   <strong>Community Lookups</strong>: Integer-indexed community tensors for $O(1)$ GPU lookup.
+-   <strong>Community Lookups</strong>: Integer-indexed community tensors for <span class="arithmatex">\(O(1)\)</span> GPU lookup.
 -   <strong>Structural Features</strong>: Pre-loaded structural feature tensors (PageRank, Degree).
 -   <strong>Metabolic Signals</strong>: Dynamic scalar modulation applied via element-wise multiplication.</p>
 <h2 id="3-architectural-design">3. Architectural Design</h2>
@@ -2046,6 +2046,10 @@
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

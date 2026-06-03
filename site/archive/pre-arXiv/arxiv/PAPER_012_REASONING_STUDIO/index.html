@@ -1983,18 +1983,18 @@
 <strong>Date</strong>: May 2, 2026</p>
 <hr />
 <h3 id="abstract">Abstract</h3>
-<p>The "Black-Box" nature of modern Graph Neural Networks (GNNs) and Transformer-based reasoning systems limits their utility in domains requiring high auditability. We present the <strong>Glass-Box Reasoning Studio</strong>, an interactive visualization framework designed for the forensic audit of multi-hop Knowledge Graph inference. The Studio reifies the "Reasoning Beam" as a dynamic topological trace, where edges are scaled by their <strong>Community-Structured Attention (CSA)</strong> weights and nodes are color-coded by their <strong>DSCF/TSC</strong> community partitions. We introduce a "Forensic Score Breakdown" interface that exposes the latent mathematical signals (semantic similarity, community guidance, and structural centrality) driving each traversal hop, building on foundational Explainable AI (XAI) principles \cite{samek2017explainable, ribeiro2016lime, lundberg2017shap}. Furthermore, we describe a real-time "Live Feed" visualization for streaming graphs that animates <strong>STDP spike events</strong> and the materialization of speculative causal links. The v2.52.0 release adds adaptive node clustering to support visual scaling for graphs exceeding $10^5$ nodes. In v2.52.0 (Phase 54), a major architectural refactor extracts all Studio business logic into <code>core/studio_engine.py</code> (StudioEngine class), enabling 38 new unit tests that run without a live Gradio server. The 10-parameter CSA weight profiler is corrected to expose all parameters including $\mu$ (synthesis-density penalty), and a new dark-mode monitoring dashboard with live log streaming is introduced. Our results show that this interactive "Glass-Box" approach significantly reduces the time required for human experts to verify complex AI-generated hypotheses.</p>
+<p>The "Black-Box" nature of modern Graph Neural Networks (GNNs) and Transformer-based reasoning systems limits their utility in domains requiring high auditability. We present the <strong>Glass-Box Reasoning Studio</strong>, an interactive visualization framework designed for the forensic audit of multi-hop Knowledge Graph inference. The Studio reifies the "Reasoning Beam" as a dynamic topological trace, where edges are scaled by their <strong>Community-Structured Attention (CSA)</strong> weights and nodes are color-coded by their <strong>DSCF/TSC</strong> community partitions. We introduce a "Forensic Score Breakdown" interface that exposes the latent mathematical signals (semantic similarity, community guidance, and structural centrality) driving each traversal hop, building on foundational Explainable AI (XAI) principles \cite{samek2017explainable, ribeiro2016lime, lundberg2017shap}. Furthermore, we describe a real-time "Live Feed" visualization for streaming graphs that animates <strong>STDP spike events</strong> and the materialization of speculative causal links. The v2.52.0 release adds adaptive node clustering to support visual scaling for graphs exceeding <span class="arithmatex">\(10^5\)</span> nodes. In v2.52.0 (Phase 54), a major architectural refactor extracts all Studio business logic into <code>core/studio_engine.py</code> (StudioEngine class), enabling 38 new unit tests that run without a live Gradio server. The 10-parameter CSA weight profiler is corrected to expose all parameters including <span class="arithmatex">\(\mu\)</span> (synthesis-density penalty), and a new dark-mode monitoring dashboard with live log streaming is introduced. Our results show that this interactive "Glass-Box" approach significantly reduces the time required for human experts to verify complex AI-generated hypotheses.</p>
 <h3 id="1-introduction">1. Introduction</h3>
 <p>Explainability in AI (XAI) has traditionally focused on post-hoc interpretations of neural weights (e.g., saliency maps). In graph-based reasoning, however, the explanation is the path itself. The Glass-Box Reasoning Studio provides the first integrated environment for visualizing graph attention as a physical, navigatable flow.</p>
 <h3 id="2-forensic-visualization-methodology">2. Forensic Visualization Methodology</h3>
 <h4 id="21-the-reasoning-trace">2.1 The Reasoning Trace</h4>
-<p>The Studio implements a path-centric rendering algorithm that isolates the sub-graph involved in a specific query. The attention weight $a(u,v,k)$ is mapped to edge thickness and opacity, allowing the user to visually perceive the "narrowing of the beam" as the AI focuses on likely answers.</p>
+<p>The Studio implements a path-centric rendering algorithm that isolates the sub-graph involved in a specific query. The attention weight <span class="arithmatex">\(a(u,v,k)\)</span> is mapped to edge thickness and opacity, allowing the user to visually perceive the "narrowing of the beam" as the AI focuses on likely answers.</p>
 <h4 id="22-modal-animations">2.2 Modal Animations</h4>
 <p>For temporal and streaming data, the Studio utilizes high-frequency state updates:
 -   <strong>Potentiation</strong>: Edges being strengthened by LTP [Buchorn, 2026] increase in saturation.
 -   <strong>Drift</strong>: Community boundaries shift smoothly using force-directed layouts to reflect modularity updates [Buchorn, 2026].</p>
 <h3 id="3-interactive-debugging-v2520">3. Interactive Debugging (v2.52.0)</h3>
-<p>The Studio provides a "Dialectical reasoning" mode where users can manually adjust CSA parameters ($\alpha, \beta, \gamma$) via sliders and observe the immediate physical shift in the reasoning beam, providing a "Human-in-the-Loop" (HITL) interface for hyperparameter tuning. In v2.52.0, this includes real-time feedback submission to the <strong>MetaParameterLearner</strong>.</p>
+<p>The Studio provides a "Dialectical reasoning" mode where users can manually adjust CSA parameters (<span class="arithmatex">\(\alpha, \beta, \gamma\)</span>) via sliders and observe the immediate physical shift in the reasoning beam, providing a "Human-in-the-Loop" (HITL) interface for hyperparameter tuning. In v2.52.0, this includes real-time feedback submission to the <strong>MetaParameterLearner</strong>.</p>
 <h3 id="4-recent-advances-v2511-v2520">4. Recent Advances (v2.51.1 -&gt; v2.52.0)</h3>
 <h4 id="41-studioengine-architectural-refactor-phase-54">4.1 StudioEngine Architectural Refactor (Phase 54)</h4>
 <p>The most significant change in v2.52.0 is a complete architectural separation of Studio business logic from the Gradio server layer. Previously, all reasoning coordination, graph management, and query dispatch were embedded directly in <code>ui/studio.py</code>. Phase 54 extracts these into a new <code>core/studio_engine.py</code> module exposing the <code>StudioEngine</code> class.</p>
@@ -2003,7 +2003,7 @@
 - <strong>Reusability</strong>: StudioEngine can be instantiated by the REST API server (<code>api/server.py</code>) and the CLI without the UI layer.
 - <strong>Separation of concerns</strong>: <code>ui/studio.py</code> is reduced to a thin Gradio binding layer; all algorithmic logic lives in <code>core/</code>.</p>
 <h4 id="42-10-parameter-csa-weight-profiler-bug-fix">4.2 10-Parameter CSA Weight Profiler (Bug Fix)</h4>
-<p>The Studio's CSA weight profiler previously exposed only 9 of the 10 CSA parameters, omitting $\mu$ (synthesis-density penalty). This meant that Studio users tuning parameters interactively could not adjust the penalty applied to paths over-relying on Synaptic Bridge-synthesized edges. In v2.52.0, the profiler exposes all 10 parameters:</p>
+<p>The Studio's CSA weight profiler previously exposed only 9 of the 10 CSA parameters, omitting <span class="arithmatex">\(\mu\)</span> (synthesis-density penalty). This meant that Studio users tuning parameters interactively could not adjust the penalty applied to paths over-relying on Synaptic Bridge-synthesized edges. In v2.52.0, the profiler exposes all 10 parameters:</p>
 <table>
 <thead>
 <tr>
@@ -2015,52 +2015,52 @@
 <tbody>
 <tr>
 <td>alpha</td>
-<td>$\alpha$</td>
+<td><span class="arithmatex">\(\alpha\)</span></td>
 <td>Semantic similarity (cosine)</td>
 </tr>
 <tr>
 <td>beta</td>
-<td>$\beta$</td>
+<td><span class="arithmatex">\(\beta\)</span></td>
 <td>Community score</td>
 </tr>
 <tr>
 <td>gamma</td>
-<td>$\gamma$</td>
+<td><span class="arithmatex">\(\gamma\)</span></td>
 <td>Edge-type weight</td>
 </tr>
 <tr>
 <td>delta</td>
-<td>$\delta$</td>
+<td><span class="arithmatex">\(\delta\)</span></td>
 <td>Normalized distance penalty</td>
 </tr>
 <tr>
 <td>epsilon</td>
-<td>$\varepsilon$</td>
+<td><span class="arithmatex">\(\varepsilon\)</span></td>
 <td>Hop decay</td>
 </tr>
 <tr>
 <td>zeta</td>
-<td>$\zeta$</td>
+<td><span class="arithmatex">\(\zeta\)</span></td>
 <td>PageRank prior</td>
 </tr>
 <tr>
 <td>eta</td>
-<td>$\eta$</td>
+<td><span class="arithmatex">\(\eta\)</span></td>
 <td>Temporal decay</td>
 </tr>
 <tr>
 <td>iota</td>
-<td>$\iota$</td>
+<td><span class="arithmatex">\(\iota\)</span></td>
 <td>Node recency</td>
 </tr>
 <tr>
 <td><strong>mu</strong></td>
-<td><strong>$\mu$</strong></td>
+<td><strong><span class="arithmatex">\(\mu\)</span></strong></td>
 <td><strong>Synthesis-density penalty (was missing)</strong></td>
 </tr>
 <tr>
 <td>theta</td>
-<td>$\theta$</td>
+<td><span class="arithmatex">\(\theta\)</span></td>
 <td>Grounding confidence</td>
 </tr>
 </tbody>
@@ -2167,6 +2167,10 @@
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

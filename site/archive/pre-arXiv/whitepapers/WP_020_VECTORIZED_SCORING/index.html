@@ -1881,8 +1881,8 @@
 <h3 id="the-solution-numpy-vectorized-scoring">The Solution: NumPy-Vectorized Scoring</h3>
 <p>CEREBRUM v2.52.0 utilizes a fully vectorized scoring architecture. Instead of scoring edges one-by-one, the entire candidate beam is converted into a multi-dimensional tensor, and the 10-parameter CSA formula is applied using bulk matrix operations.</p>
 <p><strong>Key Technical Shifts</strong>:
-1.  <strong>Bulk Embeddings</strong>: All candidate entity embeddings are stacked into a single $(N \times D)$ matrix for parallel cosine similarity calculation.
-2.  <strong>Lookup Tensors</strong>: Community assignments and structural features are pre-indexed into integer tensors for $O(1)$ vectorized lookup.
+1.  <strong>Bulk Embeddings</strong>: All candidate entity embeddings are stacked into a single <span class="arithmatex">\((N \times D)\)</span> matrix for parallel cosine similarity calculation.
+2.  <strong>Lookup Tensors</strong>: Community assignments and structural features are pre-indexed into integer tensors for <span class="arithmatex">\(O(1)\)</span> vectorized lookup.
 3.  <strong>Broadcasting</strong>: Metabolic signals and hop-decay factors are applied across the entire candidate set using NumPy broadcasting rules.</p>
 <h3 id="performance-impact">Performance Impact</h3>
 <p>The transition to vectorized scoring yielded a <strong>10x reduction in query latency</strong>:
@@ -1972,6 +1972,10 @@
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

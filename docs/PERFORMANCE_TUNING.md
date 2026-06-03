@@ -1,6 +1,6 @@
 # CEREBRUM Performance Tuning Guide
 
-**Status**: v2.66.0 (Phase 204)
+**Status**: v2.71.0 (Phase 213)
 
 This guide covers the key parameters affecting query latency, throughput, reasoning quality, and memory usage — and how to tune them for your specific workload.
 
@@ -419,4 +419,4 @@ The indirect performance effect is positive: Arousal dynamically scales `beam_wi
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 29, 2026 for version v2.66.0
+**Reviewed on**: Jun 2, 2026 for version v2.71.0

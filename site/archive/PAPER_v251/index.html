@@ -2620,12 +2620,15 @@
 
 
 <h1 id="cerebrum-community-structured-graph-attention-for-knowledge-graph-reasoning">CEREBRUM: Community-Structured Graph Attention for Knowledge Graph Reasoning</h1>
-<p><strong>Authors</strong>: Bryan Alexander Buchorn · Claude Sonnet 4.6 (Research Collaborator)
-<strong>Affiliations</strong>: Independent Researcher · Anthropic
+<p><strong>Author</strong>: Bryan Alexander Buchorn</p>
+<blockquote>
+<p><strong>Note on AI assistance:</strong> Claude (Anthropic) was used as a pivotal tool in the development of CEREBRUM — for mathematical formalization, code generation, and manuscript drafting. All novel ideas, architectural decisions, and intellectual property claims are solely the work of Bryan Alexander Buchorn.
+<strong>Affiliation</strong>: Independent Researcher
 <strong>Contact</strong>: bryan.alexander@buchorn.com
 <strong>Date</strong>: April 2026
 <strong>Status</strong>: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
 <strong>License</strong>: Proprietary — all rights reserved</p>
+</blockquote>
 <hr />
 <h2 id="quick-reference">Quick Reference</h2>
 <p><strong>What it is</strong>: A framework that lets a Knowledge Graph reason like a Transformer —
@@ -2638,17 +2641,17 @@ Every inference step is a verifiable graph edge.</p>
 <p>$$
 \text{DSCF (community detection):}
 $$
-For each node $v$ at each iteration:
-- $\text{lpa_cid} = \text{majority vote among neighbors (local signal)}$
-- $\text{mod_cid} = \text{best modularity gain } \Delta Q \text{ (global signal)}$
-- If signals agree and $\neq \text{current}$: <strong>MOVE (anchor)</strong>
-- Elif disagree: <strong>MOVE</strong> with probability weighted by $(\text{lpa_conf} \times \tau)$ vs $(\text{mod_conf} \times (2-\tau))$</p>
-<p>Temperature schedule: $\tau_{t+1} = \max(\tau_t \times 0.92, 0.01)$</p>
-<p>$$
+For each node <span class="arithmatex">\(v\)</span> at each iteration:
+- <span class="arithmatex">\(\text{lpa\_cid} = \text{majority vote among neighbors (local signal)}\)</span>
+- <span class="arithmatex">\(\text{mod\_cid} = \text{best modularity gain } \Delta Q \text{ (global signal)}\)</span>
+- If signals agree and <span class="arithmatex">\(\neq \text{current}\)</span>: <strong>MOVE (anchor)</strong>
+- Elif disagree: <strong>MOVE</strong> with probability weighted by <span class="arithmatex">\((\text{lpa\_conf} \times \tau)\)</span> vs <span class="arithmatex">\((\text{mod\_conf} \times (2-\tau))\)</span></p>
+<p>Temperature schedule: <span class="arithmatex">\(\tau_{t+1} = \max(\tau_t \times 0.92, 0.01)\)</span></p>
+<div class="arithmatex">\[
 \text{CSA — 10-parameter attention weight for edge } u \to v \text{ at hop } k \text{ (Phase 43/45):}
-$$</p>
-<p>$$a(u,v,k) = \sigma!\left(\;\alpha \cdot \mathrm{sim} + \beta \cdot cs + \gamma \cdot etw - \delta \cdot nd + \varepsilon \cdot hd + \zeta \cdot pr_v + \eta \cdot td + \iota \cdot nr_v - \mu \cdot sd + \theta \cdot grounding\;\right)$$</p>
-<p>Default weights: $\alpha=0.4,\;\beta=0.4,\;\gamma=0.1,\;\delta=0.05,\;\varepsilon=0.05,\;\zeta=0.1,\;\eta=0.1,\;\iota=0.05,\;\mu=0.1,\;\theta=1.0$</p>
+\]</div>
+<div class="arithmatex">\[a(u,v,k) = \sigma\!\left(\;\alpha \cdot \mathrm{sim} + \beta \cdot cs + \gamma \cdot etw - \delta \cdot nd + \varepsilon \cdot hd + \zeta \cdot pr_v + \eta \cdot td + \iota \cdot nr_v - \mu \cdot sd + \theta \cdot grounding\;\right)\]</div>
+<p>Default weights: <span class="arithmatex">\(\alpha=0.4,\;\beta=0.4,\;\gamma=0.1,\;\delta=0.05,\;\varepsilon=0.05,\;\zeta=0.1,\;\eta=0.1,\;\iota=0.05,\;\mu=0.1,\;\theta=1.0\)</span></p>
 <p><strong>Transformer → KG mapping</strong>:</p>
 <table>
 <thead>
@@ -3107,8 +3110,8 @@ with 200 communities has 200. The architecture adapts to the data.</p>
 <h3 id="41-community-structured-attention-csa-10-parameter-formula-phase-4345">4.1 Community-Structured Attention (CSA) — 10-Parameter Formula (Phase 43/45)</h3>
 <p>CSA computes attention weights for graph traversal that incorporate both local graph topology and global community structure. The formula was extended from 5 to 10 parameters across Phases 43 and 45.</p>
 <p><strong>Attention weight formula:</strong></p>
-<p>For entity $u$ attending to entity $v$ at traversal hop $k$:</p>
-<p>$$\boxed{a(u,v,k) = \sigma!\left(\alpha \cdot \mathrm{sim} + \beta \cdot cs + \gamma \cdot etw - \delta \cdot nd + \varepsilon \cdot hd + \zeta \cdot pr_v + \eta \cdot td + \iota \cdot nr_v - \mu \cdot sd + \theta \cdot grounding\right)}$$</p>
+<p>For entity <span class="arithmatex">\(u\)</span> attending to entity <span class="arithmatex">\(v\)</span> at traversal hop <span class="arithmatex">\(k\)</span>:</p>
+<div class="arithmatex">\[\boxed{a(u,v,k) = \sigma\!\left(\alpha \cdot \mathrm{sim} + \beta \cdot cs + \gamma \cdot etw - \delta \cdot nd + \varepsilon \cdot hd + \zeta \cdot pr_v + \eta \cdot td + \iota \cdot nr_v - \mu \cdot sd + \theta \cdot grounding\right)}\]</div>
 <p><strong>Term definitions:</strong></p>
 <table>
 <thead>
@@ -3121,70 +3124,70 @@ with 200 communities has 200. The architecture adapts to the data.</p>
 </thead>
 <tbody>
 <tr>
-<td>$\alpha \cdot \mathrm{sim}$</td>
+<td><span class="arithmatex">\(\alpha \cdot \mathrm{sim}\)</span></td>
 <td>Semantic similarity</td>
 <td>0.4</td>
-<td>$\cos(\mathbf{e}_u, \mathbf{e}_v)$ — cosine similarity of entity embeddings</td>
+<td><span class="arithmatex">\(\cos(\mathbf{e}_u, \mathbf{e}_v)\)</span> — cosine similarity of entity embeddings</td>
 </tr>
 <tr>
-<td>$\beta \cdot cs$</td>
+<td><span class="arithmatex">\(\beta \cdot cs\)</span></td>
 <td>Community score</td>
 <td>0.4</td>
 <td>Structural membership (1.0 same, 0.5 adjacent, exp-decay otherwise)</td>
 </tr>
 <tr>
-<td>$\gamma \cdot etw$</td>
+<td><span class="arithmatex">\(\gamma \cdot etw\)</span></td>
 <td>Edge-type weight</td>
 <td>0.1</td>
 <td>Per-relation-type significance; configurable</td>
 </tr>
 <tr>
-<td>$-\delta \cdot nd$</td>
+<td><span class="arithmatex">\(-\delta \cdot nd\)</span></td>
 <td>Distance penalty</td>
 <td>0.05</td>
 <td>Normalized community distance; discourages speculative hops</td>
 </tr>
 <tr>
-<td>$\varepsilon \cdot hd$</td>
+<td><span class="arithmatex">\(\varepsilon \cdot hd\)</span></td>
 <td>Hop decay</td>
 <td>0.05</td>
-<td>$1/(1+k)$; prevents over-extension of the beam</td>
+<td><span class="arithmatex">\(1/(1+k)\)</span>; prevents over-extension of the beam</td>
 </tr>
 <tr>
-<td>$\zeta \cdot pr_v$</td>
+<td><span class="arithmatex">\(\zeta \cdot pr_v\)</span></td>
 <td>PageRank prior</td>
 <td>0.1</td>
 <td>Global authority score of destination node (Phase 27)</td>
 </tr>
 <tr>
-<td>$\eta \cdot td$</td>
+<td><span class="arithmatex">\(\eta \cdot td\)</span></td>
 <td>Temporal decay</td>
 <td>0.1</td>
 <td>Recency of edges based on timestamp (Phase 41)</td>
 </tr>
 <tr>
-<td>$\iota \cdot nr_v$</td>
+<td><span class="arithmatex">\(\iota \cdot nr_v\)</span></td>
 <td>Node recency</td>
 <td>0.05</td>
 <td>Recency of node's last update event (Phase 43)</td>
 </tr>
 <tr>
-<td>$-\mu \cdot sd$</td>
+<td><span class="arithmatex">\(-\mu \cdot sd\)</span></td>
 <td>Synthesis density</td>
 <td>0.1</td>
 <td>Penalty for over-reliance on REM-synthesized edges (Phase 43)</td>
 </tr>
 <tr>
-<td>$\theta \cdot grounding$</td>
+<td><span class="arithmatex">\(\theta \cdot grounding\)</span></td>
 <td>Grounding confidence</td>
 <td>1.0</td>
 <td>Ingestion-time confidence/provenance score (Phase 43)</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Community membership score.</strong> Let $c: V \to \mathbb{Z}_{\geq 0}$ be the community assignment and $\mathcal{A}$ the set of adjacent community pairs:</p>
-<p>$$S_{\mathcal{C}}(u,v) = \begin{cases} 1.0 &amp; \text{if } c(u) = c(v) \quad \text{[same attention head]} \ 0.5 &amp; \text{if } (c(u), c(v)) \in \mathcal{A} \quad \text{[adjacent heads]} \ e^{-\lambda \cdot d_{\mathcal{C}}(c(u),\, c(v))} &amp; \text{otherwise} \quad \text{[distance decay, } \lambda = 0.5\text{]} \end{cases}$$</p>
-<p><strong>Why CSA is not a GAT.</strong> GATs compute $a(u,v) = f(\mathbf{W}\mathbf{e}<em _mathcal_C="\mathcal{C">u,\, \mathbf{W}\mathbf{e}_v)$ from learned weights on adjacent pairs only, with no global context. CSA introduces the term $\beta \cdot S</em> \cdot C)$ — far cheaper than Transformer self-attention's $O(n^2)$.}}(u,v)$ which provides global structural awareness at $O(n \cdot \bar{k</p>
+<p><strong>Community membership score.</strong> Let <span class="arithmatex">\(c: V \to \mathbb{Z}_{\geq 0}\)</span> be the community assignment and <span class="arithmatex">\(\mathcal{A}\)</span> the set of adjacent community pairs:</p>
+<div class="arithmatex">\[S_{\mathcal{C}}(u,v) = \begin{cases} 1.0 &amp; \text{if } c(u) = c(v) \quad \text{[same attention head]} \\ 0.5 &amp; \text{if } (c(u), c(v)) \in \mathcal{A} \quad \text{[adjacent heads]} \\ e^{-\lambda \cdot d_{\mathcal{C}}(c(u),\, c(v))} &amp; \text{otherwise} \quad \text{[distance decay, } \lambda = 0.5\text{]} \end{cases}\]</div>
+<p><strong>Why CSA is not a GAT.</strong> GATs compute <span class="arithmatex">\(a(u,v) = f(\mathbf{W}\mathbf{e}_u,\, \mathbf{W}\mathbf{e}_v)\)</span> from learned weights on adjacent pairs only, with no global context. CSA introduces the term <span class="arithmatex">\(\beta \cdot S_{\mathcal{C}}(u,v)\)</span> which provides global structural awareness at <span class="arithmatex">\(O(n \cdot \bar{k} \cdot C)\)</span> — far cheaper than Transformer self-attention's <span class="arithmatex">\(O(n^2)\)</span>.</p>
 <h3 id="42-reasoninglogit-unified-feature-vector">4.2 ReasoningLogit: Unified Feature Vector</h3>
 <p>All 10 CSA features are encapsulated in the <code>ReasoningLogit</code> dataclass, which threads through scoring, learning, and logging code uniformly. The <code>score(params)</code> method computes the dot product of the feature vector with the parameter vector, enabling clean separation between feature extraction and parameter optimization.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ReasoningLogit(sim, cs, etw, nd, hd, pr_v, td, nr_v, sd, grounding)
@@ -3198,12 +3201,12 @@ majority-vote signal (local topology) and the modularity gain signal (global
 structure) are computed. The decision incorporates both simultaneously,
 governed by a temperature parameter:</p>
 <p><strong>LPA signal</strong> (local majority vote):</p>
-<p>$$\mathrm{lpa_cid}(v) = \underset{c}{\arg\max}\sum_{u \in \mathcal{N}(v)} \mathbf{1}[c(u) = c], \qquad \mathrm{lpa_conf}(v) = \frac{\max_c \sum_{u \in \mathcal{N}(v)} \mathbf{1}[c(u)=c]}{|\mathcal{N}(v)|} \in [0,1]$$</p>
-<p><strong>Modularity gain signal</strong> (global structure). For each candidate community $\mathcal{C}$ adjacent to $v$:</p>
-<p>$$\Delta Q(v \to \mathcal{C}) = \frac{k_{v,\mathcal{C}}}{m} - \rho \cdot \frac{k_v \cdot \sum_{u \in \mathcal{C}} k_u}{2m^2}$$</p>
-<p>$$\mathrm{mod_cid}(v) = \underset{\mathcal{C}}{\arg\max}\;\Delta Q(v \to \mathcal{C}), \qquad \mathrm{mod_conf}(v) = \min!\left(\Delta Q_{\max} \cdot m,\; 1.0\right)$$</p>
-<p>where $k_{v,\mathcal{C}}$ is the number of edges from $v$ to $\mathcal{C}$, $k_v = \deg(v)$, $m$ is the total edge count, and $\rho$ is the resolution parameter.</p>
-<p><strong>Decision rule</strong> (temperature $\tau \in [0.01, 1.0]$):</p>
+<div class="arithmatex">\[\mathrm{lpa\_cid}(v) = \underset{c}{\arg\max}\sum_{u \in \mathcal{N}(v)} \mathbf{1}[c(u) = c], \qquad \mathrm{lpa\_conf}(v) = \frac{\max_c \sum_{u \in \mathcal{N}(v)} \mathbf{1}[c(u)=c]}{|\mathcal{N}(v)|} \in [0,1]\]</div>
+<p><strong>Modularity gain signal</strong> (global structure). For each candidate community <span class="arithmatex">\(\mathcal{C}\)</span> adjacent to <span class="arithmatex">\(v\)</span>:</p>
+<div class="arithmatex">\[\Delta Q(v \to \mathcal{C}) = \frac{k_{v,\mathcal{C}}}{m} - \rho \cdot \frac{k_v \cdot \sum_{u \in \mathcal{C}} k_u}{2m^2}\]</div>
+<div class="arithmatex">\[\mathrm{mod\_cid}(v) = \underset{\mathcal{C}}{\arg\max}\;\Delta Q(v \to \mathcal{C}), \qquad \mathrm{mod\_conf}(v) = \min\!\left(\Delta Q_{\max} \cdot m,\; 1.0\right)\]</div>
+<p>where <span class="arithmatex">\(k_{v,\mathcal{C}}\)</span> is the number of edges from <span class="arithmatex">\(v\)</span> to <span class="arithmatex">\(\mathcal{C}\)</span>, <span class="arithmatex">\(k_v = \deg(v)\)</span>, <span class="arithmatex">\(m\)</span> is the total edge count, and <span class="arithmatex">\(\rho\)</span> is the resolution parameter.</p>
+<p><strong>Decision rule</strong> (temperature <span class="arithmatex">\(\tau \in [0.01, 1.0]\)</span>):</p>
 <table>
 <thead>
 <tr>
@@ -3213,7 +3216,7 @@ governed by a temperature parameter:</p>
 </thead>
 <tbody>
 <tr>
-<td>$\mathrm{lpa_cid} = \mathrm{mod_cid} \neq c(v)$</td>
+<td><span class="arithmatex">\(\mathrm{lpa\_cid} = \mathrm{mod\_cid} \neq c(v)\)</span></td>
 <td><strong>MOVE</strong> (consensus anchor)</td>
 </tr>
 <tr>
@@ -3222,54 +3225,54 @@ governed by a temperature parameter:</p>
 </tr>
 <tr>
 <td>LPA says MOVE, Mod says STAY</td>
-<td>MOVE with probability $\mathrm{lpa_conf} \cdot \tau$</td>
+<td>MOVE with probability <span class="arithmatex">\(\mathrm{lpa\_conf} \cdot \tau\)</span></td>
 </tr>
 <tr>
 <td>Mod says MOVE, LPA says STAY</td>
-<td>MOVE with probability $\mathrm{mod_conf} \cdot (2 - \tau)$</td>
+<td>MOVE with probability <span class="arithmatex">\(\mathrm{mod\_conf} \cdot (2 - \tau)\)</span></td>
 </tr>
 <tr>
 <td>Both say MOVE to different targets</td>
-<td>Move to $\mathrm{lpa_cid}$ with weight $\mathrm{lpa_conf} \cdot \tau$; to $\mathrm{mod_cid}$ with weight $\mathrm{mod_conf} \cdot (2 - \tau)$</td>
+<td>Move to <span class="arithmatex">\(\mathrm{lpa\_cid}\)</span> with weight <span class="arithmatex">\(\mathrm{lpa\_conf} \cdot \tau\)</span>; to <span class="arithmatex">\(\mathrm{mod\_cid}\)</span> with weight <span class="arithmatex">\(\mathrm{mod\_conf} \cdot (2 - \tau)\)</span></td>
 </tr>
 </tbody>
 </table>
 <p><strong>Temperature schedule</strong> (anneals from local-dominant to global-dominant):</p>
-<p>$$\tau_{t+1} = \max!\left(\tau_t \cdot 0.92,\; 0.01\right)$$</p>
-<p><strong>Post-convergence connectivity check.</strong> Any community $\mathcal{C}$ whose induced subgraph $G[\mathcal{C}]$ is disconnected is split into its connected components:</p>
-<p>$$\text{If } G[\mathcal{C}] \text{ is disconnected: } \mathcal{C} \to \mathcal{C}_1, \mathcal{C}_2, \ldots, \mathcal{C}_r$$</p>
+<div class="arithmatex">\[\tau_{t+1} = \max\!\left(\tau_t \cdot 0.92,\; 0.01\right)\]</div>
+<p><strong>Post-convergence connectivity check.</strong> Any community <span class="arithmatex">\(\mathcal{C}\)</span> whose induced subgraph <span class="arithmatex">\(G[\mathcal{C}]\)</span> is disconnected is split into its connected components:</p>
+<div class="arithmatex">\[\text{If } G[\mathcal{C}] \text{ is disconnected: } \mathcal{C} \to \mathcal{C}_1, \mathcal{C}_2, \ldots, \mathcal{C}_r\]</div>
 <p><strong>TSC (Triple-Signal Consensus)</strong> adds Infomap flow-based community detection as a third signal. When all three signals agree on a boundary the community assignment is high-confidence. The community engine mode (DSCF / TSC / Leiden / LPA) is configurable at startup via <code>CommunityEngine(algorithm=...)</code> (Phase 49).</p>
 <h3 id="44-probabilistic-traversal-bayesian-beam-search-phase-19">4.4 Probabilistic Traversal: Bayesian Beam Search (Phase 19)</h3>
 <p>To handle topological noise and cold-start uncertainty, CEREBRUM provides a probabilistic mode where edge weights are modeled as Beta distributions:</p>
-<p>$$P(a | \alpha, \beta) = \frac{a^{\alpha-1} (1-a)^{\beta-1}}{B(\alpha, \beta)}$$</p>
-<p>During traversal, Thompson Sampling ranks neighbors stochastically. For each candidate neighbor $v$ a sample $x \sim \text{Beta}(\alpha_v, \beta_v)$ determines priority. <strong>Warm-starting</strong> seeds the distribution from the deterministic CSA score $s$:</p>
-<p>$$\alpha_{init} = s \cdot \omega, \quad \beta_{init} = (1-s) \cdot \omega \qquad (\omega = \text{warm_start_strength}, \text{default } 10.0)$$</p>
+<div class="arithmatex">\[P(a | \alpha, \beta) = \frac{a^{\alpha-1} (1-a)^{\beta-1}}{B(\alpha, \beta)}\]</div>
+<p>During traversal, Thompson Sampling ranks neighbors stochastically. For each candidate neighbor <span class="arithmatex">\(v\)</span> a sample <span class="arithmatex">\(x \sim \text{Beta}(\alpha_v, \beta_v)\)</span> determines priority. <strong>Warm-starting</strong> seeds the distribution from the deterministic CSA score <span class="arithmatex">\(s\)</span>:</p>
+<div class="arithmatex">\[\alpha_{init} = s \cdot \omega, \quad \beta_{init} = (1-s) \cdot \omega \qquad (\omega = \text{warm\_start\_strength}, \text{default } 10.0)\]</div>
 <p>This reduces cold-start variance without discarding structural priors.</p>
 <h3 id="45-cross-modal-alignment-procrustes-svd-phase-19">4.5 Cross-Modal Alignment: Procrustes SVD (Phase 19)</h3>
-<p><code>SignalEncoder</code> aligns non-textual signals (FFT spectra, sensor readings) into the canonical entity embedding space $\mathcal{E}$ using Orthogonal Procrustes Analysis. Given anchor points $X$ in signal space and their embeddings $Y$:</p>
-<p>$$R = \arg\min_{\Omega^T\Omega=I} | \Omega X - Y |_F \qquad \text{solved via SVD: } M = Y X^T = U \Sigma V^T \implies R = U V^T$$</p>
-<p><strong>Canonical Basis Anchor</strong> (Phase 20): all alignments are anchored to a fixed root embedding space $\mathcal{E}_{root}$ preventing geometric drift across federated hops.</p>
+<p><code>SignalEncoder</code> aligns non-textual signals (FFT spectra, sensor readings) into the canonical entity embedding space <span class="arithmatex">\(\mathcal{E}\)</span> using Orthogonal Procrustes Analysis. Given anchor points <span class="arithmatex">\(X\)</span> in signal space and their embeddings <span class="arithmatex">\(Y\)</span>:</p>
+<div class="arithmatex">\[R = \arg\min_{\Omega^T\Omega=I} \| \Omega X - Y \|_F \qquad \text{solved via SVD: } M = Y X^T = U \Sigma V^T \implies R = U V^T\]</div>
+<p><strong>Canonical Basis Anchor</strong> (Phase 20): all alignments are anchored to a fixed root embedding space <span class="arithmatex">\(\mathcal{E}_{root}\)</span> preventing geometric drift across federated hops.</p>
 <h3 id="46-federated-reasoning-distributedbeamtraversal-phase-32">4.6 Federated Reasoning: DistributedBeamTraversal (Phase 32)</h3>
 <p><code>DistributedBeamTraversal</code> delegates reasoning branches to remote CEREBRUM nodes via the POST /traverse endpoint. Federated sub-paths are merged with local paths using score-weighted voting (Phase 27). HMAC-SHA256 signatures on all remote responses prevent adversarial path injection.</p>
 <p><strong>Federated lease protocol</strong> (Phase 20): remote nodes PIN entities for the duration of a federated query TTL, preventing eviction of in-flight paths.</p>
 <h3 id="47-adaptive-search-strategy-phase-53">4.7 Adaptive Search Strategy (Phase 53)</h3>
-<p>BeamTraversal dynamically adjusts <code>beam_width</code> and <code>max_hop</code> based on local graph density around the seed entity. Dense ego-networks (high average degree) warrant narrower beams to limit combinatorial explosion; sparse ego-networks warrant wider beams to maximize recall. The density estimate is computed in $O(k)$ over the immediate neighborhood at query time:</p>
-<p>$$\text{density}(v) = \frac{|\mathcal{E}(G[\mathcal{N}(v)])|}{|\mathcal{N}(v)|(|\mathcal{N}(v)|-1)/2}$$</p>
+<p>BeamTraversal dynamically adjusts <code>beam_width</code> and <code>max_hop</code> based on local graph density around the seed entity. Dense ego-networks (high average degree) warrant narrower beams to limit combinatorial explosion; sparse ego-networks warrant wider beams to maximize recall. The density estimate is computed in <span class="arithmatex">\(O(k)\)</span> over the immediate neighborhood at query time:</p>
+<div class="arithmatex">\[\text{density}(v) = \frac{|\mathcal{E}(G[\mathcal{N}(v)])|}{|\mathcal{N}(v)|(|\mathcal{N}(v)|-1)/2}\]</div>
 <h3 id="48-graphsage-neighbourhood-smoothing-phase-55">4.8 GraphSAGE Neighbourhood Smoothing (Phase 55)</h3>
-<p>Entity embeddings produced by a base encoder (random, TransE, or sentence-transformer) carry only local semantic signal: they encode what an entity is, not where it sits in the graph. Two entities in the same community, co-cited by dozens of shared neighbours, may have dissimilar raw embeddings simply because their surface forms differ. This lack of structural context directly degrades the CSA semantic similarity term $\alpha \cdot \mathrm{sim}$, which depends on cosine distance between entity vectors.</p>
-<p>To address this, CEREBRUM applies a single-pass GraphSAGE-style neighbourhood aggregation after base encoding but before any traversal. For each entity $v$ with embedding $\mathbf{e}_v$ and neighbourhood $\mathcal{N}(v)$:</p>
-<p>$$\tilde{\mathbf{e}}<em _in="\in" _mathcal_N="\mathcal{N" u="u">v = \frac{\mathbf{e}_v + \sum</em>$$}(v)} \mathbf{e}_u}{1 + |\mathcal{N}(v)|</p>
-<p>The result is re-normalized to unit length. This mean pooling step propagates local structural context into every entity vector without any learned parameters, weight matrices, or training data. The operation runs at graph build time via <code>CerebrumGraph.build(use_graphsage=True)</code> and applies the smoothing over the entire graph in a single pass, making the incremental cost $O(|E|)$.</p>
-<p>The effect on CSA is direct and significant. Entities that are structurally proximate — sharing community membership, co-neighbours, or analogous graph roles — have their smoothed embeddings pulled together, increasing $\mathrm{sim}(u, v)$ for semantically related pairs even when their raw lexical representations are distant. Combined with the community score term $\beta \cdot cs$, the smoothed semantic similarity creates a redundant double-signal for structurally cohesive paths, further sharpening beam focus. Importantly, this is an inference-time enrichment: no retraining of the CSA parameters, no gradient steps, and no labelled supervision are required.</p>
+<p>Entity embeddings produced by a base encoder (random, TransE, or sentence-transformer) carry only local semantic signal: they encode what an entity is, not where it sits in the graph. Two entities in the same community, co-cited by dozens of shared neighbours, may have dissimilar raw embeddings simply because their surface forms differ. This lack of structural context directly degrades the CSA semantic similarity term <span class="arithmatex">\(\alpha \cdot \mathrm{sim}\)</span>, which depends on cosine distance between entity vectors.</p>
+<p>To address this, CEREBRUM applies a single-pass GraphSAGE-style neighbourhood aggregation after base encoding but before any traversal. For each entity <span class="arithmatex">\(v\)</span> with embedding <span class="arithmatex">\(\mathbf{e}_v\)</span> and neighbourhood <span class="arithmatex">\(\mathcal{N}(v)\)</span>:</p>
+<div class="arithmatex">\[\tilde{\mathbf{e}}_v = \frac{\mathbf{e}_v + \sum_{u \in \mathcal{N}(v)} \mathbf{e}_u}{1 + |\mathcal{N}(v)|}\]</div>
+<p>The result is re-normalized to unit length. This mean pooling step propagates local structural context into every entity vector without any learned parameters, weight matrices, or training data. The operation runs at graph build time via <code>CerebrumGraph.build(use_graphsage=True)</code> and applies the smoothing over the entire graph in a single pass, making the incremental cost <span class="arithmatex">\(O(|E|)\)</span>.</p>
+<p>The effect on CSA is direct and significant. Entities that are structurally proximate — sharing community membership, co-neighbours, or analogous graph roles — have their smoothed embeddings pulled together, increasing <span class="arithmatex">\(\mathrm{sim}(u, v)\)</span> for semantically related pairs even when their raw lexical representations are distant. Combined with the community score term <span class="arithmatex">\(\beta \cdot cs\)</span>, the smoothed semantic similarity creates a redundant double-signal for structurally cohesive paths, further sharpening beam focus. Importantly, this is an inference-time enrichment: no retraining of the CSA parameters, no gradient steps, and no labelled supervision are required.</p>
 <h3 id="49-engram-steered-beam-traversal-phase-55">4.9 Engram-Steered Beam Traversal (Phase 55)</h3>
 <p>A fundamental limitation of stateless beam traversal is the cold-start problem: every query begins without memory of which reasoning chains have proven effective in the past. A domain-expert human reasoner, by contrast, quickly learns that certain relation-sequence patterns reliably lead to correct answers in a given knowledge domain ("gene → expressed_in → tissue → affected_by → disease" is a productive chain in biomedical KGs). Without this experiential bias, the traversal must explore the full beam combinatorially on every query.</p>
 <p>The <strong>Engram-Steered Traversal</strong> system addresses this by accumulating compressed relation-sequence patterns from successful queries into a persistent cache (<code>Engram</code>). After each successful reasoning call, the relation sequence of every top-ranked path is extracted and stored as a compressed prefix-indexed structure. On subsequent queries, each candidate expansion at <code>_prune_candidates()</code> time is scored by looking up the current path's relation prefix in the cache and computing an affinity score based on how often that prefix has appeared in historically successful paths. The effective candidate score is:</p>
-<p>$$s_\text{eff}(v) = s_\text{CSA}(v) \times \left(1 + \lambda_\text{engram} \times \text{affinity}(v)\right)$$</p>
-<p>where $\lambda_\text{engram}$ is a configurable strength parameter and $\text{affinity}(v) \in [0, 1]$ is the normalized frequency of the candidate's relation prefix in the cache. This is a multiplicative boost rather than an additive override, preserving the CSA score's absolute scale while biasing the beam toward known-productive chains.</p>
+<div class="arithmatex">\[s_\text{eff}(v) = s_\text{CSA}(v) \times \left(1 + \lambda_\text{engram} \times \text{affinity}(v)\right)\]</div>
+<p>where <span class="arithmatex">\(\lambda_\text{engram}\)</span> is a configurable strength parameter and <span class="arithmatex">\(\text{affinity}(v) \in [0, 1]\)</span> is the normalized frequency of the candidate's relation prefix in the cache. This is a multiplicative boost rather than an additive override, preserving the CSA score's absolute scale while biasing the beam toward known-productive chains.</p>
 <p>The system's durability across process restarts is provided by a two-layer mechanism. At shutdown, <code>Engram</code> serializes its prefix index to a JSON file. At startup, <code>QueryLog.replay_into_cache(engram)</code> re-ingests the NDJSON query history, rebuilding the cache state from the record of past successful queries. This gives the Engram system persistent memory without requiring a separate database process. Critically, the entire mechanism is training-free: no gradient steps, no reward model, and no labelled path-quality annotations are needed. This contrasts fundamentally with RL-based path selection methods (DeepPath, MINERVA) that require thousands of labelled training examples. Engram-Steered Traversal learns from the system's own operational history.</p>
 <h3 id="410-temporalcalibrator-phase-55">4.10 TemporalCalibrator (Phase 55)</h3>
-<p>The CSA formula contains two parameters, $\eta$ (temporal decay) and $\iota$ (node recency), that govern how strongly the system favours recently-updated edges and nodes. These parameters interact with the time distribution of the graph in ways that are highly domain-dependent: a rapidly-evolving biomedical KG has very different temporal structure from a stable encyclopedic KG, and the optimal values of $\eta$ and $\iota$ cannot be inferred from graph topology alone.</p>
-<p><code>TemporalCalibrator</code> performs a grid search over a configurable range of $(\eta, \iota)$ pairs against a labelled validation set, evaluating each configuration via Recall@K. For each grid point it: (1) applies the candidate $(\eta, \iota)$ pair to the live CSA engine, (2) runs inference over the validation set, (3) measures Recall@K, and (4) restores the original parameter values in a <code>try/finally</code> block regardless of whether step 3 succeeds or raises an exception. After exhausting the grid, the configuration maximising Recall@K is applied permanently via <code>TemporalCalibrator.apply()</code>. This calibration is entirely distinct from the online SGD path (Section 6.1) and the batch retraining path (Section 6.2): it requires no gradient computation and no positive/negative path pairs — only a small validation set with known-correct answer entities.</p>
+<p>The CSA formula contains two parameters, <span class="arithmatex">\(\eta\)</span> (temporal decay) and <span class="arithmatex">\(\iota\)</span> (node recency), that govern how strongly the system favours recently-updated edges and nodes. These parameters interact with the time distribution of the graph in ways that are highly domain-dependent: a rapidly-evolving biomedical KG has very different temporal structure from a stable encyclopedic KG, and the optimal values of <span class="arithmatex">\(\eta\)</span> and <span class="arithmatex">\(\iota\)</span> cannot be inferred from graph topology alone.</p>
+<p><code>TemporalCalibrator</code> performs a grid search over a configurable range of <span class="arithmatex">\((\eta, \iota)\)</span> pairs against a labelled validation set, evaluating each configuration via Recall@K. For each grid point it: (1) applies the candidate <span class="arithmatex">\((\eta, \iota)\)</span> pair to the live CSA engine, (2) runs inference over the validation set, (3) measures Recall@K, and (4) restores the original parameter values in a <code>try/finally</code> block regardless of whether step 3 succeeds or raises an exception. After exhausting the grid, the configuration maximising Recall@K is applied permanently via <code>TemporalCalibrator.apply()</code>. This calibration is entirely distinct from the online SGD path (Section 6.1) and the batch retraining path (Section 6.2): it requires no gradient computation and no positive/negative path pairs — only a small validation set with known-correct answer entities.</p>
 <hr />
 <h2 id="5-the-forward-pass-graph-reasoning">5. The Forward Pass: Graph Reasoning</h2>
 <h3 id="51-algorithm">5.1 Algorithm</h3>
@@ -3329,8 +3332,8 @@ governed by a temperature parameter:</p>
 <h3 id="52-community-coherence">5.2 Community Coherence</h3>
 <p>The <code>community_coherence</code> term rewards paths that traverse communities in a
 principled way:</p>
-<p>$$\gamma_{\mathcal{C}}(P) = \frac{1}{L}\sum_{k=1}^{L} \begin{cases} 1.0 &amp; c(v_k) = c(v_{k-1}) \ 0.5 &amp; c(v_k) \neq c(v_{k-1}) \end{cases}$$</p>
-<p>A fully intra-community path scores $\gamma_{\mathcal{C}} = 1.0$. One community transition: $\gamma_{\mathcal{C}} \approx 0.75$. Incoherent zigzags compound the penalty across hops.</p>
+<div class="arithmatex">\[\gamma_{\mathcal{C}}(P) = \frac{1}{L}\sum_{k=1}^{L} \begin{cases} 1.0 &amp; c(v_k) = c(v_{k-1}) \\ 0.5 &amp; c(v_k) \neq c(v_{k-1}) \end{cases}\]</div>
+<p>A fully intra-community path scores <span class="arithmatex">\(\gamma_{\mathcal{C}} = 1.0\)</span>. One community transition: <span class="arithmatex">\(\gamma_{\mathcal{C}} \approx 0.75\)</span>. Incoherent zigzags compound the penalty across hops.</p>
 <h3 id="53-interpretability">5.3 Interpretability</h3>
 <p>The output of CEREBRUM is always a path through the KG. This is fundamentally
 different from LLM reasoning in two ways:</p>
@@ -3353,14 +3356,14 @@ different from LLM reasoning in two ways:</p>
 <hr />
 <h2 id="6-adaptive-online-learning-phases-22-4548">6. Adaptive Online Learning (Phases 22, 45–48)</h2>
 <h3 id="61-metaparameterlearner-online-sgd-phase-2245">6.1 MetaParameterLearner: Online SGD (Phase 22/45)</h3>
-<p>User feedback via POST /feedback triggers per-community CSA parameter updates using stochastic gradient descent. For a positive feedback signal on path $P$ traversing community $c$:</p>
-<p>$$\theta_c \leftarrow \theta_c + \eta \cdot \nabla_\theta \log \sigma(\mathrm{logit}(P;\, \theta_c))$$</p>
+<p>User feedback via POST /feedback triggers per-community CSA parameter updates using stochastic gradient descent. For a positive feedback signal on path <span class="arithmatex">\(P\)</span> traversing community <span class="arithmatex">\(c\)</span>:</p>
+<div class="arithmatex">\[\theta_c \leftarrow \theta_c + \eta \cdot \nabla_\theta \log \sigma(\mathrm{logit}(P;\, \theta_c))\]</div>
 <p>For negative feedback, the gradient is reversed. The learner accumulates (pos, neg) path pairs in a feedback buffer for subsequent batch retraining.</p>
 <p>Community-specific parameters override the global prior for nodes in that community, enabling domain-specific tuning without global model retraining.</p>
 <h3 id="62-csaparameterlearner-batch-retraining-phase-48">6.2 CSAParameterLearner: Batch Retraining (Phase 48)</h3>
 <p>POST /retrain triggers <code>CSAParameterLearner.fit()</code> on the accumulated feedback buffer. The learner performs gradient descent over all buffered (pos, neg) pairs, updating the global prior:</p>
-<p>$$\mathcal{L} = -\sum_{(P^+, P^-)} \left[ \log \sigma(\mathrm{score}(P^+;\theta)) + \log \sigma(-\mathrm{score}(P^-;\theta)) \right]$$</p>
-<p>$$\theta \leftarrow \theta - \eta \nabla_\theta \mathcal{L}$$</p>
+<div class="arithmatex">\[\mathcal{L} = -\sum_{(P^+, P^-)} \left[ \log \sigma(\mathrm{score}(P^+;\theta)) + \log \sigma(-\mathrm{score}(P^-;\theta)) \right]\]</div>
+<div class="arithmatex">\[\theta \leftarrow \theta - \eta \nabla_\theta \mathcal{L}\]</div>
 <h3 id="63-params-persistence-phase-47">6.3 Params Persistence (Phase 47)</h3>
 <p><code>MetaParameterLearner.to_dict()</code> / <code>from_dict()</code> serializes the full parameter state:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
@@ -3374,14 +3377,14 @@ zero-downtime deployment of learned parameter sets.</p>
 <hr />
 <h2 id="7-abductive-reasoning-and-autonomous-discovery-phases-5052">7. Abductive Reasoning and Autonomous Discovery (Phases 50–52)</h2>
 <h3 id="71-hypothesisengine-multi-path-abductive-reasoning-phase-50">7.1 HypothesisEngine: Multi-Path Abductive Reasoning (Phase 50)</h3>
-<p>The HypothesisEngine generates hypotheses from incomplete graph evidence. Given a target node pair $(u, w)$ with no direct path, it:</p>
+<p>The HypothesisEngine generates hypotheses from incomplete graph evidence. Given a target node pair <span class="arithmatex">\((u, w)\)</span> with no direct path, it:</p>
 <ol>
-<li>Collects all beam paths that reach $u$ or $w$ from any seed.</li>
+<li>Collects all beam paths that reach <span class="arithmatex">\(u\)</span> or <span class="arithmatex">\(w\)</span> from any seed.</li>
 <li>Identifies partial paths that together could explain a connection.</li>
 <li>Combines confidence scores using <strong>Noisy-OR</strong> fusion:</li>
 </ol>
-<p>$$P(\text{hypothesis}) = 1 - \prod_{i} (1 - p_i)$$</p>
-<p>where $p_i$ is the CSA score of each independent path supporting the hypothesis. This formulation correctly treats independent evidence sources as cumulative without double-counting.</p>
+<div class="arithmatex">\[P(\text{hypothesis}) = 1 - \prod_{i} (1 - p_i)\]</div>
+<p>where <span class="arithmatex">\(p_i\)</span> is the CSA score of each independent path supporting the hypothesis. This formulation correctly treats independent evidence sources as cumulative without double-counting.</p>
 <p>Hypotheses are returned with confidence intervals and the supporting path evidence, making them auditable.</p>
 <h3 id="72-researchagent-autonomous-missing-link-discovery-phase-51">7.2 ResearchAgent: Autonomous Missing-Link Discovery (Phase 51)</h3>
 <p>ResearchAgent is a background daemon that continuously proposes new graph edges by:</p>
@@ -3399,7 +3402,7 @@ zero-downtime deployment of learned parameter sets.</p>
 <li><strong>arXiv</strong> — preprint server for physics, CS, biology</li>
 <li><strong>OpenAlex</strong> — open scholarly works database</li>
 </ul>
-<p>For a proposed edge $(u, r, v)$, the validator constructs search queries from entity labels and relation type, retrieves candidate abstracts, and computes a relevance score via term overlap and entity co-occurrence. Edges clearing the threshold are promoted to the live graph with a provenance tag indicating the validating source.</p>
+<p>For a proposed edge <span class="arithmatex">\((u, r, v)\)</span>, the validator constructs search queries from entity labels and relation type, retrieves candidate abstracts, and computes a relevance score via term overlap and entity co-occurrence. Edges clearing the threshold are promoted to the live graph with a provenance tag indicating the validating source.</p>
 <hr />
 <h2 id="8-observability-layer-phase-54">8. Observability Layer (Phase 54)</h2>
 <h3 id="81-studioengine">8.1 StudioEngine</h3>
@@ -3572,7 +3575,7 @@ without changing the core architecture.</p>
 <tbody>
 <tr>
 <td>Personalized PageRank (PPR)</td>
-<td>Random walk from seed, $\alpha=0.85$</td>
+<td>Random walk from seed, <span class="arithmatex">\(\alpha=0.85\)</span></td>
 </tr>
 <tr>
 <td>SP-BFS + PageRank rank</td>
@@ -3703,7 +3706,7 @@ without changing the core architecture.</p>
 </tr>
 </tbody>
 </table>
-<p>OPT = PageRank prior + learned CSA params ($\alpha=0.434$, $\beta=0.673$) + BridgeTwin (8,300 bridges) + beam_width=20.</p>
+<p>OPT = PageRank prior + learned CSA params (<span class="arithmatex">\(\alpha=0.434\)</span>, <span class="arithmatex">\(\beta=0.673\)</span>) + BridgeTwin (8,300 bridges) + beam_width=20.</p>
 <h3 id="116-results-ikgwq-graceful-degradation">11.6 Results: IKGWQ — Graceful Degradation</h3>
 <table>
 <thead>
@@ -4056,7 +4059,7 @@ without changing the core architecture.</p>
 <h3 id="132-limitations-and-honest-assessment">13.2 Limitations and Honest Assessment</h3>
 <ul>
 <li><strong>Hits@1 without question context</strong>: CEREBRUM does not rank terminal nodes by question semantics — that is the LLM bridge's role. Benchmarks that measure only Hits@1 without a re-ranking step understate CEREBRUM's practical utility.</li>
-<li><strong>Random embeddings degrade performance</strong>: The CSA semantic term ($\alpha = 0.4$) contributes noise with random embeddings. Production deployment requires sentence-transformer or domain-specific embeddings.</li>
+<li><strong>Random embeddings degrade performance</strong>: The CSA semantic term (<span class="arithmatex">\(\alpha = 0.4\)</span>) contributes noise with random embeddings. Production deployment requires sentence-transformer or domain-specific embeddings.</li>
 <li><strong>Very high community counts</strong>: On sparse graphs (MetaQA KG), DSCF can produce near-singleton communities that degrade the community distance matrix. Mitigation: <code>--min-community-size</code> flag merges small communities.</li>
 <li><strong>ExternalValidator latency</strong>: Literature API calls introduce latency in the ResearchAgent loop. This is acceptable because ResearchAgent runs as a background daemon and never blocks query serving.</li>
 </ul>
@@ -4084,7 +4087,7 @@ without changing the core architecture.</p>
 <h2 id="15-conclusion">15. Conclusion</h2>
 <p>CEREBRUM demonstrates that a Knowledge Graph can reason over itself using the structural principles of Transformer attention — without training data, without a language model, and with full interpretability. The key insight is that graph communities are a natural analog of attention heads, and DSCF constructs communities with the dual local/global character that makes this analogy operational.</p>
 <p>Through 57 phases of development the core insight has remained unchanged while the surrounding architecture has grown substantially: the 5-parameter CSA formula became a 10-parameter formula with online and batch learning; the single-node traversal became a federated multi-node system; the synchronous query server became a fully observable, traceable production platform; the pure reasoning engine gained abductive hypothesis generation and autonomous literature-validated graph enrichment; and the traversal layer gained structural memory through Engram-steered beam pruning.</p>
-<p>Phases 55–57 mark the transition from a research-quality system to a production-hardened platform. GraphSAGE neighbourhood smoothing enriches every entity embedding with local structural context in a single $O(|E|)$ pass, requiring no training. The Engram-steered traversal system accumulates relation-sequence patterns from the system's own operational history and applies them as a compounding beam bias — yielding measurably sharper traversal focus on repeated query domains without any supervised training signal. The TemporalCalibrator brings principled, gradient-free calibration of the temporal CSA parameters to maximise Recall@K on held-out validation sets. The fault tolerance architecture ensures that transient failures in any individual component — graph adapters, persistence, community detection, external validators — degrade gracefully to partial results rather than cascading to hard errors.</p>
+<p>Phases 55–57 mark the transition from a research-quality system to a production-hardened platform. GraphSAGE neighbourhood smoothing enriches every entity embedding with local structural context in a single <span class="arithmatex">\(O(|E|)\)</span> pass, requiring no training. The Engram-steered traversal system accumulates relation-sequence patterns from the system's own operational history and applies them as a compounding beam bias — yielding measurably sharper traversal focus on repeated query domains without any supervised training signal. The TemporalCalibrator brings principled, gradient-free calibration of the temporal CSA parameters to maximise Recall@K on held-out validation sets. The fault tolerance architecture ensures that transient failures in any individual component — graph adapters, persistence, community detection, external validators — degrade gracefully to partial results rather than cascading to hard errors.</p>
 <p>At v2.52.0, CEREBRUM is empirically validated against 39,093 MetaQA questions, 1,579 WebQSP questions, 5,170 GrailQA questions, and 400 IKGWQ questions. Recent advances in zero-config reasoning (GraphProfiler, STRB) and performance (Vectorized Scoring) make it a viable alternative to LLM-based systems for structured domain reasoning.</p>
 <hr />
 <h2 id="acknowledgments-intellectual-debt-and-credits">Acknowledgments: Intellectual Debt and Credits</h2>
@@ -4222,6 +4225,10 @@ without changing the core architecture.</p>
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

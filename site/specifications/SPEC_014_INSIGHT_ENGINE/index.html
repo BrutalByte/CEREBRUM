@@ -2057,9 +2057,9 @@
 <h3 id="3-insightengine">3. InsightEngine</h3>
 <p>The <code>InsightEngine</code> is the creative partner to the <code>InsightValidator</code>. It generates candidate <code>INSIGHT_LINK</code> edges by:</p>
 <ol>
-<li><strong>Latent proximity</strong>: Entity pairs $(u, v)$ where <code>cosine_sim(emb(u), emb(v)) &gt;= 0.75</code> but no direct edge exists</li>
+<li><strong>Latent proximity</strong>: Entity pairs <span class="arithmatex">\((u, v)\)</span> where <code>cosine_sim(emb(u), emb(v)) &gt;= 0.75</code> but no direct edge exists</li>
 <li><strong>Community boundary bridging</strong>: Pairs where both nodes are high-betweenness within their communities but no inter-community edge exists</li>
-<li><strong>Path pattern completion</strong>: If the graph contains $A \to B \to C$ and $A \to B \to D$, hypothesize $C \sim D$</li>
+<li><strong>Path pattern completion</strong>: If the graph contains <span class="arithmatex">\(A \to B \to C\)</span> and <span class="arithmatex">\(A \to B \to D\)</span>, hypothesize <span class="arithmatex">\(C \sim D\)</span></li>
 </ol>
 <p>Generated candidate edges enter the <code>InsightValidator</code> pipeline as <code>SPECULATIVE</code> edges. They are only materialized in the graph if they pass the validation protocol.</p>
 <h4 id="35-insight-decay-hole-12-fix">3.5 Insight Decay (Hole 12 Fix)</h4>
@@ -2235,6 +2235,10 @@
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

@@ -1922,24 +1922,24 @@
 <strong>Date</strong>: May 2, 2026</p>
 <hr />
 <h3 id="abstract">Abstract</h3>
-<p>Inferring causal relationships from unstructured, high-velocity event streams is a major challenge in unsupervised learning. We propose a novel method for autonomous causal discovery by adapting the biological mechanism of <strong>Spike-Timing-Dependent Plasticity (STDP)</strong> to temporal Knowledge Graph triples. By treating entity mentions as "spikes" and analyzing their relative timing across a sliding window, our engine infers directional <code>CAUSES</code> relationships. We define a mathematically rigorous weighting rule based on the Bi &amp; Poo \cite{bipoo1998} model and introduce <strong>Lazy Decay</strong>, an $O(1)$ optimization that allows the engine to scale to enterprise-level event throughput by applying geometric decay only upon record access. Benchmark results demonstrate that the v2.52.0 engine maintains constant sub-millisecond latency per event regardless of the number of accumulated causal pairs, representing a critical breakthrough for real-time industrial causal monitoring. As of v2.52.0, the streaming engine has been hardened across five discretizer classes and validated under high-velocity adversarial jitter attack scenarios, with the CausalSignificanceFilter's chi-squared test providing robust rejection of burst-driven artifacts in production deployments.</p>
+<p>Inferring causal relationships from unstructured, high-velocity event streams is a major challenge in unsupervised learning. We propose a novel method for autonomous causal discovery by adapting the biological mechanism of <strong>Spike-Timing-Dependent Plasticity (STDP)</strong> to temporal Knowledge Graph triples. By treating entity mentions as "spikes" and analyzing their relative timing across a sliding window, our engine infers directional <code>CAUSES</code> relationships. We define a mathematically rigorous weighting rule based on the Bi &amp; Poo \cite{bipoo1998} model and introduce <strong>Lazy Decay</strong>, an <span class="arithmatex">\(O(1)\)</span> optimization that allows the engine to scale to enterprise-level event throughput by applying geometric decay only upon record access. Benchmark results demonstrate that the v2.52.0 engine maintains constant sub-millisecond latency per event regardless of the number of accumulated causal pairs, representing a critical breakthrough for real-time industrial causal monitoring. As of v2.52.0, the streaming engine has been hardened across five discretizer classes and validated under high-velocity adversarial jitter attack scenarios, with the CausalSignificanceFilter's chi-squared test providing robust rejection of burst-driven artifacts in production deployments.</p>
 <h3 id="1-introduction">1. Introduction</h3>
 <p>Traditional causal inference relies on static datasets and intensive counterfactual analysis. In streaming environments—such as IoT telemetry, cybersecurity logs, or financial tickers—causality must be discovered "on the fly." We posit that the temporal order and proximity of events provide a sufficient signal for preliminary causal discretization when governed by biological plasticity rules.</p>
 <h3 id="2-methodology">2. Methodology</h3>
 <h4 id="21-the-stdp-weighting-rule">2.1 The STDP Weighting Rule</h4>
-<p>For any pair of entity spikes $(u, v)$ where $u$ occurs at $t_{pre}$ and $v$ at $t_{post}$, the causal weight $w_{uv}$ is updated based on the interval $\Delta t = t_{post} - t_{pre}$:
--   <strong>LTP (Potentiation)</strong>: $\Delta w_{uv} = A_+ \cdot e^{-\Delta t / \tau_+}$ if $\Delta t &gt; 0$.
--   <strong>LTD (Depression)</strong>: $\Delta w_{uv} = -A_- \cdot e^{-|\Delta t| / \tau_-}$ if $\Delta t &lt; 0$ or if $v$ spikes without a preceding $u$.</p>
+<p>For any pair of entity spikes <span class="arithmatex">\((u, v)\)</span> where <span class="arithmatex">\(u\)</span> occurs at <span class="arithmatex">\(t_{pre}\)</span> and <span class="arithmatex">\(v\)</span> at <span class="arithmatex">\(t_{post}\)</span>, the causal weight <span class="arithmatex">\(w_{uv}\)</span> is updated based on the interval <span class="arithmatex">\(\Delta t = t_{post} - t_{pre}\)</span>:
+-   <strong>LTP (Potentiation)</strong>: <span class="arithmatex">\(\Delta w_{uv} = A_+ \cdot e^{-\Delta t / \tau_+}\)</span> if <span class="arithmatex">\(\Delta t &gt; 0\)</span>.
+-   <strong>LTD (Depression)</strong>: <span class="arithmatex">\(\Delta w_{uv} = -A_- \cdot e^{-|\Delta t| / \tau_-}\)</span> if <span class="arithmatex">\(\Delta t &lt; 0\)</span> or if <span class="arithmatex">\(v\)</span> spikes without a preceding <span class="arithmatex">\(u\)</span>.</p>
 <h4 id="22-significance-filtering">2.2 Significance Filtering</h4>
 <p>To distinguish causal signal from rhythmic or stochastic noise, we apply a four-stage filter:
-1.  <strong>Weight Threshold</strong>: $w_{uv} \geq w_{threshold}$.
-2.  <strong>Pairing Count</strong>: $n \geq n_{min}$ (minimum evidence).
+1.  <strong>Weight Threshold</strong>: <span class="arithmatex">\(w_{uv} \geq w_{threshold}\)</span>.
+2.  <strong>Pairing Count</strong>: <span class="arithmatex">\(n \geq n_{min}\)</span> (minimum evidence).
 3.  <strong>Temporal Span</strong>: Minimum wall-clock duration between first and last pairing (Phase 19).
-4.  <strong>Uniformity</strong>: A $\chi^2$ test on inter-spike intervals to reject burst-driven artifacts (Phase 19).</p>
+4.  <strong>Uniformity</strong>: A <span class="arithmatex">\(\chi^2\)</span> test on inter-spike intervals to reject burst-driven artifacts (Phase 19).</p>
 <h3 id="3-scalability-lazy-decay">3. Scalability: Lazy Decay</h3>
-<p>In standard implementations, decaying $N$ weights is $O(N)$. We introduce <strong>Lazy Decay</strong>, which computes the accumulated decay for a specific pair only upon access:
-$$w'<em uv="uv">{uv} = w</em>$$
-where $T$ is the global step and $t_{last}$ is the pair's last update. This reduces the complexity of causal maintenance from $O(N)$ to $O(1)$ per event.} \cdot \lambda^{(T - t_{last})</p>
+<p>In standard implementations, decaying <span class="arithmatex">\(N\)</span> weights is <span class="arithmatex">\(O(N)\)</span>. We introduce <strong>Lazy Decay</strong>, which computes the accumulated decay for a specific pair only upon access:
+$<span class="arithmatex">\(w'_{uv} = w_{uv} \cdot \lambda^{(T - t_{last})}\)</span>$
+where <span class="arithmatex">\(T\)</span> is the global step and <span class="arithmatex">\(t_{last}\)</span> is the pair's last update. This reduces the complexity of causal maintenance from <span class="arithmatex">\(O(N)\)</span> to <span class="arithmatex">\(O(1)\)</span> per event.</p>
 <h3 id="4-conclusion">4. Conclusion</h3>
 <p>The STDP Causal Engine provides a scalable, unsupervised framework for real-time causal discovery. By grounding graph evolution in the temporal dynamics of the data stream, it enables autonomous reasoning engines to identify and follow causal chains as they emerge. In CEREBRUM v2.52.0, the discretizer has been validated under adversarial high-velocity jitter attack scenarios across five distinct discretizer classes, confirming that the chi-squared uniformity filter described in Section 2.2 is sufficient to maintain causal signal integrity in production streaming environments.</p>
 <hr />
@@ -1949,8 +1949,8 @@ where $T$ is the global step and $t_{last}$ is the pair's last update. This redu
 <p><strong>Adversarial Jitter Hardening.</strong> The <code>CausalSignificanceFilter</code> has been validated under simulated adversarial conditions: high-velocity event floods with artificial temporal jitter designed to trigger spurious LTP potentiation. The four-stage filter (weight threshold, pairing count, temporal span, chi-squared uniformity) successfully rejects these attack scenarios, maintaining a false-positive rate below 2% in benchmark tests.</p>
 <p><strong>CausalSignificanceFilter Parameters (Phase 19).</strong> For completeness, the two Phase 19 filter stages are now fully documented and configurable:
 - <code>min_causal_span=N</code>: enforces a minimum wall-clock duration between first and last pairing, blocking burst floods where all events arrive within a short window.
-- <code>use_chi_squared=True</code>: applies a $\chi^2$ test on the inter-spike interval distribution. A uniform distribution is consistent with genuine causality; a highly peaked distribution indicates rhythmic or adversarial artifact.</p>
-<p><strong>Integration with THALAMUS (Phase 18).</strong> The STDP discretizer is now an optional stage within the <code>IngestionPipeline</code>. Discretized causal edges are assigned a confidence score derived from the causal weight $w_{uv}$ and are tagged with <code>source="stdp"</code> provenance, enabling downstream components (REM, CSA) to apply appropriate skepticism to STDP-inferred edges.</p>
+- <code>use_chi_squared=True</code>: applies a <span class="arithmatex">\(\chi^2\)</span> test on the inter-spike interval distribution. A uniform distribution is consistent with genuine causality; a highly peaked distribution indicates rhythmic or adversarial artifact.</p>
+<p><strong>Integration with THALAMUS (Phase 18).</strong> The STDP discretizer is now an optional stage within the <code>IngestionPipeline</code>. Discretized causal edges are assigned a confidence score derived from the causal weight <span class="arithmatex">\(w_{uv}\)</span> and are tagged with <code>source="stdp"</code> provenance, enabling downstream components (REM, CSA) to apply appropriate skepticism to STDP-inferred edges.</p>
 <p><strong>Test Coverage.</strong> The STDP subsystem is covered by dedicated adversarial and throughput regression tests within the 1,357-test v2.52.0 suite, including constant-latency verification across accumulated pair counts of up to 10^6 pairs.</p>
 <hr />
 <h2 id="acknowledgments">Acknowledgments</h2>
@@ -2042,6 +2042,10 @@ where $T$ is the global step and $t_{last}$ is the pair's last update. This redu
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

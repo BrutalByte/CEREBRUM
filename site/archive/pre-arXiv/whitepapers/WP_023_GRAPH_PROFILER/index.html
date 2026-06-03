@@ -1868,7 +1868,7 @@
 <h3 id="the-problem-the-hyperparameter-bottleneck">The Problem: The Hyperparameter Bottleneck</h3>
 <p>Most Knowledge Graph reasoning systems require extensive manual tuning. Parameters such as beam width, pruning thresholds, and hop-decay factors must be customized for each specific graph topology. A configuration that works for a dense, homogeneous social network will often fail on a sparse, typed-heterogeneous biomedical graph. This "manual-in-the-loop" requirement prevents truly autonomous KG intelligence.</p>
 <h3 id="the-solution-graphprofiler">The Solution: GraphProfiler</h3>
-<p>GraphProfiler is an automated topology analyzer that runs during the graph's <code>build()</code> phase. It performs an $O(E)$ structural audit to identify the graph's unique "reasoning regime."</p>
+<p>GraphProfiler is an automated topology analyzer that runs during the graph's <code>build()</code> phase. It performs an <span class="arithmatex">\(O(E)\)</span> structural audit to identify the graph's unique "reasoning regime."</p>
 <p><strong>How it Works</strong>:
 1.  <strong>Feature Extraction</strong>: GraphProfiler computes a structural feature vector including average degree, community density (from TSC), diameter sampling, and degree inequality (Gini coefficient).
 2.  <strong>Regime Classification</strong>: Based on these features, the system classifies the graph into a Reasoning Regime (e.g., "Regime B: Sparse/Heterogeneous").
@@ -1957,6 +1957,10 @@
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

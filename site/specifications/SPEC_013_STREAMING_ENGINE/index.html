@@ -2055,7 +2055,7 @@ To ensure high-velocity ingestion does not block reasoning queries, v2.52.0 intr
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>Drift detection:</strong>
-After each batch commit, the rebalancer samples local modularity contributions for modified nodes. When cumulative drift $\Delta Q_{cum} \geq \theta_Q$, a background DSCF task is queued.</p>
+After each batch commit, the rebalancer samples local modularity contributions for modified nodes. When cumulative drift <span class="arithmatex">\(\Delta Q_{cum} \geq \theta_Q\)</span>, a background DSCF task is queued.</p>
 <p><strong>Atomic community-map swap:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># 1. Compute fresh partition on a snapshot graph (no lock held)</span>
 <a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">new_map</span> <span class="o">=</span> <span class="n">_run_dscf</span><span class="p">(</span><span class="n">graph_snapshot</span><span class="p">)</span>
@@ -2168,6 +2168,10 @@ After each batch commit, the rebalancer samples local modularity contributions f
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

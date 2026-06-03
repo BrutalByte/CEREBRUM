@@ -1894,14 +1894,14 @@
 <strong>Date</strong>: May 5, 2026</p>
 <hr />
 <h3 id="abstract">Abstract</h3>
-<p>Multi-hop reasoning over large-scale Knowledge Graphs (KGs) often suffers from "Path Drift," where semantically weak edges accumulate and steer the reasoning process toward irrelevant neighborhoods. We present the <strong>Cingulate Engine</strong>, a meta-cognitive component inspired by the anterior cingulate cortex's role in error detection and conflict monitoring. The Cingulate Engine performs real-time validation of reasoning paths by measuring <strong>Path-Consistency ($r^2$)</strong> and <strong>Dissonance Signals</strong>. It acts as a supervisory layer over the core CSA beam traversal, identifying and pruning paths that exhibit high attention scores but low structural or semantic coherence. We demonstrate that the Cingulate Engine reduces "false positive" reasoning chains by 22% on the WebQSP benchmark, significantly improving the precision of deep multi-hop inference.</p>
+<p>Multi-hop reasoning over large-scale Knowledge Graphs (KGs) often suffers from "Path Drift," where semantically weak edges accumulate and steer the reasoning process toward irrelevant neighborhoods. We present the <strong>Cingulate Engine</strong>, a meta-cognitive component inspired by the anterior cingulate cortex's role in error detection and conflict monitoring. The Cingulate Engine performs real-time validation of reasoning paths by measuring <strong>Path-Consistency (<span class="arithmatex">\(r^2\)</span>)</strong> and <strong>Dissonance Signals</strong>. It acts as a supervisory layer over the core CSA beam traversal, identifying and pruning paths that exhibit high attention scores but low structural or semantic coherence. We demonstrate that the Cingulate Engine reduces "false positive" reasoning chains by 22% on the WebQSP benchmark, significantly improving the precision of deep multi-hop inference.</p>
 <h3 id="1-introduction">1. Introduction</h3>
 <p>Traditional beam search algorithms are greedy and locally optimal. In the context of graph reasoning, this means a system might follow a chain of high-probability edges that collectively make no sense. The Cingulate Engine introduces a "top-down" monitoring mechanism that evaluates the coherence of the <em>entire</em> path as it is being formed, rather than just the next step.</p>
 <h3 id="2-methodology-the-conflict-monitor">2. Methodology: The Conflict Monitor</h3>
-<p>The Cingulate Engine computes a <strong>Conflict Score</strong> $\mathcal{C}$ for each candidate path $P$:
-$$\mathcal{C}(P) = \sum_{k=1}^{L} \text{Dissonance}(e_k, Q)$$
-where $e_k$ is the edge at hop $k$ and $Q$ is the query embedding.</p>
-<p><strong>Path-Consistency ($r^2$):</strong>
+<p>The Cingulate Engine computes a <strong>Conflict Score</strong> <span class="arithmatex">\(\mathcal{C}\)</span> for each candidate path <span class="arithmatex">\(P\)</span>:
+$<span class="arithmatex">\(\mathcal{C}(P) = \sum_{k=1}^{L} \text{Dissonance}(e_k, Q)\)</span>$
+where <span class="arithmatex">\(e_k\)</span> is the edge at hop <span class="arithmatex">\(k\)</span> and <span class="arithmatex">\(Q\)</span> is the query embedding.</p>
+<p><strong>Path-Consistency (<span class="arithmatex">\(r^2\)</span>):</strong>
 The engine measures the stability of the semantic trajectory. If the direction of the embedding updates changes radically between hops without a corresponding shift in community context, the path is flagged as "Dissonant."</p>
 <h3 id="3-integration-with-the-thalamofrontal-loop">3. Integration with the Thalamofrontal Loop</h3>
 <p>The Cingulate Engine feeds its conflict signals into the <strong>Thalamofrontal Feedback Loop</strong> (Phase 108). High conflict scores trigger an immediate tightening of the attention gate, increasing the pruning threshold and forcing the system to focus only on the most certain trajectories. Conversely, low conflict (high coherence) allows for more exploratory traversal.</p>
@@ -1993,6 +1993,10 @@ The engine measures the stability of the semantic trajectory. If the direction o
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

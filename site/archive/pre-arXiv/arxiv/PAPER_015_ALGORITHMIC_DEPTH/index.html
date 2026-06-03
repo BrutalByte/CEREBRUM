@@ -2218,19 +2218,19 @@
 </code></pre></div></p>
 <h4 id="22-temporal-decay-function">2.2 Temporal Decay Function</h4>
 <p>For edges with a <code>valid_until</code> timestamp, temporal weight decays exponentially after the validity period ends:</p>
-<p>$$w_{temp}(t) = w_0 \cdot \exp\left(-\lambda \cdot \max(0, t - t_{until})\right)$$</p>
-<p>The decay constant $\lambda$ is configurable per relation type (e.g., <code>CURRENT_PRICE</code> decays faster than <code>BORN_IN</code>). Edges with <code>temporal_weight &lt; \epsilon_{min}</code> (default: 0.01) are automatically removed by the REM Cycle.</p>
+<div class="arithmatex">\[w_{temp}(t) = w_0 \cdot \exp\left(-\lambda \cdot \max(0, t - t_{until})\right)\]</div>
+<p>The decay constant <span class="arithmatex">\(\lambda\)</span> is configurable per relation type (e.g., <code>CURRENT_PRICE</code> decays faster than <code>BORN_IN</code>). Edges with <code>temporal_weight &lt; \epsilon_{min}</code> (default: 0.01) are automatically removed by the REM Cycle.</p>
 <h4 id="23-integration-with-csa">2.3 Integration with CSA</h4>
 <p>The temporal weight multiplicatively modulates the CSA attention weight:</p>
-<p>$$a_{temp}(u,v,k) = a(u,v,k) \cdot w_{temp}(t_{query})$$</p>
-<p>where $t_{query}$ is the snapshot time at query start (consistent with Query Snapshot Isolation, [Buchorn, 2026]).</p>
+<div class="arithmatex">\[a_{temp}(u,v,k) = a(u,v,k) \cdot w_{temp}(t_{query})\]</div>
+<p>where <span class="arithmatex">\(t_{query}\)</span> is the snapshot time at query start (consistent with Query Snapshot Isolation, [Buchorn, 2026]).</p>
 <h3 id="3-uncertainty-propagation">3. Uncertainty Propagation</h3>
 <h4 id="31-per-edge-confidence-scores">3.1 Per-Edge Confidence Scores</h4>
 <p>Edges ingested via <code>IngestionPipeline</code> carry a <code>confidence</code> attribute (default: 1.0). This confidence represents source reliability at ingest time and is stored as edge metadata.</p>
 <h4 id="32-path-level-uncertainty">3.2 Path-Level Uncertainty</h4>
-<p>For a reasoning path $P = {e_1, e_2, \ldots, e_L}$, the path confidence propagates as:</p>
-<p>$$\text{conf}(P) = \prod_{i=1}^{L} c_i^{\alpha} \cdot \left(1 - \beta \cdot \text{Var}({c_i})\right)$$</p>
-<p>where $c_i$ is the confidence of edge $e_i$, $\alpha$ controls sensitivity to low-confidence edges, and the variance term penalizes paths with inconsistent confidence profiles (a path mixing one very-high and one very-low confidence edge is less trustworthy than a path with uniformly moderate confidence).</p>
+<p>For a reasoning path <span class="arithmatex">\(P = \{e_1, e_2, \ldots, e_L\}\)</span>, the path confidence propagates as:</p>
+<div class="arithmatex">\[\text{conf}(P) = \prod_{i=1}^{L} c_i^{\alpha} \cdot \left(1 - \beta \cdot \text{Var}(\{c_i\})\right)\]</div>
+<p>where <span class="arithmatex">\(c_i\)</span> is the confidence of edge <span class="arithmatex">\(e_i\)</span>, <span class="arithmatex">\(\alpha\)</span> controls sensitivity to low-confidence edges, and the variance term penalizes paths with inconsistent confidence profiles (a path mixing one very-high and one very-low confidence edge is less trustworthy than a path with uniformly moderate confidence).</p>
 <h4 id="33-uncertainty-in-answer-extraction">3.3 Uncertainty in Answer Extraction</h4>
 <p>The <code>AnswerExtractor</code> appends per-path uncertainty bounds to the output:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
@@ -2246,27 +2246,27 @@
 <p>Hard community assignment (each node belongs to exactly one community) is appropriate for highly modular graphs but produces sharp discontinuities at community boundaries. Nodes on community boundaries — particularly Hub nodes with connections to multiple clusters — receive CSA penalties that systematically under-weight their structural importance.</p>
 <h4 id="42-fractional-membership-scores">4.2 Fractional Membership Scores</h4>
 <p>Soft membership extends the community map to store a probability distribution over communities for each node:</p>
-<p>$$\mu_v = {c_1: p_1, c_2: p_2, \ldots, c_K: p_K}, \quad \sum_k p_k = 1$$</p>
-<p>The primary community is $\arg\max_k p_k$. The secondary membership is used by the community consensus term $S_C(u,v)$:</p>
-<p>$$S_C^{soft}(u,v) = \sum_{k} p_k^{(u)} \cdot p_k^{(v)}$$</p>
+<div class="arithmatex">\[\mu_v = \{c_1: p_1, c_2: p_2, \ldots, c_K: p_K\}, \quad \sum_k p_k = 1\]</div>
+<p>The primary community is <span class="arithmatex">\(\arg\max_k p_k\)</span>. The secondary membership is used by the community consensus term <span class="arithmatex">\(S_C(u,v)\)</span>:</p>
+<div class="arithmatex">\[S_C^{soft}(u,v) = \sum_{k} p_k^{(u)} \cdot p_k^{(v)}\]</div>
 <p>This is the dot product of the two membership distributions, which equals 1 for perfectly same-community nodes, 0 for fully disjoint membership, and a continuous value in between for partially-overlapping nodes.</p>
 <h4 id="43-computation">4.3 Computation</h4>
-<p>Soft membership scores are derived from the DSCF modularity matrix: the raw modularity contributions $\Delta Q_{vk}$ for each node-community pair are normalized via softmax with a temperature parameter $\tau$ (default: 2.0). Higher $\tau$ produces softer (more uniform) distributions; lower $\tau$ approaches hard assignment.</p>
+<p>Soft membership scores are derived from the DSCF modularity matrix: the raw modularity contributions <span class="arithmatex">\(\Delta Q_{vk}\)</span> for each node-community pair are normalized via softmax with a temperature parameter <span class="arithmatex">\(\tau\)</span> (default: 2.0). Higher <span class="arithmatex">\(\tau\)</span> produces softer (more uniform) distributions; lower <span class="arithmatex">\(\tau\)</span> approaches hard assignment.</p>
 <h3 id="5-csaparameterlearner">5. CSAParameterLearner</h3>
 <h4 id="51-the-learning-problem">5.1 The Learning Problem</h4>
-<p>The six CSA weights $(\alpha, \beta, \gamma, \delta, \varepsilon, \zeta)$ are initialized from theoretical priors (semantic similarity and community structure should dominate, with relation weight and decay as secondary terms). However, different graph domains have different optimal weightings: causal graphs may benefit from higher $\gamma$ (relation weight); temporal graphs may need higher $\delta$ (recency penalty); social graphs may need higher $\beta$ (community consensus).</p>
+<p>The six CSA weights <span class="arithmatex">\((\alpha, \beta, \gamma, \delta, \varepsilon, \zeta)\)</span> are initialized from theoretical priors (semantic similarity and community structure should dominate, with relation weight and decay as secondary terms). However, different graph domains have different optimal weightings: causal graphs may benefit from higher <span class="arithmatex">\(\gamma\)</span> (relation weight); temporal graphs may need higher <span class="arithmatex">\(\delta\)</span> (recency penalty); social graphs may need higher <span class="arithmatex">\(\beta\)</span> (community consensus).</p>
 <h4 id="52-online-gradient-free-adaptation">5.2 Online Gradient-Free Adaptation</h4>
 <p>The <code>CSAParameterLearner</code> adapts weights using a query-feedback signal without gradient computation:</p>
-<p><strong>Feedback signal</strong>: After a query completes, if the user explicitly validates or rejects the top answer, the learner records a $+1$ or $-1$ signal along with the attention weight breakdown for the winning path.</p>
+<p><strong>Feedback signal</strong>: After a query completes, if the user explicitly validates or rejects the top answer, the learner records a <span class="arithmatex">\(+1\)</span> or <span class="arithmatex">\(-1\)</span> signal along with the attention weight breakdown for the winning path.</p>
 <p><strong>Update rule</strong> (coordinate-wise moving average):
-$$\theta_i^{(t+1)} = (1 - \eta) \cdot \theta_i^{(t)} + \eta \cdot r_t \cdot a_i^{(t)}$$</p>
-<p>where $r_t \in {+1, -1}$ is the feedback signal, $a_i^{(t)}$ is the contribution of weight $i$ to the winning path score, and $\eta$ is the learning rate (default: 0.05).</p>
-<p><strong>Constraints</strong>: All weights are projected back to the simplex $\sum_i \theta_i = 1, \theta_i \geq 0.01$ after each update, ensuring no term is completely suppressed.</p>
+$<span class="arithmatex">\(\theta_i^{(t+1)} = (1 - \eta) \cdot \theta_i^{(t)} + \eta \cdot r_t \cdot a_i^{(t)}\)</span>$</p>
+<p>where <span class="arithmatex">\(r_t \in \{+1, -1\}\)</span> is the feedback signal, <span class="arithmatex">\(a_i^{(t)}\)</span> is the contribution of weight <span class="arithmatex">\(i\)</span> to the winning path score, and <span class="arithmatex">\(\eta\)</span> is the learning rate (default: 0.05).</p>
+<p><strong>Constraints</strong>: All weights are projected back to the simplex <span class="arithmatex">\(\sum_i \theta_i = 1, \theta_i \geq 0.01\)</span> after each update, ensuring no term is completely suppressed.</p>
 <h4 id="53-per-community-parameters">5.3 Per-Community Parameters</h4>
 <p>The <code>CSAParameterLearner</code> maintains separate parameter sets per community (consistent with Community-Specific CSA Parameters, [Buchorn, 2026]), enabling different communities to learn different optimal weightings from the same query traffic.</p>
 <h3 id="6-kge-embedding-integration">6. KGE Embedding Integration</h3>
 <h4 id="61-transe">6.1 TransE</h4>
-<p>TransE [Bordes et al., 2013] models each relation $r$ as a translation vector: a triple $(h, r, t)$ is valid iff $\vec{h} + \vec{r} \approx \vec{t}$. CEREBRUM integrates TransE as an optional drop-in for the <code>EmbeddingEngine</code>:</p>
+<p>TransE [Bordes et al., 2013] models each relation <span class="arithmatex">\(r\)</span> as a translation vector: a triple <span class="arithmatex">\((h, r, t)\)</span> is valid iff <span class="arithmatex">\(\vec{h} + \vec{r} \approx \vec{t}\)</span>. CEREBRUM integrates TransE as an optional drop-in for the <code>EmbeddingEngine</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">kge</span> <span class="o">=</span> <span class="n">TransEEngine</span><span class="p">(</span><span class="n">adapter</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">margin</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">kge</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">embedding_engine</span> <span class="o">=</span> <span class="n">KGEEmbeddingAdapter</span><span class="p">(</span><span class="n">kge</span><span class="p">)</span>
@@ -2274,19 +2274,19 @@ $$\theta_i^{(t+1)} = (1 - \eta) \cdot \theta_i^{(t)} + \eta \cdot r_t \cdot a_i^
 <h4 id="62-rotate">6.2 RotatE</h4>
 <p>RotatE [Sun et al., 2019] models relations as rotations in complex embedding space, handling symmetric, antisymmetric, inverse, and compositional relations. Its embeddings provide better CSA semantic similarity scores for graphs with rich relational diversity.</p>
 <h4 id="63-integration-with-csa">6.3 Integration with CSA</h4>
-<p>KGE embeddings are used exclusively in the $\cos(\vec{e}_u, \vec{e}_v)$ term of the CSA formula. All other terms (community structure, relation weight, distance penalty, hop decay, PageRank) continue to use graph-structural features. This hybrid design preserves the interpretability of the non-embedding terms while upgrading the semantic similarity signal.</p>
+<p>KGE embeddings are used exclusively in the <span class="arithmatex">\(\cos(\vec{e}_u, \vec{e}_v)\)</span> term of the CSA formula. All other terms (community structure, relation weight, distance penalty, hop decay, PageRank) continue to use graph-structural features. This hybrid design preserves the interpretability of the non-embedding terms while upgrading the semantic similarity signal.</p>
 <h3 id="7-recent-advances-v2511-v2520">7. Recent Advances (v2.51.1 -&gt; v2.52.0)</h3>
 <h4 id="71-10-parameter-csa-formula-phase-4345">7.1 10-Parameter CSA Formula (Phase 43/45)</h4>
 <p>The original 6-parameter CSA formula has been expanded to a 10-parameter formulation:</p>
-<p>$$a(u,v,k) = \text{sigmoid}(\alpha \cdot sim + \beta \cdot cs + \gamma \cdot etw - \delta \cdot nd + \varepsilon \cdot hd + \zeta \cdot pr_v + \eta \cdot td + \iota \cdot nr_v - \mu \cdot sd + \theta \cdot grounding)$$</p>
+<div class="arithmatex">\[a(u,v,k) = \text{sigmoid}(\alpha \cdot sim + \beta \cdot cs + \gamma \cdot etw - \delta \cdot nd + \varepsilon \cdot hd + \zeta \cdot pr_v + \eta \cdot td + \iota \cdot nr_v - \mu \cdot sd + \theta \cdot grounding)\]</div>
 <p>The four new parameters are:
-- $\zeta$ (<strong>PageRank prior</strong>): Boosts structurally central destination nodes
-- $\eta$ (<strong>Temporal decay</strong>): Penalizes edges with expired validity windows
-- $\iota$ (<strong>Node recency</strong>): Rewards recently-updated or recently-traversed nodes
-- $\mu$ (<strong>Synthesis-density penalty</strong>): Penalizes paths over-relying on Synaptic Bridge-synthesized edges (REM Engine)
-- $\theta$ (<strong>Grounding confidence</strong>): Rewards edges with high ingest-time confidence scores</p>
+- <span class="arithmatex">\(\zeta\)</span> (<strong>PageRank prior</strong>): Boosts structurally central destination nodes
+- <span class="arithmatex">\(\eta\)</span> (<strong>Temporal decay</strong>): Penalizes edges with expired validity windows
+- <span class="arithmatex">\(\iota\)</span> (<strong>Node recency</strong>): Rewards recently-updated or recently-traversed nodes
+- <span class="arithmatex">\(\mu\)</span> (<strong>Synthesis-density penalty</strong>): Penalizes paths over-relying on Synaptic Bridge-synthesized edges (REM Engine)
+- <span class="arithmatex">\(\theta\)</span> (<strong>Grounding confidence</strong>): Rewards edges with high ingest-time confidence scores</p>
 <p>Default weights: <code>(0.4, 0.4, 0.1, 0.05, 0.05, 0.1, 0.1, 0.05, 0.1, 1.0)</code></p>
-<p>The <code>CSAParameterLearner</code> was correspondingly upgraded from 5-parameter to <strong>10-parameter</strong> operation (Phase 45), with correct penalty signs ($-\delta$, $-\mu$) applied during SGD gradient steps.</p>
+<p>The <code>CSAParameterLearner</code> was correspondingly upgraded from 5-parameter to <strong>10-parameter</strong> operation (Phase 45), with correct penalty signs (<span class="arithmatex">\(-\delta\)</span>, <span class="arithmatex">\(-\mu\)</span>) applied during SGD gradient steps.</p>
 <h4 id="72-metaparameterlearner-online-sgd-phase-2245">7.2 MetaParameterLearner Online SGD (Phase 22/45)</h4>
 <p>The <strong>MetaParameterLearner</strong> operates on all 10 features with correct penalty sign handling. It receives <code>POST /feedback</code> signals and updates community-specific parameter vectors via online SGD with a configurable learning rate. The <code>MetaParameterLearner.to_dict()</code> / <code>from_dict()</code> methods enable checkpoint serialization.</p>
 <h4 id="73-parameter-persistence-phase-47">7.3 Parameter Persistence (Phase 47)</h4>
@@ -2487,6 +2487,10 @@ $$\theta_i^{(t+1)} = (1 - \eta) \cdot \theta_i^{(t)} + \eta \cdot r_t \cdot a_i^
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

@@ -4187,7 +4187,7 @@ NSM's 52.1% at 3-hop exceeds CEREBRUM FULL's 47.3%. This is honest. NSM achieves
 <p>The claim "trained systems achieve higher accuracy, so training is worth it" deserves quantitative scrutiny.</p>
 <p>If a trained system achieves +10% H@1 over CEREBRUM (a generous assumption given 3-hop MetaQA results), and each additional correct answer in drug discovery is worth $50K in analyst time saved:</p>
 <ul>
-<li><strong>Break-even queries needed</strong>: $441K training cost ÷ ($50K × 10%) = <strong>88,200 queries</strong></li>
+<li><strong>Break-even queries needed</strong>: <span class="arithmatex">\(441K training cost ÷ (\)</span>50K × 10%) = <strong>88,200 queries</strong></li>
 <li><strong>Typical annual query volume</strong> for a research team: 5,000–20,000 queries</li>
 <li><strong>Time to break even</strong>: 4.4 to 17.6 years</li>
 </ul>
@@ -4284,10 +4284,10 @@ These systems compute their answers from the graph topology itself, without any 
 </tbody>
 </table>
 <p><strong>Cloud training cost estimates</strong> (AWS on-demand pricing, May 2026):
-- MINERVA: 4× p3.8xlarge @ $12.24/hr × 48hr = <strong>$2,349</strong>
-- NSM: 4× p4d.24xlarge @ $32.77/hr × 72hr = <strong>$9,437</strong>
-- EmbedKGQA: 2× p3.8xlarge × 24hr = <strong>$588</strong>
-- CEREBRUM: <strong>$0</strong></p>
+- MINERVA: 4× p3.8xlarge @ <span class="arithmatex">\(12.24/hr × 48hr = **\)</span>2,349<strong>
+- NSM: 4× p4d.24xlarge @ <span class="arithmatex">\(32.77/hr × 72hr = **\)</span>9,437</strong>
+- EmbedKGQA: 2× p3.8xlarge × 24hr = <strong><span class="arithmatex">\(588**
+- CEREBRUM: **\)</span>0</strong></p>
 <h3 id="162-inference-infrastructure-requirements">16.2 Inference Infrastructure Requirements</h3>
 <table>
 <thead>
@@ -4532,6 +4532,10 @@ These systems compute their answers from the graph topology itself, without any 
     
     
       <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

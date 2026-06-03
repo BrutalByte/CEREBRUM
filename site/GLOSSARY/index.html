@@ -2141,7 +2141,7 @@ The core multi-hop graph traversal engine in CORTEX. Uses beam search (configura
 <p><strong>Beta Distribution (in Beam Search)</strong>
 Each <code>TraversalPath</code> maintains <code>beta_alpha</code> and <code>beta_beta</code> parameters defining a Beta distribution over its expected quality. After each hop, the distribution is updated: <code>alpha += weight * prior_scale</code>, <code>beta += (1 - weight) * prior_scale</code>. Thompson sampling draws from this distribution for beam selection.</p>
 <p><strong>Bilateral Verification</strong>
-The <code>InsightValidator</code>'s validation protocol. A speculative edge $E_{uv}$ is probed independently in both directions: forward (start from $u$, reach $v$ without using $E_{uv}$) and reverse (start from $v$, reach $u$ without using $E_{uv}$). At least one probe must succeed with confidence ≥ 0.65 for the edge to be verified.</p>
+The <code>InsightValidator</code>'s validation protocol. A speculative edge <span class="arithmatex">\(E_{uv}\)</span> is probed independently in both directions: forward (start from <span class="arithmatex">\(u\)</span>, reach <span class="arithmatex">\(v\)</span> without using <span class="arithmatex">\(E_{uv}\)</span>) and reverse (start from <span class="arithmatex">\(v\)</span>, reach <span class="arithmatex">\(u\)</span> without using <span class="arithmatex">\(E_{uv}\)</span>). At least one probe must succeed with confidence ≥ 0.65 for the edge to be verified.</p>
 <p><strong>Bridge Bonus (EF-005)</strong>
 An innovation in CEREBRUM's benchmark traversal strategy: the BeamTraversal's CSA weights preferentially identify structural bridges — edges connecting otherwise-isolated communities — and use them as "shortcuts" to improve multi-hop recall. Named EF-005 in the benchmark evaluation log.</p>
 <p><strong>Bridge Twin Engine</strong>
@@ -2167,7 +2167,7 @@ An active error-driven meta-learning loop (Phase 59) that detects "dissonant" pr
 <p><strong>ChemicalModulator</strong>
 The bio-mimetic regulation system (Phase 68) that manages the global reasoning state via metabolic scalars (<strong>Reinforcement</strong>, <strong>Arousal</strong>, <strong>Novelty</strong>, <strong>Cohesion</strong>, <strong>Persistence</strong>). Implements homeostatic decay, pulling all levels back to a resting baseline after each query completion.</p>
 <p><strong>Cohesion</strong>
-The functional name for the "Oxytocin" scalar in the <code>ChemicalModulator</code> (Phase 68). Promotes community stability by scaling the community membership term ($\beta$) in the CSA formula. High Cohesion levels favor intra-community reasoning over cross-domain "leaps."</p>
+The functional name for the "Oxytocin" scalar in the <code>ChemicalModulator</code> (Phase 68). Promotes community stability by scaling the community membership term (<span class="arithmatex">\(\beta\)</span>) in the CSA formula. High Cohesion levels favor intra-community reasoning over cross-domain "leaps."</p>
 <p><strong>ContradictionResolver</strong>
 A deterministic evidence-weight classifier (Phase 73 Batch B) that runs on already-computed proposal data. Computes <code>net_evidence_score = Noisy-OR(proposed confidences) - max(contradiction_score)</code>. Classifies findings as: <strong>"clean"</strong> (approved), <strong>"revision_candidate"</strong> (queued for human review), <strong>"contested"</strong> (AutoApprover decides), or <strong>"discardable"</strong> (auto-rejected before AutoApprover). Revision candidates are queued in <code>ResearchAgent._revision_candidates</code>.</p>
 <p><strong>Community (Graph)</strong>
@@ -2177,9 +2177,9 @@ A reasoning pathology detected by the MetaInsightEngine: more than 70% of succes
 <p><strong>Community-Specific CSA Parameters</strong>
 <code>CSAEngine(community_params={community_id: (α, β, γ, δ, ε, ζ)})</code> — per-community overrides for the six CSA attention weights. Prevents homogeneity saturation in tightly-clustered communities (Phase 20 fix, Hole 6).</p>
 <p><strong>Community-Structured Attention (CSA)</strong>
-The core attention formula defining the weight $a(u,v,k)$ for traversing from node $u$ to node $v$ at hop $k$:
-$$a(u,v,k) = \sigma(\alpha \cdot \cos(\vec{e}<em rel="rel">u, \vec{e}_v) + \beta \cdot S_C(u,v) + \gamma \cdot w</em> + \varepsilon \cdot \phi(k) + \zeta \cdot PR(v))$$
-Six configurable weights with defaults: α=0.4, β=0.4, γ=0.1, δ=0.05, ε=0.05, ζ=0.1.} - \delta \cdot d_{norm</p>
+The core attention formula defining the weight <span class="arithmatex">\(a(u,v,k)\)</span> for traversing from node <span class="arithmatex">\(u\)</span> to node <span class="arithmatex">\(v\)</span> at hop <span class="arithmatex">\(k\)</span>:
+$<span class="arithmatex">\(a(u,v,k) = \sigma(\alpha \cdot \cos(\vec{e}_u, \vec{e}_v) + \beta \cdot S_C(u,v) + \gamma \cdot w_{rel} - \delta \cdot d_{norm} + \varepsilon \cdot \phi(k) + \zeta \cdot PR(v))\)</span>$
+Six configurable weights with defaults: α=0.4, β=0.4, γ=0.1, δ=0.05, ε=0.05, ζ=0.1.</p>
 <p><strong>CORTEX</strong>
 The core reasoning engine subsystem. Encompasses CommunityEngine (DSCF), CSAEngine (attention), BeamTraversal (search), PathScorer, and AnswerExtractor. Operates on a prepared graph produced by THALAMUS.</p>
 <p><strong>CSAParameterLearner</strong>
@@ -2233,7 +2233,7 @@ A CEREBRUM REST endpoint (Phase 92) that returns up to <code>?limit=5000</code> 
 <p><strong>Glass-Box Reasoning</strong>
 CEREBRUM's defining property: every answer is a verifiable path through graph edges with a complete mathematical trace. Contrasted with "Black-Box" probabilistic models (LLMs) where the reasoning process is opaque.</p>
 <p><strong>GlobalRebalancer</strong>
-The background component that monitors modularity drift ($\Delta Q_{cum}$) across streaming ingest events. When drift exceeds a threshold, it spawns a background DSCF re-run, then performs an atomic swap of <code>adapter.community_map</code>. Notifies <code>BridgeTwinEngine</code> via <code>on_rebalance()</code> hook (Phase 19).</p>
+The background component that monitors modularity drift (<span class="arithmatex">\(\Delta Q_{cum}\)</span>) across streaming ingest events. When drift exceeds a threshold, it spawns a background DSCF re-run, then performs an atomic swap of <code>adapter.community_map</code>. Notifies <code>BridgeTwinEngine</code> via <code>on_rebalance()</code> hook (Phase 19).</p>
 <p><strong>GraphProfiler</strong>
 A Phase 172 component that performs automatic graph regime classification at build time. Analyzes topology signals (hub_score, rel_coverage, degree_cv) to classify the graph into one of three regimes: <code>hub_homogeneous</code>, <code>typed_heterogeneous</code>, or <code>mixed</code>. Automatically configures query strategies (H1SE, STRB, TAB) based on the detected regime.</p>
 <p><strong>GraphSnapshot</strong>
@@ -2249,7 +2249,7 @@ A Phase 137 innovation to solve hub competition. Instead of a single global beam
 <p><strong>Holographic Index</strong>
 A privacy-preserving federated discovery system using Bloom filters (probabilistic membership) and community centroids (structural fingerprints). Allows remote graphs to advertise their contents without revealing individual entities.</p>
 <p><strong>Hop</strong>
-One step in a multi-hop reasoning traversal: moving from node $u$ to node $v$ along edge $(u, v, r)$. Analogous to one Transformer layer depth.</p>
+One step in a multi-hop reasoning traversal: moving from node <span class="arithmatex">\(u\)</span> to node <span class="arithmatex">\(v\)</span> along edge <span class="arithmatex">\((u, v, r)\)</span>. Analogous to one Transformer layer depth.</p>
 <p><strong>HMAC-SHA256 Path Provenance</strong>
 A cryptographic signature applied to each reasoning path output. Computed over the canonical JSON serialization of the path using the server's <code>CEREBRUM_HMAC_KEY</code>. Allows downstream systems to verify path integrity.</p>
 <hr />
@@ -2279,11 +2279,11 @@ A Phase 70 <code>BeamTraversal</code>-compatible wrapper implementing LoopLM-sty
 <p><strong>Loop-Provenance Recovery</strong>
 The Phase 79 integration between <code>AutonomousDiscoveryLoop</code> and <code>ProvenanceLedger</code>. When <code>LoopConfig.auto_rollback_on_trip=True</code> and the circuit breaker fires, the loop automatically calls <code>ProvenanceLedger.rollback_cycle(cycle_number, adapter)</code> to undo all materializations from the failed cycle before pausing. <code>CycleRecord.edges_rolled_back</code> records how many edges were removed.</p>
 <p><strong>Lazy STDP Weight Decay</strong>
-An optimization in <code>STDPDiscretizer</code> that applies weight decay lazily (only when a pair is accessed) rather than on every clock tick, reducing time complexity from $O(N)$ to $O(1)$ per event. See also: STDP.</p>
+An optimization in <code>STDPDiscretizer</code> that applies weight decay lazily (only when a pair is accessed) rather than on every clock tick, reducing time complexity from <span class="arithmatex">\(O(N)\)</span> to <span class="arithmatex">\(O(1)\)</span> per event. See also: STDP.</p>
 <p><strong>Leiden Algorithm (Native)</strong>
 CEREBRUM's GPL-free native reimplementation of the Leiden community detection algorithm in <code>core/leiden_native.py</code>. Replaces the <code>igraph</code>/<code>leidenalg</code> external dependencies removed in v2.52.0.</p>
 <p><strong>LPA (Label Propagation Algorithm)</strong>
-A local community detection method where each node adopts the most common community label among its neighbors. Represents the "local topology signal" in DSCF. Fast ($O(E)$) but can produce poor modularity. Combined with modularity gain in DSCF to achieve both speed and quality.</p>
+A local community detection method where each node adopts the most common community label among its neighbors. Represents the "local topology signal" in DSCF. Fast (<span class="arithmatex">\(O(E)\)</span>) but can produce poor modularity. Combined with modularity gain in DSCF to achieve both speed and quality.</p>
 <p><strong>LTD (Long-Term Depression)</strong>
 The biological analog for Bridge Twin node pruning: when a bridge twin's crossing count falls below a threshold (simulating synaptic weakening from disuse), the bridge record is pruned.</p>
 <p><strong>LTP (Long-Term Potentiation)</strong>
@@ -2298,7 +2298,7 @@ A three-tier reasoning verification framework (Phase 60):
 <p><strong>MetaInsightEngine</strong>
 The second-order reasoning component. Constructs a graph over <code>InsightEvent</code> nodes connected by typed edges (TRIGGERED_BY, CONTRADICTS, REINFORCES, CO_OCCURRED). Runs standard CSA traversal on this event graph to detect reasoning pathologies (community lock-in, relation starvation, depth asymmetry).</p>
 <p><strong>Modularity (Q)</strong>
-A graph quality metric measuring the fraction of edges within communities minus the expected fraction for a random graph with the same degree sequence. Higher Q indicates more modular (community-structured) graphs. CEREBRUM's GlobalRebalancer monitors modularity drift $\Delta Q_{cum}$.</p>
+A graph quality metric measuring the fraction of edges within communities minus the expected fraction for a random graph with the same degree sequence. Higher Q indicates more modular (community-structured) graphs. CEREBRUM's GlobalRebalancer monitors modularity drift <span class="arithmatex">\(\Delta Q_{cum}\)</span>.</p>
 <p><strong>Multi-Hop Reasoning</strong>
 Answering questions that require traversing multiple edges in sequence: e.g., "What disease is caused by the organism transmitted by the vector that bites humans in tropical regions?" requires 3+ hops through a biomedical KG.</p>
 <hr />
@@ -2310,7 +2310,7 @@ A prefix string applied to entity IDs to isolate them from other modality spaces
 <p><strong>Neural Telemetry</strong>
 The real-time event-streaming protocol (Phase 63) that broadcasts reasoning pulses (<code>SYNAPTIC_PULSE</code>), node creation (<code>NEUROGENESIS</code>), and pruning (<code>SYNAPTIC_PRUNE</code>) via WebSockets. Enables 3D observability in external game engine clients.</p>
 <p><strong>Novelty</strong>
-The functional name for the "Acetylcholine" scalar in the <code>ChemicalModulator</code> (Phase 68). Mimics the biological role of sensory focus vs. prior knowledge. High Novelty boosts the semantic similarity term ($\alpha$) and suppresses the community structure term ($\beta$), allowing the system to focus on immediate data novelty over structural expectations.</p>
+The functional name for the "Acetylcholine" scalar in the <code>ChemicalModulator</code> (Phase 68). Mimics the biological role of sensory focus vs. prior knowledge. High Novelty boosts the semantic similarity term (<span class="arithmatex">\(\alpha\)</span>) and suppresses the community structure term (<span class="arithmatex">\(\beta\)</span>), allowing the system to focus on immediate data novelty over structural expectations.</p>
 <hr />
 <h2 id="p">P</h2>
 <p><strong>Prediction Error (PE)</strong>
@@ -2320,24 +2320,24 @@ The Phase 69 active-inference component. Before each traversal, generates a <em>
 <p><strong>ProvenanceLedger</strong>
 The Phase 76 audit chain for <code>ResearchAgent.approve()</code>. Records every materialized edge in <code>EdgeRecord</code> objects grouped into <code>BatchRecord</code> objects (one batch per <code>approve()</code> call), keyed by <code>batch_id</code>. <code>rollback_batch(batch_id, adapter)</code> removes exactly one batch's edges. <code>rollback_cycle(cycle_number, adapter)</code> removes all batches from a given loop cycle. Thread-safe. LRU eviction at <code>max_batches</code> cap. Requires <code>adapter.remove_edge()</code> (Phase 80 protocol). See also: GraphSnapshot, Loop-Provenance Recovery.</p>
 <p><strong>PageRank (PR)</strong>
-A graph centrality measure (part of StructuralEncoder) used as the sixth term in the CSA formula ($\zeta \cdot PR(v)$). High PageRank nodes receive a traversal bonus, reflecting their structural importance.</p>
+A graph centrality measure (part of StructuralEncoder) used as the sixth term in the CSA formula (<span class="arithmatex">\(\zeta \cdot PR(v)\)</span>). High PageRank nodes receive a traversal bonus, reflecting their structural importance.</p>
 <p><strong>Penultimate Relation Boost (PRB)</strong>
 A Phase 156 optimization that uses a training-data r3→r2 frequency map to boost specific relation types at the penultimate hop of 3-hop queries. Enables boosting a different relation type than the terminal one, crucial for heterogeneous path templates.</p>
 <p><strong>Persistence</strong>
 The functional name for the "Vasopressin" scalar in the <code>ChemicalModulator</code> (Phase 68). Linked to long-term memory formation. High Persistence levels increase the multiplier for Engram pattern-steering and lower the threshold for promoting patterns to "Canonical Engrams" via the <code>EngramConsolidator</code>.</p>
 <p><strong>PathScorer</strong>
 CORTEX component that ranks <code>ReasoningPath</code> objects using the composite score:
-$$\text{score}(P) = \left(\prod_{k=1}^L a(u_k, v_k, k)\right) \cdot \text{coherence}<em final="final">{com}(P) \cdot \cos(\vec{h}</em>)$$}, \vec{q</p>
+$<span class="arithmatex">\(\text{score}(P) = \left(\prod_{k=1}^L a(u_k, v_k, k)\right) \cdot \text{coherence}_{com}(P) \cdot \cos(\vec{h}_{final}, \vec{q})\)</span>$</p>
 <p><strong>Partial Response</strong>
 A <code>QueryResponse</code> with <code>partial=True</code> and a non-null <code>error</code> field. Returned when the traversal raises an unrecoverable exception mid-execution — the response contains whatever paths were collected in <code>_partial_paths</code> before the failure. HTTP status is 200, not 500, so clients can still consume partial results gracefully.</p>
 <p><strong>Path-Preserving Hold-out</strong>
-<code>InferenceValidator(path_preserving=True)</code> — validation methodology that skips holding out edge $(u,v)$ if no alternative path between $u$ and $v$ exists after removal. Prevents false-zero recall on sparse graphs (Phase 20 fix, Hole 8).</p>
+<code>InferenceValidator(path_preserving=True)</code> — validation methodology that skips holding out edge <span class="arithmatex">\((u,v)\)</span> if no alternative path between <span class="arithmatex">\(u\)</span> and <span class="arithmatex">\(v\)</span> exists after removal. Prevents false-zero recall on sparse graphs (Phase 20 fix, Hole 8).</p>
 <p><strong>PatternDiscretizer</strong>
-A streaming discretizer that emits a graph edge when a symbolic event sequence matches a configured pattern with probability ≥ $p$.</p>
+A streaming discretizer that emits a graph edge when a symbolic event sequence matches a configured pattern with probability ≥ <span class="arithmatex">\(p\)</span>.</p>
 <p><strong>ProcessPoolExecutor Fallback</strong>
 A fault tolerance pattern in <code>best_of_n_dscf</code>: if <code>ProcessPoolExecutor</code> raises any exception (e.g., <code>BrokenExecutor</code> from Windows paging file exhaustion), the function logs a WARNING and falls back to sequential <code>dscf_communities</code> calls. Ensures community detection completes even when multiprocessing is unavailable.</p>
 <p><strong>Procrustes SVD</strong>
-The mathematical core of <code>SignalEncoder</code>'s cross-modal alignment. Computes a rotation matrix $R = V U^T$ from the SVD of the cross-covariance matrix $\Sigma = Y^T X$, where $X$ are signal embeddings and $Y$ are entity embeddings. Minimizes $||Y - XR||_F$.</p>
+The mathematical core of <code>SignalEncoder</code>'s cross-modal alignment. Computes a rotation matrix <span class="arithmatex">\(R = V U^T\)</span> from the SVD of the cross-covariance matrix <span class="arithmatex">\(\Sigma = Y^T X\)</span>, where <span class="arithmatex">\(X\)</span> are signal embeddings and <span class="arithmatex">\(Y\)</span> are entity embeddings. Minimizes <span class="arithmatex">\(||Y - XR||_F\)</span>.</p>
 <hr />
 <h2 id="q">Q</h2>
 <p><strong>Quantized Traversal</strong>
@@ -2349,7 +2349,7 @@ An append-only NDJSON file (<code>data/cerebrum/query_log.ndjson</code> by defau
 <hr />
 <h2 id="r">R</h2>
 <p><strong>Reinforcement</strong>
-The functional name for the "Dopamine" scalar in the <code>ChemicalModulator</code> (Phase 68). Tracks "Reward Prediction Error" (RPE) derived from user feedback (<code>POST /feedback</code>). Reinforcement surges amplify the semantic ($\alpha$) and edge-type ($\gamma$) weights, reinforcing successful relation sequences in the reasoner's attention formula.</p>
+The functional name for the "Dopamine" scalar in the <code>ChemicalModulator</code> (Phase 68). Tracks "Reward Prediction Error" (RPE) derived from user feedback (<code>POST /feedback</code>). Reinforcement surges amplify the semantic (<span class="arithmatex">\(\alpha\)</span>) and edge-type (<span class="arithmatex">\(\gamma\)</span>) weights, reinforcing successful relation sequences in the reasoner's attention formula.</p>
 <p><strong>REM Cycle (Rapid Edge Maintenance)</strong>
 Background metacognitive maintenance loop (Phase 172). Runs on three schedules: Hot Path (10 min, TTL edge pruning), Cold Path (1 hour, insight validation + decay), REM Path (daily/triggered, full DSCF re-optimization + Shortcut Synthesis). Merges Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 172) into a unified maintenance cycle.</p>
 <p><strong>Hebbian Replay (Phase 96)</strong>
@@ -2378,9 +2378,9 @@ A Phase 172 zero-config innovation. Uses sentence-transformer embeddings to matc
 <p><strong>SignalEncoder</strong>
 THALAMUS component for cross-modal alignment. <code>StatisticalSignalEncoder</code> (time-series statistics → embeddings) and <code>SpectralSignalEncoder</code> (waveform FFT features → embeddings). Projects sensor signals into entity embedding space via Procrustes SVD. Uses <code>namespace="signal"</code> by default.</p>
 <p><strong>Skepticism Factor (ρ)</strong>
-The exponential decay multiplier applied to <code>INSIGHT_LINK</code> edges in the REM Cycle's confidence decay: $c_{t+1} = c_t \cdot (\lambda \cdot \rho)^{\Delta t}$ with $\rho = 0.8 &lt; 1$. Prevents speculative insights from becoming entrenched without independent validation.</p>
+The exponential decay multiplier applied to <code>INSIGHT_LINK</code> edges in the REM Cycle's confidence decay: <span class="arithmatex">\(c_{t+1} = c_t \cdot (\lambda \cdot \rho)^{\Delta t}\)</span> with <span class="arithmatex">\(\rho = 0.8 &lt; 1\)</span>. Prevents speculative insights from becoming entrenched without independent validation.</p>
 <p><strong>Soft Community Membership</strong>
-<code>CommunityEngine(soft_membership=True)</code> — each node carries a probability distribution over communities rather than a single hard assignment. Community consensus term uses the dot product of membership distributions: $S_C^{soft}(u,v) = \sum_k p_k^{(u)} \cdot p_k^{(v)}$ (Phase 17 feature).</p>
+<code>CommunityEngine(soft_membership=True)</code> — each node carries a probability distribution over communities rather than a single hard assignment. Community consensus term uses the dot product of membership distributions: <span class="arithmatex">\(S_C^{soft}(u,v) = \sum_k p_k^{(u)} \cdot p_k^{(v)}\)</span> (Phase 17 feature).</p>
 <p><strong>SpeedTalk Encoding</strong>
 A Heinlein-inspired phonemic compression algorithm (Phase 58) for the <code>Engram</code> cache. Maps KG relation types to single characters, achieving 8-20x compression while preserving prefix structure for O(P) pattern queries.</p>
 <p><strong>STDP (Spike-Timing-Dependent Plasticity)</strong>
@@ -2408,7 +2408,7 @@ The ingestion layer subsystem. Encompasses: CSV/NetworkX/Neo4j/RDF adapters, Emb
 <p><strong>Thompson Sampling</strong>
 The probabilistic path selection strategy in Bayesian Beam Search: for each candidate path, draw a sample from its Beta distribution; select the candidate with the highest sample. Balances exploration (uncertain paths) and exploitation (high-confidence paths).</p>
 <p><strong>Temporal Decay</strong>
-The time-dependent reduction in edge weight for edges with <code>valid_until</code> timestamps: $w_{temp}(t) = w_0 \cdot \exp(-\lambda \cdot \max(0, t - t_{until}))$. Decay rate $\lambda$ is configurable per relation type (Phase 17 feature).</p>
+The time-dependent reduction in edge weight for edges with <code>valid_until</code> timestamps: <span class="arithmatex">\(w_{temp}(t) = w_0 \cdot \exp(-\lambda \cdot \max(0, t - t_{until}))\)</span>. Decay rate <span class="arithmatex">\(\lambda\)</span> is configurable per relation type (Phase 17 feature).</p>
 <p><strong>TAB (Terminal-Anchor Boost)</strong>
 Also known as "Terminal-Anchor Hints" (Phase 172). A reasoning optimization for 3+ hop queries in heterogeneous graphs. It applies a score bonus to the penultimate-hop entities that are known sources of the terminal relation (the "anchor set"). This biases the search toward paths that can directly reach the target entity type in the final hop, significantly improving 3-hop recall.</p>
 <p><strong>TAB Anchor Set</strong>
@@ -2420,7 +2420,7 @@ A streaming discretizer that emits a graph edge when a continuous float signal c
 <p><strong>TriangulationEngine</strong>
 The Phase 72 four-perspective candidate validation component. Validates <code>ResearchCandidate</code> objects across four independent perspectives: <strong>P1 <code>reverse_confidence</code></strong> — <code>HypothesisEngine</code> run in the reverse direction (B→A); <strong>P2 <code>strategy_agreement</code></strong> — agreement fraction across 3 different reasoning configurations; <strong>P3 <code>mean_path_independence</code></strong> — Jaccard independence score across primary proposal paths; <strong>P4 <code>semantic_type_score</code></strong> — relation-type and entity-class consistency (novel relations = 0.5 neutral). Results extend the AutoApprover feature vector from 12 to 16 features. <code>is_Synaptic Bridge_candidate</code> diagnostic flag set for cross-community bridge candidates. Stored in <code>finding.metadata["triangulation"]</code>.</p>
 <p><strong>TransE</strong>
-A KGE method modeling relations as translation vectors: a triple $(h, r, t)$ is valid iff $\vec{h} + \vec{r} \approx \vec{t}$. Available as optional <code>EmbeddingEngine</code> backend in CEREBRUM.</p>
+A KGE method modeling relations as translation vectors: a triple <span class="arithmatex">\((h, r, t)\)</span> is valid iff <span class="arithmatex">\(\vec{h} + \vec{r} \approx \vec{t}\)</span>. Available as optional <code>EmbeddingEngine</code> backend in CEREBRUM.</p>
 <p><strong>Traversal Path</strong>
 A <code>dataclass</code> representing an in-progress beam search path. Carries: <code>nodes</code> (list of entities), <code>edges</code> (list of edge objects), <code>score</code> (cumulative CSA product), <code>beta_alpha</code>, <code>beta_beta</code> (Beta distribution parameters for probabilistic mode).</p>
 <p><strong>TSC (Triple-Signal Consensus)</strong>
@@ -2430,11 +2430,11 @@ Extension of DSCF that adds a third signal (Infomap/flow-based community assignm
 <p><strong>UCerebrumLink</strong>
 The UE5 <code>UActorComponent</code> WebSocket bridge (Phase 92). Connects to the CEREBRUM <code>TelemetryBridge</code> at a configurable <code>ws://host:port</code> URL and fires typed Blueprint dynamic delegates: <code>OnSynapticPulse</code>, <code>OnNeurogenesis</code>, <code>OnSynapticPrune</code>, <code>OnCorticalGlow</code>, <code>OnDissonance</code>, and the catch-all <code>OnNeuralEvent</code>. Routes JSON envelope <code>{event_type, payload}</code> to the correct delegate.</p>
 <p><strong>Uncertainty Propagation</strong>
-<code>BeamTraversal(propagate_uncertainty=True)</code> — computes per-path confidence as a variance-penalized product of edge confidences: $\text{conf}(P) = \prod_i c_i^\alpha \cdot (1 - \beta \cdot \text{Var}({c_i}))$ (Phase 17 feature).</p>
+<code>BeamTraversal(propagate_uncertainty=True)</code> — computes per-path confidence as a variance-penalized product of edge confidences: <span class="arithmatex">\(\text{conf}(P) = \prod_i c_i^\alpha \cdot (1 - \beta \cdot \text{Var}(\{c_i\}))\)</span> (Phase 17 feature).</p>
 <hr />
 <h2 id="w">W</h2>
 <p><strong>Warm-Start Strength</strong>
-<code>BeamTraversal(warm_start_strength=N)</code> — scales the first-hop Beta distribution prior using the CSA edge weight: $(\alpha, \beta)_{hop1} = (1 + w(1+s), 1 + (1-w)(1+s))$. Reduces cold-start variance 85% on sparse graphs (Phase 19 fix, Hole 4).</p>
+<code>BeamTraversal(warm_start_strength=N)</code> — scales the first-hop Beta distribution prior using the CSA edge weight: <span class="arithmatex">\((\alpha, \beta)_{hop1} = (1 + w(1+s), 1 + (1-w)(1+s))\)</span>. Reduces cold-start variance 85% on sparse graphs (Phase 19 fix, Hole 4).</p>
 <p><strong>WindowedFrequencyDiscretizer</strong>
 A streaming discretizer that emits a graph edge when two entities co-occur more than a minimum number of times within a sliding time window.</p>
 <p><strong>Synaptic Bridge Attention</strong>
@@ -2528,6 +2528,10 @@ A stale <code>BridgeRecord</code> whose <code>source_community</code> or <code>d
     
     
       <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

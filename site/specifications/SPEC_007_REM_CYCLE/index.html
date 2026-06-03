@@ -1905,23 +1905,23 @@
 <p>Autonomous Knowledge Graphs (KGs) are subject to "Informational Entropy"—the accumulation of noisy edges, stale community mappings, and spurious causal correlations. Without periodic maintenance, the graph's signal-to-noise ratio (SNR) inevitably degrades.</p>
 <p>The <strong>REM Cycle</strong> (Rapid Edge Maintenance) is a background metacognitive loop that mimics biological sleep to perform three core functions: (1) <strong>Pruning</strong> of stale or unverified data, (2) <strong>Consolidation</strong> of high-usage reasoning paths, and (3) <strong>Synthesis</strong> of latent global insights.</p>
 <h3 id="2-bilateral-verification-triangulation">2. Bilateral Verification (Triangulation)</h3>
-<p>To distinguish between grounded facts and speculative noise, the REM cycle employs <strong>Bilateral Verification</strong>. A target edge $E_{uv}$ (typically an <code>INSIGHT_LINK</code> or <code>STDP_CAUSES</code> edge) is verified if it meets at least two of the following criteria:</p>
+<p>To distinguish between grounded facts and speculative noise, the REM cycle employs <strong>Bilateral Verification</strong>. A target edge <span class="arithmatex">\(E_{uv}\)</span> (typically an <code>INSIGHT_LINK</code> or <code>STDP_CAUSES</code> edge) is verified if it meets at least two of the following criteria:</p>
 <ol>
-<li><strong>Topological Density</strong>: The edge exists in a locally dense neighborhood (clustering coefficient $C \geq 0.4$).</li>
-<li><strong>Transitive Support</strong>: The <code>InferenceEngine</code> identifies an alternative path $P = {u \to w_1 \to \dots \to v}$ with confidence $\geq 0.7$, where $P$ does not include $E_{uv}$.</li>
-<li><strong>Community Consensus</strong>: Both $u$ and $v$ reside in the same community or are bridged by a high-strength <code>BRIDGE_TWIN</code> node [Buchorn, 2026].</li>
+<li><strong>Topological Density</strong>: The edge exists in a locally dense neighborhood (clustering coefficient <span class="arithmatex">\(C \geq 0.4\)</span>).</li>
+<li><strong>Transitive Support</strong>: The <code>InferenceEngine</code> identifies an alternative path <span class="arithmatex">\(P = \{u \to w_1 \to \dots \to v\}\)</span> with confidence <span class="arithmatex">\(\geq 0.7\)</span>, where <span class="arithmatex">\(P\)</span> does not include <span class="arithmatex">\(E_{uv}\)</span>.</li>
+<li><strong>Community Consensus</strong>: Both <span class="arithmatex">\(u\)</span> and <span class="arithmatex">\(v\)</span> reside in the same community or are bridged by a high-strength <code>BRIDGE_TWIN</code> node [Buchorn, 2026].</li>
 </ol>
 <p>If an edge fails bilateral verification over two consecutive REM cycles, its confidence is reduced to 0.0 and it is deleted.</p>
 <h3 id="3-recursive-hallucination-prevention">3. Recursive Hallucination Prevention</h3>
 <p>A unique danger in self-optimizing graphs is the "Insight Feedback Loop," where the system materializes a false insight and then "learns" from it, making it appear more grounded than it is.</p>
 <p>The REM cycle implements <strong>Insight Confidence Decay</strong>:
-*   <strong>Grounded Edges</strong>: Decay linearly at rate $\lambda$.
-*   <strong>Insight Edges</strong>: Decay exponentially at rate $\lambda \cdot \rho$, where $\rho = 0.8$ is the <strong>Skepticism Factor</strong>.</p>
+*   <strong>Grounded Edges</strong>: Decay linearly at rate <span class="arithmatex">\(\lambda\)</span>.
+*   <strong>Insight Edges</strong>: Decay exponentially at rate <span class="arithmatex">\(\lambda \cdot \rho\)</span>, where <span class="arithmatex">\(\rho = 0.8\)</span> is the <strong>Skepticism Factor</strong>.</p>
 <p><strong>Survival Rule</strong>: An <code>INSIGHT_LINK</code> only transitions to a "Grounded" state if it is explicitly utilized in a successful user-validated query or matches new data ingested via THALAMUS.</p>
 <h3 id="4-background-re-optimization">4. Background Re-optimization</h3>
 <p>The REM cycle acts as the scheduler for the <strong>GlobalRebalancer</strong> [Buchorn, 2026]. It monitors the graph for:
 1.  <strong>Modularity Drift</strong>: Cumulative change in node assignments vs. the original partition.
-2.  <strong>Size Inbalance</strong>: One community growing to $&gt; 30\%$ of the total graph.</p>
+2.  <strong>Size Inbalance</strong>: One community growing to <span class="arithmatex">\(&gt; 30\%\)</span> of the total graph.</p>
 <p>When triggers are met, REM spawns a background thread to:
 1.  Compute a fresh DSCF/TSC partition.
 2.  Perform an <strong>Atomic Swap</strong> of the <code>community_map</code> under a global lock.
@@ -1940,7 +1940,7 @@
 <h3 id="6-sleep-phase-consolidation-phase-172">6. Sleep-Phase Consolidation (Phase 172)</h3>
 <p>CEREBRUM v2.52.0 introduces a unified <code>ConsolidationEngine</code> that merges traditional REM maintenance with mnemonic optimization.</p>
 <ol>
-<li><strong>Hebbian Replay (Phase 96)</strong>: The engine replays high-salience (high score, low prediction error) traces from Working Memory. Edges participating in these successful reasoning paths receive a weight boost ($+ \Delta w$), increasing their future attention priority (LTP analog).</li>
+<li><strong>Hebbian Replay (Phase 96)</strong>: The engine replays high-salience (high score, low prediction error) traces from Working Memory. Edges participating in these successful reasoning paths receive a weight boost (<span class="arithmatex">\(+ \Delta w\)</span>), increasing their future attention priority (LTP analog).</li>
 <li><strong>Shortcut Synthesis (Phase 172)</strong>: The engine identifies recurrent multi-hop trajectories in the <code>QueryLog</code>. Trajectories exceeding the <code>threshold</code> are materialized as direct <code>REM_SHORTCUT</code> edges.<ul>
 <li><strong>Effect</strong>: Reduces hop-count and computational complexity for frequently asked questions.</li>
 <li><strong>Grounding</strong>: Shortcuts inherit the minimum confidence of their component edges and are subject to the same decay rules as standard insights.</li>
@@ -2028,6 +2028,10 @@
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

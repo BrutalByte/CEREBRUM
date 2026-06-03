@@ -2536,7 +2536,7 @@
 <h3 id="the-cerebrum-paradigm-autonomous-structural-reasoning">The CEREBRUM Paradigm: Autonomous Structural Reasoning</h3>
 <p>CEREBRUM is not a Machine Learning system; it is an <strong>Autonomous Reasoning Appliance</strong>.</p>
 <ol>
-<li><strong>Zero-Shot Reasoning</strong>: When you load a new Knowledge Graph, CEREBRUM performs an $O(E)$ topological scan (via <strong>GraphProfiler</strong>). It doesn't learn weights; it maps the structural landscape. It reasons over the graph itself, using its actual topology as the attention mechanism.</li>
+<li><strong>Zero-Shot Reasoning</strong>: When you load a new Knowledge Graph, CEREBRUM performs an <span class="arithmatex">\(O(E)\)</span> topological scan (via <strong>GraphProfiler</strong>). It doesn't learn weights; it maps the structural landscape. It reasons over the graph itself, using its actual topology as the attention mechanism.</li>
 <li><strong>No Training, Just Consolidation</strong>: CEREBRUM doesn't "train." Instead, it uses the <strong>REM Cycle</strong> (Phase 172) to autonomously synthesize "shortcuts" and optimize the graph structure <em>in real-time</em> as it learns which connections are most valuable for your specific questions. </li>
 <li><strong>Real-Time Adaptation</strong>: Because it relies on explicit graph edges rather than a hidden parameter space, CEREBRUM is inherently "live." Add a new edge? The reasoning engine can traverse it in the very next query. No retraining required.</li>
 </ol>
@@ -2670,6 +2670,10 @@
     
     
       <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

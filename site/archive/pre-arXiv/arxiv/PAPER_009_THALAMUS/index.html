@@ -1927,16 +1927,16 @@
 <p>The "GIGO" (Garbage In, Garbage Out) principle is the primary failure mode for autonomous reasoning engines. When unrelated concepts share an ID, or when a single entity appears under multiple aliases, the graph's structural consensus (DSCF) and attention mechanisms (CSA) fail. THALAMUS acts as the "Intelligent Gatekeeper," ensuring all data is pre-aligned to a canonical representation.</p>
 <h3 id="2-methodology">2. Methodology</h3>
 <h4 id="21-normalization-and-deduplication">2.1 Normalization and Deduplication</h4>
-<p>THALAMUS maintains a stateful mapping $\mathcal{M}: {a_1, a_2, \dots, a_n} \to e_{canonical}$. All incoming triples are projected through $\mathcal{M}$ before ingestion. This deduplication process \cite{doan2012principles} utilizes both exact string matching and n-gram based fuzzy resolution.</p>
+<p>THALAMUS maintains a stateful mapping <span class="arithmatex">\(\mathcal{M}: \{a_1, a_2, \dots, a_n\} \to e_{canonical}\)</span>. All incoming triples are projected through <span class="arithmatex">\(\mathcal{M}\)</span> before ingestion. This deduplication process \cite{doan2012principles} utilizes both exact string matching and n-gram based fuzzy resolution.</p>
 <h4 id="22-modal-isolation">2.2 Modal Isolation</h4>
-<p>In multi-modal graphs, "Identity Collapse" occurs when a symbolic entity (text) and a physical signal (sensor) share a label. We formalize the isolation rule $\mathcal{I}$:
-$$\mathcal{I}(id, mode) = \text{prefix}(mode) \mathbin{|} id$$
+<p>In multi-modal graphs, "Identity Collapse" occurs when a symbolic entity (text) and a physical signal (sensor) share a label. We formalize the isolation rule <span class="arithmatex">\(\mathcal{I}\)</span>:
+$<span class="arithmatex">\(\mathcal{I}(id, mode) = \text{prefix}(mode) \mathbin{\|} id\)</span>$
 This ensures topological separation between disparate data layers while allowing explicit cross-modal edges [Buchorn, 2026] to bridge them.</p>
 <h3 id="3-scalability-parallel-preprocessing-v2520">3. Scalability: Parallel Preprocessing (v2.52.0)</h3>
 <p>We define a two-stage ingestion protocol:
-1.  <strong>Map-Stage</strong>: $N$ worker threads normalize batches of $B$ triples in parallel. CPU-bound string work is performed outside the graph mutex.
+1.  <strong>Map-Stage</strong>: <span class="arithmatex">\(N\)</span> worker threads normalize batches of <span class="arithmatex">\(B\)</span> triples in parallel. CPU-bound string work is performed outside the graph mutex.
 2.  <strong>Commit-Stage</strong>: The master thread performs a bulk-addition to the adjacency list under a single lock acquisition.
-This removes the $O(N)$ string-processing bottleneck from the critical path, unblocking query readers during high-velocity bursts.</p>
+This removes the <span class="arithmatex">\(O(N)\)</span> string-processing bottleneck from the critical path, unblocking query readers during high-velocity bursts.</p>
 <h3 id="4-conclusion">4. Conclusion</h3>
 <p>THALAMUS provides the necessary structural foundation for stable, enterprise-scale reasoning. By integrating normalization, isolation, and parallelization, it ensures that the Knowledge Graph remains a coherent and high-integrity substrate for autonomous intelligence. In CEREBRUM v2.52.0, THALAMUS has been extended with a hot-reload <code>/build</code> endpoint, a <code>ResearchAgent</code> feedback loop for human-approved edge ingestion, and a 1,357-test suite covering the full pipeline — confirming that high-throughput intelligent ingestion remains the stable foundation on which all reasoning capabilities depend.</p>
 <hr />
@@ -1950,7 +1950,7 @@ This removes the $O(N)$ string-processing bottleneck from the critical path, unb
 - STDP discretizer integration tests within the pipeline
 - <code>/build</code> hot-reload atomicity and snapshot isolation tests
 - <code>ResearchAgent</code> approval-and-ingest workflow tests</p>
-<p><strong>STDPDiscretizer as Pipeline Stage (Phase 18).</strong> The <code>STDPDiscretizer</code> is now an optional stage within <code>IngestionPipeline</code>, positioned between relation normalization and the graph write-commit. Discretized causal edges emerge from the pipeline with <code>source="stdp"</code> provenance and a confidence score derived from the causal weight $w_{uv}$, making them first-class citizens of the graph's provenance model.</p>
+<p><strong>STDPDiscretizer as Pipeline Stage (Phase 18).</strong> The <code>STDPDiscretizer</code> is now an optional stage within <code>IngestionPipeline</code>, positioned between relation normalization and the graph write-commit. Discretized causal edges emerge from the pipeline with <code>source="stdp"</code> provenance and a confidence score derived from the causal weight <span class="arithmatex">\(w_{uv}\)</span>, making them first-class citizens of the graph's provenance model.</p>
 <p><strong>Throughput Baseline Confirmed.</strong> The 850% throughput improvement (1,200 → 11,500 triples/sec) reported at v2.51.1 has been maintained through all pipeline additions. The hot-reload <code>/build</code> endpoint adds no steady-state latency to the ingestion path, as it operates on a separate execution context from the normal ingestion workers.</p>
 <hr />
 <h2 id="acknowledgments">Acknowledgments</h2>
@@ -2042,6 +2042,10 @@ This removes the $O(N)$ string-processing bottleneck from the critical path, unb
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

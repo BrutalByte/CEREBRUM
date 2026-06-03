@@ -1978,30 +1978,30 @@
 <p>In a federated Knowledge Graph network, a local node must discover which remote peers possess relevant information without either party revealing their full raw dataset. Standard retrieval methods (sharing node lists) violate privacy and scale poorly.</p>
 <p><strong>Holographic Indexing</strong> provides a two-tier discovery protocol that combines exact entity matching with semantic neighborhood approximation. By using Bloom Filters for membership probing and Community Centroids for semantic signatures, nodes can perform "Blind Semantic Search" across organizational boundaries while maintaining data sovereignty.</p>
 <h3 id="2-tier-1-exact-membership-the-entity-hologram">2. Tier 1: Exact Membership (The Entity Hologram)</h3>
-<p>Each node $\mathcal{G}_i$ generates a compressed representation of its entity set $\mathcal{E}_i$ using a <strong>Bloom Filter</strong> $B_i$.</p>
+<p>Each node <span class="arithmatex">\(\mathcal{G}_i\)</span> generates a compressed representation of its entity set <span class="arithmatex">\(\mathcal{E}_i\)</span> using a <strong>Bloom Filter</strong> <span class="arithmatex">\(B_i\)</span>.</p>
 <h4 id="21-construction">2.1 Construction</h4>
-<p>$B_i$ is a bit array of size $m$ (optimized for a false-positive rate $p=0.01$). Each entity $e \in \mathcal{E}_i$ is hashed using $k$ independent hash functions:
+<p><span class="arithmatex">\(B_i\)</span> is a bit array of size <span class="arithmatex">\(m\)</span> (optimized for a false-positive rate <span class="arithmatex">\(p=0.01\)</span>). Each entity <span class="arithmatex">\(e \in \mathcal{E}_i\)</span> is hashed using <span class="arithmatex">\(k\)</span> independent hash functions:
 $$
 h_1(e), h_2(e), \dots, h_k(e) \pmod m
 $$
 The bits at these indices are set to 1.</p>
 <h4 id="22-probing">2.2 Probing</h4>
-<p>A remote node can query if entity $e'$ exists in $\mathcal{G}_i$ by checking if all $k$ bits are set.
+<p>A remote node can query if entity <span class="arithmatex">\(e'\)</span> exists in <span class="arithmatex">\(\mathcal{G}_i\)</span> by checking if all <span class="arithmatex">\(k\)</span> bits are set.
 *   <strong>Privacy</strong>: Bloom Filters are one-way; while they allow membership verification, they cannot be reversed to enumerate the dataset.
 *   <strong>Security</strong>: Probes are rate-limited by the <code>ResourceGovernor</code> to prevent dictionary attacks.</p>
 <h3 id="3-tier-2-semantic-neighborhoods-the-community-hologram">3. Tier 2: Semantic Neighborhoods (The Community Hologram)</h3>
 <p>To support discovery of entities that are semantically related but not exactly matched, nodes exchange <strong>Community Centroid Signatures</strong>.</p>
 <h4 id="31-signature-generation">3.1 Signature Generation</h4>
-<p>For each community $C_j \in \mathcal{G}<em C_j="C_j" _in="\in" e="e">i$, the node computes:
-1.  <strong>Centroid</strong>: $\vec{c}_j = \frac{1}{|C_j|} \sum</em>$
-2.  } \vec{e<strong>Radius</strong>: $\rho_j = \max_{e \in C_j} |\vec{e} - \vec{c}_j|$
-3.  <strong>Density</strong>: Average internal modularity of $C_j$.</p>
+<p>For each community <span class="arithmatex">\(C_j \in \mathcal{G}_i\)</span>, the node computes:
+1.  <strong>Centroid</strong>: <span class="arithmatex">\(\vec{c}_j = \frac{1}{|C_j|} \sum_{e \in C_j} \vec{e}\)</span>
+2.  <strong>Radius</strong>: <span class="arithmatex">\(\rho_j = \max_{e \in C_j} \|\vec{e} - \vec{c}_j\|\)</span>
+3.  <strong>Density</strong>: Average internal modularity of <span class="arithmatex">\(C_j\)</span>.</p>
 <h4 id="32-discovery-synaptic-bridge-detection">3.2 Discovery (Synaptic Bridge Detection)</h4>
-<p>If a local reasoning beam is looking for concepts similar to vector $\vec{x}$, it computes the "Synaptic Bridge Score" for each remote community $C_j$:
+<p>If a local reasoning beam is looking for concepts similar to vector <span class="arithmatex">\(\vec{x}\)</span>, it computes the "Synaptic Bridge Score" for each remote community <span class="arithmatex">\(C_j\)</span>:
 $$
 \text{score}(C_j) = \cos(\vec{x}, \vec{c}_j)
 $$
-If $\text{score}(C_j) \geq \sigma$ (default $0.75$), the peer is flagged as a relevant "Synaptic Bridge" destination for that specific reasoning path.</p>
+If <span class="arithmatex">\(\text{score}(C_j) \geq \sigma\)</span> (default <span class="arithmatex">\(0.75\)</span>), the peer is flagged as a relevant "Synaptic Bridge" destination for that specific reasoning path.</p>
 <h3 id="4-security-path-provenance-v2520">4. Security &amp; Path Provenance (v2.52.0)</h3>
 <p>To prevent adversarial path injection ("Hallucinated Paths") from untrusted peers, the system implements <strong>HMAC-SHA256 Verification</strong>.</p>
 <h4 id="41-federated-hmac">4.1 Federated HMAC</h4>
@@ -2015,7 +2015,7 @@ The local node discards any reasoning hop that fails signature verification, ens
 1.  Local node sends <code>PIN(entity_id, ttl)</code>.
 2.  Remote peer exempts that node from the <code>SlidingWindowBuffer</code> eviction for the duration of the TTL.</p>
 <h3 id="5-geometric-stability-canonical-basis-anchor">5. Geometric Stability: Canonical Basis Anchor</h3>
-<p>To prevent "Semantic Drift" across federated hops, all holographic signatures are anchored to a fixed root embedding space $\mathcal{E}_{root}$.
+<p>To prevent "Semantic Drift" across federated hops, all holographic signatures are anchored to a fixed root embedding space <span class="arithmatex">\(\mathcal{E}_{root}\)</span>.
 *   When a peer joins the federation, it performs a one-time <strong>Orthogonal Procrustes Alignment</strong> [Buchorn, 2026] to map its local space to the root space.
 *   This ensures that a "Synaptic Bridge Score" of 0.8 means the same thing in Graph A as it does in Graph B.</p>
 <blockquote>
@@ -2102,6 +2102,10 @@ The local node discards any reasoning hop that fails signature verification, ens
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

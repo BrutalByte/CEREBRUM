@@ -1902,45 +1902,45 @@
 <strong>Module</strong>: <code>reasoning/traversal.py</code></p>
 <hr />
 <h3 id="1-introduction">1. Introduction</h3>
-<p>Standard beam search is a deterministic, greedy algorithm that selects the top-$K$ candidates based on point-estimate scores. In noisy, streaming, or multi-modal Knowledge Graphs, this greedy behavior often leads to the "Exploration Trap"—where a correct but initially low-scoring path is pruned before its relevance is discovered.</p>
+<p>Standard beam search is a deterministic, greedy algorithm that selects the top-<span class="arithmatex">\(K\)</span> candidates based on point-estimate scores. In noisy, streaming, or multi-modal Knowledge Graphs, this greedy behavior often leads to the "Exploration Trap"—where a correct but initially low-scoring path is pruned before its relevance is discovered.</p>
 <p><strong>Bayesian Beam Search</strong> treats edge weights as probability distributions rather than fixed numbers. By employing <strong>Thompson Sampling</strong>, the traversal engine balances the exploitation of high-confidence paths with the exploration of uncertain neighborhoods, leading to significantly higher recall in sparse data environments.</p>
 <h3 id="2-probabilistic-modeling-the-beta-distribution">2. Probabilistic Modeling: The Beta Distribution</h3>
 <p>Every potential hop in the reasoning beam is modeled as a Bernoulli process with an unknown success probability. We represent our belief in this probability using a <strong>Beta Distribution</strong>:</p>
-<p>$$
+<div class="arithmatex">\[
 P(s | \alpha, \beta) = \frac{s^{\alpha-1} (1-s)^{\beta-1}}{B(\alpha, \beta)}
-$$</p>
+\]</div>
 <ul>
-<li><strong>$\alpha$ (Successes)</strong>: Evidence that this path leads to a grounded, high-quality answer.</li>
-<li><strong>$\beta$ (Failures)</strong>: Evidence that this path leads to a dead-end or structural noise.</li>
-<li><strong>Posterior Mean</strong>: $\mu = \frac{\alpha}{\alpha + \beta}$</li>
-<li><strong>Score Variance (Uncertainty)</strong>: $\sigma^2 = \frac{\alpha\beta}{(\alpha+\beta)^2(\alpha+\beta+1)}$</li>
+<li><strong><span class="arithmatex">\(\alpha\)</span> (Successes)</strong>: Evidence that this path leads to a grounded, high-quality answer.</li>
+<li><strong><span class="arithmatex">\(\beta\)</span> (Failures)</strong>: Evidence that this path leads to a dead-end or structural noise.</li>
+<li><strong>Posterior Mean</strong>: <span class="arithmatex">\(\mu = \frac{\alpha}{\alpha + \beta}\)</span></li>
+<li><strong>Score Variance (Uncertainty)</strong>: <span class="arithmatex">\(\sigma^2 = \frac{\alpha\beta}{(\alpha+\beta)^2(\alpha+\beta+1)}\)</span></li>
 </ul>
 <h3 id="3-thompson-sampling-traversal">3. Thompson Sampling Traversal</h3>
-<p>During each hop $k$ of the beam search, the engine selects the next set of paths using Thompson Sampling:</p>
+<p>During each hop <span class="arithmatex">\(k\)</span> of the beam search, the engine selects the next set of paths using Thompson Sampling:</p>
 <ol>
-<li><strong>Candidate Expansion</strong>: Fetch all neighbors $\mathcal{N}(u)$ for each path in the current beam.</li>
-<li><strong>CSA Scoring</strong>: Compute the deterministic attention weight $w_{uv}$ using the CSA formula [Buchorn, 2026].</li>
-<li><strong>Probabilistic Sampling</strong>: For each candidate neighbor $v$, draw a random sample $x$ from its specific Beta distribution:
-    $$x_v \sim \text{Beta}(\alpha_v, \beta_v)$$</li>
-<li><strong>Ranking &amp; Pruning</strong>: Rank neighbors by their sampled scores $x_v$ and retain the top-$B$ candidates.</li>
+<li><strong>Candidate Expansion</strong>: Fetch all neighbors <span class="arithmatex">\(\mathcal{N}(u)\)</span> for each path in the current beam.</li>
+<li><strong>CSA Scoring</strong>: Compute the deterministic attention weight <span class="arithmatex">\(w_{uv}\)</span> using the CSA formula [Buchorn, 2026].</li>
+<li><strong>Probabilistic Sampling</strong>: For each candidate neighbor <span class="arithmatex">\(v\)</span>, draw a random sample <span class="arithmatex">\(x\)</span> from its specific Beta distribution:
+    $<span class="arithmatex">\(x_v \sim \text{Beta}(\alpha_v, \beta_v)\)</span>$</li>
+<li><strong>Ranking &amp; Pruning</strong>: Rank neighbors by their sampled scores <span class="arithmatex">\(x_v\)</span> and retain the top-<span class="arithmatex">\(B\)</span> candidates.</li>
 </ol>
-<p><strong>Key Advantage</strong>: A high-variance (uncertain) path will occasionally produce a very high sample score $x$, allowing it to bypass "stronger" but more certain paths. This prevents the beam from getting trapped in local topological optima.</p>
+<p><strong>Key Advantage</strong>: A high-variance (uncertain) path will occasionally produce a very high sample score <span class="arithmatex">\(x\)</span>, allowing it to bypass "stronger" but more certain paths. This prevents the beam from getting trapped in local topological optima.</p>
 <h3 id="4-bayesian-warm-starting">4. Bayesian Warm-Starting</h3>
-<p>The "Cold-Start" problem occurs when a path is brand new (e.g., just ingested from a sensor). A default $\text{Beta}(1,1)$ prior has maximum variance, essentially making the first choice a random coin flip.</p>
+<p>The "Cold-Start" problem occurs when a path is brand new (e.g., just ingested from a sensor). A default <span class="arithmatex">\(\text{Beta}(1,1)\)</span> prior has maximum variance, essentially making the first choice a random coin flip.</p>
 <p>CEREBRUM implements <strong>Heuristic Warm-Starting</strong> to seed the search with graph-topological knowledge:
-$$\alpha_{init} = w_{uv} \cdot \omega, \quad \beta_{init} = (1-w_{uv}) \cdot \omega$$
-*   $w_{uv}$: The deterministic CSA score.
-*   $\omega$: The <code>warm_start_strength</code> (default $10.0$).</p>
+$<span class="arithmatex">\(\alpha_{init} = w_{uv} \cdot \omega, \quad \beta_{init} = (1-w_{uv}) \cdot \omega\)</span>$
+*   <span class="arithmatex">\(w_{uv}\)</span>: The deterministic CSA score.
+*   <span class="arithmatex">\(\omega\)</span>: The <code>warm_start_strength</code> (default <span class="arithmatex">\(10.0\)</span>).</p>
 <p>This ensures the sampler starts with an "educated guess" provided by the graph structure, then refines that guess as it gathers evidence across hops.</p>
 <h3 id="5-uncertainty-aware-answer-extraction">5. Uncertainty-Aware Answer Extraction</h3>
 <p>The final answers returned to the user include a <strong>Confidence Calibration</strong>:
-*   <strong>Score</strong>: The posterior mean $\mu$ of the path.
-*   <strong>Uncertainty</strong>: The path variance $\sigma^2$.</p>
+*   <strong>Score</strong>: The posterior mean <span class="arithmatex">\(\mu\)</span> of the path.
+*   <strong>Uncertainty</strong>: The path variance <span class="arithmatex">\(\sigma^2\)</span>.</p>
 <p>If an answer has a high score but high uncertainty, the system flags it for <strong>Metacognitive Verification</strong> [Buchorn, 2026], triggering a second-order "triangulation" pass to confirm the reasoning chain.</p>
 <h3 id="6-implementation-notes-v2520">6. Implementation Notes (v2.52.0)</h3>
 <ul>
 <li><strong>Reproducibility</strong>: Supports a fixed <code>RandomState</code> seed for deterministic debugging of probabilistic runs.</li>
-<li><strong>Performance</strong>: Sampling is performed using vectorized NumPy operations, maintaining $O(B \cdot D)$ complexity.</li>
+<li><strong>Performance</strong>: Sampling is performed using vectorized NumPy operations, maintaining <span class="arithmatex">\(O(B \cdot D)\)</span> complexity.</li>
 <li><strong>Streaming Compatibility</strong>: Beta distributions are persisted in the <code>TraversalPath</code> objects, allowing reasoning to pause and resume as new data arrives in the stream.</li>
 </ul>
 <blockquote>
@@ -2027,6 +2027,10 @@ $$\alpha_{init} = w_{uv} \cdot \omega, \quad \beta_{init} = (1-w_{uv}) \cdot \om
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

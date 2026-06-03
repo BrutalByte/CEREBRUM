@@ -1945,7 +1945,7 @@
 <h3 id="2-typology-of-contradictions">2. Typology of Contradictions</h3>
 <p>The engine identifies five distinct classes of factual conflict:</p>
 <h4 id="21-direct-predicate-conflict">2.1 Direct Predicate Conflict</h4>
-<p>Occurs when two triples $(s, r, o_1)$ and $(s, r, o_2)$ exist where $r$ is a functional relation (e.g., <code>BORN_IN</code>) and $o_1 \neq o_2$.</p>
+<p>Occurs when two triples <span class="arithmatex">\((s, r, o_1)\)</span> and <span class="arithmatex">\((s, r, o_2)\)</span> exist where <span class="arithmatex">\(r\)</span> is a functional relation (e.g., <code>BORN_IN</code>) and <span class="arithmatex">\(o_1 \neq o_2\)</span>.</p>
 <h4 id="22-temporal-anachronism">2.2 Temporal Anachronism</h4>
 <p>Occurs when the temporal metadata of a triple violates physical or logical sequence (e.g., a "Died" event occurring before a "Born" event).</p>
 <h4 id="23-structural-impossibility">2.3 Structural Impossibility</h4>
@@ -1954,10 +1954,10 @@
 <p>Occurs when two high-trust sources provide diametrically opposed facts about the same entity relationship.</p>
 <h3 id="3-materialization-delta-authority">3. Materialization &amp; Delta-Authority</h3>
 <p>Instead of deleting the "weaker" fact, the engine expands the graph:
-1.  <strong>Linkage</strong>: A <code>CONTRADICTS</code> edge is created between the conflicting target nodes $o_1$ and $o_2$.
+1.  <strong>Linkage</strong>: A <code>CONTRADICTS</code> edge is created between the conflicting target nodes <span class="arithmatex">\(o_1\)</span> and <span class="arithmatex">\(o_2\)</span>.
 2.  <strong>Delta-Authority</strong>: The edge is decorated with an <code>authority_delta</code> score:
-    $$\Delta A = |T(source_1) - T(source_2)|$$
-    where $T$ is the trust score of the provenance.
+    $<span class="arithmatex">\(\Delta A = |T(source_1) - T(source_2)|\)</span>$
+    where <span class="arithmatex">\(T\)</span> is the trust score of the provenance.
 3.  <strong>Conflict Context</strong>: The edge stores the <code>relation_type</code> and <code>reasoning_path</code> that led to the detection.</p>
 <h3 id="4-reasoning-through-conflict">4. Reasoning through Conflict</h3>
 <p>The <strong>CSA Engine</strong> [Buchorn, 2026] recognizes <code>CONTRADICTS</code> edges as "High-Surprise" signals. 
@@ -2052,6 +2052,10 @@
     
     
       <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

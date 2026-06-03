@@ -1850,7 +1850,7 @@
   <a href="#32-the-community-signal-mathcals_com" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.2 The Community Signal ($\mathcal{S}_{com}$)
+        3.2 The Community Signal (\(\mathcal{S}_{com}\))
       
     </span>
   </a>
@@ -1944,7 +1944,7 @@
 <strong>Date</strong>: May 2, 2026</p>
 <hr />
 <h3 id="abstract">Abstract</h3>
-<p>We propose <strong>Community-Structured Attention (CSA)</strong>, an attention mechanism that enables multi-hop reasoning over large Knowledge Graphs (KGs) without the $O(N^2)$ complexity of global attention matrices. CSA maps the structural components of the Transformer architecture \cite{vaswani2017attention} directly onto graph operations, utilizing community partitions as discrete "Attention Heads." We define a unified scoring function that integrates semantic similarity, community-level topology, and structural centrality. Benchmark results on the <strong>Hetionet</strong> \cite{hetionet2017} biomedical dataset demonstrate that CSA achieves a Mean Reciprocal Rank (MRR) of <strong>0.68</strong>, a <strong>+183% improvement</strong> over breadth-first search baselines. Furthermore, on the <strong>MetaQA 3-hop</strong> \cite{metaqa2017} reasoning task, CSA improves MRR by <strong>+350%</strong>, demonstrating superior beam steering in deep multi-hop traversals while maintaining full "Glass-Box" interpretability. As of v2.52.0, the CSA formula has been expanded to 10 parameters covering temporal decay, node recency, synthesis-density penalty, and grounding confidence, with both batch (CSAParameterLearner) and online per-community (MetaParameterLearner) learning, achieving MetaQA canonical results of H@1=46.1%/30.0%/12.5% across 1-, 2-, and 3-hop tasks.</p>
+<p>We propose <strong>Community-Structured Attention (CSA)</strong>, an attention mechanism that enables multi-hop reasoning over large Knowledge Graphs (KGs) without the <span class="arithmatex">\(O(N^2)\)</span> complexity of global attention matrices. CSA maps the structural components of the Transformer architecture \cite{vaswani2017attention} directly onto graph operations, utilizing community partitions as discrete "Attention Heads." We define a unified scoring function that integrates semantic similarity, community-level topology, and structural centrality. Benchmark results on the <strong>Hetionet</strong> \cite{hetionet2017} biomedical dataset demonstrate that CSA achieves a Mean Reciprocal Rank (MRR) of <strong>0.68</strong>, a <strong>+183% improvement</strong> over breadth-first search baselines. Furthermore, on the <strong>MetaQA 3-hop</strong> \cite{metaqa2017} reasoning task, CSA improves MRR by <strong>+350%</strong>, demonstrating superior beam steering in deep multi-hop traversals while maintaining full "Glass-Box" interpretability. As of v2.52.0, the CSA formula has been expanded to 10 parameters covering temporal decay, node recency, synthesis-density penalty, and grounding confidence, with both batch (CSAParameterLearner) and online per-community (MetaParameterLearner) learning, achieving MetaQA canonical results of H@1=46.1%/30.0%/12.5% across 1-, 2-, and 3-hop tasks.</p>
 <h3 id="1-introduction">1. Introduction</h3>
 <p>The dominance of Transformer architectures in Natural Language Processing has inspired attempts to apply similar attention-based principles to graph structures. However, Graph Attention Networks (GATs) \cite{velickovic2018gat} typically operate on local ego-networks and struggle with global structural context. CSA addresses this by introducing a "Soft Community Constraint," where attention weights are influenced by the membership of nodes in pre-computed structural partitions (DSCF/TSC).</p>
 <h3 id="2-the-cerebrum-mapping">2. The Cerebrum Mapping</h3>
@@ -1954,18 +1954,18 @@
 - <strong>Traversal Paths</strong> function as a <strong>KV Cache</strong>, memoizing the reasoning history.</p>
 <h3 id="3-methodology">3. Methodology</h3>
 <h4 id="31-the-csa-formula">3.1 The CSA Formula</h4>
-<p>The attention weight $a(u,v,k)$ for an edge from $u$ to $v$ at hop $k$ is defined as:
-$$\begin{aligned}
-a(u,v,k) = \sigma( &amp; \alpha \cdot \mathcal{S}<em com="com">{sem}(u,v) + \beta \cdot \mathcal{S}</em>(u,v) + \
+<p>The attention weight <span class="arithmatex">\(a(u,v,k)\)</span> for an edge from <span class="arithmatex">\(u\)</span> to <span class="arithmatex">\(v\)</span> at hop <span class="arithmatex">\(k\)</span> is defined as:
+$<span class="arithmatex">\(\begin{aligned}
+a(u,v,k) = \sigma( &amp; \alpha \cdot \mathcal{S}_{sem}(u,v) + \beta \cdot \mathcal{S}_{com}(u,v) + \\
 &amp; \gamma \cdot w_{rel} - \delta \cdot d_{norm}(u,v) + \epsilon \cdot \phi(k) )
-\end{aligned}$$</p>
-<h4 id="32-the-community-signal-mathcals_com">3.2 The Community Signal ($\mathcal{S}_{com}$)</h4>
+\end{aligned}\)</span>$</p>
+<h4 id="32-the-community-signal-mathcals_com">3.2 The Community Signal (<span class="arithmatex">\(\mathcal{S}_{com}\)</span>)</h4>
 <p>Unlike GATs \cite{velickovic2018gat} which treat all neighbors equally, CSA scales weights based on community topology:
-- <strong>Intra-community</strong>: $1.0$
-- <strong>Adjacent-community</strong>: $0.5$
-- <strong>Distant-community</strong>: $e^{-\lambda d_{com}}$</p>
+- <strong>Intra-community</strong>: <span class="arithmatex">\(1.0\)</span>
+- <strong>Adjacent-community</strong>: <span class="arithmatex">\(0.5\)</span>
+- <strong>Distant-community</strong>: <span class="arithmatex">\(e^{-\lambda d_{com}}\)</span></p>
 <h3 id="4-enterprise-hardening-v2520">4. Enterprise Hardening (v2.52.0)</h3>
-<p>The v2.52.0 release introduces <strong>Adaptive Parameter Learning</strong>, utilizing a <strong>MetaParameterLearner</strong> to autonomously adjust the $(\alpha, \beta, \gamma, \delta, \epsilon)$ coefficients per-community based on query feedback. This closes the gap between zero-shot and supervised performance without the need for global retraining.</p>
+<p>The v2.52.0 release introduces <strong>Adaptive Parameter Learning</strong>, utilizing a <strong>MetaParameterLearner</strong> to autonomously adjust the <span class="arithmatex">\((\alpha, \beta, \gamma, \delta, \epsilon)\)</span> coefficients per-community based on query feedback. This closes the gap between zero-shot and supervised performance without the need for global retraining.</p>
 <h3 id="5-conclusion">5. Conclusion</h3>
 <p>CSA provides a scalable, Interpretable AI (XAI) alternative to black-box graph embeddings. By grounding attention in the structural consensus of the graph, it enables complex multi-hop reasoning that is both computationally efficient and mathematically verifiable. In CEREBRUM v2.52.0, the 10-parameter CSA formula with online per-community learning achieves MetaQA H@1 of 46.1% (1-hop), 30.0% (2-hop), and 12.5% (3-hop), alongside WebQSP H@1=6.27%, H@10=20.84%, and MRR=10.66% — establishing CSA as a competitive and interpretable alternative to embedding-based KG reasoning.</p>
 <hr />
@@ -2025,11 +2025,11 @@ a(u,v,k) = \sigma( &amp; \alpha \cdot \mathcal{S}<em com="com">{sem}(u,v) + \bet
 </table>
 <h2 id="7-phase-55-advances">7. Phase 55 Advances</h2>
 <p><strong>GraphSAGE Neighbourhood Smoothing (Phase 55).</strong> <code>smooth_with_graphsage(embeddings, G)</code> applies a one-pass mean neighbourhood aggregation after base encoding:</p>
-<p>$$\tilde{\mathbf{e}}<em _in="\in" _mathcal_N="\mathcal{N" u="u">v = \frac{1}{1+|\mathcal{N}(v)|}\left(\mathbf{e}_v + \sum</em>_u\right)$$}(v)} \mathbf{e</p>
-<p>The enriched embeddings make the <code>alpha</code> (semantic similarity) term in the CSA formula significantly more discriminating — nodes in the same community share more similar neighbourhood-aggregated representations. <code>CerebrumGraph.build(use_graphsage=True)</code> enables smoothing automatically after base encoding. Complexity is $O(|E| \times d)$ where $d$ is the embedding dimension.</p>
+<div class="arithmatex">\[\tilde{\mathbf{e}}_v = \frac{1}{1+|\mathcal{N}(v)|}\left(\mathbf{e}_v + \sum_{u \in \mathcal{N}(v)} \mathbf{e}_u\right)\]</div>
+<p>The enriched embeddings make the <code>alpha</code> (semantic similarity) term in the CSA formula significantly more discriminating — nodes in the same community share more similar neighbourhood-aggregated representations. <code>CerebrumGraph.build(use_graphsage=True)</code> enables smoothing automatically after base encoding. Complexity is <span class="arithmatex">\(O(|E| \times d)\)</span> where <span class="arithmatex">\(d\)</span> is the embedding dimension.</p>
 <p><strong>TemporalCalibrator (Phase 55).</strong> Grid-searches <code>eta</code> (temporal decay) and <code>iota</code> (node recency) against a labelled validation set to maximise Recall@K. The <code>calibrate()</code> method enumerates a parameter grid, calls <code>measure_recall()</code> at each point, and applies the best-found parameters to the CSAEngine. A <code>try/finally</code> block guarantees original parameters are restored if calibration is interrupted — ensuring that a failed calibration run never leaves the CSAEngine in a partially-modified state.</p>
 <p><strong>Engram-Steered Traversal (Phase 55).</strong> <code>Engram</code> tracks relation-sequence patterns from previous successful Engram traces. <code>EngramTraversal._prune_candidates()</code> applies:</p>
-<p>$$s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{engram} \cdot \text{affinity}(\text{rel_seq}))$$</p>
+<div class="arithmatex">\[s_\text{eff}(c) = s(c) \times (1 + \lambda_\text{engram} \cdot \text{affinity}(\text{rel\_seq}))\]</div>
 <p>where <code>affinity</code> is derived from accumulated <code>_counts</code>. This biases beam search toward known-productive reasoning chains without modifying graph structure. The cache is durable — <code>save(path)</code> serializes to JSON and <code>load(path)</code> restores counts on restart, so learned relation patterns survive process restarts.</p>
 <hr />
 <h2 id="acknowledgments">Acknowledgments</h2>
@@ -2125,6 +2125,10 @@ a(u,v,k) = \sigma( &amp; \alpha \cdot \mathcal{S}<em com="com">{sem}(u,v) + \bet
     
     
       <script src="../../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>

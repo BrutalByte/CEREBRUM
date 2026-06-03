@@ -2074,10 +2074,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#notation-for-eta-resolved-conflict" class="md-nav__link">
+  <a href="#notation-for-eta-eta-resolved-conflict" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Notation for η (Eta) — Resolved Conflict
+        Notation for \(\eta\) (Eta) — Resolved Conflict
       
     </span>
   </a>
@@ -2201,7 +2201,7 @@ never in a table alongside supervised methods.</p>
 <p><strong>Phase 182 3-hop configuration:</strong> sentence-transformers, beam-width=20, RelationPathPrior,
 r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs ~4h serial).
 14,268/14,274 questions answered (6 skipped). Run date: 2026-05-14.</p>
-<p><strong>Phase progression (3-hop H@1, full 14,274 questions):</strong></p>
+<p><strong>Phase progression (3-hop <span class="arithmatex">\(\text{H@1}\)</span>, full 14,274 questions):</strong></p>
 <table>
 <thead>
 <tr>
@@ -2341,8 +2341,8 @@ r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs 
 <p><strong>Auto-derived params (hub_homogeneous × random):</strong>
 trb_factor=21.48, gamma=0.5, beta=2.0, r2_boost=8.18, fhrb_factor=3.26,
 idf_weight=0.058, vote_weight=0.758, branch_bonus=0.48, beam_width=12.</p>
-<p><strong>Finding:</strong> Zero-config (no tuning) lands 3.5pp below Phase 204 tuned (60.4% 3-hop H@1).
-H@10=90.7% confirms the system <em>finds</em> the answer in top-10 the vast majority of the time —
+<p><strong>Finding:</strong> Zero-config (no tuning) lands 3.5pp below Phase 204 tuned (60.4% 3-hop <span class="arithmatex">\(\text{H@1}\)</span>).
+<span class="arithmatex">\(\text{H@10} = 90.7\%\)</span> confirms the system <em>finds</em> the answer in top-10 the vast majority of the time —
 the gap to supervised methods is primarily a ranking problem, not a reasoning failure.</p>
 <hr />
 <h2 id="hetionet-phase-207-random-embeddings-hop_expand-fixed">Hetionet — Phase 207 (Random Embeddings, hop_expand Fixed)</h2>
@@ -2459,7 +2459,7 @@ the gap to supervised methods is primarily a ranking problem, not a reasoning fa
 </tr>
 </tbody>
 </table>
-<p>Note: beam_width importance ≈0 confirms fixed at 8 is correct. beta is now the dominant parameter (was near-zero in Phase 206 broken-2-hop run).</p>
+<p>Note: beam_width importance <span class="arithmatex">\(\approx 0\)</span> confirms fixed at 8 is correct. beta is now the dominant parameter (was near-zero in Phase 206 broken-2-hop run).</p>
 <h3 id="phase-207-full-validation-results-200qtemplate-phase-207-params">Phase 207 — Full Validation Results (200q/template, Phase 207 params)</h3>
 <table>
 <thead>
@@ -2668,7 +2668,7 @@ compound_gene_disease ~32% is a graph-structure ceiling: AvgTyped=0.9 means most
 </tr>
 </tbody>
 </table>
-<p>Note: idf_weight dominance (0.43) with sentence-transformers vs beta dominance (0.22) with random embeddings confirms the 2D constant space (regime × embedding_method).</p>
+<p>Note: idf_weight dominance (0.43) with sentence-transformers vs beta dominance (0.22) with random embeddings confirms the 2D constant space (regime <span class="arithmatex">\(\times\)</span> embedding_method).</p>
 <p><strong>Canonical eval command (Phase 208):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>-u<span class="w"> </span>benchmarks/hetionet_param_eval.py<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span>--n-questions<span class="w"> </span><span class="m">200</span><span class="w"> </span>--min-eval-hop<span class="w"> </span><span class="m">1</span><span class="w"> </span>--max-neighbors<span class="w"> </span><span class="m">200</span><span class="w"> </span>--workers<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
@@ -2778,7 +2778,7 @@ compound_gene_disease ~32% is a graph-structure ceiling: AvgTyped=0.9 means most
 <p><strong>Finding: sentence-transformers regresses vs random on multi-hop.</strong> 1-hop is near-parity (94.0% vs 95.7%) but 2-hop drops 11pp and 3-hop drops 18pp. Two compounding causes:</p>
 <ol>
 <li><strong>AvgTyped collapse on 2-hop</strong>: disease_gene_pathway 3.1→1.6, compound_gene_disease 0.9→0.5 — the semantic similarity filter culls more candidates than random does, starving the beam before it can complete the path. idf_weight=0.032 (low) was meant to compensate but insufficient.</li>
-<li><strong>Tuner pilot used 20q/template</strong> — too small to calibrate 2-hop and 3-hop templates independently. The tuner pooled all templates, allowing 1-hop (3×) to dominate the H@1 signal.</li>
+<li><strong>Tuner pilot used 20q/template</strong> — too small to calibrate 2-hop and 3-hop templates independently. The tuner pooled all templates, allowing 1-hop (<span class="arithmatex">\(3\times\)</span>) to dominate the <span class="arithmatex">\(\text{H@1}\)</span> signal.</li>
 </ol>
 <p><strong>Root cause</strong>: Phase 208 tuner calibrated against all hops simultaneously with 20q each. The optimal idf_weight for 1-hop (low penalty → more candidates) conflicts with 2-hop (needs higher IDF to suppress false positives at the intermediate node).</p>
 <p><strong>See Phase 209 below for corrected multi-hop calibration.</strong></p>
@@ -3082,7 +3082,7 @@ compound_gene_disease ~32% is a graph-structure ceiling: AvgTyped=0.9 means most
 </table>
 <p>Template codes: dgp=disease_gene_pathway, cge=compound_gene_disease, dcvg=disease_compound_via_gene</p>
 <p><strong>Finding 1 — branch_bonus confirmed optimal at 0.032.</strong> 2-hop degrades monotonically as branch_bonus rises. disease_gene_pathway AvgTyped collapses 4.6→2.1 as branch_bonus rises: higher values bias the beam toward branchy intermediate paths, culling typed candidates before the answer hop.</p>
-<p><strong>Finding 2 — 3-hop is insensitive to branch_bonus.</strong> <code>disease_compound_via_gene</code> is locked at 48.5% for all values ≥ 0.10, and only marginally better at 0.032 (50.8%). The 3-hop ceiling is not a structural parameter problem.</p>
+<p><strong>Finding 2 — 3-hop is insensitive to branch_bonus.</strong> <code>disease_compound_via_gene</code> is locked at 48.5% for all values <span class="arithmatex">\(\geq 0.10\)</span>, and only marginally better at 0.032 (50.8%). The 3-hop ceiling is not a structural parameter problem.</p>
 <p><strong>Finding 3 — The 3-hop regression is semantic in origin.</strong> Sentence-transformers introduce cosine-similarity bias that suppresses valid cross-type paths. The <code>disease_compound_via_gene</code> template traverses maximally dissimilar semantic types (disease→gene→compound); the alpha (semantic similarity) CSA term systematically penalizes valid paths at each hop because the entity types are semantically distant. Random embeddings have no such bias and achieve 79.5%.</p>
 <p><strong>Known limitation (documented):</strong> Training-free semantic similarity has a natural cross-type depth ceiling in typed heterogeneous biomedical KGs. This is not addressable by structural parameter tuning. The practical mitigation (reducing CSA alpha weight globally) would degrade 1-hop and 2-hop same-type templates that benefit from semantic signal. The asymmetry is real: semantic embeddings help typed 2-hop (disease_gene_pathway +10pp vs random) while hurting cross-type 3-hop (-30pp vs random). A training step that calibrates per-relation-type semantic weights would be required to close this gap — outside the scope of training-free CEREBRUM.</p>
 <hr />
@@ -3414,7 +3414,7 @@ Use Phase 53 numbers in all paper comparison tables.</p>
 <p>CEREBRUM achieves these results with zero task-specific training, no labeled question-answer pairs,
 and no gradient updates — operating purely from graph structure and pre-trained sentence embeddings.
 To our knowledge, this represents the first training-free baseline for multi-hop KGQA, establishing
-a reference point for what structural reasoning alone can achieve. The H@10 story is the key result:
+a reference point for what structural reasoning alone can achieve. The <span class="arithmatex">\(\text{H@10}\)</span> story is the key result:
 CEREBRUM retrieves the correct answer in its top-10 candidates at 96.6% (1-hop), 86.3% (2-hop),
 and 50.3% (3-hop) — the system <em>finds</em> the answer, it does not yet rank it first. This is a ranking
 challenge, not a reasoning failure. Supervised methods benefit from task-specific training that
@@ -3505,14 +3505,14 @@ optimizes exactly this ranking; CEREBRUM does not.</p>
 <p>Zhang, Y., Dai, H., Kozareva, Z., Smola, A., &amp; Song, L. (2018). Variational reasoning for question answering with knowledge graphs. In <em>Proceedings of the 32nd AAAI Conference on Artificial Intelligence</em> (Vol. 32, No. 1). AAAI Press. https://arxiv.org/abs/1709.04071</p>
 <p>Zhu, Z., Galkin, M., Zhang, Z., &amp; Tang, J. (2022). Neural-symbolic models for logical queries on knowledge graphs. In <em>Proceedings of the 39th International Conference on Machine Learning (ICML 2022)</em> (pp. 27454–27478). PMLR. https://arxiv.org/abs/2205.10128</p>
 <hr />
-<h2 id="notation-for-eta-resolved-conflict">Notation for η (Eta) — Resolved Conflict</h2>
-<p><strong>Decision (Phase 172 / May 2026):</strong> The symbol <code>η</code> was used with two different meanings:
-- In CSA (Phase 43): <code>η</code> = temporal decay weight (one of the 10 CSA parameters)
-- In TSC/DSCF (Phase 1): <code>η</code> was used generically for temperature step decay</p>
+<h2 id="notation-for-eta-eta-resolved-conflict">Notation for <span class="arithmatex">\(\eta\)</span> (Eta) — Resolved Conflict</h2>
+<p><strong>Decision (Phase 172 / May 2026):</strong> The symbol <span class="arithmatex">\(\eta\)</span> was used with two different meanings:
+- In CSA (Phase 43): <span class="arithmatex">\(\eta\)</span> = temporal decay weight (one of the 10 CSA parameters)
+- In TSC/DSCF (Phase 1): <span class="arithmatex">\(\eta\)</span> was used generically for temperature step decay</p>
 <p><strong>Resolution:</strong> In all publication documents, use:
-- <code>η</code> for CSA temporal decay weight (the 10-parameter formula — dominant usage)
-- <code>η_T</code> for TSC temperature-step decay (Paper A only, subscript T for Temperature)</p>
-<p>All papers after Phase 1 that reference the TSC temperature schedule should use <code>η_T</code>.</p>
+- <span class="arithmatex">\(\eta\)</span> for CSA temporal decay weight (the 10-parameter formula — dominant usage)
+- <span class="arithmatex">\(\eta_T\)</span> for TSC temperature-step decay (Paper A only, subscript T for Temperature)</p>
+<p>All papers after Phase 1 that reference the TSC temperature schedule should use <span class="arithmatex">\(\eta_T\)</span>.</p>
 <hr />
 <p><em>Last updated: 2026-06-02 | Phase 212: zero-config full validation (83.2%/63.3%/56.8% H@1, all 39,093 questions) — 3.5pp below tuned, H@10=90.7% confirms reasoning not ranking is the gap | Phase 213: hub_homogeneous × sentence H@1=66.8% (500-sample, 3-hop) — 2D calibration table complete | Phase 53 canonical paper numbers unchanged</em></p>
 
@@ -3592,6 +3592,10 @@ optimizes exactly this ranking; CEREBRUM does not.</p>
     
     
       <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>
