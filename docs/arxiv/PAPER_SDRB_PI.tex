@@ -46,12 +46,9 @@ $\text{boost}(r) = \gamma \cdot \text{fan\_out}(r)^{\beta}$,
 where $\gamma$ and $\beta$ are derived from the graph's own fan-out statistics
 rather than from labeled data.
 Second, the \textbf{ParameterInitializer}, a principled procedure that
-analytically maps all nine scoring hyperparameters
-(terminal relation boost, fan-out amplification, path corroboration,
-first-hop disambiguation, IDF hub penalty, community vote weight,
-branch evidence combination, beam width, and power-law exponent)
-to measurable graph statistics via IDF theory, Bayesian evidence combination,
-and Newman-Girvan modularity.
+analytically maps all nine scoring hyperparameters to measurable graph
+statistics via IDF theory, Bayesian evidence combination, and
+Newman-Girvan modularity — without any labeled data.
 The procedure is parameterized by a two-dimensional calibration table
 indexed by graph regime (\textit{hub-homogeneous}, \textit{typed-heterogeneous},
 \textit{mixed}) and embedding method (\textit{random}, \textit{sentence-transformers}).
