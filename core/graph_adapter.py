@@ -7,6 +7,7 @@ and the full CEREBRUM stack works with it unchanged.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict
+import json
 import numpy as np
 import networkx as nx
 
@@ -317,4 +318,68 @@ class GraphAdapter(ABC):
         return 1.5
 
 
+class CredibilityRegistry:
+    """
+    Phase 216-A: Per-source trust priors for graph edge provenance.
 
+    Maps provenance strings (e.g. "pubmed:123", "synthetic") to a credibility
+    score in [0, 1].  Edges with unknown provenance get the default score (0.7).
+
+    The score is multiplied into the CSA 'grounding' feature so that
+    authoritative sources (PubMed, structured KBs) naturally score higher than
+    synthetic or inferred edges — without touching path score arithmetic.
+    """
+
+    _DEFAULTS: Dict[str, float] = {
+        "pubmed":    0.95,
+        "openkg":    0.85,
+        "wikidata":  0.90,
+        "freebase":  0.88,
+        "dbpedia":   0.85,
+        "inferred":  0.50,
+        "synthetic": 0.30,
+        "rem_synthesized": 0.25,
+        "hypothesis": 0.40,
+    }
+
+    def __init__(self, default_score: float = 0.70) -> None:
+        self._scores: Dict[str, float] = dict(self._DEFAULTS)
+        self.default_score = default_score
+
+    def get(self, provenance: str) -> float:
+        """Return credibility for a provenance string.
+
+        Matches by prefix so "pubmed:12345" returns the 'pubmed' score.
+        """
+        if not provenance:
+            return self.default_score
+        # Exact match first
+        if provenance in self._scores:
+            return self._scores[provenance]
+        # Prefix match (e.g. "pubmed:123" → "pubmed")
+        for key, score in self._scores.items():
+            if provenance.startswith(key):
+                return score
+        return self.default_score
+
+    def register(self, source: str, score: float) -> None:
+        """Register or update the credibility score for a source prefix."""
+        self._scores[source] = float(max(0.0, min(1.0, score)))
+
+    def to_dict(self) -> dict:
+        return {"default_score": self.default_score, "scores": dict(self._scores)}
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "CredibilityRegistry":
+        obj = cls(default_score=d.get("default_score", 0.70))
+        obj._scores.update(d.get("scores", {}))
+        return obj
+
+    def save(self, path: str) -> None:
+        with open(path, "w") as f:
+            json.dump(self.to_dict(), f, indent=2)
+
+    @classmethod
+    def load(cls, path: str) -> "CredibilityRegistry":
+        with open(path) as f:
+            return cls.from_dict(json.load(f))

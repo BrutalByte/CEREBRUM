@@ -46,6 +46,18 @@ class SymbolicValidator:
     def add_constraint(self, constraint: "IntegrityConstraint") -> None:
         self.constraints.append(constraint)
 
+    def register_causal_relation(self, relation: str) -> None:
+        """Phase 216-B: Register a relation type as causal (discovered by CausalDiscoveryEngine).
+
+        Adds a CAUSAL_ORDERING constraint so that traversal enforces temporal
+        ordering (valid_from monotonicity) when following this relation type.
+        """
+        c = IntegrityConstraint(
+            constraint_type=ConstraintType.CAUSAL_ORDERING,
+            params={"relation": relation},
+        )
+        self.constraints.append(c)
+
     def validate_step(self, u: str, relation: str, v: str, path=None) -> bool:
         """Per-hop validation against IntegrityConstraints and contradiction_engine."""
         for c in self.constraints:

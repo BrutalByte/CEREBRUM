@@ -671,6 +671,7 @@ class BeamTraversal:
                     # --- Prepare neighbor embeddings for both scoring paths ---
                     _v_list   = [s[0] for s in _batch_steps]
                     _rel_list = [s[1] for s in _batch_steps]
+                    _prov_list = [s[3] for s in _batch_steps]
                     _vt_list  = [s[5] for s in _batch_steps]
                     _vf_list  = [s[4] for s in _batch_steps]
 
@@ -686,6 +687,7 @@ class BeamTraversal:
                             edge_types=_rel_list, valid_tos=_vt_list,
                             eu=eu, ev_list=_ev_list,
                             edge_type_weights=self.edge_type_weights,
+                            provenances=_prov_list,
                         )
                     else:
                         # Per-step fallback when batch scorer is unavailable

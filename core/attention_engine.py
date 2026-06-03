@@ -118,6 +118,9 @@ class CSAEngine:
         self._query_snapshot: Optional[Dict[str, int]] = None
         self._query_time: Optional[float] = None
         self._cs_cache: Dict[Tuple[str, str], float] = {}
+        # Phase 216-A: Source credibility registry
+        from core.graph_adapter import CredibilityRegistry
+        self.credibility_registry: Optional[CredibilityRegistry] = kwargs.get("credibility_registry", None)
 
     def compute_attention(self, u_idx: int, neighbor_indices: List[int]) -> torch.Tensor:
         """
@@ -241,7 +244,7 @@ class CSAEngine:
         )
         return logit.score(params)
 
-    def compute_weight_with_features(self, u, v, hop, edge_type="", edge_type_weights=None, normalized_distance=0.0, valid_from=None, valid_to=None, eu=None, ev=None) -> ReasoningLogit:
+    def compute_weight_with_features(self, u, v, hop, edge_type="", edge_type_weights=None, normalized_distance=0.0, valid_from=None, valid_to=None, eu=None, ev=None, provenance: str = "") -> ReasoningLogit:
         if edge_type == "BRIDGE_TWIN":
             # Force high score for structural relay
             return ReasoningLogit(sim=1.0, cs=1.0, etw=1.0, hd=10.0, grounding=1.0)
@@ -272,7 +275,12 @@ class CSAEngine:
                     td *= 0.1 # Window penalty
 
         sd = 1.0 if "rem_synthesized" in edge_type else 0.0
-        grounding = 1.0 # Default
+        # Phase 216-A: Source credibility — trust prior per provenance prefix
+        grounding = (
+            self.credibility_registry.get(provenance)
+            if self.credibility_registry is not None and provenance
+            else 1.0
+        )
 
         # Phase 143: Apply Homeostatic Scaling if modulator exists
         modulator = getattr(self, "homeostatic_modulator", None)
@@ -293,6 +301,7 @@ class CSAEngine:
         eu: Optional[np.ndarray] = None,
         ev_list: Optional[List[np.ndarray]] = None,
         edge_type_weights: Optional[Dict[str, float]] = None,
+        provenances: Optional[List[str]] = None,
     ) -> List[ReasoningLogit]:
         """Vectorized batch version of compute_weight_with_features."""
         n = len(v_list)
@@ -351,7 +360,13 @@ class CSAEngine:
                         _td_cache[_td_key] = td
 
             sd = 1.0 if "rem_synthesized" in edge_types[i] else 0.0
-            logits.append(ReasoningLogit(sims[i], cs_scores[i], etw, 0.0, hd, pr_v, td, nr_v, sd, 1.0))
+            # Phase 216-A: credibility-weighted grounding
+            grounding = (
+                self.credibility_registry.get(provenances[i])
+                if self.credibility_registry is not None and provenances and provenances[i]
+                else 1.0
+            )
+            logits.append(ReasoningLogit(sims[i], cs_scores[i], etw, 0.0, hd, pr_v, td, nr_v, sd, grounding))
             
         return logits
 
