@@ -438,7 +438,7 @@ class DocumentBackend(PerceptionBackend):
 # ---------------------------------------------------------------------------
 
 _TRIPLE_RE = re.compile(
-    r"^\s*([^\|]+?)\s*\|\s*([A-Z][A-Z0-9_]*)\s*\|\s*([^\|]+?)\s*$",
+    r"^\s*([^\|\n]+?)\s*\|\s*([A-Z][A-Z0-9_]*)\s*\|\s*([^\|\n]+?)\s*$",
     re.MULTILINE,
 )
 
@@ -627,6 +627,9 @@ class PerceptionAdapter:
 
         for subj, rel, obj in triples:
             if not (subj and rel and obj):
+                continue
+            # Discard LLM preamble bleed — real KG entities are concise
+            if len(subj) > 120 or len(obj) > 120:
                 continue
             processed = pipeline.process(
                 source=subj,

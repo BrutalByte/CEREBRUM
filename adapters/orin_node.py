@@ -63,9 +63,12 @@ logger = logging.getLogger("cerebrum.orin")
 
 # Default commands run on the Orin.  Override at OrinPerceptionNode() init.
 _DEFAULT_WHISPER_CMD = (
-    "python3 -m faster_whisper {remote_path} "
-    "--model {model} --output_format json --output_dir /tmp/ 2>/dev/null"
-    " && cat /tmp/{stem}.json"
+    "python3 -c \""
+    "from faster_whisper import WhisperModel; import json, sys; "
+    "m=WhisperModel('{model}', device='auto'); "
+    "segs,info=m.transcribe('{remote_path}'); "
+    "text=' '.join(s.text for s in segs).strip(); "
+    "print(json.dumps({{'text': text, 'language': info.language}}))\" 2>/dev/null"
 )
 _DEFAULT_VISION_CMD = (
     "python3 -c \""
@@ -234,71 +237,82 @@ class OrinNode:
     @contextmanager
     def open_tunnel(self, remote_port: int, local_port: int) -> Iterator[None]:
         """
-        Forward Orin's remote_port to localhost:local_port.
+        Forward localhost:local_port to Orin's remote_port (local port forwarding).
 
         Useful for accessing the Orin's ollama/llama-server through a normal
         HTTP backend without exposing the port over the network.
 
         Usage::
 
-            with node.open_tunnel(remote_port=11434, local_port=11434):
-                backend = VisionBackend(endpoint="http://localhost:11434/v1")
-                result = backend.perceive("image.jpg")
+            with node.open_tunnel(remote_port=11434, local_port=21434):
+                llm = OllamaAdapter(url="http://localhost:21434")
         """
+        import select as _select
+
         self._require_connected()
         transport = self._client.get_transport()
         stop_event = threading.Event()
 
-        def _forward_handler(chan: Any, src_addr: Any, dest_addr: Any) -> None:
-            sock = socket.socket()
+        def _handle_connection(local_sock: Any) -> None:
             try:
-                sock.connect(dest_addr)
+                chan = transport.open_channel(
+                    "direct-tcpip",
+                    ("127.0.0.1", remote_port),
+                    local_sock.getpeername(),
+                )
                 while not stop_event.is_set():
-                    import select
-                    rlist, _, _ = select.select([sock, chan], [], [], 0.1)
-                    if sock in rlist:
-                        data = sock.recv(1024)
+                    rlist, _, _ = _select.select([local_sock, chan], [], [], 0.1)
+                    if local_sock in rlist:
+                        data = local_sock.recv(4096)
                         if not data:
                             break
                         chan.send(data)
                     if chan in rlist:
-                        data = chan.recv(1024)
+                        data = chan.recv(4096)
                         if not data:
                             break
-                        sock.send(data)
+                        local_sock.send(data)
+            except Exception as exc:
+                logger.debug("Tunnel connection closed: %s", exc)
             finally:
-                sock.close()
-                chan.close()
+                try:
+                    local_sock.close()
+                except Exception:
+                    pass
+                try:
+                    chan.close()
+                except Exception:
+                    pass
+
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind(("127.0.0.1", local_port))
+        server.listen(20)
+        server.settimeout(0.5)
 
         def _accept_loop() -> None:
             while not stop_event.is_set():
                 try:
-                    chan = transport.accept(0.5)
-                    if chan is None:
-                        continue
-                    src_addr = chan.origin_addr
-                    dest_addr = ("127.0.0.1", local_port)
+                    client_sock, _ = server.accept()
                     t = threading.Thread(
-                        target=_forward_handler,
-                        args=(chan, src_addr, dest_addr),
+                        target=_handle_connection,
+                        args=(client_sock,),
                         daemon=True,
                     )
                     t.start()
+                except socket.timeout:
+                    continue
                 except Exception:
                     break
 
+        accept_thread = threading.Thread(target=_accept_loop, daemon=True)
+        accept_thread.start()
+        logger.info("Tunnel open: localhost:%s → orin:%s", local_port, remote_port)
         try:
-            transport.request_port_forward("", local_port)
-            accept_thread = threading.Thread(target=_accept_loop, daemon=True)
-            accept_thread.start()
-            logger.info("Tunnel open: localhost:%s → orin:%s", local_port, remote_port)
             yield
         finally:
             stop_event.set()
-            try:
-                transport.cancel_port_forward("", local_port)
-            except Exception:
-                pass
+            server.close()
             logger.info("Tunnel closed: localhost:%s", local_port)
 
 
