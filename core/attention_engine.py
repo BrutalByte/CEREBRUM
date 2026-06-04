@@ -17,7 +17,7 @@ Implements the attention weight formula from Section 4.1, updated for Phase 43:
   )
 """
 import math
-from typing import Dict, Optional, Set, Tuple, Any
+from typing import Dict, List, Optional, Set, Tuple, Any
 
 import numpy as np
 from core.graph_adapter import GraphAdapter
