@@ -1603,6 +1603,34 @@ class CerebrumGraph:
         return answers
 
     # ------------------------------------------------------------------
+    # Phase 220: Self-Aware Query
+    # ------------------------------------------------------------------
+
+    def query_aware(self, *args, **kwargs):
+        """
+        Phase 220: Like query() but also returns a SelfAwarenessReport.
+
+        Returns
+        -------
+        (answers, report) : Tuple[List[Answer], SelfAwarenessReport]
+
+        Example
+        -------
+            answers, report = graph.query_aware(seeds=["Tom_Hanks"], max_hop=2)
+            print(report.summary)
+            # "High confidence answer driven by community structure, supported by
+            #  3 independent paths via authoritative sources."
+        """
+        from core.self_awareness import SelfAwarenessEngine
+        answers = self.query(*args, **kwargs)
+        engine = SelfAwarenessEngine.from_symbolic_validator(
+            self._validator if hasattr(self, "_validator") else type(
+                "V", (), {"constraints": []})()
+        )
+        report = engine.assess(answers)
+        return answers, report
+
+    # ------------------------------------------------------------------
     # Phase 95: Working Memory + Goal Stack attachment
     # ------------------------------------------------------------------
 

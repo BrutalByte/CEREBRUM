@@ -188,9 +188,10 @@
     </div>
     <!-- Nav links (desktop) -->
     <div class="hidden md:flex items-center gap-8">
-      <a href="#pipeline"    class="text-sm text-slate-400 hover:text-white transition-colors">Pipeline</a>
-      <a href="#research"    class="text-sm text-slate-400 hover:text-white transition-colors">Research</a>
-      <a href="#benchmarks"  class="text-sm text-slate-400 hover:text-white transition-colors">Benchmarks</a>
+      <a href="#pipeline"        class="text-sm text-slate-400 hover:text-white transition-colors">Pipeline</a>
+      <a href="#self-awareness"  class="text-sm text-indigo hover:text-white transition-colors font-medium">Self-Aware ✦</a>
+      <a href="#research"        class="text-sm text-slate-400 hover:text-white transition-colors">Research</a>
+      <a href="#benchmarks"      class="text-sm text-slate-400 hover:text-white transition-colors">Benchmarks</a>
       <a href="#references"  class="text-sm text-slate-400 hover:text-white transition-colors">References</a>
       <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" class="text-sm text-slate-400 hover:text-white transition-colors">Docs</a>
       <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" class="text-sm text-slate-400 hover:text-white transition-colors">GitHub</a>
@@ -203,8 +204,9 @@
   </div>
   <!-- Mobile menu -->
   <div x-data="{ open: false }" @toggle-menu.window="open = !open" x-show="open" x-transition class="md:hidden px-6 pb-4 flex flex-col gap-3 border-t border-border">
-    <a href="#pipeline"   class="text-sm text-slate-400 hover:text-white py-1">Pipeline</a>
-    <a href="#research"   class="text-sm text-slate-400 hover:text-white py-1">Research</a>
+    <a href="#pipeline"       class="text-sm text-slate-400 hover:text-white py-1">Pipeline</a>
+    <a href="#self-awareness" class="text-sm text-indigo hover:text-white py-1 font-medium">Self-Aware ✦</a>
+    <a href="#research"       class="text-sm text-slate-400 hover:text-white py-1">Research</a>
     <a href="#benchmarks" class="text-sm text-slate-400 hover:text-white py-1">Benchmarks</a>
     <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" class="text-sm text-slate-400 hover:text-white py-1">Docs</a>
     <a href="https://github.com/BrutalByte/CEREBRUM"  target="_blank" rel="noopener" class="text-sm text-slate-400 hover:text-white py-1">GitHub</a>
@@ -411,8 +413,8 @@
     <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
       <div class="flex-shrink-0 w-1 h-16 bg-gradient-to-b from-cyan to-cyan/0 rounded-full"></div>
       <div>
-        <p class="text-3xl md:text-4xl font-bold text-white leading-tight">No labels. No training loop.<br><span class="text-cyan">56.8% H@1 out of the box.</span></p>
-        <p class="text-slate-500 mt-3 text-sm max-w-lg">Zero-config, zero tuning. Supervised systems like UniKGQA reach 99% H@1 on MetaQA — after training on thousands of labeled question-answer pairs from that exact dataset. CEREBRUM reaches 60.4% (tuned) or 56.8% (zero-config) on the same benchmark with no labels, no gradient descent, and no GPU cluster required. The retrieval gap is 88.3% H@10 — within 11 points of UniKGQA's top-1 accuracy, entirely training-free.</p>
+        <p class="text-3xl md:text-4xl font-bold text-white leading-tight">No labels. No training loop.<br><span class="text-cyan">60.6% H@1 out of the box.</span></p>
+        <p class="text-slate-500 mt-3 text-sm max-w-lg">Zero-config, zero tuning. Supervised systems like UniKGQA reach 99% H@1 on MetaQA — after training on thousands of labeled question-answer pairs from that exact dataset. CEREBRUM reaches 66.8% (tuned) or 60.6% (zero-config) on the same benchmark with no labels, no gradient descent, and no GPU cluster required. The retrieval gap is 89.8% H@10 — within 10 points of UniKGQA's top-1 accuracy, entirely training-free.</p>
       </div>
     </div>
 
@@ -423,6 +425,89 @@
         <p class="text-3xl md:text-4xl font-bold text-white leading-tight">Knowledge graphs were<br>always the answer.<br><span class="bg-gradient-to-r from-indigo to-cyan bg-clip-text text-transparent">We just made them work.</span></p>
         <p class="text-slate-500 mt-3 text-sm max-w-lg">30+ original algorithmic contributions. Community detection, Bayesian beam search, ParameterInitializer, SDRB, H1SE, STRB, GraphProfiler — all working together, on any knowledge base, out of the box.</p>
       </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 2.7: SELF-AWARENESS
+══════════════════════════════════════════════════ -->
+<section id="self-awareness" class="py-24 px-6 border-t border-border bg-surface">
+  <div class="max-w-6xl mx-auto">
+
+    <!-- Headline -->
+    <div class="text-center mb-16">
+      <p class="text-xs font-mono uppercase tracking-widest text-indigo mb-4">v2.72 — Phase 220</p>
+      <h2 class="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
+        CEREBRUM knows<br>
+        <span class="bg-gradient-to-r from-indigo to-cyan bg-clip-text text-transparent">what it doesn't know.</span>
+      </h2>
+      <p class="text-slate-400 text-lg max-w-2xl mx-auto">
+        Most AI systems produce answers. CEREBRUM v2.72 produces answers <em>and a model of its own confidence</em> — which signals drove the result, how good the evidence is, whether it's guessing, and why.
+      </p>
+    </div>
+
+    <!-- Five awareness dimensions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+
+      <div class="bg-bg border border-border rounded-xl p-6">
+        <div class="text-2xl mb-3">🎯</div>
+        <h3 class="text-white font-semibold mb-2">Confidence is a number, not a feeling</h3>
+        <p class="text-slate-400 text-sm">Score margin between top answer and runner-up. Beam score variance (Beta distribution). Branch count. Three independent signals quantify exactly how decisive the answer is.</p>
+      </div>
+
+      <div class="bg-bg border border-border rounded-xl p-6">
+        <div class="text-2xl mb-3">🔍</div>
+        <h3 class="text-white font-semibold mb-2">It knows where its knowledge came from</h3>
+        <p class="text-slate-400 text-sm">PubMed edges score at 0.95 credibility. Synthetic inferences score at 0.30. Source credibility flows directly into path scores — authoritative evidence wins on merit, not position.</p>
+      </div>
+
+      <div class="bg-bg border border-border rounded-xl p-6">
+        <div class="text-2xl mb-3">⚡</div>
+        <h3 class="text-white font-semibold mb-2">It knows which signal drove the answer</h3>
+        <p class="text-slate-400 text-sm">Every response identifies the dominant CSA feature: community structure, semantic similarity, source credibility, temporal freshness, or hub authority. No black box.</p>
+      </div>
+
+      <div class="bg-bg border border-border rounded-xl p-6">
+        <div class="text-2xl mb-3">⚠️</div>
+        <h3 class="text-white font-semibold mb-2">It detects its own knowledge gaps</h3>
+        <p class="text-slate-400 text-sm">When no paths converge above threshold, the system flags a knowledge gap rather than hallucinating a confident wrong answer. "I don't know" is a valid — and surfaced — result.</p>
+      </div>
+
+      <div class="bg-bg border border-border rounded-xl p-6">
+        <div class="text-2xl mb-3">🔬</div>
+        <h3 class="text-white font-semibold mb-2">Causal vs. correlational paths</h3>
+        <p class="text-slate-400 text-sm">CausalDiscoveryEngine automatically classifies relation types as causal or correlational. Every answer reports what fraction of its reasoning chain is causal — without manual annotation.</p>
+      </div>
+
+      <div class="bg-bg border border-border rounded-xl p-6">
+        <div class="text-2xl mb-3">🧠</div>
+        <h3 class="text-white font-semibold mb-2">Second-order reasoning about reasoning</h3>
+        <p class="text-slate-400 text-sm">Meta-relation traversal lets CEREBRUM reason about the structure of its own knowledge graph: "What kinds of connections link disease to gene?" — answered by traversing relation types, not entities.</p>
+      </div>
+
+    </div>
+
+    <!-- Live API example -->
+    <div class="bg-bg border border-indigo/30 rounded-xl p-8">
+      <p class="text-xs font-mono uppercase tracking-widest text-indigo mb-4">Every /query response now includes:</p>
+      <pre class="text-sm font-mono overflow-x-auto"><code><span class="text-slate-500">{</span>
+  <span class="text-cyan">"answer"</span><span class="text-slate-500">:</span> <span class="text-green-400">"ibuprofen"</span><span class="text-slate-500">,</span>
+  <span class="text-cyan">"self_awareness"</span><span class="text-slate-500">: {</span>
+    <span class="text-cyan">"answer_confidence"</span><span class="text-slate-500">:</span>  <span class="text-amber-400">0.74</span><span class="text-slate-500">,</span>        <span class="text-slate-600">// score margin over runner-up</span>
+    <span class="text-cyan">"evidence_quality"</span><span class="text-slate-500">:</span>  <span class="text-amber-400">0.93</span><span class="text-slate-500">,</span>        <span class="text-slate-600">// mean source credibility on path</span>
+    <span class="text-cyan">"corroboration"</span><span class="text-slate-500">:</span>     <span class="text-amber-400">4</span><span class="text-slate-500">,</span>           <span class="text-slate-600">// independent paths that agreed</span>
+    <span class="text-cyan">"dominant_signal"</span><span class="text-slate-500">:</span>   <span class="text-green-400">"community_structure"</span><span class="text-slate-500">,</span>
+    <span class="text-cyan">"causal_fraction"</span><span class="text-slate-500">:</span>   <span class="text-amber-400">0.67</span><span class="text-slate-500">,</span>        <span class="text-slate-600">// 2/3 path edges are causal</span>
+    <span class="text-cyan">"knowledge_gap"</span><span class="text-slate-500">:</span>     <span class="text-red-400">false</span><span class="text-slate-500">,</span>
+    <span class="text-cyan">"contradiction_detected"</span><span class="text-slate-500">:</span> <span class="text-red-400">false</span><span class="text-slate-500">,</span>
+    <span class="text-cyan">"summary"</span><span class="text-slate-500">:</span> <span class="text-green-400">"High confidence answer driven by community structure,</span>
+               <span class="text-green-400">supported by 4 independent paths via authoritative sources;
+               67% of path edges are causal."</span>
+  <span class="text-slate-500">}</span>
+<span class="text-slate-500">}</span></code></pre>
     </div>
 
   </div>

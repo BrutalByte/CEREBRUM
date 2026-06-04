@@ -1,6 +1,6 @@
 # CEREBRUM System Architecture
 
-**Status**: v2.72.0 (Phase 219 COMPLETE — 2261 tests passing, 4 skipped)
+**Status**: v2.72.0 (Phase 220 COMPLETE — 2269 tests passing, 4 skipped)
 
 Complete data-flow from ingestion to result, including all options, pathways, and decision nodes.
 
@@ -132,6 +132,17 @@ These phases add ten biologically-grounded cognitive enhancements. None alter th
 | Adaptive Loop Tuning | on / off | DiscoveryCalibrator-driven dynamic cap scaling | 
 | TelemetryBridge | ws_port set / not set | WebSocket server for UE5 visualization |
 | GUI Adaptation | on / off | metabolic-driven UI structural adaptation |
+
+### Phase 220: Explicit Epistemic Self-Awareness
+`SelfAwarenessEngine` synthesises a `SelfAwarenessReport` from every query result.
+Seven dimensions — answer confidence, epistemic uncertainty (Beta variance), evidence quality
+(mean provenance credibility), corroboration (branch count), signal attribution (dominant
+CSA feature), causal fraction, and knowledge gap detection — are aggregated into a
+structured dict returned on every `/query` response as `self_awareness`. Plain-English
+`summary` field auto-generated. `CerebrumGraph.query_aware()` returns `(answers, report)`
+tuple. Zero added latency — all computation is `O(path_length)` over already-available data.
+
+**Files**: `core/self_awareness.py`, `api/schemas.py` (`QueryResponse.self_awareness`), `core/cerebrum.py`
 
 ---
 **Reviewed on**: June 3, 2026 for version v2.72.0

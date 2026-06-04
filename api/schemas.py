@@ -261,6 +261,14 @@ class QueryResponse(BaseModel):
         default=None,
         description="Unique ID for this query session. Pass to /feedback for triplet learning.",
     )
+    # Phase 220: Self-awareness report
+    self_awareness: Optional[Dict] = Field(
+        default=None,
+        description=(
+            "Phase 220 SelfAwarenessReport: confidence, evidence quality, dominant signal, "
+            "corroboration, contradiction detection, knowledge gap, and a plain-English summary."
+        ),
+    )
 
 
 class CommunityInfo(BaseModel):

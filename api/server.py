@@ -1153,6 +1153,17 @@ def create_app(
         except Exception as _pe:
             _api_log.debug("prometheus metric record failed: %s", _pe)
 
+        # Phase 220: Self-Awareness Report
+        _self_awareness = None
+        try:
+            from core.self_awareness import SelfAwarenessEngine
+            _sa_engine = SelfAwarenessEngine.from_symbolic_validator(
+                _state.get("validator") or type("V", (), {"constraints": []})()
+            )
+            _self_awareness = _sa_engine.assess(answers).to_dict()
+        except Exception as _sae:
+            _api_log.debug("SelfAwarenessEngine.assess failed: %s", _sae)
+
         return QueryResponse(
             query=req.query,
             seeds_used=seeds,
@@ -1169,6 +1180,7 @@ def create_app(
             epistemic_warning=_epistemic_warning,
             gate_decision=_gate_decision,
             query_id=_query_id,
+            self_awareness=_self_awareness,
         )
 
     @router.post("/query/trace", response_model=TraceResponse, tags=["reasoning"])

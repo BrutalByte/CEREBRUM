@@ -1385,6 +1385,28 @@ while maintaining structural freshness on high-traffic regions.
 
 ---
 
+---
+
+## Part VII: Phase 220 — Explicit Epistemic Self-Awareness
+
+### Claim 70: SelfAwarenessEngine — Queryable Epistemic Self-Assessment
+
+**Description**: A post-query synthesis engine that aggregates five independent self-knowledge signals — answer confidence, evidence quality, corroboration depth, signal attribution, and knowledge gap detection — into a single structured `SelfAwarenessReport` appended to every `/query` response. The system produces a plain-English self-assessment alongside every answer.
+
+**Novelty Statement**: No published KG reasoning system produces explicit machine-readable self-assessments about its own answer quality at inference time. GNN-based systems (MINERVA, BeamQA, UniKGQA) return ranked answers with scores; none expose which attention signal dominated, whether the evidence is authoritative, whether a knowledge gap was detected, or what fraction of the reasoning chain was causal. SelfAwarenessEngine is the first system to synthesise CSA feature attribution, Beta-distribution epistemic uncertainty, provenance credibility, causal path classification, and knowledge gap detection into a single queryable report.
+
+**Closest Prior Art**:
+- GNN confidence calibration (Lakshminarayanan et al., 2017): scalar uncertainty estimates, not structured attribution
+- Epistemic uncertainty in Bayesian NNs: distributional output only, no signal decomposition
+- RAG confidence scoring (Kadavath et al., 2022): LLM self-verification, not structural KG attribution
+- CEREBRUM's own EpistemicGate (Phase 122): computes epistemic uncertainty for gating decisions — a single float, not a multi-dimensional structured report
+
+**Key Technical Differentiator**: The `SelfAwarenessEngine.assess()` method produces a structured report with: (1) answer confidence from score margin and Beta-distribution variance; (2) evidence quality from mean provenance credibility across path edges (Phase 216-A); (3) corroboration from independent path branch count; (4) dominant CSA signal from edge_features attribution; (5) causal fraction from CausalDiscoveryEngine-registered relations (Phase 216-B); (6) knowledge gap detection from score threshold and beam convergence; (7) a generated plain-English summary. All seven dimensions from a single `O(path_length)` pass over already-computed data.
+
+**Relevant files**: `core/self_awareness.py`, `api/schemas.py`, `api/server.py`, `core/cerebrum.py` (`query_aware()`)
+
+---
+
 **Reviewed on**: June 2026 for version v2.72.0
 
 ---
