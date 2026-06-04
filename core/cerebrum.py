@@ -1581,9 +1581,11 @@ class CerebrumGraph:
             weight_specificity    = weight_specificity,    # Phase 179: PSS
         )
 
-        # Phase 221: Uncertainty-steered retry + gap recovery
+        # Phase 221: Uncertainty-steered retry + gap recovery.
+        # Threshold 0.09 > Beta(1,1) default variance (0.083) so this only fires
+        # when Bayesian paths have meaningfully accumulated uncertainty, not on every query.
         self._last_gap_recovery = False
-        _eu_retry_threshold = getattr(self, "_eu_retry_threshold", 0.05)
+        _eu_retry_threshold = getattr(self, "_eu_retry_threshold", 0.09)
         try:
             from core.self_awareness import SelfAwarenessEngine as _SAE
             _sa_eng = _SAE()
@@ -1606,15 +1608,17 @@ class CerebrumGraph:
                     degree_penalty_weight=degree_penalty_weight, adapter=self.adapter,
                     fan_out=fan_out, weight_specificity=weight_specificity,
                 )
-                if _retry_answers:
+                # Only replace when retry finds a strictly better or first answer
+                _orig_top = answers[0].score if answers else 0.0
+                if _retry_answers and _retry_answers[0].score > _orig_top:
                     answers = _retry_answers
                     logger.debug("Phase 221-A: retry recovered %d answers", len(answers))
                     self._last_gap_recovery = True
                     if trace_info is not None:
                         setattr(trace_info, "retry_triggered", True)
-                    # 221-B: if still knowledge_gap, brute-force pass
+                    # 221-B: brute-force pass only when retry returned nothing useful
                     _retry_report2 = _sa_eng.assess(answers)
-                    if _retry_report2.knowledge_gap:
+                    if not answers or _retry_report2.knowledge_gap:
                         _saved_bw2 = traversal.beam_width
                         _saved_widths2 = getattr(traversal, "_beam_widths", {})
                         traversal.beam_width = max(self._beam_width, 32)

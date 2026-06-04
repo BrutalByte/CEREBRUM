@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.72.0 (Phase 219) — Updated Jun 3, 2026
+## Version: v2.73.0 (Phase 223) — Updated Jun 4, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -61,6 +61,10 @@ r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs 
 | **217** | Meta-relation layer (second-order graph reasoning) (cognitive architecture) | — | — | — |
 | **218** | Cross-KB Engram transfer + calibrator persistence + mixed-regime parameter blending (cognitive architecture) | — | — | — |
 | **219** | FastBindingEngine (one-shot episodic) + OscillationEngine (theta/gamma DSCF sync) (cognitive architecture) | — | — | — |
+| **220** | SelfAwarenessEngine — 7-dimension epistemic self-assessment (cognitive architecture) | — | — | — |
+| **221–223** | Uncertainty-steered retry + credibility resolution + PlattCalibration + cerebellar punishment + self-supervised adaptation (cognitive architecture) | **60.2%** | **89.4%** | **0.702** |
+
+*\* Phase 221–223 numbers from 500-sample sentence-transformer run (Jun 4, 2026). No regression vs Phase 220 baseline (60.6%).*
 
 ---
 
@@ -86,13 +90,21 @@ the gap to supervised methods is primarily a ranking problem, not a reasoning fa
 
 ---
 
-## MetaQA — Phase 219 Zero-Config Validation (v2.72.0)
+## MetaQA — Phase 219–223 Zero-Config Validation (v2.73.0)
 
 **Configuration:** 500-question sample, zero-config (ParameterInitializer auto-derives all params), no manual tuning.
-Phases 215–219 add cognitive architecture enhancements (IOR disabled by default, power-law forgetting,
-conflict monitoring, oscillation sync, etc.) — they do not alter the scoring path for standard MetaQA runs.
+Phases 215–223 add cognitive architecture enhancements (uncertainty retry threshold 0.09, PlattCalibration,
+cerebellar punishment, etc.) — none alter the primary scoring path for standard MetaQA runs when probabilistic=False.
 
-### Sentence-Transformers Embeddings
+### Phase 223 — Sentence-Transformers Embeddings (Jun 4, 2026)
+
+| Hop | H@1 | H@10 | MRR |
+|-----|-----|------|-----|
+| 1-hop | **84.0%** | **99.0%** | **0.892** |
+| 2-hop | **48.2%** | **92.0%** | **0.625** |
+| 3-hop | **60.2%** | **89.4%** | **0.702** |
+
+### Phase 219 — Sentence-Transformers Embeddings (Jun 3, 2026, archived)
 
 | Hop | H@1 | H@10 | MRR |
 |-----|-----|------|-----|
@@ -100,7 +112,7 @@ conflict monitoring, oscillation sync, etc.) — they do not alter the scoring p
 | 2-hop | **47.6%** | **91.2%** | **0.616** |
 | 3-hop | **60.6%** | **89.8%** | **0.717** |
 
-### Random Embeddings
+### Random Embeddings (Phase 219, archived)
 
 | Hop | H@1 | H@10 | MRR |
 |-----|-----|------|-----|
@@ -112,7 +124,7 @@ conflict monitoring, oscillation sync, etc.) — they do not alter the scoring p
 - Phase 212 zero-config random full run (39,093 q): 83.2% / 63.3% / 56.8% H@1
 - Phase 213 tuner best (hub_homogeneous × sentence, 500-sample): 66.8% 3-hop H@1
 
-Run date: 2026-06-03.
+Run date: 2026-06-04 (Phase 223), 2026-06-03 (Phase 219 archived).
 
 ---
 
