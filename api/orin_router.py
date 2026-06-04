@@ -50,11 +50,29 @@ orin_router = APIRouter()
 
 _node: Optional[OrinPerceptionNode] = None
 _node_lock = threading.Lock()
-_graph = NetworkXAdapter(nx.DiGraph())
+_local_graph = NetworkXAdapter(nx.DiGraph())   # fallback when NEXUS graph not loaded
 _event_queue: asyncio.Queue = asyncio.Queue(maxsize=500)
 _watch_thread: Optional[threading.Thread] = None
 _watch_active = threading.Event()
 _llm_fn: Any = None   # set to OllamaAdapter when connected
+
+# Injected by server.py so perception writes directly into the NEXUS graph.
+_nexus_graph_getter: Optional[Any] = None
+
+
+def register_graph_getter(fn: Any) -> None:
+    """Called by server.py at startup to share the main NEXUS graph adapter."""
+    global _nexus_graph_getter
+    _nexus_graph_getter = fn
+
+
+def _get_graph() -> NetworkXAdapter:
+    """Return the live NEXUS graph if available, else the local fallback."""
+    if _nexus_graph_getter is not None:
+        g = _nexus_graph_getter()
+        if g is not None:
+            return g
+    return _local_graph
 
 
 # ---------------------------------------------------------------------------
@@ -69,12 +87,13 @@ def _require_node() -> OrinPerceptionNode:
 
 def _get_perception_adapter() -> PerceptionAdapter:
     n = _require_node()
-    return n.create_perception_adapter(_graph, confidence_threshold=0.6, llm_fn=_llm_fn)
+    return n.create_perception_adapter(_get_graph(), confidence_threshold=0.6, llm_fn=_llm_fn)
 
 
 def _edges_snapshot() -> List[Dict]:
+    g = _get_graph()
     edges = []
-    for u, v, data in _graph._G.edges(data=True):
+    for u, v, data in g._G.edges(data=True):
         edges.append({
             "source": u,
             "target": v,
@@ -86,9 +105,10 @@ def _edges_snapshot() -> List[Dict]:
 
 
 def _nodes_snapshot() -> List[Dict]:
+    g = _get_graph()
     return [
-        {"id": n, "label": _graph._G.nodes[n].get("label", n)}
-        for n in _graph._G.nodes
+        {"id": n, "label": g._G.nodes[n].get("label", n)}
+        for n in g._G.nodes
     ]
 
 
@@ -157,12 +177,13 @@ class PerceiveResult(BaseModel):
 
 @orin_router.get("/status", response_model=OrinStatus)
 async def get_status():
-    global _node, _graph
+    global _node
     if _node is None or not _node.connected:
+        g = _get_graph()
         return OrinStatus(
             connected=False,
-            graph_nodes=_graph._G.number_of_nodes(),
-            graph_edges=_graph._G.number_of_edges(),
+            graph_nodes=g._G.number_of_nodes(),
+            graph_edges=g._G.number_of_edges(),
         )
     info: Dict[str, str] = {}
     try:
@@ -184,8 +205,8 @@ async def get_status():
         whisper_model=_node._whisper_model,
         ollama_model=_llm_fn._model if _llm_fn else None,
         system_info=info,
-        graph_nodes=_graph._G.number_of_nodes(),
-        graph_edges=_graph._G.number_of_edges(),
+        graph_nodes=_get_graph()._G.number_of_nodes(),
+        graph_edges=_get_graph()._G.number_of_edges(),
         watch_active=_watch_active.is_set(),
     )
 
@@ -288,7 +309,7 @@ async def perceive_audio(context: str = "", file: UploadFile = File(...)):
         tmp.write(await file.read())
         tmp_path = tmp.name
 
-    before = _graph._G.number_of_edges()
+    before = _get_graph()._G.number_of_edges()
     try:
         edges = pa.ingest_audio(tmp_path, context=context)
     finally:
@@ -306,7 +327,7 @@ async def perceive_image(context: str = "", file: UploadFile = File(...)):
         tmp.write(await file.read())
         tmp_path = tmp.name
 
-    before = _graph._G.number_of_edges()
+    before = _get_graph()._G.number_of_edges()
     try:
         edges = pa.ingest_image(tmp_path, context=context)
     finally:
@@ -324,7 +345,7 @@ async def perceive_document(context: str = "", file: UploadFile = File(...)):
         tmp.write(await file.read())
         tmp_path = tmp.name
 
-    before = _graph._G.number_of_edges()
+    before = _get_graph()._G.number_of_edges()
     try:
         edges = pa.ingest_document(tmp_path, context=context)
     finally:
@@ -338,7 +359,7 @@ async def perceive_document(context: str = "", file: UploadFile = File(...)):
 @orin_router.post("/perceive/text", response_model=PerceiveResult)
 async def perceive_text(req: PerceiveTextRequest):
     pa = _get_perception_adapter()
-    before = _graph._G.number_of_edges()
+    before = _get_graph()._G.number_of_edges()
     edges = pa.ingest_text(req.text, context=req.context)
     result = _make_result(edges, before)
     _put_event({"type": "text", "filename": "(direct)", **result.model_dump()})
@@ -352,7 +373,7 @@ def _make_result(edges: list, edges_before: int) -> PerceiveResult:
         confidence=edges[0].confidence if edges else 0.0,
         provenance=edges[0].provenance if edges else "",
         triples=triples,
-        edges_added=_graph._G.number_of_edges() - edges_before,
+        edges_added=_get_graph()._G.number_of_edges() - edges_before,
     )
 
 
@@ -370,8 +391,18 @@ async def get_graph():
 
 @orin_router.delete("/graph")
 async def clear_graph():
-    global _graph
-    _graph = NetworkXAdapter(nx.DiGraph())
+    global _local_graph
+    g = _get_graph()
+    if g is _local_graph:
+        _local_graph = NetworkXAdapter(nx.DiGraph())
+    else:
+        # Clear only Orin-sourced edges from the NEXUS graph
+        orin_edges = [
+            (u, v) for u, v, d in g._G.edges(data=True)
+            if "orin" in d.get("provenance", "").lower()
+        ]
+        g._G.remove_edges_from(orin_edges)
+        g._G.remove_nodes_from(list(nx.isolates(g._G)))
     return {"status": "cleared"}
 
 
@@ -390,18 +421,18 @@ async def watch_start(req: WatchStartRequest):
     _watch_active.set()
 
     def _watch_worker() -> None:
-        pa = node.create_perception_adapter(_graph, confidence_threshold=0.6, llm_fn=_llm_fn)
+        pa = node.create_perception_adapter(_get_graph(), confidence_threshold=0.6, llm_fn=_llm_fn)
         for result in node.watch_directory(req.remote_dir, req.modality, req.poll_interval):
             if not _watch_active.is_set():
                 break
-            before = _graph._G.number_of_edges()
+            before = _get_graph()._G.number_of_edges()
             edges = pa._process_result(result, req.context)
             ev = {
                 "type": "watch",
                 "provenance": result.provenance,
                 "transcript": result.raw_text[:300],
                 "triples": [[e.source, e.relation, e.target] for e in edges],
-                "edges_added": _graph._G.number_of_edges() - before,
+                "edges_added": _get_graph()._G.number_of_edges() - before,
             }
             _put_event(ev)
 

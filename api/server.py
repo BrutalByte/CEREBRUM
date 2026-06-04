@@ -3907,8 +3907,9 @@ def create_app(
     app.include_router(router, prefix="/v1")
 
     # â”€â”€ Orin perception router â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    from api.orin_router import orin_router
+    from api.orin_router import orin_router, register_graph_getter
     app.include_router(orin_router, prefix="/orin", tags=["orin"])
+    register_graph_getter(lambda: _state.get("adapter"))
 
     # â”€â”€ Unversioned /health â€” kept for Docker healthcheck and load-balancer
     #    probes that don't know about /v1.  No auth required. â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
