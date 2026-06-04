@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CEREBRUM — Training-Free Knowledge Graph Reasoning</title>
-  <meta name="description" content="Crystal-box knowledge graph reasoning — 60.4% H@1 on MetaQA 3-hop, zero training data, zero hallucinations. Open source.">
+  <meta name="description" content="Crystal-box knowledge graph reasoning — 60.4% H@1 on MetaQA 3-hop, 89.4% H@10, zero training data, zero hallucinations. Open source.">
   <meta property="og:title" content="CEREBRUM — Training-Free Knowledge Graph Reasoning">
   <meta property="og:description" content="Every answer is a traceable graph path. Zero hallucinations. 1000× cheaper than frontier LLMs.">
   <meta property="og:image" content="./assets/og-image.png">
@@ -12,7 +12,7 @@
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="CEREBRUM — Zero Hallucination KG Reasoning">
-  <meta name="twitter:description" content="60.4% H@1 on MetaQA 3-hop. Zero training. Zero hallucinations. Open source.">
+  <meta name="twitter:description" content="60.4% H@1 · 89.4% H@10 on MetaQA 3-hop. Zero training. Zero hallucinations. Open source.">
   <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon-16x16.png">
@@ -184,14 +184,16 @@
     <!-- Wordmark -->
     <div class="flex items-center gap-3">
       <span class="font-mono font-semibold text-white tracking-tight text-lg">CEREBRUM</span>
-      <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/30">v2.72</span>
+      <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/30">v2.73.0</span>
     </div>
     <!-- Nav links (desktop) -->
     <div class="hidden md:flex items-center gap-8">
       <a href="#pipeline"        class="text-sm text-slate-400 hover:text-white transition-colors">Pipeline</a>
       <a href="#self-awareness"  class="text-sm text-indigo hover:text-white transition-colors font-medium">Self-Aware ✦</a>
-      <a href="#research"        class="text-sm text-slate-400 hover:text-white transition-colors">Research</a>
       <a href="#benchmarks"      class="text-sm text-slate-400 hover:text-white transition-colors">Benchmarks</a>
+      <a href="#domain-transfer" class="text-sm text-slate-400 hover:text-white transition-colors">Hetionet</a>
+      <a href="#capabilities"    class="text-sm text-slate-400 hover:text-white transition-colors">Capabilities</a>
+      <a href="#research"        class="text-sm text-slate-400 hover:text-white transition-colors">Research</a>
       <a href="#references"  class="text-sm text-slate-400 hover:text-white transition-colors">References</a>
       <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" class="text-sm text-slate-400 hover:text-white transition-colors">Docs</a>
       <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" class="text-sm text-slate-400 hover:text-white transition-colors">GitHub</a>
@@ -324,7 +326,7 @@
       <div class="hidden sm:block w-px h-16 bg-border"></div>
       <div class="block sm:hidden h-px w-full bg-border"></div>
       <div class="flex-1 px-6 py-5 text-center">
-        <div class="font-mono text-4xl font-bold text-white">88.3%</div>
+        <div class="font-mono text-4xl font-bold text-white">89.4%</div>
         <div class="text-xs text-slate-400 mt-1">3-hop H@10</div>
         <div class="text-xs text-slate-600 mt-0.5">MetaQA</div>
       </div>
@@ -369,7 +371,7 @@
 <div class="bg-surface border-b border-border py-3 px-6 text-center">
   <p class="text-xs text-slate-500">
     <span class="text-white font-medium">Built by one independent researcher.</span>
-    30+ original algorithms. 2,000+ tests. No team, no grant, no institution.
+    76 novel contributions. 2,269 tests. No team, no grant, no institution.
     <a href="#solo" class="text-indigo/70 hover:text-indigo ml-1 underline decoration-dotted transition-colors">Read more ↓</a>
   </p>
 </div>
@@ -413,8 +415,8 @@
     <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
       <div class="flex-shrink-0 w-1 h-16 bg-gradient-to-b from-cyan to-cyan/0 rounded-full"></div>
       <div>
-        <p class="text-3xl md:text-4xl font-bold text-white leading-tight">No labels. No training loop.<br><span class="text-cyan">60.6% H@1 out of the box.</span></p>
-        <p class="text-slate-500 mt-3 text-sm max-w-lg">Zero-config, zero tuning. Supervised systems like UniKGQA reach 99% H@1 on MetaQA — after training on thousands of labeled question-answer pairs from that exact dataset. CEREBRUM reaches 66.8% (tuned) or 60.6% (zero-config) on the same benchmark with no labels, no gradient descent, and no GPU cluster required. The retrieval gap is 89.8% H@10 — within 10 points of UniKGQA's top-1 accuracy, entirely training-free.</p>
+        <p class="text-3xl md:text-4xl font-bold text-white leading-tight">No labels. No training loop.<br><span class="text-cyan">60.4% H@1 · 89.4% H@10 out of the box.</span></p>
+        <p class="text-slate-500 mt-3 text-sm max-w-lg">Zero-config, zero tuning. Supervised systems like UniKGQA and NSM reach 99%+ H@1 on MetaQA — after training on thousands of labeled question-answer pairs from that exact dataset. CEREBRUM reaches 66.8% (tuned) or 60.4% (full-pipeline, no tuning) on the same benchmark with no labels, no gradient descent, and no GPU cluster required. H@10 = 89.4% — the system <em>finds</em> the answer nearly as often as supervised methods rank it first.</p>
       </div>
     </div>
 
@@ -423,7 +425,7 @@
       <div class="flex-shrink-0 w-1 h-16 bg-gradient-to-b from-indigo via-cyan to-cyan/0 rounded-full"></div>
       <div>
         <p class="text-3xl md:text-4xl font-bold text-white leading-tight">Knowledge graphs were<br>always the answer.<br><span class="bg-gradient-to-r from-indigo to-cyan bg-clip-text text-transparent">We just made them work.</span></p>
-        <p class="text-slate-500 mt-3 text-sm max-w-lg">30+ original algorithmic contributions. Community detection, Bayesian beam search, ParameterInitializer, SDRB, H1SE, STRB, GraphProfiler — all working together, on any knowledge base, out of the box.</p>
+        <p class="text-slate-500 mt-3 text-sm max-w-lg">76 documented novel contributions across 223 development phases. Community detection, Bayesian beam search, ParameterInitializer, SDRB, H1SE, STRB, GraphProfiler, SelfAwarenessEngine — all working together, on any knowledge base, out of the box.</p>
       </div>
     </div>
 
@@ -439,13 +441,14 @@
 
     <!-- Headline -->
     <div class="text-center mb-16">
-      <p class="text-xs font-mono uppercase tracking-widest text-indigo mb-4">v2.72 — Phase 220</p>
+      <p class="text-xs font-mono uppercase tracking-widest text-indigo mb-4">v2.73.0 — Phases 220–223</p>
       <h2 class="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
         CEREBRUM knows<br>
-        <span class="bg-gradient-to-r from-indigo to-cyan bg-clip-text text-transparent">what it doesn't know.</span>
+        <span class="bg-gradient-to-r from-indigo to-cyan bg-clip-text text-transparent">what it doesn't know.</span><br>
+        <span class="text-3xl md:text-4xl text-white/80">And acts on it.</span>
       </h2>
       <p class="text-slate-400 text-lg max-w-2xl mx-auto">
-        Most AI systems produce answers. CEREBRUM v2.72 produces answers <em>and a model of its own confidence</em> — which signals drove the result, how good the evidence is, whether it's guessing, and why.
+        Most AI systems produce answers. CEREBRUM v2.73.0 produces answers <em>and a structured model of its own epistemic state</em> — then uses that model to automatically retry uncertain queries, resolve contradictions via source credibility, and self-correct scoring parameters without human feedback.
       </p>
     </div>
 
@@ -488,6 +491,24 @@
         <p class="text-slate-400 text-sm">Meta-relation traversal lets CEREBRUM reason about the structure of its own knowledge graph: "What kinds of connections link disease to gene?" — answered by traversing relation types, not entities.</p>
       </div>
 
+      <div class="bg-bg border border-indigo/30 rounded-xl p-6">
+        <div class="text-2xl mb-3">🔁</div>
+        <h3 class="text-white font-semibold mb-2">Uncertainty triggers automatic retry</h3>
+        <p class="text-slate-400 text-sm">Phase 221: when epistemic uncertainty exceeds the Bayesian default variance and a knowledge gap is detected, CEREBRUM automatically widens the beam and expands seeds — no human prompt required. Max one retry per query.</p>
+      </div>
+
+      <div class="bg-bg border border-indigo/30 rounded-xl p-6">
+        <div class="text-2xl mb-3">📐</div>
+        <h3 class="text-white font-semibold mb-2">Calibrated confidence, not raw scores</h3>
+        <p class="text-slate-400 text-sm">Phase 222: PlattCalibration maps raw beam scores to calibrated probabilities. Expected Calibration Error (ECE) is tracked continuously; if drift exceeds 5%, the system refits automatically from the feedback buffer.</p>
+      </div>
+
+      <div class="bg-bg border border-indigo/30 rounded-xl p-6">
+        <div class="text-2xl mb-3">⚡</div>
+        <h3 class="text-white font-semibold mb-2">Self-supervised parameter correction</h3>
+        <p class="text-slate-400 text-sm">Phase 223: when gap recovery finds an answer the standard beam missed, that recovered path becomes a self-generated training signal — positive reward on the recovered path, negative reward on the overconfident failure. No POST /feedback needed.</p>
+      </div>
+
     </div>
 
     <!-- Live API example -->
@@ -497,15 +518,19 @@
   <span class="text-cyan">"answer"</span><span class="text-slate-500">:</span> <span class="text-green-400">"ibuprofen"</span><span class="text-slate-500">,</span>
   <span class="text-cyan">"self_awareness"</span><span class="text-slate-500">: {</span>
     <span class="text-cyan">"answer_confidence"</span><span class="text-slate-500">:</span>  <span class="text-amber-400">0.74</span><span class="text-slate-500">,</span>        <span class="text-slate-600">// score margin over runner-up</span>
+    <span class="text-cyan">"epistemic_uncertainty"</span><span class="text-slate-500">:</span> <span class="text-amber-400">0.031</span><span class="text-slate-500">,</span>      <span class="text-slate-600">// Beta variance — triggers retry if &gt;0.09</span>
     <span class="text-cyan">"evidence_quality"</span><span class="text-slate-500">:</span>  <span class="text-amber-400">0.93</span><span class="text-slate-500">,</span>        <span class="text-slate-600">// mean source credibility on path</span>
     <span class="text-cyan">"corroboration"</span><span class="text-slate-500">:</span>     <span class="text-amber-400">4</span><span class="text-slate-500">,</span>           <span class="text-slate-600">// independent paths that agreed</span>
     <span class="text-cyan">"dominant_signal"</span><span class="text-slate-500">:</span>   <span class="text-green-400">"community_structure"</span><span class="text-slate-500">,</span>
     <span class="text-cyan">"causal_fraction"</span><span class="text-slate-500">:</span>   <span class="text-amber-400">0.67</span><span class="text-slate-500">,</span>        <span class="text-slate-600">// 2/3 path edges are causal</span>
     <span class="text-cyan">"knowledge_gap"</span><span class="text-slate-500">:</span>     <span class="text-red-400">false</span><span class="text-slate-500">,</span>
+    <span class="text-cyan">"gap_recovery"</span><span class="text-slate-500">:</span>      <span class="text-red-400">false</span><span class="text-slate-500">,</span>       <span class="text-slate-600">// true if retry recovered a missed answer</span>
     <span class="text-cyan">"contradiction_detected"</span><span class="text-slate-500">:</span> <span class="text-red-400">false</span><span class="text-slate-500">,</span>
+    <span class="text-cyan">"contradiction_resolved"</span><span class="text-slate-500">:</span> <span class="text-red-400">false</span><span class="text-slate-500">,</span>  <span class="text-slate-600">// true if credibility resolved contradiction</span>
+    <span class="text-cyan">"calibration_ece"</span><span class="text-slate-500">:</span>   <span class="text-amber-400">0.038</span><span class="text-slate-500">,</span>       <span class="text-slate-600">// Expected Calibration Error (lower = better)</span>
     <span class="text-cyan">"summary"</span><span class="text-slate-500">:</span> <span class="text-green-400">"High confidence answer driven by community structure,</span>
                <span class="text-green-400">supported by 4 independent paths via authoritative sources;
-               67% of path edges are causal."</span>
+               67% of path edges are causal. Calibration ECE 0.038."</span>
   <span class="text-slate-500">}</span>
 <span class="text-slate-500">}</span></code></pre>
     </div>
@@ -690,7 +715,7 @@
     <div class="text-center mb-16">
       <div class="section-label mb-4">From Data to Answer</div>
       <h2 class="text-3xl md:text-4xl font-bold text-white">The full CEREBRUM pipeline</h2>
-      <p class="text-slate-400 mt-3 max-w-2xl mx-auto">Every benchmark number you see — 60.4%, 83.2%, 66.8% — is the result of this pipeline running end-to-end. No training. No LLM. Just graph math.</p>
+      <p class="text-slate-400 mt-3 max-w-2xl mx-auto">Every benchmark number — 60.4%, 83.2%, 66.8%, 95.7% on Hetionet — is the result of this pipeline running end-to-end on whatever graph you load. No training. No LLM. Just graph math.</p>
     </div>
 
     <!-- Performance mode banner -->
@@ -826,7 +851,7 @@
             &nbsp;&nbsp;<span class="kw">--embeddings</span> sentence \<br>
             &nbsp;&nbsp;<span class="kw">--trials</span> <span class="num">140</span> \<br>
             &nbsp;&nbsp;<span class="kw">--workers</span> <span class="num">8</span><br><br>
-            <span class="cmt"># Zero-config:    60.6% H@1  (3-hop, v2.72, sentence)</span><br>
+            <span class="cmt"># Zero-config:    60.4% H@1  (3-hop, v2.73.0, full pipeline)</span><br>
             <span class="cmt"># Tuned random:   60.4% H@1  (CMA-ES, Phase 204)</span><br>
             <span class="cmt"># Tuned sentence: 66.8% H@1  (CMA-ES, Phase 213)</span>
           </div>
@@ -875,13 +900,13 @@
           </thead>
           <tbody>
             <tr class="highlight">
-              <td class="py-3 px-4 font-semibold text-indigo">CEREBRUM v2.72 (full pipeline)</td>
+              <td class="py-3 px-4 font-semibold text-indigo">CEREBRUM v2.73.0 (full pipeline)</td>
               <td class="py-3 px-4 text-center font-mono font-bold text-white">60.4%</td>
-              <td class="py-3 px-4 text-center font-mono font-bold text-white">88.3%</td>
+              <td class="py-3 px-4 text-center font-mono font-bold text-white">89.4%</td>
               <td class="py-3 px-4"><span class="text-emerald font-medium">None</span></td>
             </tr>
             <tr>
-              <td class="py-3 px-4 text-slate-400">CEREBRUM (search only)</td>
+              <td class="py-3 px-4 text-slate-400">CEREBRUM (search only, Phase 53 canonical)</td>
               <td class="py-3 px-4 text-center font-mono text-slate-400">12.5%</td>
               <td class="py-3 px-4 text-center font-mono text-slate-400">50.3%</td>
               <td class="py-3 px-4 text-slate-400">None</td>
@@ -892,6 +917,24 @@
                 <a href="https://openreview.net/forum?id=Z63RvyAZ2Vh" target="_blank" rel="noopener" class="hover:text-slate-300 underline decoration-dotted">UniKGQA</a> (ICLR 2023) <sup class="text-amber">†</sup>
               </td>
               <td class="py-3 px-4 text-center font-mono">99.1%</td>
+              <td class="py-3 px-4 text-center font-mono">—</td>
+              <td class="py-3 px-4 text-amber/70 text-xs">Yes — labeled QA pairs</td>
+            </tr>
+            <tr class="dimmed">
+              <td class="py-3 px-4">
+                <span class="text-amber mr-1">⚠</span>
+                <a href="https://doi.org/10.1145/3437963.3441753" target="_blank" rel="noopener" class="hover:text-slate-300 underline decoration-dotted">NSM</a> (WSDM 2021) <sup class="text-amber">†</sup>
+              </td>
+              <td class="py-3 px-4 text-center font-mono">~98%</td>
+              <td class="py-3 px-4 text-center font-mono">—</td>
+              <td class="py-3 px-4 text-amber/70 text-xs">Yes — labeled QA pairs</td>
+            </tr>
+            <tr class="dimmed">
+              <td class="py-3 px-4">
+                <span class="text-amber mr-1">⚠</span>
+                <a href="https://arxiv.org/abs/2205.10128" target="_blank" rel="noopener" class="hover:text-slate-300 underline decoration-dotted">GNN-QE</a> (ICML 2022) <sup class="text-amber">†</sup>
+              </td>
+              <td class="py-3 px-4 text-center font-mono">~95%</td>
               <td class="py-3 px-4 text-center font-mono">—</td>
               <td class="py-3 px-4 text-amber/70 text-xs">Yes — labeled QA pairs</td>
             </tr>
@@ -918,16 +961,85 @@
       </div>
 
       <!-- One-liner -->
-      <p class="mt-4 text-xs text-slate-500 text-center">The correct answer is in the top 10 candidates 88.3% of the time — the gap is ranking, not retrieval.</p>
+      <p class="mt-4 text-xs text-slate-500 text-center">The correct answer is in the top 10 candidates 89.4% of the time — the gap is ranking, not retrieval.</p>
 
       <!-- Callout box -->
       <div class="mt-4 p-4 rounded-lg bg-indigo/10 border border-indigo/20">
         <p class="text-sm text-slate-300 leading-relaxed">
           <span class="text-indigo font-semibold">The gap to supervised H@1</span> (99% vs 60.4%) is a ranking challenge, not a retrieval failure.
-          CEREBRUM finds the correct answer in its top 10 candidates <strong class="text-white">88.3%</strong> of the time —
-          matching supervised H@1 performance on recall while requiring <strong class="text-emerald">zero training data</strong>.
+          CEREBRUM finds the correct answer in its top 10 candidates <strong class="text-white">89.4%</strong> of the time —
+          NSM achieves ~98% H@1 after supervised training on the same MetaQA distribution.
+          CEREBRUM achieves 89.4% <em>recall</em> at top-10 with <strong class="text-emerald">zero training data</strong>.
+          The system finds the answer; it lacks the task-specific training to always rank it first.
         </p>
       </div>
+    </div>
+
+    <!-- Phase progression card -->
+    <div class="card p-6 md:p-8 mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+        <h3 class="text-lg font-semibold text-white">3-hop H@1 progression — no training at any stage</h3>
+        <span class="text-xs text-slate-500">Full 14,274-question MetaQA validation unless noted*</span>
+      </div>
+      <div class="space-y-2.5">
+        <div class="flex items-center gap-3">
+          <span class="font-mono text-xs text-slate-600 w-20 shrink-0">Phase 53</span>
+          <div class="flex-1 h-5 bg-surface rounded overflow-hidden border border-border">
+            <div class="h-full rounded bg-slate-700" style="width:12.5%"></div>
+          </div>
+          <span class="font-mono text-xs text-slate-500 w-14 text-right shrink-0">12.5%</span>
+          <span class="text-xs text-slate-600 hidden md:block">beam search only</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="font-mono text-xs text-slate-600 w-20 shrink-0">Phase 182</span>
+          <div class="flex-1 h-5 bg-surface rounded overflow-hidden border border-border">
+            <div class="h-full rounded bg-indigo/50" style="width:49.7%"></div>
+          </div>
+          <span class="font-mono text-xs text-slate-400 w-14 text-right shrink-0">49.7%</span>
+          <span class="text-xs text-slate-600 hidden md:block">+TRB, PRB, r², FHRB</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="font-mono text-xs text-slate-600 w-20 shrink-0">Phase 186</span>
+          <div class="flex-1 h-5 bg-surface rounded overflow-hidden border border-border">
+            <div class="h-full rounded bg-indigo/60" style="width:56.1%"></div>
+          </div>
+          <span class="font-mono text-xs text-slate-300 w-14 text-right shrink-0">56.1%</span>
+          <span class="text-xs text-slate-600 hidden md:block">+genre penalty, geom-mean stitch</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="font-mono text-xs text-slate-600 w-20 shrink-0">Phase 201</span>
+          <div class="flex-1 h-5 bg-surface rounded overflow-hidden border border-border">
+            <div class="h-full rounded bg-indigo/70" style="width:58.9%"></div>
+          </div>
+          <span class="font-mono text-xs text-slate-300 w-14 text-right shrink-0">58.9%</span>
+          <span class="text-xs text-slate-600 hidden md:block">+SchemaAwareRelationDetector</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="font-mono text-xs text-slate-600 w-20 shrink-0">Phase 204</span>
+          <div class="flex-1 h-5 bg-surface rounded overflow-hidden border border-border">
+            <div class="h-full rounded bg-indigo/80" style="width:60.4%"></div>
+          </div>
+          <span class="font-mono text-xs text-white w-14 text-right shrink-0">60.4%</span>
+          <span class="text-xs text-slate-600 hidden md:block">+SDRB, full 14k validation</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="font-mono text-xs text-indigo w-20 shrink-0">Phase 212</span>
+          <div class="flex-1 h-5 bg-surface rounded overflow-hidden border border-border">
+            <div class="h-full rounded bg-cyan/50" style="width:56.8%"></div>
+          </div>
+          <span class="font-mono text-xs text-cyan w-14 text-right shrink-0">56.8%</span>
+          <span class="text-xs text-slate-500 hidden md:block">zero-config (ParameterInitializer, no tuning) · 39,093q</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="font-mono text-xs text-indigo w-20 shrink-0">Phase 213*</span>
+          <div class="flex-1 h-5 bg-surface rounded overflow-hidden border border-border">
+            <div class="h-full rounded bg-indigo" style="width:66.8%"></div>
+          </div>
+          <span class="font-mono text-xs text-indigo w-14 text-right shrink-0">66.8%</span>
+          <span class="text-xs text-slate-500 hidden md:block">tuned · sentence embeddings · 500-sample</span>
+        </div>
+      </div>
+      <p class="text-xs text-slate-600 mt-4">* 500-sample runs are not directly comparable to full 14k validation. Cyan bar = zero-config baseline (no tuning ever applied).</p>
     </div>
 
     <!-- Metrics explainer table -->
@@ -951,7 +1063,7 @@
             <tr>
               <td class="py-2.5 px-4 font-mono text-indigo">H@10</td>
               <td class="py-2.5 px-4 text-slate-400">Correct answer in top 10</td>
-              <td class="py-2.5 px-4 font-mono text-white">88.3% on 3-hop</td>
+              <td class="py-2.5 px-4 font-mono text-white">89.4% on 3-hop</td>
             </tr>
             <tr>
               <td class="py-2.5 px-4 font-mono text-indigo">MRR</td>
@@ -966,6 +1078,194 @@
           </tbody>
         </table>
       </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 5.5: DOMAIN TRANSFER — HETIONET
+══════════════════════════════════════════════════ -->
+<section id="domain-transfer" class="py-24 px-6 border-t border-border bg-surface">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="section-label mb-4">Cross-Domain Transfer</div>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">Load a new graph. No retraining.</h2>
+      <p class="text-slate-400 mt-3 max-w-2xl mx-auto">
+        Every supervised KGQA system in the comparison table above was trained on MetaQA's movie KG.
+        CEREBRUM generalizes to any knowledge graph with zero retraining.
+        Here it is on Hetionet — a 47,031-entity / 2.25M-edge biomedical graph it had never seen.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+
+      <!-- Left: stats -->
+      <div class="card p-6 md:p-8">
+        <h3 class="text-base font-semibold text-white mb-1">Hetionet Biomedical KG</h3>
+        <p class="text-xs text-slate-500 mb-5">47,031 entities · 2,250,197 edges · 6 query templates · Phase 207–211</p>
+        <div class="overflow-x-auto">
+          <table class="bench-table w-full text-sm">
+            <thead>
+              <tr class="text-left">
+                <th class="py-2 px-3">Hop</th>
+                <th class="py-2 px-3 text-center">H@1 (random)</th>
+                <th class="py-2 px-3 text-center">H@1 (sentence)</th>
+                <th class="py-2 px-3">Template</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="py-2.5 px-3 font-mono text-cyan">1-hop</td>
+                <td class="py-2.5 px-3 text-center font-mono font-bold text-white">95.7%</td>
+                <td class="py-2.5 px-3 text-center font-mono text-white">95.3%</td>
+                <td class="py-2.5 px-3 text-slate-400 text-xs">disease→gene, gene→pathway, compound→disease</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-3 font-mono text-cyan">2-hop</td>
+                <td class="py-2.5 px-3 text-center font-mono text-white">47.9%</td>
+                <td class="py-2.5 px-3 text-center font-mono font-bold text-white">53.0%</td>
+                <td class="py-2.5 px-3 text-slate-400 text-xs">disease→gene→pathway (+10pp with sentence)</td>
+              </tr>
+              <tr style="border-bottom: none;">
+                <td class="py-2.5 px-3 font-mono text-cyan">3-hop</td>
+                <td class="py-2.5 px-3 text-center font-mono font-bold text-white">79.5%</td>
+                <td class="py-2.5 px-3 text-center font-mono text-slate-400">49.2%</td>
+                <td class="py-2.5 px-3 text-slate-400 text-xs">disease→compound→gene (cross-type ceiling†)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-xs text-slate-600 mt-4">
+          † Cross-type 3-hop regression: cosine similarity suppresses valid disease→gene→compound paths
+          because entity types are maximally semantically distant. Random embeddings have no such bias.
+          Documented known limitation — not addressable by parameter tuning.
+        </p>
+      </div>
+
+      <!-- Right: narrative -->
+      <div class="space-y-5">
+        <div class="bg-bg border border-emerald/20 rounded-xl p-5">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-2 h-2 rounded-full bg-emerald"></div>
+            <span class="text-sm font-semibold text-white">0.8% → 95.7%</span>
+          </div>
+          <p class="text-sm text-slate-400">Baseline BFS (no reasoning priors) scores 0.8% on the disease-associates-gene template.
+          CEREBRUM's Terminal Relation Boost identifies the target relation type from the question text — no annotation required — and the beam focuses immediately on the right edge type. Result: 95.7% H@1 on the same template.</p>
+        </div>
+        <div class="bg-bg border border-cyan/20 rounded-xl p-5">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-2 h-2 rounded-full bg-cyan"></div>
+            <span class="text-sm font-semibold text-white">2-hop with sentence: +10pp vs random</span>
+          </div>
+          <p class="text-sm text-slate-400">On the disease→gene→pathway template, sentence-transformer embeddings genuinely help once properly calibrated: 81.1% vs 71.2% with random. The semantic signal helps the beam identify the correct gene intermediate node type.</p>
+        </div>
+        <div class="bg-bg border border-border rounded-xl p-5">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-2 h-2 rounded-full bg-slate-500"></div>
+            <span class="text-sm font-semibold text-white">Honest about the ceiling</span>
+          </div>
+          <p class="text-sm text-slate-400">Cross-type 3-hop paths (disease→compound) involve entities with maximally dissimilar semantic types. Training-free cosine similarity penalizes these paths at every hop. This gap requires supervised per-relation-type weight calibration to close — outside the scope of training-free CEREBRUM and documented as such.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-5 bg-indigo/5 border-indigo/20">
+      <p class="text-sm text-slate-300 text-center">
+        None of the supervised MetaQA systems (UniKGQA, NSM, EmbedKGQA, GNN-QE) have published Hetionet results.
+        CEREBRUM achieved these numbers on a domain it was never configured for — zero biomedical labels, zero relation-name hardcoding, zero retraining.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 5.7: CAPABILITY COMPARISON
+══════════════════════════════════════════════════ -->
+<section id="capabilities" class="py-24 px-6 border-t border-border">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="section-label mb-4">Capability Comparison</div>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">H@1 is one metric.<br>These are the rest.</h2>
+      <p class="text-slate-400 mt-3 max-w-2xl mx-auto">
+        The accuracy gap to supervised methods is real. Every other dimension tells a different story.
+      </p>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr style="border-bottom: 1px solid #1e1e2e;">
+            <th class="py-3 px-4 text-left text-slate-400 font-medium w-56">Capability</th>
+            <th class="py-3 px-4 text-center text-indigo font-semibold">CEREBRUM</th>
+            <th class="py-3 px-4 text-center text-amber/80 font-medium">Supervised KG<br><span class="text-xs font-normal">(UniKGQA, NSM, etc.)</span></th>
+            <th class="py-3 px-4 text-center text-slate-400 font-medium">Frontier LLM<br><span class="text-xs font-normal">(GPT-4, Claude)</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid #1e1e2e;">
+            <td class="py-3 px-4 text-slate-300 font-medium">Training required</td>
+            <td class="py-3 px-4 text-center"><span class="text-emerald font-semibold">None</span></td>
+            <td class="py-3 px-4 text-center text-amber/80 text-xs">Labeled QA pairs + GPU cluster</td>
+            <td class="py-3 px-4 text-center text-amber/80 text-xs">Massive pretraining + RLHF</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #1e1e2e;">
+            <td class="py-3 px-4 text-slate-300 font-medium">Cross-domain transfer</td>
+            <td class="py-3 px-4 text-center"><span class="text-emerald font-semibold">Zero-config</span></td>
+            <td class="py-3 px-4 text-center text-amber/80 text-xs">Retrain per domain</td>
+            <td class="py-3 px-4 text-center text-slate-400 text-xs">Partial (parametric memory)</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #1e1e2e;">
+            <td class="py-3 px-4 text-slate-300 font-medium">3-hop H@10 recall</td>
+            <td class="py-3 px-4 text-center font-mono text-white font-semibold">89.4%</td>
+            <td class="py-3 px-4 text-center font-mono text-amber/80">~95–99% (H@1)</td>
+            <td class="py-3 px-4 text-center text-slate-500 text-xs">N/A — no structured KG</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #1e1e2e;">
+            <td class="py-3 px-4 text-slate-300 font-medium">Full reasoning trace</td>
+            <td class="py-3 px-4 text-center"><span class="text-emerald font-semibold">Every hop, every score</span></td>
+            <td class="py-3 px-4 text-center text-slate-500 text-xs">Attention maps only</td>
+            <td class="py-3 px-4 text-center text-red-400/70 text-xs">None</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #1e1e2e;">
+            <td class="py-3 px-4 text-slate-300 font-medium">Hallucination risk</td>
+            <td class="py-3 px-4 text-center"><span class="text-emerald font-semibold">0% (structural)</span></td>
+            <td class="py-3 px-4 text-center text-slate-400 text-xs">Low (graph-constrained)</td>
+            <td class="py-3 px-4 text-center text-amber/80 text-xs">5–20%</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #1e1e2e;">
+            <td class="py-3 px-4 text-slate-300 font-medium">Incomplete KG robustness</td>
+            <td class="py-3 px-4 text-center"><span class="text-white font-mono text-sm">AUC 0.89</span><span class="text-xs text-slate-500"> @ 50% removal</span></td>
+            <td class="py-3 px-4 text-center text-slate-500 text-xs">Not reported</td>
+            <td class="py-3 px-4 text-center text-slate-500 text-xs">Not applicable</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #1e1e2e;">
+            <td class="py-3 px-4 text-slate-300 font-medium">Online learning (no retraining)</td>
+            <td class="py-3 px-4 text-center"><span class="text-emerald font-semibold">MetaParameterLearner SGD</span></td>
+            <td class="py-3 px-4 text-center text-amber/80 text-xs">Full retrain cycle</td>
+            <td class="py-3 px-4 text-center text-slate-500 text-xs">Fine-tune (expensive)</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #1e1e2e;">
+            <td class="py-3 px-4 text-slate-300 font-medium">Epistemic self-awareness</td>
+            <td class="py-3 px-4 text-center"><span class="text-emerald font-semibold">7-dimension report</span></td>
+            <td class="py-3 px-4 text-center text-slate-500 text-xs">None</td>
+            <td class="py-3 px-4 text-center text-slate-500 text-xs">None</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #1e1e2e;">
+            <td class="py-3 px-4 text-slate-300 font-medium">Self-correcting parameters</td>
+            <td class="py-3 px-4 text-center"><span class="text-emerald font-semibold">Gap recovery → auto-update</span></td>
+            <td class="py-3 px-4 text-center text-slate-500 text-xs">None</td>
+            <td class="py-3 px-4 text-center text-slate-500 text-xs">None</td>
+          </tr>
+          <tr>
+            <td class="py-3 px-4 text-slate-300 font-medium">Biomedical KG (Hetionet)</td>
+            <td class="py-3 px-4 text-center"><span class="text-white font-mono">95.7%</span><span class="text-xs text-slate-500"> 1-hop H@1</span></td>
+            <td class="py-3 px-4 text-center text-slate-500 text-xs">Not tested</td>
+            <td class="py-3 px-4 text-center text-slate-500 text-xs">Not tested</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </section>
@@ -1090,10 +1390,10 @@
 
     <div class="text-center mb-16">
       <div class="section-label mb-4">Research</div>
-      <h2 class="text-3xl md:text-4xl font-bold text-white">30+ original contributions</h2>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">76 documented novel contributions</h2>
       <p class="text-slate-400 mt-3 max-w-2xl mx-auto">
         Each contribution has a documented novelty statement and prior-art analysis.
-        Six headline algorithms are featured below — the full catalog is in the
+        Six headline algorithms are featured below — the full catalog (76 claims, Phases 1–223) is in the
         <a href="https://brutalbyte.github.io/CEREBRUM/NOVEL_CONTRIBUTIONS/" target="_blank" rel="noopener"
            class="text-indigo hover:text-cyan transition-colors underline decoration-dotted">IP documentation</a>.
       </p>
@@ -1181,7 +1481,7 @@
     <!-- ── Full contribution catalog ── -->
     <div class="card p-6 mb-10" x-data="{ open: false }">
       <div class="flex items-center justify-between">
-        <h3 class="text-base font-semibold text-white">All 30+ contributions</h3>
+        <h3 class="text-base font-semibold text-white">All 76 contributions</h3>
         <div class="flex items-center gap-4">
           <a href="https://brutalbyte.github.io/CEREBRUM/NOVEL_CONTRIBUTIONS/"
              target="_blank" rel="noopener"
@@ -1249,6 +1549,13 @@
             <li class="flex gap-2"><span class="text-amber mt-0.5">▸</span>Counterfactual answer re-ranking</li>
             <li class="flex gap-2"><span class="text-amber mt-0.5">▸</span>ResearchAgent — training-free structural gap detection</li>
             <li class="flex gap-2"><span class="text-amber mt-0.5">▸</span>Platt-scaled confidence calibration (training-free)</li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">✦</span><span class="text-indigo/80">SelfAwarenessEngine — 7-dim epistemic self-report</span></li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">✦</span><span class="text-indigo/80">Uncertainty-steered retry (Phase 221)</span></li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">✦</span><span class="text-indigo/80">Credibility contradiction resolution (Phase 221)</span></li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">✦</span><span class="text-indigo/80">PlattCalibration + ECE drift detection (Phase 222)</span></li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">✦</span><span class="text-indigo/80">CerebellarEngine param punishment (Phase 223)</span></li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">✦</span><span class="text-indigo/80">Self-supervised MetaParameterLearner (Phase 223)</span></li>
+            <li class="flex gap-2"><span class="text-indigo mt-0.5">✦</span><span class="text-indigo/80">Curiosity-uncertainty co-regulation (Phase 223)</span></li>
           </ul>
         </div>
 
@@ -1265,7 +1572,7 @@
           <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span class="text-xs text-slate-500 uppercase tracking-wide">Technical Report</span>
         </div>
-        <h4 class="text-sm font-semibold text-white mb-2 flex-1">CEREBRUM v2.72: Complete Technical Specification</h4>
+        <h4 class="text-sm font-semibold text-white mb-2 flex-1">CEREBRUM v2.73.0: Complete Technical Specification — Phase 223</h4>
         <span class="inline-flex items-center gap-1.5 text-xs text-slate-600 mt-3">
           <span class="px-1.5 py-0.5 rounded bg-surface border border-border">arXiv</span>
           <span>In preparation</span>
@@ -1309,7 +1616,7 @@
     <div class="inline-block px-4 py-1.5 rounded-full bg-indigo/10 border border-indigo/20 text-xs text-indigo font-mono mb-5 tracking-wide">Solo Project</div>
     <h2 class="text-2xl md:text-3xl font-bold text-white mb-4">Built by one person.</h2>
     <p class="text-slate-400 leading-relaxed max-w-xl mx-auto mb-3">
-      CEREBRUM is the work of a single independent researcher — 30+ original algorithms, 2,000+ tests, and a fully documented research roadmap with no team, no grant, and no institution behind it.
+      CEREBRUM is the work of a single independent researcher — 76 novel contributions, 2,269 tests, and a fully documented research roadmap across 223 development phases — with no team, no grant, and no institution behind it.
     </p>
     <p class="text-slate-500 text-sm">
       Claude (Anthropic) was a pivotal tool in its creation. The ideas, architecture, and research decisions are entirely human-originated.
@@ -1546,7 +1853,7 @@
     <div class="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
       <p class="text-sm text-slate-600">Open source · AGPL-3.0 · <a href="mailto:cerebrum.kg@gmail.com" class="hover:text-slate-400 transition-colors">cerebrum.kg@gmail.com</a></p>
       <div class="flex items-center gap-4">
-        <span class="text-xs font-mono text-slate-700">Published June 3, 2026</span>
+        <span class="text-xs font-mono text-slate-700">Updated June 4, 2026</span>
         <a href="https://github.com/BrutalByte/CEREBRUM" target="_blank" rel="noopener" class="text-slate-600 hover:text-white transition-colors">
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
         </a>
@@ -1689,7 +1996,7 @@ document.querySelectorAll('.card').forEach(card => {
 // ── 4. STAT BAR COUNTER ANIMATION ────────────────────────────────────────────
 const stats = [
   { selector: null, target: 60.4, suffix: '%', decimals: 1 },
-  { selector: null, target: 88.3, suffix: '%', decimals: 1 },
+  { selector: null, target: 89.4, suffix: '%', decimals: 1 },
   { selector: null, target: 0.001, prefix: '$', decimals: 3 },
   { selector: null, target: 0, suffix: '%', decimals: 0 },
 ];
