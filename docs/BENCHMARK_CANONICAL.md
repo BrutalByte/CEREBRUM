@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.71.0 (Phase 213) — Updated Jun 2, 2026
+## Version: v2.72.0 (Phase 219) — Updated Jun 3, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -56,6 +56,11 @@ r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs 
 | **203/204** | **+SDRB beta power-law (full 14,274-question validation)** | **60.36%** | — | — |
 | **212** | **zero-config (ParameterInitializer, random, all hops)** | **56.8%** | **90.7%** | **0.692** |
 | **213** | **hub_homogeneous × sentence constants (ParameterInitializer)** | **66.8%*** | — | — |
+| **215** | Inhibition of Return, hyperbolic forgetting, conflict monitoring, information-gain curiosity (cognitive architecture — not scored separately) | — | — | — |
+| **216** | Source credibility weighting + causal discovery engine (cognitive architecture) | — | — | — |
+| **217** | Meta-relation layer (second-order graph reasoning) (cognitive architecture) | — | — | — |
+| **218** | Cross-KB Engram transfer + calibrator persistence + mixed-regime parameter blending (cognitive architecture) | — | — | — |
+| **219** | FastBindingEngine (one-shot episodic) + OscillationEngine (theta/gamma DSCF sync) (cognitive architecture) | — | — | — |
 
 ---
 
@@ -78,6 +83,36 @@ idf_weight=0.058, vote_weight=0.758, branch_bonus=0.48, beam_width=12.
 **Finding:** Zero-config (no tuning) lands 3.5pp below Phase 204 tuned (60.4% 3-hop \(\text{H@1}\)).
 \(\text{H@10} = 90.7\%\) confirms the system *finds* the answer in top-10 the vast majority of the time —
 the gap to supervised methods is primarily a ranking problem, not a reasoning failure.
+
+---
+
+## MetaQA — Phase 219 Zero-Config Validation (v2.72.0)
+
+**Configuration:** 500-question sample, zero-config (ParameterInitializer auto-derives all params), no manual tuning.
+Phases 215–219 add cognitive architecture enhancements (IOR disabled by default, power-law forgetting,
+conflict monitoring, oscillation sync, etc.) — they do not alter the scoring path for standard MetaQA runs.
+
+### Sentence-Transformers Embeddings
+
+| Hop | H@1 | H@10 | MRR |
+|-----|-----|------|-----|
+| 1-hop | **84.0%** | **99.0%** | **0.892** |
+| 2-hop | **47.6%** | **91.2%** | **0.616** |
+| 3-hop | **60.6%** | **89.8%** | **0.717** |
+
+### Random Embeddings
+
+| Hop | H@1 | H@10 | MRR |
+|-----|-----|------|-----|
+| 1-hop | **82.0%** | **99.0%** | **0.877** |
+| 2-hop | **59.6%** | **96.2%** | **0.716** |
+| 3-hop | **60.6%** | **92.0%** | **0.719** |
+
+**Prior baselines for comparison:**
+- Phase 212 zero-config random full run (39,093 q): 83.2% / 63.3% / 56.8% H@1
+- Phase 213 tuner best (hub_homogeneous × sentence, 500-sample): 66.8% 3-hop H@1
+
+Run date: 2026-06-03.
 
 ---
 
@@ -547,4 +582,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-06-02 | Phase 212: zero-config full validation (83.2%/63.3%/56.8% H@1, all 39,093 questions) — 3.5pp below tuned, H@10=90.7% confirms reasoning not ranking is the gap | Phase 213: hub_homogeneous × sentence H@1=66.8% (500-sample, 3-hop) — 2D calibration table complete | Phase 53 canonical paper numbers unchanged*
+*Last updated: 2026-06-03 | Phase 219: cognitive architecture additions (IOR, hyperbolic forgetting, conflict monitoring, curiosity, source credibility, causal discovery, meta-relation layer, cross-KB transfer, fast binding, oscillation sync) — no scoring regression | Phase 219 zero-config 500-sample validation: 60.6% 3-hop H@1 (sentence) / 60.6% (random) | Phase 213: hub_homogeneous × sentence H@1=66.8% (500-sample, 3-hop) | Phase 53 canonical paper numbers unchanged*

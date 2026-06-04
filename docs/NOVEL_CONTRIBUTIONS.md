@@ -7,7 +7,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: June 2026
-**Status**: v2.71.0 (Phase 213 COMPLETE)
+**Status**: v2.72.0 (Phase 219 COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -1134,7 +1134,258 @@ the "no training data" invariant of the CEREBRUM framework.
 
 ---
 
-**Reviewed on**: June 2026 for version v2.71.0
+---
+
+## Part VI: Phase 215–219 — Closing the Brain Gap
+
+---
+
+### Claim 60: Inhibition of Return (IOR) in Knowledge Graph Beam Traversal
+
+**Description**: A per-query node visit counter integrated into BeamTraversal that applies a
+suppression score `1 / (1 + ior_decay * visits)` to previously visited nodes during
+`_prune_candidates()`. Controlled by a per-query `ior_decay` parameter defaulting to 0.0
+(disabled; opt-in per query), preserving backward compatibility.
+
+**Novelty Statement**: Inhibition of Return is a well-established biological phenomenon (Posner
+& Cohen, 1984) but has not been applied to KG beam traversal. All prior KG beam search
+methods either allow unlimited re-visitation or use hard-stop cycle detection. CEREBRUM is the
+first to use a soft, per-visit decay modelled on biological IOR to penalize — but not
+completely block — re-traversal of visited nodes, allowing return when evidence warrants it.
+
+**Closest Prior Art**: Cycle-detection pruning in MINERVA (Das et al., 2018) — hard binary
+block on revisited nodes; no soft decay.
+
+**Key Technical Differentiator**: Continuous suppression function rather than binary block;
+decay rate as a per-query hyperparameter enabling task-appropriate suppression strength.
+
+**Relevant files**: `reasoning/traversal.py`
+
+---
+
+### Claim 61: Ebbinghaus Power-Law Temporal Decay in Graph Attention
+
+**Description**: Replaced the exponential temporal decay term `exp(-λt)` in the CSAEngine
+10-parameter attention formula with a power-law `(1 + λt)^-1`, matching Ebbinghaus's
+empirically-derived biological forgetting curve. Controlled by `use_power_law_decay=True`
+(default); exponential fallback available via flag.
+
+**Novelty Statement**: All prior graph attention systems using temporal decay employ exponential
+decay. Power-law decay matches decades of empirical evidence on biological memory forgetting
+(Ebbinghaus, 1885; Wixted & Ebbesen, 1991) and produces heavier tails — older edges retain
+more weight than exponential decay would assign. CEREBRUM is the first KG attention system
+to adopt the biologically accurate power-law forgetting curve as its default temporal decay.
+
+**Closest Prior Art**: Temporal KGE methods (TNTComplEx, TeLM) use exponential decay on
+entity/relation embeddings; no prior training-free KG attention system uses power-law decay.
+
+**Key Technical Differentiator**: Power-law (1+λt)^-1 vs. exp(-λt) — heavier-tailed forgetting
+that matches empirical human memory curves rather than an exponential convenience approximation.
+
+**Relevant files**: `core/attention_engine.py`
+
+---
+
+### Claim 62: Anterior Cingulate Cortex Analog — Conflict-Driven Adaptive Beam Width
+
+**Description**: `FrontalEngine.detect_conflict()` computes the coefficient of variation (CV)
+of top-K beam scores at each hop. `adaptive_beam_width()` doubles the active beam width when
+CV exceeds a threshold (default 0.4), allocating additional computational budget to ambiguous
+decision points. Implements the ACC's biological role in error/conflict monitoring.
+
+**Novelty Statement**: Prior adaptive beam search methods (e.g., Graves, 2012) adapt width
+based on entropy of next-token distributions in language models. No prior KG traversal
+system uses score disagreement among concurrent beam candidates as a signal to expand the
+search budget. CEREBRUM is the first to explicitly model the ACC conflict-monitoring function
+in a KG reasoning engine.
+
+**Closest Prior Art**: Adaptive computation time (Graves, 2012) — adapts depth, not width;
+operates on sequence models, not KG beam traversal.
+
+**Key Technical Differentiator**: Width expansion triggered by inter-candidate score variance
+(CV) rather than per-candidate uncertainty, capturing the multi-path ambiguity specific to
+graph traversal.
+
+**Relevant files**: `core/frontal_engine.py`
+
+---
+
+### Claim 63: Information-Gain Curiosity for Autonomous KG Discovery
+
+**Description**: Extends DiscoveryCalibrator with a curiosity weight derived from the Shannon
+entropy of the relation-type distribution within each community, blended with the existing
+inverse-scan-rate weight (α=0.3). Communities with more diverse relation types receive higher
+curiosity weights, directing ResearchAgent attention toward structurally complex unexplored
+regions.
+
+**Novelty Statement**: Prior DiscoveryCalibrator versions weighted communities solely by
+inverse scan rate. The entropy-based curiosity term introduces an information-theoretic
+novelty signal: communities are not only weighted by how rarely they are visited but also by
+how much structural information they are likely to contain. No prior autonomous KG discovery
+system uses relation-type entropy as a community-level exploration bonus.
+
+**Closest Prior Art**: Curiosity-driven RL exploration (Pathak et al., 2017) uses prediction
+error as intrinsic reward; no application to KG community-level autonomous discovery.
+
+**Key Technical Differentiator**: Shannon entropy over relation-type distribution as a static
+graph-structural curiosity signal, combined with dynamic EMA scan-rate weighting.
+
+**Relevant files**: `core/discovery_calibrator.py`
+
+---
+
+### Claim 64: Source Credibility Weighting in Provenance-Aware Graph Attention
+
+**Description**: `CredibilityRegistry` in `core/graph_adapter.py` maps prefix-matched
+provenance strings to trust scores (e.g., pubmed=0.95, synthetic=0.30). These scores are
+multiplied into the CSA `grounding` (θ) feature at attention computation time, modulating
+edge weights by the trustworthiness of the source that contributed each edge.
+
+**Novelty Statement**: Prior KG reasoning systems treat all edges as equally trustworthy once
+ingested. CEREBRUM is the first training-free KG attention system to propagate source-level
+credibility scores through the attention formula, enabling differential weighting of
+publication-backed vs. synthetic edges without retraining.
+
+**Closest Prior Art**: Confidence-weighted KGE (Sun et al., 2019 RotatE with soft labels)
+— uses per-triple confidence but derived from embedding fit, not source provenance.
+
+**Key Technical Differentiator**: Source provenance prefix matching at query time, not at
+embedding training time; no gradient updates required to incorporate new credibility priors.
+
+**Relevant files**: `core/graph_adapter.py`
+
+---
+
+### Claim 65: Training-Free PC-Algorithm Causal Discovery for KG Constraint Synthesis
+
+**Description**: `CausalDiscoveryEngine` implements a PC-algorithm-inspired structure learning
+procedure using fan-out asymmetry, collider density, and temporal edge consistency as
+conditional independence proxies — all computable from graph topology without statistical
+samples. Discovered causal orderings are auto-populated into `SymbolicValidator`'s
+`CAUSAL_ORDERING` constraints, making causal reasoning a first-class zero-config feature.
+
+**Novelty Statement**: The PC algorithm (Spirtes et al., 1993) and all subsequent causal
+discovery methods (FCI, GES, NOTEARS) require observational or interventional data.
+CEREBRUM is the first system to perform causal structure discovery purely from KG topology
+features (edge directionality asymmetry and collider patterns), requiring no data samples
+and no training — making causal constraints available on any KG at build time.
+
+**Closest Prior Art**: PC algorithm (Spirtes, Glymour & Scheines, 1993) — requires
+conditional independence tests over data; NOTEARS (Zheng et al., 2018) — gradient-based,
+requires data matrix.
+
+**Key Technical Differentiator**: Structural proxies (fan-out asymmetry, collider density,
+temporal edge consistency) replace statistical conditional independence tests, enabling
+causal discovery on graphs with no associated tabular data.
+
+**Relevant files**: `core/causal_discovery_engine.py`
+
+---
+
+### Claim 66: Meta-Relation Layer — Second-Order Knowledge Graph Reasoning
+
+**Description**: `MetaRelationTraversal` (`reasoning/meta_relation_traversal.py`) constructs
+a second-order graph over relation types using TF-IDF normalised co-occurrence
+(`build_meta_graph()` in NetworkXAdapter). Beam search over this meta-graph via
+STRB-seeded `explain_query()` identifies which relation-type sequences are structurally
+related, enabling reasoning about *how* relations relate to each other — not just which
+entities they connect.
+
+**Novelty Statement**: Prior KG reasoning systems reason over entity-entity edges. Path
+ranking methods (MINERVA, DeepPath) learn relation path patterns but do not construct an
+explicit graph over relation types. CEREBRUM is the first training-free system to build and
+traverse a relation-type co-occurrence graph as a first-class reasoning layer, enabling
+second-order structural queries.
+
+**Closest Prior Art**: Relation-type embeddings in KGE (TransR, ANALOGY) — embed relation
+types in vector space but do not build an explicit relation-type graph for traversal.
+
+**Key Technical Differentiator**: Explicit relation-type meta-graph with TF-IDF edge weights;
+beam-searchable at query time using STRB for semantic seeding.
+
+**Relevant files**: `reasoning/meta_relation_traversal.py`, `core/graph_adapter.py`
+
+---
+
+### Claim 67: KB-Agnostic Cross-Knowledge-Base Engram Transfer with Count Decay
+
+**Description**: `EngramTransferRegistry` in `reasoning/speedtalk_cache.py` re-encodes
+reasoning patterns from prior knowledge bases into the vocabulary of a new KB using
+phonemic remapping and count decay. `DiscoveryCalibrator.save(path)` / `load(path,
+decay_factor=0.8)` persist EMA state across sessions with configurable temporal discounting.
+`ParameterInitializer._blend_params_mixed()` computes cosine similarity to MetaQA/Hetionet
+5-vector profiles and weighted-averages calibrated constants for mixed-regime graphs.
+
+**Novelty Statement**: No prior training-free KG reasoning system transfers reasoning
+patterns across heterogeneous knowledge bases. CEREBRUM is the first to implement
+KB-agnostic pattern transfer: relation sequences learned on one graph are remapped to a
+new graph's vocabulary and seeded into the Engram cache with count decay, giving the new
+KB a warm-start from prior reasoning experience without any retraining.
+
+**Closest Prior Art**: Transfer learning in KGE (Wang et al., 2019 — cross-lingual KG
+alignment) requires shared embedding space and supervised alignment pairs.
+
+**Key Technical Differentiator**: Phonemic SpeedTalk remapping enables vocabulary-agnostic
+transfer; count decay prevents prior-KB patterns from dominating the new KB's reasoning.
+
+**Relevant files**: `reasoning/speedtalk_cache.py`, `core/discovery_calibrator.py`,
+`core/parameter_initializer.py`
+
+---
+
+### Claim 68: One-Shot Episodic Encoding via FastBindingEngine
+
+**Description**: `FastBindingEngine` in `reasoning/speedtalk_cache.py` performs one-shot
+episodic encoding of novel high-confidence paths: paths with Engram affinity < 0.1 and
+traversal score > 0.7 are immediately bound into Engram at weight=5 after a single
+successful traversal, bypassing the standard multi-hit consolidation requirement. Wired
+into `reasoning/engram_traversal.py`.
+
+**Novelty Statement**: Biological fast binding (O'Reilly & McClelland, 1994; Kumaran et al.,
+2016) allows the hippocampus to encode novel episodes in a single exposure without
+disrupting existing cortical representations. All prior Engram consolidation mechanisms in
+CEREBRUM (Phase 64 EngramConsolidator, Phase 96 Hebbian Replay) require multiple
+exposures before promotion. FastBindingEngine is the first one-shot encoding component
+in CEREBRUM, matching the hippocampal fast-binding biological mechanism.
+
+**Closest Prior Art**: Memory-Augmented Neural Networks (Graves et al., 2016 — NTM/DNC)
+use one-shot write heads but require learned controllers; not applicable to training-free
+graph traversal.
+
+**Key Technical Differentiator**: Threshold-gated (affinity + score) single-exposure encoding
+into the phonemic Engram cache; no controller training required.
+
+**Relevant files**: `reasoning/speedtalk_cache.py`, `reasoning/engram_traversal.py`
+
+---
+
+### Claim 69: Neural Oscillation Engine — Theta/Gamma Community Synchronization
+
+**Description**: `OscillationEngine` (`core/oscillation_engine.py`) tracks per-community
+query frequency via EMA and triggers partial DSCF re-runs on communities crossing the
+`theta_period=50` query threshold, simulating theta-rhythm community synchronization.
+Gamma-band synchronization is modelled by co-activating structurally adjacent communities
+during hot-community rebalancing. Wired into `core/rebalancer.py`.
+
+**Novelty Statement**: Theta/gamma oscillations in the hippocampus-entorhinal circuit are
+believed to coordinate memory retrieval and encoding (Lisman & Jensen, 2013). No prior
+KG reasoning system models oscillatory synchronization for community rebalancing.
+CEREBRUM is the first system to use query-frequency EMA as a theta-rhythm analog to
+schedule partial graph rebalancing on hot communities, achieving adaptive structural
+maintenance without full DSCF re-runs.
+
+**Closest Prior Art**: GlobalRebalancer (Phase 18) triggers full DSCF on modularity Q drift —
+global, not community-selective; not oscillation-driven.
+
+**Key Technical Differentiator**: Per-community EMA query frequency as theta-analog; partial
+DSCF (hot communities only) triggered at configurable period, reducing rebalancing cost
+while maintaining structural freshness on high-traffic regions.
+
+**Relevant files**: `core/oscillation_engine.py`, `core/rebalancer.py`
+
+---
+
+**Reviewed on**: June 2026 for version v2.72.0
 
 ---
 

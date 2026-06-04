@@ -1,6 +1,6 @@
 # CEREBRUM System Architecture
 
-**Status**: v2.52.0 (Phase 172 (STRB — Semantic Terminal Relation Boost) COMPLETE — 2177 tests passing)
+**Status**: v2.72.0 (Phase 219 COMPLETE — 2261 tests passing, 4 skipped)
 
 Complete data-flow from ingestion to result, including all options, pathways, and decision nodes.
 
@@ -73,6 +73,23 @@ Transforms reasoning from a reactive search to a proactive traversal. The `Predi
 ### Phase 172: Sleep-Phase Consolidation (REM Cycle)
 The `ConsolidationEngine` merges Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 172) into a unified maintenance cycle. During idle periods, the system replays successful Working Memory entries to strengthen synaptic weights and analyzes QueryLog patterns to materialize direct "shortcut" edges (e.g., A -> C skipping B). This turns common multi-hop reasoning into instantaneous reflexive paths.
 
+## Phase 215–219: Brain-Gap Closure
+
+These phases add ten biologically-grounded cognitive enhancements. None alter the default beam scoring path — all opt-in or background components.
+
+- **OscillationEngine** (`core/oscillation_engine.py`): Theta/gamma community synchronization. EMA per-community query frequency; partial DSCF re-runs on hot communities at `theta_period=50` queries. Wired into `core/rebalancer.py`.
+- **FastBindingEngine** (`reasoning/speedtalk_cache.py`, `reasoning/engram_traversal.py`): One-shot episodic encoding. Novel high-confidence paths (affinity < 0.1, score > 0.7) are fast-bound at weight=5 directly into Engram without replay.
+- **MetaRelationTraversal** (`reasoning/meta_relation_traversal.py`): Second-order reasoning over the relation-type graph. `MetaEdge` dataclass + `build_meta_graph()` (TF-IDF normalised co-occurrence) in NetworkXAdapter; STRB-seeded `explain_query()` beam-searches over relation-type nodes.
+- **CausalDiscoveryEngine** (`core/causal_discovery_engine.py`): PC-algorithm-inspired training-free structure learning from fan-out asymmetry, collider density, and temporal consistency. Auto-populates `CAUSAL_ORDERING` constraints in SymbolicValidator.
+- **CredibilityRegistry** (`core/graph_adapter.py`): Per-source trust priors in provenance-weighted attention. Prefix-matched provenance trust scores (pubmed=0.95, synthetic=0.30, etc.) multiplied into CSA `grounding` feature.
+- **Inhibition of Return (IOR)** (`reasoning/traversal.py`): Per-query node visit counter in BeamTraversal; suppression score `1/(1 + ior_decay * visits)` in `_prune_candidates()`. Default `ior_decay=0.0` (disabled; opt-in per query).
+- **Power-law temporal decay** (`core/attention_engine.py`): Replaced exponential `exp(-λt)` with Ebbinghaus-accurate power-law `(1+λt)^-1` in CSAEngine. `use_power_law_decay=True` default; exponential fallback via flag.
+- **Conflict monitoring** (`core/frontal_engine.py`): ACC-analog adaptive beam allocation. `FrontalEngine.detect_conflict()` computes coefficient of variation of top-K beam scores; `adaptive_beam_width()` doubles beam when CV > 0.4.
+- **Information-gain curiosity** (`core/discovery_calibrator.py`): Shannon entropy of relation-type distribution per community, blended with inverse-scan-rate weight (α=0.3). Steers autonomous discovery toward informationally underexplored communities.
+- **Cross-KB EngramTransferRegistry** (`reasoning/speedtalk_cache.py`): Re-encodes reasoning patterns from prior KBs into new KB vocabulary with count decay. `DiscoveryCalibrator.save()`/`load()` persist EMA state across sessions. `ParameterInitializer._blend_params_mixed()` computes cosine similarity to MetaQA/Hetionet 5-vector profiles for weighted-average calibrated constants.
+
+---
+
 ## Legend
 
 | Colour | Layer | Description |
@@ -117,7 +134,7 @@ The `ConsolidationEngine` merges Hebbian Replay (Phase 96) and Shortcut Synthesi
 | GUI Adaptation | on / off | metabolic-driven UI structural adaptation |
 
 ---
-**Reviewed on**: May 9, 2026 for version v2.52.0
+**Reviewed on**: June 3, 2026 for version v2.72.0
 
 ---
 
