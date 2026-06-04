@@ -101,6 +101,14 @@ class SelfAwarenessReport:
     causal_fraction:      float = 0.0
     path_length:          int   = 0
     summary:              str   = ""
+    gap_recovery:         bool  = False
+    """True if query() triggered a recovery retry due to knowledge_gap."""
+    calibration_ece:      float = -1.0
+    """Expected Calibration Error from PlattCalibration. −1 = not yet calibrated."""
+    contradiction_resolved: bool = False
+    """True if at least one contradiction was resolved (e.g. by credibility scoring)."""
+    resolution_method:    str   = ""
+    """How contradiction was resolved: 'credibility' or ''."""
 
     def to_dict(self) -> dict:
         return {
@@ -110,8 +118,12 @@ class SelfAwarenessReport:
             "corroboration":         self.corroboration,
             "contradiction_detected": self.contradiction_detected,
             "contradiction_count":   self.contradiction_count,
+            "contradiction_resolved": self.contradiction_resolved,
+            "resolution_method":     self.resolution_method,
             "knowledge_gap":         self.knowledge_gap,
             "gap_reason":            self.gap_reason,
+            "gap_recovery":          self.gap_recovery,
+            "calibration_ece":       round(self.calibration_ece, 4) if self.calibration_ece >= 0 else -1,
             "dominant_signal":       self.dominant_signal,
             "signal_breakdown":      {k: round(v, 4) for k, v in self.signal_breakdown.items()},
             "causal_fraction":       round(self.causal_fraction, 4),
@@ -208,6 +220,18 @@ class SelfAwarenessEngine:
             gap_reason, dominant_signal, causal_fraction,
         )
 
+        # Check if any contradictions were resolved by credibility scoring
+        _contra_resolved = False
+        _resolution_method = ""
+        for ans in answers[:5]:
+            for flag in getattr(ans, "contradiction_flags", []) or []:
+                if getattr(flag, "resolution_status", "") == "resolved_by_credibility":
+                    _contra_resolved = True
+                    _resolution_method = "credibility"
+                    break
+            if _contra_resolved:
+                break
+
         return SelfAwarenessReport(
             answer_confidence=confidence,
             epistemic_uncertainty=uncertainty,
@@ -222,6 +246,8 @@ class SelfAwarenessEngine:
             causal_fraction=causal_fraction,
             path_length=path_length,
             summary=summary,
+            contradiction_resolved=_contra_resolved,
+            resolution_method=_resolution_method,
         )
 
     # ------------------------------------------------------------------

@@ -97,7 +97,7 @@ class CerebellarEngine:
                     best_path_relations=rels,
                 )
                 events.append(event)
-                self._handle_event(event)
+                self._handle_event(event, best_path=ans.best_path)
 
         if events:
             logger.info("CerebellarEngine: detected %d dissonance events for seed %r", 
@@ -106,7 +106,7 @@ class CerebellarEngine:
         self._total_events += len(events)
         return events
 
-    def _handle_event(self, event: DissonanceEvent) -> None:
+    def _handle_event(self, event: DissonanceEvent, best_path: Optional[Any] = None) -> None:
         """Trigger research and parameter punishment."""
         
         # 1. Trigger research
@@ -144,15 +144,13 @@ class CerebellarEngine:
             except Exception:
                 pass
 
-        # 2. Parameter Punishment (Meta-Learning)
-        # We simulate a "confidently wrong" feedback event.
-        if self.meta_learner is not None and event.best_path_relations:
+        # 2. Parameter Punishment — Phase 223-A: negative SGD on dissonant path
+        if self.meta_learner is not None and best_path is not None:
             try:
-                # MetaParameterLearner.fit_online(path_features, reward)
-                # We don't have the full path_features here easily, but we can 
-                # signal a "surprise" penalty for these relations.
-                # For now, we'll just log it.
-                logger.debug("CerebellarEngine: Dissonance penalty for relations: %s", 
-                             event.best_path_relations)
+                self.meta_learner.update_from_feedback(best_path, reward=-1.0)
+                logger.debug(
+                    "CerebellarEngine: negative SGD applied for dissonant path (rels=%s)",
+                    event.best_path_relations,
+                )
             except Exception as exc:
-                logger.debug("CerebellarEngine: Failed to notify MetaLearner: %s", exc)
+                logger.debug("CerebellarEngine: Failed to punish MetaLearner: %s", exc)

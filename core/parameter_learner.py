@@ -527,8 +527,49 @@ class PlattCalibration:
         """Accumulate one feedback sample."""
         self._samples.append((raw_score, 1.0 if correct else 0.0))
 
+    def transform(self, raw_score: float) -> float:
+        """Map a raw sigmoid score to a calibrated probability in (0, 1)."""
+        if not self._fitted:
+            return float(raw_score)
+        val = max(-500.0, min(500.0, self.A * raw_score + self.B))
+        return 1.0 / (1.0 + math.exp(val))
+
+    def ece(self, bins: int = 10) -> float:
+        """Expected Calibration Error across ``bins`` confidence bins."""
+        if len(self._samples) < 2:
+            return -1.0
+        total = len(self._samples)
+        bin_size = 1.0 / bins
+        ece_sum = 0.0
+        for b in range(bins):
+            lo = b * bin_size
+            hi = lo + bin_size
+            bucket = [
+                (self.transform(s), y)
+                for s, y in self._samples
+                if lo <= self.transform(s) < hi
+            ]
+            if not bucket:
+                continue
+            n_b = len(bucket)
+            mean_conf = sum(p for p, _ in bucket) / n_b
+            mean_acc  = sum(y for _, y in bucket) / n_b
+            ece_sum += (n_b / total) * abs(mean_conf - mean_acc)
+        return round(ece_sum, 6)
+
+    def drift_score(self) -> float:
+        """Absolute ECE change since last fit().  Returns 0.0 if not yet fitted."""
+        if not self._fitted:
+            return 0.0
+        current_ece = self.ece()
+        baseline = getattr(self, "_baseline_ece", 0.0)
+        if current_ece < 0 or baseline < 0:
+            return 0.0
+        return round(abs(current_ece - baseline), 6)
+
     def fit(self, lr: float = 0.1, iterations: int = 200) -> bool:
-        """Fit A and B via gradient descent on log-loss.  Returns True if fitted."""
+        # Override to update _baseline_ece after a successful fit.
+        # Delegate to parent implementation via direct code.
         if len(self._samples) < self.MIN_SAMPLES:
             return False
         A, B = self.A, self.B
@@ -544,18 +585,18 @@ class PlattCalibration:
             B -= lr * dB / n
         self.A, self.B = A, B
         self._fitted = True
+        self._baseline_ece = self.ece()
+        self._last_fit_ts = time.monotonic()
         return True
 
-    def transform(self, raw_score: float) -> float:
-        """Map a raw sigmoid score to a calibrated probability in (0, 1)."""
-        if not self._fitted:
-            return float(raw_score)
-        val = max(-500.0, min(500.0, self.A * raw_score + self.B))
-        return 1.0 / (1.0 + math.exp(val))
-
     def to_dict(self) -> dict:
-        return {"A": self.A, "B": self.B, "fitted": self._fitted,
-                "n_samples": len(self._samples)}
+        return {
+            "A": self.A, "B": self.B, "fitted": self._fitted,
+            "n_samples": len(self._samples),
+            "ece": self.ece() if self._fitted else -1.0,
+            "drift_score": self.drift_score(),
+            "last_fit_ts": getattr(self, "_last_fit_ts", None),
+        }
 
     @classmethod
     def from_dict(cls, d: dict) -> "PlattCalibration":

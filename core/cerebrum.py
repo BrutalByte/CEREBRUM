@@ -1055,6 +1055,22 @@ class CerebrumGraph:
             "Build complete: %d nodes, %d edges, %d communities",
             G.number_of_nodes(), G.number_of_edges(), n_comm,
         )
+
+        # Phase 222: Activate PlattCalibration — load from cache if available
+        from core.parameter_learner import PlattCalibration as _PlattCal
+        import json as _json
+        self._platt = _PlattCal()
+        self._cache_dir = str(cache) if cache else None
+        if cache:
+            _platt_path = cache / "platt.json"
+            if _platt_path.exists():
+                try:
+                    with open(_platt_path) as _pf:
+                        self._platt = _PlattCal.from_dict(_json.load(_pf))
+                    logger.info("Phase 222: PlattCalibration loaded from %s", _platt_path)
+                except Exception as _pe:
+                    logger.debug("Phase 222: PlattCalibration load failed: %s", _pe)
+
         return self
 
     # ------------------------------------------------------------------
@@ -1104,6 +1120,20 @@ class CerebrumGraph:
 
         if query_params:
             self._feedback_buf.append({"correct": correct, "params": query_params})
+
+        # Phase 222: accumulate Platt calibration sample from this feedback
+        _platt = getattr(self, "_platt", None)
+        if _platt is not None:
+            # Use the cached score for this answer entity if available
+            _score = 0.5
+            _acache = getattr(self, "_recent_answer_cache", {})
+            if answer_entity in _acache:
+                _score_src = _acache[answer_entity][0]
+                _score = float(_score_src.get("trb_factor", 0.5))  # proxy when no direct score
+            _platt.record(_score, correct)
+            if len(_platt._samples) >= _platt.MIN_SAMPLES and len(_platt._samples) % _platt.MIN_SAMPLES == 0:
+                import threading as _t
+                _t.Thread(target=_platt.fit, daemon=True).start()
 
         # Trigger EMA adaptation every 20 confirmed-correct answers
         n_correct = sum(1 for e in self._feedback_buf if e["correct"])
@@ -1551,6 +1581,110 @@ class CerebrumGraph:
             weight_specificity    = weight_specificity,    # Phase 179: PSS
         )
 
+        # Phase 221: Uncertainty-steered retry + gap recovery
+        self._last_gap_recovery = False
+        _eu_retry_threshold = getattr(self, "_eu_retry_threshold", 0.05)
+        try:
+            from core.self_awareness import SelfAwarenessEngine as _SAE
+            _sa_eng = _SAE()
+            _sa_report = _sa_eng.assess(answers)
+            if _sa_report.knowledge_gap and _sa_report.epistemic_uncertainty > _eu_retry_threshold:
+                # 221-A: retry with expanded seeds
+                _expanded = self._expand_seeds_for_retry(seeds, k=5)
+                _saved_bw = traversal.beam_width
+                traversal.beam_width = min(_saved_bw * 2, 32)
+                try:
+                    _retry_paths = traversal.traverse(
+                        _expanded, query_embedding=query_embedding, node_priming=_priming_map
+                    )
+                finally:
+                    traversal.beam_width = _saved_bw
+                _retry_answers = extract(
+                    _retry_paths, top_k=top_k, min_hop=min_hop,
+                    query_embedding=query_embedding, relation_prior=relation_prior,
+                    vote_weight=vote_weight, branch_bonus_weight=branch_bonus_weight,
+                    degree_penalty_weight=degree_penalty_weight, adapter=self.adapter,
+                    fan_out=fan_out, weight_specificity=weight_specificity,
+                )
+                if _retry_answers:
+                    answers = _retry_answers
+                    logger.debug("Phase 221-A: retry recovered %d answers", len(answers))
+                    self._last_gap_recovery = True
+                    if trace_info is not None:
+                        setattr(trace_info, "retry_triggered", True)
+                    # 221-B: if still knowledge_gap, brute-force pass
+                    _retry_report2 = _sa_eng.assess(answers)
+                    if _retry_report2.knowledge_gap:
+                        _saved_bw2 = traversal.beam_width
+                        _saved_widths2 = getattr(traversal, "_beam_widths", {})
+                        traversal.beam_width = max(self._beam_width, 32)
+                        traversal._beam_widths = {}
+                        try:
+                            _bf_paths = traversal.traverse(
+                                _expanded, query_embedding=query_embedding
+                            )
+                        finally:
+                            traversal.beam_width = _saved_bw2
+                            traversal._beam_widths = _saved_widths2
+                        _bf_answers = extract(
+                            _bf_paths, top_k=top_k, min_hop=min_hop,
+                            query_embedding=query_embedding, relation_prior=relation_prior,
+                            vote_weight=vote_weight, adapter=self.adapter,
+                        )
+                        if _bf_answers:
+                            answers = _bf_answers
+                            logger.debug("Phase 221-B: brute-force recovered %d answers", len(answers))
+                        if trace_info is not None:
+                            setattr(trace_info, "gap_recovery_triggered", True)
+        except Exception as _sa_exc:
+            logger.debug("Phase 221 retry skipped: %s", _sa_exc)
+
+        # Phase 223-B: Self-triggered MetaParameterLearner from gap recovery
+        if self._last_gap_recovery and answers:
+            _meta = getattr(self, "_meta_learner", None)
+            _self_supervised = getattr(self, "_self_supervised_learning", True)
+            if _meta is not None and _self_supervised:
+                try:
+                    _top_path = answers[0].best_path if answers[0].best_path else None
+                    if _top_path is not None:
+                        _meta.update_from_feedback(_top_path, reward=0.5)
+                        logger.debug(
+                            "Phase 223-B: self-supervised update from gap recovery (entity=%s)",
+                            answers[0].entity_id,
+                        )
+                except Exception as _meta_exc:
+                    logger.debug("Phase 223-B MetaParameterLearner update failed: %s", _meta_exc)
+
+        # Phase 223-C: Adapt curiosity alpha from EMA of epistemic uncertainty
+        try:
+            _sa_quick = None
+            from core.self_awareness import SelfAwarenessEngine as _SAE2
+            _sa_quick = _SAE2().assess(answers) if answers else None
+            if _sa_quick is not None:
+                _eu_ema = getattr(self, "_eu_ema", 0.5)
+                _eu_ema = 0.9 * _eu_ema + 0.1 * _sa_quick.epistemic_uncertainty
+                self._eu_ema = _eu_ema
+                _dc = getattr(self, "_discovery_calibrator", None)
+                if _dc is not None and hasattr(_dc, "set_curiosity_alpha"):
+                    _new_alpha = 0.1 + 0.4 * _eu_ema
+                    _dc.set_curiosity_alpha(_new_alpha)
+        except Exception as _c_exc:
+            logger.debug("Phase 223-C curiosity alpha update failed: %s", _c_exc)
+
+        # Phase 222: Apply PlattCalibration to calibrate answer scores
+        _platt = getattr(self, "_platt", None)
+        if _platt is not None and _platt._fitted and answers:
+            for _ans in answers:
+                _ans.score = round(_platt.transform(_ans.score), 6)
+            answers.sort(key=lambda a: a.score, reverse=True)
+            # Auto-refit if drift > threshold (non-blocking)
+            try:
+                if _platt.drift_score() > 0.05 and len(_platt._samples) >= _platt.MIN_SAMPLES:
+                    import threading as _t
+                    _t.Thread(target=_platt.fit, daemon=True).start()
+            except Exception:
+                pass
+
         # Phase 172: community consensus post-traversal re-ranking
         if auto_infer_terminal_relation and answers:
             _sri = getattr(self, "_sri", None)
@@ -1603,6 +1737,39 @@ class CerebrumGraph:
         return answers
 
     # ------------------------------------------------------------------
+    # Phase 221: Seed expansion helper for uncertainty-steered retry
+    # ------------------------------------------------------------------
+
+    def _expand_seeds_for_retry(self, seeds: List[str], k: int = 5) -> List[str]:
+        """Return seeds + k nearest embedding neighbors by cosine similarity."""
+        embs = getattr(self.adapter, "embeddings", None)
+        if not embs:
+            return seeds
+        seed_vecs = [embs[s] for s in seeds if s in embs]
+        if not seed_vecs:
+            return seeds
+        query_vec = np.mean(seed_vecs, axis=0)
+        norm = float(np.linalg.norm(query_vec))
+        if norm < 1e-9:
+            return seeds
+        query_vec = query_vec / norm
+        scored: List[tuple] = []
+        for eid, vec in embs.items():
+            if eid in seeds:
+                continue
+            v_norm = float(np.linalg.norm(vec))
+            if v_norm < 1e-9:
+                continue
+            sim = float(np.dot(query_vec, vec / v_norm))
+            scored.append((eid, sim))
+        scored.sort(key=lambda x: -x[1])
+        expanded = list(seeds)
+        for eid, _ in scored[:k]:
+            if eid not in expanded:
+                expanded.append(eid)
+        return expanded
+
+    # ------------------------------------------------------------------
     # Phase 220: Self-Aware Query
     # ------------------------------------------------------------------
 
@@ -1622,17 +1789,33 @@ class CerebrumGraph:
             #  3 independent paths via authoritative sources."
         """
         from core.self_awareness import SelfAwarenessEngine
+        self._last_gap_recovery = False
         answers = self.query(*args, **kwargs)
         engine = SelfAwarenessEngine.from_symbolic_validator(
             self._validator if hasattr(self, "_validator") else type(
                 "V", (), {"constraints": []})()
         )
         report = engine.assess(answers)
+        report.gap_recovery = self._last_gap_recovery
+        _platt = getattr(self, "_platt", None)
+        if _platt is not None and _platt._fitted:
+            report.calibration_ece = _platt.ece()
         return answers, report
 
     # ------------------------------------------------------------------
     # Phase 95: Working Memory + Goal Stack attachment
     # ------------------------------------------------------------------
+
+    def attach_meta_learner(self, learner: Any, self_supervised: bool = True) -> None:
+        """Phase 223-B: attach MetaParameterLearner for self-supervised online adaptation."""
+        self._meta_learner = learner
+        self._self_supervised_learning = self_supervised
+        logger.info("Phase 223: MetaParameterLearner attached (self_supervised=%s)", self_supervised)
+
+    def attach_discovery_calibrator(self, calibrator: Any) -> None:
+        """Phase 223-C: attach DiscoveryCalibrator for curiosity alpha adaptation."""
+        self._discovery_calibrator = calibrator
+        logger.info("Phase 223: DiscoveryCalibrator attached for curiosity alpha adaptation.")
 
     def attach_valence_engine(self, engine: Any) -> None:
         """Phase 101: attach a ValenceEngine to the BeamTraversal."""

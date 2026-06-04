@@ -1,6 +1,6 @@
 # CEREBRUM System Architecture
 
-**Status**: v2.72.0 (Phase 220 COMPLETE — 2269 tests passing, 4 skipped)
+**Status**: v2.73.0 (Phase 223 COMPLETE — 2269 tests passing, 4 skipped)
 
 Complete data-flow from ingestion to result, including all options, pathways, and decision nodes.
 
@@ -144,8 +144,24 @@ tuple. Zero added latency — all computation is `O(path_length)` over already-a
 
 **Files**: `core/self_awareness.py`, `api/schemas.py` (`QueryResponse.self_awareness`), `core/cerebrum.py`
 
+## Phases 221–223: Closing the Self-Awareness Loop
+
+These phases convert CEREBRUM's self-knowledge from purely observational to actively corrective.
+All wiring of existing dormant implementations — zero new files.
+
+- **Phase 221-A: Uncertainty-Steered Retry** (`core/cerebrum.py`): When `SelfAwarenessEngine` detects `knowledge_gap=True` AND `epistemic_uncertainty > 0.05`, `query()` automatically retries with doubled beam width + 5 nearest embedding neighbors as additional seeds. Max 1 retry per query.
+- **Phase 221-B: Gap Recovery** (`core/cerebrum.py`): If the retry still yields `knowledge_gap`, a brute-force pass runs with `beam_width=32`, IOR disabled, no funnel profile. `ReasoningTrace.gap_recovery_triggered` set for observability.
+- **Phase 221-C: Contradiction Resolution** (`reasoning/answer_extractor.py`): `ContradictionFlag.resolution_status` upgraded from permanent `"unresolved"` to `"resolved_by_credibility"` when mean grounding (Phase 216 credibility-weighted) differs by >0.05 between conflicting paths. `resolved_path` points to the higher-credibility path.
+- **Phase 222-A: PlattCalibration Activated** (`core/cerebrum.py`, `core/parameter_learner.py`): `PlattCalibration` (fully implemented since Phase 129, never wired) now instantiated at build time and applied to answer scores when fitted. Loaded from `{cache_dir}/platt.json` across sessions. Auto-refit triggered when calibration drift >0.05.
+- **Phase 222-B: Calibration Drift Detection** (`core/parameter_learner.py`): `PlattCalibration.ece()` computes Expected Calibration Error. `drift_score()` measures ECE change since last `fit()`. `GET /calibration` endpoint exposes live ECE, drift score, sample count.
+- **Phase 223-A: CerebellarEngine Parameter Punishment** (`core/cerebellar_engine.py`): The `# Parameter Punishment` stub (present since Phase 59) now executes: `MetaParameterLearner.update_from_feedback(dissonant_path, reward=-1.0)` on every dissonance event. Negative SGD step on the overconfident community's CSA parameters.
+- **Phase 223-B: Self-Triggered MetaParameterLearner** (`core/cerebrum.py`): When gap recovery succeeds (brute-force pass finds an answer that the standard beam missed), the recovered path is used as a weak positive signal (`reward=0.5`) to automatically update CSA parameters — no user feedback required.
+- **Phase 223-C: Curiosity Alpha Adaptation** (`core/cerebrum.py`, `core/discovery_calibrator.py`): EMA of `epistemic_uncertainty` across queries drives `DiscoveryCalibrator.curiosity_alpha`. High-uncertainty periods → explore more (alpha→0.5); low-uncertainty → exploit (alpha→0.1). Range [0.1, 0.5].
+
+**Files**: `core/cerebrum.py`, `core/self_awareness.py`, `reasoning/answer_extractor.py`, `core/parameter_learner.py`, `core/cerebellar_engine.py`, `core/discovery_calibrator.py`, `api/server.py`
+
 ---
-**Reviewed on**: June 3, 2026 for version v2.72.0
+**Reviewed on**: June 3, 2026 for version v2.73.0
 
 ---
 

@@ -218,6 +218,10 @@ class DiscoveryCalibrator:
         except Exception:
             return 0.5
 
+    def set_curiosity_alpha(self, alpha: float) -> None:
+        """Phase 223-C: Dynamically adjust curiosity blend ratio."""
+        self.curiosity_alpha = max(0.0, min(1.0, alpha))
+
     def refresh_curiosity(self, adapter: "GraphAdapter", community_ids: Set[int]) -> None:
         """
         Recompute curiosity scores for the given communities and cache them.

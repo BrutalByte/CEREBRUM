@@ -3923,6 +3923,21 @@ def create_app(
             community_count=len(set(cm.values())) if cm else 0,
         )
 
+    @app.get("/calibration")
+    async def get_calibration():
+        """Phase 222: PlattCalibration status — ECE, drift score, and sample count."""
+        graph = _state.get("graph")
+        _platt = getattr(graph, "_platt", None) if graph else None
+        if _platt is None:
+            return {"error": "PlattCalibration not initialised (build graph first)"}
+        return {
+            "ece": _platt.ece() if _platt._fitted else -1.0,
+            "drift_score": _platt.drift_score(),
+            "n_samples": len(_platt._samples),
+            "fitted": _platt._fitted,
+            "last_fit_ts": getattr(_platt, "_last_fit_ts", None),
+        }
+
     @app.get("/", include_in_schema=False)
     async def root_redirect():
         return RedirectResponse(url="/v1/docs")

@@ -7,7 +7,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: June 2026
-**Status**: v2.72.0 (Phase 219 COMPLETE)
+**Status**: v2.73.0 (Phase 223 COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -1407,7 +1407,59 @@ while maintaining structural freshness on high-traffic regions.
 
 ---
 
-**Reviewed on**: June 2026 for version v2.72.0
+## Part VIII: Phases 221–223 — Closing the Self-Awareness Loop
+
+### Claim 71: Uncertainty-Steered Adaptive Retry (Phase 221-A/B)
+
+**Description**: `CerebrumGraph.query()` automatically re-invokes traversal when `SelfAwarenessEngine` detects both `knowledge_gap=True` and `epistemic_uncertainty > threshold`. The retry expands seeds via embedding cosine similarity and doubles beam width. A second "brute-force" pass (beam=32, no funnel, IOR disabled) fires if the first retry still returns a knowledge gap. Both retry stages are fully logged to `ReasoningTrace`.
+
+**Novelty Statement**: No existing KG traversal system uses its own epistemic self-assessment to trigger adaptive re-traversal strategies without external supervision. This creates a closed autonomy loop — the system detects its own uncertainty and self-corrects without human feedback.
+
+**Relevant files**: `core/cerebrum.py` (`query()`, `_expand_seeds_for_retry()`), `core/self_awareness.py`
+
+### Claim 72: Credibility-Based Contradiction Resolution (Phase 221-C)
+
+**Description**: `ContradictionFlag.resolution_status` is now set to `"resolved_by_credibility"` when the mean grounding (edge credibility scores from Phase 216-A) of the two conflicting paths differs by more than 0.05. The preferred path is stored in `ContradictionFlag.resolved_path`. `SelfAwarenessReport` exposes `contradiction_resolved` and `resolution_method` for callers.
+
+**Novelty Statement**: Prior art in KG contradiction detection (ContradictionResolver, Phase 73) only categorizes contradictions; no system automatically resolves them by provenance credibility at inference time.
+
+**Relevant files**: `reasoning/answer_extractor.py`, `core/self_awareness.py`
+
+### Claim 73: Activated Platt Calibration with Drift Detection (Phase 222)
+
+**Description**: `PlattCalibration` (2-parameter sigmoid calibration, implemented Phase 129) is now instantiated and wired into the query path at build time. Answer scores are transformed to calibrated probabilities when fitted. New `ece()` (Expected Calibration Error) and `drift_score()` methods detect when calibration has degraded and trigger background auto-refit. `GET /calibration` endpoint exposes live ECE and drift metrics.
+
+**Novelty Statement**: KG reasoning systems do not typically apply post-hoc score calibration at inference time. Combining drift detection with auto-triggered recalibration provides a self-maintaining confidence output that adapts to distribution shift without supervision.
+
+**Relevant files**: `core/parameter_learner.py`, `core/cerebrum.py`, `api/server.py`
+
+### Claim 74: CerebellarEngine Parameter Punishment — Implemented (Phase 223-A)
+
+**Description**: The `CerebellarEngine._handle_event()` stub (present since Phase 59, always logged but never executed) now calls `MetaParameterLearner.update_from_feedback(dissonant_path, reward=-1.0)`, applying a negative SGD step on the CSA parameters of the community that produced the overconfident dissonant path. Completes the cerebellar error-correction loop.
+
+**Novelty Statement**: Closes the loop opened by CerebellarEngine (Phase 59). The system now actively degrades parameters that produced overconfident-but-wrong reasoning, providing unsupervised error-driven learning at the community level.
+
+**Relevant files**: `core/cerebellar_engine.py`
+
+### Claim 75: Self-Triggered Unsupervised Online Adaptation (Phase 223-B)
+
+**Description**: When brute-force gap recovery (Phase 221-B) succeeds, the recovered answer's path is used as a weak positive signal (`reward=0.5`) to `MetaParameterLearner.update_from_feedback()` automatically — no external `/feedback` call required. Closes the gap → retry → learn loop entirely within a single query call.
+
+**Novelty Statement**: This is the first KG reasoning system to generate its own learning signal from the discrepancy between initial traversal failure and recovery success, creating fully unsupervised online adaptation at inference time.
+
+**Relevant files**: `core/cerebrum.py`
+
+### Claim 76: Curiosity-Uncertainty Co-Regulation (Phase 223-C)
+
+**Description**: A running EMA of `epistemic_uncertainty` from `SelfAwarenessReport` across queries drives `DiscoveryCalibrator.curiosity_alpha` in real time. High-uncertainty periods → higher curiosity blend (explore undersampled communities); low-uncertainty → lower blend (exploit familiar communities). Alpha range [0.1, 0.5]; EMA decay=0.9.
+
+**Novelty Statement**: Links epistemic self-assessment to autonomous discovery strategy without any external signal. The system becomes more exploratory precisely when it realizes it doesn't know enough — mirroring biological uncertainty-driven curiosity.
+
+**Relevant files**: `core/cerebrum.py`, `core/discovery_calibrator.py`
+
+---
+
+**Reviewed on**: June 3, 2026 for version v2.73.0
 
 ---
 

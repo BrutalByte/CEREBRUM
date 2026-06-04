@@ -59,6 +59,8 @@ class ContradictionFlag:
     """The (rel_a, rel_b) pair that triggered the flag."""
 
     resolution_status: str = "unresolved"
+    resolved_path: Any = None
+    """The preferred path when resolution_status == 'resolved_by_credibility'."""
     note: str = ""
 
     def __repr__(self) -> str:
@@ -191,6 +193,21 @@ def detect_answer_contradictions(answers: List[Answer]) -> None:
                                 f"path to {ans_a.entity_id!r} uses {ra!r}"
                             ),
                         )
+                        # Phase 221-C: resolve via grounding (credibility baked in via Phase 216).
+                        # Mean edge grounding (index 8) reflects source credibility.
+                        def _mean_grounding(p: Any) -> float:
+                            feats = getattr(p, "edge_features", None) or []
+                            gs = [f[8] for f in feats if len(f) > 8]
+                            return sum(gs) / len(gs) if gs else 0.5
+                        g_a = _mean_grounding(path_a)
+                        g_b = _mean_grounding(path_b)
+                        if abs(g_a - g_b) > 0.05:
+                            winner = path_a if g_a >= g_b else path_b
+                            flag_for_a.resolution_status = "resolved_by_credibility"
+                            flag_for_a.resolved_path = winner
+                            flag_for_b.resolution_status = "resolved_by_credibility"
+                            flag_for_b.resolved_path = winner
+
                         ans_a.contradiction_flags.append(flag_for_a)
                         ans_b.contradiction_flags.append(flag_for_b)
                         # One flag per pair is enough
