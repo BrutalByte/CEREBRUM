@@ -8,7 +8,7 @@ a shared beam pool.
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import Dict, List, Optional, Set, Any, Callable
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 import logging
 import math
 
@@ -17,7 +17,7 @@ _log = logging.getLogger("cerebrum.traversal")
 from reasoning.traversal import BeamTraversal, TraversalPath
 
 # ---------------------------------------------------------------------------
-# Phase 184: diagnostic hook — set by phase184_hop1_audit.py only.
+# Phase 184: diagnostic hook â€” set by phase184_hop1_audit.py only.
 # Called with (sorted_neighbors, score_map, k_eff) after stage-1 ranking.
 # None in all production paths.
 # ---------------------------------------------------------------------------
@@ -93,10 +93,10 @@ def _funnel_beam_widths(max_hop: int, bw: int, factor: float) -> Dict[int, int]:
 
 def _stitch(parent: TraversalPath, child: TraversalPath) -> TraversalPath:
     """
-    Concatenate parent (seed→hop1) with child (hop1→answer) into a single
-    full-depth path (seed→hop1→answer).
+    Concatenate parent (seedâ†’hop1) with child (hop1â†’answer) into a single
+    full-depth path (seedâ†’hop1â†’answer).
 
-    Phase 185: use geometric mean (√(parent × child)) instead of product so
+    Phase 185: use geometric mean (âˆš(parent Ã— child)) instead of product so
     that low-scoring hop-1 branches (score_ratio ~0.33) don't bury valid paths
     below the global top-100 cutoff. The geometric mean is symmetric: weak
     branches lose less ground relative to dominant ones.
@@ -124,7 +124,7 @@ class HopExpandedTraversal:
     """
     Phase 137: Hop-1 Intermediate Seed Expansion.
 
-    Stage 1: 1-hop scan (terminal — no pruning) returns all hop-1 neighbors.
+    Stage 1: 1-hop scan (terminal â€” no pruning) returns all hop-1 neighbors.
     Stage 2: each hop-1 entity runs an independent (max_hop-1)-hop
              BeamTraversal with its own beam, eliminating cross-branch
              competition for beam slots.
@@ -177,9 +177,9 @@ class HopExpandedTraversal:
         self.min_diversity_target = min_diversity_target
         self.residual_k = residual_k
         self.barrier_min_guaranteed = barrier_min_guaranteed
-        # Phase 151: PenultimateGate — hop-1 branch score-gap filter
+        # Phase 151: PenultimateGate â€” hop-1 branch score-gap filter
         self.penultimate_decay: float = float(traversal_kwargs.get("penultimate_decay", 0.0))
-        # Phase 172: Stage-1 anchor — biases which hop-1 entities receive deep traversals.
+        # Phase 172: Stage-1 anchor â€” biases which hop-1 entities receive deep traversals.
         # Entities in the anchor set get a score bonus during stage-1 ranking.
         self._stage1_anchor = traversal_kwargs.get("stage1_anchor_hint", None)
         self._traversal_kwargs = traversal_kwargs
@@ -300,7 +300,7 @@ class HopExpandedTraversal:
             base_score = parent_map[eid].score
             # Intersection bonus: +20% per additional seed
             bonus = 1.0 + (0.2 * (neighbor_seed_counts[eid] - 1))
-            # Phase 172: anchor bonus — prefer hop-1 entities in anchor set
+            # Phase 172: anchor bonus â€” prefer hop-1 entities in anchor set
             if _s1_anchor and eid in _s1_anchor[0]:
                 bonus *= _s1_anchor[1]
             return base_score * bonus
@@ -315,7 +315,7 @@ class HopExpandedTraversal:
             if len(hop1_entities) >= k_eff:
                 break
 
-        # Phase 151: PenultimateGate — drop hop-1 branches below decay_factor * best_score.
+        # Phase 151: PenultimateGate â€” drop hop-1 branches below decay_factor * best_score.
         # Prevents weak intermediate branches from polluting Stage 2 final-hop expansion.
         if self.penultimate_decay > 0.0 and hop1_entities:
             best_h1 = max(_rank_key(e) for e in hop1_entities)

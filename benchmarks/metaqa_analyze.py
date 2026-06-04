@@ -31,7 +31,7 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Counter, Dict, List, Tuple
 
 # ---------------------------------------------------------------------------
 # Paths  (mirrors metaqa_eval.py layout)
@@ -49,7 +49,7 @@ _YEAR_RE = re.compile(r"^\d{4}$")
 def _load_relation_sets() -> Dict[str, set]:
     rel: Dict[str, set] = collections.defaultdict(set)
     if not KB_FILE.exists():
-        print(f"  [warn] KB not found at {KB_FILE} — entity-type inference will use heuristics only",
+        print(f"  [warn] KB not found at {KB_FILE} â€” entity-type inference will use heuristics only",
               file=sys.stderr)
         return rel
     with open(KB_FILE, encoding="utf-8") as f:
@@ -92,12 +92,12 @@ def _classify(row: dict) -> str:
 # ---------------------------------------------------------------------------
 
 def _pct(n: int, d: int) -> str:
-    return f"{n / d * 100:.1f}%" if d else "—"
+    return f"{n / d * 100:.1f}%" if d else "â€”"
 
 
 def _bar(n: int, total: int, width: int = 20) -> str:
     filled = round(n / total * width) if total else 0
-    return "█" * filled + "░" * (width - filled)
+    return "â–ˆ" * filled + "â–‘" * (width - filled)
 
 
 def _section(title: str) -> str:
@@ -105,7 +105,7 @@ def _section(title: str) -> str:
 
 
 def _sub(title: str) -> str:
-    return f"\n  ── {title} ──"
+    return f"\n  â”€â”€ {title} â”€â”€"
 
 
 def _extract_template(question: str, seed: str) -> str:
@@ -199,10 +199,10 @@ def analyze(rows: List[dict], top_n: int = 15) -> str:  # noqa: C901
             out.append(_sub(f"Beam rank when partially visible ({len(partial)} of {len(beam_misses)} cases)"))
             out.append(f"    Min={sorted_p[0]}  Median={sorted_p[len(sorted_p)//2]}  Max={sorted_p[-1]}")
             buckets_brank = collections.Counter(
-                "≤50" if r <= 50 else "51-100" if r <= 100 else ">100"
+                "â‰¤50" if r <= 50 else "51-100" if r <= 100 else ">100"
                 for r in partial
             )
-            for label in ["≤50", "51-100", ">100"]:
+            for label in ["â‰¤50", "51-100", ">100"]:
                 if label in buckets_brank:
                     out.append(f"    rank {label:<7} : {buckets_brank[label]}")
 
@@ -226,30 +226,30 @@ def analyze(rows: List[dict], top_n: int = 15) -> str:  # noqa: C901
 
         out.append(_sub("SUGGESTED FIXES"))
         out.append(
-            "\n    Priority: HIGH — every beam miss is an unrecoverable loss.\n"
-            "\n    1. Increase expansion_k (default 20 → 25-30):\n"
+            "\n    Priority: HIGH â€” every beam miss is an unrecoverable loss.\n"
+            "\n    1. Increase expansion_k (default 20 â†’ 25-30):\n"
             "       More hop-1 entities enter stage-2, giving the GlobalBeamBarrier\n"
             "       more candidates to guarantee. Low risk, ~15% memory increase.\n"
-            "       Code: reasoning/expanded_traversal.py → _h1se_expand()\n"
+            "       Code: reasoning/expanded_traversal.py â†’ _h1se_expand()\n"
             "       CLI:  --expansion-k 25\n"
             "\n    2. Widen stage-2 beam for guaranteed branches:\n"
             "       Top-10 hop-1 branches currently share the same beam=30 as the rest.\n"
             "       Give each guaranteed branch beam=50 while others keep 30.\n"
             "       Targets the in_topk_stage2_fail subcase.\n"
-            "       Code: reasoning/expanded_traversal.py → HopExpandedTraversal.query()\n"
-            "\n    3. Raise _raw_top_k from 100 → 150 (collection window):\n"
+            "       Code: reasoning/expanded_traversal.py â†’ HopExpandedTraversal.query()\n"
+            "\n    3. Raise _raw_top_k from 100 â†’ 150 (collection window):\n"
             "       Previously caused H@10 regression via filter interaction.\n"
             "       Re-test ONLY on beam_coverage cases: if they now rank 101-150,\n"
             "       the fix is valid and filter interaction was a separate bug.\n"
-            "       Code: benchmarks/metaqa_eval.py → _raw_top_k\n"
+            "       Code: benchmarks/metaqa_eval.py â†’ _raw_top_k\n"
             "\n    4. Score floor for guaranteed branches:\n"
             "       If hop-1 score is very low (~0.001), sqrt(parent*child) is still\n"
             "       tiny. Add a minimum stitched score for barrier-guaranteed paths\n"
             "       so they can't fall below the top-100 cutoff.\n"
-            "       Code: reasoning/expanded_traversal.py → _stitch()"
+            "       Code: reasoning/expanded_traversal.py â†’ _stitch()"
         )
     else:
-        out.append("\n  No beam coverage misses — traversal is reaching all correct answers.")
+        out.append("\n  No beam coverage misses â€” traversal is reaching all correct answers.")
 
     # =======================================================================
     # 2. VOTE CONVERGENCE
@@ -296,7 +296,7 @@ def analyze(rows: List[dict], top_n: int = 15) -> str:  # noqa: C901
         if score_data:
             gaps   = [g for g, *_ in score_data]
             ratios = [cas / t1s for _, t1s, cas, _ in score_data if t1s > 0]
-            out.append(_sub("Score gap  (top1_score − correct_answer_score)"))
+            out.append(_sub("Score gap  (top1_score âˆ’ correct_answer_score)"))
             out.append(f"    Mean gap    : {sum(gaps)/len(gaps):.5f}")
             out.append(f"    Median gap  : {sorted(gaps)[len(gaps)//2]:.5f}")
             out.append(f"    Max gap     : {max(gaps):.5f}")
@@ -305,7 +305,7 @@ def analyze(rows: List[dict], top_n: int = 15) -> str:  # noqa: C901
                 close  = sum(1 for r in ratios if r >= 0.75)
                 medium = sum(1 for r in ratios if 0.25 <= r < 0.75)
                 far    = sum(1 for r in ratios if r < 0.25)
-                out.append(f"    ≥75% of top1 (near-tie) : {close:>4}  ({_pct(close, len(ratios))})")
+                out.append(f"    â‰¥75% of top1 (near-tie) : {close:>4}  ({_pct(close, len(ratios))})")
                 out.append(f"    25-75% of top1          : {medium:>4}  ({_pct(medium, len(ratios))})")
                 out.append(f"    <25% of top1 (far miss) : {far:>4}  ({_pct(far, len(ratios))})")
                 out.append(
@@ -333,7 +333,7 @@ def analyze(rows: List[dict], top_n: int = 15) -> str:  # noqa: C901
                 etype = _infer_type(ent, genres, langs)
                 out.append(f"    {cnt:>3}x  {ent!r}  [{etype}]")
             out.append(
-                f"\n    → Check if these are in _pure_genre in metaqa_eval.py.\n"
+                f"\n    â†’ Check if these are in _pure_genre in metaqa_eval.py.\n"
                 f"      If not, add them to the penalty set or _FORMAT_TAG_BLOCKLIST."
             )
 
@@ -354,7 +354,7 @@ def analyze(rows: List[dict], top_n: int = 15) -> str:  # noqa: C901
             for tmpl, cnt in tmpls_v.most_common(top_n):
                 out.append(f"    {cnt:>3}x  {tmpl}")
 
-        # Suggested fixes — data-driven
+        # Suggested fixes â€” data-driven
         out.append(_sub("SUGGESTED FIXES"))
         suggestions: List[str] = []
 
@@ -370,7 +370,7 @@ def analyze(rows: List[dict], top_n: int = 15) -> str:  # noqa: C901
                 "       be added, OR add it to _FORMAT_TAG_BLOCKLIST (applies the same 0.10x\n"
                 "       penalty). These entities are definitionally not people or years, so\n"
                 "       penalizing them for person/year relation queries is safe.\n"
-                "       Code: benchmarks/metaqa_eval.py → _pure_genre, _FORMAT_TAG_BLOCKLIST"
+                "       Code: benchmarks/metaqa_eval.py â†’ _pure_genre, _FORMAT_TAG_BLOCKLIST"
             )
 
         year_vs_year = type_counts.get("year beats year", 0)
@@ -380,15 +380,15 @@ def analyze(rows: List[dict], top_n: int = 15) -> str:  # noqa: C901
                 "       Both candidates are years; the wrong year wins by accumulating more\n"
                 "       undirected KB paths (popular release years like 2011 appear in\n"
                 "       thousands of movies). Attempted fixes:\n"
-                "         ✗ Global IDF weight — regressed (penalizes correct popular years too)\n"
+                "         âœ— Global IDF weight â€” regressed (penalizes correct popular years too)\n"
                 "       Untried approaches:\n"
-                "         → Release-year-specific IDF floor: apply idf_weight ONLY when\n"
+                "         â†’ Release-year-specific IDF floor: apply idf_weight ONLY when\n"
                 "           detected_rel == 'release_year' AND entity type is 'year'.\n"
                 "           This is more targeted than the global IDF that regressed.\n"
-                "         → Path-length tiebreaker: when scores are within 5%, prefer the\n"
+                "         â†’ Path-length tiebreaker: when scores are within 5%, prefer the\n"
                 "           year with fewer total KB occurrences.\n"
-                "         → Directed-path count: count only forward-direction traversals\n"
-                "           (subject→release_year) instead of undirected paths."
+                "         â†’ Directed-path count: count only forward-direction traversals\n"
+                "           (subjectâ†’release_year) instead of undirected paths."
             )
 
         person_vs_person = type_counts.get("person/other beats person/other", 0)
@@ -398,28 +398,28 @@ def analyze(rows: List[dict], top_n: int = 15) -> str:  # noqa: C901
                 "       Wrong person accumulates more multi-hop paths than the correct one.\n"
                 "       Current state: r2_boost=3.0 is confirmed optimal via sweep.\n"
                 "       Untried approaches:\n"
-                "         → Relation-specific r2_boost: higher boost for written_by/directed_by\n"
+                "         â†’ Relation-specific r2_boost: higher boost for written_by/directed_by\n"
                 "           (currently a single global value).\n"
-                "         → Path uniqueness penalty: entities reachable via many DIFFERENT\n"
+                "         â†’ Path uniqueness penalty: entities reachable via many DIFFERENT\n"
                 "           hop-2 relations are likely hub nodes, not specific answers.\n"
-                "         → Anchor bonus: if seed→hop1 score is high, boost hop1-rooted paths."
+                "         â†’ Anchor bonus: if seedâ†’hop1 score is high, boost hop1-rooted paths."
             )
 
         if low_hanging:
             close_cnt = sum(1 for _, t1s, cas, _ in score_data if cas / t1s >= 0.75) if score_data else 0
             suggestions.append(
                 f"    4. NEAR-TIE TUNING  ({len(low_hanging)} rank-2 + {close_cnt} near-tie score cases)\n"
-                "       Correct answer is rank=2 or scores ≥75% of top-1. Small parameter\n"
+                "       Correct answer is rank=2 or scores â‰¥75% of top-1. Small parameter\n"
                 "       adjustments could flip these without disrupting H@1 hits.\n"
-                "         → Run Optuna re-tune with a tighter search space:\n"
+                "         â†’ Run Optuna re-tune with a tighter search space:\n"
                 "             vote_weight: [0.82, 0.88]  r2_boost: [2.5, 3.5]\n"
-                "         → Test branch_bonus_weight (default 0.25, currently underexplored):\n"
+                "         â†’ Test branch_bonus_weight (default 0.25, currently underexplored):\n"
                 "             rewards entities that appear across multiple hop-1 branches."
             )
 
         if not suggestions:
             suggestions.append(
-                "    No dominant pattern detected. Run on a larger sample (n≥2000)\n"
+                "    No dominant pattern detected. Run on a larger sample (nâ‰¥2000)\n"
                 "    for clearer signal before choosing a fix direction."
             )
 
@@ -472,9 +472,9 @@ def analyze(rows: List[dict], top_n: int = 15) -> str:  # noqa: C901
         zero_filt = sum(1 for v in n_filt_vals if v == 0)
         out.append(
             "\n    1. INCREASE --min-filter-size (currently 1):\n"
-            "       Only apply hard filter when ≥N valid-type answers exist.\n"
+            "       Only apply hard filter when â‰¥N valid-type answers exist.\n"
             "       If n_filtered=0 is common above, the filter is always cutting\n"
-            "       everything — raising to 2-3 would force fallback to unfiltered.\n"
+            "       everything â€” raising to 2-3 would force fallback to unfiltered.\n"
             f"       {zero_filt} of {len(filter_misses)} filter misses had n_filtered=0.\n"
             "       CLI: --min-filter-size 3\n"
             "\n    2. CHECK TRB DETECTION ACCURACY:\n"
@@ -487,7 +487,7 @@ def analyze(rows: List[dict], top_n: int = 15) -> str:  # noqa: C901
             "       answer set to include entities within 1 hop of the relation's objects."
         )
     else:
-        out.append("\n  No filter misses — type filter is not removing correct answers.")
+        out.append("\n  No filter misses â€” type filter is not removing correct answers.")
 
     # =======================================================================
     # 4. RELATION-LEVEL PERFORMANCE TABLE
@@ -561,9 +561,9 @@ def analyze(rows: List[dict], top_n: int = 15) -> str:  # noqa: C901
         out.append(
             "\n  These entities have many outgoing KB edges, creating traversal noise.\n"
             "  SUGGESTED FIX:\n"
-            "    → IDF-style seed-entity penalty: reduce scores for candidates\n"
+            "    â†’ IDF-style seed-entity penalty: reduce scores for candidates\n"
             "      reachable from very high-degree seed entities.\n"
-            "    → Anchor bonus: if seed→hop1 cosine score is high, boost that branch."
+            "    â†’ Anchor bonus: if seedâ†’hop1 cosine score is high, boost that branch."
         )
     else:
         out.append("    No seed entities with 3+ misses.")
@@ -579,7 +579,7 @@ def analyze(rows: List[dict], top_n: int = 15) -> str:  # noqa: C901
         pct_bm = len(beam_misses) / n_total * 100
         priority_items.append((pct_bm,
             f"beam_coverage ({len(beam_misses)} cases, {pct_bm:.1f}%):\n"
-            "       expansion_k↑, beam widening for guaranteed branches, or score floor"))
+            "       expansion_kâ†‘, beam widening for guaranteed branches, or score floor"))
     if vote_misses:
         pct_vm = len(vote_misses) / n_total * 100
         priority_items.append((pct_vm,
@@ -589,20 +589,20 @@ def analyze(rows: List[dict], top_n: int = 15) -> str:  # noqa: C901
         pct_fm = len(filter_misses) / n_total * 100
         priority_items.append((pct_fm,
             f"filter_miss ({len(filter_misses)} cases, {pct_fm:.1f}%):\n"
-            "       min_filter_size↑ or TRB detection review"))
+            "       min_filter_sizeâ†‘ or TRB detection review"))
 
     priority_items.sort(reverse=True)
     for rank, (_, desc) in enumerate(priority_items, 1):
         out.append(f"  {rank}. {desc}\n")
 
     if low_hanging:
-        out.append(f"  Quick wins: {len(low_hanging)} rank-2 misses — correct answer is #2,\n"
+        out.append(f"  Quick wins: {len(low_hanging)} rank-2 misses â€” correct answer is #2,\n"
                    f"    a small score nudge could flip them. Run Optuna with tight bounds first.")
 
     unreachable_pct = len(beam_misses) / n_total * 100
     reachable_miss_pct = (len(vote_misses) + len(filter_misses)) / n_total * 100
     out.append(
-        f"\n  ── Upper bounds ──\n"
+        f"\n  â”€â”€ Upper bounds â”€â”€\n"
         f"  If beam_coverage fixed:    H@1 ceiling = {_pct(h1 + len(beam_misses), n_total)} (currently {_pct(h1, n_total)})\n"
         f"  If vote+filter fixed:      H@1 ceiling = {_pct(h1 + len(vote_misses) + len(filter_misses), n_total)}\n"
         f"  If all misses fixed:       H@1 ceiling = 100.0%\n"
@@ -644,7 +644,7 @@ def main() -> None:
             try:
                 rows.append(json.loads(line))
             except json.JSONDecodeError as e:
-                print(f"[warn] Line {line_num}: JSON parse error — {e}", file=sys.stderr)
+                print(f"[warn] Line {line_num}: JSON parse error â€” {e}", file=sys.stderr)
 
     if not rows:
         print("[error] No valid JSONL records found.", file=sys.stderr)

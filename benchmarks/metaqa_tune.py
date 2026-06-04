@@ -1,15 +1,15 @@
 """
-CEREBRUM MetaQA Hyperparameter Tuner — Phase 183.
+CEREBRUM MetaQA Hyperparameter Tuner â€” Phase 183.
 
 Uses Optuna TPE to search scoring parameters that target the ranking-miss problem.
 Each trial runs metaqa_eval on a small subsample; results are logged to MLflow.
 
 Usage
 -----
-    # Quick search (30 trials × 500 questions ≈ 35 min):
+    # Quick search (30 trials Ã— 500 questions â‰ˆ 35 min):
     python -m benchmarks.metaqa_tune
 
-    # Larger search (50 trials × 1000 questions ≈ 90 min):
+    # Larger search (50 trials Ã— 1000 questions â‰ˆ 90 min):
     python -m benchmarks.metaqa_tune --n-trials 50 --sample 1000
 
     # Custom search space:
@@ -30,6 +30,7 @@ Fixed parameters (always applied, not tuned)
     --hop 3
 """
 from __future__ import annotations
+from typing import Set
 
 import argparse
 import os
@@ -66,7 +67,7 @@ _FIXED = {
     "idf_weight": 0.0,
 }
 
-# Search space bounds — Phase 187 re-tune around Phase 186 optimum
+# Search space bounds â€” Phase 187 re-tune around Phase 186 optimum
 _SPACE = {
     "pss_weight":  (0.00, 0.40),
     "vote_weight": (0.70, 0.95),
@@ -170,7 +171,7 @@ def main():
     parser.add_argument("--n-trials",  type=int,   default=30,
                         help="Number of Optuna trials (default: 30)")
     parser.add_argument("--sample",    type=int,   default=500,
-                        help="Questions per trial (default: 500; ±2.2pp 95%% CI)")
+                        help="Questions per trial (default: 500; Â±2.2pp 95%% CI)")
     parser.add_argument("--search",    nargs="+",
                         default=["pss_weight", "vote_weight", "r2_boost"],
                         choices=list(_SPACE.keys()),
@@ -187,7 +188,7 @@ def main():
     args = parser.parse_args()
 
     print("=" * 60)
-    print("CEREBRUM MetaQA Hyperparameter Search — Phase 187")
+    print("CEREBRUM MetaQA Hyperparameter Search â€” Phase 187")
     print("=" * 60)
     print(f"  Trials      : {args.n_trials}")
     print(f"  Sample/trial: {args.sample} questions")

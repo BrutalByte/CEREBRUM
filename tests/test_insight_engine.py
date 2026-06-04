@@ -1,9 +1,10 @@
 """
-Tests for core/insight_engine.py — InsightEngine (Phase 15).
+Tests for core/insight_engine.py â€” InsightEngine (Phase 15).
 
 All tests use small in-process NetworkXAdapter instances with synthetic
 embeddings (RandomEngine). No external dependencies. No file I/O.
 """
+from typing import Any
 import time
 
 import networkx as nx
@@ -32,7 +33,7 @@ def _adapter_two_communities():
     Graph with two clear communities separated by a single cross edge.
     Community 0: A, B, C
     Community 1: D, E, F
-    Cross edge: C → D
+    Cross edge: C â†’ D
     """
     G = nx.DiGraph()
     edges = [
@@ -75,7 +76,7 @@ def _flood_baseline(engine, u_cid, v_cid, score, n=MIN_BASELINE_OBS):
 
 
 # ---------------------------------------------------------------------------
-# Ring buffer — hot path
+# Ring buffer â€” hot path
 # ---------------------------------------------------------------------------
 
 def test_record_crossing_adds_to_buffer():
@@ -132,10 +133,10 @@ def test_resume_allows_drain():
 # ---------------------------------------------------------------------------
 
 def test_compute_surprise_no_baseline():
-    """Fewer than MIN_BASELINE_OBS observations → no InsightEvent fired."""
+    """Fewer than MIN_BASELINE_OBS observations â†’ no InsightEvent fired."""
     adapter = _adapter_two_communities()
     ie = _make_engine(adapter)
-    # Only 2 observations — not enough
+    # Only 2 observations â€” not enough
     key = (0, 1)
     for _ in range(2):
         ie._update_baseline(key, 0.3)
@@ -147,7 +148,7 @@ def test_compute_surprise_no_baseline():
 
 
 def test_compute_surprise_below_threshold():
-    """Path score barely above baseline → no event."""
+    """Path score barely above baseline â†’ no event."""
     adapter = _adapter_two_communities()
     ie = _make_engine(adapter, salience_threshold=0.5)
     _flood_baseline(ie, 0, 1, 0.6)  # baseline = 0.6
@@ -158,7 +159,7 @@ def test_compute_surprise_below_threshold():
 
 
 def test_compute_surprise_above_threshold():
-    """Path score well above baseline → InsightEvent fired."""
+    """Path score well above baseline â†’ InsightEvent fired."""
     adapter = _adapter_two_communities()
     ie = _make_engine(adapter, salience_threshold=0.2)
     _flood_baseline(ie, 0, 1, 0.3)  # baseline = 0.3
@@ -197,7 +198,7 @@ def test_materialize_creates_insight_edge():
     )
     ie._materialize(event, G)
 
-    # Either C→D or D→C should now be INSIGHT_LINK
+    # Either Câ†’D or Dâ†’C should now be INSIGHT_LINK
     found = False
     for a, b in [("C", "D"), ("D", "C")]:
         if G.has_edge(a, b):
@@ -215,7 +216,7 @@ def test_materialize_edge_metadata():
     ie = _make_engine(adapter)
     G = adapter._G
 
-    # Remove the C→D BRIDGE edge so forward slot is free
+    # Remove the Câ†’D BRIDGE edge so forward slot is free
     G.remove_edge("C", "D")
 
     event = InsightEvent(
@@ -269,7 +270,7 @@ def test_propagate_reward_boosts_edge_confidence():
     ie = _make_engine(adapter)
     G = adapter._G
 
-    # A→B is currently confidence=1.0; path A→KNOWS→B
+    # Aâ†’B is currently confidence=1.0; path Aâ†’KNOWSâ†’B
     path = _MockPath(["A", "KNOWS", "B"])
     before = G.get_edge_data("A", "B")["confidence"]
     ie._propagate_reward(G, path, insight_score=1.0)
@@ -305,7 +306,7 @@ def test_propagate_reward_proportional_to_insight_score():
 
     conf1 = adapter1._G.get_edge_data("A", "B")["confidence"]
     conf2 = adapter2._G.get_edge_data("A", "B")["confidence"]
-    # Higher insight_score → larger boost
+    # Higher insight_score â†’ larger boost
     assert conf2 >= conf1
     ie1.stop()
     ie2.stop()
@@ -316,7 +317,7 @@ def test_propagate_reward_proportional_to_insight_score():
 # ---------------------------------------------------------------------------
 
 def test_explanatory_power_disconnected():
-    """Adding an edge between two separate components → high explanatory power."""
+    """Adding an edge between two separate components â†’ high explanatory power."""
     adapter = _adapter_two_communities()
     ie = _make_engine(adapter)
 
@@ -329,13 +330,13 @@ def test_explanatory_power_disconnected():
     ie2 = _make_engine(adapter2)
 
     power = ie2._explanatory_power(G2, "X1", "Y1")
-    assert power > 0.1  # Should be substantial (2 × 2 / C(4,2) = 4/6 ≈ 0.67)
+    assert power > 0.1  # Should be substantial (2 Ã— 2 / C(4,2) = 4/6 â‰ˆ 0.67)
     ie.stop()
     ie2.stop()
 
 
 def test_explanatory_power_already_connected():
-    """Adding an edge between already-connected nodes → near-zero power."""
+    """Adding an edge between already-connected nodes â†’ near-zero power."""
     adapter = _adapter_two_communities()
     ie = _make_engine(adapter)
     G = adapter._G

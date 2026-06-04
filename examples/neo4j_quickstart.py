@@ -13,6 +13,7 @@ Set environment variables:
 Usage:
     python examples/neo4j_quickstart.py
 """
+from typing import Set
 import sys
 from pathlib import Path
 

@@ -1,5 +1,5 @@
 """
-Parquet / Arrow adapter for CEREBRUM — load a knowledge graph from columnar data files.
+Parquet / Arrow adapter for CEREBRUM â€” load a knowledge graph from columnar data files.
 
 Supports Parquet (.parquet), Feather/Arrow (.arrow, .feather), and
 in-memory pandas DataFrames / pyarrow Tables.
@@ -30,7 +30,7 @@ Usage
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 import networkx as nx
 
@@ -73,7 +73,7 @@ def load_arrow_adapter(
     relation_col: str = "relation",
     directed: bool = False,
 ) -> NetworkXAdapter:
-    """Alias for load_parquet_adapter — accepts .arrow / .feather files."""
+    """Alias for load_parquet_adapter â€” accepts .arrow / .feather files."""
     return load_parquet_adapter(
         source, source_col=source_col, target_col=target_col,
         relation_col=relation_col, directed=directed,

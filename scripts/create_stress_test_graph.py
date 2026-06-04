@@ -1,3 +1,4 @@
+from typing import Generator
 import os
 import csv
 import random
@@ -41,7 +42,7 @@ def generate():
             rel = random.choice(relations)
             writer.writerow([u, v, rel])
             
-    print(f"✅ Success: Saved to {OUTPUT_FILE}")
+    print(f"âœ… Success: Saved to {OUTPUT_FILE}")
     print(f"File size: {os.path.getsize(OUTPUT_FILE) / 1024:.2f} KB")
 
 if __name__ == "__main__":

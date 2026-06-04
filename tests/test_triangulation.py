@@ -1,14 +1,14 @@
 """
-Tests for TriangulationEngine — Phase 72.
+Tests for TriangulationEngine â€” Phase 72.
 
 Coverage:
   - evaluate() returns all four scores in [0, 1]
   - P1 reverse_confidence = 0.0 when no reverse path
   - P1 reverse_confidence > 0 when reverse path exists
-  - P1 skipped when run_bidirectional=False → 0.0
+  - P1 skipped when run_bidirectional=False â†’ 0.0
   - P2 strategy_agreement = 1.0 when all three strategies find proposals
-  - P2 strategy_agreement ≈ 0.33 when only primary finds proposals
-  - P2 skipped when run_multi_strategy=False → 1.0 or 0.0
+  - P2 strategy_agreement â‰ˆ 0.33 when only primary finds proposals
+  - P2 skipped when run_multi_strategy=False â†’ 1.0 or 0.0
   - P3 mean_path_independence = 0.5 when no independence_scores
   - P3 mean_path_independence computed correctly from independence_scores
   - P4 semantic_type_score = 0.5 for unknown relation type
@@ -23,7 +23,7 @@ Coverage:
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Type
 
 import pytest
 
@@ -64,7 +64,7 @@ class _MockHypothesisEngine:
     """
     Controllable mock for HypothesisEngine.
 
-    ``responses`` maps (source_id, target_id, max_hop) → list of proposals.
+    ``responses`` maps (source_id, target_id, max_hop) â†’ list of proposals.
     Unmatched calls return [].
     """
     def __init__(self, responses=None):
@@ -144,11 +144,11 @@ def test_evaluate_all_scores_in_range():
 
 
 # ---------------------------------------------------------------------------
-# P1 — Bidirectional path confirmation
+# P1 â€” Bidirectional path confirmation
 # ---------------------------------------------------------------------------
 
 def test_p1_no_reverse_path():
-    engine = _make_engine(hyp_responses={})  # no responses → all return []
+    engine = _make_engine(hyp_responses={})  # no responses â†’ all return []
     cand = _make_candidate(source_id="A", target_id="B")
     report = engine.evaluate(cand, [_make_proposal()])
     assert report.reverse_confidence == 0.0
@@ -186,11 +186,11 @@ def test_p1_below_min_confidence_not_counted():
 
 
 # ---------------------------------------------------------------------------
-# P2 — Multi-strategy agreement
+# P2 â€” Multi-strategy agreement
 # ---------------------------------------------------------------------------
 
 def test_p2_all_strategies_agree():
-    """All three strategies (primary + 2 extra) find proposals → agreement = 1.0."""
+    """All three strategies (primary + 2 extra) find proposals â†’ agreement = 1.0."""
     prop = _make_proposal(confidence=0.7)
     responses = {
         ("A", "B", 2): [prop],   # conservative
@@ -204,7 +204,7 @@ def test_p2_all_strategies_agree():
 
 
 def test_p2_only_primary():
-    """Only the primary (standard) run finds proposals → agreement = 1/3."""
+    """Only the primary (standard) run finds proposals â†’ agreement = 1/3."""
     engine = _make_engine(hyp_responses={})  # extra strategies return []
     primary = [_make_proposal(confidence=0.7)]
     cand = _make_candidate(source_id="A", target_id="B")
@@ -213,7 +213,7 @@ def test_p2_only_primary():
 
 
 def test_p2_no_strategies_agree():
-    """No strategy finds proposals → agreement = 0.0."""
+    """No strategy finds proposals â†’ agreement = 0.0."""
     engine = _make_engine(hyp_responses={})
     cand = _make_candidate(source_id="A", target_id="B")
     report = engine.evaluate(cand, [])  # primary also empty
@@ -234,7 +234,7 @@ def test_p2_skipped_returns_primary_only():
 
 
 # ---------------------------------------------------------------------------
-# P3 — Path independence
+# P3 â€” Path independence
 # ---------------------------------------------------------------------------
 
 def test_p3_no_proposals():
@@ -273,11 +273,11 @@ def test_p3_perfect_independence():
 
 
 # ---------------------------------------------------------------------------
-# P4 — Semantic type consistency
+# P4 â€” Semantic type consistency
 # ---------------------------------------------------------------------------
 
 def test_p4_novel_relation_neutral():
-    """Relation not seen in graph → 0.5 (neutral, not penalised)."""
+    """Relation not seen in graph â†’ 0.5 (neutral, not penalised)."""
     adapter = _MockAdapter(edges=[], entity_types={"A": "drug", "B": "disease"})
     engine = _make_engine(adapter=adapter)
     cand = _make_candidate(source_id="A", target_id="B")
@@ -287,7 +287,7 @@ def test_p4_novel_relation_neutral():
 
 
 def test_p4_exact_type_match():
-    """(src_type, tgt_type) exactly seen in graph for this relation → 1.0."""
+    """(src_type, tgt_type) exactly seen in graph for this relation â†’ 1.0."""
     adapter = _MockAdapter(
         edges=[("X", "Y", {"relation": "treats"})],
         entity_types={"A": "drug", "B": "disease", "X": "drug", "Y": "disease"},
@@ -300,7 +300,7 @@ def test_p4_exact_type_match():
 
 
 def test_p4_one_side_match():
-    """Source type matches but target type is new → 0.65."""
+    """Source type matches but target type is new â†’ 0.65."""
     adapter = _MockAdapter(
         edges=[("X", "Y", {"relation": "treats"})],
         entity_types={"A": "drug", "B": "protein", "X": "drug", "Y": "disease"},
@@ -313,7 +313,7 @@ def test_p4_one_side_match():
 
 
 def test_p4_neither_type_matches():
-    """Relation known but neither endpoint type seen → 0.30."""
+    """Relation known but neither endpoint type seen â†’ 0.30."""
     adapter = _MockAdapter(
         edges=[("X", "Y", {"relation": "treats"})],
         entity_types={"A": "gene", "B": "pathway", "X": "drug", "Y": "disease"},
@@ -326,10 +326,10 @@ def test_p4_neither_type_matches():
 
 
 def test_p4_empty_derived_relation():
-    """No derived relation → neutral 0.5."""
+    """No derived relation â†’ neutral 0.5."""
     engine = _make_engine()
     cand = _make_candidate()
-    report = engine.evaluate(cand, [])  # no proposals → derived_relation = ""
+    report = engine.evaluate(cand, [])  # no proposals â†’ derived_relation = ""
     assert report.semantic_type_score == 0.5
 
 
@@ -357,7 +357,7 @@ def test_SynapticBridge_candidate_all_conditions_met():
 
 
 def test_SynapticBridge_candidate_no_reverse():
-    """No reverse path → not a SynapticBridge."""
+    """No reverse path â†’ not a SynapticBridge."""
     engine = _make_engine(hyp_responses={})
     prop = _make_proposal(independence_scores=[0.9])
     cand = _make_candidate(community_distance=3)
@@ -366,7 +366,7 @@ def test_SynapticBridge_candidate_no_reverse():
 
 
 def test_SynapticBridge_candidate_low_community_distance():
-    """Same community → not a SynapticBridge even if reverse path exists."""
+    """Same community â†’ not a SynapticBridge even if reverse path exists."""
     prop = _make_proposal(confidence=0.8, independence_scores=[0.9])
     rev_prop = _make_proposal(confidence=0.75)
     responses = {("B", "A", 3): [rev_prop]}
@@ -390,7 +390,7 @@ def test_type_index_cached_on_same_signature():
     idx1 = engine._get_type_index()
     # Second call with same graph
     idx2 = engine._get_type_index()
-    assert idx1 is idx2  # same object — returned from cache
+    assert idx1 is idx2  # same object â€” returned from cache
 
 
 def test_type_index_rebuilds_on_graph_change():
@@ -415,7 +415,7 @@ def test_type_index_rebuilds_on_graph_change():
 
     idx1 = engine._get_type_index()
 
-    # Mutate the graph — this changes edge count
+    # Mutate the graph â€” this changes edge count
     G.add_edge("X", "Z", relation="causes")
     adapter._types["Z"] = "symptom"
 

@@ -1,5 +1,5 @@
 """
-HypothesisEngine — Multi-Path Abductive Reasoning (Phase 50).
+HypothesisEngine â€” Multi-Path Abductive Reasoning (Phase 50).
 
 Given two nodes with no direct edge, finds all multi-hop paths between them,
 composes each path's relation chain, combines independent evidence using the
@@ -12,11 +12,11 @@ Key concepts
 Equifinality
     Multiple independent paths converging on the same derived relation
     compound confidence via Noisy-OR:
-        P(link | P1, P2, ...) = 1 - ∏(1 - score_i)
+        P(link | P1, P2, ...) = 1 - âˆ�(1 - score_i)
 
 Intersectionality
-    Intermediate nodes shared across ≥2 independent paths are structural hubs
-    — the highest-value candidates for follow-up study or new edge creation.
+    Intermediate nodes shared across â‰¥2 independent paths are structural hubs
+    â€” the highest-value candidates for follow-up study or new edge creation.
 
 Domain-agnostic
     The composition table is user-configurable (pass ``composition_table``).
@@ -44,13 +44,13 @@ import uuid
 import threading
 from collections import Counter
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Counter, Dict, List, Optional, Set, Tuple
 
 import networkx as nx  # noqa: F401  (used indirectly via adapter.to_networkx())
 
 
 # ---------------------------------------------------------------------------
-# Opposing relation map — for contradiction detection
+# Opposing relation map â€” for contradiction detection
 # ---------------------------------------------------------------------------
 
 _OPPOSING_RELATIONS: Dict[str, str] = {
@@ -94,7 +94,7 @@ class HypothesisProposal:
     """Relation type inferred by composing the supporting path chains."""
 
     confidence: float
-    """Noisy-OR combined confidence across independent supporting paths (0–1)."""
+    """Noisy-OR combined confidence across independent supporting paths (0â€“1)."""
 
     path_count: int
     """Number of independent supporting paths contributing to this proposal."""
@@ -112,7 +112,7 @@ class HypothesisProposal:
     """TraversalPath objects used as evidence (serialized separately for the API)."""
 
     intersection_nodes: List[str]
-    """Intermediate nodes appearing in ≥2 independent paths (equifinality hubs)."""
+    """Intermediate nodes appearing in â‰¥2 independent paths (equifinality hubs)."""
 
 
 # ---------------------------------------------------------------------------
@@ -276,7 +276,7 @@ class HypothesisEngine:
                 for i, p in enumerate(independent):
                     chain = self._chain_string(p)
                     parts.append(
-                        f"P{i + 1}: {source_id}→{'→'.join(p.entity_nodes[1:-1])}→{target_id}"
+                        f"P{i + 1}: {source_id}â†’{'â†’'.join(p.entity_nodes[1:-1])}â†’{target_id}"
                         f" [{chain}] score={p.score:.3f}"
                     )
                 derivation = "; ".join(parts)
@@ -484,9 +484,9 @@ class HypothesisEngine:
 
     def _noisy_or(self, scores: List[float]) -> float:
         """
-        Noisy-OR combination: 1 - ∏(1 - s_i).
+        Noisy-OR combination: 1 - âˆ�(1 - s_i).
 
-        Models independent causal chains — each path is an independent
+        Models independent causal chains â€” each path is an independent
         ``cause'' of the proposed link.
         """
         if not scores:
@@ -541,9 +541,9 @@ class HypothesisEngine:
         self, paths: list, source_id: str, target_id: str
     ) -> List[str]:
         """
-        Identify intermediate nodes appearing in ≥2 independent paths.
+        Identify intermediate nodes appearing in â‰¥2 independent paths.
 
-        These are equifinality hubs — structural bottlenecks through which
+        These are equifinality hubs â€” structural bottlenecks through which
         multiple reasoning routes converge.
         """
         if len(paths) < 2:
@@ -557,6 +557,6 @@ class HypothesisEngine:
         return [node for node, cnt in counts.items() if cnt >= 2]
 
     def _chain_string(self, path) -> str:
-        """Human-readable relation chain: REL1→REL2→REL3."""
+        """Human-readable relation chain: REL1â†’REL2â†’REL3."""
         rels = path.nodes[1::2]
-        return "→".join(rels) if rels else "?"
+        return "â†’".join(rels) if rels else "?"

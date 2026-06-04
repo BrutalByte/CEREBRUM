@@ -6,7 +6,7 @@ to ensure consistency across traversal, pruning, and ranking.
 """
 import logging
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Tuple, Type
 import numpy as np
 
 _logger = logging.getLogger("cerebrum.reasoning_logit")

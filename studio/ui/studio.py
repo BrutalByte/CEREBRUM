@@ -9,6 +9,7 @@ Usage:
     python studio/ui/studio.py
     cerebrum-studio                   # when installed via pip install cerebrum-kg-studio
 """
+from typing import List, Type
 import sys
 import logging
 import argparse
@@ -30,7 +31,7 @@ logging.basicConfig(
 )
 
 # In development: add monorepo root to path so `from core.xxx` resolves.
-# studio/ui/studio.py → studio/ui → studio → repo root
+# studio/ui/studio.py â†’ studio/ui â†’ studio â†’ repo root
 _repo_root = Path(__file__).resolve().parent.parent.parent
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
@@ -38,7 +39,7 @@ if str(_repo_root) not in sys.path:
 from core.studio_engine import StudioEngine
 
 # ---------------------------------------------------------------------------
-# Singleton engine — owns all graph state
+# Singleton engine â€” owns all graph state
 # ---------------------------------------------------------------------------
 
 _engine = StudioEngine()
@@ -50,16 +51,16 @@ _engine = StudioEngine()
 # 10-param CSA weight labels in canonical order:
 #   alpha, beta, gamma, delta, epsilon, zeta, eta, iota, mu, theta
 _WEIGHT_DEFS = [
-    (0.40, "α — Semantic"),
-    (0.40, "β — Community"),
-    (0.10, "γ — Edge Type"),
-    (0.05, "δ — Distance"),
-    (0.05, "ε — Hop Decay"),
-    (0.10, "ζ — PageRank"),
-    (0.10, "η — Temp Decay"),
-    (0.05, "ι — Node Recency"),
-    (0.10, "μ — Synth Density"),
-    (1.00, "θ — Grounding"),
+    (0.40, "Î± â€” Semantic"),
+    (0.40, "Î² â€” Community"),
+    (0.10, "Î³ â€” Edge Type"),
+    (0.05, "Î´ â€” Distance"),
+    (0.05, "Îµ â€” Hop Decay"),
+    (0.10, "Î¶ â€” PageRank"),
+    (0.10, "Î· â€” Temp Decay"),
+    (0.05, "Î¹ â€” Node Recency"),
+    (0.10, "Î¼ â€” Synth Density"),
+    (1.00, "Î¸ â€” Grounding"),
 ]
 
 _PARAM_CATEGORIES = [label for _, label in _WEIGHT_DEFS]
@@ -117,7 +118,7 @@ def _kb_preview_cb(file_obj, path_text):
         return f"<p>Error reading file: {exc}</p>", [], [], []
 
     if not cols:
-        return "<p>No columns detected — check file format.</p>", [], [], []
+        return "<p>No columns detected â€” check file format.</p>", [], [], []
 
     # Build HTML table
     header = "".join(f"<th style='padding:4px 10px;border-bottom:1px solid #30363d'>{c}</th>" for c in cols)
@@ -128,7 +129,7 @@ def _kb_preview_cb(file_obj, path_text):
     html = (
         "<table style='border-collapse:collapse;font-size:13px;width:100%'>"
         f"<thead><tr>{header}</tr></thead><tbody>{body}</tbody></table>"
-        f"<p style='color:#8b949e;margin-top:6px'>Showing first {len(rows)} rows · {len(cols)} columns detected</p>"
+        f"<p style='color:#8b949e;margin-top:6px'>Showing first {len(rows)} rows Â· {len(cols)} columns detected</p>"
     )
 
     # Smart defaults: try to guess src/tgt/rel columns
@@ -207,10 +208,10 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
     reasoning_answers = gr.State([])   # last reasoning answers for audit export
 
     with gr.Row():
-        # ── Left panel: controls ──────────────────────────────────────
+        # â”€â”€ Left panel: controls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         with gr.Column(scale=1):
             with gr.Group():
-                file_in = gr.File(label="Upload Graph (CSV/JSON/GraphML/…)")
+                file_in = gr.File(label="Upload Graph (CSV/JSON/GraphML/â€¦)")
                 path_in = gr.Textbox(
                     label="Or paste a local file path",
                     placeholder=r"E:\path\to\your\graph.csv",
@@ -222,7 +223,7 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
                         choices=_engine.get_recent_paths(),
                         interactive=True,
                     )
-                    history_ref_btn = gr.Button("🔄", scale=0)
+                    history_ref_btn = gr.Button("ðŸ”„", scale=0)
                 emb_in  = gr.Dropdown(
                     ["Random (Fast)", "Sentence (BGE)", "Sentence + GraphSAGE"],
                     value="Random (Fast)",
@@ -259,7 +260,7 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
             status_out  = gr.Textbox(label="Status")
             comm_output = gr.Textbox(label="Community Summary", visible=True)
 
-        # ── Right panel: results ──────────────────────────────────────
+        # â”€â”€ Right panel: results â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         with gr.Column(scale=3):
             with gr.Tabs():
                 with gr.Tab("KB Builder"):
@@ -290,7 +291,7 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
                             q_in  = gr.Textbox(label="Query Entity", placeholder="e.g. newton")
                             q_btn = gr.Button("Run", variant="primary")
                             q_html = gr.HTML()
-                            with gr.Accordion("Why this answer? — Beam Explanation", open=False):
+                            with gr.Accordion("Why this answer? â€” Beam Explanation", open=False):
                                 explain_btn  = gr.Button("Explain Top Answer", variant="secondary")
                                 explain_html = gr.HTML()
                             with gr.Accordion("Export Audit Report", open=False):
@@ -357,7 +358,7 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
                             st_log = gr.HTML(label="Mutation Log")
                             st_ref = gr.Button("Refresh Log")
 
-    # ── Wiring ────────────────────────────────────────────────────────
+    # â”€â”€ Wiring â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     # KB Builder
     for _kb_trigger in (kb_file_in, kb_path_in):
@@ -409,12 +410,12 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
         outputs=[p_radar, s_plot, s_md],
     )
 
-    # CSA weight profiler — live radar + commit (10 params)
+    # CSA weight profiler â€” live radar + commit (10 params)
     for w in weights:
         w.change(generate_param_radar, weights, p_radar, api_name="update_param_profile")
     commit_btn.click(_engine.commit_params, weights, status_out, api_name="commit_weights")
 
-    # Graph load → also refresh radar and analytics
+    # Graph load â†’ also refresh radar and analytics
     load_btn.click(
         _load_graph_cb,
         [file_in, path_in, emb_in],
@@ -428,7 +429,7 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
         lambda: gr.update(choices=_engine.get_recent_paths()), None, history_in
     )
 
-    # C1 — Explainability Dashboard
+    # C1 â€” Explainability Dashboard
     explain_btn.click(_engine.explain_beam_from_last, [], explain_html)
     audit_btn.click(_engine.generate_audit_json_from_last, [], audit_json)
     pdf_btn.click(
@@ -440,7 +441,7 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
         js="() => { const w=window.open('','_blank'); w.document.write(document.querySelector('#pdf_html_preview').innerHTML); w.print(); }",
     )
 
-    # Reasoning → also update 3D path highlight
+    # Reasoning â†’ also update 3D path highlight
     q_btn.click(
         _engine.run_reasoning,
         [q_in, beam_sl, hop_sl, k_sl, mem_sl],

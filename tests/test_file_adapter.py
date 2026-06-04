@@ -3,10 +3,11 @@ Tests for the universal file loader (adapters/file_adapter.py).
 
 Covers all supported formats: CSV, TSV, JSON (array/dict/triples), JSONL,
 GraphML, GEXF, GML. Parquet and Excel require pandas/openpyxl which are
-optional — those loaders are tested with a skip guard.
+optional â€” those loaders are tested with a skip guard.
 
 All tests use pytest's tmp_path fixture for temp files.
 """
+from typing import Optional
 import json
 
 import networkx as nx
@@ -92,7 +93,7 @@ def test_load_tsv(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# JSON — array of edge objects
+# JSON â€” array of edge objects
 # ---------------------------------------------------------------------------
 
 def test_load_json_array_of_objects(tmp_path):
@@ -112,7 +113,7 @@ def test_load_json_relation_preserved(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# JSON — nodes-and-edges object
+# JSON â€” nodes-and-edges object
 # ---------------------------------------------------------------------------
 
 def test_load_json_nodes_and_edges(tmp_path):
@@ -131,7 +132,7 @@ def test_load_json_nodes_and_edges(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# JSON — triples array
+# JSON â€” triples array
 # ---------------------------------------------------------------------------
 
 def test_load_json_triples(tmp_path):

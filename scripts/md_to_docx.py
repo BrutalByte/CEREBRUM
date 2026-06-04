@@ -1,5 +1,5 @@
 """
-Markdown → .docx converter using python-docx.
+Markdown â†’ .docx converter using python-docx.
 
 Handles: headings, paragraphs, bold, italic, code blocks, tables,
 horizontal rules, bullet lists, and inline LaTeX (rendered as italic text).
@@ -9,6 +9,7 @@ Usage:
     # writes docs/CEREBRUM_White_Paper.docx
 """
 from __future__ import annotations
+from typing import List, Set
 
 import re
 import sys
@@ -54,7 +55,7 @@ def add_inline_run(para, text: str) -> None:
 
 def add_paragraph(doc: Document, text: str, style: str = 'Normal') -> None:
     text = strip_latex(text)
-    # Remove markdown link syntax [text](url) → text
+    # Remove markdown link syntax [text](url) â†’ text
     text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
     para = doc.add_paragraph(style=style)
     add_inline_run(para, text)
@@ -156,7 +157,7 @@ def convert(md_path: Path, docx_path: Path) -> None:
 
         # Horizontal rule
         if re.match(r'^---+\s*$', line):
-            doc.add_paragraph('─' * 60)
+            doc.add_paragraph('â”€' * 60)
             i += 1
             continue
 
@@ -199,7 +200,7 @@ def convert(md_path: Path, docx_path: Path) -> None:
             i += 1
             continue
 
-        # Empty line → paragraph break
+        # Empty line â†’ paragraph break
         if not line.strip():
             doc.add_paragraph()
             i += 1

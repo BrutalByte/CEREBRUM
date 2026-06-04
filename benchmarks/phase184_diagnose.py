@@ -1,5 +1,5 @@
 """
-Phase 184 Diagnostic — CEREBRUM MetaQA 3-hop miss-cause analysis.
+Phase 184 Diagnostic â€” CEREBRUM MetaQA 3-hop miss-cause analysis.
 
 Classifies each 3-hop question into one of five categories to determine
 which structural miss cause dominates before implementing fixes:
@@ -33,7 +33,7 @@ import sys
 import tempfile
 import time
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 # ---------------------------------------------------------------------------

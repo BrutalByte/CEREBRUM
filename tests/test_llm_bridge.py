@@ -1,16 +1,17 @@
 """
-Tests for llm_bridge — context_formatter and adapters.
+Tests for llm_bridge â€” context_formatter and adapters.
 
 Covers:
-  - to_prompt()      — formats answers as a natural-language LLM prompt string
-  - to_structured()  — formats answers as a structured dict for JSON/API use
-  - generate()       — end-to-end: format + call llm_fn + return GenerationResult
-  - Adapter wrappers — AnthropicAdapter, OpenAIAdapter, OllamaAdapter,
+  - to_prompt()      â€” formats answers as a natural-language LLM prompt string
+  - to_structured()  â€” formats answers as a structured dict for JSON/API use
+  - generate()       â€” end-to-end: format + call llm_fn + return GenerationResult
+  - Adapter wrappers â€” AnthropicAdapter, OpenAIAdapter, OllamaAdapter,
                        HuggingFaceAdapter (all tested with mocks, no real API calls)
 
 All tests use synthetic Answer/TraversalPath objects.
 No external API calls are made.
 """
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 
@@ -225,7 +226,7 @@ class TestToStructured:
 
 
 # ---------------------------------------------------------------------------
-# generate() — core function
+# generate() â€” core function
 # ---------------------------------------------------------------------------
 
 class TestGenerate:
@@ -299,7 +300,7 @@ class TestGenerate:
         assert "Answer in French." in captured["prompt"]
 
     def test_plain_lambda_works_as_llm_fn(self):
-        """Any callable(str)->str is a valid llm_fn — no adapter required."""
+        """Any callable(str)->str is a valid llm_fn â€” no adapter required."""
         def fn(prompt):
             return f"Processed: {len(prompt)} chars"
         result = generate([ANSWER_A], query="test", llm_fn=fn)
@@ -307,7 +308,7 @@ class TestGenerate:
 
 
 # ---------------------------------------------------------------------------
-# Adapter wrappers (all mocked — no real API calls)
+# Adapter wrappers (all mocked â€” no real API calls)
 # ---------------------------------------------------------------------------
 
 class TestAnthropicAdapter:
@@ -451,7 +452,7 @@ class TestHuggingFaceAdapter:
         mock_pipeline.assert_called_once()
 
     def test_strips_input_prompt_from_generated_text(self):
-        """text-generation pipelines often echo the input — strip it."""
+        """text-generation pipelines often echo the input â€” strip it."""
         from llm_bridge.adapters import HuggingFaceAdapter
 
         prompt = "Tell me about Newton."

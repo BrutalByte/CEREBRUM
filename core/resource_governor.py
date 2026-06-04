@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import psutil
 
@@ -172,7 +172,7 @@ class ResourceGovernor:
         needed = required_mb + self.vram_buffer_mb
         if free_mb < needed:
             logger.warning(
-                "Governor: insufficient physical VRAM — %d MB free, %d MB needed "
+                "Governor: insufficient physical VRAM â€” %d MB free, %d MB needed "
                 "(requested %d + %d buffer)",
                 free_mb, needed, required_mb, self.vram_buffer_mb,
             )

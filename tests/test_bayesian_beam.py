@@ -1,5 +1,5 @@
 """
-Tests for Gap 3 — Bayesian Beam Search.
+Tests for Gap 3 â€” Bayesian Beam Search.
 
 Covers:
   - Beta distribution parameters on TraversalPath
@@ -9,6 +9,7 @@ Covers:
   - score_uncertainty on Answer from extract()
   - AsyncBeamTraversal also accepts probabilistic=True
 """
+from typing import Any
 import asyncio
 from unittest.mock import MagicMock
 
@@ -93,7 +94,7 @@ def test_posterior_mean_decreases_with_low_weight():
 
 
 def test_score_variance_decreases_with_more_hops():
-    """More hops → tighter distribution (higher α+β → lower variance)."""
+    """More hops â†’ tighter distribution (higher Î±+Î² â†’ lower variance)."""
     path_1hop = _make_path(weights=[0.7])
     path_3hop = _make_path(weights=[0.7, 0.7, 0.7])
     assert path_3hop.score_variance < path_1hop.score_variance
@@ -123,7 +124,7 @@ def test_deterministic_mode_unchanged():
 
 
 # ---------------------------------------------------------------------------
-# Probabilistic mode — basic contract
+# Probabilistic mode â€” basic contract
 # ---------------------------------------------------------------------------
 
 def _make_adapter_with_edges(n_neighbors=8, emb_dim=4):
@@ -166,7 +167,7 @@ def test_probabilistic_beam_width_respected():
     bt.adapter = _make_adapter_with_edges(n_neighbors=10)
     bt.max_hop = 1
     # After 1 hop the beam is capped but this is the terminal hop, so all kept.
-    # What matters is that at non-terminal hops we prune — set max_hop=2 to test.
+    # What matters is that at non-terminal hops we prune â€” set max_hop=2 to test.
     bt.max_hop = 2
     result = bt.traverse(["root"])
     assert isinstance(result, list)
@@ -207,7 +208,7 @@ def test_noisy_graph_diversity():
     det = BeamTraversal(adapter, csa, beam_width=3, max_hop=1, probabilistic=False)
     det_result = [p.tail for p in det.traverse(["root"])]
 
-    # Run probabilistic several times — at least one run should differ from det
+    # Run probabilistic several times â€” at least one run should differ from det
     diffs = 0
     for seed in range(10):
         prob = BeamTraversal(adapter, csa, beam_width=3, max_hop=1,

@@ -1,27 +1,27 @@
 """
-TriangulationEngine — Multi-Perspective Discovery Validation (Phase 72).
+TriangulationEngine â€” Multi-Perspective Discovery Validation (Phase 72).
 
 Examines each ResearchCandidate from four independent angles after the primary
 HypothesisEngine run, producing four numeric signals that extend the AutoApprover
-feature vector from 12 → 16.
+feature vector from 12 â†’ 16.
 
 Design invariant: absence of structural precedent is NOT evidence of impossibility.
 A relation type that has never crossed a given community distance is exactly what
-the ResearchAgent is designed to find. This engine never penalises novelty —
+the ResearchAgent is designed to find. This engine never penalises novelty â€”
 it amplifies uncertainty for borderline cases and confirms confidence for strong ones.
 
 Four perspectives
 -----------------
-P1  reverse_confidence      — HypothesisEngine run in the B→A direction
-P2  strategy_agreement      — fraction of 3 strategy configs that find proposals
-P3  mean_path_independence   — mean Jaccard independence from primary proposals (free)
-P4  semantic_type_score      — relation-type entity-class consistency index
+P1  reverse_confidence      â€” HypothesisEngine run in the Bâ†’A direction
+P2  strategy_agreement      â€” fraction of 3 strategy configs that find proposals
+P3  mean_path_independence   â€” mean Jaccard independence from primary proposals (free)
+P4  semantic_type_score      â€” relation-type entity-class consistency index
 """
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Type
 
 logger = logging.getLogger("cerebrum.triangulation")
 
@@ -48,11 +48,11 @@ class TriangulationReport:
     """
 
     reverse_confidence: float
-    """P1: best Noisy-OR confidence of B→A hypothesis run. 0.0 if no reverse path."""
+    """P1: best Noisy-OR confidence of Bâ†’A hypothesis run. 0.0 if no reverse path."""
 
     strategy_agreement: float
     """P2: fraction of 3 strategy configs (conservative/standard/exploratory) that
-    returned ≥1 valid proposal. 0.33 = only one, 1.0 = all three."""
+    returned â‰¥1 valid proposal. 0.33 = only one, 1.0 = all three."""
 
     mean_path_independence: float
     """P3: mean Jaccard independence across primary proposals' independence_scores.
@@ -63,7 +63,7 @@ class TriangulationReport:
     index. 0.5 for completely novel relations (neutral), 1.0 for exact type match."""
 
     is_SynapticBridge_candidate: bool
-    """Diagnostic flag — True when all four conditions for a genuine SynapticBridge are met.
+    """Diagnostic flag â€” True when all four conditions for a genuine SynapticBridge are met.
     NOT used as a classifier feature (derivable from the four scores above)."""
 
 
@@ -80,7 +80,7 @@ class TriangulationEngine:
     adapter
         GraphAdapter providing entity type lookups and graph access.
     hypothesis_engine
-        Pre-constructed HypothesisEngine.  Shared with ResearchAgent — all
+        Pre-constructed HypothesisEngine.  Shared with ResearchAgent â€” all
         calls are protected by the engine's internal RLock.
     min_confidence
         Minimum confidence for a proposal to count as "found" in P1/P2.
@@ -105,7 +105,7 @@ class TriangulationEngine:
         self._run_bidirectional = run_bidirectional
         self._run_multi_strategy = run_multi_strategy
 
-        # Type index cache — invalidated when graph signature changes
+        # Type index cache â€” invalidated when graph signature changes
         self._type_index: Optional[Dict[str, Set[Tuple[str, str]]]] = None
         self._type_index_sig: Optional[Tuple[int, int]] = None
 
@@ -127,7 +127,7 @@ class TriangulationEngine:
             The ``ResearchCandidate`` that was evaluated.
         primary_proposals
             The ``List[HypothesisProposal]`` returned by the primary
-            HypothesisEngine run (source → target, standard config).
+            HypothesisEngine run (source â†’ target, standard config).
         """
         source_id = candidate.source_id
         target_id = candidate.target_id
@@ -139,16 +139,16 @@ class TriangulationEngine:
         )
         derived_relation = getattr(best_prop, "derived_relation", "") if best_prop else ""
 
-        # P1 — bidirectional
+        # P1 â€” bidirectional
         rev_conf = self._reverse_confidence(source_id, target_id)
 
-        # P2 — multi-strategy agreement
+        # P2 â€” multi-strategy agreement
         strat_agree = self._strategy_agreement(source_id, target_id, primary_proposals)
 
-        # P3 — path independence (free from primary proposals)
+        # P3 â€” path independence (free from primary proposals)
         path_indep = self._mean_path_independence(primary_proposals)
 
-        # P4 — semantic type consistency
+        # P4 â€” semantic type consistency
         sem_score = self._semantic_type_score(source_id, target_id, derived_relation)
 
         # SynapticBridge diagnostic
@@ -169,7 +169,7 @@ class TriangulationEngine:
         )
 
         logger.debug(
-            "Triangulation %s→%s: rev=%.3f agree=%.3f indep=%.3f sem=%.3f SynapticBridge=%s",
+            "Triangulation %sâ†’%s: rev=%.3f agree=%.3f indep=%.3f sem=%.3f SynapticBridge=%s",
             source_id, target_id, rev_conf, strat_agree, path_indep, sem_score, is_SynapticBridge,
         )
         return report
@@ -179,7 +179,7 @@ class TriangulationEngine:
     # ------------------------------------------------------------------
 
     def _reverse_confidence(self, source_id: str, target_id: str) -> float:
-        """P1: Run hypothesis engine in the B→A direction."""
+        """P1: Run hypothesis engine in the Bâ†’A direction."""
         if not self._run_bidirectional:
             return 0.0
         try:
@@ -192,7 +192,7 @@ class TriangulationEngine:
                 return 0.0
             return float(max(p.confidence for p in valid))
         except Exception as exc:
-            logger.debug("_reverse_confidence error for %s→%s: %s", target_id, source_id, exc)
+            logger.debug("_reverse_confidence error for %sâ†’%s: %s", target_id, source_id, exc)
             return 0.0
 
     def _strategy_agreement(
@@ -223,12 +223,12 @@ class TriangulationEngine:
                         strategies_found += 1
                 except Exception as exc:
                     logger.debug("_strategy_agreement error (config=%s): %s", config, exc)
-                    # Count as "not found" — conservative
+                    # Count as "not found" â€” conservative
 
         return strategies_found / total_strategies
 
     def _mean_path_independence(self, primary_proposals: List[Any]) -> float:
-        """P3: Mean Jaccard independence across all primary proposals (free — already computed)."""
+        """P3: Mean Jaccard independence across all primary proposals (free â€” already computed)."""
         all_scores: List[float] = []
         for prop in primary_proposals:
             scores = getattr(prop, "independence_scores", None) or []
@@ -248,18 +248,18 @@ class TriangulationEngine:
 
         Score table
         -----------
-        - Relation not in index (novel)                 → 0.5  (neutral, never penalise)
-        - Exact (src_type, tgt_type) pair in index      → 1.0
-        - Both types appear in index (not as a pair)    → 0.65
-        - One type appears in index                     → 0.65
-        - Relation known, neither type appears          → 0.30
+        - Relation not in index (novel)                 â†’ 0.5  (neutral, never penalise)
+        - Exact (src_type, tgt_type) pair in index      â†’ 1.0
+        - Both types appear in index (not as a pair)    â†’ 0.65
+        - One type appears in index                     â†’ 0.65
+        - Relation known, neither type appears          â†’ 0.30
         """
         if not derived_relation:
             return 0.5
 
         index = self._get_type_index()
         if derived_relation not in index:
-            return 0.5  # novel relation — neutral, not penalised
+            return 0.5  # novel relation â€” neutral, not penalised
 
         known_pairs = index[derived_relation]
 
@@ -286,12 +286,12 @@ class TriangulationEngine:
         return round(score, 4)
 
     # ------------------------------------------------------------------
-    # Type index — lazy build + graph-signature cache invalidation
+    # Type index â€” lazy build + graph-signature cache invalidation
     # ------------------------------------------------------------------
 
     def _get_type_index(self) -> Dict[str, Set[Tuple[str, str]]]:
         """
-        Return the relation-type → {(src_type, tgt_type)} index.
+        Return the relation-type â†’ {(src_type, tgt_type)} index.
         Rebuilt whenever the graph grows (node_count or edge_count changes).
         """
         try:

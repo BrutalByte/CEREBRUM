@@ -5,7 +5,7 @@ Reads research/papers/00-technical-report/sections/*.md and writes
 corresponding .tex files to arxiv_submission/sections/.
 
 Each section is \input{} inside a \chapter*{} in cerebrum-v251-report.tex,
-so section files provide body content only — no \documentclass or \section
+so section files provide body content only â€” no \documentclass or \section
 at the outermost level.
 
 Heading mapping (chapter title is set by main tex, so # is skipped):
@@ -15,6 +15,7 @@ Heading mapping (chapter title is set by main tex, so # is skipped):
   #### -> \subsubsection*{...}
 """
 from __future__ import annotations
+from typing import Match
 
 import re
 import sys
@@ -25,7 +26,7 @@ SECTION_SRC = REPO_ROOT / "research" / "papers" / "00-technical-report" / "secti
 SECTION_DST = REPO_ROOT / "research" / "papers" / "00-technical-report" / "arxiv_submission" / "sections"
 
 # ---------------------------------------------------------------------------
-# Unicode → LaTeX mapping (outside math mode)
+# Unicode â†’ LaTeX mapping (outside math mode)
 # ---------------------------------------------------------------------------
 UNICODE_MAP = {
     "\u2014": "---",          # em dash
@@ -108,7 +109,7 @@ def escape_text(text: str) -> str:
     # Ampersand outside tabular (caller skips this in table rows)
     text = re.sub(r"(?<!\\)&", r"\\&", text)
     # Tilde (non-breaking space already handled; stray ~ in text)
-    # Leave ~ alone — LaTeX uses it as non-breaking space which is fine
+    # Leave ~ alone â€” LaTeX uses it as non-breaking space which is fine
     return text
 
 
@@ -132,7 +133,7 @@ def protect_math(line: str) -> tuple[str, list[str]]:
 
     protected = re.sub(r"\$\$[^\n]+?\$\$", _replace_display, line)
     # Now replace remaining single-dollar inline math: $...$
-    # [^$\n]+ ensures no nested $ and no newlines — safe, no backtracking
+    # [^$\n]+ ensures no nested $ and no newlines â€” safe, no backtracking
     protected = re.sub(r"\$[^$\n]+?\$", _replace, protected)
     return protected, spans
 
@@ -152,7 +153,7 @@ def convert_inline(text: str, in_table: bool = False) -> str:
     text = re.sub(r"\*\*(.+?)\*\*", r"\\textbf{\1}", text)
     text = re.sub(r"\*(.+?)\*", r"\\textit{\1}", text)
 
-    # Inline code  `` `code` `` → \texttt{code}
+    # Inline code  `` `code` `` â†’ \texttt{code}
     def _inline_code(m: re.Match) -> str:
         code = m.group(1)
         # Escape chars inside \texttt
@@ -300,7 +301,7 @@ def strip_header_and_footer(lines: list[str]) -> list[str]:
         if stripped == "":
             i -= 1
             continue
-        # Non-footer content encountered — stop
+        # Non-footer content encountered â€” stop
         break
 
     lines = lines[:footer_start]
@@ -348,7 +349,7 @@ def convert_section(md_text: str) -> str:
             # Collect until closing $$
             math_lines = [line]
             if stripped.count("$$") >= 2 and stripped.endswith("$$") and len(stripped) > 4:
-                # single-line $$...$$  → keep as-is (LaTeX handles it)
+                # single-line $$...$$  â†’ keep as-is (LaTeX handles it)
                 output.append(stripped)
                 i += 1
                 continue
@@ -394,7 +395,7 @@ def convert_section(md_text: str) -> str:
             i += 1
             continue
         if h1:
-            # Chapter title — skip (set by main tex \chapter*{})
+            # Chapter title â€” skip (set by main tex \chapter*{})
             i += 1
             continue
 
@@ -405,7 +406,7 @@ def convert_section(md_text: str) -> str:
 
         # ---- horizontal rule ----
         if stripped == "---":
-            # Inline divider within content — render as small vertical space
+            # Inline divider within content â€” render as small vertical space
             output.append(r"\medskip\noindent\rule{\linewidth}{0.4pt}\medskip")
             i += 1
             continue

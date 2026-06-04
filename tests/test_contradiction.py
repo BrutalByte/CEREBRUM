@@ -1,21 +1,22 @@
 """
 Tests for the CEREBRUM contradiction handling system.
 
-Contradictions are research signals — they are surfaced, never suppressed.
+Contradictions are research signals â€” they are surfaced, never suppressed.
 A lone contradicting path may be the actual correct answer.
 
 Coverage:
   - CONTRADICTION_PAIRS lookup (bidirectional, case-insensitive)
   - is_valid_at() temporal edge filtering
   - ContradictionRecord structure and auto-computed authority_delta
-  - ContradictionEngine.detect_direct() — Type 1
-  - ContradictionEngine.detect_temporal() — Type 3
-  - ContradictionEngine.materialize() — CONTRADICTS edge creation
-  - ContradictionEngine.scan() — full index-time pipeline
+  - ContradictionEngine.detect_direct() â€” Type 1
+  - ContradictionEngine.detect_temporal() â€” Type 3
+  - ContradictionEngine.materialize() â€” CONTRADICTS edge creation
+  - ContradictionEngine.scan() â€” full index-time pipeline
   - TraversalPath edge_confidences / path_confidence
   - path_scorer.path_confidence()
   - Answer.contradiction_flags populated by extract()
 """
+from typing import Type
 import random
 
 import networkx as nx
@@ -50,9 +51,9 @@ from reasoning.traversal import BeamTraversal, TraversalPath
 
 def make_directed_contradicting_graph() -> nx.DiGraph:
     """
-    A → B via ACTIVATES
-    B → A via INHIBITS   (contradicts ACTIVATES)
-    A → C via KNOWS      (no contradiction)
+    A â†’ B via ACTIVATES
+    B â†’ A via INHIBITS   (contradicts ACTIVATES)
+    A â†’ C via KNOWS      (no contradiction)
     """
     G = nx.DiGraph()
     G.add_edge("A", "B", relation="ACTIVATES", confidence=0.9, provenance="pubmed:1")
@@ -63,8 +64,8 @@ def make_directed_contradicting_graph() -> nx.DiGraph:
 
 def make_temporal_graph() -> nx.DiGraph:
     """
-    A → B via ACTIVATES  (valid 2000–2010)
-    A → D via INHIBITS   (valid 2015–2025)   ← contradicts ACTIVATES but no overlap
+    A â†’ B via ACTIVATES  (valid 2000â€“2010)
+    A â†’ D via INHIBITS   (valid 2015â€“2025)   â†� contradicts ACTIVATES but no overlap
     """
     G = nx.DiGraph()
     t2000 = float(946684800)   # 2000-01-01
@@ -130,7 +131,7 @@ def test_relations_contradict_case_insensitive():
 
 
 # ---------------------------------------------------------------------------
-# is_valid_at() — temporal filtering
+# is_valid_at() â€” temporal filtering
 # ---------------------------------------------------------------------------
 
 class _MockEdge:
@@ -141,7 +142,7 @@ class _MockEdge:
 
 
 def test_is_valid_at_no_query_time():
-    """None query_time disables filtering — always valid."""
+    """None query_time disables filtering â€” always valid."""
     e = _MockEdge(valid_from=1000.0, valid_to=2000.0)
     assert is_valid_at(e, None)
 
@@ -207,7 +208,7 @@ def test_contradiction_record_defaults():
 
 
 # ---------------------------------------------------------------------------
-# ContradictionEngine — detect_direct()
+# ContradictionEngine â€” detect_direct()
 # ---------------------------------------------------------------------------
 
 def test_detect_direct_finds_contradiction():
@@ -239,7 +240,7 @@ def test_detect_direct_preserves_provenance():
 
 
 # ---------------------------------------------------------------------------
-# ContradictionEngine — detect_temporal()
+# ContradictionEngine â€” detect_temporal()
 # ---------------------------------------------------------------------------
 
 def test_detect_temporal_finds_non_overlapping():
@@ -253,7 +254,7 @@ def test_detect_temporal_finds_non_overlapping():
 
 
 def test_detect_temporal_clean_graph():
-    """Graph with no temporal bounds or contradictions → no records."""
+    """Graph with no temporal bounds or contradictions â†’ no records."""
     G = nx.DiGraph()
     G.add_edge("A", "B", relation="KNOWS")
     engine = ContradictionEngine()
@@ -262,12 +263,12 @@ def test_detect_temporal_clean_graph():
 
 
 # ---------------------------------------------------------------------------
-# ContradictionEngine — materialize()
+# ContradictionEngine â€” materialize()
 # ---------------------------------------------------------------------------
 
 def test_materialize_adds_contradicts_edge():
     # Use a graph where one direction of (X, Y) is free so CONTRADICTS can be added.
-    # X→Y ACTIVATES exists; Y→X is free — materialize adds CONTRADICTS as Y→X.
+    # Xâ†’Y ACTIVATES exists; Yâ†’X is free â€” materialize adds CONTRADICTS as Yâ†’X.
     G = nx.DiGraph()
     G.add_edge("X", "Y", relation="ACTIVATES", confidence=0.9, provenance="pubmed:1")
     records = [
@@ -341,11 +342,11 @@ def test_materialize_no_duplicates():
 
 
 # ---------------------------------------------------------------------------
-# ContradictionEngine — scan()
+# ContradictionEngine â€” scan()
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
-# ContradictionEngine — detect_provenance() (Type 4, multigraph only)
+# ContradictionEngine â€” detect_provenance() (Type 4, multigraph only)
 # ---------------------------------------------------------------------------
 
 def test_detect_provenance_finds_conflict():
@@ -377,7 +378,7 @@ def test_detect_provenance_skips_close_confidence():
     G.add_edge("A", "B", relation="ACTIVATES", confidence=0.85, provenance="arxiv:2")
     engine = ContradictionEngine()
     records = engine.detect_provenance(G)
-    # Spread = 0.05 <= threshold 0.1 — not flagged
+    # Spread = 0.05 <= threshold 0.1 â€” not flagged
     assert records == []
 
 
@@ -390,7 +391,7 @@ def test_detect_provenance_returns_empty_for_simple_graph():
 
 
 # ---------------------------------------------------------------------------
-# ContradictionEngine — detect_cross_path() (Type 2, query time)
+# ContradictionEngine â€” detect_cross_path() (Type 2, query time)
 # ---------------------------------------------------------------------------
 
 def test_detect_cross_path_finds_contradiction():
@@ -409,7 +410,7 @@ def test_detect_cross_path_requires_same_terminal():
     path_b = _make_path_with_relation("S", "INHIBITS",  "T2")
     engine = ContradictionEngine()
     records = engine.detect_cross_path([path_a], [path_b])
-    # Different terminals — no cross-path contradiction
+    # Different terminals â€” no cross-path contradiction
     assert records == []
 
 
@@ -422,7 +423,7 @@ def test_detect_cross_path_no_contradiction_on_compatible_relations():
 
 
 # ---------------------------------------------------------------------------
-# ContradictionEngine — materialize() edge cases
+# ContradictionEngine â€” materialize() edge cases
 # ---------------------------------------------------------------------------
 
 def test_materialize_multigraph_adds_edge():
@@ -444,7 +445,7 @@ def test_materialize_multigraph_adds_edge():
 
 
 def test_materialize_skips_when_both_directions_occupied():
-    # DiGraph with both A→B and B→A already filled by non-CONTRADICTS edges.
+    # DiGraph with both Aâ†’B and Bâ†’A already filled by non-CONTRADICTS edges.
     # materialize() cannot add without overwriting, so it skips.
     G = nx.DiGraph()
     G.add_edge("A", "B", relation="ACTIVATES", confidence=0.9)
@@ -464,7 +465,7 @@ def test_materialize_skips_when_both_directions_occupied():
 
 
 def test_materialize_uses_reverse_when_forward_occupied():
-    # A→B ACTIVATES exists; B→A is free — CONTRADICTS goes B→A.
+    # Aâ†’B ACTIVATES exists; Bâ†’A is free â€” CONTRADICTS goes Bâ†’A.
     G = nx.DiGraph()
     G.add_edge("A", "B", relation="ACTIVATES", confidence=0.9)
     records = [
@@ -477,7 +478,7 @@ def test_materialize_uses_reverse_when_forward_occupied():
     engine = ContradictionEngine()
     added = engine.materialize(G, records)
     assert added == 1
-    # CONTRADICTS should be on the reverse edge B→A
+    # CONTRADICTS should be on the reverse edge Bâ†’A
     assert G.has_edge("B", "A")
     data = G.get_edge_data("B", "A")
     assert data["relation"] == CONTRADICTS_RELATION
@@ -499,7 +500,7 @@ def test_scan_clean_graph_empty():
 
 
 # ---------------------------------------------------------------------------
-# Edge dataclass — new fields
+# Edge dataclass â€” new fields
 # ---------------------------------------------------------------------------
 
 def test_edge_confidence_default():
@@ -523,7 +524,7 @@ def test_edge_confidence_set():
 
 
 # ---------------------------------------------------------------------------
-# TraversalPath — edge_confidences / path_confidence
+# TraversalPath â€” edge_confidences / path_confidence
 # ---------------------------------------------------------------------------
 
 def test_traversal_path_confidence_default():
@@ -696,7 +697,7 @@ def test_extract_attaches_contradiction_flags():
 
 def test_extract_contradiction_flags_not_filtered():
     """
-    Contradiction flags are research signals — they do NOT cause answers
+    Contradiction flags are research signals â€” they do NOT cause answers
     to be removed from the result set.
     """
     emb = np.ones(4, dtype=np.float32) / 2.0

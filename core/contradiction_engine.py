@@ -10,15 +10,15 @@ entirely new reasoning path.
 Design principle: **surface contradictions, never suppress them**.
 
 Five contradiction types:
-  Type 1 — Direct         : same (subject, object), contradictory predicates
-  Type 2 — Cross-path     : contradiction only visible when multi-hop paths combine
-  Type 3 — Temporal       : both claims true but at different time periods
-  Type 4 — Provenance     : different sources disagree on the same fact
-  Type 5 — Semantic       : circular causation / logical impossibility
+  Type 1 â€” Direct         : same (subject, object), contradictory predicates
+  Type 2 â€” Cross-path     : contradiction only visible when multi-hop paths combine
+  Type 3 â€” Temporal       : both claims true but at different time periods
+  Type 4 â€” Provenance     : different sources disagree on the same fact
+  Type 5 â€” Semantic       : circular causation / logical impossibility
 
 Detection moments:
-  Ingest/index time — Types 1, 3, 4 (ContradictionEngine.scan + materialize)
-  Query time        — Type 2 (ContradictionEngine.detect_cross_path, called from extractor)
+  Ingest/index time â€” Types 1, 3, 4 (ContradictionEngine.scan + materialize)
+  Query time        â€” Type 2 (ContradictionEngine.detect_cross_path, called from extractor)
 
 CONTRADICTS edges are first-class graph citizens with structured metadata
 (detected_at, resolution_status, authority_delta, human_reviewed) so that
@@ -27,7 +27,7 @@ contradictions are queryable and auditable without separate bookkeeping.
 
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Type
 
 import networkx as nx
 
@@ -87,10 +87,10 @@ def is_valid_at(edge, query_time: Optional[float]) -> bool:
     """
     Return True if the edge is temporally active at query_time.
 
-    - query_time is None  → no temporal filter → always True
-    - edge has no valid_from/valid_to → always valid
-    - query_time < valid_from → not yet valid → False
-    - query_time > valid_to   → expired       → False
+    - query_time is None  â†’ no temporal filter â†’ always True
+    - edge has no valid_from/valid_to â†’ always valid
+    - query_time < valid_from â†’ not yet valid â†’ False
+    - query_time > valid_to   â†’ expired       â†’ False
     """
     if query_time is None:
         return True
@@ -128,10 +128,10 @@ class ContradictionRecord:
     A detected contradiction between two claims in the knowledge graph.
 
     resolution_status values:
-      "unresolved"   — contradiction exists; cause unknown
-      "temporal"     — both claims correct but at different time periods
-      "source_bias"  — claims differ by source methodology or credibility
-      "resolved"     — human review determined which claim is correct
+      "unresolved"   â€” contradiction exists; cause unknown
+      "temporal"     â€” both claims correct but at different time periods
+      "source_bias"  â€” claims differ by source methodology or credibility
+      "resolved"     â€” human review determined which claim is correct
     """
 
     node_a: str           # Subject (or left-hand) entity
@@ -173,7 +173,7 @@ class ContradictionEngine:
     """
 
     # ------------------------------------------------------------------
-    # Type 1 — Direct contradictions
+    # Type 1 â€” Direct contradictions
     # ------------------------------------------------------------------
 
     def detect_direct(
@@ -184,10 +184,10 @@ class ContradictionEngine:
         """
         Type 1: same (subject, object) pair connected by contradictory predicates.
 
-        For directed graphs: checks u→v (rel_a) and v→u (rel_b) pairs.
+        For directed graphs: checks uâ†’v (rel_a) and vâ†’u (rel_b) pairs.
         For multigraphs: also checks parallel edges on the same (u, v).
 
-        Complexity: O(|E| · avg_degree) — suitable for index-time use.
+        Complexity: O(|E| Â· avg_degree) â€” suitable for index-time use.
         """
         records: List[ContradictionRecord] = []
         seen: Set[Tuple[str, str, str, str]] = set()  # deduplicate symmetric pairs
@@ -198,7 +198,7 @@ class ContradictionEngine:
             )
 
             for v in out_neighbors:
-                # --- Edges u→v ---
+                # --- Edges uâ†’v ---
                 if G.is_multigraph():
                     uv_edges = [G[u][v][k] for k in G[u][v]]
                 else:
@@ -212,7 +212,7 @@ class ContradictionEngine:
                     conf_a = float(ed_a.get("confidence", 1.0))
                     prov_a = ed_a.get("provenance", "")
 
-                    # Check reverse edge v→u (directed) for contradiction
+                    # Check reverse edge vâ†’u (directed) for contradiction
                     if G.is_directed() and G.has_edge(v, u):
                         if G.is_multigraph():
                             vu_edges = [G[v][u][k] for k in G[v][u]]
@@ -267,7 +267,7 @@ class ContradictionEngine:
         return records
 
     # ------------------------------------------------------------------
-    # Type 3 — Temporal contradictions
+    # Type 3 â€” Temporal contradictions
     # ------------------------------------------------------------------
 
     def detect_temporal(
@@ -276,7 +276,7 @@ class ContradictionEngine:
     ) -> List[ContradictionRecord]:
         """
         Type 3: two edges with contradicting relations that have non-overlapping
-        valid_from/valid_to windows. Both claims are correct — just at different
+        valid_from/valid_to windows. Both claims are correct â€” just at different
         times. Emitted with resolution_status="temporal".
 
         Only edges that carry at least one temporal bound are considered.
@@ -292,7 +292,7 @@ class ContradictionEngine:
             vfa = da.get("valid_from")
             vta = da.get("valid_to")
             if vfa is None and vta is None:
-                continue  # no temporal data — skip
+                continue  # no temporal data â€” skip
 
             conf_a = float(da.get("confidence", 1.0))
             prov_a = da.get("provenance", "")
@@ -341,7 +341,7 @@ class ContradictionEngine:
         return records
 
     # ------------------------------------------------------------------
-    # Type 4 — Provenance contradictions (multigraph only)
+    # Type 4 â€” Provenance contradictions (multigraph only)
     # ------------------------------------------------------------------
 
     def detect_provenance(
@@ -384,7 +384,7 @@ class ContradictionEngine:
                     provenances = [ed.get("provenance", "") for ed in eds]
                     unique_provs = set(provenances)
                     if len(unique_provs) < 2:
-                        continue  # same source — not a provenance conflict
+                        continue  # same source â€” not a provenance conflict
 
                     conf_values = [float(ed.get("confidence", 1.0)) for ed in eds]
                     conf_spread = max(conf_values) - min(conf_values)
@@ -416,7 +416,7 @@ class ContradictionEngine:
         return records
 
     # ------------------------------------------------------------------
-    # Type 2 — Cross-path contradictions (query time)
+    # Type 2 â€” Cross-path contradictions (query time)
     # ------------------------------------------------------------------
 
     def detect_cross_path(
@@ -545,7 +545,7 @@ class ContradictionEngine:
           authority_delta, resolution_status, human_reviewed,
           detected_at, note
 
-        Edge weight is set to 0.1 — low enough that the beam does not follow
+        Edge weight is set to 0.1 â€” low enough that the beam does not follow
         CONTRADICTS edges blindly during normal traversal.
 
         On undirected graphs, only one edge is added per (a, b) pair.
@@ -593,7 +593,7 @@ class ContradictionEngine:
                 # Strategy: try forward direction, then reverse direction.
                 for u, v in [(rec.node_a, rec.node_b), (rec.node_b, rec.node_a)]:
                     if not G.has_edge(u, v):
-                        # Direction is free — safe to add
+                        # Direction is free â€” safe to add
                         G.add_edge(u, v, **edge_data)
                         added += 1
                         break

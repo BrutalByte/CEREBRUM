@@ -1,3 +1,4 @@
+from typing import Type
 import os
 import re
 import requests

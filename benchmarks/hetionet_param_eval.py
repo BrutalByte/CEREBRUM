@@ -1,5 +1,5 @@
 """
-Phase 206: Parametric Hetionet benchmark — tuner-compatible CLI.
+Phase 206: Parametric Hetionet benchmark â€” tuner-compatible CLI.
 
 Accepts all 9 CEREBRUM tunable parameters via CLI and reports per-hop results
 in the exact format parsed by cerebrum_tuner.py:
@@ -44,7 +44,7 @@ import sys
 import time
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Counter, Dict, List, Optional, Tuple
 
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
@@ -237,7 +237,7 @@ def _build_graph(adapter, *, beam_width: int, max_neighbors: int,
             engine = SentenceEngine()
             print(f"  Using SentenceEngine ({engine.dim}-dim)")
         except ImportError:
-            print("  sentence-transformers not installed — falling back to RandomEngine")
+            print("  sentence-transformers not installed â€” falling back to RandomEngine")
             engine = RandomEngine(dim=64)
     else:
         engine = RandomEngine(dim=64)
@@ -361,7 +361,7 @@ def _eval_template_serial(
 
 
 # ---------------------------------------------------------------------------
-# In-process API — avoids rebuilding graph (~66s) on every tuner trial
+# In-process API â€” avoids rebuilding graph (~66s) on every tuner trial
 # ---------------------------------------------------------------------------
 
 def build_hetionet_state(
@@ -374,7 +374,7 @@ def build_hetionet_state(
 ) -> dict:
     """
     Build CerebrumGraph + precompute QA data once.  Pass the returned dict
-    to run_trial_inprocess() for each tuner trial — eliminates the ~66s
+    to run_trial_inprocess() for each tuner trial â€” eliminates the ~66s
     sentence-transformers graph build that otherwise runs per subprocess.
     """
     from benchmarks.hetionet_eval import load_hetionet, generate_hetionet_qa
@@ -408,7 +408,7 @@ def build_hetionet_state(
     QA_TEMPLATES_FIXED, TEMPLATE_ANSWER_TYPE, TEMPLATE_HOP, chains = _get_template_meta()
     templates = [t for t in QA_TEMPLATES_FIXED if TEMPLATE_HOP[t] >= min_eval_hop]
 
-    print(f"[HetionetState] Pre-generating {n_questions}q × {len(templates)} templates...")
+    print(f"[HetionetState] Pre-generating {n_questions}q Ã— {len(templates)} templates...")
     _orig = _heval.QA_TEMPLATES
     _heval.QA_TEMPLATES = QA_TEMPLATES_FIXED
     qa_by_template: Dict[str, List] = {}
@@ -419,7 +419,7 @@ def build_hetionet_state(
     _heval.QA_TEMPLATES = _orig
 
     answer_freq = _build_answer_freq(qa_by_template, chains)
-    print("[HetionetState] Ready — all trials will skip graph build.\n")
+    print("[HetionetState] Ready â€” all trials will skip graph build.\n")
 
     return {
         "graph":                graph,
@@ -440,7 +440,7 @@ def run_trial_inprocess(
 ) -> tuple[float, float, float]:
     """
     Run one tuner trial against a pre-built HetionetState. Returns (h1, h10, mrr).
-    Skips graph build → ~10-20x faster than the subprocess path per trial.
+    Skips graph build â†’ ~10-20x faster than the subprocess path per trial.
     """
     graph                = state["graph"]
     deriver              = state["deriver"]
@@ -518,7 +518,7 @@ def main() -> None:
                              "Use 2 for tuner runs to skip near-ceiling 1-hop templates.")
     parser.add_argument("--max-neighbors", type=int, default=50,
                         help="Per-node neighbor cap in traversal (default 50). "
-                             "Hetionet Gene nodes have 3K+ neighbors — cap cuts query "
+                             "Hetionet Gene nodes have 3K+ neighbors â€” cap cuts query "
                              "time 10-60x. Use 200 for final validation.")
     # All 9 tunable params
     parser.add_argument("--beam-width",    type=int,   default=12)
@@ -631,7 +631,7 @@ def main() -> None:
     answer_freq = _build_answer_freq(qa_by_template, chains)
 
     # ------------------------------------------------------------------
-    # Evaluate — parallel or serial
+    # Evaluate â€” parallel or serial
     # ------------------------------------------------------------------
     all_results: List[Dict] = []
     t0_eval = time.time()
@@ -746,7 +746,7 @@ def main() -> None:
         }
 
     # ------------------------------------------------------------------
-    # Summary — tuner-parseable output
+    # Summary â€” tuner-parseable output
     # ------------------------------------------------------------------
     total_elapsed = time.time() - t0_eval
     print(f"\n=== Results Summary  ({total_elapsed:.0f}s eval) ===\n")
@@ -770,11 +770,11 @@ def main() -> None:
                 f"{r['hits_1']*100:>6.1f}% {r['hits_10']*100:>6.1f}% "
                 f"{r['mrr']*100:>6.1f}% {avg_t:>8.1f}"
             )
-        # Warn if avg typed candidates is very low (likely cause of H@1≈H@10)
+        # Warn if avg typed candidates is very low (likely cause of H@1â‰ˆH@10)
         overall_avg_typed = sum(r.get("avg_typed", 0) * r["n_total"] for r in all_results) / max(sum(r["n_total"] for r in all_results), 1)
         if overall_avg_typed < 2.0:
             print(f"\n  WARNING: avg typed candidates after filter = {overall_avg_typed:.2f} "
-                  f"(< 2.0) — H@1≈H@10 is expected. "
+                  f"(< 2.0) â€” H@1â‰ˆH@10 is expected. "
                   f"Try --max-neighbors 200 for a more diverse ranked list.")
 
 

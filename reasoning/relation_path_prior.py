@@ -1,16 +1,16 @@
 """
-Relation Path Frequency Prior — Phase 27B
+Relation Path Frequency Prior â€” Phase 27B
 
 Learns which relation-sequence patterns are productive for multi-hop QA by
 counting how often each pattern appears in correct beam paths.  At query time,
 paths whose relation sequence matches a high-frequency pattern receive a score
-bonus — equivalent to what a trained RL policy learns implicitly, but achieved
+bonus â€” equivalent to what a trained RL policy learns implicitly, but achieved
 with a single counting pass over training data and zero gradient descent.
 
 Two variants:
 
   RelationPathPrior
-    Learns from (paths, correct_answer_set) pairs — requires a training split
+    Learns from (paths, correct_answer_set) pairs â€” requires a training split
     or the current question's answers (for online accumulation).
 
   GraphRelationPrior
@@ -37,7 +37,7 @@ from __future__ import annotations
 
 import math
 from collections import Counter, defaultdict
-from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Any, Counter, Dict, FrozenSet, List, Optional, Set, Tuple
 
 import numpy as np
 
@@ -58,7 +58,7 @@ def _rel_sequence(path) -> Tuple[str, ...]:
 
 
 # ---------------------------------------------------------------------------
-# RelationPathPrior — learned from QA (path, correct_answers) pairs
+# RelationPathPrior â€” learned from QA (path, correct_answers) pairs
 # ---------------------------------------------------------------------------
 
 class RelationPathPrior:
@@ -111,7 +111,7 @@ class RelationPathPrior:
         correct_entities : set of ground-truth answer entity IDs
         """
         if self._frozen:
-            raise RuntimeError("RelationPathPrior is frozen — call unfreeze() first.")
+            raise RuntimeError("RelationPathPrior is frozen â€” call unfreeze() first.")
         for path in paths:
             if path.hop_depth < 1:
                 continue
@@ -181,7 +181,7 @@ class RelationPathPrior:
         return float(np.clip(smoothed, 0.0, 1.0))
 
     # ------------------------------------------------------------------
-    # Prefix generalisation — score by longest matching prefix
+    # Prefix generalisation â€” score by longest matching prefix
     # ------------------------------------------------------------------
 
     def score_with_prefix(self, path: Any) -> float:
@@ -234,7 +234,7 @@ class RelationPathPrior:
 
 
 # ---------------------------------------------------------------------------
-# GraphRelationPrior — structural fallback (no QA labels needed)
+# GraphRelationPrior â€” structural fallback (no QA labels needed)
 # ---------------------------------------------------------------------------
 
 class GraphRelationPrior:

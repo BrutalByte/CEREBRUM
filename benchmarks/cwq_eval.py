@@ -31,7 +31,7 @@ import pickle
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Match, Optional, Set, Tuple, Type
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 

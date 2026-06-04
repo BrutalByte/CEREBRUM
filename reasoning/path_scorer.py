@@ -5,12 +5,12 @@ Combines:
   - Attention weight product (coverage of the reasoning chain)
   - Community coherence (domain consistency across hops)
   - Semantic alignment to the query (optional)
-  - Relation path prior (optional) — frequency bonus for productive sequences
-  - Path Specificity Score / PSS (Phase 179) — inverse relation fan-out penalty
+  - Relation path prior (optional) â€” frequency bonus for productive sequences
+  - Path Specificity Score / PSS (Phase 179) â€” inverse relation fan-out penalty
     for hub-like traversals; favours narrow, specific reasoning chains
 """
 import math
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -97,20 +97,20 @@ def grounding_score(path) -> float:
 
 def path_specificity_score(path, fan_out: "Dict[str, Dict[str, int]]") -> float:
     """
-    Phase 179 — Path Specificity Score (PSS).
+    Phase 179 â€” Path Specificity Score (PSS).
 
-    For each hop (entity u) → (relation r) → (entity v), compute the inverse
+    For each hop (entity u) â†’ (relation r) â†’ (entity v), compute the inverse
     fan-out of relation r from u: 1 / |{targets of r from u}|.
 
     Paths that traverse narrow, specific edges score near 1.0.
     Paths that pass through hub entities with hundreds of r-neighbours score
-    near 0.0 — these are likely generic hub-traversals, not the intended chain.
+    near 0.0 â€” these are likely generic hub-traversals, not the intended chain.
 
     PSS = geometric mean of per-hop inverse fan-outs, clamped to [0, 1].
 
     Parameters
     ----------
-    path     : TraversalPath — nodes alternate entity/relation/entity/...
+    path     : TraversalPath â€” nodes alternate entity/relation/entity/...
     fan_out  : {entity_id: {relation: edge_count}} precomputed from KB
 
     Returns

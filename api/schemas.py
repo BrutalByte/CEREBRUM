@@ -1,5 +1,5 @@
 """Pydantic schemas for the CEREBRUM REST API."""
-from typing import List, Dict, Optional, Any
+from typing import Any, Dict, List, Optional, Set
 from pydantic import BaseModel, Field
 
 
@@ -92,7 +92,7 @@ class QueryRequest(BaseModel):
         description=(
             "Phase 126: re-rank top-K answers by counterfactual robustness. "
             "Blocks each answer's intermediate path nodes and scores how much the "
-            "causal effect drops. High latency — disabled by default."
+            "causal effect drops. High latency â€” disabled by default."
         ),
     )
     use_deductive_consensus: bool = Field(
@@ -100,7 +100,7 @@ class QueryRequest(BaseModel):
         description=(
             "Phase 132: re-rank top-K answers by deductive BFS consensus. "
             "Runs DeductiveTraversal (causal_only=True) for each answer entity. "
-            "Expensive (K exhaustive BFS calls) — disabled by default."
+            "Expensive (K exhaustive BFS calls) â€” disabled by default."
         ),
     )
     hop_expand: bool = Field(
@@ -238,12 +238,12 @@ class QueryResponse(BaseModel):
         default=None,
         description="Prediction Error after each loop. None entries where PE was unavailable.",
     )
-    # Phase 121: Metacognitive Monitor — unified epistemic uncertainty
+    # Phase 121: Metacognitive Monitor â€” unified epistemic uncertainty
     epistemic_state: Optional["EpistemicStateSchema"] = Field(
         default=None,
         description="Unified epistemic uncertainty summary for this reasoning call.",
     )
-    # Phase 122: Epistemic Gate — gating decisions derived from EpistemicState
+    # Phase 122: Epistemic Gate â€” gating decisions derived from EpistemicState
     low_confidence: bool = Field(
         default=False,
         description="True when EU >= suppress_threshold. Answers should be treated with caution.",
@@ -367,24 +367,24 @@ class FeedbackRequest(BaseModel):
 
 
 class ParamsResponse(BaseModel):
-    param_names: List[str] = Field(description="Names of the 10 CSA parameters (alpha … theta)")
+    param_names: List[str] = Field(description="Names of the 10 CSA parameters (alpha â€¦ theta)")
     global_params: List[float] = Field(description="Current global parameter vector")
     community_count: int = Field(description="Number of communities with learned overrides")
     community_overrides: Dict[str, List[float]] = Field(
-        description="Per-community parameter overrides {community_id -> [alpha…theta]}",
+        description="Per-community parameter overrides {community_id -> [alphaâ€¦theta]}",
     )
 
 
 class ParamsImportRequest(BaseModel):
-    """Body for POST /params — restore a previously exported parameter state."""
+    """Body for POST /params â€” restore a previously exported parameter state."""
 
     global_prior: List[float] = Field(
         ...,
-        description="10-element global parameter vector (alpha … theta).",
+        description="10-element global parameter vector (alpha â€¦ theta).",
     )
     community_overrides: Dict[str, List[float]] = Field(
         default_factory=dict,
-        description="Per-community overrides to restore {community_id -> [alpha…theta]}.",
+        description="Per-community overrides to restore {community_id -> [alphaâ€¦theta]}.",
     )
     learning_rate: Optional[float] = Field(
         default=None,
@@ -541,7 +541,7 @@ class ReasoningCallbackResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Phase 11 — Streaming schemas
+# Phase 11 â€” Streaming schemas
 # ---------------------------------------------------------------------------
 
 class StreamEventRequest(BaseModel):
@@ -598,11 +598,11 @@ class BridgesResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Phase 14 — REM Cycle schemas
+# Phase 14 â€” REM Cycle schemas
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
-# Phase 15 — Insight Engine schemas
+# Phase 15 â€” Insight Engine schemas
 # ---------------------------------------------------------------------------
 
 class InsightEventSchema(BaseModel):
@@ -614,7 +614,7 @@ class InsightEventSchema(BaseModel):
     community_leap: int
     edge_created: bool
     timestamp: float
-    # Phase 16 — validation fields
+    # Phase 16 â€” validation fields
     id: str = ""
     validation_status: str = "pending"
     corroboration_count: int = 0
@@ -634,7 +634,7 @@ class InsightScanResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Phase 16 — InsightValidator schemas
+# Phase 16 â€” InsightValidator schemas
 # ---------------------------------------------------------------------------
 
 class InsightValidateResponse(BaseModel):
@@ -650,7 +650,7 @@ class InsightValidateAllResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Phase 16 — MetaInsightEngine schemas
+# Phase 16 â€” MetaInsightEngine schemas
 # ---------------------------------------------------------------------------
 
 class MetaInsightEventSchema(BaseModel):
@@ -693,7 +693,7 @@ class InsightGraphResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Phase 14 — REM Cycle schemas
+# Phase 14 â€” REM Cycle schemas
 # ---------------------------------------------------------------------------
 
 class REMRunRequest(BaseModel):
@@ -728,7 +728,7 @@ class REMRollbackResponse(BaseModel):
 # Sleep Cycle schemas (Phase 119)
 
 class SleepRunRequest(BaseModel):
-    dry_run: bool = Field(default=False, description="If true, audit only — no mutations.")
+    dry_run: bool = Field(default=False, description="If true, audit only â€” no mutations.")
 
 
 class SleepReportSchema(BaseModel):
@@ -975,7 +975,7 @@ class IngestReportSchema(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Phase 50 — HypothesisEngine schemas
+# Phase 50 â€” HypothesisEngine schemas
 # ---------------------------------------------------------------------------
 
 class HypothesisProposalSchema(BaseModel):
@@ -992,7 +992,7 @@ class HypothesisProposalSchema(BaseModel):
     supporting_paths: List[TraversalPathSchema]
     intersection_nodes: List[str] = Field(
         default_factory=list,
-        description="Intermediate nodes appearing in ≥2 independent paths (equifinality hubs).",
+        description="Intermediate nodes appearing in â‰¥2 independent paths (equifinality hubs).",
     )
 
 
@@ -1040,7 +1040,7 @@ class HypothesisStatusResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Phase 51 — ResearchAgent schemas
+# Phase 51 â€” ResearchAgent schemas
 # ---------------------------------------------------------------------------
 
 class ResearchCandidateSchema(BaseModel):
@@ -1089,7 +1089,7 @@ class ResearchRejectResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Phase 52 — ExternalValidator schemas
+# Phase 52 â€” ExternalValidator schemas
 # ---------------------------------------------------------------------------
 
 class LiteratureHitSchema(BaseModel):
@@ -1133,7 +1133,7 @@ class ValidateProposalsResponse(BaseModel):
 
 
 class AutoApprovalPolicySchema(BaseModel):
-    """PATCH-friendly schema for AutoApprovalPolicy — all fields optional."""
+    """PATCH-friendly schema for AutoApprovalPolicy â€” all fields optional."""
 
     approve_threshold: Optional[float] = None
     reject_threshold: Optional[float] = None
@@ -1158,7 +1158,7 @@ class AutoApproverStatsResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Phase 74 — Autonomous Discovery Loop schemas
+# Phase 74 â€” Autonomous Discovery Loop schemas
 # ---------------------------------------------------------------------------
 
 class LoopConfigSchema(BaseModel):
@@ -1234,7 +1234,7 @@ class LoopConfigSchema(BaseModel):
     synaptic_decay: Optional[bool] = Field(default=None, description="Enable LTD synaptic homeostasis decay.")
     decay_rate: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Fraction of gap closed per decay pass.")
     decay_baseline: Optional[float] = Field(default=None, ge=0.0, description="Target baseline weight for decay.")
-    decay_min_weight: Optional[float] = Field(default=None, ge=0.0, description="Weight floor — never decay below this.")
+    decay_min_weight: Optional[float] = Field(default=None, ge=0.0, description="Weight floor â€” never decay below this.")
     decay_resistance_k: Optional[float] = Field(default=None, ge=0.1, description="Traversal count at which resistance = 50%.")
     decay_interval: Optional[float] = Field(default=None, ge=10.0, description="Seconds between decay passes.")
     # Phase 102: Default Mode Network
@@ -1357,7 +1357,7 @@ class GoalHistoryResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Phase 76 — Provenance & Rollback schemas
+# Phase 76 â€” Provenance & Rollback schemas
 # ---------------------------------------------------------------------------
 
 class EdgeRecordSchema(BaseModel):
@@ -1421,7 +1421,7 @@ class MetabolicStatusResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# D1 — Multi-tenant / API Key Management
+# D1 â€” Multi-tenant / API Key Management
 # ---------------------------------------------------------------------------
 
 class ApiKeyCreate(BaseModel):
@@ -1438,8 +1438,8 @@ class ApiKeyInfo(BaseModel):
 
 
 class ApiKeyCreated(ApiKeyInfo):
-    """Returned once on creation — raw_secret is never stored."""
-    raw_secret: str = Field(..., description="Store this — it will not be shown again")
+    """Returned once on creation â€” raw_secret is never stored."""
+    raw_secret: str = Field(..., description="Store this â€” it will not be shown again")
 
 
 class ApiKeyListResponse(BaseModel):

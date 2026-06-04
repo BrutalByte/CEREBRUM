@@ -8,7 +8,7 @@ never needs to branch on availability.
 from __future__ import annotations
 import logging
 import time
-from typing import Optional
+from typing import Counter, Optional
 
 logger = logging.getLogger("cerebrum.metrics")
 
@@ -20,7 +20,7 @@ try:
     _AVAILABLE = True
 except ImportError:
     _AVAILABLE = False
-    logger.debug("prometheus_client not installed — metrics disabled")
+    logger.debug("prometheus_client not installed â€” metrics disabled")
 
 
 # ---------------------------------------------------------------------------

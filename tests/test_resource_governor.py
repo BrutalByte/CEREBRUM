@@ -1,11 +1,12 @@
 """
-Tests for ResourceGovernor — memory-aware expansion budget management.
+Tests for ResourceGovernor â€” memory-aware expansion budget management.
 
 All tests use real psutil calls (no mocking) because the governor's whole
 purpose is to read real system state. Tests are written to be robust on any
 machine regardless of current memory pressure.
 """
 
+from typing import Set
 from core.resource_governor import ResourceGovernor
 
 
@@ -15,7 +16,7 @@ from core.resource_governor import ResourceGovernor
 
 def test_default_construction():
     gov = ResourceGovernor()
-    assert gov.threshold == 95.0   # raised from 85% — accuracy-first
+    assert gov.threshold == 95.0   # raised from 85% â€” accuracy-first
     assert gov.buffer_bytes == 200 * 1024 * 1024  # reduced from 500 MB
 
 
@@ -57,7 +58,7 @@ def test_stats_process_rss_positive():
 
 
 # ---------------------------------------------------------------------------
-# can_expand — budget cap
+# can_expand â€” budget cap
 # ---------------------------------------------------------------------------
 
 def test_can_expand_within_budget():
@@ -82,14 +83,14 @@ def test_can_expand_zero_budget():
 
 
 def test_can_expand_memory_pressure_cap():
-    # Set threshold to 0% — any memory usage exceeds it — should always return False
+    # Set threshold to 0% â€” any memory usage exceeds it â€” should always return False
     gov = ResourceGovernor(memory_threshold_pct=0.0, safety_buffer_mb=1)
     result = gov.can_expand(0, 10000)
     assert result is False
 
 
 def test_can_expand_extreme_buffer():
-    # Set safety buffer to 1TB — no machine has this free — should always return False
+    # Set safety buffer to 1TB â€” no machine has this free â€” should always return False
     gov = ResourceGovernor(memory_threshold_pct=99.0, safety_buffer_mb=1_000_000)
     result = gov.can_expand(0, 10000)
     assert result is False

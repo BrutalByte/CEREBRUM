@@ -7,6 +7,7 @@ Usage:
     python -m cli.cerebrum serve --csv tests/fixtures/toy_graph.csv --port 8200
     python -m cli.cerebrum ask --csv tests/fixtures/toy_graph.csv "What did newton influence?"
 """
+from typing import Type
 import argparse
 import json
 import sys
@@ -171,7 +172,7 @@ def cmd_ingest(args):
                 rel  = d.get("relation_type") or d.get("relation", "")
                 conf = d.get("confidence", 1.0)
                 writer.writerow([u, v, rel, conf])
-        print(f"\nSaved updated graph → {args.output}")
+        print(f"\nSaved updated graph â†’ {args.output}")
     elif not args.dry_run and report.edges_added > 0:
         print("\nGraph updated in memory. Use --output PATH to persist.")
 
@@ -191,7 +192,7 @@ def cmd_chat(args):
     from reasoning.traversal import BeamTraversal
     from core.resource_governor import ResourceGovernor
 
-    # ── Load graph + pipeline ────────────────────────────────────────
+    # â”€â”€ Load graph + pipeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     adapter = load_csv_adapter(args.csv)
     G       = adapter.to_networkx()
 
@@ -238,7 +239,7 @@ def cmd_chat(args):
 
     session = manager.new_session()
 
-    # ── Enable readline history if available ────────────────────────
+    # â”€â”€ Enable readline history if available â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     try:
         import readline  # noqa: F401
     except ImportError:
@@ -246,7 +247,7 @@ def cmd_chat(args):
 
     print(f"Communities: {len(set(community_map.values()))}  |  Type 'help' for commands\n")
 
-    # ── REPL ────────────────────────────────────────────────────────
+    # â”€â”€ REPL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     while True:
         try:
             raw = input("You > ").strip()
@@ -276,7 +277,7 @@ def cmd_chat(args):
                 for t in session.turns:
                     print(f"  [{t.turn_number}] {t.raw_question!r}")
                     if t.resolved_question != t.raw_question:
-                        print(f"       → resolved: {t.resolved_question!r}")
+                        print(f"       â†’ resolved: {t.resolved_question!r}")
             print()
             continue
 
@@ -302,7 +303,7 @@ def cmd_chat(args):
             )
             continue
 
-        # ── Process question ────────────────────────────────────────
+        # â”€â”€ Process question â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         turn = manager.process(raw, session)
 
         print()
@@ -310,7 +311,7 @@ def cmd_chat(args):
         if turn.is_followup:
             print(f"  [follow-up on {session.focus_entity_label!r}]")
         if turn.focus_shift:
-            print(f"  [topic shift → {turn.seed_entity_label!r}]")
+            print(f"  [topic shift â†’ {turn.seed_entity_label!r}]")
         if turn.resolved_question != turn.raw_question:
             print(f"  [resolved: {turn.resolved_question!r}]")
         print()
@@ -372,7 +373,7 @@ def cmd_infer(args):
 
 
 def cmd_ask(args):
-    """Full NL→Graph→NL pipeline: parse question, traverse, verbalize."""
+    """Full NLâ†’Graphâ†’NL pipeline: parse question, traverse, verbalize."""
     from adapters.csv_adapter import load_csv_adapter
     from core.community_engine import best_of_n_dscf
     from core.embedding_engine import RandomEngine
@@ -464,21 +465,21 @@ def cmd_init(args):
     import webbrowser
     from pathlib import Path
 
-    # ── Resolve CSV path ────────────────────────────────────────────────────
+    # â”€â”€ Resolve CSV path â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if args.demo:
         csv_path = str(Path(__file__).parent.parent / "tests" / "fixtures" / "toy_graph.csv")
-        print("CEREBRUM Quickstart — demo mode (toy_graph.csv)")
+        print("CEREBRUM Quickstart â€” demo mode (toy_graph.csv)")
     elif args.from_csv:
         csv_path = args.from_csv
         if not Path(csv_path).exists():
             print(f"Error: file not found: {csv_path!r}", file=sys.stderr)
             sys.exit(1)
-        print(f"CEREBRUM Quickstart — loading {csv_path!r}")
+        print(f"CEREBRUM Quickstart â€” loading {csv_path!r}")
     else:
         print("Provide --from-csv PATH or --demo", file=sys.stderr)
         sys.exit(1)
 
-    # ── Load graph ───────────────────────────────────────────────────────────
+    # â”€â”€ Load graph â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     from adapters.csv_adapter import load_csv_adapter
     from core.community_engine import best_of_n_dscf
 
@@ -487,13 +488,13 @@ def cmd_init(args):
     G = adapter.to_networkx()
     print("done.")
 
-    # ── Detect communities ───────────────────────────────────────────────────
+    # â”€â”€ Detect communities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     print("  Detecting communities...", end=" ", flush=True)
     parts = best_of_n_dscf(G, n_trials=3, seed=42)
-    rel_types = {d.get("relation_type") or d.get("relation", "—") for _, _, d in G.edges(data=True)}
+    rel_types = {d.get("relation_type") or d.get("relation", "â€”") for _, _, d in G.edges(data=True)}
     print("done.")
 
-    # ── Summary ──────────────────────────────────────────────────────────────
+    # â”€â”€ Summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     print()
     print("=" * 50)
     print("  Knowledge Base Ready")
@@ -509,7 +510,7 @@ def cmd_init(args):
     print(f'    cerebrum serve --csv "{csv_path}" --port 8200')
     print()
 
-    # ── Optionally launch Studio ──────────────────────────────────────────────
+    # â”€â”€ Optionally launch Studio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if args.serve or args.open:
         try:
             import uvicorn
@@ -619,7 +620,7 @@ def cmd_serve(args):
 def main():
     parser = argparse.ArgumentParser(
         prog="cerebrum",
-        description="CEREBRUM — Community-Structured Graph Attention for KG Reasoning",
+        description="CEREBRUM â€” Community-Structured Graph Attention for KG Reasoning",
     )
     parser.add_argument("--max-ram-gb", type=float, default=None, help="Maximum system RAM (GB) before spilling to disk")
     parser.add_argument("--max-vram-gb", type=float, default=None, help="Maximum GPU VRAM (GB) before falling back to CPU")
@@ -702,7 +703,7 @@ def main():
     tn.add_argument("--n-trials",   type=int, default=100,              dest="n_trials",
                     help="Optuna trials to run (default 100)")
     tn.add_argument("--sample",     type=int, default=500,
-                    help="Questions per trial (default 500 ≈ 30s; use 2000 for stability)")
+                    help="Questions per trial (default 500 â‰ˆ 30s; use 2000 for stability)")
     tn.add_argument("--validate",   type=int, default=0,
                     help="After tuning, validate best on N questions (0=skip; 14274=full dataset)")
     tn.add_argument("--study-name", type=str, default="cerebrum-tuner", dest="study_name",

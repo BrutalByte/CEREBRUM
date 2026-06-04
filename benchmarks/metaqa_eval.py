@@ -44,7 +44,7 @@ Usage
 
 Notes
 -----
-  - KB is loaded as undirected (standard MetaQA practice — traversal works
+  - KB is loaded as undirected (standard MetaQA practice â€” traversal works
     in both directions without needing InverseRule).
   - With --embeddings random the CSA alpha (semantic) term is noise; attention
     is driven by community structure (beta) alone.
@@ -59,7 +59,7 @@ import math
 import multiprocessing
 import os
 
-# Optional experiment tracking — imported lazily when --mlflow / --wandb used
+# Optional experiment tracking â€” imported lazily when --mlflow / --wandb used
 _mlflow = None
 _wandb  = None
 import pickle
@@ -69,7 +69,7 @@ import random
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Counter, Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -175,7 +175,7 @@ def build_or_load_prior(
     """
     Build a RelationPathPrior for the given hop level from the training split.
 
-    The prior is learned from (paths, correct_answers) pairs on training data —
+    The prior is learned from (paths, correct_answers) pairs on training data â€”
     it counts which relation-sequence patterns most often reach correct answers.
     This is a frequency heuristic over the *search*, not a modification to the
     *graph structure* or the *answer claims*.
@@ -198,10 +198,10 @@ def build_or_load_prior(
 
     path = TRAIN_FILES[hop]
     if not path.exists():
-        print(f"    Training file not found: {path} — skipping prior")
+        print(f"    Training file not found: {path} â€” skipping prior")
         return None
 
-    # Load training QA — read from train file, not test file.
+    # Load training QA â€” read from train file, not test file.
     # Cap at train_sample to keep prior-building time under ~2 minutes.
     train_path = TRAIN_FILES[hop]
     all_train: List[Tuple] = []
@@ -223,7 +223,7 @@ def build_or_load_prior(
                 all_train.append((seed_e, answers))
 
     if train_sample < len(all_train):
-        rng = random.Random(99)   # fixed seed — different from eval seed 42
+        rng = random.Random(99)   # fixed seed â€” different from eval seed 42
         train_pairs = rng.sample(all_train, train_sample)
     else:
         train_pairs = all_train
@@ -262,7 +262,7 @@ def build_or_load_prior(
 # This fallback is only active when sentence embeddings are unavailable.
 # ---------------------------------------------------------------------------
 
-# Ordered keyword rules: first match wins. MetaQA-specific — do not extend.
+# Ordered keyword rules: first match wins. MetaQA-specific â€” do not extend.
 _RELATION_KEYWORDS = [
     ("directed_by",    ["direct", "director"]),
     ("written_by",     ["writ", "wrote", "writer", "written", "screenwriter", "screenplay"]),
@@ -286,13 +286,13 @@ def detect_target_relation(
     """
     Map a question string to a MetaQA KB relation type via keyword matching.
 
-    Phase 152 fix: Two-pass detection — prefix first, suffix as fallback only.
+    Phase 152 fix: Two-pass detection â€” prefix first, suffix as fallback only.
     Phase 153 fix: Three targeted pre-passes before the two-pass keyword scan:
-      (1) "when ..." → release_year — "when did the films STARRED by X release"
+      (1) "when ..." â†’ release_year â€” "when did the films STARRED by X release"
           has "star" in the prefix which would fire starred_actors first.
       (2) Answer type at end of sentence ("...in which LANGUAGES/GENRES/YEARS")
-          — scan ONLY the terminal 1-3 words before entity contamination hits.
-      (3) "what are the primary RELATION" — prefix_words=6 only for "what are"
+          â€” scan ONLY the terminal 1-3 words before entity contamination hits.
+      (3) "what are the primary RELATION" â€” prefix_words=6 only for "what are"
           starters, safe because "share actors" never appears there.
 
     Pass 1: prefix (first 4 or 6 words). Pass 2: suffix if no match.
@@ -303,7 +303,7 @@ def detect_target_relation(
     if words and words[0] == "when" and "release_year" in kb_relations:
         return "release_year"
 
-    # Pre-pass 2: "...in which TERM" suffix — the answer type is the LAST WORD
+    # Pre-pass 2: "...in which TERM" suffix â€” the answer type is the LAST WORD
     # when the template ends with "in which X" (genres, languages, years, etc.).
     # Check only the last word to avoid entity-name contamination of the suffix.
     if len(words) >= 2 and words[-2] in ("which", "what"):
@@ -314,9 +314,9 @@ def detect_target_relation(
             if any(kw in last_word for kw in keywords):
                 return relation
 
-    # Pre-pass 3: "what are the primary TERM" — extend prefix only for "what
+    # Pre-pass 3: "what are the primary TERM" â€” extend prefix only for "what
     # are/is" starters (safe because "share actors" never follows "what are").
-    # Pre-pass 4: "who is listed as RELATION_TYPE of films ..." — the answer-type
+    # Pre-pass 4: "who is listed as RELATION_TYPE of films ..." â€” the answer-type
     # keyword is at word[4] (index 4), just outside the default prefix_words=4 window.
     # Without this pass, the suffix catches "starred/actors" from the path description
     # and misidentifies directed_by/written_by questions as starred_actors.
@@ -343,7 +343,7 @@ def detect_target_relation(
 
 
 # ---------------------------------------------------------------------------
-# Phase 182: Question-level multiprocessing — worker globals and functions
+# Phase 182: Question-level multiprocessing â€” worker globals and functions
 # ---------------------------------------------------------------------------
 
 # Module-level globals populated by _worker_init in each spawned process.
@@ -402,7 +402,7 @@ def _worker_init(graph_args: dict, shared: dict) -> None:
     if _W_QUERY_ENGINE is not None and _W_KB_RELATIONS:
         _W_SCHEMA_REL_DETECTOR.build(_W_KB_RELATIONS, _W_QUERY_ENGINE)
 
-    # Build relation boost deriver from KB file (Phase 202 — replaces wb/db/ry/sa params)
+    # Build relation boost deriver from KB file (Phase 202 â€” replaces wb/db/ry/sa params)
     _W_BOOST_DERIVER = RelationBoostDeriver()
     try:
         _W_BOOST_DERIVER.build_from_file(graph_args["kb_file"])
@@ -456,7 +456,7 @@ def _worker_process_question(task: tuple) -> tuple:
             except Exception:
                 pass
 
-        # Terminal Relation Boost — schema-aware embedding detector (Phase 201),
+        # Terminal Relation Boost â€” schema-aware embedding detector (Phase 201),
         # falls back to keyword matcher when detector not built (no sentence engine).
         _trb: Dict[str, float] = {}
         if not structural_trb and question_text:
@@ -476,7 +476,7 @@ def _worker_process_question(task: tuple) -> tuple:
             if _r2:
                 _prb = {_r2: next(iter(_trb.values())) ** 0.5}
 
-        # First-Hop Relation Boost (Phase 180) — schema-aware detector for R1.
+        # First-Hop Relation Boost (Phase 180) â€” schema-aware detector for R1.
         _irb: Optional[Dict[str, float]] = None
         if _is_3hop and fhrb_factor > 0.0 and question_text:
             _r3_detected = next(iter(_trb)) if _trb else None
@@ -548,7 +548,7 @@ def _worker_process_question(task: tuple) -> tuple:
 
         # Phase 189: Data-agnostic cross-type penalty (worker path).
         # Penalise any candidate not in the KB's valid-answer set for the
-        # detected terminal relation. No hardcoded relation names — works on
+        # detected terminal relation. No hardcoded relation names â€” works on
         # any KB schema.
         if _is_3hop and _trb:
             _det_r3_xtp = next(iter(_trb))
@@ -562,7 +562,7 @@ def _worker_process_question(task: tuple) -> tuple:
                 if _changed_xtp:
                     answers_obj.sort(key=lambda a: a.score, reverse=True)
 
-        # Phase 196: secondary sort by branch_count descending — tiebreaker for
+        # Phase 196: secondary sort by branch_count descending â€” tiebreaker for
         # equal-score candidates (e.g. genre ties where multiple genres score 4.0).
         answers_obj.sort(key=lambda a: (-a.score, -a.branch_count))
 
@@ -648,10 +648,10 @@ def _build_r2_boost_map(args) -> Optional[Dict[str, float]]:
     Return the r2_boost_map to use for a run.
 
     Priority:
-      1. --gamma N  →  {relation: gamma * fan_out(r)} for all KB relations
+      1. --gamma N  â†’  {relation: gamma * fan_out(r)} for all KB relations
                        (requires _W_BOOST_DERIVER built in worker init)
-      2. Legacy --wb/db/ry/sa-r2-boost  →  explicit per-relation map
-      3. Neither set  →  None  (uniform --r2-boost applied to all)
+      2. Legacy --wb/db/ry/sa-r2-boost  â†’  explicit per-relation map
+      3. Neither set  â†’  None  (uniform --r2-boost applied to all)
     """
     if getattr(args, "gamma", None) is not None:
         beta = getattr(args, "beta", 1.0)
@@ -661,7 +661,7 @@ def _build_r2_boost_map(args) -> Optional[Dict[str, float]]:
         # Deriver not available in main process (workers have it); return sentinel
         return {"__gamma__": args.gamma, "__beta__": beta}
 
-    # Legacy mode — MetaQA-specific per-relation flags (deprecated since Phase 202).
+    # Legacy mode â€” MetaQA-specific per-relation flags (deprecated since Phase 202).
     # Use --gamma / --beta (SDRB) for any new KB or tuning run.
     legacy = {
         k: v for k, v in {
@@ -769,8 +769,8 @@ def evaluate_hop(
         )
     r2_boost_map = _resolved_r2_boost_map
 
-    # Phase 152: Answer-type constraint index — passed in from main() where it
-    # is built directly from KB triples (objects only — not reversed edges).
+    # Phase 152: Answer-type constraint index â€” passed in from main() where it
+    # is built directly from KB triples (objects only â€” not reversed edges).
     _relation_answer_set: Dict[str, set] = relation_answer_set or {}
 
     # Phase 189: Data-agnostic cross-type penalty sets are computed per-question
@@ -835,12 +835,12 @@ def evaluate_hop(
                 mrr_sum  += reciprocal_rank(pred, correct)
                 if verbose:
                     _seed_v  = qa_pairs[q_idx][0]
-                    _mark    = "✓" if _hit1 else "✗"
+                    _mark    = "âœ“" if _hit1 else "âœ—"
                     _got     = pred[0] if pred else ""
                     _cor     = correct[0] if correct else ""
-                    _run_h1  = f"{h1/found*100:.1f}%" if found else "—"
+                    _run_h1  = f"{h1/found*100:.1f}%" if found else "â€”"
                     if _hit1:
-                        print(f"  [{completed:5d}/{n_total:5d}] {_mark} [{_seed_v}] → {_got}  (H@1 {_run_h1})", flush=True)
+                        print(f"  [{completed:5d}/{n_total:5d}] {_mark} [{_seed_v}] â†’ {_got}  (H@1 {_run_h1})", flush=True)
                     else:
                         _rank = next((r+1 for r, e in enumerate(pred) if e in set(correct)), 0)
                         _rank_s = f"rank={_rank}" if _rank else "not-in-top10"
@@ -904,7 +904,7 @@ def evaluate_hop(
             except Exception:
                 pass
 
-        # Terminal Relation Boost — schema-aware embedding detector (Phase 201),
+        # Terminal Relation Boost â€” schema-aware embedding detector (Phase 201),
         # falls back to keyword matcher when detector not built (no sentence engine).
         # Phase 172: --structural-trb skips question-based detection entirely.
         _trb: Dict[str, float] = {}
@@ -924,11 +924,11 @@ def evaluate_hop(
         # The type filter removes wrong-type candidates (actors appearing as
         # answers to genre questions, etc.) before top-k truncation, allowing
         # high vote_weight to amplify convergence on the correct answer type.
-        # degree_penalty NOT used — MetaQA correct answers are high-degree hubs.
+        # degree_penalty NOT used â€” MetaQA correct answers are high-degree hubs.
         _is_3hop = (hop == 3)
         _raw_top_k = 100 if _is_3hop else top_k
 
-        # Phase 156: Penultimate Relation Boost — boost expected r2 at hop N-1
+        # Phase 156: Penultimate Relation Boost â€” boost expected r2 at hop N-1
         _prb: Dict[str, float] = {}
         if _is_3hop and _trb and r2_map:
             _detected_r3 = next(iter(_trb))
@@ -936,7 +936,7 @@ def evaluate_hop(
             if _r2:
                 _prb = {_r2: _trb[_detected_r3] ** 0.5}
 
-        # First-Hop Relation Boost (Phase 180) — schema-aware detector for R1.
+        # First-Hop Relation Boost (Phase 180) â€” schema-aware detector for R1.
         _irb: Optional[Dict[str, float]] = None
         if _is_3hop and fhrb_factor > 0.0 and question_text:
             _detected_r3_for_r1 = next(iter(_trb)) if _trb else None
@@ -951,7 +951,7 @@ def evaluate_hop(
             if _r1_candidate:
                 _irb = {_r1_candidate: fhrb_factor}
 
-        # Phase 158: per-hop beam widths — {1: hop2_beam_width} widens the H1SE
+        # Phase 158: per-hop beam widths â€” {1: hop2_beam_width} widens the H1SE
         # sub-traversal's hop-1 (= original hop-2), improving coverage by allowing
         # more intermediate entities to survive into the final hop.
         _beam_widths: Optional[Dict[int, int]] = None
@@ -978,7 +978,7 @@ def evaluate_hop(
             weight_specificity            = pss_weight if _is_3hop else 0.0,
             initial_relation_boost        = _irb,       # Phase 180: FHRB
         )
-        # Phase 157: IDF hub-entity penalty — applied before answer-type filter.
+        # Phase 157: IDF hub-entity penalty â€” applied before answer-type filter.
         # Penalizes entities that appear very frequently as objects of the target
         # relation (e.g., Tom Hanks in 100 films). Only applied for high-cardinality
         # relations (>100 unique answer entities) where hub inflation is a problem.
@@ -993,8 +993,8 @@ def evaluate_hop(
                     _ans.score *= 1.0 / (1.0 + idf_weight * math.log1p(_freq))
                 answers_obj.sort(key=lambda a: a.score, reverse=True)
 
-        # Phase 158/160: r2 path-consistency boost — answers whose best path reached
-        # hop-2 via the expected r2 (from the r3→r2 training map) are boosted.
+        # Phase 158/160: r2 path-consistency boost â€” answers whose best path reached
+        # hop-2 via the expected r2 (from the r3â†’r2 training map) are boosted.
         # Phase 172: r2_boost_map allows per-relation tuning.
         if _is_3hop and _trb and r2_map:
             _detected_r3_pc = next(iter(_trb))
@@ -1014,7 +1014,7 @@ def evaluate_hop(
 
         # Phase 189: Data-agnostic cross-type penalty (serial path).
         # Penalise any candidate not in the KB's valid-answer set for the
-        # detected terminal relation. No hardcoded relation names — works on
+        # detected terminal relation. No hardcoded relation names â€” works on
         # any KB schema.
         if _is_3hop and _trb:
             _det_r3_xtp = next(iter(_trb))
@@ -1028,12 +1028,12 @@ def evaluate_hop(
                 if _changed_xtp:
                     answers_obj.sort(key=lambda a: a.score, reverse=True)
 
-        # Phase 196: secondary sort by branch_count — tiebreaker for equal scores.
+        # Phase 196: secondary sort by branch_count â€” tiebreaker for equal scores.
         answers_obj.sort(key=lambda a: (-a.score, -a.branch_count))
 
         pred = [a.entity_id for a in answers_obj]
 
-        # Phase 159/184: diagnostic — capture pre-filter beam state
+        # Phase 159/184: diagnostic â€” capture pre-filter beam state
         _diag: Optional[Dict] = None
         if (diagnose_path or diagnose_jsonl_path) and _is_3hop:
             _correct_set_s = set(correct_answers)
@@ -1077,7 +1077,7 @@ def evaluate_hop(
             continue
 
         # Phase 152: apply answer-type filter for 3-hop when TRB detected a relation.
-        # Phase 159: soft fallback — only apply hard filter when len(filtered) >= min_filter_size.
+        # Phase 159: soft fallback â€” only apply hard filter when len(filtered) >= min_filter_size.
         # Prevents wrong TRB detection from locking out correct answers via thin filter results.
         if _is_3hop and _trb:
             detected_rel = next(iter(_trb))
@@ -1108,12 +1108,12 @@ def evaluate_hop(
         h10     += hits_at_k(pred, correct_answers, k=10)
         mrr_sum += reciprocal_rank(pred, correct_answers)
         if verbose:
-            _mark   = "✓" if _hit1 else "✗"
+            _mark   = "âœ“" if _hit1 else "âœ—"
             _got    = pred[0] if pred else ""
             _cor    = correct_answers[0] if correct_answers else ""
-            _run_h1 = f"{h1/found*100:.1f}%" if found else "—"
+            _run_h1 = f"{h1/found*100:.1f}%" if found else "â€”"
             if _hit1:
-                print(f"  [{i+1:5d}/{len(qa_pairs):5d}] {_mark} [{seed}] → {_got}  (H@1 {_run_h1})", flush=True)
+                print(f"  [{i+1:5d}/{len(qa_pairs):5d}] {_mark} [{seed}] â†’ {_got}  (H@1 {_run_h1})", flush=True)
             else:
                 _rank = next((r+1 for r, e in enumerate(pred) if e in set(correct_answers)), 0)
                 _rank_s = f"rank={_rank}" if _rank else "not-in-top10"
@@ -1157,7 +1157,7 @@ def evaluate_hop(
 def _cleanup_stale_gpu_processes() -> None:
     """Kill idle metaqa_eval processes holding VRAM from prior crashed/OOM runs.
 
-    Only kills processes with near-zero CPU activity — actively running
+    Only kills processes with near-zero CPU activity â€” actively running
     benchmarks are left untouched.
     """
     import os
@@ -1179,15 +1179,15 @@ def _cleanup_stale_gpu_processes() -> None:
                 cmdline = " ".join(proc.info["cmdline"] or [])
                 if "metaqa_eval" not in cmdline:
                     continue
-                # Only target processes that started >60s before us — this
+                # Only target processes that started >60s before us â€” this
                 # prevents killing our own pool workers or a concurrent run
                 # that started at roughly the same time.
                 if proc.create_time() > current_start - 60:
                     continue
-                # Sample CPU over 1 second — skip actively working processes
+                # Sample CPU over 1 second â€” skip actively working processes
                 cpu = proc.cpu_percent(interval=1.0)
                 if cpu > 2.0:
-                    continue  # process is alive and working — leave it alone
+                    continue  # process is alive and working â€” leave it alone
                 candidates.append(proc.info["pid"])
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
@@ -1326,7 +1326,7 @@ def main():
                              "false negatives from wrong TRB detection.")
     parser.add_argument("--structural-trb", action="store_true",
                         help="Phase 172: use StructuralRelationInferrer (SRI) for terminal "
-                             "relation boost instead of keyword detection. Fully agnostic — "
+                             "relation boost instead of keyword detection. Fully agnostic â€” "
                              "no question text, no domain keywords. Skips the answer-type "
                              "hard filter (which requires KB relation names). Measures the "
                              "gap between graph-structural inference and domain-assisted TRB.")
@@ -1337,12 +1337,12 @@ def main():
     parser.add_argument("--pss-weight", type=float, default=0.0,
                         help="Phase 179: Path Specificity Score weight [0,1]. "
                              "Penalises hub-like traversals by inverse relation fan-out. "
-                             "Default 0.0 (disabled). Try 0.15–0.30 for 3-hop H@1.")
+                             "Default 0.0 (disabled). Try 0.15â€“0.30 for 3-hop H@1.")
     parser.add_argument("--fhrb-factor", type=float, default=0.0,
                         help="Phase 180: First-Hop Relation Boost factor. When >0, "
                              "detects r1 from question keywords and boosts hop-1 edges "
                              "matching r1 by this factor; non-matching edges get 0.1 penalty. "
-                             "Default 0.0 (disabled). Try 3.0–8.0 alongside --use-prior.")
+                             "Default 0.0 (disabled). Try 3.0â€“8.0 alongside --use-prior.")
     parser.add_argument("--seed",       type=int,   default=42)
     parser.add_argument("--mlflow",  action="store_true", default=False,
                         help="Log metrics and params to MLflow (tracking URI: ./mlruns).")
@@ -1392,7 +1392,7 @@ def main():
             _mlflow.log_params(_run_params)
             print(f"  MLflow tracking: {uri}")
         except ImportError:
-            print("  [warning] mlflow not installed — run: pip install mlflow")
+            print("  [warning] mlflow not installed â€” run: pip install mlflow")
             _mlflow = None
 
     if args.wandb:
@@ -1406,11 +1406,11 @@ def main():
             )
             print(f"  W&B tracking: project={args.wandb_project}")
         except ImportError:
-            print("  [warning] wandb not installed — run: pip install wandb")
+            print("  [warning] wandb not installed â€” run: pip install wandb")
             _wandb = None
 
     # ------------------------------------------------------------------
-    # Phase 181: GPU startup cleanup — kill stale Python processes that
+    # Phase 181: GPU startup cleanup â€” kill stale Python processes that
     # hold VRAM from prior crashed/OOM runs before allocating our own.
     # ------------------------------------------------------------------
     _cleanup_stale_gpu_processes()
@@ -1431,7 +1431,7 @@ def main():
             sys.exit(1)
 
     # ------------------------------------------------------------------
-    # Build CerebrumGraph  (THALAMUS pipeline — done once for all hops)
+    # Build CerebrumGraph  (THALAMUS pipeline â€” done once for all hops)
     # ------------------------------------------------------------------
     print("Loading knowledge graph...")
     t0 = time.time()
@@ -1463,7 +1463,7 @@ def main():
     print(f"  {graph.community_count} communities")
 
     # ------------------------------------------------------------------
-    # Phase 212: --zero-config — override all tunable params with
+    # Phase 212: --zero-config â€” override all tunable params with
     # ParameterInitializer auto-derived values from graph statistics.
     # ------------------------------------------------------------------
     if args.zero_config:
@@ -1472,7 +1472,7 @@ def main():
             print("\n[zero-config] WARNING: ParameterInitializer not available "
                   "(graph profiling failed). Running with CLI defaults.")
         else:
-            print(f"\n[zero-config] ParameterInitializer ({_pd.effective_regime} × "
+            print(f"\n[zero-config] ParameterInitializer ({_pd.effective_regime} Ã— "
                   f"{_pd.embedding_method}) auto-derived params:")
             for k, v in _pd.as_dict().items():
                 print(f"  {k:14s} = {v}")
@@ -1534,11 +1534,11 @@ def main():
         _relation_answer_set = {}
         _answer_freq = {}
 
-    # Phase 189: Cross-type penalty is now fully data-agnostic — computed
+    # Phase 189: Cross-type penalty is now fully data-agnostic â€” computed
     # per-question from _relation_answer_set[detected_rel]. No second KB pass needed.
 
     # ------------------------------------------------------------------
-    # Phase 156: Build r3 → most-common-r2 map from 3-hop training data.
+    # Phase 156: Build r3 â†’ most-common-r2 map from 3-hop training data.
     # Walks all correct (seed, answer) paths in the KB to count r2 frequencies
     # per terminal relation r3.
     # ------------------------------------------------------------------
@@ -1576,7 +1576,7 @@ def main():
     # ------------------------------------------------------------------
     # Phase 179: Build relation fan-out index for Path Specificity Score.
     # fan_out[entity][relation] = number of distinct targets in the KB.
-    # Derived entirely from graph structure — no training labels used.
+    # Derived entirely from graph structure â€” no training labels used.
     # ------------------------------------------------------------------
     _fan_out: Dict[str, Dict[str, int]] = {}
     if args.pss_weight > 0.0 and _kb_index:

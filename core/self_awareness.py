@@ -1,5 +1,5 @@
 """
-SelfAwarenessEngine — Phase 220: Explicit Epistemic Self-Assessment.
+SelfAwarenessEngine â€” Phase 220: Explicit Epistemic Self-Assessment.
 
 CEREBRUM v2.72 knows *where* its knowledge came from, *how confident* it is,
 and *which signals* drove each answer.  This module synthesises those scattered
@@ -18,14 +18,14 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import Dict, List, Optional, Set, TYPE_CHECKING, Tuple
 
 if TYPE_CHECKING:
     from reasoning.answer_extractor import Answer
     from reasoning.traversal import TraversalPath
 
 
-# CSA feature index → human-readable signal name
+# CSA feature index â†’ human-readable signal name
 _SIGNAL_NAMES: Tuple[str, ...] = (
     "semantic_similarity",
     "community_structure",
@@ -57,13 +57,13 @@ class SelfAwarenessReport:
         1.0 = decisive lead; 0.0 = top two answers tied.
     epistemic_uncertainty
         Beta-distribution variance of the winning path's score accumulation.
-        High variance → the system explored many directions before committing.
+        High variance â†’ the system explored many directions before committing.
     evidence_quality
         Mean source-credibility (grounding) across all edges in the best path.
         Reflects provenance quality, not just structural path quality.
     corroboration
         Number of independent first-intermediate-hop branches that converged
-        on the top answer (branch_count).  ≥ 2 = corroborated; 1 = single path.
+        on the top answer (branch_count).  â‰¥ 2 = corroborated; 1 = single path.
     contradiction_detected
         True if the AnswerExtractor flagged cross-path contradictions in the
         top-5 answers.
@@ -104,7 +104,7 @@ class SelfAwarenessReport:
     gap_recovery:         bool  = False
     """True if query() triggered a recovery retry due to knowledge_gap."""
     calibration_ece:      float = -1.0
-    """Expected Calibration Error from PlattCalibration. −1 = not yet calibrated."""
+    """Expected Calibration Error from PlattCalibration. âˆ’1 = not yet calibrated."""
     contradiction_resolved: bool = False
     """True if at least one contradiction was resolved (e.g. by credibility scoring)."""
     resolution_method:    str   = ""
@@ -183,13 +183,13 @@ class SelfAwarenessEngine:
         top = answers[0]
         best_path: Optional["TraversalPath"] = getattr(top, "best_path", None)
 
-        # 1. Answer confidence — score margin
+        # 1. Answer confidence â€” score margin
         confidence = self._compute_confidence(answers)
 
-        # 2. Epistemic uncertainty — Beta variance of best path
+        # 2. Epistemic uncertainty â€” Beta variance of best path
         uncertainty = self._compute_uncertainty(best_path)
 
-        # 3. Evidence quality — mean grounding across best path edges
+        # 3. Evidence quality â€” mean grounding across best path edges
         evidence_quality = self._compute_evidence_quality(best_path)
 
         # 4. Corroboration
@@ -316,7 +316,7 @@ class SelfAwarenessEngine:
             return {}, ""
 
         breakdown = {_SIGNAL_NAMES[i]: round(totals[i] / count, 4) for i in range(n)}
-        # synthesis_density is a *penalty* — negate for "contribution" ranking
+        # synthesis_density is a *penalty* â€” negate for "contribution" ranking
         ranked = sorted(
             breakdown.items(),
             key=lambda kv: -kv[1] if kv[0] != "synthesis_density" else kv[1],

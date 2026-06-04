@@ -1,24 +1,24 @@
 """
-TextIngestor — CEREBRUM text-to-graph pipeline (Phase 21).
+TextIngestor â€” CEREBRUM text-to-graph pipeline (Phase 21).
 
 Reads plain text and extracts (subject, relation, object) triples, adding
 new knowledge to the graph with full provenance.  No LLM required.
 
 How it works
 ------------
-**Stage 1 — Entity anchoring** (always available, no dependencies)
+**Stage 1 â€” Entity anchoring** (always available, no dependencies)
   Scan every sentence for known graph entity labels.  Entities in the graph
   are the anchors.  Between adjacent anchor pairs, extract the verb phrase
   and map it to a graph relation type.
 
   "Newton influenced Leibniz who invented calculus."
-  → Newton (known) → influenced (→ INFLUENCED) → Leibniz (known)
-  → Leibniz (known) → invented (→ INVENTED) → calculus (known)
+  â†’ Newton (known) â†’ influenced (â†’ INFLUENCED) â†’ Leibniz (known)
+  â†’ Leibniz (known) â†’ invented (â†’ INVENTED) â†’ calculus (known)
 
   New entities (not already in the graph) are detected via capitalization
   heuristics and added as new nodes if confidence exceeds the threshold.
 
-**Stage 2 — spaCy enhancement** (optional; installed separately)
+**Stage 2 â€” spaCy enhancement** (optional; installed separately)
   When ``en_core_web_sm`` or ``en_core_web_md`` is available, the pipeline
   also uses dependency-tree SVO extraction, which catches relations that
   don't rely on two entities appearing close together.
@@ -61,11 +61,11 @@ import hashlib
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Match, Optional, Pattern, Set, Tuple
 
 
 # ---------------------------------------------------------------------------
-# Verb → relation type mapping
+# Verb â†’ relation type mapping
 # Keyed by stem prefix (first 6 chars, lowercase) for fast matching.
 # Value: (RELATION_TYPE, confidence_factor)
 # ---------------------------------------------------------------------------
@@ -175,7 +175,7 @@ _AUX_VERBS: Set[str] = {
     "do", "does", "did",
 }
 
-# Prepositions that can appear between verb and object — strip them
+# Prepositions that can appear between verb and object â€” strip them
 _PREPS: Set[str] = {
     "by", "with", "to", "of", "from", "in", "on", "at", "for", "as",
 }
@@ -304,7 +304,7 @@ class TextIngestor:
         self._last_report: Optional[IngestReport] = None
 
         # Build entity label index from graph
-        self._entity_index: Optional[Dict[str, str]] = None  # lower_label → entity_id
+        self._entity_index: Optional[Dict[str, str]] = None  # lower_label â†’ entity_id
 
     # ------------------------------------------------------------------
     # Public API
@@ -317,7 +317,7 @@ class TextIngestor:
         Parameters
         ----------
         text : str
-            Plain text — sentences, paragraphs, or a full document.
+            Plain text â€” sentences, paragraphs, or a full document.
         dry_run : bool
             If True, extract and report without modifying the graph.
 
@@ -661,7 +661,7 @@ class TextIngestor:
                 skipped.append((rt, "self_loop"))
                 continue
 
-            # Extraction quality × verb mapping quality.
+            # Extraction quality Ã— verb mapping quality.
             # Entity-link confidence is already factored into rt.confidence
             # (anchored=0.85 for two known, 0.65 for one new); compounding it
             # again would make valid extractions fall below the threshold.
@@ -819,7 +819,7 @@ class TextIngestor:
     # ------------------------------------------------------------------
 
     def _build_entity_index(self) -> Dict[str, str]:
-        """Build lower_label → entity_id dict from current graph."""
+        """Build lower_label â†’ entity_id dict from current graph."""
         idx: Dict[str, str] = {}
         G = self._adapter.to_networkx()
         for node in G.nodes():
@@ -917,7 +917,7 @@ def _find_cap_mentions(
     for m in cap_pattern.finditer(sentence):
         text = m.group(1)
         if text.lower() in entity_index:
-            continue   # already a known entity — handled by _find_entity_mentions
+            continue   # already a known entity â€” handled by _find_entity_mentions
         if len(text) < _MIN_ENTITY_LEN:
             continue
         new_id = text.lower().replace(" ", "_")

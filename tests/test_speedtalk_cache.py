@@ -9,6 +9,7 @@ Covers:
     - SpeedTalkEngramTraversal: boost mechanics, record_answers integration
 """
 from __future__ import annotations
+from typing import Pattern
 
 import json
 import os
@@ -43,7 +44,7 @@ class TestSpeedTalkEncoder:
         enc = SpeedTalkEncoder()
         seq = ("CAUSES", "TREATS", "PREVENTS")
         encoded = enc.encode(seq)
-        assert len(encoded) == 3          # three distinct rels → three chars
+        assert len(encoded) == 3          # three distinct rels â†’ three chars
         assert enc.decode(encoded) == seq
 
     def test_same_relation_gets_same_symbol(self):
@@ -170,7 +171,7 @@ class TestSpeedTalkEngram:
         assert cache.affinity(("CAUSES",)) == 0.0
 
     # ------------------------------------------------------------------
-    # prefix_query — new capability
+    # prefix_query â€” new capability
     # ------------------------------------------------------------------
 
     def test_prefix_query_returns_matching_patterns(self):
@@ -202,7 +203,7 @@ class TestSpeedTalkEngram:
         decoded = [r[0] for r in results]
         assert ("CAUSES", "TREATS", "PREVENTS") in decoded
         assert ("CAUSES", "TREATS", "INHIBITS") in decoded
-        # Only two-hop prefix match; single-hop CAUSES→INHIBITS must be absent
+        # Only two-hop prefix match; single-hop CAUSESâ†’INHIBITS must be absent
         assert ("CAUSES", "INHIBITS") not in decoded
 
     def test_prefix_query_empty_args_returns_empty(self):
@@ -221,7 +222,7 @@ class TestSpeedTalkEngram:
 
     def test_adapt_to_graph_reassigns_most_common_relation_to_first_symbol(self):
         cache = SpeedTalkEngram()
-        # Record a pattern *before* adapting — it must survive re-encoding
+        # Record a pattern *before* adapting â€” it must survive re-encoding
         cache.record(("RARE_REL", "COMMON_REL"), weight=3)
         freq = {"COMMON_REL": 1000, "RARE_REL": 5}
         cache.adapt_to_graph(freq)
@@ -433,7 +434,7 @@ class TestSpeedTalkEngramTraversal:
     def test_boosted_score_with_no_cached_pattern(self):
         t = self._make_mock_traversal()
         path = self._make_path(0.5, "A", "CAUSES", "B")
-        # No cached patterns → no boost → score unchanged
+        # No cached patterns â†’ no boost â†’ score unchanged
         assert t._boosted_score(path) == pytest.approx(0.5)
 
     def test_boosted_score_increases_with_known_pattern(self):
@@ -448,7 +449,7 @@ class TestSpeedTalkEngramTraversal:
         t = self._make_mock_traversal()
         path = self._make_path(0.8)
         path.nodes = []
-        # No relations → no boost
+        # No relations â†’ no boost
         assert t._boosted_score(path) == pytest.approx(0.8)
 
     def test_record_answers_populates_cache(self):

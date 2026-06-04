@@ -48,9 +48,9 @@ import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Pattern
 
-# ── MetaQA relation vocabulary ────────────────────────────────────────────────
+# â”€â”€ MetaQA relation vocabulary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 METAQA_RELATIONS: tuple[str, ...] = (
     "directed_by",
     "written_by",
@@ -63,7 +63,7 @@ METAQA_RELATIONS: tuple[str, ...] = (
     "has_imdb_votes",
 )
 
-# ── Keyword patterns per relation ─────────────────────────────────────────────
+# â”€â”€ Keyword patterns per relation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # Listed from most-specific to least-specific within each group.
 # _match_relation() uses the first match per relation, so order matters.
 # Question-verb forms ("starred", "wrote", "directed") are placed FIRST so that
@@ -83,33 +83,33 @@ _PATTERNS: dict[str, list[str]] = {
 # Patterns used ONLY for near-entity R1 detection (bridge phrases).
 # Ordered from most-specific to least-specific.
 _R1_BRIDGE_PATTERNS: list[tuple[re.Pattern, str]] = [
-    # "whose WORD also"  — "whose writers also wrote [X]"
+    # "whose WORD also"  â€” "whose writers also wrote [X]"
     (re.compile(r"\bwhose\s+(\w+)\s+also\b",        re.IGNORECASE), "whose_also"),
-    # "that the WORD"  — "that the actors in their films"
+    # "that the WORD"  â€” "that the actors in their films"
     (re.compile(r"\bthat\s+the\s+(\w+)\b",           re.IGNORECASE), "that_the"),
-    # "share WORD with"  — "share directors with [X]"
+    # "share WORD with"  â€” "share directors with [X]"
     (re.compile(r"\bshare\s+(\w+)\s+with\s*$",       re.IGNORECASE), "share"),
-    # "for the WORD of"  — "for the director of [X]"
+    # "for the WORD of"  â€” "for the director of [X]"
     (re.compile(r"\bfor\s+the\s+(\w+)\s+of\s*$",     re.IGNORECASE), "for_the_of"),
-    # "the WORD of"  — "the director of [X]"
+    # "the WORD of"  â€” "the director of [X]"
     (re.compile(r"\bthe\s+(\w+)\s+of\s*$",           re.IGNORECASE), "the_of"),
     # bare "WORD of"  fallback
     (re.compile(r"\b(\w+)\s+of\s*$",                 re.IGNORECASE), "bare_of"),
-    # "the WORD in"  — "by the actors in [X]", "the films acted by the actors in"
+    # "the WORD in"  â€” "by the actors in [X]", "the films acted by the actors in"
     (re.compile(r"\bthe\s+(\w+)\s+in\s*$",           re.IGNORECASE), "the_in"),
-    # "by [X] WORD"  — post-entity: "starred by [X] actors"
+    # "by [X] WORD"  â€” post-entity: "starred by [X] actors"
     (re.compile(r"^by\s+\S+\s+(\w+)",                re.IGNORECASE), "by_entity"),
 ]
 
 
-# ── Core matching helper ──────────────────────────────────────────────────────
+# â”€â”€ Core matching helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def _match_relation(
     text: str,
     exclude: Optional[str] = None,
 ) -> tuple[Optional[str], float]:
     """
     Scan text for the best-matching MetaQA relation keyword.
-    Returns (relation, confidence) where confidence ∈ (0, 1].
+    Returns (relation, confidence) where confidence âˆˆ (0, 1].
     Earlier patterns in _PATTERNS have higher confidence (more specific).
     """
     tl = text.lower()
@@ -127,22 +127,22 @@ def _match_relation(
     return best_rel, best_conf
 
 
-# ── Result dataclass ──────────────────────────────────────────────────────────
+# â”€â”€ Result dataclass â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @dataclass
 class RelationPath:
-    r1: Optional[str] = None       # first-hop relation  (Film → Bridge)
-    r2: Optional[str] = None       # terminal relation   (Films → Answers)
+    r1: Optional[str] = None       # first-hop relation  (Film â†’ Bridge)
+    r2: Optional[str] = None       # terminal relation   (Films â†’ Answers)
     r1_confidence: float = 0.0
     r2_confidence: float = 0.0
 
-    # ── convenience ───────────────────────────────────────────────────────
+    # â”€â”€ convenience â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     def is_complete(self) -> bool:
         return self.r1 is not None and self.r2 is not None
 
     def terminal_boost(self, magnitude: float) -> dict[str, float]:
         """
         Returns terminal_relation_boost dict for graph.query().
-        magnitude = trb_factor (tuned by Optuna, typically 20–30).
+        magnitude = trb_factor (tuned by Optuna, typically 20â€“30).
         """
         if not self.r2 or self.r2_confidence < 0.5:
             return {}
@@ -151,7 +151,7 @@ class RelationPath:
     def initial_boost(self, magnitude: float) -> dict[str, float]:
         """
         Returns initial_relation_boost dict for graph.query().
-        magnitude = fhrb_factor (tuned by Optuna, typically 4–6).
+        magnitude = fhrb_factor (tuned by Optuna, typically 4â€“6).
         """
         if not self.r1 or self.r1_confidence < 0.5:
             return {}
@@ -173,7 +173,7 @@ class RelationPath:
         )
 
 
-# ── Classifier ────────────────────────────────────────────────────────────────
+# â”€â”€ Classifier â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class RelationPathClassifier:
     """
     Context-aware relation path classifier for MetaQA 3-hop questions.
@@ -189,7 +189,7 @@ class RelationPathClassifier:
 
     def predict(self, question: str) -> RelationPath:
         """
-        Predict (R1, R2) from question text.  O(len(question)) — safe to call
+        Predict (R1, R2) from question text.  O(len(question)) â€” safe to call
         per-question inside the eval hot path.
         """
         m = self._ENTITY_RE.search(question)
@@ -204,13 +204,13 @@ class RelationPathClassifier:
 
         return RelationPath(r1=r1, r2=r2, r1_confidence=r1_conf, r2_confidence=r2_conf)
 
-    # ── R2 detection (terminal relation — what we're looking for) ──────────
+    # â”€â”€ R2 detection (terminal relation â€” what we're looking for) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     def _detect_r2(
         self, pre: str, post: str, full: str
     ) -> tuple[Optional[str], float]:
         words = full.lower().split()
 
-        # Pre-pass 1: "when …" → unambiguously release_year
+        # Pre-pass 1: "when â€¦" â†’ unambiguously release_year
         if words and words[0] == "when":
             return "release_year", 0.99
 
@@ -223,7 +223,7 @@ class RelationPathClassifier:
             if rel and conf >= 0.9:
                 return rel, min(conf + 0.05, 1.0)
 
-        # Pre-pass 3a: "… VERB who" at end — "starred who", "directed by who"
+        # Pre-pass 3a: "â€¦ VERB who" at end â€” "starred who", "directed by who"
         # This template puts R2 at the very end as a question-final verb.
         if len(words) >= 2 and words[-1] == "who":
             tail = " ".join(words[-3:])   # e.g. "films starred who"
@@ -231,7 +231,7 @@ class RelationPathClassifier:
             if rel and conf >= 0.8:
                 return rel, min(conf + 0.05, 1.0)
 
-        # Pre-pass 3b: "…in which WORD" / "…what WORD" at end of question
+        # Pre-pass 3b: "â€¦in which WORD" / "â€¦what WORD" at end of question
         if len(words) >= 2 and words[-2] in ("which", "what"):
             rel, conf = _match_relation(words[-1])
             if rel:
@@ -243,7 +243,7 @@ class RelationPathClassifier:
             if rel:
                 return rel, min(conf + 0.05, 1.0)
 
-        # Pass 1: question-goal context — first 6 words for "what/who/which"
+        # Pass 1: question-goal context â€” first 6 words for "what/who/which"
         # starters (safe because "share actors" never starts these questions).
         pref_len = 6 if (len(words) >= 2 and words[0] in ("what", "who", "which")) else 4
         prefix_text = " ".join(words[:pref_len])
@@ -251,7 +251,7 @@ class RelationPathClassifier:
         if rel:
             return rel, conf
 
-        # Pass 2: post-entity text — handles "…starred who", "…directed by who"
+        # Pass 2: post-entity text â€” handles "â€¦starred who", "â€¦directed by who"
         rel, conf = _match_relation(post)
         if rel:
             return rel, conf * 0.9
@@ -260,7 +260,7 @@ class RelationPathClassifier:
         rel, conf = _match_relation(full)
         return rel, conf * 0.8
 
-    # ── R1 detection (bridge relation near [X]) ────────────────────────────
+    # â”€â”€ R1 detection (bridge relation near [X]) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     def _detect_r1(
         self, pre: str, post: str, full: str
     ) -> tuple[Optional[str], float]:
@@ -274,14 +274,14 @@ class RelationPathClassifier:
                     return rel, min(conf + 0.05, 1.0)
 
         # Strategy 2: "by [X] WORD" in post-entity text
-        # ("starred by [X] actors" → starred_actors)
+        # ("starred by [X] actors" â†’ starred_actors)
         words_post = post.lower().split()
         if words_post:
             rel, conf = _match_relation(words_post[0])
             if rel:
                 return rel, conf * 0.85
 
-        # Strategy 3: full pre-entity text (no exclusion — unlike current code)
+        # Strategy 3: full pre-entity text (no exclusion â€” unlike current code)
         rel, conf = _match_relation(pre)
         if rel:
             return rel, conf * 0.75
@@ -291,7 +291,7 @@ class RelationPathClassifier:
         return rel, conf * 0.6
 
 
-# ── Module-level singleton (import once, reuse per question) ──────────────────
+# â”€â”€ Module-level singleton (import once, reuse per question) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 _CLASSIFIER = RelationPathClassifier()
 
 
@@ -300,7 +300,7 @@ def predict(question: str) -> RelationPath:
     return _CLASSIFIER.predict(question)
 
 
-# ── Evaluation mode ───────────────────────────────────────────────────────────
+# â”€â”€ Evaluation mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 _QA_PATH = (
     Path(__file__).parent
     / "data" / "metaqa" / "3-hop" / "vanilla" / "qa_test.txt"
@@ -340,7 +340,7 @@ def evaluate(sample: int = 100) -> None:
     both_detected = 0
     r1_eq_r2 = 0
 
-    print(f"\nRelationPathClassifier — {sample} questions from MetaQA 3-hop test\n")
+    print(f"\nRelationPathClassifier â€” {sample} questions from MetaQA 3-hop test\n")
     print(f"{'#':>4}  {'R1':15}  {'cf':>4}  {'R2':15}  {'cf':>4}  Question (truncated)")
     print("-" * 100)
     for i, (q, _) in enumerate(questions):
@@ -368,11 +368,11 @@ def evaluate(sample: int = 100) -> None:
     print()
 
 
-# ── CLI ───────────────────────────────────────────────────────────────────────
+# â”€â”€ CLI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="relation_path_classifier",
-        description="CEREBRUM relation path classifier — evaluation and testing",
+        description="CEREBRUM relation path classifier â€” evaluation and testing",
     )
     parser.add_argument("--evaluate", action="store_true",
                         help="Run on MetaQA 3-hop test questions and print predictions")

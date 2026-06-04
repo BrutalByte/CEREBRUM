@@ -6,7 +6,7 @@ Uses Bloom Filters for membership and Centroid Embeddings for semantic relevance
 """
 import hashlib
 import math
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 import numpy as np
 from core.graph_adapter import GraphAdapter

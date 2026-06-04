@@ -1,13 +1,13 @@
 """
 In-memory graph adapter backed by a NetworkX graph.
 
-This is the default adapter — no external dependencies beyond networkx.
+This is the default adapter â€” no external dependencies beyond networkx.
 Use it for:
   - Loading from CSV (via csv_adapter.py)
   - Testing and prototyping
   - In-memory graph construction from Python dicts or triples
 """
-from typing import List, Optional, Dict, TYPE_CHECKING
+from typing import Counter, Dict, List, Optional, TYPE_CHECKING
 
 import networkx as nx
 import numpy as np
@@ -522,8 +522,8 @@ class NetworkXAdapter(GraphAdapter):
         """
         Build and cache a meta-relation graph from co-occurrence statistics.
 
-        For every triple A→[r1]→B→[r2]→C in the entity graph, add a
-        meta-edge r1→r2 with weight = co-occurrence count.  Weights are
+        For every triple Aâ†’[r1]â†’Bâ†’[r2]â†’C in the entity graph, add a
+        meta-edge r1â†’r2 with weight = co-occurrence count.  Weights are
         then TF-IDF normalised so ubiquitous meta-paths are downweighted.
 
         The meta-graph is stored in self._meta_graph and returned.
@@ -554,7 +554,7 @@ class NetworkXAdapter(GraphAdapter):
                     co_occur[(r1, r2)] += 1
                     r2_total[r2] += 1
 
-        # TF-IDF normalisation: downweight r1→r2 pairs where r2 is ubiquitous
+        # TF-IDF normalisation: downweight r1â†’r2 pairs where r2 is ubiquitous
         n_nodes = max(1, self._G.number_of_nodes())
         meta = nx.DiGraph()
         for (r1, r2), count in co_occur.items():

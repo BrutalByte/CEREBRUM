@@ -1,3 +1,4 @@
+from typing import Type
 import pytest
 from unittest.mock import MagicMock, patch
 import networkx as nx

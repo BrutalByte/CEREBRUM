@@ -1,6 +1,6 @@
 """
 setup_graph_layout.py
-─────────────────────
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 Query a live CEREBRUM REST API, compute 3D Fibonacci-sphere layout for every
 entity grouped by community, and write Content/graph_layout.json that
 ACerebrumBrain can load at startup for a richer initial visualisation.
@@ -14,6 +14,7 @@ The script requires no external deps beyond the Python standard library.
 Run it from the repo root while CEREBRUM is running.
 """
 
+from typing import Type
 import argparse
 import json
 import math
@@ -58,7 +59,7 @@ def get_json(url: str, token: str | None = None) -> dict:
 # ---------------------------------------------------------------------------
 
 def community_center(community_id: int, total_communities: int) -> tuple[float, float, float]:
-    """Fibonacci sphere placement — stable for a given community_id."""
+    """Fibonacci sphere placement â€” stable for a given community_id."""
     i = community_id
     n = max(total_communities, 1)
     theta = GOLDEN_ANGLE * i
@@ -72,9 +73,9 @@ def community_center(community_id: int, total_communities: int) -> tuple[float, 
 
 
 def community_color(community_id: int) -> dict:
-    """Golden-ratio hue wheel → RGB (same algorithm as NeuronNodeActor.cpp)."""
+    """Golden-ratio hue wheel â†’ RGB (same algorithm as NeuronNodeActor.cpp)."""
     hue = (community_id * GOLDEN_RATIO_CONJ) % 1.0
-    # HSV→RGB (S=0.78, V=0.90)
+    # HSVâ†’RGB (S=0.78, V=0.90)
     h6 = hue * 6.0
     i  = int(h6)
     f  = h6 - i
@@ -124,25 +125,25 @@ def main():
     api   = args.api.rstrip("/")
     out   = Path(args.out)
 
-    print(f"Querying CEREBRUM at {api} …")
+    print(f"Querying CEREBRUM at {api} â€¦")
 
-    # ── Health check ────────────────────────────────────────────────────────
+    # â”€â”€ Health check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     health = get_json(f"{api}/health", token)
     if not health:
-        print("ERROR: /health failed — is CEREBRUM running?")
+        print("ERROR: /health failed â€” is CEREBRUM running?")
         sys.exit(1)
     node_count = health.get("node_count", "?")
     comm_count = health.get("community_count", "?")
     print(f"  Nodes: {node_count}  |  Communities: {comm_count}")
 
-    # ── Community map ───────────────────────────────────────────────────────
-    print("  Fetching /communities …")
+    # â”€â”€ Community map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    print("  Fetching /communities â€¦")
     comm_resp = get_json(f"{api}/communities", token)
     community_map: dict[str, int] = comm_resp.get("node_to_community", {})
     if not community_map:
         print("  No community data (node_to_community) returned. Layout will be empty.")
 
-    # Build reverse map: community_id → [node_ids]
+    # Build reverse map: community_id â†’ [node_ids]
     communities: dict[int, list[str]] = {}
     for node_id, cid in community_map.items():
         communities.setdefault(int(cid), []).append(node_id)
@@ -150,14 +151,14 @@ def main():
     total_communities = len(communities)
     print(f"  Found {total_communities} communities, {len(community_map)} nodes.")
 
-    # ── Compute community centres & colours ─────────────────────────────────
+    # â”€â”€ Compute community centres & colours â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     centers: dict[int, tuple] = {}
     colors:  dict[int, dict]  = {}
     for cid in sorted(communities.keys()):
         centers[cid] = community_center(cid, total_communities)
         colors[cid]  = community_color(cid)
 
-    # ── Compute per-node positions ──────────────────────────────────────────
+    # â”€â”€ Compute per-node positions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     nodes_out = []
     for cid, node_ids in sorted(communities.items()):
         center = centers[cid]
@@ -172,7 +173,7 @@ def main():
                 "position":      {"x": round(x, 2), "y": round(y, 2), "z": round(z, 2)},
             })
 
-    # ── Community metadata list ─────────────────────────────────────────────
+    # â”€â”€ Community metadata list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     communities_out = []
     for cid in sorted(communities.keys()):
         x, y, z = centers[cid]
@@ -183,10 +184,10 @@ def main():
             "node_count":   len(communities[cid]),
         })
 
-    # ── Fetch edges from /graph/edges ───────────────────────────────────────
+    # â”€â”€ Fetch edges from /graph/edges â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     edges_out = []
     if args.edge_limit > 0:
-        print(f"  Fetching /graph/edges?limit={args.edge_limit} …")
+        print(f"  Fetching /graph/edges?limit={args.edge_limit} â€¦")
         edge_resp = get_json(f"{api}/graph/edges?limit={args.edge_limit}", token)
         raw_edges = edge_resp.get("edges", [])
         for e in raw_edges:
@@ -203,7 +204,7 @@ def main():
                 })
         print(f"  Got {len(edges_out)} edges.")
 
-    # ── Output JSON ─────────────────────────────────────────────────────────
+    # â”€â”€ Output JSON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     layout = {
         "cerebrum_layout_version": "1.1",
         "api_url":       api,
@@ -222,7 +223,7 @@ def main():
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(layout, indent=2), encoding="utf-8")
     print(f"\nWrote {len(nodes_out)} nodes, {len(edges_out)} edges "
-          f"({total_communities} communities) → {out}")
+          f"({total_communities} communities) â†’ {out}")
     print("Load this in UE5 via ACerebrumBrain or import as a DataAsset.")
 
 

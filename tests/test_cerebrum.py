@@ -1,11 +1,12 @@
 """
-Unit tests for CerebrumGraph — the unified THALAMUS → CORTEX pipeline.
+Unit tests for CerebrumGraph â€” the unified THALAMUS â†’ CORTEX pipeline.
 
 All tests use small hand-crafted graphs (4-6 nodes) and RandomEngine
 embeddings to keep execution fast.  No mocking of internal components;
 tests go through the public API.
 """
 from __future__ import annotations
+from typing import Set
 
 import tempfile
 import os
@@ -62,7 +63,7 @@ class TestFactoryMethods:
         """from_triples() creates a CerebrumGraph with the right node/edge counts."""
         g = CerebrumGraph.from_triples(STAR_TRIPLES)
         assert g.node_count == 6
-        # Not yet built — just check the adapter has nodes
+        # Not yet built â€” just check the adapter has nodes
         assert g.adapter.node_count() == 6
 
     def test_from_triples_directed_default(self):
@@ -142,7 +143,7 @@ class TestCompleteMethod:
         G_after = g.adapter._G.number_of_edges()
 
         assert G_after > G_before, "inverse rule should add at least one edge"
-        assert g.adapter._G.has_edge("B", "A"), "B→A (director_of) should exist"
+        assert g.adapter._G.has_edge("B", "A"), "Bâ†’A (director_of) should exist"
 
     def test_complete_invalidates_built_state(self):
         """complete() sets is_built to False even if called on an already-built graph."""
@@ -164,7 +165,7 @@ class TestCompleteMethod:
         g = CerebrumGraph.from_triples(TRIANGLE_TRIPLES)
         g.complete([CompositionRule("directed_by", "born_in", "director_birthplace")])
 
-        assert g.adapter._G.has_edge("A", "C"), "composed A→C edge should exist"
+        assert g.adapter._G.has_edge("A", "C"), "composed Aâ†’C edge should exist"
         data = g.adapter._G.get_edge_data("A", "C")
         assert data["relation"] == "director_birthplace"
 
@@ -218,7 +219,7 @@ class TestBuildMethod:
         """Calling build() twice on the same graph should not raise."""
         g = CerebrumGraph.from_triples(STAR_TRIPLES)
         g.build(seed=42)
-        g.build(seed=42)  # second call — must not raise
+        g.build(seed=42)  # second call â€” must not raise
         assert g.is_built is True
 
     def test_build_empty_graph_raises(self):
@@ -296,13 +297,13 @@ class TestQueryMethod:
         """
         min_hop=2 filters out paths of depth 1.
 
-        Build a linear chain: start → mid → end
+        Build a linear chain: start â†’ mid â†’ end
         With min_hop=2, 'mid' (1-hop from start) should NOT appear in results
         when it is unreachable at depth >= 2 (no back-edges in this chain).
         We verify this by checking that no path with hop_depth < 2 reaches
         an answer entity via the query's best_path.
         """
-        # Linear chain — end is only reachable in 2 hops from start
+        # Linear chain â€” end is only reachable in 2 hops from start
         chain = [
             ("start", "step",  "mid"),
             ("mid",   "step",  "end"),
@@ -317,7 +318,7 @@ class TestQueryMethod:
             "min_hop=2 should exclude nodes reachable only at depth 1"
         )
         # 'end' may appear (reachable at depth 2)
-        # (no assertion needed — beam may or may not find it on a 2-node chain)
+        # (no assertion needed â€” beam may or may not find it on a 2-node chain)
 
     def test_query_returns_unique_entity_ids(self):
         """Each entity_id appears at most once in the returned list."""
@@ -339,7 +340,7 @@ class TestQueryMethod:
         assert isinstance(answers, list)
 
     def test_query_complete_then_build_then_query(self):
-        """Full pipeline: from_triples → complete → build → query works end-to-end."""
+        """Full pipeline: from_triples â†’ complete â†’ build â†’ query works end-to-end."""
         g = (
             CerebrumGraph.from_triples(TRIANGLE_TRIPLES)
             .complete([InverseRule("directed_by", "director_of")])

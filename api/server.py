@@ -2,9 +2,9 @@
 CEREBRUM FastAPI REST server.
 
 Endpoints:
-  GET  /health       — service health and readiness
-  POST /query        — multi-hop KG reasoning query
-  GET  /communities  — current community assignments
+  GET  /health       â€” service health and readiness
+  POST /query        â€” multi-hop KG reasoning query
+  GET  /communities  â€” current community assignments
 
 Startup: loads graph, computes communities and embeddings once, serves queries.
 
@@ -20,7 +20,7 @@ import os
 import time
 import asyncio
 from contextlib import asynccontextmanager
-from typing import Optional, Dict, List, Any
+from typing import Any, Dict, List, Optional, Set
 
 from core.log_config import setup_logging, get_ring_handler
 
@@ -128,7 +128,7 @@ async def get_authenticated_node(
 
     # 1. Try API Key
     if api_key:
-        # 1a. Dynamic key store (D1 multi-tenant) — first priority
+        # 1a. Dynamic key store (D1 multi-tenant) â€” first priority
         store = _state.get("api_key_store")
         if store is not None:
             key_obj = store.validate(api_key)
@@ -143,12 +143,12 @@ async def get_authenticated_node(
                     "_key_id": key_obj.key_id,
                 }
 
-        # 1b. Admin key (env var) — explicit admin bypass
+        # 1b. Admin key (env var) â€” explicit admin bypass
         admin_key = os.getenv("CEREBRUM_ADMIN_KEY", "")
         if admin_key and api_key == admin_key:
             return {"node_id": "local-admin", "scopes": ["query", "search", "graph", "admin"], "tenant_id": "default"}
 
-        # 1c. Static env-var keys or dev mode (no keys configured → accept anything)
+        # 1c. Static env-var keys or dev mode (no keys configured â†’ accept anything)
         if not valid_keys or api_key in valid_keys:
             return {"node_id": "local-admin", "scopes": ["query", "search", "graph"], "tenant_id": "default"}
 
@@ -162,7 +162,7 @@ async def get_authenticated_node(
         except Exception:
             raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid or expired JWT")
 
-    # 3. No credentials provided — allow only in open dev mode (no keys AND no shared secret)
+    # 3. No credentials provided â€” allow only in open dev mode (no keys AND no shared secret)
     shared_secret = os.getenv("PARALLAX_SHARED_SECRET", "")
     if not valid_keys and not shared_secret:
         return {"node_id": "anonymous", "scopes": ["query", "search", "graph"]}
@@ -200,7 +200,7 @@ _state: Dict[str, Any] = {
     "csa_metadata":     None,   # {"distances": dict, "adjacent_pairs": set}
     "default_edge_type_weights": None,
     "hologram":         None,   # List[CommunitySignature]
-    "telemetry_bridge": None,   # TelemetryBridge — WebSocket stream to UE5 clients
+    "telemetry_bridge": None,   # TelemetryBridge â€” WebSocket stream to UE5 clients
     "meta_learner":     None,   # MetaParameterLearner (Milestone 4)
     "feedback_buffer":  [],     # list of {"path": TraversalPath, "reward": float}
     "rem_engine":       None,   # REMEngine (lazy-initialized on first /rem call)
@@ -212,9 +212,9 @@ _state: Dict[str, Any] = {
     "chat_sessions":    {},     # session_id -> ConversationSession
     "text_ingestor":    None,   # TextIngestor (lazy-initialized on first /ingest call)
     "insight_engine":   None,   # InsightEngine (lazy-initialized on first /insight call)
-    "query_log":        None,   # QueryLog — durable NDJSON query history
-    "engram":           None,   # Engram — relation-pattern prior (warmed from query_log)
-    "cerebellar_engine": None,  # CerebellarEngine — active error-correction (Phase 59)
+    "query_log":        None,   # QueryLog â€” durable NDJSON query history
+    "engram":           None,   # Engram â€” relation-pattern prior (warmed from query_log)
+    "cerebellar_engine": None,  # CerebellarEngine â€” active error-correction (Phase 59)
     "multi_strategy_consensus": None, # MACH L1 (Phase 60)
     "consensus_hierarchy_engine": None, # MACH Hierarchy (Phase 60)
     "modulator":        None,   # ChemicalModulator (Phase 68)
@@ -228,8 +228,8 @@ _state: Dict[str, Any] = {
     "graph":             None,     # CerebrumGraph (set when available)
     "_query_path_cache":  {},      # Phase 127: query_id -> (answers, expiry_ts)
     "_platt_calibration": None,   # Phase 129: PlattCalibration instance
-    "audit_ledger":       None,   # QueryAuditLedger — compliance mode logging
-    "api_key_store":      None,   # ApiKeyStore — dynamic key management (D1)
+    "audit_ledger":       None,   # QueryAuditLedger â€” compliance mode logging
+    "api_key_store":      None,   # ApiKeyStore â€” dynamic key management (D1)
     "_tenant_graphs":     {},     # tenant_id -> CerebrumGraph (D1 per-tenant KB)
 }
 
@@ -407,7 +407,7 @@ def create_app(
     async def lifespan(app: FastAPI):
         import asyncio
 
-        # ── Neural telemetry WebSocket bridge ───────────────────────────────
+        # â”€â”€ Neural telemetry WebSocket bridge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
         # --- Neural Command Handler (Phase 90) ---
         async def neural_command_handler(cmd: NeuralCommand):
@@ -495,7 +495,7 @@ def create_app(
                 _state["audit_ledger"] = QueryAuditLedger(
                     log_file=audit_log_file or "cerebrum_audit.jsonl"
                 )
-                _api_log.info("Compliance mode enabled — audit logging to %s",
+                _api_log.info("Compliance mode enabled â€” audit logging to %s",
                               audit_log_file or "cerebrum_audit.jsonl")
 
         # D1: Initialize API key store always (even without graph loaded)
@@ -531,7 +531,7 @@ def create_app(
         allow_headers=["*"],
     )
 
-    # ── Request / response logging middleware ────────────────────────
+    # â”€â”€ Request / response logging middleware â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @app.middleware("http")
     async def _log_requests(request, call_next):
         t0 = time.perf_counter()
@@ -540,12 +540,12 @@ def create_app(
         # Skip /logs polling from the log to avoid noise
         if not request.url.path.startswith("/logs"):
             _api_log.info(
-                "%s %s → %d  (%.1fms)",
+                "%s %s â†’ %d  (%.1fms)",
                 request.method, request.url.path, response.status_code, dt,
             )
         return response
 
-    # ── Log viewer endpoints ─────────────────────────────────────────
+    # â”€â”€ Log viewer endpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @router.get("/logs", tags=["system"])
     async def get_logs(
         level:  Optional[str] = None,
@@ -558,10 +558,10 @@ def create_app(
         Return recent log entries from the in-memory ring buffer.
 
         Query params:
-          level  — filter by level name (DEBUG / INFO / WARNING / ERROR)
-          limit  — max entries returned (default 500)
-          since  — Unix timestamp; only entries newer than this
-          search — substring filter on message or logger name
+          level  â€” filter by level name (DEBUG / INFO / WARNING / ERROR)
+          limit  â€” max entries returned (default 500)
+          since  â€” Unix timestamp; only entries newer than this
+          search â€” substring filter on message or logger name
         """
         ring = get_ring_handler()
         entries = ring.get_entries(level=level, limit=limit, since=since, search=search)
@@ -593,7 +593,7 @@ def create_app(
             community_count=len(set(cm.values())) if cm else 0,
         )
 
-    # ── D2: Prometheus metrics ────────────────────────────────────────────────
+    # â”€â”€ D2: Prometheus metrics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @router.get("/metrics", tags=["system"], include_in_schema=False)
     async def prometheus_metrics():
@@ -679,7 +679,7 @@ def create_app(
             )
         return ledger.stats()
 
-    # ── D1: Multi-tenant API Key Management ──────────────────────────────────
+    # â”€â”€ D1: Multi-tenant API Key Management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     def _require_admin(node: Dict):
         """Raise 403 unless the node has admin scope."""
@@ -692,7 +692,7 @@ def create_app(
         Generate a new API key.
 
         Requires admin scope (set CEREBRUM_ADMIN_KEY env var and pass it as X-API-Key).
-        The returned raw_secret is shown once — store it securely.
+        The returned raw_secret is shown once â€” store it securely.
         """
         _require_admin(node)
         store = _state.get("api_key_store")
@@ -753,7 +753,7 @@ def create_app(
             key_ids = list(store._keys.keys())
         return {"usage": [store.get_usage(kid) for kid in key_ids if store.get_usage(kid)]}
 
-    # ── D1: Tenant KB Management ──────────────────────────────────────────────
+    # â”€â”€ D1: Tenant KB Management â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     @router.post("/admin/tenants", response_model=TenantInfo, tags=["admin"])
     async def register_tenant(req: TenantRegisterRequest, node: Dict = Depends(get_authenticated_node)):
@@ -960,7 +960,7 @@ def create_app(
         except Exception as exc:
             _api_log.warning("CerebellarEngine failed: %s", exc)
 
-        # Persist query result for Engram warm-up on next restart (fire-and-forget — never crash the response)
+        # Persist query result for Engram warm-up on next restart (fire-and-forget â€” never crash the response)
         try:
             if _state["query_log"] is not None:
                 _state["query_log"].record(seeds, answers)
@@ -1018,7 +1018,7 @@ def create_app(
                 community_sequence=list(best_path.community_sequence),
             ))
 
-        # ── Telemetry: emit SYNAPTIC_PULSE for each hop in top paths ───────
+        # â”€â”€ Telemetry: emit SYNAPTIC_PULSE for each hop in top paths â”€â”€â”€â”€â”€â”€â”€
         bridge = _state.get("telemetry_bridge")
         if bridge is not None and answers:
             try:
@@ -1050,7 +1050,7 @@ def create_app(
             except Exception as _tel_e:
                 _api_log.debug("Telemetry emit failed: %s", _tel_e)
 
-        # Phase 121: Metacognitive Monitor — build EpistemicState
+        # Phase 121: Metacognitive Monitor â€” build EpistemicState
         _epistemic_state = None
         _ep_raw = None
         monitor = _state.get("metacognitive_monitor")
@@ -1067,7 +1067,7 @@ def create_app(
             except Exception as _me:
                 _api_log.debug("MetacognitiveMonitor.assess failed: %s", _me)
 
-        # Phase 122: Epistemic Gate — derive gating decisions from EpistemicState
+        # Phase 122: Epistemic Gate â€” derive gating decisions from EpistemicState
         _gate_decision = None
         _low_confidence = False
         _epistemic_warning = None
@@ -1343,7 +1343,7 @@ def create_app(
         Phase 207 EMA hyperparameter adaptation on CerebrumGraph.
         """
         # Phase 207: feed signal into CerebrumGraph adaptive param loop.
-        # Works independently of MetaParameterLearner — no meta_learner required.
+        # Works independently of MetaParameterLearner â€” no meta_learner required.
         _cg = _state.get("graph")
         if _cg is not None and hasattr(_cg, "record_feedback"):
             try:
@@ -1486,7 +1486,7 @@ def create_app(
             ml.learning_rate = req.learning_rate
         if req.momentum is not None:
             ml.momentum = req.momentum
-        # Reset velocity — stale momentum from previous run is misleading.
+        # Reset velocity â€” stale momentum from previous run is misleading.
         ml._velocity = {}
 
         overrides = {
@@ -1536,7 +1536,7 @@ def create_app(
             raise HTTPException(
                 status_code=422,
                 detail=(
-                    f"Need ≥1 positive and ≥1 negative feedback item. "
+                    f"Need â‰¥1 positive and â‰¥1 negative feedback item. "
                     f"Buffer has {len(positives)} positive, {len(negatives)} negative."
                 ),
             )
@@ -1619,7 +1619,7 @@ def create_app(
 
         Intended for initialising 3D visualisation clients (e.g. UE5 CerebrumBrain)
         that need an edge list on startup. Use `limit` to cap the payload size.
-        For production graphs with millions of edges, keep `limit` ≤ 2000.
+        For production graphs with millions of edges, keep `limit` â‰¤ 2000.
         """
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Service not ready")
@@ -1921,7 +1921,7 @@ def create_app(
         return ReasoningCallbackResponse(found=True, paths=path_results)
 
     # ---------------------------------------------------------------------------
-    # Phase 11 — Streaming Endpoints
+    # Phase 11 â€” Streaming Endpoints
     # ---------------------------------------------------------------------------
 
     @router.post("/stream/ingest", response_model=StreamIngestResponse, tags=["streaming"])
@@ -2036,7 +2036,7 @@ def create_app(
                      "timestamp": event.timestamp, "metadata": event.metadata},
                 )
             except Exception:
-                pass  # Queue full — drop event rather than block
+                pass  # Queue full â€” drop event rather than block
 
         adapter.add_mutation_listener(on_mutation)
 
@@ -2094,7 +2094,7 @@ def create_app(
         )
 
     # ---------------------------------------------------------------------------
-    # Phase 15 — Insight Engine Endpoints
+    # Phase 15 â€” Insight Engine Endpoints
     # ---------------------------------------------------------------------------
 
     def _get_insight_engine():
@@ -2102,7 +2102,7 @@ def create_app(
         from core.insight_engine import InsightEngine
         if _state["insight_engine"] is None:
             if not _is_ready():
-                raise HTTPException(status_code=503, detail="Service not ready — call load() first")
+                raise HTTPException(status_code=503, detail="Service not ready â€” call load() first")
             _state["insight_engine"] = InsightEngine(_state["adapter"])
         return _state["insight_engine"]
 
@@ -2155,7 +2155,7 @@ def create_app(
 
         Finds high-similarity unconnected node pairs at community edges and
         materializes INSIGHT_LINK edges where warranted. Safe to call at any
-        time — no mutations if no insights meet the salience threshold.
+        time â€” no mutations if no insights meet the salience threshold.
         """
         ie = _get_insight_engine()
         events = ie.scan_boundaries()
@@ -2165,7 +2165,7 @@ def create_app(
         )
 
     # ---------------------------------------------------------------------------
-    # Phase 16 — InsightValidator endpoints
+    # Phase 16 â€” InsightValidator endpoints
     # ---------------------------------------------------------------------------
 
     def _get_insight_validator():
@@ -2175,7 +2175,7 @@ def create_app(
             _state["insight_validator"] = None
         if _state.get("insight_validator") is None:
             if not _is_ready():
-                raise HTTPException(status_code=503, detail="Service not ready — call load() first")
+                raise HTTPException(status_code=503, detail="Service not ready â€” call load() first")
             _state["insight_validator"] = InsightValidator(_state["adapter"])
         return _state["insight_validator"]
 
@@ -2233,7 +2233,7 @@ def create_app(
         )
 
     # ---------------------------------------------------------------------------
-    # Phase 16 — MetaInsightEngine endpoints
+    # Phase 16 â€” MetaInsightEngine endpoints
     # ---------------------------------------------------------------------------
 
     def _meta_insight_event_schema(ev) -> MetaInsightEventSchema:
@@ -2310,7 +2310,7 @@ def create_app(
         )
 
     # ---------------------------------------------------------------------------
-    # Phase 14 — REM Cycle Endpoints
+    # Phase 14 â€” REM Cycle Endpoints
     # ---------------------------------------------------------------------------
 
     def _get_rem_engine():
@@ -2318,14 +2318,14 @@ def create_app(
         from core.rem_engine import REMEngine
         if _state["rem_engine"] is None:
             if not _is_ready():
-                raise HTTPException(status_code=503, detail="Service not ready — call load() first")
+                raise HTTPException(status_code=503, detail="Service not ready â€” call load() first")
             _state["rem_engine"] = REMEngine(_state["adapter"])
         return _state["rem_engine"]
 
     @router.post("/rem/run", response_model=REMReportSchema, tags=["rem"])
     async def rem_run(req: REMRunRequest, node: Dict = Depends(check_scope("query"))):
         """
-        Execute one REM cycle (prune → consolidate → synthesize).
+        Execute one REM cycle (prune â†’ consolidate â†’ synthesize).
 
         Set dry_run=true to preview changes without mutating the graph.
         """
@@ -2370,7 +2370,7 @@ def create_app(
         """
         rem = _get_rem_engine()
         if not rem.can_rollback:
-            raise HTTPException(status_code=409, detail="No REM cycle to roll back — run a real cycle first.")
+            raise HTTPException(status_code=409, detail="No REM cycle to roll back â€” run a real cycle first.")
         ops = rem.rollback()
         return REMRollbackResponse(
             operations=ops,
@@ -2397,7 +2397,7 @@ def create_app(
         return REMStatusResponse(last_report=schema, can_rollback=rem.can_rollback)
 
     # ------------------------------------------------------------------
-    # Sleep Cycle endpoints  (/sleep/*)  — Phase 119
+    # Sleep Cycle endpoints  (/sleep/*)  â€” Phase 119
     # ------------------------------------------------------------------
 
     def _get_sleep_orchestrator():
@@ -2437,7 +2437,7 @@ def create_app(
         return SleepStatusResponse(last_report=schema, is_sleeping=orc.is_sleeping)
 
     # ------------------------------------------------------------------
-    # Epistemic Gate endpoints  (/epistemic-gate/*)  — Phase 122
+    # Epistemic Gate endpoints  (/epistemic-gate/*)  â€” Phase 122
     # ------------------------------------------------------------------
 
     def _get_epistemic_gate():
@@ -2471,7 +2471,7 @@ def create_app(
         )
 
     # ------------------------------------------------------------------
-    # Causal Inference endpoint  (/causal)  — Phase 120
+    # Causal Inference endpoint  (/causal)  â€” Phase 120
     # ------------------------------------------------------------------
 
     _causal_engine_instance = None
@@ -2501,7 +2501,7 @@ def create_app(
         return CausalProofResponse(**proof.to_dict())
 
     # ------------------------------------------------------------------
-    # Counterfactual Reasoning endpoint  (/counterfactual)  — Phase 123
+    # Counterfactual Reasoning endpoint  (/counterfactual)  â€” Phase 123
     # ------------------------------------------------------------------
 
     _cf_engine_instance = None
@@ -3117,7 +3117,7 @@ def create_app(
         )
 
     # ------------------------------------------------------------------
-    # Phase 74 — Autonomous Discovery Loop endpoints
+    # Phase 74 â€” Autonomous Discovery Loop endpoints
     # ------------------------------------------------------------------
 
     def _get_autonomous_loop():
@@ -3323,7 +3323,7 @@ def create_app(
         req: LoopConfigSchema,
         node: Dict = Depends(get_authenticated_node),
     ):
-        """Update loop configuration at runtime (partial update — omit fields to keep current values)."""
+        """Update loop configuration at runtime (partial update â€” omit fields to keep current values)."""
         if not _is_ready():
             raise HTTPException(status_code=503, detail="Graph not loaded")
         from core.autonomous_loop import LoopConfig
@@ -3376,7 +3376,7 @@ def create_app(
         return _loop_status_response(loop)
 
     # ------------------------------------------------------------------
-    # Phase 95 — Goal System endpoints
+    # Phase 95 â€” Goal System endpoints
     # ------------------------------------------------------------------
 
     def _get_goal_stack_or_503():
@@ -3478,7 +3478,7 @@ def create_app(
         )
 
     # ------------------------------------------------------------------
-    # Phase 76 — Provenance & Rollback endpoints
+    # Phase 76 â€” Provenance & Rollback endpoints
     # ------------------------------------------------------------------
 
     def _get_provenance_ledger():
@@ -3640,7 +3640,7 @@ def create_app(
             raise HTTPException(status_code=404, detail=f"Proposal {hypothesis_id!r} not found")
 
         validator = _get_external_validator()
-        # Check cache only — do not trigger a new network call
+        # Check cache only â€” do not trigger a new network call
         cache_key = (proposal.source, proposal.derived_relation, proposal.target)
         with validator._lock:
             cached = validator._cache.get(cache_key)
@@ -3839,7 +3839,7 @@ def create_app(
             raise HTTPException(status_code=500, detail=str(exc))
         return _report_to_schema(report)
 
-    # ── /build — hot-reload graph from uploaded CSV ──────────────────
+    # â”€â”€ /build â€” hot-reload graph from uploaded CSV â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @router.post("/build", tags=["system"])
     async def build_from_upload(
         file: UploadFile = File(None),
@@ -3885,7 +3885,7 @@ def create_app(
             "filename": file.filename,
         }
 
-    # ── Telemetry broadcast REST endpoint ───────────────────────────────────
+    # â”€â”€ Telemetry broadcast REST endpoint â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     @router.post("/telemetry/broadcast", tags=["telemetry"])
     async def telemetry_broadcast(req: Dict, node: Dict = Depends(get_authenticated_node)):
         """Broadcast a custom event through the telemetry bridge to all WS clients."""
@@ -3902,15 +3902,15 @@ def create_app(
                 pass
         return {"status": "ok", "bridged": bridge is not None}
 
-    # ── /v1 router ──────────────────────────────────────────────────────────
+    # â”€â”€ /v1 router â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     app.include_router(router, prefix="/v1")
 
-    # ── Orin perception router ───────────────────────────────────────────────
+    # â”€â”€ Orin perception router â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     from api.orin_router import orin_router
     app.include_router(orin_router, prefix="/orin", tags=["orin"])
 
-    # ── Unversioned /health — kept for Docker healthcheck and load-balancer
-    #    probes that don't know about /v1.  No auth required. ────────────────
+    # â”€â”€ Unversioned /health â€” kept for Docker healthcheck and load-balancer
+    #    probes that don't know about /v1.  No auth required. â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     from fastapi.responses import RedirectResponse
 
     @app.get("/health", include_in_schema=False)
@@ -3929,7 +3929,7 @@ def create_app(
 
     @app.get("/calibration")
     async def get_calibration():
-        """Phase 222: PlattCalibration status — ECE, drift score, and sample count."""
+        """Phase 222: PlattCalibration status â€” ECE, drift score, and sample count."""
         graph = _state.get("graph")
         _platt = getattr(graph, "_platt", None) if graph else None
         if _platt is None:
@@ -3946,7 +3946,7 @@ def create_app(
     async def root_redirect():
         return RedirectResponse(url="/v1/docs")
 
-    # ── WebSocket telemetry endpoint — same port as REST, no separate process
+    # â”€â”€ WebSocket telemetry endpoint â€” same port as REST, no separate process
     from fastapi import WebSocket, WebSocketDisconnect
 
     @app.websocket("/ws/telemetry")
@@ -3957,7 +3957,7 @@ def create_app(
             await websocket.close(code=1011, reason="Telemetry bridge not initialised")
             return
 
-        # Simple list-based subscriber — avoids asyncio.Queue cross-loop issues
+        # Simple list-based subscriber â€” avoids asyncio.Queue cross-loop issues
         pending: list = []
 
         def _collect(event):
@@ -4173,7 +4173,7 @@ def _load(
     _state["query_log"] = qlog
     _state["engram"] = acache
 
-    # Phase 69: Predictive Coding Engine — wire after engram is ready
+    # Phase 69: Predictive Coding Engine â€” wire after engram is ready
     from core.predictive_coder import PredictiveCodingEngine
     _state["predictive_coder"] = PredictiveCodingEngine(acache, adapter)
 

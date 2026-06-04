@@ -1,5 +1,5 @@
 """
-MetaRelationTraversal — Phase 217: Relational Abstraction Layer.
+MetaRelationTraversal â€” Phase 217: Relational Abstraction Layer.
 
 The human brain reasons about relations between relations: "X causes Y" is
 itself a concept you can reason over.  This module lifts relation types to
@@ -8,7 +8,7 @@ meta-relation graph (the graph of graphs).
 
 Use cases
 ---------
-- "What kinds of connections link disease to gene?" →
+- "What kinds of connections link disease to gene?" â†’
   traverse the meta-graph starting from 'disease_*' relations.
 - Explain *why* a query traversal followed a certain path: which relation
   type transitions are most common for this query type?
@@ -32,7 +32,7 @@ from __future__ import annotations
 import heapq
 import logging
 from dataclasses import dataclass, field
-from typing import List, Optional, TYPE_CHECKING
+from typing import Any, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core.graph_adapter import GraphAdapter
@@ -62,7 +62,7 @@ class MetaPath:
         return self.relations[-1] if self.relations else None
 
     def __repr__(self) -> str:
-        chain = " → ".join(
+        chain = " â†’ ".join(
             f"{r}[{m}]" if m else r
             for r, m in zip(self.relations, [""] + self.meta_relations)
         )

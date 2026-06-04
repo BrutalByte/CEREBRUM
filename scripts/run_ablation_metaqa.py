@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ablation study for the CEREBRUM flagship paper — MetaQA 3-hop H@1.
+"""Ablation study for the CEREBRUM flagship paper â€” MetaQA 3-hop H@1.
 
 Runs 5 configurations on MetaQA 3-hop test set and measures Hits@1.
 Results replace the $^\star$ placeholder rows in:
@@ -14,7 +14,7 @@ Configurations (all: sentence embeddings, beam_width=20, hop=3, no TRB/PRB):
 
 The "Full CEREBRUM" row in the ablation table is re-measured by this script.
 The Phase 53 canonical 12.5% (used in the comparison-against-SOTA table) is
-measured WITHOUT GraphSAGE and without BridgeTwinEngine — it is NOT the same
+measured WITHOUT GraphSAGE and without BridgeTwinEngine â€” it is NOT the same
 as "Full CEREBRUM" in the ablation table. This is consistent: the ablation
 table shows component contributions within v2.52.0; the comparison table shows
 training-free performance against supervised SOTA.
@@ -39,7 +39,7 @@ import re
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Pattern, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -220,7 +220,7 @@ def _fmt_delta(v: float, ref: float) -> str:
 def update_paper(results: List[Dict]) -> None:
     by_name = {r["config"]: r for r in results}
     if "full" not in by_name:
-        print("WARN: 'full' config not in results — cannot update paper.")
+        print("WARN: 'full' config not in results â€” cannot update paper.")
         return
 
     full_h1 = by_name["full"]["hits_1"]
@@ -266,7 +266,7 @@ def update_paper(results: List[Dict]) -> None:
             return m.group(1) + _body + m.group(4)
         new_text, n = pattern.subn(_replacer, text)
         if n == 0:
-            print(f"  WARN: pattern not matched in {tex_path.name} — manual update needed")
+            print(f"  WARN: pattern not matched in {tex_path.name} â€” manual update needed")
             print("  Expected table body:")
             print(new_body)
         else:
@@ -327,7 +327,7 @@ def main() -> None:
         print(f"ERROR: MetaQA kb.txt not found at {KB_FILE}", file=sys.stderr)
         sys.exit(1)
 
-    print("=== CEREBRUM Ablation Study — MetaQA 3-hop ===\n")
+    print("=== CEREBRUM Ablation Study â€” MetaQA 3-hop ===\n")
     print(f"  Sample     : {args.sample if args.sample else 'all (14,274)'}")
     print(f"  Beam width : {args.beam_width}")
     print(f"  Configs    : {args.configs}")

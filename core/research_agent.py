@@ -1,20 +1,20 @@
 """
-ResearchAgent — Autonomous Missing-Link Discovery Daemon (Phase 51+).
+ResearchAgent â€” Autonomous Missing-Link Discovery Daemon (Phase 51+).
 
 Continuously mines (source, target) candidate pairs from the graph, calls
 HypothesisEngine.generate() on each, and accumulates findings in a fixed-size
 ring buffer for human review and optional materialization.
 
 Four candidate sources (combined and ranked by discovery potential):
-  1. ANN embedding scan     — batched numpy dot-product finds semantically
-                              related pairs in O(N·K) rather than O(N²).
+  1. ANN embedding scan     â€” batched numpy dot-product finds semantically
+                              related pairs in O(NÂ·K) rather than O(NÂ²).
                               Replaces the previous Python nested loop.
-  2. Structural hole scan   — nodes with high degree and low local clustering
+  2. Structural hole scan   â€” nodes with high degree and low local clustering
                               are Burt-constraint bridges; cross-community
                               targets around these hubs are high-value finds.
-  3. InsightEngine seeding  — cross-community paths already flagged as
+  3. InsightEngine seeding  â€” cross-community paths already flagged as
                               surprising by the InsightEngine.
-  4. Manual override        — external callers push (source, target) directly.
+  4. Manual override        â€” external callers push (source, target) directly.
 
 Improvements over the original Phase 51 implementation:
   - _pushed_candidates initialised in __init__ (no more lazy hasattr dance).
@@ -25,10 +25,10 @@ Improvements over the original Phase 51 implementation:
   - Real inter-community distance from CSA metadata (not binary 0/1).
   - Optional Engram/SpeedTalkEngram: affinity stored as finding metadata so
     Engram-endorsed findings can be prioritised for approval.
-  - Research thread clustering via thread_findings() — groups findings by
+  - Research thread clustering via thread_findings() â€” groups findings by
     shared intersection hub nodes using union-find.
-  - Feedback learning via report_outcome() — per-community-pair weights
-    updated online (EMA α=0.2) so the agent learns from human approvals.
+  - Feedback learning via report_outcome() â€” per-community-pair weights
+    updated online (EMA Î±=0.2) so the agent learns from human approvals.
 
 Usage
 -----
@@ -53,11 +53,11 @@ import time
 import uuid
 import random
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import numpy as np
 
-# Phase 73 Batch B — optional components (imported lazily to avoid hard dependency)
+# Phase 73 Batch B â€” optional components (imported lazily to avoid hard dependency)
 try:
     from core.contradiction_resolver import ContradictionResolver, ContradictionRecord  # noqa: F401
 except ImportError:
@@ -85,7 +85,7 @@ class ResearchCandidate:
     """Combined score in [0, 1]: higher means more likely to be a novel connection."""
 
     gap_score: float
-    """Cosine distance (1 − similarity): semantically related but disconnected."""
+    """Cosine distance (1 âˆ’ similarity): semantically related but disconnected."""
 
     community_distance: int
     """Ordinal proxy: 0 if same community, 1 if adjacent, 2+ if distant."""
@@ -122,9 +122,9 @@ class ResearchFinding:
     metadata: Dict[str, Any] = field(default_factory=dict)
     """
     Extensible metadata bag.  Keys set by the agent:
-      ``engram_affinity`` : float — how well the derived relation matches the
-                            Engram's known-productive patterns (0–1).
-      ``n_reports``       : int   — number of proposals validated.
+      ``engram_affinity`` : float â€” how well the derived relation matches the
+                            Engram's known-productive patterns (0â€“1).
+      ``n_reports``       : int   â€” number of proposals validated.
     """
 
 
@@ -230,9 +230,9 @@ class ResearchAgent:
         self._findings: collections.deque = collections.deque(maxlen=findings_capacity)
         self._evaluated_pairs: Set[Tuple[str, str]] = set()
         self._pushed_candidates: List[ResearchCandidate] = []
-        # Phase 73 Batch B: revision candidates (discardable → skip; revision → queue here)
+        # Phase 73 Batch B: revision candidates (discardable â†’ skip; revision â†’ queue here)
         self._revision_candidates: collections.deque = collections.deque(maxlen=50)
-        # Phase 76: provenance ledger (optional — attached via set_provenance_ledger)
+        # Phase 76: provenance ledger (optional â€” attached via set_provenance_ledger)
         self._provenance_ledger: Optional[Any] = None
 
         # Phase 98: working memory + goal hints (optional attachments)
@@ -244,7 +244,7 @@ class ResearchAgent:
         # Optional external validator (set by server or constructor caller)
         self._validator: Optional[Any] = None
 
-        # Feedback learning: (min_cid, max_cid) → weight multiplier in [0.3, 2.0]
+        # Feedback learning: (min_cid, max_cid) â†’ weight multiplier in [0.3, 2.0]
         self._feedback_weights: Dict[Tuple[int, int], float] = {}
 
     # ------------------------------------------------------------------
@@ -298,7 +298,7 @@ class ResearchAgent:
         Attach a TriangulationEngine (Phase 72).  When set, each finding is
         evaluated from four independent perspectives before entering the ring
         buffer.  Results are stored in ``finding.metadata["triangulation"]``
-        and feed features 12–15 of the AutoApprover classifier.
+        and feed features 12â€“15 of the AutoApprover classifier.
         """
         with self._lock:
             self._triangulation_engine = engine
@@ -520,10 +520,10 @@ class ResearchAgent:
         """
         Report whether a finding's hypothesis was correct after human review.
 
-        Updates per-community-pair weights (EMA α=0.2) so the agent learns
+        Updates per-community-pair weights (EMA Î±=0.2) so the agent learns
         from human approvals and rejections:
-          correct=True  → boosts future candidates between the same communities
-          correct=False → penalises them
+          correct=True  â†’ boosts future candidates between the same communities
+          correct=False â†’ penalises them
 
         Weights are clamped to [0.3, 2.0] to prevent runaway adaptation.
         """
@@ -549,13 +549,13 @@ class ResearchAgent:
         Group findings into research threads by shared intersection hub nodes.
 
         Two findings belong to the same thread when their proposals share at
-        least one intersection node — the structural hub through which both
-        hypotheses route.  Uses union-find (path-compressed) for O(F·H·α).
+        least one intersection node â€” the structural hub through which both
+        hypotheses route.  Uses union-find (path-compressed) for O(FÂ·HÂ·Î±).
 
         Returns
         -------
         Dict[str, List[ResearchFinding]]
-            Mapping from thread root key → list of findings in that thread.
+            Mapping from thread root key â†’ list of findings in that thread.
             Findings with no intersection nodes form singleton threads keyed
             by their own finding_id.
         """
@@ -606,7 +606,7 @@ class ResearchAgent:
         return threads
 
     # ------------------------------------------------------------------
-    # Internal — scheduling
+    # Internal â€” scheduling
     # ------------------------------------------------------------------
 
     def _get_finding(self, finding_id: str) -> ResearchFinding:
@@ -634,7 +634,7 @@ class ResearchAgent:
             self._timer.start()
 
     # ------------------------------------------------------------------
-    # Internal — main scan loop
+    # Internal â€” main scan loop
     # ------------------------------------------------------------------
 
     def _run_scan(self) -> List[ResearchFinding]:
@@ -644,7 +644,7 @@ class ResearchAgent:
         auto_count: int = 0  # tracks automatic decisions this scan cycle
 
         # Smarter dedup reset: only clear evaluated_pairs when the graph has
-        # grown significantly (>1% change) — single-edge materializations don't
+        # grown significantly (>1% change) â€” single-edge materializations don't
         # invalidate the full scan history.
         try:
             G_snapshot = self._adapter.to_networkx()
@@ -698,7 +698,7 @@ class ResearchAgent:
 
             if not proposals:
                 # Direction fallback: structural-hole mining may generate the candidate
-                # in the wrong direction (e.g. epilepsy→drug when only drug→epilepsy
+                # in the wrong direction (e.g. epilepsyâ†’drug when only drugâ†’epilepsy
                 # paths exist).  Retry with swapped endpoints and, if successful,
                 # re-orient the candidate so downstream code stays consistent.
                 try:
@@ -770,7 +770,7 @@ class ResearchAgent:
             # Multi-perspective triangulation (Phase 72).
             # Runs four independent validation perspectives and stores the
             # TriangulationReport in finding.metadata["triangulation"] so
-            # the AutoApprover can read features 12–15.
+            # the AutoApprover can read features 12â€“15.
             if self._triangulation_engine is not None:
                 try:
                     tri_report = self._triangulation_engine.evaluate(cand, good)
@@ -792,7 +792,7 @@ class ResearchAgent:
                         cand.source_id, cand.target_id, exc,
                     )
 
-            # ContradictionResolver — Phase 73 Batch B.
+            # ContradictionResolver â€” Phase 73 Batch B.
             # Classifies findings with meaningful contradiction signals before
             # they reach the AutoApprover.  "discardable" findings are rejected
             # here and never enter the ring buffer or the AutoApprover queue.
@@ -821,7 +821,7 @@ class ResearchAgent:
                         )
                         with self._lock:
                             self._revision_candidates.append(finding)
-                        # Fall through — still enters ring buffer for human review
+                        # Fall through â€” still enters ring buffer for human review
                 except Exception as exc:
                     logger.error(
                         "ContradictionResolver error for %s: %s",
@@ -872,7 +872,7 @@ class ResearchAgent:
                             "AutoApprover rejected %s (%s)",
                             finding.finding_id, decision.reason,
                         )
-                    # "review" → stays in ring buffer for human
+                    # "review" â†’ stays in ring buffer for human
                 except Exception as exc:
                     logger.error("AutoApprover error for %s: %s", finding.finding_id, exc)
 
@@ -888,7 +888,7 @@ class ResearchAgent:
         return new_findings
 
     # ------------------------------------------------------------------
-    # Internal — candidate mining
+    # Internal â€” candidate mining
     # ------------------------------------------------------------------
 
     def _mine_candidates(self) -> List[ResearchCandidate]:
@@ -896,9 +896,9 @@ class ResearchAgent:
         Collect and rank candidate (source, target) pairs for hypothesis generation.
 
         Combines four sources:
-          1. Pushed candidates (highest priority — from CerebellarEngine / manual).
-          2. ANN embedding scan (vectorised numpy, replaces the O(N²) Python loop).
-          3. Structural hole detection (degree × (1-clustering) Burt approximation).
+          1. Pushed candidates (highest priority â€” from CerebellarEngine / manual).
+          2. ANN embedding scan (vectorised numpy, replaces the O(NÂ²) Python loop).
+          3. Structural hole detection (degree Ã— (1-clustering) Burt approximation).
           4. InsightEngine hot candidates.
 
         Returns at most ``candidate_limit`` candidates, sorted by
@@ -1044,8 +1044,8 @@ class ResearchAgent:
         dot-product (embeddings are L2-normalised).  Only upper-triangular
         pairs are inspected (j > global_i) to avoid duplicates.
 
-        Time:   O(N · K · d) via BLAS, ~1000x faster than the Python loop.
-        Memory: O(batch_size · N) per batch (configurable via ann_batch_size).
+        Time:   O(N Â· K Â· d) via BLAS, ~1000x faster than the Python loop.
+        Memory: O(batch_size Â· N) per batch (configurable via ann_batch_size).
         """
         valid_nodes = [n for n in nodes if emb_cache.get(n) is not None]
         N = len(valid_nodes)
@@ -1076,7 +1076,7 @@ class ResearchAgent:
 
             batch_end = min(batch_start + self.ann_batch_size, N)
             batch_E = E[batch_start:batch_end]          # (B, d)
-            sims = batch_E @ E.T                        # (B, N) — BLAS sgemm
+            sims = batch_E @ E.T                        # (B, N) â€” BLAS sgemm
 
             for bi in range(batch_end - batch_start):
                 global_i = batch_start + bi
@@ -1146,14 +1146,14 @@ class ResearchAgent:
         targets_per_hole: int = 5,
     ) -> List[ResearchCandidate]:
         """
-        Burt-constraint approximation via degree × (1 - clustering).
+        Burt-constraint approximation via degree Ã— (1 - clustering).
 
         Nodes with high degree and low local clustering are structural holes:
         they sit between otherwise disconnected regions.  Cross-community
         pairs that route THROUGH these nodes are high-value hypothesis targets.
 
         Clustering is O(|E|) via NetworkX; betweenness is not recomputed here
-        (too expensive) — degree is used as a proxy instead.
+        (too expensive) â€” degree is used as a proxy instead.
         """
         if G.number_of_nodes() < 4:
             return []
@@ -1168,7 +1168,7 @@ class ResearchAgent:
         except Exception:
             return []
 
-        # Hole score: degree × (1 − clustering); high = genuine bridge
+        # Hole score: degree Ã— (1 âˆ’ clustering); high = genuine bridge
         hole_scores: Dict[str, float] = {}
         for n in nodes:
             deg = G.degree(n)
@@ -1301,16 +1301,16 @@ class ResearchAgent:
         return candidates
 
     # ------------------------------------------------------------------
-    # Internal — scoring and strategy
+    # Internal â€” scoring and strategy
     # ------------------------------------------------------------------
 
     def _select_strategy(self, local_density: float) -> Dict[str, int]:
         """
         Choose beam search parameters based on local graph density.
 
-        Dense  (> 0.4) — paths are short and abundant: shallow + narrow beam.
-        Sparse (< 0.1) — paths are long and rare: deep + wide beam.
-        Transitional   — use the agent's configured defaults.
+        Dense  (> 0.4) â€” paths are short and abundant: shallow + narrow beam.
+        Sparse (< 0.1) â€” paths are long and rare: deep + wide beam.
+        Transitional   â€” use the agent's configured defaults.
         """
         if local_density > 0.4:
             return {"max_hop": 2, "beam_width": 5, "max_budget": 150}
@@ -1336,9 +1336,9 @@ class ResearchAgent:
         Compute (discovery_potential, local_density), both in [0, 1].
 
         Formula (base):
-            0.4 × gap_score           (semantic gap — want high)
-          + 0.4 × (1 − conn_density)  (sparse connection zone)
-          + 0.2 × cross_community     (1.0 if different communities, 0.0 if same)
+            0.4 Ã— gap_score           (semantic gap â€” want high)
+          + 0.4 Ã— (1 âˆ’ conn_density)  (sparse connection zone)
+          + 0.2 Ã— cross_community     (1.0 if different communities, 0.0 if same)
 
         Modifiers:
           - Real inter-community distance (from CSA metadata) replaces the
@@ -1389,7 +1389,7 @@ class ResearchAgent:
             cal_w = self._calibrator.get_weight(cid_u)
             potential = min(1.0, potential * cal_w)
 
-        # Phase 98 Gap 7: goal-hinted entities get a 2× discovery boost
+        # Phase 98 Gap 7: goal-hinted entities get a 2Ã— discovery boost
         goal_hints = self._goal_hints
         if goal_hints and (u in goal_hints or v in goal_hints):
             potential = min(1.0, potential * 2.0)

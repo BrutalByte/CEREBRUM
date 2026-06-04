@@ -1,18 +1,18 @@
 """
-EpistemicGate — Phase 122: Epistemic Gating.
+EpistemicGate â€” Phase 122: Epistemic Gating.
 
 Converts the MetacognitiveMonitor's EpistemicState into concrete runtime
 decisions.  Rather than leaving EU/CIU as passive metrics in the query
 response, the gate maps them to four actions:
 
-  suppress    EU >= suppress_threshold  → low_confidence=True on the response
-  warn        CIU < credence_threshold  → epistemic_warning string on the response
-  research    EU >= research_threshold  → triggered_research=True (server fires
+  suppress    EU >= suppress_threshold  â†’ low_confidence=True on the response
+  warn        CIU < credence_threshold  â†’ epistemic_warning string on the response
+  research    EU >= research_threshold  â†’ triggered_research=True (server fires
                                           ResearchAgent.scan_once() asynchronously)
-  sleep       EU >= sleep_threshold     → triggered_sleep=True (server schedules
+  sleep       EU >= sleep_threshold     â†’ triggered_sleep=True (server schedules
                                           SleepCycleOrchestrator)
 
-EpistemicGate.evaluate() is a pure, synchronous function — it returns a
+EpistemicGate.evaluate() is a pure, synchronous function â€” it returns a
 GateDecision with flags and never fires side effects itself.  The server layer
 reads the flags and fires the appropriate async tasks.  This keeps the gate
 fully testable without a live event loop.
@@ -28,7 +28,7 @@ import threading
 import time
 import logging
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Set
 
 logger = logging.getLogger("cerebrum.epistemic_gate")
 
@@ -53,7 +53,7 @@ class GateConfig:
     """Minimum seconds between consecutive research triggers."""
 
     enabled: bool = True
-    """Master switch — False passes all queries through with no gating."""
+    """Master switch â€” False passes all queries through with no gating."""
 
     def to_dict(self) -> dict:
         return dataclasses.asdict(self)
@@ -104,7 +104,7 @@ class EpistemicGate:
 
     Parameters
     ----------
-    config : GateConfig — threshold configuration (defaults apply if None)
+    config : GateConfig â€” threshold configuration (defaults apply if None)
     """
 
     def __init__(self, config: Optional[GateConfig] = None) -> None:
@@ -124,7 +124,7 @@ class EpistemicGate:
 
         Parameters
         ----------
-        state : EpistemicState — output of MetacognitiveMonitor.assess()
+        state : EpistemicState â€” output of MetacognitiveMonitor.assess()
 
         Returns
         -------
@@ -135,19 +135,19 @@ class EpistemicGate:
         decision = GateDecision(eu=eu, ciu=ciu)
 
         if not self.config.enabled:
-            decision.action_log.append("gate disabled — pass-through")
+            decision.action_log.append("gate disabled â€” pass-through")
             return decision
 
         cfg = self.config
 
-        # ── Suppress (low_confidence flag) ────────────────────────────
+        # â”€â”€ Suppress (low_confidence flag) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if eu >= cfg.suppress_threshold:
             decision.low_confidence = True
             decision.action_log.append(
                 f"suppress: EU={eu:.3f} >= threshold={cfg.suppress_threshold}"
             )
 
-        # ── Credence warning ──────────────────────────────────────────
+        # â”€â”€ Credence warning â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if ciu < cfg.credence_threshold:
             decision.epistemic_warning = (
                 f"Uncertainty estimate has low credence (CIU={ciu:.3f} < "
@@ -158,7 +158,7 @@ class EpistemicGate:
                 f"warn: CIU={ciu:.3f} < credence_threshold={cfg.credence_threshold}"
             )
 
-        # ── Research trigger (with cooldown) ─────────────────────────
+        # â”€â”€ Research trigger (with cooldown) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if eu >= cfg.research_threshold:
             now = time.monotonic()
             with self._lock:
@@ -176,7 +176,7 @@ class EpistemicGate:
                         f"research_skipped: cooldown {remaining:.0f}s remaining"
                     )
 
-        # ── Sleep trigger ─────────────────────────────────────────────
+        # â”€â”€ Sleep trigger â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if eu >= cfg.sleep_threshold:
             decision.triggered_sleep = True
             decision.action_log.append(

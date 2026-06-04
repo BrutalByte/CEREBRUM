@@ -12,7 +12,7 @@ benchmark uses CerebrumGraph.build() + CerebrumGraph.query(), enabling:
   - H1SE hop-1 expansion (independent per-branch sub-traversal)
   - Terminal-Anchor Beam (TAB, Phase 172) -strict anchor sets work here
     because "Compound-treats-Disease" sources are only ~2.4% of all nodes
-  - STRB (Phase 172) — semantic TRB via query-text × relation-phrase
+  - STRB (Phase 172) â€” semantic TRB via query-text Ã— relation-phrase
     cosine similarity, replacing structural SRI in Profile-Auto mode
 
 Ablation ladder (for each template):
@@ -33,15 +33,15 @@ QA Templates
   1-hop:
     compound_treats_disease  -"What diseases does [compound] treat?"
     disease_associates_gene  -"What genes are associated with [disease]?"
-    gene_participates_pathway— "What pathways involve [gene]?"
+    gene_participates_pathwayâ€” "What pathways involve [gene]?"
 
   2-hop:
     disease_gene_pathway     -"What pathways involve genes linked to [disease]?"
     compound_gene_disease    -"What diseases can [compound] reach via gene binding?"
 
   3-hop:
-    disease_compound_via_gene— "What compounds treat diseases sharing genes with [disease]?"
-                               Chain: Disease→Gene→Disease→Compound (fixed vs old eval)
+    disease_compound_via_geneâ€” "What compounds treat diseases sharing genes with [disease]?"
+                               Chain: Diseaseâ†’Geneâ†’Diseaseâ†’Compound (fixed vs old eval)
 
 Usage
 -----
@@ -55,7 +55,7 @@ Usage
   python -m benchmarks.hetionet_cerebrum_eval \\
       --template disease_associates_gene --no-bfs
 
-  # With sentence embeddings — enables STRB (Phase 172) for Profile-Auto+STRB variant:
+  # With sentence embeddings â€” enables STRB (Phase 172) for Profile-Auto+STRB variant:
   python -m benchmarks.hetionet_cerebrum_eval --embeddings sentence
 """
 
@@ -64,7 +64,7 @@ import random
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -87,7 +87,7 @@ from core.embedding_engine import RandomEngine, SentenceEngine
 # Template configuration
 # ---------------------------------------------------------------------------
 
-# Fixed 3-hop template: Disease→Gene→Disease→Compound
+# Fixed 3-hop template: Diseaseâ†’Geneâ†’Diseaseâ†’Compound
 # Old hetionet_eval used "Disease-treated_by-Compound" which doesn't exist in
 # the graph. Since Hetionet is undirected, the metaedge label stored on the
 # edge is always "Compound-treats-Disease" regardless of traversal direction.
@@ -695,7 +695,7 @@ def main():
                 },
             ]
 
-        # Phase 172: Profile-Auto — zero configuration, profile decides everything.
+        # Phase 172: Profile-Auto â€” zero configuration, profile decides everything.
         # Passes only seeds, top_k, min_hop, max_hop. All strategy params are None
         # so CerebrumGraph.query() resolves them from the QueryProfile.
         variants.append({
@@ -703,7 +703,7 @@ def main():
             "query_kwargs": {},  # hop_expand=None, auto_infer_trb=None, anchor_bonus=None
         })
 
-        # Phase 172: Profile-Auto+STRB — same zero-config strategy selection as
+        # Phase 172: Profile-Auto+STRB â€” same zero-config strategy selection as
         # Profile-Auto, but replaces structural SRI with semantic query-embedding
         # similarity for terminal relation inference. Requires --embeddings sentence.
         # Falls back silently to structural SRI when RandomEngine is in use.

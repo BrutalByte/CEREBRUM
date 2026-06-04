@@ -7,9 +7,9 @@ score_path() and deduplicated by terminal entity (best score wins).
 Contradiction surfacing: after ranking, detect_answer_contradictions() inspects
 each pair of answers for cross-path contradictions (Type 2). When found, a
 ContradictionFlag is attached to each conflicting Answer. Contradictions are
-surfaced as research signals — they are never filtered from the result.
+surfaced as research signals â€” they are never filtered from the result.
 """
-from typing import List, Dict, Optional, Any, Tuple
+from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING, Tuple, Type
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -89,7 +89,7 @@ class Answer:
     """Decomposition: {attention, community, semantic}."""
 
     community_trace: List[int] = field(default_factory=list)
-    """Community ID sequence for the best path — shows conceptual trajectory."""
+    """Community ID sequence for the best path â€” shows conceptual trajectory."""
 
     path_confidence: float = 1.0
     """
@@ -143,7 +143,7 @@ def detect_answer_contradictions(answers: List[Answer]) -> None:
     best paths. When a pair of relations is found to be contradictory (per
     CONTRADICTION_PAIRS), a ContradictionFlag is appended to both answers.
 
-    This operation is O(K^2 * max_path_len^2) where K = number of answers — fast
+    This operation is O(K^2 * max_path_len^2) where K = number of answers â€” fast
     for the typical K <= 10 result set.
 
     Modifies answer.contradiction_flags in-place; returns None.
@@ -251,12 +251,12 @@ def extract(
     query_embedding: optional query vector for semantic alignment re-scoring.
                      Pass the seed entity's embedding to activate the semantic
                      alignment term in score_path().
-    min_hop        : minimum hop depth to consider (default 1 — excludes seeds)
+    min_hop        : minimum hop depth to consider (default 1 â€” excludes seeds)
     vote_weight    : weight given to path-convergence vote count vs path score.
                      Higher values prefer entities reached by more distinct paths
                      (ensemble-like voting). Default 0.3.
                      Set to 0.0 to restore legacy behaviour (path score only).
-    branch_bonus_weight : Phase 144 — multiplicative bonus scaling for answers
+    branch_bonus_weight : Phase 144 â€” multiplicative bonus scaling for answers
                      reached via multiple distinct first-intermediate-node branches.
                      0.25 means a 2-branch answer scores ~17% higher (log1p(1)*0.25);
                      a 4-branch answer scores ~35% higher. Set to 0.0 to disable.
@@ -289,7 +289,7 @@ def extract(
 
     # Deduplicate: keep best-scoring path per terminal entity AND accumulate
     # score-weighted votes for path convergence ranking.
-    # Each path contributes its score as a vote weight — high-confidence paths
+    # Each path contributes its score as a vote weight â€” high-confidence paths
     # count more than low-confidence paths toward the entity's vote total.
     # More/stronger independent reasoning chains converging = stronger signal.
     #
@@ -325,7 +325,7 @@ def extract(
         _norm_pss = {}
 
     # Combine path score with normalised weighted vote sum.
-    # Phase 144: Apply branch-diversity multiplier — log-scale bonus for answers
+    # Phase 144: Apply branch-diversity multiplier â€” log-scale bonus for answers
     # reached via multiple independent hop-1 branches.
     import math as _math
     def combined(entity_id: str, path_score: float) -> float:
@@ -343,7 +343,7 @@ def extract(
             deg = adapter.get_degree(entity_id)
             penalty = 1.0 / (1.0 + degree_penalty_weight * _math.log1p(deg))
             base *= penalty
-        # Phase 179: Path Specificity Score — penalise hub-like traversals
+        # Phase 179: Path Specificity Score â€” penalise hub-like traversals
         if _norm_pss:
             pss = _norm_pss.get(entity_id, 0.0)
             base = (1.0 - weight_specificity) * base + weight_specificity * pss
@@ -405,7 +405,7 @@ def extract(
         )
 
     # Surface any cross-path contradictions among the result set.
-    # Contradictions are research signals — they are attached as flags,
+    # Contradictions are research signals â€” they are attached as flags,
     # never used to filter or reorder results.
     detect_answer_contradictions(answers)
 
@@ -424,7 +424,7 @@ def counterfactual_rerank(
 
     For each answer, block its intermediate path node(s) and measure how much
     the causal effect drops. Answers that survive intervention (small effect_delta)
-    are more robust — they rank higher.
+    are more robust â€” they rank higher.
 
     formula: final_score = base_score * (1 + robustness_weight * (1 - |effect_delta|))
 
@@ -432,7 +432,7 @@ def counterfactual_rerank(
     ----------
     answers           : ranked answers from extract()
     seeds             : original query seeds (used as causal source)
-    adapter           : GraphAdapter — passed to CounterfactualEngine
+    adapter           : GraphAdapter â€” passed to CounterfactualEngine
     robustness_weight : how much robustness boosts score (default 0.2)
     causal_relations  : optional frozenset; defaults to CAUSAL_RELATIONS
 
@@ -503,10 +503,10 @@ def deductive_consensus_rerank(
     """Phase 132: re-rank answers by deductive BFS consensus.
 
     For each answer entity, run DeductiveTraversal.traverse(seed, target, causal_only=True).
-    A non-empty proof list → agreement (multiply score by boost).
-    Empty proof list → no causal chain found (multiply score by penalty).
+    A non-empty proof list â†’ agreement (multiply score by boost).
+    Empty proof list â†’ no causal chain found (multiply score by penalty).
     """
-    # Phase 134: cache proof results — avoids redundant O(V+E) BFS for duplicate entity_ids
+    # Phase 134: cache proof results â€” avoids redundant O(V+E) BFS for duplicate entity_ids
     _proof_cache: Dict[Tuple[str, str], bool] = {}
     for ans in answers:
         try:

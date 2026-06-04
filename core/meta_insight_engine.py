@@ -1,8 +1,8 @@
 """
-MetaInsightEngine — second-order reasoning over InsightEvents (Phase 16).
+MetaInsightEngine â€” second-order reasoning over InsightEvents (Phase 16).
 
 Biological analogy: when the brain notices that two separate "Aha!" moments
-are themselves related, it creates a meta-memory — a higher-order abstraction
+are themselves related, it creates a meta-memory â€” a higher-order abstraction
 that links two insights into a unified conceptual structure. This is the
 neurological basis of analogical reasoning and the feeling of "I've seen this
 pattern before."
@@ -12,20 +12,20 @@ Architecture
 The engine maintains an InsightGraph: a directed NetworkX graph where:
   - Nodes are InsightEvent IDs
   - Edges are structural relationships between insights:
-      "chain"             — a.target == b.source (insight B continues insight A)
-      "shared_entity"     — A and B reference the same source or target entity
-      "community_overlap" — A and B cross the same community boundary
-      "temporal_cluster"  — A and B fired within a short time window
+      "chain"             â€” a.target == b.source (insight B continues insight A)
+      "shared_entity"     â€” A and B reference the same source or target entity
+      "community_overlap" â€” A and B cross the same community boundary
+      "temporal_cluster"  â€” A and B fired within a short time window
 
-When the InsightGraph itself develops a surprising new connection — i.e., when
-two previously unrelated InsightEvents are discovered to be structurally linked —
+When the InsightGraph itself develops a surprising new connection â€” i.e., when
+two previously unrelated InsightEvents are discovered to be structurally linked â€”
 a MetaInsightEvent fires. This is the system observing a pattern in its own
 discovery history.
 
 Depth-2 detection finds chains of meta-connections:
-  Insight A → Insight B (meta-edge) and Insight B → Insight C (meta-edge)
-  → MetaInsight at depth=2: "My insight about B is itself connected to insights
-    about both A and C — the three form a coherent higher-order pattern."
+  Insight A â†’ Insight B (meta-edge) and Insight B â†’ Insight C (meta-edge)
+  â†’ MetaInsight at depth=2: "My insight about B is itself connected to insights
+    about both A and C â€” the three form a coherent higher-order pattern."
 
 The "I think that you think that I think" recursive awareness maps directly to
 depth-k meta-reasoning. In practice, depth 2 yields meaningful signal; depth 3
@@ -51,7 +51,7 @@ import threading
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple
+from typing import Dict, List, Pattern, Tuple
 
 import networkx as nx
 
@@ -77,11 +77,11 @@ class MetaInsightEvent:
         How the two insights are related:
         "chain" | "shared_entity" | "community_overlap" | "temporal_cluster"
     meta_score : float
-        Combined score of the two underlying insights — a proxy for how strong
+        Combined score of the two underlying insights â€” a proxy for how strong
         the meta-connection is.
     depth : int
         Recursion level. 1 = direct connection between two insights.
-        2 = a chain of two meta-connections (A→B and B→C detected together).
+        2 = a chain of two meta-connections (Aâ†’B and Bâ†’C detected together).
     timestamp : float
         Unix time the MetaInsightEvent was created.
     id : str
@@ -103,7 +103,7 @@ class MetaInsightEvent:
         return (
             f"MetaInsightEvent(type={self.connection_type!r}, "
             f"depth={self.depth}, score={self.meta_score:.3f}, "
-            f"a={self.insight_a_id!r}→b={self.insight_b_id!r})"
+            f"a={self.insight_a_id!r}â†’b={self.insight_b_id!r})"
         )
 
 
@@ -145,7 +145,7 @@ class MetaInsightEngine:
         # InsightGraph: nodes = event IDs, edges = meta-relationships
         self._graph: nx.DiGraph = nx.DiGraph()
 
-        # ID → InsightEvent storage
+        # ID â†’ InsightEvent storage
         self._events: Dict[str, InsightEvent] = {}
 
         # Ring buffer of MetaInsightEvents
@@ -282,7 +282,7 @@ class MetaInsightEngine:
             connections.append(("shared_entity", base * 0.8))
 
         # --- Community overlap: both cross the same community boundary ---
-        # (using community_leap as a proxy — same leap count and at least 1)
+        # (using community_leap as a proxy â€” same leap count and at least 1)
         if a.community_leap == b.community_leap and a.community_leap >= 1:
             connections.append(("community_overlap", base * 0.6))
 
@@ -302,25 +302,25 @@ class MetaInsightEngine:
 
         Two patterns are detected:
 
-        Pattern 1 — new_id completes a chain tail:
-            pred_of_pred → pred → new_id
+        Pattern 1 â€” new_id completes a chain tail:
+            pred_of_pred â†’ pred â†’ new_id
             The new event is the third link in a chain that already existed
             between pred_of_pred and pred. This is the most common pattern:
-            A→B insight + B→C insight, then C→D arrives and completes the
-            meta-chain [A→B] → [B→C] → [C→D].
+            Aâ†’B insight + Bâ†’C insight, then Câ†’D arrives and completes the
+            meta-chain [Aâ†’B] â†’ [Bâ†’C] â†’ [Câ†’D].
 
-        Pattern 2 — new_id starts a chain into existing successors:
-            new_id → succ → succ_of_succ
+        Pattern 2 â€” new_id starts a chain into existing successors:
+            new_id â†’ succ â†’ succ_of_succ
             The new event feeds into a chain that already exists downstream.
             This fires if a third event was observed before the first.
 
         When this occurs, the system recognises that three insights form a
-        coherent higher-order reasoning chain — the graph is thinking about
+        coherent higher-order reasoning chain â€” the graph is thinking about
         its own thinking.
         """
         fired: List[MetaInsightEvent] = []
 
-        # Pattern 1: pred_of_pred → pred → new_id
+        # Pattern 1: pred_of_pred â†’ pred â†’ new_id
         for pred_id in list(self._graph.predecessors(new_id)):
             pred_data = self._graph.get_edge_data(pred_id, new_id) or {}
             for pp_id in list(self._graph.predecessors(pred_id)):
@@ -340,7 +340,7 @@ class MetaInsightEngine:
                     self._meta_events.append(meta_ev)
                     fired.append(meta_ev)
 
-        # Pattern 2: new_id → succ → succ_of_succ
+        # Pattern 2: new_id â†’ succ â†’ succ_of_succ
         for succ_id in list(self._graph.successors(new_id)):
             succ_data = self._graph.get_edge_data(new_id, succ_id) or {}
             for ss_id in list(self._graph.successors(succ_id)):

@@ -1,13 +1,13 @@
 """
-Tests for CVT-aware traversal — Phase 28A.
+Tests for CVT-aware traversal â€” Phase 28A.
 
 CVT (Compound Value Type) nodes are Freebase mediator nodes with opaque
 /m/ or /g/ MID identifiers.  They have no semantic label and produce
 near-zero cosine-similarity scores, which kills attention weights on
 indirect paths.
 
-BeamTraversal(cvt_passthrough=True) collapses A→CVT→B into a single hop
-scored on A↔B semantic similarity.
+BeamTraversal(cvt_passthrough=True) collapses Aâ†’CVTâ†’B into a single hop
+scored on Aâ†”B semantic similarity.
 
 Tests cover:
   - _is_cvt_node: detection of CVT vs. named entity nodes
@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Type
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -236,8 +236,8 @@ class TestCvtPassthroughEnabled:
 
     def test_cvt_penalty_applied(self):
         """Path through CVT should have lower confidence than direct path."""
-        # Direct path: seed → answer (confidence=1.0)
-        # CVT path:    seed → /m/cvt → answer (confidence dampened by CVT_HOP_PENALTY)
+        # Direct path: seed â†’ answer (confidence=1.0)
+        # CVT path:    seed â†’ /m/cvt â†’ answer (confidence dampened by CVT_HOP_PENALTY)
         edges_direct = [("seed", "direct", "answer")]
         edges_cvt    = [
             ("seed", "r1", "/m/cvt001"),
@@ -261,7 +261,7 @@ class TestCvtPassthroughEnabled:
 
     def test_no_cvt_cycles(self):
         """CVT expansion must not revisit already-seen entities."""
-        # CVT node points back to seed — must not create a cycle
+        # CVT node points back to seed â€” must not create a cycle
         edges = [
             ("seed", "r1", "/m/cvt001"),
             ("/m/cvt001", "r2", "seed"),   # cycle back to seed
@@ -277,7 +277,7 @@ class TestCvtPassthroughEnabled:
 
     def test_chained_cvt_not_expanded(self):
         """Second CVT node after first should not be added as an endpoint."""
-        # seed → /m/cvt1 → /m/cvt2 → answer
+        # seed â†’ /m/cvt1 â†’ /m/cvt2 â†’ answer
         # passthrough of cvt1 would reach cvt2, which is also a CVT node.
         # The inner CVT filter in next_steps should drop it.
         edges = [

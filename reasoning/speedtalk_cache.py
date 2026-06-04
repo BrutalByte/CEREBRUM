@@ -7,19 +7,19 @@ a 62-symbol alphabet), so relation sequences are stored as compact strings
 rather than verbose tuples.
 
 Analogy to Heinlein's SpeedTalk ("Gulf", 1949 / "Friday"):
-    - Every primitive concept → single phoneme
-    - Sequences of concepts → concatenated phoneme strings
+    - Every primitive concept â†’ single phoneme
+    - Sequences of concepts â†’ concatenated phoneme strings
     - Most-common concepts get the shortest symbols (frequency-order assignment)
 
 New capabilities over Engram
 --------------------------------
     prefix_query(*rels)
         Find all cached patterns whose relation sequence *starts with* the
-        given relations.  Works because encoded string prefix ↔ relation
-        sequence prefix — each character encodes exactly one relation.
+        given relations.  Works because encoded string prefix â†” relation
+        sequence prefix â€” each character encodes exactly one relation.
 
     alphabet()
-        Expose the full {relation_type → phoneme_char} mapping so callers
+        Expose the full {relation_type â†’ phoneme_char} mapping so callers
         can inspect or visualise the learned vocabulary.
 
     compression_stats()
@@ -28,9 +28,9 @@ New capabilities over Engram
 
 Classes
 -------
-    SpeedTalkEncoder           — relation-type ↔ phoneme bijection
-    SpeedTalkEngram            — compressed cache with prefix-query API
-    SpeedTalkEngramTraversal   — BeamTraversal variant using the above cache
+    SpeedTalkEncoder           â€” relation-type â†” phoneme bijection
+    SpeedTalkEngram            â€” compressed cache with prefix-query API
+    SpeedTalkEngramTraversal   â€” BeamTraversal variant using the above cache
 
 Usage
 -----
@@ -43,12 +43,12 @@ Usage
     answers = extract(paths, ...)
     traversal.record_answers(answers, min_score=0.5)
 
-    # Prefix query — new capability not present in Engram
+    # Prefix query â€” new capability not present in Engram
     patterns = cache.prefix_query("CAUSES")
-    # → [(('CAUSES', 'TREATS'), 5), (('CAUSES', 'INHIBITS', 'PREVENTS'), 3)]
+    # â†’ [(('CAUSES', 'TREATS'), 5), (('CAUSES', 'INHIBITS', 'PREVENTS'), 3)]
 
     stats = cache.compression_stats()
-    # → {'vocab_size': 8, 'compression_ratio': 11.2, ...}
+    # â†’ {'vocab_size': 8, 'compression_ratio': 11.2, ...}
 """
 from __future__ import annotations
 
@@ -57,12 +57,12 @@ import logging
 import threading
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Any, Counter, Dict, List, Optional, Sequence, Tuple
 
 _log = logging.getLogger("cerebrum.speedtalk")
 
 # ---------------------------------------------------------------------------
-# Base alphabet — 62 single-char slots before overflow
+# Base alphabet â€” 62 single-char slots before overflow
 # ---------------------------------------------------------------------------
 
 _BASE_ALPHABET = (
@@ -84,13 +84,13 @@ class SpeedTalkEncoder:
     --------------------------
     Each unique relation type is assigned one character from _BASE_ALPHABET.
     For KGs with more than 62 relation types, overflow symbols use a
-    null-delimited integer notation ``\\x00N\\x00`` — transparent to users
+    null-delimited integer notation ``\\x00N\\x00`` â€” transparent to users
     of encode()/decode().
 
     Key properties
     --------------
-    - encode() · decode() are inverses for any relation sequence
-    - Prefix of encoded string ↔ prefix of original sequence
+    - encode() Â· decode() are inverses for any relation sequence
+    - Prefix of encoded string â†” prefix of original sequence
       (each char encodes exactly one relation, so ``s[:k]`` decodes to first k)
     - Thread-safe reads and writes
     - Frequency-order rebalancing: call build_frequency_order() at startup
@@ -129,7 +129,7 @@ class SpeedTalkEncoder:
 
     @property
     def vocabulary(self) -> Dict[str, str]:
-        """Return a copy of the {relation → symbol} mapping."""
+        """Return a copy of the {relation â†’ symbol} mapping."""
         with self._lock:
             return dict(self._rel_to_sym)
 
@@ -219,7 +219,7 @@ class SpeedTalkEncoder:
                 try:
                     end = encoded.index("\x00", i + 1)
                 except ValueError:
-                    # Malformed/truncated overflow token — skip remaining bytes
+                    # Malformed/truncated overflow token â€” skip remaining bytes
                     break
                 tokens.append(encoded[i : end + 1])
                 i = end + 1
@@ -240,7 +240,7 @@ class SpeedTalkEngram:
     Stores relation sequences as compact phoneme strings rather than verbose
     Python tuples.  The key insight: because each character encodes exactly
     one relation type, a string prefix corresponds exactly to a relation-
-    sequence prefix — enabling O(P) prefix queries over all cached patterns.
+    sequence prefix â€” enabling O(P) prefix queries over all cached patterns.
 
     Interface mirrors Engram so it can act as a drop-in replacement.
 
@@ -250,7 +250,7 @@ class SpeedTalkEngram:
         All cached patterns whose sequence starts with the given relation(s).
 
     alphabet()
-        The full {relation_type → phoneme_char} mapping.
+        The full {relation_type â†’ phoneme_char} mapping.
 
     compression_stats()
         Memory-efficiency metrics for the current cache state.
@@ -268,8 +268,8 @@ class SpeedTalkEngram:
     ) -> None:
         self._lock = threading.Lock()
         self._encoder = encoder or SpeedTalkEncoder()
-        self._counts: Dict[str, int] = defaultdict(int)   # encoded_str → count
-        self._prefix: Dict[str, int] = defaultdict(int)   # encoded_prefix → count
+        self._counts: Dict[str, int] = defaultdict(int)   # encoded_str â†’ count
+        self._prefix: Dict[str, int] = defaultdict(int)   # encoded_prefix â†’ count
         self._max_patterns = max_patterns
         self._max_count: int = 1
 
@@ -385,7 +385,7 @@ class SpeedTalkEngram:
         return [(self._encoder.decode(enc), cnt) for enc, cnt in matches]
 
     def alphabet(self) -> Dict[str, str]:
-        """Return the full {relation_type → phoneme_char} mapping."""
+        """Return the full {relation_type â†’ phoneme_char} mapping."""
         return self._encoder.vocabulary
 
     def compression_stats(self) -> dict:
@@ -440,7 +440,7 @@ class SpeedTalkEngram:
         that actually appears in the active KG.
 
         If the cache already contains stored patterns (e.g. loaded from disk),
-        they are transparently re-encoded to the new symbol assignments — no
+        they are transparently re-encoded to the new symbol assignments â€” no
         patterns are lost.
 
         Call this immediately after loading a new graph, before any queries run.
@@ -474,7 +474,7 @@ class SpeedTalkEngram:
             "(top 3: %s)",
             len(edge_type_counts),
             ", ".join(
-                f"{r}→'{self._encoder.encode([r])}'"
+                f"{r}â†’'{self._encoder.encode([r])}'"
                 for r in sorted(
                     edge_type_counts, key=edge_type_counts.__getitem__, reverse=True
                 )[:3]
@@ -489,7 +489,7 @@ class SpeedTalkEngram:
             self._max_count = 1
 
         for seq, cnt in snapshot:
-            # seq may contain relation types not in the new graph's vocab —
+            # seq may contain relation types not in the new graph's vocab â€”
             # they will be assigned new symbols on-demand via _intern()
             self.record(seq, weight=cnt)
 
@@ -538,11 +538,11 @@ class SpeedTalkEngram:
 
         Parameters
         ----------
-        adapter : GraphAdapter — must expose edges via get_all_edges() or .edges
+        adapter : GraphAdapter â€” must expose edges via get_all_edges() or .edges
 
         Returns
         -------
-        {relation_type: count}  — empty dict if the adapter exposes no edges
+        {relation_type: count}  â€” empty dict if the adapter exposes no edges
         """
         from collections import Counter
         counts: Counter = Counter()
@@ -563,7 +563,7 @@ class SpeedTalkEngram:
 
         _log.warning(
             "SpeedTalkEngram.count_edge_types: adapter has no get_all_edges() "
-            "or .edges — returning empty frequency map"
+            "or .edges â€” returning empty frequency map"
         )
         return {}
 
@@ -575,7 +575,7 @@ class SpeedTalkEngram:
         """
         Persist the cache (counts + encoder) to a JSON file.
 
-        The prefix index is derived and not stored — it is rebuilt on load.
+        The prefix index is derived and not stored â€” it is rebuilt on load.
 
         Parameters
         ----------
@@ -593,7 +593,7 @@ class SpeedTalkEngram:
         with open(p, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
         _log.info(
-            "SpeedTalkEngram saved: %d patterns → %s", len(data["counts"]), p
+            "SpeedTalkEngram saved: %d patterns â†’ %s", len(data["counts"]), p
         )
 
     @classmethod
@@ -606,7 +606,7 @@ class SpeedTalkEngram:
         """
         p = Path(path)
         if not p.exists():
-            _log.info("SpeedTalkEngram: no file at %s — starting empty", p)
+            _log.info("SpeedTalkEngram: no file at %s â€” starting empty", p)
             return cls()
         with open(p, encoding="utf-8") as f:
             data = json.load(f)
@@ -618,7 +618,7 @@ class SpeedTalkEngram:
             for k in range(1, len(enc) + 1):
                 cache._prefix[enc[:k]] += cnt
         _log.info(
-            "SpeedTalkEngram loaded: %d patterns ← %s", len(cache._counts), p
+            "SpeedTalkEngram loaded: %d patterns â†� %s", len(cache._counts), p
         )
         return cache
 
@@ -641,7 +641,7 @@ class EngramTransferRegistry:
     them into the initial Engram with a configurable count decay so that
     transferred patterns are trusted less than locally observed ones.
 
-    This closes the "every KB starts from zero" gap — CEREBRUM can seed
+    This closes the "every KB starts from zero" gap â€” CEREBRUM can seed
     its Engram cache with structural priors from prior KBs on first launch.
 
     Usage
@@ -739,7 +739,7 @@ class FastBindingEngine:
 
     When a path is both novel (low existing affinity) and high-confidence
     (score > score_threshold), it is bound directly into the Engram with
-    a higher initial count — equivalent to a single salient experience
+    a higher initial count â€” equivalent to a single salient experience
     encoding into episodic memory.
 
     Parameters
@@ -777,7 +777,7 @@ class FastBindingEngine:
 
 
 # ---------------------------------------------------------------------------
-# Path helper — raw relation extraction (no Engram shorthand)
+# Path helper â€” raw relation extraction (no Engram shorthand)
 # ---------------------------------------------------------------------------
 
 def _raw_rel_sequence(path) -> Tuple[str, ...]:
@@ -788,7 +788,7 @@ def _raw_rel_sequence(path) -> Tuple[str, ...]:
     Odd-indexed elements are relation types.
 
     Unlike _path_rel_sequence() in engram_traversal.py, this does NOT
-    apply the Engram shorthand map — SpeedTalkEncoder handles its own encoding.
+    apply the Engram shorthand map â€” SpeedTalkEncoder handles its own encoding.
     """
     nodes = path.nodes
     return tuple(nodes[i] for i in range(1, len(nodes), 2))
@@ -819,7 +819,7 @@ class SpeedTalkEngramTraversal(BeamTraversal):
     Parameters
     ----------
     cache            : SpeedTalkEngram instance (shared across queries)
-    engram_strength  : multiplicative boost ceiling (default 0.3 → max 30% boost)
+    engram_strength  : multiplicative boost ceiling (default 0.3 â†’ max 30% boost)
     All other parameters are forwarded to BeamTraversal.
     """
 

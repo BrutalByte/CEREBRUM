@@ -4,9 +4,9 @@ Ablation study: DSCF vs LPA vs BFS-only for MetaQA (Phase 4).
 This module implements the ablation plan from Section 9.2 of PARALLAX.md.
 Three variants are evaluated on the same MetaQA test questions:
 
-  Variant A — CEREBRUM (DSCF + CSA)          [the full system]
-  Variant B — CEREBRUM (LPA  + CSA)           [swap community detection only]
-  Variant C — BFS baseline (uniform weights)  [no attention, no communities]
+  Variant A â€” CEREBRUM (DSCF + CSA)          [the full system]
+  Variant B â€” CEREBRUM (LPA  + CSA)           [swap community detection only]
+  Variant C â€” BFS baseline (uniform weights)  [no attention, no communities]
 
 All three variants use the same:
   - KB graph (undirected MetaQA)
@@ -31,7 +31,7 @@ import random
 import sys
 import time
 from pathlib import Path
-from typing import Optional, Dict, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -66,14 +66,14 @@ KB_FILE   = DATA_DIR / "kb.txt"
 
 
 # ---------------------------------------------------------------------------
-# BFS CSA engine — uniform attention weights
+# BFS CSA engine â€” uniform attention weights
 # ---------------------------------------------------------------------------
 
 class UniformCSAEngine(CSAEngine):
     """
     CSA engine that returns a constant weight for every edge.
 
-    This makes BeamTraversal equivalent to BFS — no preference is given
+    This makes BeamTraversal equivalent to BFS â€” no preference is given
     to any edge over any other. Used as the 'no-attention' ablation baseline.
 
     Weight = sigmoid(0) = 0.5 for all edges (all coefficients zeroed out).
@@ -86,7 +86,7 @@ class UniformCSAEngine(CSAEngine):
         hop: int,
         **kwargs: Any
     ) -> float:
-        return 0.5   # sigmoid(0) — perfectly neutral
+        return 0.5   # sigmoid(0) â€” perfectly neutral
 
 
 # ---------------------------------------------------------------------------
@@ -162,7 +162,7 @@ def main():
 
     hops = [args.hop] if args.hop else [1, 2, 3]
 
-    print("\n=== CEREBRUM — MetaQA Ablation Study ===\n")
+    print("\n=== CEREBRUM â€” MetaQA Ablation Study ===\n")
     print("Variants:")
     print("  A  CEREBRUM  DSCF + CSA   (full system)")
     print("  B  CEREBRUM  LPA  + CSA   (LPA communities only)")
@@ -197,7 +197,7 @@ def main():
 
         row = {"hop": hop, "n": len(qa_pairs)}
 
-        # Variant A — DSCF + CSA
+        # Variant A â€” DSCF + CSA
         print("\n  [A] DSCF + CSA...")
         graph.build(
             cache_dir           = CACHE_DIR,
@@ -218,7 +218,7 @@ def main():
         print(f"      Hits@1={m_a['hits_1']:.4f}  Hits@10={m_a['hits_10']:.4f}  MRR={m_a['mrr']:.4f}")
         row.update({"dscf_h1": m_a["hits_1"], "dscf_h10": m_a["hits_10"], "dscf_mrr": m_a["mrr"]})
 
-        # Variant B — LPA + CSA
+        # Variant B â€” LPA + CSA
         print("\n  [B] LPA + CSA...")
         print("      Computing LPA communities...")
         parts = lpa_communities(G)
@@ -248,7 +248,7 @@ def main():
         print(f"      Hits@1={m_b['hits_1']:.4f}  Hits@10={m_b['hits_10']:.4f}  MRR={m_b['mrr']:.4f}")
         row.update({"lpa_h1": m_b["hits_1"], "lpa_h10": m_b["hits_10"], "lpa_mrr": m_b["mrr"]})
 
-        # Variant C — BFS
+        # Variant C â€” BFS
         print("\n  [C] BFS (uniform weights)...")
         # Reuse adapter but use UniformCSAEngine
         csa_bfs = UniformCSAEngine(adapter=graph.adapter)

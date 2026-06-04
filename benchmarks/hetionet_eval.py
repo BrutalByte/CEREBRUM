@@ -47,7 +47,7 @@ import sys
 import time
 import urllib.request
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -524,7 +524,7 @@ def main():
         else list(QA_TEMPLATES.keys())
     )
 
-    print("\n=== CEREBRUM — Hetionet Biomedical KG Benchmark ===\n")
+    print("\n=== CEREBRUM â€” Hetionet Biomedical KG Benchmark ===\n")
 
     # ------------------------------------------------------------------
     # Data
@@ -572,7 +572,7 @@ def main():
             engine = SentenceEngine()
             print(f"  Using SentenceEngine ({engine.dim}-dim)")
         except ImportError:
-            print("  sentence-transformers not installed — using RandomEngine")
+            print("  sentence-transformers not installed â€” using RandomEngine")
             engine = RandomEngine(dim=64)
     else:
         engine = RandomEngine(dim=64)
@@ -605,14 +605,14 @@ def main():
 
     # Variant F: raw DSCF (K=5916, purity=0.673) with expanded distance-matrix cap.
     # The BFS runs on the community-level graph (K nodes), so K=5916 takes ~40s
-    # — acceptable for benchmark setup. Bypasses coarsening-induced purity loss.
+    # â€” acceptable for benchmark setup. Bypasses coarsening-induced purity loss.
     purity_raw, _ = compute_type_alignment(node_type_map, cmap_dscf_raw)
     print(f"  Raw DSCF: {len(set(cmap_dscf_raw.values()))} communities  "
           f"purity={purity_raw:.4f}  (will use max_communities=10000)")
 
     # Coarsen DSCF to ~300 so the normal distance-matrix cap (2000) is honoured.
     # Variant A: pure structural coarsening (edge-count only).
-    # Variant E: LPA-guided coarsening — merge small DSCF communities preferring
+    # Variant E: LPA-guided coarsening â€” merge small DSCF communities preferring
     #            targets that share the same LPA community (type-coherent).
     COARSEN_TARGET = 300
     print(f"\nCoarsening DSCF {len(set(cmap_dscf_raw.values()))} -> {COARSEN_TARGET} communities...")
@@ -656,13 +656,13 @@ def main():
             n_questions=args.n_questions, seed=args.seed,
         )
         if not qa_pairs:
-            print("  No QA pairs generated — skipping (metaedge may not be in "
+            print("  No QA pairs generated â€” skipping (metaedge may not be in "
                   "loaded graph subset).")
             print()
             continue
         print(f"  {len(qa_pairs):,} QA pairs generated")
 
-        # Variant A — DSCF coarsened + CSA
+        # Variant A â€” DSCF coarsened + CSA
         print(f"\n  [A] DSCF-coarsened + CSA (purity={purity_dscf:.3f}, bonus={HETIONET_BRIDGE_BONUS})...")
         t_dscf = build_traversal(adapter, G, cmap_dscf, embeddings,
                                  args.beam_width, hop, variant="dscf",
@@ -670,7 +670,7 @@ def main():
         m_a = evaluate_variant("DSCF+CSA", t_dscf, qa_pairs, hop, args.top_k)
         print(f"      Hits@1={m_a['hits_1']:.4f}  Hits@10={m_a['hits_10']:.4f}  MRR={m_a['mrr']:.4f}")
 
-        # Variant B — LPA + CSA
+        # Variant B â€” LPA + CSA
         print(f"\n  [B] LPA + CSA (purity={purity_lpa:.3f}, bonus={HETIONET_BRIDGE_BONUS})...")
         t_lpa = build_traversal(adapter, G, cmap_lpa, embeddings,
                                 args.beam_width, hop, variant="lpa",
@@ -678,14 +678,14 @@ def main():
         m_b = evaluate_variant("LPA+CSA", t_lpa, qa_pairs, hop, args.top_k)
         print(f"      Hits@1={m_b['hits_1']:.4f}  Hits@10={m_b['hits_10']:.4f}  MRR={m_b['mrr']:.4f}")
 
-        # Variant C — BFS
+        # Variant C â€” BFS
         print("\n  [C] BFS (uniform weights)...")
         t_bfs = build_traversal(adapter, G, None, embeddings,
                                 args.beam_width, hop, variant="bfs")
         m_c = evaluate_variant("BFS", t_bfs, qa_pairs, hop, args.top_k)
         print(f"      Hits@1={m_c['hits_1']:.4f}  Hits@10={m_c['hits_10']:.4f}  MRR={m_c['mrr']:.4f}")
 
-        # Variant E — Hybrid (LPA-guided DSCF coarsening) + CSA
+        # Variant E â€” Hybrid (LPA-guided DSCF coarsening) + CSA
         print(f"\n  [E] Hybrid (LPA-guided DSCF) + CSA (purity={purity_hybrid:.3f})...")
         t_hybrid = build_traversal(adapter, G, cmap_hybrid, embeddings,
                                    args.beam_width, hop, variant="dscf",
@@ -693,7 +693,7 @@ def main():
         m_e = evaluate_variant("Hybrid+CSA", t_hybrid, qa_pairs, hop, args.top_k)
         print(f"      Hits@1={m_e['hits_1']:.4f}  Hits@10={m_e['hits_10']:.4f}  MRR={m_e['mrr']:.4f}")
 
-        # Variant F — raw DSCF (no coarsening, max_communities cap raised to 10000)
+        # Variant F â€” raw DSCF (no coarsening, max_communities cap raised to 10000)
         print(f"\n  [F] Raw DSCF (K={len(set(cmap_dscf_raw.values()))}, purity={purity_raw:.3f}, cap=10000)...")
         t_raw = build_traversal(adapter, G, cmap_dscf_raw, embeddings,
                                 args.beam_width, hop, variant="dscf",

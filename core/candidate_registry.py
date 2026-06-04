@@ -1,5 +1,5 @@
 """
-CandidateRegistry — TTL-Aware Candidate Deduplication with Nomination Boost (Phase 73 Batch B).
+CandidateRegistry â€” TTL-Aware Candidate Deduplication with Nomination Boost (Phase 73 Batch B).
 
 Replaces the flat ``_evaluated_pairs: Set[Tuple[str, str]]`` in ResearchAgent with
 a richer structure that:
@@ -23,11 +23,11 @@ Nomination boost formula
 
   nomination_count  |  boost
   ------------------|--------
-        1           |  1.00 ×
-        2           |  1.50 ×
-        4           |  2.00 ×
-        8           |  2.50 ×
-       16+          |  3.00 ×  (capped)
+        1           |  1.00 Ã—
+        2           |  1.50 Ã—
+        4           |  2.00 Ã—
+        8           |  2.50 Ã—
+       16+          |  3.00 Ã—  (capped)
 
 Memory management
 -----------------
@@ -41,7 +41,7 @@ import math
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Set, Tuple
 
 # ---------------------------------------------------------------------------
 # RegistryEntry
@@ -109,7 +109,7 @@ class CandidateRegistry:
         self.max_entries          = max_entries
         self.nomination_boost_cap = nomination_boost_cap
 
-        # key → RegistryEntry; ordered-dict for O(1) LRU eviction
+        # key â†’ RegistryEntry; ordered-dict for O(1) LRU eviction
         self._entries: Dict[Tuple[str, str], RegistryEntry] = {}
         self._lock = threading.Lock()
 
@@ -121,8 +121,8 @@ class CandidateRegistry:
         """
         Upsert a candidate into the registry.
 
-        - First nomination → creates a new ``RegistryEntry``.
-        - Subsequent nominations → increments ``nomination_count`` and updates
+        - First nomination â†’ creates a new ``RegistryEntry``.
+        - Subsequent nominations â†’ increments ``nomination_count`` and updates
           ``last_seen``.
 
         Parameters

@@ -1,5 +1,5 @@
 """
-Bridge Twin Engine — Phase 12: Experience-Dependent Structural Relay Formation.
+Bridge Twin Engine â€” Phase 12: Experience-Dependent Structural Relay Formation.
 
 When a cross-community traversal occurs repeatedly (>= n_min times) and the
 crossing node has high semantic similarity to the destination community centroid
@@ -34,13 +34,13 @@ import asyncio
 import logging
 import json
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from core.security import FederatedAuth
 from core.node_registry import NodeRegistry
 
-# The relation type label for bridge edges — gets w_rel = 1.0 in CSA
+# The relation type label for bridge edges â€” gets w_rel = 1.0 in CSA
 BRIDGE_RELATION = "BRIDGE_TWIN"
 
 
@@ -142,7 +142,7 @@ class BridgeTwinEngine:
         node_id: str,
         source_community: int,
         dest_community: int,
-        adapter,                   # GraphAdapter — typed loosely to avoid circular import
+        adapter,                   # GraphAdapter â€” typed loosely to avoid circular import
     ) -> Optional[str]:
         """
         Record one cross-community traversal.
@@ -159,7 +159,7 @@ class BridgeTwinEngine:
         node_id          : node being traversed (source of the crossing)
         source_community : node's home community
         dest_community   : community being traversed into
-        adapter          : NetworkXAdapter — twin is added here if created
+        adapter          : NetworkXAdapter â€” twin is added here if created
 
         Returns
         -------
@@ -168,7 +168,7 @@ class BridgeTwinEngine:
         key = (node_id, dest_community)
 
         with self._lock:
-            # Bridge already exists — just refresh the timestamp
+            # Bridge already exists â€” just refresh the timestamp
             if key in self._bridge_index:
                 twin_id = self._bridge_index[key]
                 rec = self._bridges[twin_id]
@@ -183,12 +183,12 @@ class BridgeTwinEngine:
             if count < self.n_min:
                 return None
 
-            # Semantic fit check — does the node actually belong in dest?
+            # Semantic fit check â€” does the node actually belong in dest?
             sim = self._similarity_to_community(node_id, dest_community, adapter)
             if sim < self.similarity_threshold:
                 return None
 
-            # All criteria met — materialise the bridge twin
+            # All criteria met â€” materialise the bridge twin
             return self._create_twin(
                 node_id=node_id,
                 source_community=source_community,
@@ -294,7 +294,7 @@ class BridgeTwinEngine:
         intact because crossing frequencies remain meaningful regardless of
         partition changes.
 
-        Bridge twin *nodes* are NOT removed from the graph here — the existing
+        Bridge twin *nodes* are NOT removed from the graph here â€” the existing
         ``prune_unused()`` LTD mechanism handles node-level cleanup. This method
         only invalidates the BridgeRecord bookkeeping.
 
@@ -304,7 +304,7 @@ class BridgeTwinEngine:
 
         Returns
         -------
-        int — number of bridge records pruned as stale
+        int â€” number of bridge records pruned as stale
         """
         with self._lock:
             stale: List[str] = []
@@ -321,7 +321,7 @@ class BridgeTwinEngine:
                 record = self._bridges.pop(twin_id)
                 self._bridge_index.pop((record.original_id, record.destination_community), None)
 
-            # Community partition changed — invalidate reverse index and centroid cache
+            # Community partition changed â€” invalidate reverse index and centroid cache
             self._community_members = None
             self._centroid_cache = {}
 
@@ -421,7 +421,7 @@ class BridgeTwinEngine:
             adapter.community_map = {}
         adapter.community_map[twin_id] = dest_community
 
-        # Bidirectional BRIDGE_TWIN edges — the circuit is now complete
+        # Bidirectional BRIDGE_TWIN edges â€” the circuit is now complete
         bridge_attrs = {"relation": BRIDGE_RELATION, "weight": 1.0, "is_bridge": True}
         adapter._G.add_edge(node_id, twin_id, **bridge_attrs)
         adapter._G.add_edge(twin_id, node_id, **bridge_attrs)

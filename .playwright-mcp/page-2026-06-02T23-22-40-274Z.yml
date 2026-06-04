@@ -1,0 +1,761 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]: CEREBRUM
+        - generic [ref=e6]: v2.71
+      - generic [ref=e7]:
+        - link "Pipeline" [ref=e8] [cursor=pointer]:
+          - /url: "#pipeline"
+        - link "Research" [ref=e9] [cursor=pointer]:
+          - /url: "#research"
+        - link "Benchmarks" [ref=e10] [cursor=pointer]:
+          - /url: "#benchmarks"
+        - link "References" [ref=e11] [cursor=pointer]:
+          - /url: "#references"
+        - link "Docs" [ref=e12] [cursor=pointer]:
+          - /url: https://github.com/BrutalByte/CEREBRUM
+        - link "GitHub" [ref=e13] [cursor=pointer]:
+          - /url: https://github.com/BrutalByte/CEREBRUM
+        - link "Get Started →" [ref=e14] [cursor=pointer]:
+          - /url: "#install"
+  - generic [ref=e15]:
+    - img
+    - generic [ref=e16]:
+      - generic [ref=e17]: Training-Free Knowledge Graph Reasoning
+      - generic [ref=e18]:
+        - generic [ref=e19]: Crystal-box reasoning
+        - generic [ref=e21]: ·
+        - generic [ref=e22]: Zero training
+        - generic [ref=e24]: ·
+        - generic [ref=e25]: Zero hallucinations
+      - paragraph [ref=e27]: Zero hallucinations within the graph. What's not in the data won't appear in the answer.
+      - heading "Every answer. Fully explained. Zero hallucinations." [level=1] [ref=e28]:
+        - text: Every answer.
+        - text: Fully explained.
+        - text: Zero hallucinations.
+      - paragraph [ref=e29]: Built for researchers, engineers, and enterprises who need answers they can verify. CEREBRUM reasons over any knowledge graph through deterministic path traversal. No LLM. No training data. No black box. Every conclusion is a verifiable chain of edges you can inspect, audit, and trust.
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - generic [ref=e32]: 14.2%
+          - generic [ref=e33]: 3-hop H@1
+          - generic [ref=e34]: MetaQA
+        - generic [ref=e36]:
+          - generic [ref=e37]: 20.8%
+          - generic [ref=e38]: 3-hop H@10
+          - generic [ref=e39]: MetaQA
+        - generic [ref=e41]:
+          - generic [ref=e42]: $0.000
+          - generic [ref=e43]: per 1K queries
+          - generic [ref=e44]: vs $5–15 frontier LLM
+        - generic [ref=e46]:
+          - generic [ref=e47]: 0%
+          - generic [ref=e48]: Hallucination risk
+          - generic [ref=e49]: Guaranteed†
+      - generic [ref=e50]:
+        - link "Read the Research →" [ref=e51] [cursor=pointer]:
+          - /url: https://brutalbyte.github.io/CEREBRUM/NOVEL_CONTRIBUTIONS/
+        - link "View on GitHub" [ref=e52] [cursor=pointer]:
+          - /url: https://github.com/BrutalByte/CEREBRUM
+          - img [ref=e53]
+          - text: View on GitHub
+    - img [ref=e56]
+  - paragraph [ref=e59]:
+    - text: Built by one independent researcher. 30+ original algorithms. 2,000+ tests. No team, no grant, no institution.
+    - link "Read more ↓" [ref=e60] [cursor=pointer]:
+      - /url: "#solo"
+  - generic [ref=e63]:
+    - generic [ref=e64]: It doesn't guess. It traces.
+    - generic [ref=e65]: ·
+    - generic [ref=e66]: Every answer is a proof, not a prediction.
+    - generic [ref=e67]: ·
+    - generic [ref=e68]: It doesn't guess. It traces.
+    - generic [ref=e69]: ·
+    - generic [ref=e70]: Every answer is a proof, not a prediction.
+    - generic [ref=e71]: ·
+  - generic [ref=e73]:
+    - generic [ref=e76]:
+      - paragraph [ref=e77]:
+        - text: Large language models hallucinate.
+        - text: CEREBRUM shows its work.
+      - paragraph [ref=e78]: Every response includes the complete edge chain — every hop, every relation, every score. You can verify any answer against the source data in seconds.
+    - generic [ref=e81]:
+      - paragraph [ref=e82]:
+        - text: No labels. No training loop.
+        - text: 56.8% H@1 out of the box.
+      - paragraph [ref=e83]: Zero-config, zero tuning. Supervised systems like UniKGQA reach 99% H@1 on MetaQA — after training on thousands of labeled question-answer pairs from that exact dataset. CEREBRUM reaches 60.4% (tuned) or 56.8% (zero-config) on the same benchmark with no labels, no gradient descent, and no GPU cluster required. The retrieval gap is 88.3% H@10 — within 11 points of UniKGQA's top-1 accuracy, entirely training-free.
+    - generic [ref=e86]:
+      - paragraph [ref=e87]:
+        - text: Knowledge graphs were
+        - text: always the answer.
+        - text: We just made them work.
+      - paragraph [ref=e88]: 30+ original algorithmic contributions. Community detection, Bayesian beam search, ParameterInitializer, SDRB, H1SE, STRB, GraphProfiler — all working together, on any knowledge base, out of the box.
+  - generic [ref=e90]:
+    - generic [ref=e91]:
+      - generic [ref=e92]: The Problem
+      - heading "The problem with AI answers" [level=2] [ref=e93]
+    - generic [ref=e94]:
+      - generic [ref=e95]:
+        - generic [ref=e96]: ⚠️
+        - heading "Language models hallucinate" [level=3] [ref=e97]
+        - paragraph [ref=e98]: Large language models generate answers by predicting likely token sequences. They can produce confident, fluent, completely wrong answers with no indication of error — and no way to verify the source.
+        - paragraph [ref=e99]:
+          - text: "Cost: $5–15 per 1,000 queries"
+          - link "[8]" [ref=e100] [cursor=pointer]:
+            - /url: https://arxiv.org/abs/2303.08774
+          - text: ". Hallucination rate: 5–20%."
+        - generic [ref=e101]:
+          - generic [ref=e102]: Black-box
+          - generic [ref=e103]: Cannot audit
+          - generic [ref=e104]: Hallucination risk
+      - generic [ref=e105]:
+        - generic [ref=e106]: 🔒
+        - heading "Trained methods need your data" [level=3] [ref=e107]
+        - paragraph [ref=e108]:
+          - link "EmbedKGQA" [ref=e109] [cursor=pointer]:
+            - /url: https://aclanthology.org/2020.acl-main.412
+          - text: ","
+          - link "NSM" [ref=e110] [cursor=pointer]:
+            - /url: https://doi.org/10.1145/3437963.3441753
+          - text: ","
+          - link "UniKGQA" [ref=e111] [cursor=pointer]:
+            - /url: https://openreview.net/forum?id=Z63RvyAZ2Vh
+          - text: achieve near-perfect scores on
+          - link "MetaQA" [ref=e112] [cursor=pointer]:
+            - /url: https://arxiv.org/abs/1709.04071
+          - text: — but only after training on thousands of labeled question-answer pairs from that specific dataset. Load a new knowledge graph and you start over.
+        - paragraph [ref=e113]: No transfer. No transparency. No path trace.
+        - generic [ref=e114]:
+          - generic [ref=e115]: Black-box
+          - generic [ref=e116]: Requires retraining
+          - generic [ref=e117]: Not transferable
+      - generic [ref=e118]:
+        - generic [ref=e119]: 🔷
+        - heading "CEREBRUM traces every step" [level=3] [ref=e120]
+        - paragraph [ref=e121]: Every answer is produced by walking explicit edges in your graph. The full traversal path — every hop, every relation, every score — is returned with the result. If the answer is wrong, you can see exactly why.
+        - paragraph [ref=e122]: Zero training. Zero hallucinations. Works on any knowledge graph.
+        - generic [ref=e123]:
+          - generic [ref=e124]: Crystal-box
+          - generic [ref=e125]: Fully auditable
+          - generic [ref=e126]: Zero training
+  - generic [ref=e128]:
+    - generic [ref=e129]:
+      - generic [ref=e130]: How It Works
+      - heading "How CEREBRUM reasons" [level=2] [ref=e131]
+      - paragraph [ref=e132]: Three steps. No training. Full traceability.
+    - generic [ref=e133]:
+      - img [ref=e136]
+      - img [ref=e140]
+      - generic [ref=e142]:
+        - generic [ref=e143]:
+          - generic [ref=e145]: "1"
+          - generic [ref=e146]: Load
+        - heading "Load your graph" [level=3] [ref=e147]
+        - generic [ref=e148]:
+          - text: "# Any CSV with head, relation, tail"
+          - text: python -m cli.cerebrum serve \
+          - text: "--csv my_graph.csv \\"
+          - text: "--port 8200"
+        - paragraph [ref=e149]: CEREBRUM profiles the graph automatically and configures itself. No schema definition required.
+      - generic [ref=e150]:
+        - generic [ref=e151]:
+          - generic [ref=e153]: "2"
+          - generic [ref=e154]: Query
+        - heading "Ask a question" [level=3] [ref=e155]
+        - generic [ref=e156]:
+          - text: curl -X POST localhost:8200/v1/query \
+          - text: "-H \"Content-Type: application/json\" \\"
+          - text: "-d '{\"query\": \"What treats Diabetes?\", \"max_hop\": 3}'"
+        - paragraph [ref=e157]: Beam search traverses the graph, scoring each candidate path with the 10-parameter CSA formula.
+      - generic [ref=e158]:
+        - generic [ref=e159]:
+          - generic [ref=e161]: "3"
+          - generic [ref=e162]: Trace
+        - heading "Inspect the trace" [level=3] [ref=e163]
+        - generic [ref=e164]:
+          - text: "{"
+          - text: "\"answer\": \"Metformin\","
+          - text: "\"score\": 0.91,"
+          - text: "\"path\": ["
+          - text: "{\"entity\": \"Diabetes\","
+          - text: "\"relation\": \"treated_by\"},"
+          - text: "{\"entity\": \"Metformin\"}"
+          - text: "]"
+          - text: "}"
+        - paragraph [ref=e165]: Every answer includes the complete edge-chain. Auditable. Reproducible. Provable.
+  - generic [ref=e167]:
+    - generic [ref=e168]:
+      - generic [ref=e169]: From Data to Answer
+      - heading "The full CEREBRUM pipeline" [level=2] [ref=e170]
+      - paragraph [ref=e171]: Every benchmark number you see — 60.4%, 83.2%, 66.8% — is the result of this pipeline running end-to-end. No training. No LLM. Just graph math.
+    - generic [ref=e172]:
+      - img [ref=e173]
+      - paragraph [ref=e176]: All benchmark numbers are post-ingestion. The ingestion pipeline — community detection, embedding, GraphProfiler, ParameterInitializer — is what enables high accuracy. BFS without ingestion achieves ~5% H@1. With the full pipeline, zero-config reaches 83.2% H@1 on 1-hop and 56.8% on 3-hop. Running the CMA-ES tuner after ingestion pushes 3-hop to 60.4% (tuned random) or 66.8% (tuned sentence embeddings).
+    - generic [ref=e177]:
+      - generic [ref=e179]:
+        - generic [ref=e180]:
+          - generic [ref=e181]:
+            - generic [ref=e182]: "1"
+            - generic [ref=e183]: Ingest
+          - heading "Load any knowledge base" [level=3] [ref=e184]
+          - paragraph [ref=e185]:
+            - text: Point CEREBRUM at any CSV with
+            - code [ref=e186]: head, relation, tail
+            - text: columns. No schema. No ontology. No data preprocessing required.
+        - generic [ref=e188]:
+          - text: "# CSV format — any knowledge base"
+          - text: head,relation,tail
+          - text: Diabetes,treated_by,Metformin
+          - text: Metformin,inhibits,mTOR
+          - text: mTOR,regulates,insulin_signaling
+          - text: ...
+          - text: "# Start the server"
+          - text: python -m cli.cerebrum serve \
+          - text: "--csv knowledge_base.csv \\"
+          - text: "--port 8200"
+      - generic [ref=e189]:
+        - generic [ref=e191]:
+          - text: "# Automatic during server startup"
+          - text: "GraphProfiler: mean_degree=5.77, cv=5.68"
+          - text: "TSC: 312 communities, Q=0.88"
+          - text: "Embeddings: sentence-transformers loaded"
+          - text: "ParameterInitializer: regime=hub_homogeneous"
+          - text: → boost_scale=15.45, trb_c=13.52
+          - text: → branch_bonus=0.39, vote_base=0.68
+          - text: "# All 9 parameters derived from graph stats"
+          - text: Server ready at localhost:8200 ✓
+        - generic [ref=e192]:
+          - generic [ref=e193]:
+            - generic [ref=e194]: "2"
+            - generic [ref=e195]: Build
+          - heading "Graph profiling & self-calibration" [level=3] [ref=e196]
+          - paragraph [ref=e197]:
+            - text: CEREBRUM analyzes the graph topology with
+            - strong [ref=e198]: GraphProfiler
+            - text: ", runs"
+            - strong [ref=e199]: TSC community detection
+            - text: (Q=0.88 vs 0.48 for Leiden), loads optional sentence-transformer embeddings, then uses
+            - strong [ref=e200]: ParameterInitializer
+            - text: to derive all 9 scoring parameters analytically from the graph's own statistics. No tuning required.
+      - generic [ref=e201]:
+        - generic [ref=e202]:
+          - generic [ref=e203]:
+            - generic [ref=e204]: "3"
+            - generic [ref=e205]: Query
+          - heading "Submit any natural-language query" [level=3] [ref=e206]
+          - paragraph [ref=e207]: Send a REST call with the question and hop depth. Bayesian beam search traverses the graph, scoring every candidate path with the 10-parameter CSA formula — semantic similarity, community topology, structural centrality.
+        - generic [ref=e209]:
+          - text: curl -X POST localhost:8200/v1/query \
+          - text: "-H \"Content-Type: application/json\" \\"
+          - text: "-d '{\"query\": \"What drug treats Diabetes via mTOR?\", \"max_hop\": 3, \"top_k\": 10}'"
+          - text: "# Beam search: 3 hops × 20 candidates"
+          - text: "# No LLM. No embeddings needed at query time."
+      - generic [ref=e210]:
+        - generic [ref=e212]:
+          - text: "{"
+          - text: "\"answer\": \"Metformin\","
+          - text: "\"score\": 0.913,"
+          - text: "\"h10_candidates\": [\"Metformin\", \"Rapamycin\", ...],"
+          - text: "\"path\": ["
+          - text: "{ \"entity\": \"Diabetes\", \"rel\": \"treated_by\" },"
+          - text: "{ \"entity\": \"Metformin\", \"rel\": \"inhibits\" },"
+          - text: "{ \"entity\": \"mTOR\", \"rel\": \"regulates\" },"
+          - text: "{ \"entity\": \"insulin_signaling\" }"
+          - text: "],"
+          - text: "\"hop_count\": 3,"
+          - text: "\"community_id\": 47,"
+          - text: "\"traversal_ms\": 12.3"
+          - text: "}"
+        - generic [ref=e213]:
+          - generic [ref=e214]:
+            - generic [ref=e215]: "4"
+            - generic [ref=e216]: Answer
+          - heading "Full path trace — zero hallucinations" [level=3] [ref=e217]
+          - paragraph [ref=e218]:
+            - text: Every response includes the complete edge chain, scores, community assignment, and traversal time. The path is
+            - strong [ref=e219]: verifiable against the source KB
+            - text: — every hop is a real edge that exists in your data. If the edge isn't there, CEREBRUM won't claim it is.
+      - generic [ref=e220]:
+        - generic [ref=e221]:
+          - generic [ref=e222]:
+            - generic [ref=e223]: "5"
+            - generic [ref=e224]: Tune (optional)
+          - heading "CMA-ES tuner for maximum accuracy" [level=3] [ref=e225]
+          - paragraph [ref=e226]:
+            - text: The ParameterInitializer zero-config baseline already achieves
+            - strong [ref=e227]: 56.8% H@1 on 3-hop
+            - text: . Running the built-in CMA-ES tuner on your specific data pushes further —
+            - strong [ref=e228]: 60.4%
+            - text: with random embeddings,
+            - strong [ref=e229]: 66.8%
+            - text: with sentence-transformers. One command. Fully automated.
+        - generic [ref=e231]:
+          - text: "# Optional: run the tuner for maximum accuracy"
+          - text: python benchmarks/metaqa_eval.py \
+          - text: "--tune \\"
+          - text: "--embeddings sentence \\"
+          - text: "--trials 140 \\"
+          - text: "--workers 8"
+          - text: "# Zero-config: 56.8% H@1 (3-hop, no tuning)"
+          - text: "# Tuned random: 60.4% H@1 (CMA-ES, Phase 204)"
+          - text: "# Tuned sentence: 66.8% H@1 (CMA-ES, Phase 213)"
+  - generic [ref=e233]:
+    - generic [ref=e234]:
+      - generic [ref=e235]: Benchmarks
+      - heading "Validated on standard benchmarks" [level=2] [ref=e236]
+      - paragraph [ref=e237]: Training-free. Zero labeled data. Zero hardcoded relation names.
+    - generic [ref=e238]:
+      - generic [ref=e239]:
+        - heading "MetaQA — 3-hop" [level=3] [ref=e240]
+        - generic [ref=e241]:
+          - generic [ref=e242]: 43,234 entities
+          - generic [ref=e243]: ·
+          - generic [ref=e244]: 124,680 edges
+          - generic [ref=e245]: ·
+          - generic [ref=e246]: 14,274 test questions
+      - paragraph [ref=e247]: "⚠ † Black-box model: no auditable reasoning path; can produce confident wrong answers."
+      - table [ref=e249]:
+        - rowgroup [ref=e250]:
+          - row "System 3-hop H@1 3-hop H@10 Training required" [ref=e251]:
+            - columnheader "System" [ref=e252]
+            - columnheader "3-hop H@1" [ref=e253]
+            - columnheader "3-hop H@10" [ref=e254]
+            - columnheader "Training required" [ref=e255]
+        - rowgroup [ref=e256]:
+          - row "CEREBRUM v2.71 (full pipeline) 60.4% 88.3% None" [ref=e257]:
+            - cell "CEREBRUM v2.71 (full pipeline)" [ref=e258]
+            - cell "60.4%" [ref=e259]
+            - cell "88.3%" [ref=e260]
+            - cell "None" [ref=e261]
+          - row "CEREBRUM (search only) 12.5% 50.3% None" [ref=e262]:
+            - cell "CEREBRUM (search only)" [ref=e263]
+            - cell "12.5%" [ref=e264]
+            - cell "50.3%" [ref=e265]
+            - cell "None" [ref=e266]
+          - row "⚠ UniKGQA (ICLR 2023) † 99.1% — Yes — labeled QA pairs" [ref=e267]:
+            - cell "⚠ UniKGQA (ICLR 2023) †" [ref=e268]:
+              - text: ⚠
+              - link "UniKGQA" [ref=e269] [cursor=pointer]:
+                - /url: https://openreview.net/forum?id=Z63RvyAZ2Vh
+              - text: (ICLR 2023)
+              - superscript [ref=e270]: †
+            - cell "99.1%" [ref=e271]
+            - cell "—" [ref=e272]
+            - cell "Yes — labeled QA pairs" [ref=e273]
+          - row "⚠ EmbedKGQA (ACL 2020) † ~94% — Yes — labeled QA pairs" [ref=e274]:
+            - cell "⚠ EmbedKGQA (ACL 2020) †" [ref=e275]:
+              - text: ⚠
+              - link "EmbedKGQA" [ref=e276] [cursor=pointer]:
+                - /url: https://aclanthology.org/2020.acl-main.412
+              - text: (ACL 2020)
+              - superscript [ref=e277]: †
+            - cell "~94%" [ref=e278]
+            - cell "—" [ref=e279]
+            - cell "Yes — labeled QA pairs" [ref=e280]
+          - row "⚠ MINERVA (Das et al., 2018) † — 45.6% Yes — RL training" [ref=e281]:
+            - cell "⚠ MINERVA (Das et al., 2018) †" [ref=e282]:
+              - text: ⚠
+              - link "MINERVA" [ref=e283] [cursor=pointer]:
+                - /url: https://openreview.net/forum?id=Syg-YfWCW
+              - text: (Das et al., 2018)
+              - superscript [ref=e284]: †
+            - cell "—" [ref=e285]
+            - cell "45.6%" [ref=e286]
+            - cell "Yes — RL training" [ref=e287]
+      - paragraph [ref=e288]: The correct answer is in the top 10 candidates 88.3% of the time — the gap is ranking, not retrieval.
+      - paragraph [ref=e290]:
+        - text: The gap to supervised H@1 (99% vs 60.4%) is a ranking challenge, not a retrieval failure. CEREBRUM finds the correct answer in its top 10 candidates
+        - strong [ref=e291]: 88.3%
+        - text: of the time — matching supervised H@1 performance on recall while requiring
+        - strong [ref=e292]: zero training data
+        - text: .
+    - generic [ref=e293]:
+      - heading "What the metrics mean" [level=3] [ref=e294]
+      - table [ref=e296]:
+        - rowgroup [ref=e297]:
+          - row "Metric What it means CEREBRUM" [ref=e298]:
+            - columnheader "Metric" [ref=e299]
+            - columnheader "What it means" [ref=e300]
+            - columnheader "CEREBRUM" [ref=e301]
+        - rowgroup [ref=e302]:
+          - 'row "H@1 Correct answer ranked #1 60.4% on 3-hop" [ref=e303]':
+            - cell "H@1" [ref=e304]
+            - 'cell "Correct answer ranked #1" [ref=e305]'
+            - cell "60.4% on 3-hop" [ref=e306]
+          - row "H@10 Correct answer in top 10 88.3% on 3-hop" [ref=e307]:
+            - cell "H@10" [ref=e308]
+            - cell "Correct answer in top 10" [ref=e309]
+            - cell "88.3% on 3-hop" [ref=e310]
+          - row "MRR Average rank of correct answer 0.693" [ref=e311]:
+            - cell "MRR" [ref=e312]
+            - cell "Average rank of correct answer" [ref=e313]
+            - cell "0.693" [ref=e314]
+          - row "\"3-hop\" Question requires 3 reasoning steps Hardest standard test" [ref=e315]:
+            - cell "\"3-hop\"" [ref=e316]
+            - cell "Question requires 3 reasoning steps" [ref=e317]
+            - cell "Hardest standard test" [ref=e318]
+  - generic [ref=e320]:
+    - generic [ref=e321]:
+      - generic [ref=e322]: Cost
+      - heading "1,000× cheaper than frontier LLMs" [level=2] [ref=e323]
+    - generic [ref=e324]:
+      - generic [ref=e325]:
+        - generic [ref=e327]:
+          - generic [ref=e328]:
+            - generic [ref=e329]: CEREBRUM
+            - generic [ref=e330]: 0% hallucination†
+          - generic [ref=e331]: $0.001
+        - generic [ref=e335]:
+          - generic [ref=e336]:
+            - generic [ref=e337]: LLM (small)
+            - generic [ref=e338]: 8–18% hallucination
+          - generic [ref=e339]: $0.15–0.60
+        - generic [ref=e343]:
+          - generic [ref=e344]:
+            - generic [ref=e345]: RAG + LLM
+            - generic [ref=e346]: 10–20% hallucination†
+          - generic [ref=e347]: $1–20
+        - generic [ref=e351]:
+          - generic [ref=e352]:
+            - generic [ref=e353]: LLM (frontier)
+            - generic [ref=e354]: 5–15% hallucination
+          - generic [ref=e355]: $5–15
+        - paragraph [ref=e358]: Cost per 1,000 queries (approximate)
+      - generic [ref=e359]:
+        - paragraph [ref=e360]:
+          - text: CEREBRUM runs on your own hardware — a consumer GPU (RTX 3080 or better) handles typical workloads. The $0.001/1K figure is the
+          - emphasis [ref=e361]: compute cost
+          - text: "of running graph traversal locally, not an API price. At 100,000 queries/month, the amortized hardware cost breaks even against frontier LLM API pricing in under 3 months. After that: effectively free."
+        - paragraph [ref=e362]: Every answer includes a full hop-by-hop reasoning trace — the exact path through the graph that produced the result. This trace is auditable, exportable, and reproducible. LLM-based systems offer none of this.
+  - generic [ref=e364]:
+    - generic [ref=e365]:
+      - generic [ref=e366]: Research
+      - heading "30+ original contributions" [level=2] [ref=e367]
+      - paragraph [ref=e368]:
+        - text: Each contribution has a documented novelty statement and prior-art analysis. Six headline algorithms are featured below — the full catalog is in the
+        - link "IP documentation" [ref=e369] [cursor=pointer]:
+          - /url: https://brutalbyte.github.io/CEREBRUM/NOVEL_CONTRIBUTIONS/
+        - text: .
+    - generic [ref=e370]:
+      - generic [ref=e371]:
+        - generic [ref=e372]:
+          - heading "Community-Structured Attention (CSA)" [level=3] [ref=e373]
+          - generic [ref=e374]: CORTEX
+        - paragraph [ref=e375]: 10-parameter scoring formula using graph community topology as discrete attention heads — the structural analogue of Transformer attention, requiring zero training. First attention formula to include global community co-membership as a term.
+      - generic [ref=e376]:
+        - generic [ref=e377]:
+          - heading "Dual-Signal Community Fusion (DSCF)" [level=3] [ref=e378]
+          - generic [ref=e379]: CORTEX
+        - paragraph [ref=e380]: First community detection algorithm that applies all structural signals to every node simultaneously — not sequentially or on disjoint subsets. Produces communities with richer multi-signal character than any prior method.
+      - generic [ref=e381]:
+        - generic [ref=e382]:
+          - heading "Schema-Derived Relation Boost (SDRB)" [level=3] [ref=e383]
+          - generic [ref=e384]: CORTEX
+        - paragraph [ref=e385]:
+          - text: Derives per-relation scoring weights analytically from the graph's own triple statistics. Eliminates KB-specific tuning entirely. fANOVA confirmed
+          - strong [ref=e386]: branch_bonus
+          - text: as the dominant scoring signal (46.2% variance).
+        - code [ref=e387]: boost(r) = γ × fan_out(r)^β
+      - generic [ref=e388]:
+        - generic [ref=e389]:
+          - heading "ParameterInitializer (Zero-Config)" [level=3] [ref=e390]
+          - generic [ref=e391]: CORTEX
+        - paragraph [ref=e392]: "Maps all 9 scoring hyperparameters to measurable graph statistics via IDF theory, Bayesian evidence combination, and Newman-Girvan modularity. A 2D calibration table (regime × embedding method) covers any knowledge base out-of-the-box. Validated: 56.8% H@1 3-hop with zero tuning."
+      - generic [ref=e393]:
+        - generic [ref=e394]:
+          - heading "Experience-Dependent Graph Plasticity" [level=3] [ref=e395]
+          - generic [ref=e396]: REM Engine
+        - paragraph [ref=e397]: Relay nodes form automatically on frequently-traversed inter-community paths, mimicking synaptic long-term potentiation. First KG system where the graph itself strengthens the paths that work — no external agent required.
+      - generic [ref=e398]:
+        - generic [ref=e399]:
+          - heading "Training-Free Abductive Reasoning" [level=3] [ref=e400]
+          - generic [ref=e401]: HypothesisEngine
+        - paragraph [ref=e402]: Given an effect, infer the most plausible cause via multi-path reverse traversal with Noisy-OR path fusion — entirely without training data. Prior abductive KG work requires trained neural models; CEREBRUM uses graph structure alone.
+    - generic [ref=e404]:
+      - heading "All 30+ contributions" [level=3] [ref=e405]
+      - generic [ref=e406]:
+        - link "Full IP documentation" [ref=e407] [cursor=pointer]:
+          - /url: https://brutalbyte.github.io/CEREBRUM/NOVEL_CONTRIBUTIONS/
+          - text: Full IP documentation
+          - img [ref=e408]
+        - button "Show all" [ref=e410] [cursor=pointer]:
+          - generic [ref=e411]: Show all
+          - img [ref=e412]
+    - heading "Papers" [level=3] [ref=e414]
+    - generic [ref=e415]:
+      - generic [ref=e416]:
+        - generic [ref=e417]:
+          - img [ref=e418]
+          - generic [ref=e420]: Technical Report
+        - 'heading "CEREBRUM v2.71: Complete Technical Specification" [level=4] [ref=e421]'
+        - generic [ref=e422]:
+          - generic [ref=e423]: arXiv
+          - generic [ref=e424]: In preparation
+      - generic [ref=e425]:
+        - generic [ref=e426]:
+          - img [ref=e427]
+          - generic [ref=e429]: Flagship Paper
+        - 'heading "CEREBRUM: Training-Free KG Reasoning via Community-Structured Graph Attention" [level=4] [ref=e430]'
+        - generic [ref=e431]:
+          - generic [ref=e432]: arXiv
+          - generic [ref=e433]: In preparation
+      - generic [ref=e434]:
+        - generic [ref=e435]:
+          - img [ref=e436]
+          - generic [ref=e438]: SDRB + ParameterInitializer
+        - heading "Schema-Derived Relation Boost and Principled Zero-Config Hyperparameter Initialization" [level=4] [ref=e439]
+        - generic [ref=e440]:
+          - generic [ref=e441]: arXiv
+          - generic [ref=e442]: In preparation
+  - generic [ref=e444]:
+    - generic [ref=e445]: Solo Project
+    - heading "Built by one person." [level=2] [ref=e446]
+    - paragraph [ref=e447]: CEREBRUM is the work of a single independent researcher — 30+ original algorithms, 2,000+ tests, and a fully documented research roadmap with no team, no grant, and no institution behind it.
+    - paragraph [ref=e448]: Claude (Anthropic) was a pivotal tool in its creation. The ideas, architecture, and research decisions are entirely human-originated.
+  - generic [ref=e450]:
+    - generic [ref=e451]:
+      - generic [ref=e452]: Quick Start
+      - heading "Get started in 5 minutes" [level=2] [ref=e453]
+    - generic [ref=e454]:
+      - generic [ref=e455]:
+        - heading "Install" [level=3] [ref=e456]
+        - generic [ref=e457]:
+          - text: "# Clone the repo and install from source"
+          - text: git clone https://github.com/BrutalByte/CEREBRUM.git
+          - text: cd CEREBRUM
+          - text: "# Core engine with API + embeddings"
+          - text: pip install -e ".[api,embeddings]"
+          - text: "# PyPI package coming soon"
+        - heading "Start the server" [level=3] [ref=e458]
+        - generic [ref=e459]:
+          - text: python -m cli.cerebrum serve \
+          - text: "--csv my_graph.csv \\"
+          - text: "--port 8200"
+      - generic [ref=e460]:
+        - heading "First query" [level=3] [ref=e461]
+        - generic [ref=e462]:
+          - text: curl -X POST http://localhost:8200/v1/query \
+          - text: "-H \"Content-Type: application/json\" \\"
+          - text: "-d '{\"query\": \"What compound treats Diabetes?\", \"max_hop\": 3}'"
+        - heading "Response" [level=3] [ref=e463]
+        - generic [ref=e464]:
+          - text: "{"
+          - text: "\"answer_entity\": \"Metformin\","
+          - text: "\"score\": 0.91,"
+          - text: "\"path\": ["
+          - text: "{\"entity\": \"Diabetes\","
+          - text: "\"relation\": \"treated_by\"},"
+          - text: "{\"entity\": \"Metformin\","
+          - text: "\"relation\": null}"
+          - text: "]"
+          - text: "}"
+    - generic [ref=e465]:
+      - link "📖 Full Documentation API reference, guides, examples" [ref=e466] [cursor=pointer]:
+        - /url: https://github.com/BrutalByte/CEREBRUM
+        - generic [ref=e467]: 📖
+        - generic [ref=e468]:
+          - generic [ref=e469]: Full Documentation
+          - generic [ref=e470]: API reference, guides, examples
+      - link "⚡ Quickstart Guide Up and running in 5 minutes" [ref=e471] [cursor=pointer]:
+        - /url: https://github.com/BrutalByte/CEREBRUM
+        - generic [ref=e472]: ⚡
+        - generic [ref=e473]:
+          - generic [ref=e474]: Quickstart Guide
+          - generic [ref=e475]: Up and running in 5 minutes
+      - link "💬 GitHub Discussions Ask questions, share ideas" [ref=e476] [cursor=pointer]:
+        - /url: https://github.com/BrutalByte/CEREBRUM/discussions
+        - generic [ref=e477]: 💬
+        - generic [ref=e478]:
+          - generic [ref=e479]: GitHub Discussions
+          - generic [ref=e480]: Ask questions, share ideas
+  - generic [ref=e482]:
+    - generic [ref=e483]:
+      - generic [ref=e484]: References
+      - heading "Works Cited" [level=2] [ref=e485]
+      - blockquote [ref=e486]:
+        - paragraph [ref=e487]: "\"If I have seen further, it is by standing on the shoulders of giants.\""
+        - generic [ref=e488]: — Isaac Newton, letter to Robert Hooke, 1675
+    - list [ref=e489]:
+      - listitem [ref=e490]:
+        - generic [ref=e491]: "[1]"
+        - generic [ref=e492]:
+          - text: Bordes, A., Usunier, N., Garcia-Duran, A., Weston, J., & Yakhnenko, O. (2013). Translating embeddings for modeling multi-relational data. In
+          - emphasis [ref=e493]: Advances in Neural Information Processing Systems 26
+          - text: (pp. 2787–2795). Curran Associates.
+          - link "https://proceedings.neurips.cc/paper/2013/hash/1cecc7a77928ca8133fa24680a88d2f9-Abstract.html" [ref=e494] [cursor=pointer]:
+            - /url: https://proceedings.neurips.cc/paper/2013/hash/1cecc7a77928ca8133fa24680a88d2f9-Abstract.html
+      - listitem [ref=e495]:
+        - generic [ref=e496]: "[2]"
+        - generic [ref=e497]:
+          - text: "Das, R., Dhuliawala, S., Zaheer, M., Vilnis, L., Durugkar, I., Krishnamurthy, A., Smola, A., & McCallum, A. (2018). Go for a walk and arrive at the answer: Reasoning over paths in knowledge bases using reinforcement learning. In"
+          - emphasis [ref=e498]: Proceedings of the 6th International Conference on Learning Representations (ICLR 2018)
+          - text: . OpenReview.
+          - link "https://openreview.net/forum?id=Syg-YfWCW" [ref=e499] [cursor=pointer]:
+            - /url: https://openreview.net/forum?id=Syg-YfWCW
+      - listitem [ref=e500]:
+        - generic [ref=e501]: "[3]"
+        - generic [ref=e502]:
+          - text: He, G., Lan, Y., Jiang, J., Zhao, W. X., & Wen, J. R. (2021). Improving multi-hop knowledge base question answering by learning intermediate supervision signals. In
+          - emphasis [ref=e503]: Proceedings of the 14th ACM International Conference on Web Search and Data Mining
+          - text: (pp. 553–561). ACM.
+          - link "https://doi.org/10.1145/3437963.3441753" [ref=e504] [cursor=pointer]:
+            - /url: https://doi.org/10.1145/3437963.3441753
+      - listitem [ref=e505]:
+        - generic [ref=e506]: "[4]"
+        - generic [ref=e507]:
+          - text: Himmelstein, D. S., Lizee, A., Hessler, C., Brueggeman, L., Chen, S. L., Hadley, D., Green, A., Khankhanian, P., & Baranzini, S. E. (2017). Systematic integration of biomedical knowledge prioritizes drugs for repurposing.
+          - emphasis [ref=e508]: eLife, 6
+          - text: ", e26726."
+          - link "https://doi.org/10.7554/eLife.26726" [ref=e509] [cursor=pointer]:
+            - /url: https://doi.org/10.7554/eLife.26726
+      - listitem [ref=e510]:
+        - generic [ref=e511]: "[5]"
+        - generic [ref=e512]:
+          - text: Hutter, F., Hoos, H., & Leyton-Brown, K. (2014). An efficient approach for assessing hyperparameter importance. In
+          - emphasis [ref=e513]: Proceedings of the 31st International Conference on Machine Learning (ICML 2014)
+          - text: (Vol. 32, pp. 754–762). PMLR.
+          - link "https://proceedings.mlr.press/v32/hutter14.html" [ref=e514] [cursor=pointer]:
+            - /url: https://proceedings.mlr.press/v32/hutter14.html
+      - listitem [ref=e515]:
+        - generic [ref=e516]: "[6]"
+        - generic [ref=e517]:
+          - text: "Jiang, J., Zhou, K., Dong, Z., Ye, K., Zhao, W. X., & Wen, J. R. (2023). UniKGQA: Unified retrieval and reasoning for solving multi-hop question answering over knowledge graph. In"
+          - emphasis [ref=e518]: Proceedings of the 11th International Conference on Learning Representations (ICLR 2023)
+          - text: . OpenReview.
+          - link "https://openreview.net/forum?id=Z63RvyAZ2Vh" [ref=e519] [cursor=pointer]:
+            - /url: https://openreview.net/forum?id=Z63RvyAZ2Vh
+      - listitem [ref=e520]:
+        - generic [ref=e521]: "[7]"
+        - generic [ref=e522]:
+          - text: Newman, M. E. J., & Girvan, M. (2004). Finding and evaluating community structure in networks.
+          - emphasis [ref=e523]: Physical Review E, 69
+          - text: (2), 026113.
+          - link "https://doi.org/10.1103/PhysRevE.69.026113" [ref=e524] [cursor=pointer]:
+            - /url: https://doi.org/10.1103/PhysRevE.69.026113
+      - listitem [ref=e525]:
+        - generic [ref=e526]: "[8]"
+        - generic [ref=e527]:
+          - text: OpenAI. (2023).
+          - emphasis [ref=e528]: GPT-4 technical report
+          - text: . arXiv.
+          - link "https://arxiv.org/abs/2303.08774" [ref=e529] [cursor=pointer]:
+            - /url: https://arxiv.org/abs/2303.08774
+      - listitem [ref=e530]:
+        - generic [ref=e531]: "[9]"
+        - generic [ref=e532]:
+          - text: Saxena, A., Tripathi, A., & Talukdar, P. (2020). Improving multi-hop question answering over knowledge graphs using knowledge base embeddings. In
+          - emphasis [ref=e533]: Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics
+          - text: (pp. 4498–4507). ACL.
+          - link "https://aclanthology.org/2020.acl-main.412" [ref=e534] [cursor=pointer]:
+            - /url: https://aclanthology.org/2020.acl-main.412
+      - listitem [ref=e535]:
+        - generic [ref=e536]: "[10]"
+        - generic [ref=e537]:
+          - text: Sun, H., Dhingra, B., Zaheer, M., Mazaitis, K., Salakhutdinov, R., & Cohen, W. W. (2018). Open domain question answering using early fusion of knowledge bases and text. In
+          - emphasis [ref=e538]: Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing
+          - text: (pp. 4231–4242). ACL.
+          - link "https://aclanthology.org/D18-1455" [ref=e539] [cursor=pointer]:
+            - /url: https://aclanthology.org/D18-1455
+      - listitem [ref=e540]:
+        - generic [ref=e541]: "[11]"
+        - generic [ref=e542]:
+          - text: "Sun, Z., Deng, Z. H., Nie, J. Y., & Tang, J. (2019). RotatE: Knowledge graph embedding by relational rotation in complex space. In"
+          - emphasis [ref=e543]: Proceedings of the 7th International Conference on Learning Representations (ICLR 2019)
+          - text: . OpenReview.
+          - link "https://openreview.net/forum?id=HkgEQnRqYQ" [ref=e544] [cursor=pointer]:
+            - /url: https://openreview.net/forum?id=HkgEQnRqYQ
+      - listitem [ref=e545]:
+        - generic [ref=e546]: "[12]"
+        - generic [ref=e547]:
+          - text: "Traag, V. A., Waltman, L., & van Eck, N. J. (2019). From Louvain to Leiden: Guaranteeing well-connected communities."
+          - emphasis [ref=e548]: Scientific Reports, 9
+          - text: ", 5233."
+          - link "https://doi.org/10.1038/s41598-019-41695-z" [ref=e549] [cursor=pointer]:
+            - /url: https://doi.org/10.1038/s41598-019-41695-z
+      - listitem [ref=e550]:
+        - generic [ref=e551]: "[13]"
+        - generic [ref=e552]:
+          - text: "Xiong, W., Hoang, T., & Wang, W. Y. (2017). DeepPath: A reinforcement learning method for knowledge graph reasoning. In"
+          - emphasis [ref=e553]: Proceedings of the 2017 Conference on Empirical Methods in Natural Language Processing
+          - text: (pp. 564–573). ACL.
+          - link "https://aclanthology.org/D17-1060" [ref=e554] [cursor=pointer]:
+            - /url: https://aclanthology.org/D17-1060
+      - listitem [ref=e555]:
+        - generic [ref=e556]: "[14]"
+        - generic [ref=e557]:
+          - text: Yih, W., Richardson, M., Meek, C., Chang, M. W., & Suh, J. (2016). The value of semantic parse labeling for knowledge base question answering. In
+          - emphasis [ref=e558]: Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics
+          - text: (Vol. 2, pp. 201–206). ACL.
+          - link "https://aclanthology.org/P16-2033" [ref=e559] [cursor=pointer]:
+            - /url: https://aclanthology.org/P16-2033
+      - listitem [ref=e560]:
+        - generic [ref=e561]: "[15]"
+        - generic [ref=e562]:
+          - text: Zhang, Y., Dai, H., Kozareva, Z., Smola, A., & Song, L. (2018). Variational reasoning for question answering with knowledge graphs. In
+          - emphasis [ref=e563]: Proceedings of the 32nd AAAI Conference on Artificial Intelligence
+          - text: (Vol. 32, No. 1). AAAI Press.
+          - link "https://arxiv.org/abs/1709.04071" [ref=e564] [cursor=pointer]:
+            - /url: https://arxiv.org/abs/1709.04071
+  - contentinfo [ref=e565]:
+    - generic [ref=e566]:
+      - generic [ref=e567]:
+        - generic [ref=e568]:
+          - generic [ref=e569]: CEREBRUM
+          - paragraph [ref=e570]:
+            - text: Crystal-box knowledge graph reasoning.
+            - text: Zero training. Zero hallucinations.
+          - paragraph [ref=e571]:
+            - text: © 2026 Bryan Alexander Buchorn
+            - link "GNU AGPL v3" [ref=e572] [cursor=pointer]:
+              - /url: https://www.gnu.org/licenses/agpl-3.0
+        - generic [ref=e573]:
+          - heading "Links" [level=4] [ref=e574]
+          - list [ref=e575]:
+            - listitem [ref=e576]:
+              - link "Documentation" [ref=e577] [cursor=pointer]:
+                - /url: https://github.com/BrutalByte/CEREBRUM
+            - listitem [ref=e578]:
+              - link "GitHub Repository" [ref=e579] [cursor=pointer]:
+                - /url: https://github.com/BrutalByte/CEREBRUM
+            - listitem [ref=e580]:
+              - link "Research Papers" [ref=e581] [cursor=pointer]:
+                - /url: "#research"
+            - listitem [ref=e582]:
+              - link "Quickstart" [ref=e583] [cursor=pointer]:
+                - /url: "#install"
+            - listitem [ref=e584]:
+              - link "Benchmarks" [ref=e585] [cursor=pointer]:
+                - /url: "#benchmarks"
+        - generic [ref=e586]:
+          - heading "Research" [level=4] [ref=e587]
+          - list [ref=e588]:
+            - listitem [ref=e589]:
+              - generic [ref=e590]:
+                - text: arXiv — Technical Report
+                - emphasis [ref=e591]: · In preparation
+            - listitem [ref=e592]:
+              - generic [ref=e593]:
+                - text: arXiv — Flagship Paper
+                - emphasis [ref=e594]: · In preparation
+            - listitem [ref=e595]:
+              - generic [ref=e596]:
+                - text: arXiv — SDRB Paper
+                - emphasis [ref=e597]: · In preparation
+            - listitem [ref=e598]:
+              - link "Novel Contributions" [ref=e599] [cursor=pointer]:
+                - /url: "#research"
+      - paragraph [ref=e601]:
+        - text: †
+        - strong [ref=e602]: "Disclaimer:"
+        - text: "\"Zero hallucinations\" and \"0% hallucination\" refer specifically to CEREBRUM's deterministic path traversal — every answer corresponds to a verifiable edge path in the ingested knowledge base. CEREBRUM cannot invent edges or entities that do not exist in the source data. This guarantee applies only to well-formed knowledge graphs; it does not cover errors or omissions in the underlying source data, entity resolution ambiguities, or natural-language query mismatches. Benchmark numbers reflect performance on MetaQA (Zhang et al., 2018) under the configurations described in"
+        - link "BENCHMARK_CANONICAL.md" [ref=e603] [cursor=pointer]:
+          - /url: docs/BENCHMARK_CANONICAL.md
+        - text: . Cost estimates are approximate and based on publicly available pricing at time of writing.
+      - generic [ref=e604]:
+        - paragraph [ref=e605]:
+          - text: Open source · AGPL-3.0 ·
+          - link "cerebrum.kg@gmail.com" [ref=e606] [cursor=pointer]:
+            - /url: mailto:cerebrum.kg@gmail.com
+        - link [ref=e608] [cursor=pointer]:
+          - /url: https://github.com/BrutalByte/CEREBRUM
+          - img [ref=e609]

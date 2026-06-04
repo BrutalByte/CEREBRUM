@@ -1,5 +1,5 @@
 """
-CEREBRUM API entrypoint — module-level ``app`` for uvicorn / gunicorn.
+CEREBRUM API entrypoint â€” module-level ``app`` for uvicorn / gunicorn.
 
 Environment variables
 ---------------------
@@ -23,7 +23,7 @@ Usage
 """
 import os
 import logging
-from typing import Optional
+from typing import Optional, Set
 
 logger = logging.getLogger("cerebrum.main")
 
@@ -45,7 +45,7 @@ if _csv_path:
     _embedding_engine: Optional[EmbeddingEngine] = RandomEngine(dim=64)
 else:
     logger.info(
-        "No CEREBRUM_CSV_PATH set ΓÇö starting empty. "
+        "No CEREBRUM_CSV_PATH set Î“Ã‡Ã¶ starting empty. "
         "Upload a graph via POST /upload/csv."
     )
     _adapter          = None

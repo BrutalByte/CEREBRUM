@@ -1,3 +1,4 @@
+from typing import List
 import sys
 from docx import Document
 

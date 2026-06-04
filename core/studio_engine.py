@@ -1,5 +1,5 @@
 """
-StudioEngine — pure business-logic layer for CEREBRUM Studio.
+StudioEngine â€” pure business-logic layer for CEREBRUM Studio.
 
 Extracted from ui/studio.py so every callback is independently importable
 and unit-testable without a running Gradio server.
@@ -16,7 +16,7 @@ import random
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Type
 
 import networkx as nx
 import numpy as np
@@ -61,7 +61,7 @@ class StudioEngine:
         load_btn.click(engine.load_graph, [path_in, emb_in], [status_out, comm_out])
         q_btn.click(engine.run_reasoning, [...], [...])
 
-    All methods are callable without Gradio — pass plain Python values.
+    All methods are callable without Gradio â€” pass plain Python values.
     """
 
     def __init__(self) -> None:
@@ -77,7 +77,7 @@ class StudioEngine:
         self.stream_adapter: Optional[StreamAdapter] = None
         self.stream_running: bool = False
         self.stream_event_log: List[Dict[str, Any]] = []
-        # Phase 75 — optional v2 dashboard attachments
+        # Phase 75 â€” optional v2 dashboard attachments
         self._research_agent = None
         self._modulator = None
         self._loop = None
@@ -470,7 +470,7 @@ class StudioEngine:
             self.csa.theta   = theta
             return (
                 f"Success: Weights updated "
-                f"(α={alpha:.2f}, β={beta:.2f}, μ={mu:.2f}, θ={theta:.2f})"
+                f"(Î±={alpha:.2f}, Î²={beta:.2f}, Î¼={mu:.2f}, Î¸={theta:.2f})"
             )
         except Exception as err:
             return f"ERROR: {err}"
@@ -832,7 +832,7 @@ class StudioEngine:
         return html
 
     # ------------------------------------------------------------------
-    # Phase 75 — v2 Dashboard: optional engine attachments
+    # Phase 75 â€” v2 Dashboard: optional engine attachments
     # ------------------------------------------------------------------
 
     def attach_research_agent(self, agent) -> None:
@@ -852,7 +852,7 @@ class StudioEngine:
         self._provenance_ledger = ledger
 
     # ------------------------------------------------------------------
-    # Phase 75 — AutoApprover audit log
+    # Phase 75 â€” AutoApprover audit log
     # ------------------------------------------------------------------
 
     def get_auto_approver_audit(self, n: int = 20) -> str:
@@ -908,14 +908,14 @@ class StudioEngine:
         return summary + table
 
     # ------------------------------------------------------------------
-    # Phase 75 — ContradictionResolver revision queue
+    # Phase 75 â€” ContradictionResolver revision queue
     # ------------------------------------------------------------------
 
     def get_revision_queue(self) -> str:
         """
         Return the ContradictionResolver revision queue as an HTML list.
         These are findings where proposed evidence outweighed the contradiction
-        score — the existing graph edges may be stale.
+        score â€” the existing graph edges may be stale.
         """
         agent = self._research_agent
         if agent is None:
@@ -923,7 +923,7 @@ class StudioEngine:
 
         queue = list(getattr(agent, "_revision_candidates", []))
         if not queue:
-            return "<p style='color:#3fb950;'>Revision queue is empty — no contested findings.</p>"
+            return "<p style='color:#3fb950;'>Revision queue is empty â€” no contested findings.</p>"
 
         items = ""
         for rec in reversed(queue):
@@ -931,7 +931,7 @@ class StudioEngine:
             net = getattr(rec, "net_evidence_score", None)
             rw = getattr(rec, "revision_weight", None)
             net_str = f"{net:.3f}" if net is not None else "?"
-            rw_str = f"{rw:.2f}×" if rw is not None else "?"
+            rw_str = f"{rw:.2f}Ã—" if rw is not None else "?"
             items += (
                 f"<div style='border:1px solid #30363d;border-radius:4px;padding:6px 10px;"
                 f"margin-bottom:6px;background:#161b22;'>"
@@ -947,7 +947,7 @@ class StudioEngine:
         return header + items
 
     # ------------------------------------------------------------------
-    # Phase 75 — DiscoveryCalibrator community heatmap
+    # Phase 75 â€” DiscoveryCalibrator community heatmap
     # ------------------------------------------------------------------
 
     def get_discovery_heatmap(self) -> go.Figure:
@@ -1004,7 +1004,7 @@ class StudioEngine:
             row=1, col=2,
         )
         fig.update_layout(
-            title=f"DiscoveryCalibrator — {len(cids)} communities tracked",
+            title=f"DiscoveryCalibrator â€” {len(cids)} communities tracked",
             paper_bgcolor="#0d1117",
             plot_bgcolor="#161b22",
             font=dict(color="#e6edf3"),
@@ -1014,7 +1014,7 @@ class StudioEngine:
         return fig
 
     # ------------------------------------------------------------------
-    # Phase 75 — ChemicalModulator blood panel
+    # Phase 75 â€” ChemicalModulator blood panel
     # ------------------------------------------------------------------
 
     def get_chemical_panel(self) -> go.Figure:
@@ -1048,11 +1048,11 @@ class StudioEngine:
         colors = []
         for v, b in zip(values, baselines):
             if v > b * 1.15:
-                colors.append("#f85149")   # elevated — red
+                colors.append("#f85149")   # elevated â€” red
             elif v < b * 0.85:
-                colors.append("#58a6ff")   # suppressed — blue
+                colors.append("#58a6ff")   # suppressed â€” blue
             else:
-                colors.append("#3fb950")   # near-baseline — green
+                colors.append("#3fb950")   # near-baseline â€” green
 
         fig = go.Figure()
         fig.add_trace(go.Bar(
@@ -1072,7 +1072,7 @@ class StudioEngine:
             marker=dict(symbol="line-ew", size=8, color="#8b949e"),
         ))
         fig.update_layout(
-            title="ChemicalModulator — Metabolic State",
+            title="ChemicalModulator â€” Metabolic State",
             paper_bgcolor="#0d1117",
             plot_bgcolor="#161b22",
             font=dict(color="#e6edf3"),
@@ -1083,7 +1083,7 @@ class StudioEngine:
         return fig
 
     # ------------------------------------------------------------------
-    # Phase 75 — Autonomous Loop status panel
+    # Phase 75 â€” Autonomous Loop status panel
     # ------------------------------------------------------------------
 
     def get_loop_panel(self) -> tuple:
@@ -1160,7 +1160,7 @@ class StudioEngine:
                                  name="Edges Added", line=dict(color="#58a6ff")),
                       row=2, col=1)
         fig.update_layout(
-            title="Autonomous Loop — Cycle History",
+            title="Autonomous Loop â€” Cycle History",
             barmode="stack",
             paper_bgcolor="#0d1117",
             plot_bgcolor="#161b22",
@@ -1171,7 +1171,7 @@ class StudioEngine:
         return status_html, fig
 
     # ------------------------------------------------------------------
-    # Phase 78 — ProvenanceLedger panel
+    # Phase 78 â€” ProvenanceLedger panel
     # ------------------------------------------------------------------
 
     def get_provenance_panel(self, n: int = 20) -> tuple:
@@ -1358,7 +1358,7 @@ class StudioEngine:
         OTHER_BORDER= "#30363d"
 
         def _path_flow(nodes):
-            """Render alternating [entity] → [relation] → [entity] nodes."""
+            """Render alternating [entity] â†’ [relation] â†’ [entity] nodes."""
             parts = []
             for i, node in enumerate(nodes):
                 if i % 2 == 0:
@@ -1430,7 +1430,7 @@ class StudioEngine:
         return _json.dumps({"cerebrum_audit": records, "n_candidates": len(records)}, indent=2)
 
     # ------------------------------------------------------------------
-    # C1 — Explainability Dashboard
+    # C1 â€” Explainability Dashboard
     # ------------------------------------------------------------------
 
     def explain_beam(self, answer_index: int = 0) -> str:
@@ -1498,7 +1498,7 @@ class StudioEngine:
                 else:
                     parts.append(
                         f"<span style='color:{REL_FG};margin:0 3px;font-size:0.75em;'>"
-                        f"—[{n}]→</span>"
+                        f"â€”[{n}]â†’</span>"
                     )
             rank_badge = (
                 "<span style='background:#00ffff;color:#000;border-radius:3px;"
@@ -1517,11 +1517,11 @@ class StudioEngine:
                 f"</div></div>"
             )
 
-        # ── Section 1: Winner explanation ─────────────────────────────────
+        # â”€â”€ Section 1: Winner explanation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         w_feats = _edge_feats(winner)
         r_feats = _edge_feats(runner_up) if runner_up else [0.0] * 10
 
-        # Score breakdown (structured) — fall back to edge features
+        # Score breakdown (structured) â€” fall back to edge features
         w_bd = winner.score_breakdown or {}
         r_bd = (runner_up.score_breakdown or {}) if runner_up else {}
 
@@ -1569,7 +1569,7 @@ class StudioEngine:
         section1 = f"""
         <div style='background:#161b22;border:1px solid #00ffff;border-radius:8px;padding:14px 16px;margin-bottom:12px;'>
           <div style='color:#00ffff;font-weight:bold;margin-bottom:8px;'>
-            ✦ Why <code style='background:#1c2b3a;padding:1px 5px;border-radius:3px;'>{winner.entity_id}</code>
+            âœ¦ Why <code style='background:#1c2b3a;padding:1px 5px;border-radius:3px;'>{winner.entity_id}</code>
             scored highest (rank #{answer_index+1})
           </div>
           {win_path_html}
@@ -1577,7 +1577,7 @@ class StudioEngine:
           {cmp_table}
         </div>"""
 
-        # ── Section 2: All candidate paths ───────────────────────────────
+        # â”€â”€ Section 2: All candidate paths â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         all_paths = "".join(
             _path_mini(
                 a.best_path.nodes if a.best_path else [],
@@ -1642,7 +1642,7 @@ class StudioEngine:
 <body>
 <h1>CEREBRUM Crystal-Box Audit Report</h1>
 <p><strong>Generated:</strong> {ts}<br>
-<strong>System:</strong> CEREBRUM v2.58.0 — zero-hallucination KG traversal<br>
+<strong>System:</strong> CEREBRUM v2.58.0 â€” zero-hallucination KG traversal<br>
 <strong>Candidates:</strong> {records['n_candidates']}</p>
 
 <h2>Candidate Paths</h2>
@@ -1654,8 +1654,8 @@ class StudioEngine:
     f"<td><code>{r['answer']}</code></td>"
     f"<td>{r['confidence']:.4f}</td>"
     f"<td>{r['hop_depth']}</td>"
-    f"<td>{' → '.join(r['path']['entities'])}</td>"
-    f"<td>{' → '.join(r['path']['relations'])}</td>"
+    f"<td>{' â†’ '.join(r['path']['entities'])}</td>"
+    f"<td>{' â†’ '.join(r['path']['relations'])}</td>"
     f"</tr>"
     for r in records['cerebrum_audit']
 )}
@@ -1672,7 +1672,7 @@ class StudioEngine:
 <hr>
 <p style='font-size:0.8em;color:#57606a;'>
 This report was generated by CEREBRUM's crystal-box reasoning engine.
-Every answer is a verified path through knowledge graph edges — no neural inference,
+Every answer is a verified path through knowledge graph edges â€” no neural inference,
 no hallucination. The path shown IS the explanation.
 </p>
 </body>

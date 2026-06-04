@@ -1,5 +1,5 @@
 """
-Phase 184 Hop-1 Ranking Audit — beam-coverage miss root-cause analysis.
+Phase 184 Hop-1 Ranking Audit â€” beam-coverage miss root-cause analysis.
 
 For each question classified as h10_miss_beam_coverage in phase184_diag.csv,
 determines WHERE in the H1SE hop-1 sorted list the correct-path entity falls:
@@ -24,7 +24,7 @@ import sys
 import time
 from collections import Counter
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Counter, Dict, List, Optional, Set, Tuple
 
 # ---------------------------------------------------------------------------
 # Shared constants from metaqa_eval
@@ -132,7 +132,7 @@ def main() -> None:
     print(f"\n[hop1-audit] {len(miss_rows)} beam-coverage miss questions to audit.")
 
     # ------------------------------------------------------------------
-    # Build graph (from cache — fast)
+    # Build graph (from cache â€” fast)
     # ------------------------------------------------------------------
     print("[hop1-audit] Loading knowledge graph...")
     t0 = time.time()
@@ -261,7 +261,7 @@ def main() -> None:
             continue
 
         if "sorted_neighbors" not in captured:
-            print(f"  [warn] q_idx={row.get('q_idx')} — callback not fired (hop_expand may not have triggered)")
+            print(f"  [warn] q_idx={row.get('q_idx')} â€” callback not fired (hop_expand may not have triggered)")
             continue
 
         sorted_nbrs = captured["sorted_neighbors"]
@@ -337,7 +337,7 @@ def main() -> None:
         "rank_21_25":          "rank 21-25  (expansion_k=25 would recover)",
         "rank_26_30":          "rank 26-30  (expansion_k=30 would recover)",
         "rank_31_50":          "rank 31-50  (hop-1 scoring problem)",
-        "rank_50plus":         "rank > 50   (hop-1 scoring problem — severe)",
+        "rank_50plus":         "rank > 50   (hop-1 scoring problem â€” severe)",
         "no_viable_h1":        "no viable   (correct answer unreachable in 3 hops from seed)",
     }
     order = ["in_topk_stage2_fail", "rank_21_25", "rank_26_30",

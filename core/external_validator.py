@@ -1,21 +1,21 @@
 """
-ExternalValidator — Literature Search for Hypothesis Validation (Phase 52).
+ExternalValidator â€” Literature Search for Hypothesis Validation (Phase 52).
 
 Queries free public research databases to assess whether a proposed knowledge
 graph edge is already known, actively being investigated, or genuinely novel.
 
 Supported adapters (all free, no API key required):
-  PubMedAdapter         — NCBI E-utilities (biomedical literature)
-  ClinicalTrialsAdapter — ClinicalTrials.gov v2 API (active clinical studies)
-  ArXivAdapter          — arXiv.org Atom feed (preprints; good for physics/CS/math)
-  OpenAlexAdapter       — OpenAlex REST API (all disciplines; comprehensive)
+  PubMedAdapter         â€” NCBI E-utilities (biomedical literature)
+  ClinicalTrialsAdapter â€” ClinicalTrials.gov v2 API (active clinical studies)
+  ArXivAdapter          â€” arXiv.org Atom feed (preprints; good for physics/CS/math)
+  OpenAlexAdapter       â€” OpenAlex REST API (all disciplines; comprehensive)
 
 Literature status tags:
-  "novel"            — Zero hits across all queried adapters.
-  "active_research"  — ClinicalTrials has a recruiting/active trial, OR 1-9 hits.
-  "established"      — ≥10 hits (well-studied connection).
-  "contested"        — Hits found for both the proposed relation AND its opposing relation.
-  "unvalidated"      — No adapters were queried (offline or all failed).
+  "novel"            â€” Zero hits across all queried adapters.
+  "active_research"  â€” ClinicalTrials has a recruiting/active trial, OR 1-9 hits.
+  "established"      â€” â‰¥10 hits (well-studied connection).
+  "contested"        â€” Hits found for both the proposed relation AND its opposing relation.
+  "unvalidated"      â€” No adapters were queried (offline or all failed).
 
 Usage
 -----
@@ -39,7 +39,7 @@ import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeout
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +97,7 @@ class ValidationReport:
     """``"novel"`` | ``"active_research"`` | ``"established"`` | ``"contested"`` | ``"unvalidated"``."""
 
     novelty_score: float
-    """1.0 = no hits (fully novel); 0.0 = heavily established (≥10 hits)."""
+    """1.0 = no hits (fully novel); 0.0 = heavily established (â‰¥10 hits)."""
 
     hit_count: int
     hits: List[LiteratureHit] = field(default_factory=list)
@@ -111,11 +111,11 @@ class ValidationReport:
 
     - 1.0 = all hits published this year
     - 0.5 = average hit is 7 years old
-    - 0.0 = all hits are ≥30 years old
+    - 0.0 = all hits are â‰¥30 years old
     - 0.5 (default) = no year data available (neutral)
 
-    High recency + high hit_count → established by recent work (strong).
-    Low recency + high hit_count → established by old work (possibly superseded).
+    High recency + high hit_count â†’ established by recent work (strong).
+    Low recency + high hit_count â†’ established by old work (possibly superseded).
     """
 
     error: Optional[str] = None
@@ -135,7 +135,7 @@ def _compute_recency_score(hits: List[LiteratureHit]) -> float:
     Mean exponential-decay recency weight across all hits that carry a year.
 
     Formula:  ``exp(-age * ln(2) / half_life)``
-    - age = current_year − hit.year  (clamped to ≥ 0)
+    - age = current_year âˆ’ hit.year  (clamped to â‰¥ 0)
     - half_life = _RECENCY_HALF_LIFE_YEARS (default 7)
 
     Returns 0.5 (neutral) when no hits have year information.
@@ -457,7 +457,7 @@ class LarqlAdapter(ExternalValidatorAdapter):
                 return [LiteratureHit(
                     adapter="larql",
                     external_id=f"neural_{hash(source+relation+target)}",
-                    title=f"Neural Consensus: {source} ΓåÆ {relation} ΓåÆ {target}",
+                    title=f"Neural Consensus: {source} Î“Ã¥Ã† {relation} Î“Ã¥Ã† {target}",
                     relevance_score=link.confidence
                 )]
             return []
@@ -574,7 +574,7 @@ class ExternalValidator:
         elif contested:
             status = "contested"
         elif hit_count == 0 and errors:
-            # All adapters that were queried returned errors — we have no
+            # All adapters that were queried returned errors â€” we have no
             # evidence either way; "novel" would be a false claim.
             status = "unvalidated"
         elif hit_count == 0:

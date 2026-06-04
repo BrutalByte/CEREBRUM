@@ -1,5 +1,5 @@
 """
-Tests for Gap 1 — GlobalRebalancer.
+Tests for Gap 1 â€” GlobalRebalancer.
 
 Covers:
   - Event counting
@@ -10,6 +10,7 @@ Covers:
   - Thread safety
   - dry_run check
 """
+from typing import Counter
 import threading
 from unittest.mock import MagicMock
 
@@ -34,7 +35,7 @@ def _make_adapter(n_nodes=10, n_edges=15):
 
 
 def _random_two_cliques(n, e):
-    """Two cliques connected by a bridge — easy to detect communities."""
+    """Two cliques connected by a bridge â€” easy to detect communities."""
     G = nx.Graph()
     half = n // 2
     # Clique A
@@ -114,7 +115,7 @@ def test_no_rebalance_before_threshold():
 # ---------------------------------------------------------------------------
 
 def test_rebalance_triggered_on_drift():
-    """Force Q drop > threshold → rebalance_count increments."""
+    """Force Q drop > threshold â†’ rebalance_count increments."""
     adapter = _make_adapter()
     r = _make_rebalancer(adapter=adapter, check_every_n_events=5,
                           drift_threshold=0.0001, min_rebalance_interval=0.0)
@@ -125,7 +126,7 @@ def test_rebalance_triggered_on_drift():
     # Artificially set a very different last_q so delta is large
     r._last_q = 0.99  # current Q of the random graph is << 0.99
 
-    # Trigger check — should schedule rebalance
+    # Trigger check â€” should schedule rebalance
     r._check_drift()
 
     # Give background thread a moment to finish
@@ -140,7 +141,7 @@ def test_no_rebalance_when_q_stable():
     r = _make_rebalancer(adapter=adapter, check_every_n_events=5,
                           drift_threshold=0.5)  # very high threshold
     r._check_drift()  # seed
-    r._check_drift()  # second check — Q hasn't changed, delta=0
+    r._check_drift()  # second check â€” Q hasn't changed, delta=0
     # Allow any thread to complete
     if r._rebalance_thread is not None:
         r._rebalance_thread.join(timeout=2.0)
@@ -148,7 +149,7 @@ def test_no_rebalance_when_q_stable():
 
 
 def test_rate_limit_prevents_thrashing():
-    """Two drift events within min_rebalance_interval → only 1 rebalance."""
+    """Two drift events within min_rebalance_interval â†’ only 1 rebalance."""
     adapter = _make_adapter()
     r = _make_rebalancer(adapter=adapter, drift_threshold=0.0001,
                           min_rebalance_interval=60.0)  # 60s rate limit
@@ -191,7 +192,7 @@ def test_last_q_updated_after_rebalance():
     if r._rebalance_thread is not None:
         r._rebalance_thread.join(timeout=5.0)
 
-    # last_q must not still be 0.99 — worker updated it
+    # last_q must not still be 0.99 â€” worker updated it
     assert r.last_q != 0.99
 
 
@@ -247,7 +248,7 @@ def test_dry_run_returns_delta_q_without_rebalancing():
 # ---------------------------------------------------------------------------
 
 def test_stream_adapter_integration():
-    """StreamAdapter(rebalancer=r) — ingest calls record_event."""
+    """StreamAdapter(rebalancer=r) â€” ingest calls record_event."""
     from adapters.stream_adapter import StreamAdapter
     from core.stream_engine import StreamEvent
 
@@ -270,7 +271,7 @@ def test_no_rebalancer_backward_compatible():
     from core.stream_engine import StreamEvent
 
     adapter = StreamAdapter(min_events_before_update=1000)
-    # No rebalancer — must not raise
+    # No rebalancer â€” must not raise
     adapter.ingest(StreamEvent(source="X", relation="REL", target="Y"))
     assert adapter.stats.total_ingested == 1
 

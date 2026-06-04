@@ -50,7 +50,7 @@ from core.frontal_engine import FrontalEngine, ReasoningStrategy
 import logging
 import pickle
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, TYPE_CHECKING, Tuple, Union
 
 import networkx as nx
 import numpy as np
@@ -864,7 +864,7 @@ class CerebrumGraph:
         # 3. Optional coarsening
         # ----------------------------------------------------------
         # No automatic coarsening. The community map is {node: community_id}
-        # so memory is O(nodes), not O(communities²). Pass coarsen_target=N
+        # so memory is O(nodes), not O(communitiesÂ²). Pass coarsen_target=N
         # explicitly if you need to limit communities on constrained hardware.
 
         if min_community_size > 0:
@@ -891,15 +891,15 @@ class CerebrumGraph:
         logger.info("Building CSA engine...")
 
         # Precompute all-pairs BFS only for small community sets.
-        # MetaQA produces ~15K communities whose distances pkl reaches 3.8 GB —
-        # 8 workers × 3.8 GB = OOM.  Above the threshold we skip the pkl and rely
+        # MetaQA produces ~15K communities whose distances pkl reaches 3.8 GB â€”
+        # 8 workers Ã— 3.8 GB = OOM.  Above the threshold we skip the pkl and rely
         # on lazy per-pair BFS in CSAEngine._lazy_community_distance().
         _LAZY_DIST_THRESHOLD = 5000
         n_communities = len(set(cm.values()))
         _dist_cache = cache / f"community_distances_{community_engine}.pkl" if cache else None
         if n_communities > _LAZY_DIST_THRESHOLD:
             logger.info(
-                "Community count %d > %d — using lazy BFS distances (skipping pkl)",
+                "Community count %d > %d â€” using lazy BFS distances (skipping pkl)",
                 n_communities, _LAZY_DIST_THRESHOLD,
             )
             distances = {}
@@ -942,7 +942,7 @@ class CerebrumGraph:
             self._sri._semantic_index_built,
         )
 
-        # Phase 172: Terminal-Anchor Source Index — O(E) pass
+        # Phase 172: Terminal-Anchor Source Index â€” O(E) pass
         # _anchor_sources[rel] = set of entity IDs with at least one outgoing rel edge.
         # Used at query time to bias the penultimate-hop beam toward entities that can
         # directly produce answers of the correct type.
@@ -959,12 +959,12 @@ class CerebrumGraph:
         except Exception as _exc:
             logger.warning("Phase 172: anchor source index build failed: %s", _exc)
 
-        # Phase 172: GraphProfiler — auto query strategy selection
+        # Phase 172: GraphProfiler â€” auto query strategy selection
         try:
             from core.graph_profiler import GraphProfiler
             self._query_profile = GraphProfiler.profile(self.adapter, self._anchor_sources)
             logger.info(
-                "Phase 172: graph profile computed — regime=%s "
+                "Phase 172: graph profile computed â€” regime=%s "
                 "hub_score=%.3f mean_rel_coverage=%.3f "
                 "recommended: hop_expand=%s trb_auto=%s anchor_bonus=%s",
                 self._query_profile.regime,
@@ -979,7 +979,7 @@ class CerebrumGraph:
             self._query_profile = None
 
         # ----------------------------------------------------------
-        # Phase 207: ParameterInitializer — derive all 9 hyperparams from
+        # Phase 207: ParameterInitializer â€” derive all 9 hyperparams from
         # graph statistics and store as live defaults for query().
         # Modularity Q is computed from the DSCF partition already in `cm`.
         # ----------------------------------------------------------
@@ -1056,7 +1056,7 @@ class CerebrumGraph:
             G.number_of_nodes(), G.number_of_edges(), n_comm,
         )
 
-        # Phase 222: Activate PlattCalibration — load from cache if available
+        # Phase 222: Activate PlattCalibration â€” load from cache if available
         from core.parameter_learner import PlattCalibration as _PlattCal
         import json as _json
         self._platt = _PlattCal()
@@ -1144,9 +1144,9 @@ class CerebrumGraph:
         """
         Nudge _param_defaults toward the mean config of confirmed-correct answers.
 
-        alpha=0.08 → slow, stable drift (takes ~12 batches to shift 50% toward target).
+        alpha=0.08 â†’ slow, stable drift (takes ~12 batches to shift 50% toward target).
         Only scalar params are adapted; beam_width stays fixed (fANOVA: 15% importance,
-        discrete — better handled by explicit retune).
+        discrete â€” better handled by explicit retune).
         """
         import dataclasses as _dc
 
@@ -1263,17 +1263,17 @@ class CerebrumGraph:
 
         # Phase 207: apply ParameterInitializer (or EMA-adapted) defaults when
         # the caller left params at their legacy hardcoded values.
-        # Explicit overrides always win — only the unchanged defaults are replaced.
+        # Explicit overrides always win â€” only the unchanged defaults are replaced.
         _pd = getattr(self, "_param_defaults", None)
         if _pd is not None:
             if vote_weight       == 0.45:  vote_weight         = _pd.vote_weight
             if branch_bonus_weight == 0.0: branch_bonus_weight = _pd.branch_bonus
             if beam_width        is None:  beam_width          = _pd.beam_width
 
-        # Phase 207: implicit seed-reuse signal — check if any seed in this query
+        # Phase 207: implicit seed-reuse signal â€” check if any seed in this query
         # was a top-ranked answer in a recent prior query. If so, the user implicitly
         # confirmed that answer was meaningful by following it. Fire positive feedback
-        # automatically — no user involvement required.
+        # automatically â€” no user involvement required.
         _answer_cache = getattr(self, "_recent_answer_cache", {})
         import time as _time
         _now = _time.monotonic()
@@ -1283,7 +1283,7 @@ class CerebrumGraph:
                 _cached_params, _cached_ts = _cached
                 if _now - _cached_ts < 3600:  # 1-hour recency window
                     self.record_feedback(_seed, correct=True, query_params=_cached_params)
-                    logger.debug("Phase 207: implicit positive signal — seed %s reused", _seed)
+                    logger.debug("Phase 207: implicit positive signal â€” seed %s reused", _seed)
 
         # Phase 119: notify sleep orchestrator of query activity
         orc = getattr(self, "_sleep_orchestrator", None)
@@ -1334,7 +1334,7 @@ class CerebrumGraph:
 
         # Phase 172/163: Structural / semantic auto-inference of terminal relation boost.
         # Phase 172: when query_embedding is available and a semantic index was built,
-        # use query-relation cosine similarity (STRB) — more accurate than structural SRI.
+        # use query-relation cosine similarity (STRB) â€” more accurate than structural SRI.
         # Phase 172: structural hard-select fallback when no embedding is available.
         if auto_infer_terminal_relation and not terminal_relation_boost:
             _sri = getattr(self, "_sri", None)
@@ -1360,7 +1360,7 @@ class CerebrumGraph:
         _trb = terminal_relation_boost or {}
         _prb = penultimate_relation_boost or {}
 
-        # Phase 172: Terminal-Anchor hints — bias penultimate-hop beam toward entities
+        # Phase 172: Terminal-Anchor hints â€” bias penultimate-hop beam toward entities
         # that are sources of the terminal relation (can directly produce answer-type entities).
         # anchor_hints uses sub-traversal hop indices: for 3-hop, hop-1 of sub-traversal
         # (= hop-2 of full query) is the critical penultimate selection point.
@@ -1370,7 +1370,7 @@ class CerebrumGraph:
             _best_rel = max(_trb, key=_trb.get)
             _anchor_set = getattr(self, "_anchor_sources", {}).get(_best_rel)
             if _anchor_set:
-                _sub_penultimate = mh - 2  # e.g. 3-hop → 1, 4-hop → 2
+                _sub_penultimate = mh - 2  # e.g. 3-hop â†’ 1, 4-hop â†’ 2
                 _anchor_bonus = anchor_bonus if anchor_bonus is not None else 2.0
                 _anchor_hints = {_sub_penultimate: (_anchor_set, _anchor_bonus)}
                 # Stage-1 anchor: prefer hop-1 entities that have outgoing edges to R3-source type

@@ -1,5 +1,5 @@
 """
-SynapticDecayEngine — Phase 97: Synaptic Decay (LTD / Synaptic Homeostasis).
+SynapticDecayEngine â€” Phase 97: Synaptic Decay (LTD / Synaptic Homeostasis).
 
 Counterpart to Phase 96's Hebbian LTP. Periodically decays all edge weights
 toward a baseline, with resistance proportional to recent traversal frequency.
@@ -7,7 +7,7 @@ Edges used often resist decay; unused edges fade back to baseline.
 
 This is the KG analogue of the Synaptic Homeostasis Hypothesis (Tononi & Cirelli):
 during sleep, all synapses downscale proportionally, then LTP selectively restores
-the important ones — preventing saturation and preserving discriminability.
+the important ones â€” preventing saturation and preserving discriminability.
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ import logging
 import time
 from collections import Counter
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import Any, Counter, Dict, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core.working_memory import WorkingMemoryBuffer
@@ -23,13 +23,13 @@ if TYPE_CHECKING:
 logger = logging.getLogger("cerebrum.synaptic_decay")
 
 # Source-based frequency weight multipliers (Phase 98 Gap 8).
-# Higher multiplier → higher traversal_freq → higher resistance → SLOWER decay.
-# Dissonance (failed paths) should decay FASTER → low multiplier (0.5).
-# Approval/insight (successful paths) should decay SLOWER → high multiplier.
+# Higher multiplier â†’ higher traversal_freq â†’ higher resistance â†’ SLOWER decay.
+# Dissonance (failed paths) should decay FASTER â†’ low multiplier (0.5).
+# Approval/insight (successful paths) should decay SLOWER â†’ high multiplier.
 _DEFAULT_SOURCE_WEIGHTS: Dict[str, float] = {
-    "dissonance": 0.5,   # low freq contribution → less resistance → faster decay
-    "approval":   3.0,   # high freq contribution → more resistance → slower decay
-    "insight":    2.0,   # high freq contribution → more resistance → slower decay
+    "dissonance": 0.5,   # low freq contribution â†’ less resistance â†’ faster decay
+    "approval":   3.0,   # high freq contribution â†’ more resistance â†’ slower decay
+    "insight":    2.0,   # high freq contribution â†’ more resistance â†’ slower decay
 }
 
 
@@ -44,15 +44,15 @@ class DecayResult:
 
 
 class SynapticDecayEngine:
-    """Hebbian LTD engine — decays edge weights toward baseline.
+    """Hebbian LTD engine â€” decays edge weights toward baseline.
 
     Parameters
     ----------
     adapter        : graph adapter (must implement update_edge_weight with min_weight)
-    graph          : CerebrumGraph — for telemetry emit()
-    baseline_weight: target weight (default 1.0 — natural resting weight)
+    graph          : CerebrumGraph â€” for telemetry emit()
+    baseline_weight: target weight (default 1.0 â€” natural resting weight)
     decay_rate     : fraction of gap closed per pass (default 0.01)
-    min_weight     : absolute floor — never decay below this (default 0.5)
+    min_weight     : absolute floor â€” never decay below this (default 0.5)
     resistance_k   : traversal count at which resistance = 50% (default 5.0)
     source_weights : per-source frequency multipliers (Phase 98 Gap 8)
     """

@@ -1,10 +1,10 @@
 """
-Phase 23 — Distributed Spark GraphFrames DSCF (Offline).
+Phase 23 â€” Distributed Spark GraphFrames DSCF (Offline).
 
 Implements a Pregel-like message passing approach to compute
 DSCF (Dual-Signal Community Fusion) signals across massive graphs.
 """
-from typing import Optional
+from typing import Counter, Optional
 import os
 
 try:

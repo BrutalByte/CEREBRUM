@@ -1,5 +1,5 @@
 """
-PerceptionAdapter — Real-world perception bridge for CEREBRUM.
+PerceptionAdapter â€” Real-world perception bridge for CEREBRUM.
 
 Translates vision, audio, and document inputs into knowledge graph triples
 via purpose-built perception models, feeding results through IngestionPipeline
@@ -8,20 +8,20 @@ into any GraphAdapter.
 Architecture
 ------------
   [Image / Audio / Document / Text]
-          ↓
-  [PerceptionBackend] → PerceptionResult (raw_text, confidence, provenance)
-          ↓
-  [TripleExtractor]   → List[(subject, relation, object)]
-          ↓  (if confidence < threshold → LLM fallback via llm_bridge)
-  [IngestionPipeline] → ProcessedEdge
-          ↓
+          â†“
+  [PerceptionBackend] â†’ PerceptionResult (raw_text, confidence, provenance)
+          â†“
+  [TripleExtractor]   â†’ List[(subject, relation, object)]
+          â†“  (if confidence < threshold â†’ LLM fallback via llm_bridge)
+  [IngestionPipeline] â†’ ProcessedEdge
+          â†“
   [GraphAdapter.add_edge()]
 
 Backends
 --------
-  VisionBackend   — Florence-2, PaliGemma, LLaVA via OpenAI-compatible endpoint
-  AudioBackend    — Whisper (faster-whisper local or HTTP endpoint)
-  DocumentBackend — Docling / Surya (HTTP endpoint or local library)
+  VisionBackend   â€” Florence-2, PaliGemma, LLaVA via OpenAI-compatible endpoint
+  AudioBackend    â€” Whisper (faster-whisper local or HTTP endpoint)
+  DocumentBackend â€” Docling / Surya (HTTP endpoint or local library)
 
 All backends also accept raw text output and can run headlessly in tests.
 
@@ -63,7 +63,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, TYPE_CHECKING
+from typing import Any, Callable, Dict, Iterator, List, Optional, TYPE_CHECKING, Tuple, Type
 
 if TYPE_CHECKING:
     from core.graph_adapter import GraphAdapter
@@ -73,7 +73,7 @@ logger = logging.getLogger("cerebrum.perception")
 
 
 # ---------------------------------------------------------------------------
-# PerceptionResult — output of any perception backend
+# PerceptionResult â€” output of any perception backend
 # ---------------------------------------------------------------------------
 
 @dataclass
@@ -434,7 +434,7 @@ class DocumentBackend(PerceptionBackend):
 
 
 # ---------------------------------------------------------------------------
-# TripleExtractor — raw text → (subject, relation, object) triples
+# TripleExtractor â€” raw text â†’ (subject, relation, object) triples
 # ---------------------------------------------------------------------------
 
 _TRIPLE_RE = re.compile(
@@ -476,9 +476,9 @@ def _extract_triples_llm(
         response = llm_fn(prompt)
         triples = _extract_triples_heuristic(response)
         if not triples:
-            # Fallback: try to parse "subject → relation → object" style
+            # Fallback: try to parse "subject â†’ relation â†’ object" style
             for line in response.splitlines():
-                parts = re.split(r"\s*[-–→|,]\s*", line.strip(), maxsplit=2)
+                parts = re.split(r"\s*[-â€“â†’|,]\s*", line.strip(), maxsplit=2)
                 if len(parts) == 3 and all(p.strip() for p in parts):
                     subj, rel, obj = parts
                     rel = re.sub(r"\s+", "_", rel.strip().upper())
@@ -628,7 +628,7 @@ class PerceptionAdapter:
         for subj, rel, obj in triples:
             if not (subj and rel and obj):
                 continue
-            # Discard LLM preamble bleed — real KG entities are concise
+            # Discard LLM preamble bleed â€” real KG entities are concise
             if len(subj) > 120 or len(obj) > 120:
                 continue
             processed = pipeline.process(
@@ -647,7 +647,7 @@ class PerceptionAdapter:
                 )
                 edges.append(processed)
             except Exception as exc:
-                logger.warning("add_edge failed (%s → %s): %s", subj, obj, exc)
+                logger.warning("add_edge failed (%s â†’ %s): %s", subj, obj, exc)
 
         logger.info(
             "Perceived %d triples from %s (confidence=%.2f)",
@@ -657,7 +657,7 @@ class PerceptionAdapter:
 
 
 # ---------------------------------------------------------------------------
-# PerceptionStreamSource — polls a directory for new files
+# PerceptionStreamSource â€” polls a directory for new files
 # ---------------------------------------------------------------------------
 
 _VISION_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"}

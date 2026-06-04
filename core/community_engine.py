@@ -1,7 +1,7 @@
 """
 Community detection algorithms for CEREBRUM.
 
-The DSCF algorithm (dscf_communities) is the primary contribution —
+The DSCF algorithm (dscf_communities) is the primary contribution â€”
 it produces the attention head structure used by CSA.
 
 Also includes Leiden, LPA, and hybrid wrappers for ablation studies.
@@ -9,7 +9,7 @@ Also includes Leiden, LPA, and hybrid wrappers for ablation studies.
 Source: ported from Home Assistant services/knowledge_service/main.py with
 Home Assistant-specific scaffolding (FastAPI, Neo4j) removed.
 """
-from typing import List, Optional, Dict, Any, Tuple, Set, FrozenSet
+from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple, Union
 from core.hardware import HAS_RAPIDS, to_gpu_graph, get_xp
 import networkx as nx
 import random
@@ -17,10 +17,10 @@ import numpy as np
 
 
 # ---------------------------------------------------------------------------
-# TSC — Triple-Signal Consensus (Vectorized/GPU-Ready)
+# TSC â€” Triple-Signal Consensus (Vectorized/GPU-Ready)
 # ---------------------------------------------------------------------------
 
-_TSC_DENSE_NODE_LIMIT = 5_000  # above this, use sparse path to avoid N×N alloc
+_TSC_DENSE_NODE_LIMIT = 5_000  # above this, use sparse path to avoid NÃ—N alloc
 
 
 def _tsc_sparse(
@@ -31,7 +31,7 @@ def _tsc_sparse(
     cooling: float = 0.95,
     centrality_weights: Optional[dict] = None,
 ) -> List[frozenset]:
-    """TSC for large graphs: O(M·K) per iteration, no N×N dense matrices.
+    """TSC for large graphs: O(MÂ·K) per iteration, no NÃ—N dense matrices.
 
     Uses scipy.sparse for the adjacency matrix and a high-degree-neighbor
     warm-start to collapse K from N to ~N/avg_degree before TSC iterations.
@@ -51,8 +51,8 @@ def _tsc_sparse(
     cent = np.array([centrality_weights.get(v, 1.0) for v in nodes], dtype=np.float32)
 
     # Warm-start: each node takes the label of its highest-degree neighbour.
-    # Reduces K from N to ≤ N/avg_degree (≈7–8K for MetaQA) without any
-    # matrix allocation — just a single CSR pointer scan.
+    # Reduces K from N to â‰¤ N/avg_degree (â‰ˆ7â€“8K for MetaQA) without any
+    # matrix allocation â€” just a single CSR pointer scan.
     labels_c = np.arange(n, dtype=np.int32)
     for i in range(n):
         s, e = A.indptr[i], A.indptr[i + 1]
@@ -72,18 +72,18 @@ def _tsc_sparse(
     for _ in range(max_iter):
         K = int(labels_c.max()) + 1
 
-        # N×K sparse one-hot community assignment
+        # NÃ—K sparse one-hot community assignment
         S = sp.csr_matrix(
             (np.ones(n, np.float32), (np.arange(n, dtype=np.int32), labels_c)),
             shape=(n, K),
         )
 
-        lpa = A.dot(S).toarray()                            # N×K
+        lpa = A.dot(S).toarray()                            # NÃ—K
 
         sum_k_c = np.asarray(S.T.dot(k_deg)).ravel()        # K,
         mod = lpa / m - resolution * np.outer(k_deg, sum_k_c) / (2.0 * m * m)
 
-        flow = A.multiply(cent[:, np.newaxis]).dot(S).toarray()  # N×K
+        flow = A.multiply(cent[:, np.newaxis]).dot(S).toarray()  # NÃ—K
 
         combined = (
             temperature * _norm_rows(lpa)
@@ -223,7 +223,7 @@ def vectorized_tsc(
 
 
 # ---------------------------------------------------------------------------
-# DSCF — Dual-Signal Community Fusion
+# DSCF â€” Dual-Signal Community Fusion
 # ---------------------------------------------------------------------------
 
 def dscf_communities(
@@ -309,7 +309,7 @@ def dscf_communities(
             cur_cid = assignment[v]
             kv      = degree[v]
 
-            # 1. Count neighbor community memberships in a single pass — O(degree)
+            # 1. Count neighbor community memberships in a single pass â€” O(degree)
             neighbor_com_counts: dict = {}
             neighbor_cent_sums: dict = {}  # For TSC signal
             for nb in neighbors:
@@ -324,7 +324,7 @@ def dscf_communities(
             lpa_cid  = max(neighbor_com_counts, key=lambda c: neighbor_com_counts[c])
             lpa_conf = neighbor_com_counts[lpa_cid] / len(neighbors)
 
-            # 3. Modularity signal (best dQ) — O(number of neighbor communities)
+            # 3. Modularity signal (best dQ) â€” O(number of neighbor communities)
             # dQ(v->C) = k_{v,C}/m - resolution * kv * sum_k_C / (2m^2)
             best_mod_cid = cur_cid
             best_dq      = 0.0
@@ -481,7 +481,7 @@ def hierarchical_dscf(
 
 
 # ---------------------------------------------------------------------------
-# Leiden (native reimplementation — GPL-free)
+# Leiden (native reimplementation â€” GPL-free)
 # ---------------------------------------------------------------------------
 
 def leiden_communities(
@@ -625,7 +625,7 @@ def merge_small_communities(
         # Find best neighbor (most shared edges, tie-break: larger community)
         neighbors = adj.get(victim, {})
         if not neighbors:
-            # Isolated — merge into the largest community
+            # Isolated â€” merge into the largest community
             candidates = [(s, c) for c, s in size.items() if find(c) != victim]
             if not candidates:
                 break
@@ -752,7 +752,7 @@ def best_of_n_dscf(
         except Exception as exc:
             import logging
             logging.getLogger("cerebrum.community").warning(
-                "ProcessPoolExecutor failed (%s) — falling back to sequential DSCF", exc
+                "ProcessPoolExecutor failed (%s) â€” falling back to sequential DSCF", exc
             )
             results = [
                 dscf_communities(G, resolution=resolution, max_iter=max_iter)
@@ -797,7 +797,7 @@ def adaptive_resolution_search(
     ----------
     G                  : NetworkX graph
     target_communities : desired number of communities; defaults to sqrt(|V|)
-    tol                : fractional tolerance — early exit when
+    tol                : fractional tolerance â€” early exit when
                          |actual - target| / target <= tol
     max_steps          : maximum binary-search iterations
     min_res            : lower bound on resolution
@@ -806,7 +806,7 @@ def adaptive_resolution_search(
 
     Returns
     -------
-    float — resolution value that best hits the target
+    float â€” resolution value that best hits the target
     """
     if seed is not None:
         random.seed(seed)
@@ -834,9 +834,9 @@ def adaptive_resolution_search(
             return mid
 
         if k < target_communities:
-            lo = mid  # need more communities → increase resolution
+            lo = mid  # need more communities â†’ increase resolution
         else:
-            hi = mid  # too many communities → decrease resolution
+            hi = mid  # too many communities â†’ decrease resolution
 
         best_res = mid
 
@@ -870,7 +870,7 @@ def compute_soft_memberships(
     Parameters
     ----------
     G         : NetworkX graph (directed or undirected)
-    partition : List[frozenset] — output of dscf_communities / leiden_communities
+    partition : List[frozenset] â€” output of dscf_communities / leiden_communities
     self_weight : bonus weight added to the node's own community (relative
                   to total neighbour weight). Default 0.1.
 
@@ -1023,7 +1023,7 @@ class QueryGuidedCommunityMerger:
 
 
 # ---------------------------------------------------------------------------
-# Phase 49 — TSC Explicit Mode
+# Phase 49 â€” TSC Explicit Mode
 # ---------------------------------------------------------------------------
 
 def tsc_communities(
@@ -1040,9 +1040,9 @@ def tsc_communities(
 
     Signals
     -------
-    1. LPA       — local label propagation (neighborhood majority vote)
-    2. Modularity — global modularity gain (dQ)
-    3. Centrality — PageRank-weighted neighbor consensus
+    1. LPA       â€” local label propagation (neighborhood majority vote)
+    2. Modularity â€” global modularity gain (dQ)
+    3. Centrality â€” PageRank-weighted neighbor consensus
 
     Parameters
     ----------
@@ -1075,11 +1075,11 @@ def tsc_quality_metrics(G: nx.Graph, partition: List[frozenset]) -> dict:
     Returns
     -------
     dict with keys:
-      modularity       — Newman-Girvan Q score
-      community_count  — number of communities
-      min_size         — smallest community size
-      max_size         — largest community size
-      mean_size        — average community size
+      modularity       â€” Newman-Girvan Q score
+      community_count  â€” number of communities
+      min_size         â€” smallest community size
+      max_size         â€” largest community size
+      mean_size        â€” average community size
     """
     sizes = sorted(len(c) for c in partition)
     return {

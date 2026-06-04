@@ -15,18 +15,18 @@ Usage:
     print(result.response)          # natural language answer
     print(result.prompt)            # the prompt that was sent (auditable)
 
-Any callable (str) -> str works as llm_fn — the adapter wrappers in
+Any callable (str) -> str works as llm_fn â€” the adapter wrappers in
 llm_bridge/adapters.py are convenience helpers, not requirements.
 """
 from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Callable, List, Dict, Any
+from typing import Any, Callable, Dict, List, Optional
 
 
 # ---------------------------------------------------------------------------
-# GenerationResult — output of generate()
+# GenerationResult â€” output of generate()
 # ---------------------------------------------------------------------------
 
 @dataclass
@@ -56,7 +56,7 @@ class GenerationResult:
 
 
 # ---------------------------------------------------------------------------
-# generate() — the main entry point
+# generate() â€” the main entry point
 # ---------------------------------------------------------------------------
 
 DEFAULT_INSTRUCTION = (
@@ -145,7 +145,7 @@ def generate(
 def to_prompt(
     answers,                # List[Answer] from answer_extractor.extract()
     query: str,
-    adapter=None,           # Optional GraphAdapter — used to look up entity labels
+    adapter=None,           # Optional GraphAdapter â€” used to look up entity labels
     max_paths: int = 5,
     instruction: str = "Summarize what this tells us about the query in natural language.",
 ) -> str:

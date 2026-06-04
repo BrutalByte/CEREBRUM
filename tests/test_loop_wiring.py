@@ -4,10 +4,11 @@ Covers:
 - LoopedBeamTraversal with node_priming
 - AsyncBeamTraversal with node_priming and ValenceEngine
 - ValenceEngine initialization via AutonomousDiscoveryLoop
-- Calibrator→goal wiring (make_goal used, not bare Goal())
+- Calibratorâ†’goal wiring (make_goal used, not bare Goal())
 - SynapticDecayEngine decay with wm=None (already in test_synaptic_decay.py, repeated here
   in context of loop config to confirm no regression)
 """
+from typing import Set
 import asyncio
 import time
 from unittest.mock import MagicMock, patch
@@ -103,7 +104,7 @@ def test_looped_traversal_single_loop_passes_priming():
 
 
 # ---------------------------------------------------------------------------
-# AsyncBeamTraversal — node_priming parity
+# AsyncBeamTraversal â€” node_priming parity
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
@@ -152,7 +153,7 @@ async def test_async_traversal_priming_boosts_score():
 
 
 # ---------------------------------------------------------------------------
-# AsyncBeamTraversal — ValenceEngine parity
+# AsyncBeamTraversal â€” ValenceEngine parity
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
@@ -167,7 +168,7 @@ async def test_async_traversal_valence_penalizes_aversive_edge():
     valence_engine.valence_weight = 1.0
 
     def _get_valence(u, v, rel):
-        # Edge a→b is aversive; a→c is neutral
+        # Edge aâ†’b is aversive; aâ†’c is neutral
         return -0.5 if v == "b" else 0.0
 
     valence_engine.get_valence = _get_valence
@@ -227,7 +228,7 @@ def test_loop_valence_learning_disabled_by_default():
 
 
 # ---------------------------------------------------------------------------
-# Calibrator→goal wiring uses make_goal (no missing id)
+# Calibratorâ†’goal wiring uses make_goal (no missing id)
 # ---------------------------------------------------------------------------
 
 def test_calibrator_goal_push_creates_valid_goal():
@@ -257,7 +258,7 @@ def test_calibrator_goal_push_creates_valid_goal():
     goal_stack = GoalStack()
     loop._goal_stack = goal_stack
 
-    # Simulate the calibrator→goal wiring block directly
+    # Simulate the calibratorâ†’goal wiring block directly
     cid = 0
     goal_desc = f"explore_community_{cid}"
     from core.goal_system import make_goal

@@ -6,7 +6,7 @@ candidate next-hop using CSA attention weights and pruning to beam_width at
 each step. Returns all explored paths for downstream ranking.
 """
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Set, Tuple, Any, TYPE_CHECKING
+from typing import Any, Dict, Generator, List, Optional, Set, TYPE_CHECKING, Tuple, Type
 import heapq
 import logging
 import math
@@ -375,7 +375,7 @@ class BeamTraversal:
         self._partial_paths: List[TraversalPath] = []
         self.quantized = quantized
         self.epistemic_gaps = []  # Phase 150
-        # Phase 151: PenultimateGate — score-gap filter at hop max_hop-1
+        # Phase 151: PenultimateGate â€” score-gap filter at hop max_hop-1
         self.penultimate_decay: float = penultimate_decay
         # Phase 68: Store hormonal overrides for CSA parameters
         self.csa_overrides = {k: v for k, v in kwargs.items() if k in CSA_PARAM_KEYS}
@@ -388,7 +388,7 @@ class BeamTraversal:
         self.penultimate_relation_boost: Dict[str, float] = dict(kwargs.get("penultimate_relation_boost", {}) or {})
         # Phase 180: Initial Relation Boost - applied only at hop 1 to steer the first step
         self.initial_relation_boost: Dict[str, float] = dict(kwargs.get("initial_relation_boost", {}) or {})
-        # Phase 172: Terminal-Anchor hints — {hop: (entity_set, bonus_factor)}
+        # Phase 172: Terminal-Anchor hints â€” {hop: (entity_set, bonus_factor)}
         # At the specified hop, entities in the set get their sort key multiplied by bonus_factor.
         # Does not mutate path scores; only affects pruning order. Safe to apply at any non-terminal hop.
         raw_ah = kwargs.get("anchor_hints", None)
@@ -408,11 +408,11 @@ class BeamTraversal:
         self.gating_sensitivity: float = 0.1
         # Phase 101: Emotional Valence - aversive/appetitive edge scoring
         self._valence_engine: Optional[Any] = None
-        # Phase 215-A: Inhibition of Return — decaying suppression of nodes already
+        # Phase 215-A: Inhibition of Return â€” decaying suppression of nodes already
         # visited by surviving paths in this query.  ior_decay=0 disables IOR.
         self.ior_decay: float = float(kwargs.get("ior_decay", 0.0))
         self._ior_counts: Dict[str, int] = {}
-        # Phase 215-C: Conflict monitoring (ACC analog) — widen beam on high-variance hops
+        # Phase 215-C: Conflict monitoring (ACC analog) â€” widen beam on high-variance hops
         from core.frontal_engine import FrontalEngine as _FrontalEngine
         self._frontal_engine: Optional[_FrontalEngine] = kwargs.get("frontal_engine", None)
 
@@ -653,7 +653,7 @@ class BeamTraversal:
                     _cwb_candidate is not None
                     and any("compute_weights_batch" in cls.__dict__ for cls in type(self.csa).__mro__)
                 ) else None
-                # Phase 189+: vectorised logit scoring — one numpy matmul per batch
+                # Phase 189+: vectorised logit scoring â€” one numpy matmul per batch
                 # instead of N individual Python scalar chains.
                 _slb_candidate = getattr(self.csa, "score_logits_batch", None)
                 _slb = _slb_candidate if (
@@ -759,7 +759,7 @@ class BeamTraversal:
                                     tb = self.terminal_relation_boost.get(rel_eff, 1.0)
                                     if tb > 1.0:
                                         w *= tb ** 0.5  # penultimate cascade
-                        # Phase 180: Initial Relation Boost — steer first hop along detected r1
+                        # Phase 180: Initial Relation Boost â€” steer first hop along detected r1
                         if self.initial_relation_boost and hop == 1:
                             ib = self.initial_relation_boost.get(rel_eff, 0.1)
                             w *= ib
@@ -895,7 +895,7 @@ class BeamTraversal:
                 for _p in beam:
                     self._ior_counts[_p.tail] = self._ior_counts.get(_p.tail, 0) + 1
 
-            # Phase 215-C: Conflict monitoring — widen beam for next hop if needed
+            # Phase 215-C: Conflict monitoring â€” widen beam for next hop if needed
             if self._frontal_engine is not None and hop < self.max_hop:
                 _conflict = self._frontal_engine.detect_conflict(beam, hop_bw)
                 _next_bw = self._frontal_engine.adaptive_beam_width(hop_bw, _conflict)
@@ -1012,7 +1012,7 @@ class BeamTraversal:
                     "hop": hop
                 })
 
-        # Phase 151: PenultimateGate — score-gap filter at the penultimate hop.
+        # Phase 151: PenultimateGate â€” score-gap filter at the penultimate hop.
         # Drops candidates whose score falls below decay_factor * best_score,
         # preventing weak middle-hop paths from polluting the final hop expansion.
         # Only fires at hop == max_hop - 1 (not terminal, not earlier hops).
@@ -1051,9 +1051,9 @@ class BeamTraversal:
                     return heapq.nlargest(hop_bw, candidates, key=lambda p: p.q_score)
                 return sorted(candidates, key=lambda p: p.q_score, reverse=True)
             else:
-                # Phase 172: Terminal-Anchor sort key — applies bonus to anchored entities
+                # Phase 172: Terminal-Anchor sort key â€” applies bonus to anchored entities
                 # at the specified non-terminal hop without mutating path scores.
-                # Phase 215-A: IOR suppression — nodes visited more times score lower.
+                # Phase 215-A: IOR suppression â€” nodes visited more times score lower.
                 _ah = self._anchor_hints.get(hop) if (hop < self.max_hop and self._anchor_hints) else None
                 _ior = self._ior_counts if self.ior_decay > 0.0 else None
                 _ior_d = self.ior_decay

@@ -1,9 +1,9 @@
 """
-UEToolkitClient — HTTP wrapper for the ue-llm-toolkit plugin (Phase 94).
+UEToolkitClient â€” HTTP wrapper for the ue-llm-toolkit plugin (Phase 94).
 
 Provides a sync, gracefully-degrading interface to the ue-llm-toolkit HTTP
 server (default localhost:3000).  All methods return False/None on failure so
-callers never need try/except — the toolkit is treated as optional.
+callers never need try/except â€” the toolkit is treated as optional.
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import json
 import logging
 import urllib.error
 import urllib.request
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Type
 
 logger = logging.getLogger("cerebrum.ue_toolkit")
 
@@ -61,7 +61,7 @@ class UEToolkitClient:
         except urllib.error.HTTPError as e:
             logger.warning("UEToolkit %s HTTP %d: %s", tool, e.code, e.reason)
         except urllib.error.URLError as e:
-            logger.warning("UEToolkit unreachable (%s) — %s", tool, e.reason)
+            logger.warning("UEToolkit unreachable (%s) â€” %s", tool, e.reason)
         except Exception as e:
             logger.warning("UEToolkit %s error: %s", tool, e)
         return None
