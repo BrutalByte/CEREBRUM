@@ -51,7 +51,7 @@ If no type-checker is configured, state that explicitly instead of claiming succ
 
 **CEREBRUM** is a **Community-Structured Graph Attention** framework for Knowledge Graph reasoning. It performs multi-hop KG traversal using Transformer-like structural principles without LLMs or training data. Every answer is a verified path through graph edges.
 
-**v2.66.0 (Phase 204 COMPLETE)** — 2236 passed, 1 skipped, 3 errors (UI server tests require running server).
+**v2.73.0 (Phase 223 COMPLETE)** — 2269 passed, 4 skipped.
 
 ### System Architecture Names
 | Name | Role |
@@ -342,5 +342,5 @@ See [`docs/DOC_INDEX.md`](docs/DOC_INDEX.md) for the full documentation index:
 - pytest is configured with `asyncio_mode = "auto"` (see `pyproject.toml`)
 - Toy graph fixture at `tests/fixtures/toy_graph.csv` is the canonical small test graph (21 nodes, 30 edges)
 - Synthetic graph helpers (`make_two_cliques()`, etc.) live in `tests/` for unit tests that don't need the CSV fixture
-- **2236 passed, 1 skipped, 3 errors** as of v2.65.1 / Phase 203 (3 errors are UI server tests that require a running server — not code failures)
+- **2269 passed, 4 skipped** as of v2.73.0 / Phase 223
 - Type checker: no mypy/ruff configured as hard gate; run `python -m pytest tests/` as verification

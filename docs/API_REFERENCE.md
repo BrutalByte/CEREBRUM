@@ -1,8 +1,8 @@
 # CEREBRUM REST API Reference
 
 **Base URL**: `http://localhost:8200`
-**API Version**: v2.52.0
-**Status**: v2.52.0 (Phase 172 (STRB) COMPLETE)
+**API Version**: v2.73.0
+**Status**: v2.73.0 (Phase 223 COMPLETE)
 **Authentication**: JWT Bearer token (all endpoints except `/health`)
 
 ---
@@ -21,7 +21,7 @@ While the REST API provides remote access, the primary programmatic entry point 
 
 ## Core Advancements (Phases 166 & 167)
 
-### GraphProfiler (Phase 172)
+### GraphProfiler (Phase 223)
 Automatic Query Strategy Selection.
 - **Mechanism**: Profiles graph topology at build time to classify the "Regime" (Hub-Homogeneous, Typed-Heterogeneous, or Mixed).
 - **Auto-Config**: Automatically sets `hop_expand`, `trb_auto`, and `anchor_bonus` per-query based on the detected regime.
@@ -1111,4 +1111,4 @@ checkpoint = client.get("/params").json()
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 9, 2026 for version v2.52.0
+**Reviewed on**: June 4, 2026 for version v2.73.0

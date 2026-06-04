@@ -211,7 +211,7 @@ A one-pass mean neighbourhood aggregation step applied after base entity encodin
 ## H
 
 **H@10 (Hits at 10)**
-The primary evaluation metric for CEREBRUM: the fraction of test queries where the correct answer appears in the top-10 ranked paths. CEREBRUM zero-shot benchmarks: MetaQA 3-hop = 0.73+ (Phase 172).
+The primary evaluation metric for CEREBRUM: the fraction of test queries where the correct answer appears in the top-10 ranked paths. CEREBRUM zero-shot benchmarks: MetaQA 3-hop = 0.73+ (Phase 223).
 
 **H1SE (Hop-1 Intermediate Seed Expansion)**
 A Phase 137 innovation to solve hub competition. Instead of a single global beam, each hop-1 entity from the seed(s) receives its own independent deep traversal. This prevents popular hubs from crowding out alternative reasoning branches early in the search.
@@ -272,7 +272,7 @@ The Phase 79 integration between `AutonomousDiscoveryLoop` and `ProvenanceLedger
 An optimization in `STDPDiscretizer` that applies weight decay lazily (only when a pair is accessed) rather than on every clock tick, reducing time complexity from $O(N)$ to $O(1)$ per event. See also: STDP.
 
 **Leiden Algorithm (Native)**
-CEREBRUM's GPL-free native reimplementation of the Leiden community detection algorithm in `core/leiden_native.py`. Replaces the `igraph`/`leidenalg` external dependencies removed in v2.52.0.
+CEREBRUM's GPL-free native reimplementation of the Leiden community detection algorithm in `core/leiden_native.py`. Replaces the `igraph`/`leidenalg` external dependencies removed in v2.73.0.
 
 **LPA (Label Propagation Algorithm)**
 A local community detection method where each node adopts the most common community label among its neighbors. Represents the "local topology signal" in DSCF. Fast ($O(E)$) but can produce poor modularity. Combined with modularity gain in DSCF to achieve both speed and quality.
@@ -380,16 +380,16 @@ An append-only NDJSON file (`data/cerebrum/query_log.ndjson` by default) that re
 The functional name for the "Dopamine" scalar in the `ChemicalModulator` (Phase 68). Tracks "Reward Prediction Error" (RPE) derived from user feedback (`POST /feedback`). Reinforcement surges amplify the semantic ($\alpha$) and edge-type ($\gamma$) weights, reinforcing successful relation sequences in the reasoner's attention formula.
 
 **REM Cycle (Rapid Edge Maintenance)**
-Background metacognitive maintenance loop (Phase 172). Runs on three schedules: Hot Path (10 min, TTL edge pruning), Cold Path (1 hour, insight validation + decay), REM Path (daily/triggered, full DSCF re-optimization + Shortcut Synthesis). Merges Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 172) into a unified maintenance cycle.
+Background metacognitive maintenance loop (Phase 223). Runs on three schedules: Hot Path (10 min, TTL edge pruning), Cold Path (1 hour, insight validation + decay), REM Path (daily/triggered, full DSCF re-optimization + Shortcut Synthesis). Merges Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 223) into a unified maintenance cycle.
 
 **Hebbian Replay (Phase 96)**
 A component of the REM Cycle. During idle cycles, the system replays high-quality reasoning traces from `WorkingMemory`. It identifies successful reasoning paths and applies **Hebbian weight boosts** to the edges on those paths, strengthening the "synapses" of successful logic.
 
-**Shortcut Synthesis (Phase 172)**
+**Shortcut Synthesis (Phase 223)**
 A component of the REM Cycle. Analyzes the `QueryLog` to identify patterns of frequent multi-hop reasoning. If the system frequently follows a path A → B → C, it materializes a direct "reflexive" shortcut A → C (tagged as `REM_SHORTCUT`), reducing hop count and reasoning latency for frequently-asked questions.
 
 **ConsolidationEngine**
-The system component (Phase 172) that manages the unified REM Cycle, coordinating both Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 172). Triggered by the `AutonomousDiscoveryLoop` or manually via `/rem/run`.
+The system component (Phase 223) that manages the unified REM Cycle, coordinating both Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 223). Triggered by the `AutonomousDiscoveryLoop` or manually via `/rem/run`.
  Inspired by biological sleep-cycle memory consolidation.
 
 **REM Engine**
@@ -470,7 +470,7 @@ The probabilistic path selection strategy in Bayesian Beam Search: for each cand
 The time-dependent reduction in edge weight for edges with `valid_until` timestamps: $w_{temp}(t) = w_0 \cdot \exp(-\lambda \cdot \max(0, t - t_{until}))$. Decay rate $\lambda$ is configurable per relation type (Phase 17 feature).
 
 **TAB (Terminal-Anchor Boost)**
-Also known as "Terminal-Anchor Hints" (Phase 172). A reasoning optimization for 3+ hop queries in heterogeneous graphs. It applies a score bonus to the penultimate-hop entities that are known sources of the terminal relation (the "anchor set"). This biases the search toward paths that can directly reach the target entity type in the final hop, significantly improving 3-hop recall.
+Also known as "Terminal-Anchor Hints" (Phase 223). A reasoning optimization for 3+ hop queries in heterogeneous graphs. It applies a score bonus to the penultimate-hop entities that are known sources of the terminal relation (the "anchor set"). This biases the search toward paths that can directly reach the target entity type in the final hop, significantly improving 3-hop recall.
 
 **TAB Anchor Set**
 The set of entities in a KG that serve as sources for a specific relation type. For example, in a "Compound-treats-Disease" relation, the anchor set is all Compound entities that have a "treats" edge. TAB uses these sets to guide penultimate-hop expansion.
@@ -533,4 +533,4 @@ The mechanism for synchronizing community-map updates across a distributed CEREB
 An interface bridge that allows the CEREBRUM Brain Server to animate and communicate with Unreal Engine 5 (UE5) simulations in real-time, mapping neural telemetry events to 3D scene actions.
 
 ---
-**Reviewed on**: May 9, 2026 for version v2.52.0
+**Reviewed on**: June 4, 2026 for version v2.73.0

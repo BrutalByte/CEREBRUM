@@ -1,72 +1,55 @@
 # ROADMAP_FUTURE.md
-## Future Vision: Hybrid-Memory Architecture & Autonomous Operation (Post-Phase 172)
+## Post-Phase 223 Research Directions
 
-This roadmap defines the transition from a purely RAM-resident reasoning engine to a **Hybrid-Memory Architecture**, allowing CEREBRUM to operate on graphs of arbitrary size while maintaining sub-millisecond reasoning performance for hot reasoning paths.
-
----
-
-## 1. Hybrid-Memory Implementation Plan
-
-### Phase 168: Engine Cap Resource Controller — COMPLETE (v2.52.0)
--   **Resource Monitoring**: Integrated `MemoryGovernor` into Hardware Abstraction Layer.
--   **CLI Limits**: Added `--max-ram-gb` and `--max-vram-gb` flags to all reasoning commands.
--   **OOM Prevention**: `ResourceGovernor` now enforces absolute RSS limits in real-time.
-
-### Phase 169: Mmap-Backed Edge Layer & Auto-Spill — COMPLETE (v2.52.0)
--   **Binary Topology**: Implemented A-File (Adjacency) and E-Block (Edge) binary formats.
--   **Auto-Offload**: `CerebrumGraph` automatically serializes and spills to disk when RAM thresholds are breached.
--   **Zero-Copy Loading**: Memory-mapped binary blocks providing high-efficiency retrieval.
-
-### Phase 170: Holographic Fragment Storage — COMPLETE (v2.52.0)
--   **Community Fragmentation**: Binary topology partitioned by community ID (`comm_N.a`).
--   **On-Demand Mounting**: Only active reasoning communities are mapped into process memory.
--   **Fragment Cache**: LRU-style management of open community handles.
-
-### Phase 171: NVME-Optimized Vectorized Mmap Architecture — COMPLETE (v2.52.0)
--   **NumPy Zero-Copy**: Replaced `mmap.mmap` with structured `numpy.memmap` for zero-overhead array indexing.
--   **Parallel Fetch**: Implemented `get_neighbors_batch` interface for deep-queue NVME access.
--   **Memory Efficiency**: Reduced overhead of disk-resident reasoning from 200x to <10x.
-
-### Phase 172: Vectorized Traversal Integration — COMPLETE (v2.52.0)
--   **Batch Reasoning**: Refactored `BeamTraversal` to expand the entire beam frontier in a single call.
--   **IO Parallelism**: Exploited NVME high-bandwidth read capabilities via concurrent neighbor block resolution.
+**Current state**: v2.73.0, Phase 223 COMPLETE — 2,269 tests passing, 4 skipped.
+The self-awareness loop is fully closed: CEREBRUM can now detect uncertainty, attempt recovery, calibrate its own confidence, punish overconfident parameters, and adapt its curiosity level — all without external feedback.
 
 ---
 
-## 2. Studio & Federated Reasoning (Phases 173–178)
+## 1. Known Open Problems
 
-### Phase 173: Bug Fixes & API Hardening — COMPLETE (v2.52.0)
--   **NameError Fix**: Resolved import-time `NameError` in traversal.
--   **Pydantic Schema Conflicts**: Resolved `PathNode`/`PathResult` schema conflicts in `api/schemas.py`.
--   **API Server Init**: Fixed `FastAPI` app initialization order.
+### 1.1 Cross-Type Semantic Ceiling
+**Root cause**: Sentence-transformer embeddings hurt cross-type 3-hop reasoning (−30 pp H@1 on MetaQA 3-hop) while helping typed 2-hop queries (+10 pp). The beam confuses semantic similarity of query text with entity type compatibility.
 
-### Phase 174: NVMe SSD Management UI — COMPLETE (v2.53.0)
--   **Hardware Refactor**: `core/hardware.py` streamlined; removed dead code, improved clarity.
--   **Settings Tab**: Studio gains a dedicated NVMe SSD management tab in `ui/studio.py`.
--   **Runtime Configuration**: Configure drive paths and spill thresholds from the UI without restarts.
+**Direction**: A type-aware embedding layer that decouples entity-type compatibility from semantic similarity. Possible approaches: type-conditioned attention masking in STRB, explicit entity-type priors in `CSAEngine`, or a lightweight type-classification head trained from graph schema only (no labeled QA pairs — maintaining the training-free principle).
 
-### Phase 175: Studio Hot-Swap & Adaptive Control — COMPLETE (v2.53.0)
--   **Live Graph Hot-Swap**: Load a new graph into the running server without restarting.
--   **Adaptive Toggle**: Enable/disable H1SE, TAB, and STRB at runtime from the settings panel.
+### 1.2 Ranking Gap vs. Supervised Baselines
+CEREBRUM 3-hop H@1 = 60.2% (zero training) vs. NSM 98.0% (supervised). The gap is predominantly a **ranking problem**, not a coverage problem — H@10 = 89.4% means the correct answer is in the beam. Improving H@1 without training labels requires better final-hop disambiguation.
 
-### Phase 176: FederatedGraphRegistry — COMPLETE (v2.53.0)
--   **Cross-Domain Registry**: `core/federated_registry.py` manages multiple independent graph backends.
--   **Alias Resolution**: `resolve_alias()` bridges entity IDs across domain boundaries during beam traversal.
--   **Batch Fallback**: `BeamTraversal` uses `get_neighbors_batch` when available; falls back to per-node `get_neighbors` on all other adapters, preserving backward compatibility.
+**Direction**: Contrastive path reranking using only graph structure (degree, community membership, relation path frequency) rather than learned weights. `CounterfactualReranker` (Phase 126) already exists; deeper integration at the final-hop level is the next step.
 
-### Phase 177: Continuous Improvement Trifecta — COMPLETE (v2.53.0)
--   **Autonomous Discovery**: Auto-traversal of federated graphs to surface missing links.
--   **Self-Correction**: `ProvenanceLedger`-backed rollback when traversal confidence drops below threshold.
--   **Evolutionary Tuning**: Adaptive CSA parameter backpropagation over session history.
+### 1.3 WebQSP Performance
+CEREBRUM has not been formally benchmarked against WebQSP (Freebase-backed, CVT mediator nodes, free-text questions). The `CVT passthrough` option exists but has not been calibrated.
 
-### Phase 178: DON'T PANIC Emergency Snapshot — COMPLETE (v2.53.0)
--   **Atomic Snapshot**: `StudioEngine.emergency_snapshot()` persists all reasoning state to `panics/snapshot_<ts>/`.
--   **Recoverable State**: Saves Engram JSON, node/edge ID maps, community assignments, and active CSA parameters.
--   **Zero-Loss Recovery**: Enables post-mortem analysis and full state restoration after crashes.
+**Direction**: Full WebQSP evaluation harness with CVT flattening; compare against EPERM (88.8% supervised) baseline.
 
 ---
 
-## 3. Resource-Aware Reasoning (The Tuning Matrix)
+## 2. Architecture Extensions
+
+### 2.1 Persistent Calibration History
+`PlattCalibration` (Phase 222) now tracks ECE and drift. A natural extension is logging ECE history across sessions to visualize calibration stability over the lifetime of a deployed graph.
+
+### 2.2 Cross-KB EngramTransfer (Phase 219) — Full Validation
+`EngramTransferRegistry` re-encodes patterns across KB vocabulary changes. A rigorous benchmark measuring transfer efficiency (how many queries benefit, how much accuracy is preserved) has not been done.
+
+### 2.3 GPU-Accelerated Community Detection
+`CommunityEngine` runs DSCF/TSC on CPU. For graphs >5M edges, GPU-resident spectral methods (cuGraph) would reduce build time from minutes to seconds.
+
+---
+
+## 3. Publication Pipeline
+
+Six arXiv deliverables are in progress (see `CEREBRUM_PUBLICATION_GAMEPLAN.md`). Priority order:
+
+1. **Technical Report** (`research/papers/00-technical-report/`) — full system spec, v2.73.0 draft ready
+2. **Flagship Paper** (`research/papers/01-flagship/`) — training-free KGQA, v2.73.0 draft ready
+3. **SDRB/PI Paper** (`research/papers/06-sdrb/`) — Semantic Terminal Relation Boost, v2.73.0 draft ready
+4. Papers A–D (community detection, graph plasticity, federated, production) — planned
+
+---
+
+## 4. Resource-Aware Deployment Modes
 
 | Mode | Memory Budget | Reasoning Strategy | Target Hardware |
 |---|---|---|---|
@@ -74,5 +57,9 @@ This roadmap defines the transition from a purely RAM-resident reasoning engine 
 | **BALANCED** | Limited (Configurable) | Hybrid (Pinned Hot-Nodes + Mmap) | High-End Workstations |
 | **ECONOMY** | Minimal | Mmap-First (Disk-Backed) | Laptops / Edge / Cloud-Free Tier |
 
+Hybrid-memory architecture (Phases 168-172) is complete and production-ready. Mode selection is via `--max-ram-gb` / `--max-vram-gb` CLI flags.
+
 ---
+
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
+**Last updated**: June 4, 2026 for v2.73.0

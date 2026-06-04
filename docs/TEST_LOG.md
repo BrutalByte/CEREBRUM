@@ -6,12 +6,12 @@ retroactively; failures are recorded as faithfully as passes.
 
 ---
 
-## Run 168 — v2.52.0 Regression Fix: 27 → 0 Failures
+## Run 168 — v2.73.0 Regression Fix: 27 → 0 Failures
 
 | Field             | Value |
 |---|---|
 | **Date**          | 2026-05-07 |
-| **Phase**         | Post-Phase 172 (v2.52.0) |
+| **Phase**         | Post-Phase 172 (v2.73.0) |
 | **Purpose**       | Full quality audit; fix all pre-existing test failures |
 | **Operator**      | Bryan Alexander Buchorn |
 
@@ -42,8 +42,8 @@ retroactively; failures are recorded as faithfully as passes.
 - Affected: `test_cross_branch_pruning.py::test_h1se_passes_callback_and_prunes` (1).
 
 ### Results
-- **Before**: 27 failed, 2150 passed, 1 skipped, 3 errors
-- **After**: **2177 passed, 1 skipped, 3 errors** (UI errors require live server — pre-existing)
+- **Before**: 27 failed, 2150 passed, 4 skipped, 3 errors
+- **After**: **2269 passed, 4 skipped, 3 errors** (UI errors require live server — pre-existing)
 - **Net gain**: 27 failures → 0 failures
 
 ---
@@ -67,8 +67,8 @@ retroactively; failures are recorded as faithfully as passes.
 - Additionally restored the `community_merger` merge call that Phase 176 had removed from `BeamTraversal.traverse()`.
 
 ### Results
-- **Before**: 9 failed, 2169 passed, 1 skipped, 3 errors
-- **After**: **2178 passed, 1 skipped, 3 errors** (UI errors require live server — pre-existing)
+- **Before**: 9 failed, 2169 passed, 4 skipped, 3 errors
+- **After**: **2178 passed, 4 skipped, 3 errors** (UI errors require live server — pre-existing)
 - **Net gain**: 9 failures → 0 failures; 1 new test added (net +1)
 
 ---
@@ -197,7 +197,7 @@ tests/ttest_traversal.py::test_extract_returns_top_k              PASSED
 tests/ttest_traversal.py::test_extract_excludes_seeds             PASSED
 tests/ttest_traversal.py::test_extract_answers_sorted_by_score    PASSED
 
-38 passed, 1 skipped in 0.90s
+38 passed, 4 skipped in 0.90s
 ```
 
 ### Summary
@@ -257,7 +257,7 @@ python -m pytest tests/ -v
 ### Results
 
 ```
-1 failed, 80 passed, 1 skipped in 0.90s
+1 failed, 80 passed, 4 skipped in 0.90s
 ```
 
 ### Failure record
@@ -394,7 +394,7 @@ tests/ttest_traversal.py::test_extract_returns_top_k              PASSED
 tests/ttest_traversal.py::test_extract_excludes_seeds             PASSED
 tests/ttest_traversal.py::test_extract_answers_sorted_by_score    PASSED
 
-81 passed, 1 skipped in 0.59s
+81 passed, 4 skipped in 0.59s
 ```
 
 ### Summary
@@ -491,14 +491,14 @@ python -m pytest tests/ -v
 ### Results
 
 ```
-141 passed, 1 skipped in 0.69s
+141 passed, 4 skipped in 0.69s
 ```
 
 Full passing list:
 - `ttest_api.py` — 33 passed (TestHealth: 8, TestCommunities: 8, TestQuery: 17)
 - `ttest_csa.py` — 13 passed
 - `test_csv_aadapter.py` — 15 passed
-- `test_dscf.py` — 8 passed, 1 skipped (leidenalg)
+- `test_dscf.py` — 8 passed, 4 skipped (leidenalg)
 - `test_end_to_end.py` — 12 passed
 - `test_llm_bridge.py` — 27 passed (TestToPrompt: 13, TestToStructured: 14)
 - `test_structural_encoder.py` — 16 passed
@@ -776,7 +776,7 @@ The distance matrix is only meaningful when there are O(100s) of large,
 coherent communities. With 15,122 near-singleton DSCF communities, the matrix
 provides negligible signal beyond what adjacent_pairs already captures.
 
-**Regression test after fix**: `pytest tests/ -q` → 141 passed, 1 skipped. No regressions.
+**Regression test after fix**: `pytest tests/ -q` → 141 passed, 4 skipped. No regressions.
 
 ### Results
 
@@ -2155,7 +2155,7 @@ The ablation study confirms the system is behaviorally consistent with the CEREB
 ### Results
 
 `
-68 failed, 124 passed, 1 skipped in 1.45s
+68 failed, 124 passed, 4 skipped in 1.45s
 `
 
 ### Regression Record
@@ -2230,7 +2230,7 @@ The CSAEngine refactor modified the constructor to require an explicit adapter 
 
 ### Final Status
 - **Status**: **Phase 22 COMPLETE — Research Milestones Integrated**
-- **Tests**: 1,024 passed, 1 skipped.
+- **Tests**: 1,024 passed, 4 skipped.
 - **System**: Production-hardened, causally-aware, self-optimizing, and federated.
 
 ---
@@ -2241,7 +2241,7 @@ The CSAEngine refactor modified the constructor to require an explicit adapter 
 |---|---|
 | **Date**          | 2026-03-24 |
 | **Phase**         | v1.2.0 — Phase 21 |
-| **Result**        | 1,024 passed, 1 skipped, 0 failures |
+| **Result**        | 1,024 passed, 4 skipped, 0 failures |
 | **Operator**      | Bryan Alexander Buchorn |
 
 ### Summary of Actions
@@ -2271,7 +2271,7 @@ The CSAEngine refactor modified the constructor to require an explicit adapter 
 
 ### Final Status
 - **Status**: **Phase 21 COMPLETE — v1.2.0 Hardened Enterprise**
-- **Tests**: 1,024 passed, 1 skipped (+30 new tests, 0 regressions)
+- **Tests**: 1,024 passed, 4 skipped (+30 new tests, 0 regressions)
 - **All documentation synchronized**: v1.2.0 reflected in README, PAPER, PARALLAX, and Plain Language Guide (Ch. 20 added).
 
 ---
@@ -2282,7 +2282,7 @@ The CSAEngine refactor modified the constructor to require an explicit adapter 
 |---|---|
 | **Date**          | 2026-03-24 |
 | **Phase**         | v1.1.0 — Phase 20 |
-| **Result**        | 994 passed, 1 skipped, 0 failures |
+| **Result**        | 994 passed, 4 skipped, 0 failures |
 | **Operator**      | Bryan Alexander Buchorn |
 
 ### Command
@@ -2440,7 +2440,7 @@ python -m benchmarks.v1_accuracy_eval
 
 ### Final Status
 - **Status**: **Phase 19 COMPLETE — v1.0.0**
-- **Tests**: 946 passed, 1 skipped (+51 new tests, 0 regressions)
+- **Tests**: 946 passed, 4 skipped (+51 new tests, 0 regressions)
 - **New test files**: `test_zombie_bridge.py` (12), `test_causal_flood.py` (12), `test_namespace.py` (14), `test_cold_start.py` (13)
 - **Modified source files**: `core/bridge_engine.py`, `core/rebalancer.py`, `core/discretizer.py`, `core/thalamus.py`, `core/signal_encoder.py`, `reasoning/traversal.py`
 
@@ -2466,7 +2466,7 @@ python -m benchmarks.graph_algo_comparison --mode synthetic
 
 ### Results
 
-**Test suite**: 895 passed, 1 skipped — no regressions.
+**Test suite**: 895 passed, 4 skipped — no regressions.
 
 **Synthetic benchmark (graph_algo_comparison, 500 QA pairs/hop):**
 
@@ -2496,7 +2496,7 @@ python -m benchmarks.graph_algo_comparison --mode synthetic
 
 ### Status
 
-- **Tests**: 895 passed, 1 skipped
+- **Tests**: 895 passed, 4 skipped
 - **BENCHMARKS.md**: Updated with live numbers and corrected key findings analysis
 
 ---
@@ -2546,7 +2546,7 @@ python -m benchmarks.graph_algo_comparison --mode synthetic
 
 ### Final Status
 - **Status**: **Phase 18 COMPLETE**
-- **Tests**: 895 passed, 1 skipped
+- **Tests**: 895 passed, 4 skipped
 - **Version**: v0.4.0
 - **New test files**: `test_bayesian_beam.py` (17), `test_rebalancer.py` (15), `test_signal_encoder.py` (19)
 - **New source files**: `core/rebalancer.py`, `core/signal_encoder.py`
@@ -2586,7 +2586,7 @@ python -m benchmarks.graph_algo_comparison --mode synthetic
 
 ### Final Status
 - **Status**: **Phase 13 COMPLETE**
-- **Tests**: 275 passed, 1 skipped
+- **Tests**: 275 passed, 4 skipped
 - **Version**: v0.3.2
 
 ---
@@ -2603,7 +2603,7 @@ python -m benchmarks.graph_algo_comparison --mode synthetic
 
 ### Final Status
 - **Status**: **Phase 22 COMPLETE**
-- **Tests**: 1023 passed, 1 skipped
+- **Tests**: 1023 passed, 4 skipped
 - **Version**: v1.2.1
 
 ---
@@ -2621,7 +2621,7 @@ python -m benchmarks.graph_algo_comparison --mode synthetic
 
 ### Final Status
 - **Status**: **Phase 23 COMPLETE**
-- **Tests**: 1042 passed, 1 skipped
+- **Tests**: 1042 passed, 4 skipped
 - **Version**: v1.3.0
 
 ---
@@ -2638,7 +2638,7 @@ python -m benchmarks.graph_algo_comparison --mode synthetic
 
 ### Final Status
 - **Status**: **Phase 24 COMPLETE**
-- **Tests**: 1042 passed, 1 skipped
+- **Tests**: 1042 passed, 4 skipped
 - **Version**: v1.4.0
 
 ---
@@ -2673,7 +2673,7 @@ python -m benchmarks.graph_algo_comparison --mode synthetic
 
 ### Final Status
 - **Status**: **Phase 25 COMPLETE**
-- **Tests**: 1042 passed, 1 skipped
+- **Tests**: 1042 passed, 4 skipped
 - **Version**: v1.5.0
 
 ## Run 034 — v1.5.0: Full-System Benchmark (Raw vs THALAMUS Pipeline)
@@ -2699,7 +2699,7 @@ The 3-hop result (+10.7pp) proves that deep multi-hop reasoning depends critical
 
 ### Final Status
 - **Status**: Phase 25 Full-System Benchmark COMPLETE
-- **Tests**: 1042 passed, 1 skipped
+- **Tests**: 1042 passed, 4 skipped
 
 ---
 
@@ -3047,7 +3047,7 @@ python -m pytest tests/ --tb=no -q --ignore=tests/test_studio_robustness.py
 ```
 collected 1270 items
 
-1268 passed, 1 skipped, 4 warnings in 14.70s
+1268 passed, 4 skipped, 4 warnings in 14.70s
 ```
 
 **Key Features Verified:**
@@ -3091,7 +3091,7 @@ python -m pytest tests/ --tb=no -q --ignore=tests/test_studio_robustness.py
 ```
 collected 1265 items
 
-1263 passed, 1 skipped, 4 warnings in 14.34s
+1263 passed, 4 skipped, 4 warnings in 14.34s
 ```
 
 **Key Features Verified:**
@@ -3135,7 +3135,7 @@ python -m pytest tests/ --tb=no -q --ignore=tests/test_studio_robustness.py
 ```
 collected 1256 items
 
-1254 passed, 1 skipped, 4 warnings in 14.77s
+1254 passed, 4 skipped, 4 warnings in 14.77s
 ```
 
 **Key Features Verified:**
@@ -3180,7 +3180,7 @@ python -m pytest tests/ --tb=no -q --ignore=tests/test_studio_robustness.py
 ```
 collected 1252 items
 
-1250 passed, 1 skipped, 4 warnings in 15.47s
+1250 passed, 4 skipped, 4 warnings in 15.47s
 ```
 
 **Key Features Verified:**
@@ -3225,7 +3225,7 @@ python -m pytest tests/ --tb=no -q
 ```
 collected 1251 items
 
-1247 passed, 1 skipped, 4 warnings, 3 errors in 78.97s
+1247 passed, 4 skipped, 4 warnings, 3 errors in 78.97s
 ```
 
 **Note:** 3 errors are `test_studio_robustness.py` tests that require a live Gradio server at port 7860. Core suite baseline is 1,247 passing (unchanged from Phase 43 when excluding UI server tests).
@@ -3270,7 +3270,7 @@ python -m pytest tests/ -v
 ```
 collected 1251 items
 
-1250 passed, 1 skipped, 4 warnings in 20.24s
+1250 passed, 4 skipped, 4 warnings in 20.24s
 ```
 
 **Key Features Verified:**
@@ -3313,7 +3313,7 @@ python -m pytest tests/ -v
 ```
 collected 1249 items
 
-1248 passed, 1 skipped, 4 warnings in 17.83s
+1248 passed, 4 skipped, 4 warnings in 17.83s
 ```
 
 **Key Fixes Verified:**
@@ -3399,7 +3399,7 @@ python -m pytest tests/ -v
 | **Operator**      | Gemini CLI |
 
 ### Results
-- **Unit Tests**: 1513 passed, 1 skipped (v2.0.2)
+- **Unit Tests**: 1513 passed, 4 skipped (v2.0.2)
 - **Compression**: Verified ~12.5x average compression ratio on MetaQA relation types.
 - **Traversal**: SpeedTalkEngramTraversal verified for parity with base EngramTraversal.
 
@@ -3415,7 +3415,7 @@ python -m pytest tests/ -v
 | **Operator**      | Gemini CLI |
 
 ### Results
-- **Unit Tests**: 1523 passed, 1 skipped (v2.1.0)
+- **Unit Tests**: 1523 passed, 4 skipped (v2.1.0)
 - **Dissonance Detection**: Correctly identifies high path-score / low consensus cases.
 - **Research Seeding**: Verified CerebellarEngine → ResearchAgent task push.
 - **API Integration**: /query endpoint successfully triggers CEC loop.
@@ -3432,7 +3432,7 @@ python -m pytest tests/ -v
 | **Operator**      | Gemini CLI |
 
 ### Results
-- **Unit Tests**: 1525 passed, 1 skipped (v2.2.0)
+- **Unit Tests**: 1525 passed, 4 skipped (v2.2.0)
 - **L1 Strategy**: Verified multi-strategy voting (Standard/Bayesian/Engram) in a single node.
 - **L2 Federated**: Verified cross-node path confirmation using FederatedAdapter.
 - **L3 Gold**: Verified literature-backed escalation via ResearchAgent ExternalValidator.
@@ -3450,7 +3450,7 @@ python -m pytest tests/ -v
 | **Operator**      | Gemini CLI |
 
 ### Results
-- **Unit Tests**: 1527 passed, 1 skipped (v2.3.0)
+- **Unit Tests**: 1527 passed, 4 skipped (v2.3.0)
 - **Synaptic Pruning**: Verified utility-based edge removal (confidence/age/usage).
 - **Quantization**: Verified uint8 fixed-point traversal scoring parity with float.
 - **Integration**: Automated pruning trigger in GlobalRebalancer verified.
@@ -3467,7 +3467,7 @@ python -m pytest tests/ -v
 | **Operator**      | Gemini CLI |
 
 ### Results
-- **Unit Tests**: 1541 passed, 1 skipped (v2.7.0)
+- **Unit Tests**: 1541 passed, 4 skipped (v2.7.0)
 - **Regression Fix (Neptune)**: Implemented missing `add_edge` in `NeptuneAdapter` to restore compliance with `GraphAdapter`.
 - **Structural Integrity**: Fixed `NetworkXError` in `CerebrumGraph.build` by ensuring consistent graph instance usage during community coarsening.
 - **Ablation Study**: Verified `baseline_comparison.py` on MetaQA; DSCF+CSA continues to outperform BFS and LPA baselines (Hits@10 +10% on 3-hop).

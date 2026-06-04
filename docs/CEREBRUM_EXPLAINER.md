@@ -142,4 +142,4 @@ Every answer is a **chain of actual edges**. There is no generation step. There 
 
 Every other system either requires training data it won't tell you about, makes things up and calls them answers, or gives you exact matches with no reasoning. CEREBRUM is the only system that reasons across a graph, shows you every step, learns from feedback in real time, and can prove that its answer is grounded in real data.
 
-**v2.52.0 — 167 phases — 2177 tests — 37 research papers — zero training required.**
+**v2.73.0 — 223 phases — 2269 tests — 37 research papers — zero training required.**

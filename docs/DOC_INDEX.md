@@ -1,5 +1,5 @@
 # CEREBRUM Documentation Index
-## v2.52.0 (Phase 172) — May 2026
+## v2.73.0 (Phase 223 COMPLETE) — June 2026
 
 Single-page navigation for all CEREBRUM documentation. Start here.
 
@@ -22,12 +22,13 @@ Target: 6 arXiv submissions per `CEREBRUM_PUBLICATION_GAMEPLAN.md`. Submission o
 
 | Paper | Directory | Status | arXiv Category |
 |-------|-----------|--------|---------------|
-| Technical Report (full spec) | `research/papers/00-technical-report/` | Planned — Phase 4 | cs.AI |
-| Flagship: Training-Free KGQA | `research/papers/01-flagship/` | Planned — Phase 5 | cs.AI |
-| Paper A: TSC Community Detection | `research/papers/02-community-detection/` | Planned — Phase 5 | cs.SI / cs.LG |
-| Paper B: Graph Plasticity (Bridge + STDP) | `research/papers/03-graph-plasticity/` | Planned — Phase 5 | cs.AI |
-| Paper C: Federated Holographic Indexing | `research/papers/04-federated/` | Planned — Phase 5 | cs.DC |
-| Paper D: Production Engineering | `research/papers/05-production/` | Planned — Phase 5 | cs.SE / cs.DB |
+| Technical Report (full spec) | `research/papers/00-technical-report/` | Draft — v2.73.0 | cs.AI |
+| Flagship: Training-Free KGQA | `research/papers/01-flagship/` | Draft — v2.73.0 | cs.AI |
+| Paper A: TSC Community Detection | `research/papers/02-community-detection/` | Planned | cs.SI / cs.LG |
+| Paper B: Graph Plasticity (Bridge + STDP) | `research/papers/03-graph-plasticity/` | Planned | cs.AI |
+| Paper C: Federated Holographic Indexing | `research/papers/04-federated/` | Planned | cs.DC |
+| Paper D: Production Engineering | `research/papers/05-production/` | Planned | cs.SE / cs.DB |
+| SDRB/PI Paper | `research/papers/06-sdrb/` | Draft — v2.73.0 | cs.AI |
 
 See [`CEREBRUM_PUBLICATION_GAMEPLAN.md`](CEREBRUM_PUBLICATION_GAMEPLAN.md) for full submission strategy.  
 See [`ARXIV_SUBMISSION_GUIDE.md`](ARXIV_SUBMISSION_GUIDE.md) for submission mechanics.
@@ -50,7 +51,7 @@ See [`ARXIV_SUBMISSION_GUIDE.md`](ARXIV_SUBMISSION_GUIDE.md) for submission mech
 
 ## Technical Specifications (docs/specifications/)
 
-27 detailed specs (`SPEC_001` – `SPEC_027`) mapping to each subsystem. Internal reference only — not for direct arXiv submission.
+28 detailed specs (`SPEC_001` – `SPEC_028`) mapping to each subsystem. Internal reference only — not for direct arXiv submission.
 
 ---
 
@@ -61,7 +62,7 @@ See [`ARXIV_SUBMISSION_GUIDE.md`](ARXIV_SUBMISSION_GUIDE.md) for submission mech
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | System architecture, module map, Transformer↔KG analogy, data flow |
 | [`API_REFERENCE.md`](API_REFERENCE.md) | All REST endpoints with request/response schemas |
 | [`DEPLOYMENT.md`](DEPLOYMENT.md) | Production deployment, `--kge-model` flag, sentence-transformers requirement |
-| [`TESTING.md`](TESTING.md) | Test suite, fixture conventions, 2177 passed / 1 skipped (v2.52.0) |
+| [`TESTING.md`](TESTING.md) | Test suite, fixture conventions, 2269 passed / 4 skipped (v2.73.0) |
 | [`INTEGRATION_GUIDE.md`](INTEGRATION_GUIDE.md) | How to integrate CEREBRUM with external systems |
 | [`MIGRATION_GUIDE.md`](MIGRATION_GUIDE.md) | Version migration notes |
 | [`PERFORMANCE_TUNING.md`](PERFORMANCE_TUNING.md) | Latency, beam width, GraphSAGE tradeoffs |
@@ -75,8 +76,7 @@ See [`ARXIV_SUBMISSION_GUIDE.md`](ARXIV_SUBMISSION_GUIDE.md) for submission mech
 | File | Purpose |
 |------|---------|
 | [`CEREBRUM_BENCHMARK_COMPARISON_PAPER.md`](CEREBRUM_BENCHMARK_COMPARISON_PAPER.md) | Full benchmark analysis vs SOTA — detailed version of the comparison table in BENCHMARK_CANONICAL.md |
-| [`BENCHMARK_ANALYSIS_V2.51.0.md`](BENCHMARK_ANALYSIS_V2.51.0.md) | Phase 172 benchmark run analysis and ablation notes |
-| [`ROADMAP_FUTURE.md`](ROADMAP_FUTURE.md) | Post-v2.52.0 research directions |
+| [`ROADMAP_FUTURE.md`](ROADMAP_FUTURE.md) | Post-Phase 223 research directions |
 | [`whitepapers/`](whitepapers/) | Topic-specific technical whitepapers |
 | [`docs/Research/`](Research/) | Supporting research notes and phase-by-phase findings |
 
@@ -94,6 +94,11 @@ Superseded document versions — preserved for reference, not for new citations.
 | [`archive/Cerebrum_White_Paper_v251.md`](archive/Cerebrum_White_Paper_v251.md) | `CEREBRUM_MASTER_SCIENTIFIC_MANUSCRIPT.md` |
 | [`archive/PAPER_v251.md`](archive/PAPER_v251.md) | `CEREBRUM_MASTER_SCIENTIFIC_MANUSCRIPT.md` |
 | [`archive/PARALLAX_v251.md`](archive/PARALLAX_v251.md) | Internal reference only — do not cite |
+| [`archive/BENCHMARK_ANALYSIS_V2.51.0.md`](archive/BENCHMARK_ANALYSIS_V2.51.0.md) | `CEREBRUM_BENCHMARK_COMPARISON_PAPER.md` |
+| [`archive/CEREBRUM_MASTER_WHITEPAPER.docx`](archive/CEREBRUM_MASTER_WHITEPAPER.docx) | LaTeX papers in `research/papers/` |
+| [`archive/CEREBRUM_MASTER_SCIENTIFIC_MANUSCRIPT.docx`](archive/CEREBRUM_MASTER_SCIENTIFIC_MANUSCRIPT.docx) | LaTeX papers in `research/papers/` |
+| [`archive/CEREBRUM_Investor_Benchmark_Report.docx`](archive/CEREBRUM_Investor_Benchmark_Report.docx) | `CEREBRUM_BENCHMARK_COMPARISON_PAPER.md` |
+| [`archive/exports/`](archive/exports/) | Stale .docx / .pdf exports of operational docs — live source in `docs/*.md` |
 
 ---
 
@@ -108,4 +113,4 @@ Superseded document versions — preserved for reference, not for new citations.
 
 ---
 
-*Last updated: 2026-05-08 | v2.52.0 publication cycle*
+*Last updated: 2026-06-04 | v2.73.0 publication cycle*

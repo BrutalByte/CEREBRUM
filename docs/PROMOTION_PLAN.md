@@ -128,7 +128,7 @@ Target verticals where hallucination risk has real cost:
 - [ ] Reach out to companies building KG-based products (graph database vendors: Neo4j, TigerGraph communities)
 - [ ] Submit to **enterprise AI newsletters**: The Batch, AI Business, Emerj
 
-**The investor benchmark report** (`site/CEREBRUM_Investor_Benchmark_Report.docx`) is already written. Update it with v2.66.0 numbers and use it for warm intros.
+**The investor benchmark report** (`site/CEREBRUM_Investor_Benchmark_Report.docx`) is already written. Update it with v2.73.0 numbers and use it for warm intros.
 
 ---
 
@@ -178,7 +178,7 @@ Target verticals where hallucination risk has real cost:
 | GitHub repo | Live | https://github.com/BrutalByte/CEREBRUM |
 
 **Gaps to fill before launch:**
-- [ ] Update investor report and whitepaper to v2.66.0 numbers
+- [ ] Update investor report and whitepaper to v2.73.0 numbers
 - [ ] Build the live project website (index.html exists in site/ — needs deployment)
 - [ ] Create 3-minute demo video
 - [ ] Write the 4 blog posts

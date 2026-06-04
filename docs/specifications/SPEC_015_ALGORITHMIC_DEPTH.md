@@ -1,7 +1,7 @@
 # [Buchorn, 2026]: Algorithmic Depth
 ## Temporal Reasoning, Uncertainty Propagation, Soft Community Membership, CSAParameterLearner, and KGE Integration
 
-**Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.73.0 (Phase 223 (Sleep-Phase Consolidation) COMPLETE)
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Temporal Reasoning / Probabilistic KG / Adaptive Attention
@@ -10,7 +10,7 @@
 ---
 
 ### 1. Introduction
-Phase 17 adds five composable algorithmic enhancements to the core CORTEX reasoning pipeline. Each component is independently activatable; none are enabled by default (preserving v2.52.0 behavioral compatibility). The five components are:
+Phase 17 adds five composable algorithmic enhancements to the core CORTEX reasoning pipeline. Each component is independently activatable; none are enabled by default (preserving v2.73.0 behavioral compatibility). The five components are:
 
 1. Temporal edge validity windows with exponential decay
 2. Per-path uncertainty propagation with variance penalty
@@ -172,7 +172,7 @@ csa = CSAEngine(
 
 All other CSA terms (community, relation weight, distance, hop decay, PageRank) are unaffected.
 
-### 7. Implementation Notes (v2.52.0)
+### 7. Implementation Notes (v2.73.0)
 
 - **All five features default to OFF**: `temporal_weight=False`, `propagate_uncertainty=False`, `soft_membership=False`, `parameter_learner=None`, `embedding_engine=EmbeddingEngine()` (random).
 - **Composability**: All five can be enabled simultaneously; they operate on different stages of the reasoning pipeline and do not interact.
@@ -185,4 +185,4 @@ All other CSA terms (community, relation weight, distance, hop decay, PageRank) 
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.52.0
+**Reviewed on**: April 21, 2026 for version v2.73.0

@@ -1,6 +1,6 @@
 # CEREBRUM Performance Tuning Guide
 
-**Status**: v2.71.0 (Phase 213)
+**Status**: v2.73.0 (Phase 213)
 
 This guide covers the key parameters affecting query latency, throughput, reasoning quality, and memory usage — and how to tune them for your specific workload.
 
@@ -39,7 +39,7 @@ This guide covers the key parameters affecting query latency, throughput, reason
 
 ---
 
-## 1. Zero-Config Optimization (Phase 172-167)
+## 1. Zero-Config Optimization (Phase 223-167)
 
 ### GraphProfiler (Automatic Strategy Selection)
 In latest versions, you no longer need to manually toggle `hop_expand` (H1SE) or `anchor_bonus` (TAB). The **GraphProfiler** performs a build-time topological analysis and selects the optimal "Graph Regime":
@@ -63,7 +63,7 @@ The core attention calculation is now implemented via optimized NumPy matrix ope
 ### beam_width
 The single most impactful parameter for latency. Beam width controls how many candidates are evaluated at each hop.
 
-| beam_width | Latency (v2.52.0) | Latency (v2.52.0 Vectorized) | H@10 (MetaQA-3hop) |
+| beam_width | Latency (v2.73.0) | Latency (v2.73.0 Vectorized) | H@10 (MetaQA-3hop) |
 |---|---|---|---|
 | 3 | 2.1ms | 0.4ms | 0.271 |
 | 5 | 3.4ms | 0.8ms | 0.294 |
@@ -179,7 +179,7 @@ Phase 202 best on 2,000-sample (full-dataset validation pending). SDRB replaces 
 In hub-heavy graphs, a single global beam is often captured by popular entities (e.g., "USA") at hop 1. **Hop-1 Intermediate Seed Expansion (H1SE)** gives each hop-1 neighbor its own independent search budget.
 - **Tune**: `expansion_k` (default 5). Higher `expansion_k` improves recall but increases latency linearly.
 
-### TAB: Terminal-Anchor Boost (Phase 172)
+### TAB: Terminal-Anchor Boost (Phase 223)
 For 3-hop queries in typed graphs, use **TAB** to guide the penultimate hop. It applies a bonus to entities that are known sources of the target relation type.
 - **Tune**: `anchor_bonus` (default 2.0). Increase to 3.0+ for extremely sparse heterogeneous graphs.
 
@@ -269,7 +269,7 @@ BeamTraversal(
 ```
 
 **warm_start_strength** guidance:
-- `0.0` — standard uniform Beta(1,1) prior (v2.52.0 behavior)
+- `0.0` — standard uniform Beta(1,1) prior (v2.73.0 behavior)
 - `2.0` — mild warm-start (reduces first-hop variance ~40%)
 - `5.0` — strong warm-start (reduces first-hop variance ~85%, recommended for sparse graphs)
 - `10.0` — aggressive seeding (can reduce diversity; use only on very sparse graphs)
@@ -419,4 +419,4 @@ The indirect performance effect is positive: Arousal dynamically scales `beam_wi
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: Jun 2, 2026 for version v2.71.0
+**Reviewed on**: Jun 2, 2026 for version v2.73.0

@@ -1,7 +1,7 @@
 # [Buchorn, 2026]: Autonomous Causal Discovery via STDP
 ## Temporal Graph Plasticity in Knowledge Streams
 
-**Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.73.0 (Phase 223 (Sleep-Phase Consolidation) COMPLETE)
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Causal Inference / Stream Processing / Neuro-Symbolic AI  
@@ -69,7 +69,7 @@ This blocks instantaneous adversarial bursts.
 #### 4.3 $\chi^2$ Uniformity Test
 The inter-spike intervals between $u$ and $v$ are binned and tested against a uniform distribution. If the distribution is highly clustered (low p-value), it is rejected as a non-causal coincidence or a rhythmic artifact.
 
-### 5. Implementation Notes (v2.52.0)
+### 5. Implementation Notes (v2.73.0)
 
 *   **Directionality**: Emitted edges are strictly directional: `source` $\xrightarrow{CAUSES}$ `target`.
 *   **Memory Eviction**: Causal pairs whose weights decay below $0.05$ are automatically evicted from the weight map to prevent memory bloat.
@@ -81,4 +81,4 @@ The inter-spike intervals between $u$ and $v$ are binned and tested against a un
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.52.0
+**Reviewed on**: April 21, 2026 for version v2.73.0

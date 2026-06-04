@@ -1,6 +1,6 @@
 # CEREBRUM Reasoning Studio — User Guide
 
-**Status**: v2.52.0 (Phase 172 (STRB) COMPLETE)
+**Status**: v2.73.0 (Phase 223 COMPLETE)
 **Interface**: Gradio web UI + pyvis graph visualization
 **Business Logic Module**: `core/studio_engine.py` (`StudioEngine`)
 **UI Entry Point**: `ui/studio.py`
@@ -165,7 +165,7 @@ Four-card summary row (total batches, edges recorded, rollback count, cycles see
 
 ---
 
-## New in v2.52.0 (Phase 62)
+## New in v2.73.0 (Phase 62)
 
 ### Explainable Reasoning Trace (ERT)
 The "Glass-Box" is now fully transparent. In the Results panel, each query result now includes an **Explainable Reasoning Trace** block. This trace records:
@@ -188,4 +188,4 @@ For very large graphs, reduce the **Beam Width** or **Max Hops**. The Studio is 
 If the UI hangs during community detection, check the console logs. DSCF can be computationally intensive on CPU for dense graphs. Ensure you have enough RAM available.
 
 ---
-**Reviewed on**: May 9, 2026 for version v2.52.0
+**Reviewed on**: June 4, 2026 for version v2.73.0

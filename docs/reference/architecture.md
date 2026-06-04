@@ -1,6 +1,6 @@
 # CEREBRUM System Architecture
 
-**Status**: v2.52.0 (Phase 172 (STRB — Semantic Terminal Relation Boost) COMPLETE — 2177 tests passing)
+**Status**: v2.73.0 (Phase 223 (STRB — Semantic Terminal Relation Boost) COMPLETE — 2269 tests passing, 4 skipped)
 
 Complete data-flow from ingestion to result, including all options, pathways, and decision nodes.
 
@@ -71,7 +71,7 @@ Implements a blackboard-based competitive attention layer, replacing linear MACH
 Transforms reasoning from a reactive search to a proactive traversal. The `PredictiveCoder` generates "Expected Path" priors from Engram patterns, which bias the `BeamTraversal` toward likely sequences. Prediction Errors (PE) trigger metabolic arousal, allowing the system to focus computational energy on "surprising" discoveries.
 
 ### Phase 172: Sleep-Phase Consolidation (REM Cycle)
-The `ConsolidationEngine` merges Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 172) into a unified maintenance cycle. During idle periods, the system replays successful Working Memory entries to strengthen synaptic weights and analyzes QueryLog patterns to materialize direct "shortcut" edges (e.g., A -> C skipping B). This turns common multi-hop reasoning into instantaneous reflexive paths.
+The `ConsolidationEngine` merges Hebbian Replay (Phase 96) and Shortcut Synthesis (Phase 223) into a unified maintenance cycle. During idle periods, the system replays successful Working Memory entries to strengthen synaptic weights and analyzes QueryLog patterns to materialize direct "shortcut" edges (e.g., A -> C skipping B). This turns common multi-hop reasoning into instantaneous reflexive paths.
 
 ## Legend
 
@@ -117,4 +117,4 @@ The `ConsolidationEngine` merges Hebbian Replay (Phase 96) and Shortcut Synthesi
 | GUI Adaptation | on / off | metabolic-driven UI structural adaptation |
 
 ---
-**Reviewed on**: May 9, 2026 for version v2.52.0
+**Reviewed on**: June 4, 2026 for version v2.73.0

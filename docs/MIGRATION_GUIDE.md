@@ -4,6 +4,66 @@ This guide covers what operators and developers need to **do** (not just what ch
 
 ---
 
+## v2.52.0 → v2.73.0 (Phases 173–223)
+
+### Required actions: none
+All Phase 173–223 features are additive — opt-in via new parameters or optional engine attachments. Existing `CerebrumGraph.build()` / `query()` calls continue to work without changes.
+
+### Recommended changes
+
+**PlattCalibration (Phase 222)** — activate confidence calibration from feedback:
+```python
+# v2.73.0: PlattCalibration is wired automatically at build time.
+# It becomes active after 20+ POST /feedback calls with correct_entity.
+# Check calibration state:
+curl http://localhost:8200/calibration
+# → {"ece": 0.04, "drift_score": 0.01, "n_samples": 42, "last_fit_ts": "..."}
+```
+
+**SelfAwarenessReport (Phase 220)** — all query responses now include a `self_awareness` dict:
+```python
+result = graph.query("entity", max_hops=3)
+# result["self_awareness"]["epistemic_uncertainty"]  # Beta variance
+# result["self_awareness"]["knowledge_gap"]          # bool
+# result["self_awareness"]["gap_recovery"]           # bool — retry was triggered
+# result["self_awareness"]["calibration_ece"]        # float — −1.0 if not yet calibrated
+# result["self_awareness"]["contradiction_resolved"] # bool
+```
+
+**Uncertainty-steered retry (Phase 221)** — automatic; disable if latency is critical:
+```python
+graph = CerebrumGraph.build(..., eu_retry_threshold=1.0)  # disable: threshold unreachable
+```
+
+**Self-supervised parameter learning (Phase 223)** — disable if deterministic output is required:
+```python
+graph = CerebrumGraph.build(..., self_supervised_learning=False)
+```
+
+**Cross-KB Engram transfer (Phase 219)** — re-encode reasoning patterns when switching graphs:
+```python
+from reasoning.speedtalk_cache import EngramTransferRegistry
+registry = EngramTransferRegistry()
+registry.transfer(old_engram, new_adapter)
+graph.attach_engram(new_engram)
+```
+
+**GET /calibration** — new endpoint (Phase 222):
+```bash
+curl http://localhost:8200/calibration
+```
+
+### New optional build parameters (v2.52.0 → v2.73.0)
+
+| Parameter | Default | Phase | Effect |
+|---|---|---|---|
+| `eu_retry_threshold` | `0.09` | 221 | Epistemic uncertainty threshold for automatic retry |
+| `self_supervised_learning` | `True` | 223 | Self-triggered MetaParameterLearner on gap recovery |
+| `use_power_law_decay` | `True` | 215 | Ebbinghaus power-law temporal decay instead of exponential |
+| `ior_decay` | `0.0` | 215 | Inhibition of Return suppression strength (0 = disabled) |
+
+---
+
 ## v2.51.1 -> v2.52.0 (Phases 69–94: Autonomous Loop, Provenance, Adaptive Tuning, Active Inference, GUI Adaptation)
 
 ### Required actions: `remove_edge()` on custom GraphAdapter subclasses
@@ -342,4 +402,4 @@ No breaking changes. All Phase 6–9 features (FederatedAdapter, HolographicInde
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: May 9, 2026 for version v2.52.0
+**Reviewed on**: June 4, 2026 for version v2.73.0

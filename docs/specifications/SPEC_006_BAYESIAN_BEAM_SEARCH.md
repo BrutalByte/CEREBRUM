@@ -1,7 +1,7 @@
 # [Buchorn, 2026]: Bayesian Beam Search
 ## Probabilistic Graph Traversal under Topological Uncertainty
 
-**Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.73.0 (Phase 223 (Sleep-Phase Consolidation) COMPLETE)
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Decision Theory / Probabilistic Robotics / Graph Reasoning  
@@ -58,7 +58,7 @@ The final answers returned to the user include a **Confidence Calibration**:
 
 If an answer has a high score but high uncertainty, the system flags it for **Metacognitive Verification** [Buchorn, 2026], triggering a second-order "triangulation" pass to confirm the reasoning chain.
 
-### 6. Implementation Notes (v2.52.0)
+### 6. Implementation Notes (v2.73.0)
 *   **Reproducibility**: Supports a fixed `RandomState` seed for deterministic debugging of probabilistic runs.
 *   **Performance**: Sampling is performed using vectorized NumPy operations, maintaining $O(B \cdot D)$ complexity.
 *   **Streaming Compatibility**: Beta distributions are persisted in the `TraversalPath` objects, allowing reasoning to pause and resume as new data arrives in the stream.
@@ -69,4 +69,4 @@ If an answer has a high score but high uncertainty, the system flags it for **Me
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.52.0
+**Reviewed on**: April 21, 2026 for version v2.73.0

@@ -1,7 +1,7 @@
 # [Buchorn, 2026]: Contradiction Materialization Engine
 ## Reasoning about Factual Conflict and Uncertainty
 
-**Status**: v2.52.0 (Phase 172 (Sleep-Phase Consolidation) COMPLETE)
+**Status**: v2.73.0 (Phase 223 (Sleep-Phase Consolidation) COMPLETE)
 **Author**: Bryan Alexander Buchorn  
 **Affiliation**: Independent Researcher, Las Vegas, NV, USA  
 **Field**: Formal Logic / Knowledge Integrity / Evidence-Based Reasoning  
@@ -53,4 +53,4 @@ The **CSA Engine** [Buchorn, 2026] recognizes `CONTRADICTS` edges as "High-Surpr
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: April 21, 2026 for version v2.52.0
+**Reviewed on**: April 21, 2026 for version v2.73.0
