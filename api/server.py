@@ -15,6 +15,7 @@ Or programmatically:
     from api.server import create_app
     app = create_app(adapter, embedding_engine, community_map)
 """
+from __future__ import annotations
 import logging
 import os
 import time
