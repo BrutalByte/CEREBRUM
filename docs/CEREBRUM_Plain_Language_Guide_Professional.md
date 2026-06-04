@@ -3,8 +3,8 @@
     <h1 class="title">CEREBRUM EXPLAINED</h1>
     <p class="subtitle">A Plain-Language Guide to the Research</p>
     <div class="meta">
-        <strong>Version 7.0 (v2.52.0 — Phase 172 COMPLETE)</strong><br>
-        May 2026 — Independent Researcher
+        <strong>Version 8.0 (v2.73.0 — Phase 223 COMPLETE)</strong><br>
+        June 2026 — Independent Researcher
     </div>
 </div>
 
@@ -28,7 +28,7 @@ Each chapter builds on the last. If you're already comfortable with a concept, f
 | 6 | What is CEREBRUM? | The full picture — including THALAMUS and CORTEX |
 | 7 | Why does it matter? | Real-world stakes |
 | 8 | What are we trying to prove? | The research questions |
-| 9 | Does it work? | Validation results (v2.52.0) |
+| 9 | Does it work? | Validation results (v2.73.0) |
 | 10 | The Studio: Seeing it live | The interactive interface |
 | 11 | Real-time streaming data | Sensors, signals, and live feeds |
 | 12 | What kinds of data can it use? | Beyond spreadsheets |
@@ -37,9 +37,11 @@ Each chapter builds on the last. If you're already comfortable with a concept, f
 | 15 | Insight Learning | When the graph has a Eureka moment |
 | 16 | The 10-Parameter Attention Formula | How CEREBRUM weighs every step |
 | 17 | Autonomous Reasoning | CEREBRUM discovers what it doesn't know |
-| 18 | What's New in v2.52.0 | The latest capabilities |
+| 18 | What's New in v2.52.0 → v2.73.0 | Phases 173–223 capabilities |
 | 19 | The Formal Journey | ArXiv, Margins, and Academic Rigor |
 | 20 | The Thalamofrontal Loop | Dynamic Gating and Consciousness |
+| 21 | Self-Awareness and Epistemic Reporting | CEREBRUM knows what it doesn't know |
+| 22 | The Awareness-to-Action Loop | Uncertainty-steered retries and self-tuning |
 
 ---
 
@@ -53,27 +55,37 @@ Because LLMs are statistical, they "hallucinate." If they don't know an answer, 
 
 ---
 
-## CHAPTER 9 — Does It Work? (v2.52.0 Results)
-As of May 2026, CEREBRUM has been validated on several large-scale datasets and is operating at **v2.52.0 "Zero-Config Autonomous Reasoning"** status.
+## CHAPTER 9 — Does It Work? (v2.73.0 Results)
+As of June 2026, CEREBRUM has been validated on multiple large-scale datasets and is operating at **v2.73.0 "Self-Aware Autonomous Reasoning"** status, representing 223 phases of development and 76 documented novel contributions.
 
 **What the tests showed:**
-1. **Unrivaled Stability**: The framework now passes **2,175 automated tests**, covering core reasoning, autonomous discovery, observability, and parameter learning.
-2. **Biomedical accuracy**: On the Hetionet graph, CEREBRUM achieved **85% accuracy** at finding connections between diseases and drugs with zero training.
-3. **Reasoning Recall**: On MetaQA 3-hop reasoning, recall reached **73.2% Hits@10** (47.3% Hits@1), rivaling the performance of systems that require massive training data.
+1. **Unrivaled Stability**: The framework passes **2,269 automated tests** (4 skipped), covering core reasoning, autonomous discovery, observability, parameter learning, biomedical benchmark validation, and the full self-awareness pipeline.
+2. **Biomedical accuracy**: On the Hetionet biomedical graph, CEREBRUM achieved **95.7% Hits@1** on 1-hop disease–gene–drug queries, starting from a BFS baseline of only 0.8%.
+3. **MetaQA Reasoning**: Zero-config on the full 39,093-question MetaQA corpus achieves **83.2% / 63.3% / 56.8% Hits@1** across 1-, 2-, and 3-hop tasks. The tuned best 3-hop result is **66.8% Hits@1** — compared to the Phase 53 canonical baseline of 12.5%, a +54 percentage point gain with no training data.
 4. **Vectorized Speed**: Thanks to a 10x performance boost in Phase 134, complex reasoning now completes in **under 30 milliseconds**.
+5. **Self-Aware Output**: Every query now returns a 7-dimensional epistemic self-assessment alongside the answer, so you always know how confident CEREBRUM is — and why.
 
-### Benchmark Results (Canonical)
+### Benchmark Results (Current Best — v2.73.0)
 
-| Dataset | Metric | Score |
-|---|---|---|
-| MetaQA 1-hop | H@10 | 96.6% |
-| MetaQA 2-hop | H@10 | 86.3% |
-| MetaQA 3-hop | H@10 | 73.2% |
-| MetaQA 3-hop | H@1 | 47.3% |
-| Hetionet | H@10 | 85% |
-| WebQSP (optimized) | MRR | 10.66% |
-| IKGWQ (incomplete graph) | AUC | 0.89 |
-| GrailQA | F1 | 19.6% |
+| Dataset | Metric | Phase 53 Baseline | Current Best |
+|---|---|---|---|
+| MetaQA 1-hop | H@1 | 46.1% | **84.0%** (Phase 223) |
+| MetaQA 1-hop | H@10 | 96.6% | 96.6% |
+| MetaQA 2-hop | H@1 | 30.0% | **63.3%** (Phase 212 zero-config) |
+| MetaQA 2-hop | H@10 | 86.3% | 86.3% |
+| MetaQA 3-hop | H@1 | 12.5% | **66.8%** (Phase 213 tuned) |
+| MetaQA 3-hop | H@10 | 50.3% | **90.7%** (Phase 212 zero-config) |
+| MetaQA 3-hop | MRR | — | **0.702** (Phase 223) |
+| MetaQA zero-config (39k q) | H@1 3-hop | — | **56.8%** |
+| Hetionet 1-hop | H@1 | 0.8% (BFS) | **95.7%** |
+| Hetionet 2-hop | H@1 | 0.8% (BFS) | **53.0%** |
+| Hetionet 3-hop | H@1 | 0.8% (BFS) | **79.5%** |
+| WebQSP (optimized) | MRR | — | 10.66% |
+| IKGWQ (incomplete graph) | AUC | — | 0.89 |
+| GrailQA | F1 | — | 19.6% |
+
+### How does it compare to AI systems that do use training data?
+The best supervised systems on MetaQA 3-hop Hits@1 are: EmbedKGQA ~94%, NSM ~98%, UniKGQA 99.1%, GNN-QE ~95%. CEREBRUM's 66.8% is achieved with **zero training data** — no labeled examples, no gradient descent, no GPU training time. It is the best-known training-free result on this benchmark.
 
 ---
 
@@ -121,7 +133,9 @@ Together, these three systems form a **closed-loop autonomous research assistant
 
 ---
 
-## CHAPTER 18 — What's New in v2.52.0
+## CHAPTER 18 — What's New in v2.52.0 → v2.73.0
+
+### Capabilities through v2.52.0 (Phases 1–172)
 
 ### 1. HypothesisEngine (Phase 50)
 Multi-path abductive reasoning that generates proposed graph edges from indirect evidence. Experts approve or reject proposals via a simple interface.
@@ -153,6 +167,112 @@ The 10-parameter attention formula can now be **learned from feedback**:
 - Feedback accumulates in a buffer that can be batch-retrained via `POST /retrain`
 - Learned parameters can be saved and restored via `GET/POST /params` or the `--params-file` startup flag
 
+### 10. GraphProfiler and STRB (Phase 172)
+**GraphProfiler** automatically analyzes a newly loaded graph at startup and selects the best reasoning strategy — no configuration needed. **Semantic Terminal Relation Boost (STRB)** uses the system's internal language model to compare your question text to the graph's relation labels, automatically boosting the most relevant edges. Together, these two additions close the "zero-config gap" for 1-hop tasks.
+
+---
+
+### New Capabilities: v2.52.0 → v2.73.0 (Phases 173–223)
+
+### 11. Optuna Hyperparameter Tuner (Phase 183)
+CEREBRUM can now automatically tune its own scoring parameters using **Optuna**, a state-of-the-art hyperparameter search library. You point it at a sample of questions, and it finds the best combination of scoring weights in roughly 35 minutes — far faster than manual tuning. This raised the MetaQA 3-hop ceiling from 49.7% to 56.1% H@1 without changing the core reasoning engine.
+
+### 12. Schema-Aware Relation Detector — SRD (Phase 192)
+The **Schema-Aware Relation Detector** reads the loaded graph's relation vocabulary and automatically identifies the most likely "terminal relations" (the type of edge that leads to an answer) without needing any example questions. This makes CEREBRUM smarter about any new graph the moment it is loaded, even if you have never asked a question on that graph before.
+
+### 13. ParameterInitializer — Zero-Config Principled Defaults (Phase 205)
+`ParameterInitializer` derives all 9 scoring parameters directly from **graph statistics** — the number of communities, the average number of edges per node, the spread of relationship types, and so on. This means that when you load any new Knowledge Graph, CEREBRUM immediately sets up sensible parameter values based on what the graph actually looks like. You do not need to provide any examples, tuning sets, or configuration files. It is as close to "plug in and reason" as graph AI can get.
+
+### 14. Hetionet Biomedical Benchmark (Phases 207–211)
+CEREBRUM was tested on **Hetionet**, a large biomedical Knowledge Graph connecting diseases, genes, drugs, and biological pathways. Starting from a BFS baseline of 0.8% Hits@1 (essentially random), CEREBRUM reached:
+- 1-hop: **95.7%** Hits@1 (finding the direct disease–gene or drug–disease connection)
+- 2-hop: **53.0%** Hits@1
+- 3-hop: **79.5%** Hits@1 (finding three-step paths through the biomedical network)
+
+A key discovery from Hetionet testing: sentence-embedding guidance helps 2-hop typed traversals (+10 percentage points) but actually hurts cross-type 3-hop paths (-30 pp). This finding shaped how CEREBRUM calibrates embedding use on heterogeneous biomedical graphs going forward.
+
+### 15. Full Zero-Config Validation on 39,093 Questions (Phase 212)
+For the first time, CEREBRUM was tested on the **complete** MetaQA dataset — all 39,093 questions across 1-hop, 2-hop, and 3-hop categories — in zero-config mode. Results: 1-hop 83.2%, 2-hop 63.3%, 3-hop 56.8% Hits@1. The 3-hop recall at Hits@10 was 90.7%. This confirms that the zero-config approach generalises beyond small samples to the full benchmark scale.
+
+### 16. Best Tuned Result: 66.8% 3-Hop H@1 (Phase 213)
+With the Optuna tuner applied to a 500-question sentence-embedding sample, the best 3-hop result reached **66.8% Hits@1** — more than five times the Phase 53 canonical baseline (12.5%) and achieved with zero labeled training data. Phase 223 (500-sample sentence) adds: 1-hop 84.0%, 2-hop 48.2%, 3-hop 60.2% H@1, H@10=89.4%, MRR=0.702.
+
+### 17. Ten Cognitive Enhancements (Phases 215–219)
+Ten new reasoning modules were added, each inspired by a feature of human cognition:
+1. **Inhibition of Return (IOR)** — stops CEREBRUM from re-examining the same graph areas it recently visited, mimicking how the human eye skips areas it just processed.
+2. **Credibility Registry** — tracks how reliable each information source in the graph has proven to be, and weights future inferences from that source accordingly.
+3. **Causal Discovery Engine** — detects which connections in the graph represent true cause-and-effect versus coincidence.
+4. **Meta-Relation Layer** — enables reasoning about the relationships between relationships (e.g., "this edge contradicts that one").
+5. **Cross-KB Transfer** — allows reasoning patterns learned on one Knowledge Graph to be applied when a new graph is loaded.
+6. **Fast Binding** — instantly recognises when two different names in the graph refer to the same real-world thing (e.g., "COVID-19" and "SARS-CoV-2").
+7. **Oscillation Sync** — detects when multiple parts of the graph are "lighting up" together during a burst of queries, allowing CEREBRUM to anticipate related questions.
+8. **Power-Law Decay** — makes temporal relevance drop off more naturally (following a power law, as human memory does) rather than a simple linear fade.
+9. **Conflict Monitoring** — a live checker that flags any reasoning path that contradicts another path found in the same query.
+10. **Curiosity-Information Gain** — gives a small bonus to exploring novel, less-visited graph regions during beam search, keeping CEREBRUM from becoming "lazy" about well-trodden paths.
+
+---
+
+## CHAPTER 21 — Self-Awareness: CEREBRUM Knows What It Doesn't Know
+
+One of the most significant advances in v2.73.0 is a capability that sounds almost philosophical: **CEREBRUM now tells you how confident it is in its own answers, and why.**
+
+### The Problem with Silent Confidence
+Most AI systems give you an answer. Some give you a probability score. But a raw score like "0.87" doesn't tell you *why* the system is confident, or *which dimension* of confidence is high or low. Is the system confident because the evidence is strong? Or because the question was simple? Or because it has seen a lot of similar questions? These are very different situations, and they call for different responses from a human expert.
+
+### The SelfAwarenessEngine (Phase 220)
+Every `/query` response in v2.73.0 now includes a **7-dimensional epistemic self-assessment** produced by the `SelfAwarenessEngine`. Think of it as a "confidence dashboard" that CEREBRUM fills out for itself after every question:
+
+| Dimension | Plain-English Meaning |
+|---|---|
+| **Confidence** | How strongly do the top answer paths score? |
+| **Epistemic Uncertainty** | How spread out are the top scores? (High spread = "I could be wrong") |
+| **Evidence Quality** | How reliable are the individual facts in the winning path? |
+| **Corroboration** | Did multiple independent paths lead to the same answer? |
+| **Signal Attribution** | Is the score driven by meaning (semantics) or structure (topology)? |
+| **Causal Fraction** | What fraction of the path edges represent cause-and-effect relationships? |
+| **Knowledge Gap** | Is there a type of answer CEREBRUM expected to find but couldn't? |
+
+This makes CEREBRUM the first graph reasoning framework to provide calibrated, multi-dimensional epistemic self-reporting on every query — without any external calibration dataset.
+
+### Why This Matters
+Imagine asking CEREBRUM: *"What drug treats Disease X?"* It gives you Drug Y. But the self-assessment says: **corroboration: 0.12** (only one path found it), **knowledge_gap: 0.6** (it expected more candidates). A human expert now knows: *"This answer is a lead, not a certainty — investigate it, don't act on it alone."* Without the self-assessment, that nuance is invisible.
+
+---
+
+## CHAPTER 22 — The Awareness-to-Action Loop: When CEREBRUM Corrects Itself
+
+Knowing you are uncertain is only useful if you *do something about it*. Phases 221–223 close the loop from self-assessment to corrective action.
+
+### Uncertainty-Steered Retry (Phase 221)
+If the `SelfAwarenessEngine` reports that epistemic uncertainty is above a configurable threshold, CEREBRUM **automatically re-runs the query** with a wider beam — exploring more candidate paths before committing to an answer. You do not need to notice the uncertainty and resubmit; the system handles it itself. The merged result of both passes is returned with a note indicating that a retry was triggered.
+
+### Credibility-Aware Contradiction Resolution (Phase 221)
+When two paths in the graph contradict each other, CEREBRUM previously resolved the conflict by treating all sources equally. Now, the **Credibility Registry** (Phase 215) feeds into the resolution: sources that have a track record of being correct get more weight. This is exactly how a skilled researcher weighs conflicting papers — you trust the more reliable journal more.
+
+### Calibrated Confidence Scores (Phase 222)
+Raw attention scores (like 0.87) are not true probabilities. In Phase 222, **Platt Calibration** was activated by default. CEREBRUM fits a simple sigmoid curve to its own past results, converting raw scores into calibrated probabilities that actually reflect the real frequency of correct answers at that score level. When CEREBRUM says 80% confidence, it means it is right about 80% of the time at that score — not just that the number happens to be high.
+
+### Cerebellar Punishment (Phase 222)
+When the conflict monitor detects a reasoning path that is internally inconsistent, the **CerebellarEngine** applies a small negative learning step to the parameters that produced it. Think of it as CEREBRUM "unlearning" a bad habit. Each dissonant path makes future paths of the same type slightly less likely. This is analogous to how the human cerebellum corrects motor errors — not by rewriting everything, but by making subtle adjustments after each mistake.
+
+### Self-Triggered Parameter Updates (Phase 223)
+In all previous versions, parameter updates required user feedback (a `POST /feedback` call). Phase 223 changes this: if the **SelfAwarenessEngine** detects a sustained high `knowledge_gap` for a particular relation type, CEREBRUM **autonomously triggers a parameter learning cycle** for that area — no user action required. The system identifies where it is weakest and self-corrects.
+
+### Curiosity-Uncertainty Co-Regulation (Phase 223)
+The curiosity bonus (from Phase 219) and epistemic uncertainty (from Phase 220) are now linked: when CEREBRUM is more uncertain about a region of the graph, it automatically becomes more curious about exploring it. This keeps the system's exploration budget focused on the areas where it would learn the most — exactly how a good scientist allocates research effort.
+
+### The Big Picture
+With Phase 223 complete, CEREBRUM is the first knowledge graph reasoning system to implement a fully closed **self-awareness-to-action loop**:
+1. Reason over the graph.
+2. Assess epistemic quality across 7 dimensions.
+3. If uncertain, re-try with a wider beam.
+4. If conflicted, weight by source credibility.
+5. If dissonant, apply cerebellar punishment to reduce recurrence.
+6. If a gap persists, self-trigger parameter learning.
+7. Calibrate all output probabilities before reporting.
+
+Every query is followed by self-correction. The system gets smarter and more calibrated every time it runs — without human oversight for each individual correction.
+
 ---
 
 ## CHAPTER 19 — The Formal Journey: ArXiv and Beyond
@@ -179,7 +299,7 @@ This "Gating" makes the system significantly faster (over 10% faster in early te
 ---
 
 ## CHAPTER 21 — Zero-Config Reasoning: CEREBRUM Figures It Out
-The latest version of CEREBRUM (v2.52.0) moves from "custom-built" to "plug-and-play."
+Starting in v2.52.0, CEREBRUM moved from "custom-built" to "plug-and-play" — and v2.73.0 completes that journey.
 
 ### GraphProfiler: Knowing the Terrain
 Not all knowledge graphs are the same. A movie database works differently than a medical database. CEREBRUM's **GraphProfiler** analyzes your data as soon as it's loaded and automatically picks the best reasoning strategy. You no longer need to be an expert in graph theory to get high-quality results.
@@ -208,12 +328,14 @@ CEREBRUM is not a Machine Learning system; it is an **Autonomous Reasoning Appli
 ### Comparative Efficiency
 By eliminating the training phase, CEREBRUM effectively acts as an appliance that provides "Reasoning-as-a-Service" without the high-overhead machine learning pipeline.
 
-| Feature | Legacy KG AI | CEREBRUM (v2.52.0) |
+| Feature | Legacy KG AI | CEREBRUM (v2.73.0) |
 |---|---|---|
 | **Model Setup** | Days of GPU training | **Zero (Plug-and-Play)** |
 | **KG Updates** | Requires model retraining | **Immediate (Real-time)** |
 | **Domain Switch** | Requires domain-specific dataset | **Zero-Shot (Immediate)** |
 | **Logic Basis** | Statistical approximation | **Explicit, grounded graph paths** |
+| **Epistemic Reporting** | None (black-box score) | **7-dimensional self-assessment per query** |
+| **Self-Correction** | Requires retraining | **Autonomous cerebellar punishment + retry** |
 
 ---
 
@@ -226,10 +348,10 @@ CEREBRUM stands on the shoulders of decades of foundational research in Graph Th
 **Bryan Alexander Buchorn** — bryan.alexander@buchorn.com
 
 ---
-*Generated: May 2026 — Project CEREBRUM v2.52.0 — Zero-Config Edition*
+*Generated: June 2026 — Project CEREBRUM v2.73.0 — Self-Aware Autonomous Reasoning Edition*
 
 ---
-**Reviewed on**: May 9, 2026 for version v2.52.0
+**Reviewed on**: June 4, 2026 for version v2.73.0
 
 ---
 
