@@ -50,6 +50,7 @@ tpu   = ["torch>=2.0.0", "torch-xla>=2.0.0"]
 # Intel Gaudi 2 / 3 (Habana Labs)
 gaudi = ["torch>=2.0.0", "habana-torch-plugin>=1.16.0"]
 
+orin   = ["paramiko>=3.0.0"]
 studio = ["cerebrum-kg-studio>=2.65.1"]
 all    = ["cerebrum-kg-core[embeddings,api,neo4j,dev,enterprise,gpu,monitoring,tuning]"]
 
