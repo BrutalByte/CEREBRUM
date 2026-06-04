@@ -3905,6 +3905,10 @@ def create_app(
     # ── /v1 router ──────────────────────────────────────────────────────────
     app.include_router(router, prefix="/v1")
 
+    # ── Orin perception router ───────────────────────────────────────────────
+    from api.orin_router import orin_router
+    app.include_router(orin_router, prefix="/orin", tags=["orin"])
+
     # ── Unversioned /health — kept for Docker healthcheck and load-balancer
     #    probes that don't know about /v1.  No auth required. ────────────────
     from fastapi.responses import RedirectResponse
@@ -3987,6 +3991,10 @@ def create_app(
     _ui_dir = pathlib.Path(__file__).parent.parent / "ui"
     if _ui_dir.exists():
         app.mount("/ui", StaticFiles(directory=str(_ui_dir), html=True), name="ui")
+
+    _website_dir = pathlib.Path(__file__).parent.parent / "website"
+    if _website_dir.exists():
+        app.mount("/web", StaticFiles(directory=str(_website_dir), html=True), name="website")
 
     _frontend_dist = pathlib.Path(__file__).parent.parent / "frontend" / "dist"
     if _frontend_dist.exists():

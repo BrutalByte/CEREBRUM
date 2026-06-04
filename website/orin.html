@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEREBRUM — Orin Interface</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+  :root {
+    --accent: #6366f1;
+    --accent-dim: #4f46e5;
+    --surface: #0f1117;
+    --panel: #161b27;
+    --border: #1f2937;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --green: #10b981;
+    --red: #ef4444;
+    --amber: #f59e0b;
+  }
+  body { background: var(--surface); color: var(--text); font-family: 'Inter', system-ui, sans-serif; }
+  .panel { background: var(--panel); border: 1px solid var(--border); }
+  .badge-connected { background: #064e3b; color: #6ee7b7; }
+  .badge-disconnected { background: #450a0a; color: #fca5a5; }
+  .badge-watching { background: #1e1b4b; color: #a5b4fc; }
+  #graph-svg { width: 100%; height: 100%; }
+  .link { stroke: #374151; stroke-width: 1.5px; marker-end: url(#arrow); }
+  .node circle { cursor: pointer; stroke-width: 2px; }
+  .node text { font-size: 10px; fill: #cbd5e1; pointer-events: none; }
+  .link-label { font-size: 9px; fill: #6366f1; pointer-events: none; }
+  .drop-zone { border: 2px dashed var(--border); transition: border-color 0.2s, background 0.2s; }
+  .drop-zone.drag-over { border-color: var(--accent); background: #1e1b4b33; }
+  .event-item { border-left: 3px solid var(--accent); }
+  .event-item.audio { border-color: #10b981; }
+  .event-item.image { border-color: #6366f1; }
+  .event-item.document { border-color: #f59e0b; }
+  .event-item.watch { border-color: #ec4899; }
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  input, select { background: #0f1117; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 6px 10px; }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  button.primary { background: var(--accent); color: white; border-radius: 6px; padding: 7px 18px; font-weight: 600; transition: background 0.15s; }
+  button.primary:hover { background: var(--accent-dim); }
+  button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.secondary { background: #1f2937; color: var(--text); border-radius: 6px; padding: 7px 18px; border: 1px solid var(--border); transition: background 0.15s; }
+  button.secondary:hover { background: #374151; }
+  button.danger { background: #450a0a; color: #fca5a5; border-radius: 6px; padding: 7px 18px; border: 1px solid #7f1d1d; transition: background 0.15s; }
+  button.danger:hover { background: #7f1d1d; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Header -->
+<header class="panel border-b border-border px-6 py-3 flex items-center gap-4">
+  <div class="flex items-center gap-3">
+    <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">C</div>
+    <span class="font-semibold text-lg tracking-tight">CEREBRUM</span>
+    <span class="text-muted">·</span>
+    <span class="text-muted text-sm">Orin Interface</span>
+  </div>
+  <div class="ml-auto flex items-center gap-3">
+    <span id="status-badge" class="badge-disconnected text-xs font-medium px-3 py-1 rounded-full">Disconnected</span>
+    <span id="watch-badge" class="badge-watching text-xs font-medium px-3 py-1 rounded-full hidden">Watching</span>
+    <span id="graph-count" class="text-muted text-xs">0 nodes · 0 edges</span>
+    <input id="api-base" type="text" value="" placeholder="API base (blank = same origin)" class="text-xs w-56">
+  </div>
+</header>
+
+<div class="flex h-[calc(100vh-53px)]">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="panel border-r w-72 flex-shrink-0 flex flex-col overflow-y-auto">
+
+    <!-- Connection Panel -->
+    <div class="p-4 border-b border-border">
+      <h2 class="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Connection</h2>
+      <div class="space-y-2">
+        <input id="conn-host" type="text" placeholder="Host / IP (e.g. agxorin.local)" class="w-full text-sm">
+        <div class="flex gap-2">
+          <input id="conn-user" type="text" placeholder="User" value="brutalbyte" class="flex-1 text-sm">
+          <input id="conn-port" type="number" placeholder="Port" value="22" class="w-20 text-sm">
+        </div>
+        <input id="conn-pass" type="password" placeholder="Password" class="w-full text-sm">
+        <input id="conn-key" type="text" placeholder="Key path (optional)" class="w-full text-sm">
+        <div class="flex gap-2">
+          <input id="conn-whisper" type="text" placeholder="Whisper model" value="base" class="flex-1 text-sm">
+          <input id="conn-ollama" type="text" placeholder="Ollama model" value="llama3.1:8b" class="w-32 text-sm">
+        </div>
+      </div>
+      <div class="flex gap-2 mt-3">
+        <button class="primary flex-1 text-sm" id="btn-connect" onclick="connect()">Connect</button>
+        <button class="secondary text-sm" id="btn-disconnect" onclick="disconnect()" disabled>Disconnect</button>
+      </div>
+    </div>
+
+    <!-- System Info -->
+    <div class="p-4 border-b border-border" id="sysinfo-panel">
+      <h2 class="text-xs font-semibold text-muted uppercase tracking-wider mb-3">System Info</h2>
+      <div id="sysinfo" class="space-y-1 text-xs text-muted">
+        <span>Not connected</span>
+      </div>
+    </div>
+
+    <!-- Sensor Watch -->
+    <div class="p-4 border-b border-border">
+      <h2 class="text-xs font-semibold text-muted uppercase tracking-wider mb-3">Sensor Watch</h2>
+      <div class="space-y-2">
+        <input id="watch-dir" type="text" placeholder="Remote dir (e.g. /data/captures)" class="w-full text-sm">
+        <select id="watch-modality" class="w-full text-sm">
+          <option value="auto">Auto-detect</option>
+          <option value="audio">Audio only</option>
+          <option value="vision">Vision only</option>
+          <option value="document">Document only</option>
+        </select>
+        <input id="watch-context" type="text" placeholder="Context tag" class="w-full text-sm">
+      </div>
+      <div class="flex gap-2 mt-3">
+        <button class="primary flex-1 text-sm" id="btn-watch-start" onclick="startWatch()" disabled>Start Watch</button>
+        <button class="secondary text-sm" id="btn-watch-stop" onclick="stopWatch()" disabled>Stop</button>
+      </div>
+    </div>
+
+    <!-- Graph controls -->
+    <div class="p-4 mt-auto">
+      <button class="danger w-full text-sm" onclick="clearGraph()">Clear Graph</button>
+    </div>
+  </aside>
+
+  <!-- MAIN AREA -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- Upload Zone + Quick Text -->
+    <div class="panel border-b p-4 flex gap-4">
+      <!-- Drag and drop -->
+      <div id="drop-zone" class="drop-zone rounded-lg p-4 flex-1 flex flex-col items-center justify-center text-center cursor-pointer" onclick="document.getElementById('file-input').click()">
+        <input id="file-input" type="file" class="hidden" multiple accept="audio/*,image/*,.pdf,.docx,.txt,.md" onchange="handleFileSelect(event)">
+        <svg class="w-8 h-8 text-muted mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <span class="text-sm text-muted">Drop files here or click to upload</span>
+        <span class="text-xs text-muted mt-1">Audio · Image · Document</span>
+      </div>
+      <!-- Quick text input -->
+      <div class="flex-1 flex flex-col gap-2">
+        <label class="text-xs text-muted font-medium">Direct text input</label>
+        <textarea id="text-input" class="flex-1 bg-surface border border-border rounded-lg p-2 text-sm resize-none focus:outline-none focus:border-accent" placeholder="Paste text to extract triples directly..."></textarea>
+        <div class="flex gap-2">
+          <input id="text-context" type="text" placeholder="Context tag" class="flex-1 text-sm">
+          <button class="primary text-sm" onclick="submitText()">Extract</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom split: events + graph -->
+    <div class="flex-1 flex overflow-hidden">
+
+      <!-- Event Feed -->
+      <div class="w-80 flex-shrink-0 panel border-r flex flex-col">
+        <div class="p-3 border-b border-border flex items-center justify-between">
+          <span class="text-xs font-semibold text-muted uppercase tracking-wider">Perception Feed</span>
+          <button onclick="clearFeed()" class="text-xs text-muted hover:text-text">Clear</button>
+        </div>
+        <div id="event-feed" class="flex-1 overflow-y-auto p-2 space-y-2"></div>
+      </div>
+
+      <!-- Knowledge Graph -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <div class="p-3 border-b border-border flex items-center gap-3">
+          <span class="text-xs font-semibold text-muted uppercase tracking-wider">Knowledge Graph</span>
+          <button onclick="resetZoom()" class="text-xs secondary px-2 py-1">Reset View</button>
+          <label class="flex items-center gap-1 text-xs text-muted ml-auto">
+            <input type="checkbox" id="show-labels" checked onchange="renderGraph()"> Show labels
+          </label>
+        </div>
+        <div id="graph-container" class="flex-1 relative overflow-hidden">
+          <svg id="graph-svg">
+            <defs>
+              <marker id="arrow" viewBox="0 -5 10 10" refX="18" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,-5L10,0L0,5" fill="#374151"/>
+              </marker>
+            </defs>
+            <g id="graph-root"></g>
+          </svg>
+          <div id="graph-empty" class="absolute inset-0 flex items-center justify-center text-muted text-sm pointer-events-none">
+            Graph is empty — ingest some data to see it here
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- RIGHT PANEL: Edge table -->
+  <aside class="panel border-l w-64 flex-shrink-0 flex flex-col overflow-hidden">
+    <div class="p-3 border-b border-border">
+      <span class="text-xs font-semibold text-muted uppercase tracking-wider">Edges</span>
+    </div>
+    <div id="edge-table" class="flex-1 overflow-y-auto p-2 space-y-1 text-xs"></div>
+  </aside>
+
+</div>
+
+<script>
+// ============================================================
+// State
+// ============================================================
+let connected = false;
+let watching = false;
+let graphData = { nodes: [], edges: [] };
+let simulation = null;
+let sseSource = null;
+let zoomBehaviour = null;
+
+function apiBase() {
+  const v = document.getElementById('api-base').value.trim();
+  return v || window.location.origin;
+}
+function api(path) { return apiBase() + path; }
+
+// ============================================================
+// Connection
+// ============================================================
+async function connect() {
+  const body = {
+    host: document.getElementById('conn-host').value.trim(),
+    user: document.getElementById('conn-user').value.trim(),
+    port: parseInt(document.getElementById('conn-port').value) || 22,
+    password: document.getElementById('conn-pass').value || null,
+    key_path: document.getElementById('conn-key').value.trim() || null,
+    whisper_model: document.getElementById('conn-whisper').value.trim() || 'base',
+    ollama_model: document.getElementById('conn-ollama').value.trim() || 'llama3.1:8b',
+  };
+  if (!body.host) { alert('Enter a hostname.'); return; }
+  document.getElementById('btn-connect').disabled = true;
+  document.getElementById('btn-connect').textContent = 'Connecting…';
+  try {
+    const r = await fetch(api('/orin/connect'), {
+      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Connection failed');
+    setConnected(true);
+    startSSE();
+    refreshStatus();
+  } catch(e) {
+    alert('Connection error: ' + e.message);
+    document.getElementById('btn-connect').disabled = false;
+    document.getElementById('btn-connect').textContent = 'Connect';
+  }
+}
+
+async function disconnect() {
+  stopSSE();
+  await fetch(api('/orin/disconnect'), { method: 'POST' });
+  setConnected(false);
+  watching = false;
+  updateWatchUI();
+  document.getElementById('sysinfo').innerHTML = '<span>Not connected</span>';
+}
+
+function setConnected(v) {
+  connected = v;
+  document.getElementById('status-badge').textContent = v ? 'Connected' : 'Disconnected';
+  document.getElementById('status-badge').className = v
+    ? 'badge-connected text-xs font-medium px-3 py-1 rounded-full'
+    : 'badge-disconnected text-xs font-medium px-3 py-1 rounded-full';
+  document.getElementById('btn-connect').disabled = v;
+  document.getElementById('btn-connect').textContent = 'Connect';
+  document.getElementById('btn-disconnect').disabled = !v;
+  document.getElementById('btn-watch-start').disabled = !v;
+}
+
+async function refreshStatus() {
+  if (!connected) return;
+  try {
+    const r = await fetch(api('/orin/status'));
+    const d = await r.json();
+    const info = d.system_info || {};
+    document.getElementById('sysinfo').innerHTML = Object.entries({
+      'JetPack': info.jetpack, 'RAM': info.ram, 'Disk': info.disk,
+      'Whisper': info.whisper, 'Ollama': info.ollama_models,
+    }).filter(([,v]) => v).map(([k,v]) =>
+      `<div class="flex gap-1"><span class="text-muted w-14 flex-shrink-0">${k}</span><span class="text-text truncate">${v}</span></div>`
+    ).join('');
+    updateGraphCount(d.graph_nodes, d.graph_edges);
+  } catch(e) { /* ignore */ }
+}
+
+// ============================================================
+// SSE
+// ============================================================
+function startSSE() {
+  stopSSE();
+  sseSource = new EventSource(api('/orin/watch/stream'));
+  sseSource.onmessage = (e) => {
+    const ev = JSON.parse(e.data);
+    if (ev.type === 'heartbeat' || ev.type === 'connected') return;
+    addFeedEvent(ev);
+    if (ev.edges_added > 0) {
+      refreshGraph();
+    }
+  };
+}
+function stopSSE() {
+  if (sseSource) { sseSource.close(); sseSource = null; }
+}
+
+// ============================================================
+// File upload
+// ============================================================
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  if (!connected) { alert('Connect to Orin first.'); return; }
+  [...e.dataTransfer.files].forEach(uploadFile);
+});
+
+function handleFileSelect(e) {
+  if (!connected) { alert('Connect to Orin first.'); return; }
+  [...e.target.files].forEach(uploadFile);
+  e.target.value = '';
+}
+
+async function uploadFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  let endpoint;
+  if (['wav','mp3','m4a','flac','ogg','opus'].includes(ext)) endpoint = '/orin/perceive/audio';
+  else if (['jpg','jpeg','png','webp','gif','bmp'].includes(ext)) endpoint = '/orin/perceive/image';
+  else endpoint = '/orin/perceive/document';
+
+  const form = new FormData();
+  form.append('file', file);
+  form.append('context', document.getElementById('text-context').value.trim() || '');
+
+  addFeedEvent({ type: 'uploading', filename: file.name, transcript: 'Processing on Orin…', triples: [], edges_added: 0 });
+
+  try {
+    const r = await fetch(api(endpoint), { method: 'POST', body: form });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Error');
+    // SSE will fire the update; graph refresh happens automatically
+  } catch(e) {
+    addFeedEvent({ type: 'error', filename: file.name, transcript: 'Error: ' + e.message, triples: [], edges_added: 0 });
+  }
+}
+
+// ============================================================
+// Text input
+// ============================================================
+async function submitText() {
+  const text = document.getElementById('text-input').value.trim();
+  if (!text) return;
+  if (!connected) { alert('Connect to Orin first.'); return; }
+  const r = await fetch(api('/orin/perceive/text'), {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ text, context: document.getElementById('text-context').value.trim() }),
+  });
+  const d = await r.json();
+  addFeedEvent({ type: 'text', filename: '(direct text)', ...d });
+  if (d.edges_added > 0) refreshGraph();
+}
+
+// ============================================================
+// Watch
+// ============================================================
+async function startWatch() {
+  const dir = document.getElementById('watch-dir').value.trim();
+  if (!dir) { alert('Enter a remote directory.'); return; }
+  const r = await fetch(api('/orin/watch/start'), {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      remote_dir: dir,
+      modality: document.getElementById('watch-modality').value,
+      context: document.getElementById('watch-context').value.trim(),
+    }),
+  });
+  const d = await r.json();
+  if (d.status === 'watching' || d.status === 'already_watching') {
+    watching = true; updateWatchUI();
+  }
+}
+
+async function stopWatch() {
+  await fetch(api('/orin/watch/stop'), { method: 'POST' });
+  watching = false; updateWatchUI();
+}
+
+function updateWatchUI() {
+  document.getElementById('btn-watch-start').disabled = !connected || watching;
+  document.getElementById('btn-watch-stop').disabled = !watching;
+  const badge = document.getElementById('watch-badge');
+  badge.classList.toggle('hidden', !watching);
+}
+
+// ============================================================
+// Graph
+// ============================================================
+async function refreshGraph() {
+  try {
+    const r = await fetch(api('/orin/graph'));
+    const d = await r.json();
+    graphData = d;
+    renderGraph();
+    renderEdgeTable();
+    updateGraphCount(d.nodes.length, d.edges.length);
+  } catch(e) { /* ignore */ }
+}
+
+async function clearGraph() {
+  if (!confirm('Clear the perception graph?')) return;
+  await fetch(api('/orin/graph'), { method: 'DELETE' });
+  graphData = { nodes: [], edges: [] };
+  renderGraph();
+  renderEdgeTable();
+  updateGraphCount(0, 0);
+}
+
+function updateGraphCount(nodes, edges) {
+  document.getElementById('graph-count').textContent = `${nodes} nodes · ${edges} edges`;
+}
+
+function resetZoom() {
+  if (zoomBehaviour) {
+    d3.select('#graph-svg').transition().duration(400).call(zoomBehaviour.transform, d3.zoomIdentity);
+  }
+}
+
+function renderGraph() {
+  const svg = d3.select('#graph-svg');
+  const root = d3.select('#graph-root');
+  const container = document.getElementById('graph-container');
+  const W = container.clientWidth, H = container.clientHeight;
+
+  document.getElementById('graph-empty').style.display =
+    graphData.nodes.length === 0 ? 'flex' : 'none';
+
+  if (!zoomBehaviour) {
+    zoomBehaviour = d3.zoom().scaleExtent([0.1, 4]).on('zoom', e => {
+      root.attr('transform', e.transform);
+    });
+    svg.call(zoomBehaviour);
+  }
+
+  root.selectAll('*').remove();
+
+  if (graphData.nodes.length === 0) return;
+
+  const showLabels = document.getElementById('show-labels').checked;
+
+  const nodeMap = {};
+  graphData.nodes.forEach(n => { nodeMap[n.id] = {...n}; });
+
+  const links = graphData.edges.map(e => ({
+    source: e.source, target: e.target,
+    relation: e.relation, confidence: e.confidence,
+  }));
+  const nodes = Object.values(nodeMap);
+
+  // colour by first character (simple hash)
+  const colour = d3.scaleOrdinal(d3.schemeTableau10);
+  const nodeColour = n => colour(n.id[0] || '?');
+
+  if (simulation) simulation.stop();
+  simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(80).strength(0.5))
+    .force('charge', d3.forceManyBody().strength(-200))
+    .force('center', d3.forceCenter(W / 2, H / 2))
+    .force('collide', d3.forceCollide(20));
+
+  const link = root.append('g').selectAll('line').data(links).join('line')
+    .attr('class', 'link')
+    .attr('stroke-opacity', d => 0.4 + 0.6 * (d.confidence || 1));
+
+  const linkLabel = showLabels ? root.append('g').selectAll('text').data(links).join('text')
+    .attr('class', 'link-label')
+    .text(d => d.relation) : null;
+
+  const node = root.append('g').selectAll('g').data(nodes).join('g')
+    .attr('class', 'node')
+    .call(d3.drag()
+      .on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+      .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
+      .on('end',   (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }));
+
+  node.append('circle').attr('r', 8).attr('fill', nodeColour).attr('stroke', '#1f2937');
+  if (showLabels) {
+    node.append('text').attr('dx', 11).attr('dy', 4).text(d => {
+      const lbl = (d.label || d.id || '').replace(/^perception:/, '');
+      return lbl.length > 20 ? lbl.slice(0, 18) + '…' : lbl;
+    });
+  }
+
+  node.append('title').text(d => d.id);
+
+  simulation.on('tick', () => {
+    link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    if (linkLabel) linkLabel
+      .attr('x', d => (d.source.x + d.target.x) / 2)
+      .attr('y', d => (d.source.y + d.target.y) / 2);
+    node.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+}
+
+// ============================================================
+// Edge Table
+// ============================================================
+function renderEdgeTable() {
+  const tbl = document.getElementById('edge-table');
+  if (graphData.edges.length === 0) {
+    tbl.innerHTML = '<span class="text-muted">No edges yet</span>';
+    return;
+  }
+  tbl.innerHTML = graphData.edges.slice(-50).reverse().map(e => `
+    <div class="panel rounded p-1.5 space-y-0.5">
+      <div class="text-text truncate">${clean(e.source)}</div>
+      <div class="text-indigo-400 text-xs">${e.relation}</div>
+      <div class="text-text truncate">${clean(e.target)}</div>
+      <div class="text-muted" style="font-size:10px">${e.provenance || ''}</div>
+    </div>`).join('');
+}
+
+function clean(s) { return (s || '').replace(/^perception:/, ''); }
+
+// ============================================================
+// Event Feed
+// ============================================================
+function addFeedEvent(ev) {
+  const feed = document.getElementById('event-feed');
+  const typeClass = ev.type || 'document';
+  const icon = { audio: '🎙', image: '🖼', document: '📄', text: '📝', watch: '📡', uploading: '⏳', error: '❌' }[typeClass] || '•';
+  const tripleHtml = (ev.triples || []).slice(0, 4).map(t =>
+    `<div class="text-muted mt-0.5 truncate">${clean(t[0])} → <span class="text-indigo-400">${t[1]}</span> → ${clean(t[2])}</div>`
+  ).join('');
+  const item = document.createElement('div');
+  item.className = `event-item ${typeClass} panel rounded-lg p-2 text-xs`;
+  item.innerHTML = `
+    <div class="flex items-center gap-1 mb-1">
+      <span>${icon}</span>
+      <span class="font-medium truncate flex-1">${ev.filename || ''}</span>
+      ${ev.edges_added > 0 ? `<span class="text-green-400 ml-auto">+${ev.edges_added}</span>` : ''}
+    </div>
+    ${ev.transcript ? `<div class="text-muted truncate">${ev.transcript.slice(0, 120)}</div>` : ''}
+    ${tripleHtml}`;
+  feed.prepend(item);
+  while (feed.children.length > 100) feed.removeChild(feed.lastChild);
+}
+
+function clearFeed() {
+  document.getElementById('event-feed').innerHTML = '';
+}
+
+// ============================================================
+// Boot
+// ============================================================
+window.addEventListener('resize', () => { if (graphData.nodes.length > 0) renderGraph(); });
+
+// Poll status every 10s when connected
+setInterval(() => { if (connected) refreshStatus(); }, 10000);
+
+// Auto-fill host if URL param ?host=...
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('host')) document.getElementById('conn-host').value = urlParams.get('host');
+</script>
+</body>
+</html>
