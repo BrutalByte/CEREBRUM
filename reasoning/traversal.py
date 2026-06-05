@@ -598,6 +598,16 @@ class BeamTraversal:
                 else:
                     csa_params = csa_params_base
 
+                # Phase 225: per-hop alpha scaling — suppress semantic similarity on
+                # intermediate hops where community structure outperforms semantics.
+                _hop_scales = getattr(self.csa, "alpha_hop_scales", None)
+                if _hop_scales:
+                    _scale = _hop_scales[min(hop - 1, len(_hop_scales) - 1)]
+                    if _scale != 1.0:
+                        _p = list(csa_params)
+                        _p[0] = _p[0] * _scale
+                        csa_params = tuple(_p)
+
                 edges = all_edges_map.get(u, [])
                 self.expansions += 1
 
@@ -708,7 +718,7 @@ class BeamTraversal:
                     if _slb is not None and _rl_indices:
                         _rl_objects = [_logits[i] for i in _rl_indices]
                         _rl_pb = np.array([_batch_steps[i][6] for i in _rl_indices], dtype=np.float32)
-                        _rl_scores_arr = _slb(_rl_objects) * _rl_pb
+                        _rl_scores_arr = _slb(_rl_objects, hop=hop) * _rl_pb
                         _batch_score_map = {idx: float(s) for idx, s in zip(_rl_indices, _rl_scores_arr)}
                     else:
                         _batch_score_map = None
@@ -1239,7 +1249,7 @@ class AsyncBeamTraversal(BeamTraversal):
                             logit_obj = _cwf_result
                             # Calculate weight using parameters, default to neutral if learner not present
                             csa_params = self.csa.get_current_params(path.tail) if hasattr(self.csa, 'get_current_params') else _DEFAULT_INIT_PARAMS
-                            
+
                             # Phase 68: Apply dynamic hormonal overrides
                             if self.csa_overrides:
                                 p_list = list(csa_params)
@@ -1247,6 +1257,15 @@ class AsyncBeamTraversal(BeamTraversal):
                                     if k in self.csa_overrides:
                                         p_list[i] = self.csa_overrides[k]
                                 csa_params = tuple(p_list)
+
+                            # Phase 225: per-hop alpha scaling (async path)
+                            _hop_scales = getattr(self.csa, "alpha_hop_scales", None)
+                            if _hop_scales:
+                                _scale = _hop_scales[min(hop - 1, len(_hop_scales) - 1)]
+                                if _scale != 1.0:
+                                    _p = list(csa_params)
+                                    _p[0] = _p[0] * _scale
+                                    csa_params = tuple(_p)
 
                             w = logit_obj.score(csa_params)
                             features_vector = logit_obj.to_vector()

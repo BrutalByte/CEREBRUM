@@ -20,6 +20,11 @@ env/
 
 # Environment
 .env
+.env.*
+!.env.example
+
+# NVMe mmap store (graph.a, graph.e, embeddings.e, edges.wal, graph.meta)
+data/cerebrum/mmap/
 
 # Documents
 *.docx

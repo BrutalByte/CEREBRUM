@@ -84,6 +84,7 @@ class SleepCycleOrchestrator:
         working_memory: Optional["WorkingMemoryBuffer"] = None,
         goal_stack: Optional[Any] = None,
         calibrator: Optional[Any] = None,
+        nvme_flush_callback: Optional[Any] = None,
     ) -> None:
         self.adapter = adapter
         self.engram_consolidator = engram_consolidator
@@ -93,6 +94,10 @@ class SleepCycleOrchestrator:
         self.working_memory = working_memory
         self.goal_stack = goal_stack
         self.calibrator = calibrator
+        # Phase 227: optional callable() triggered as Phase 6 of each sleep pass.
+        # CerebrumGraph injects its _on_rem_complete method here so NVMe flush
+        # happens whether triggered via REM or the full sleep cycle.
+        self._nvme_flush_callback = nvme_flush_callback
 
         self._lock = threading.Lock()
         self._last_report: Optional[SleepReport] = None
@@ -144,6 +149,9 @@ class SleepCycleOrchestrator:
 
             # Phase 5 — DMN Scan
             report.dmn_insights = self._run_dmn_scan()
+
+            # Phase 6 — NVMe Consolidation (fire-and-forget background thread)
+            self._run_nvme_flush(dry_run)
 
         except Exception as exc:
             logger.exception("SleepCycle: error during sleep pass: %s", exc)
@@ -248,6 +256,20 @@ class SleepCycleOrchestrator:
         except Exception as exc:
             logger.warning("SleepCycle[decay]: %s", exc)
             return 0
+
+    def _run_nvme_flush(self, dry_run: bool) -> None:
+        if dry_run or self._nvme_flush_callback is None:
+            return
+        try:
+            t = threading.Thread(
+                target=self._nvme_flush_callback,
+                args=(None,),   # report=None signals a sleep-cycle-triggered flush
+                daemon=True,
+                name="cerebrum-mmap-flush",
+            )
+            t.start()
+        except Exception as exc:
+            logger.warning("SleepCycle[nvme]: failed to start flush thread: %s", exc)
 
     def _run_dmn_scan(self) -> int:
         if self.default_mode_engine is None:

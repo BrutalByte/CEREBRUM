@@ -121,6 +121,9 @@ class CSAEngine:
         # Phase 216-A: Source credibility registry
         from core.graph_adapter import CredibilityRegistry
         self.credibility_registry: Optional[CredibilityRegistry] = kwargs.get("credibility_registry", None)
+        # Phase 225: Per-hop alpha scales — index 0 = hop 1, index 1 = hop 2, etc.
+        # Empty list = uniform alpha (backward compatible).
+        self.alpha_hop_scales: List[float] = []
 
     def compute_attention(self, u_idx: int, neighbor_indices: List[int]) -> torch.Tensor:
         """
@@ -404,6 +407,7 @@ class CSAEngine:
     def score_logits_batch(
         self,
         logits: "List[ReasoningLogit]",
+        hop: int = 1,
     ) -> "np.ndarray":
         """Vectorized sigmoid scoring for a batch of ReasoningLogit objects.
 
@@ -420,8 +424,12 @@ class CSAEngine:
 
         # Weight vector with sign baked in: matches ReasoningLogit.score() formula.
         # [a, b, g, -d, e, z, eta, iota, -mu, theta]
+        _alpha = _f(self.alpha)
+        # Phase 225: per-hop alpha scaling applied inside the batch scorer
+        if self.alpha_hop_scales:
+            _alpha *= self.alpha_hop_scales[min(hop - 1, len(self.alpha_hop_scales) - 1)]
         _w = np.array([
-            _f(self.alpha), _f(self.beta), _f(self.gamma),
+            _alpha, _f(self.beta), _f(self.gamma),
             -_f(self.delta), _f(self.epsilon), _f(self.zeta),
             _f(self.eta), _f(self.iota), -_f(self.mu), _f(self.theta),
         ], dtype=np.float32)

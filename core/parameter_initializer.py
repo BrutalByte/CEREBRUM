@@ -190,6 +190,50 @@ _SENTENCE_OVERRIDES: dict[str, dict] = {
     # mixed × sentence: pending Phase 215 ConceptNet tuner run
 }
 
+# ---------------------------------------------------------------------------
+# Phase 225/226: Per-hop alpha scales
+#
+# alpha_hop_scales[k] is the multiplier applied to CSA alpha at hop k+1.
+# Empirical basis (MetaQA 1000-sample, random vs sentence, --zero-config):
+#   hop-1: sentence 83.6% vs random 82.3%  → sentence helps
+#   hop-2: sentence 58.9% vs random 63.2%  → sentence still trails 4 pts
+#   hop-3: sentence 58.5% vs random 57.6%  → sentence slightly better
+#
+# NOTE: The original Phase 225 hypothesis that alpha scaling was responsible
+# for the 14-point 2-hop degradation was INCORRECT.  Phase 226 root-cause
+# analysis traced the degradation to score_path() in path_scorer.py, which
+# applies a 0.2-weight semantic alignment term (query_embedding ↔
+# path.embedding cosine) when query_embedding is not None (sentence mode).
+# For 2-hop queries, aggregated bridge-entity embeddings are poor proxies for
+# the question, producing noisy answer rankings.  Fix: pass query_embedding=None
+# for non-3-hop queries at the call site (metaqa_eval.py) so has_semantic=False.
+# After that fix, 2-hop jumped from 45.6% → 58.9%, confirming the true cause.
+#
+# These scales therefore affect traversal guidance (alpha similarity during
+# beam expansion), not final answer ranking.  [0.0, 1.0, 1.0] suppresses
+# semantic beam-steering at hop-1 (bridge step) while keeping it for deeper
+# hops where entity names align better with the query domain.
+#
+# For typed-heterogeneous KGs, intermediate entities carry domain type info
+# (e.g. Gene → Disease) that correlates with the path, so semantic is still
+# useful at hop 2 (scale > 0).  Values are conservative estimates pending
+# Hetionet per-hop ablation.
+# ---------------------------------------------------------------------------
+_ALPHA_HOP_SCALES: dict[str, dict[str, List[float]]] = {
+    "hub_homogeneous": {
+        "random":   [1.0, 1.0, 1.0],   # alpha is noise — no benefit from varying
+        "sentence": [0.0, 1.0, 1.0],   # Phase 225/226: suppress hop-1 bridge steering; keep for hop-2+
+    },
+    "typed_heterogeneous": {
+        "random":   [1.0, 1.0, 1.0],
+        "sentence": [1.0, 0.6, 0.9],   # typed bridges retain semantic structure — estimate
+    },
+    "mixed": {
+        "random":   [1.0, 1.0, 1.0],
+        "sentence": [1.0, 0.3, 0.85],  # blend of hub and typed values
+    },
+}
+
 
 # ---------------------------------------------------------------------------
 # Phase 218-C: Known-KB profile vectors for cross-KB parameter blending
@@ -233,8 +277,13 @@ class InitialParams:
     vote_weight:  float
     branch_bonus: float
     beam_width:   int
+    alpha_hop_scales: List[float] = None  # type: ignore[assignment]
     effective_regime: str = "unknown"    # regime used for constant selection
     embedding_method: str = "random"     # embedding method used for constant selection
+
+    def __post_init__(self) -> None:
+        if self.alpha_hop_scales is None:
+            self.alpha_hop_scales = [1.0, 1.0, 1.0]
 
     def as_dict(self) -> dict:
         return {
@@ -404,6 +453,9 @@ class ParameterInitializer:
             vote_weight      = round(vote_weight, 4),
             branch_bonus     = round(branch_bonus, 4),
             beam_width       = BEAM_WIDTH,
+            alpha_hop_scales = list(_ALPHA_HOP_SCALES.get(regime, {}).get(
+                "sentence" if use_sentence else "random", [1.0, 1.0, 1.0]
+            )),
             effective_regime = regime,
             embedding_method = embedding_method,
         )
@@ -461,6 +513,7 @@ class ParameterInitializer:
         vote_weight  = vote_base + VOTE_Q_SCALE * q_clamped
         branch_bonus = _blend_const(_BRANCH_BONUS)
 
+        _emb_key = "sentence" if embedding_method == "sentence" else "random"
         return InitialParams(
             trb_factor       = round(trb_factor,   4),
             gamma            = round(gamma,        4),
@@ -471,6 +524,7 @@ class ParameterInitializer:
             vote_weight      = round(vote_weight,  4),
             branch_bonus     = round(branch_bonus, 4),
             beam_width       = BEAM_WIDTH,
+            alpha_hop_scales = list(_ALPHA_HOP_SCALES.get("mixed", {}).get(_emb_key, [1.0, 1.0, 1.0])),
             effective_regime = "mixed",
             embedding_method = embedding_method,
         )

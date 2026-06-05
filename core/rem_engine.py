@@ -122,6 +122,7 @@ class REMEngine:
         max_synthesis_proposals: int = 50,
         synthesis_confidence: float = 0.3,
         interval_seconds: float = 3600.0,
+        on_complete: Optional[callable] = None,
     ):
         self.adapter = adapter
         self.prune_confidence_threshold = prune_confidence_threshold
@@ -130,6 +131,10 @@ class REMEngine:
         self.max_synthesis_proposals = max_synthesis_proposals
         self.synthesis_confidence = synthesis_confidence
         self.interval_seconds = interval_seconds
+        # Phase 227: optional callback fired in a background thread after each
+        # real (non-dry) run.  Signature: on_complete(report: REMReport) -> None.
+        # Used by CerebrumGraph to trigger NVMe consolidation after REM.
+        self._on_complete = on_complete
 
         self._lock = threading.RLock()
         self._snapshot: Optional[_Snapshot] = None
@@ -193,7 +198,16 @@ class REMEngine:
                 dry_run=dry_run,
             )
             self._last_report = report
-            return report
+
+        # Phase 227: fire NVMe consolidation in a background thread so the
+        # REM report returns immediately.  Runs only on real (non-dry) cycles.
+        if not dry_run and self._on_complete is not None:
+            cb = self._on_complete
+            t = threading.Thread(target=cb, args=(report,), daemon=True,
+                                 name="cerebrum-mmap-flush")
+            t.start()
+
+        return report
 
     def rollback(self) -> int:
         """

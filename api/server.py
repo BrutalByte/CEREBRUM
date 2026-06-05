@@ -1610,6 +1610,17 @@ def create_app(
             communities=community_infos,
         )
 
+    @router.get("/graph/storage", tags=["graph"])
+    async def get_graph_storage(node: Dict = Depends(get_authenticated_node)):
+        """
+        Phase 227: Return current NVMe storage status — mmap policy, WAL state,
+        last consolidation report, and MmapAdvisor recommendation.
+        """
+        graph = _state.get("graph")
+        if graph is None or not hasattr(graph, "storage_status"):
+            return {"error": "Graph not loaded or storage not configured"}
+        return graph.storage_status()
+
     @router.get("/graph/edges", response_model=GraphEdgesResponse, tags=["graph"])
     async def get_graph_edges(
         limit: int = 500,
@@ -2320,7 +2331,10 @@ def create_app(
         if _state["rem_engine"] is None:
             if not _is_ready():
                 raise HTTPException(status_code=503, detail="Service not ready â€” call load() first")
-            _state["rem_engine"] = REMEngine(_state["adapter"])
+            graph = _state.get("graph")
+            on_complete = getattr(graph, "_on_rem_complete", None) if graph else None
+            _state["rem_engine"] = REMEngine(_state["adapter"],
+                                             on_complete=on_complete)
         return _state["rem_engine"]
 
     @router.post("/rem/run", response_model=REMReportSchema, tags=["rem"])

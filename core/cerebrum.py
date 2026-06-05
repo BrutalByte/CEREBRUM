@@ -134,11 +134,27 @@ class CerebrumGraph:
         auto_hybrid:          bool = False,
         max_ram_gb:           Optional[float] = None,
         max_vram_gb:          Optional[float] = None,
+        # Phase 227: intentional NVMe consolidation
+        mmap_policy:          Optional[str]  = None,  # "auto"|"always"|"never"
+        mmap_data_dir:        Optional[str]  = None,  # overrides CEREBRUM_MMAP_DIR
     ):
         self.adapter             = adapter
         self.use_mmap            = use_mmap
         self.auto_hybrid         = auto_hybrid
         self.governor            = MemoryGovernor(max_ram_gb=max_ram_gb, max_vram_gb=max_vram_gb)
+
+        # Phase 227: NVMe consolidation setup
+        from core.mmap_policy import MmapPolicy, MmapAdvisor, MmapConsolidator, resolve_mmap_dir
+        from core.graph_wal import GraphWAL
+        _policy_map = {"auto": MmapPolicy.AUTO, "always": MmapPolicy.ALWAYS,
+                       "never": MmapPolicy.NEVER}
+        self._mmap_policy     = _policy_map.get(mmap_policy or "auto", MmapPolicy.AUTO)
+        self._mmap_data_dir   = Path(mmap_data_dir) if mmap_data_dir else resolve_mmap_dir()
+        self._mmap_advisor    = MmapAdvisor()
+        self._mmap_consolidator = MmapConsolidator(self._mmap_data_dir)
+        self._wal             = GraphWAL(self._mmap_data_dir)
+        self._last_consolidation: Optional[Any] = None
+        self._build_id: Optional[str] = None
         self._embedding_engine   = embedding_engine or RandomEngine(dim=64)
         self._beam_width         = beam_width
         self._max_hop            = max_hop
@@ -225,6 +241,9 @@ class CerebrumGraph:
     def attach_sleep_cycle(self, orchestrator: Any) -> None:
         """Attach a SleepCycleOrchestrator (Phase 119)."""
         self._sleep_orchestrator = orchestrator
+        # Phase 227: inject NVMe flush callback so the orchestrator triggers
+        # consolidation at the end of every sleep pass.
+        orchestrator._nvme_flush_callback = self._on_rem_complete
         logger.info("SleepCycleOrchestrator attached.")
 
     def attach_metacognitive_monitor(self, monitor: Any) -> None:
@@ -556,6 +575,67 @@ class CerebrumGraph:
         return self
 
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Phase 227: NVMe consolidation helpers
+    # ------------------------------------------------------------------
+
+    def add_edge(
+        self,
+        source_id:   str,
+        target_id:   str,
+        relation:    str,
+        confidence:  float = 1.0,
+        provenance:  str   = "",
+        synthetic:   bool  = False,
+    ) -> None:
+        """
+        Add an edge to the live graph and append it to the WAL so it survives
+        a power outage before the next REM cycle writes it to NVMe memmap.
+        """
+        self.adapter.add_edge(
+            source_id, target_id, relation,
+            confidence=confidence,
+            provenance=provenance,
+            synthetic=synthetic,
+        )
+        self._wal.append(source_id, target_id, relation,
+                         confidence=confidence,
+                         provenance=provenance,
+                         synthetic=synthetic)
+
+    def _on_rem_complete(self, report) -> None:
+        """
+        Phase 227: Triggered in a background thread after every real REM or
+        sleep cycle.  Flushes the consolidated graph + embeddings to NVMe and
+        truncates the WAL.
+        """
+        try:
+            embeddings = getattr(self.adapter, "embeddings", {})
+            result = self._mmap_consolidator.flush(
+                self.adapter,
+                embeddings,
+                wal=self._wal,
+                build_id=self._build_id,
+            )
+            self._last_consolidation = result
+        except Exception as exc:
+            logger.error("CerebrumGraph: NVMe consolidation failed: %s", exc)
+
+    def storage_status(self) -> dict:
+        """Return current storage mode + last advisor recommendation + WAL state."""
+        from core.mmap_policy import MmapAdvisor
+        meta = self._mmap_consolidator.load_meta()
+        return {
+            "policy":            self._mmap_policy.value,
+            "mmap_dir":          str(self._mmap_data_dir),
+            "wal_entries":       self._wal.entry_count(),
+            "wal_size_bytes":    self._wal.size_bytes(),
+            "last_consolidation": (self._last_consolidation.to_dict()
+                                   if self._last_consolidation else None),
+            "mmap_meta":         meta,
+        }
+
+    # ------------------------------------------------------------------
     # THALAMUS build pipeline
     # ------------------------------------------------------------------
 
@@ -632,6 +712,27 @@ class CerebrumGraph:
         # Phase 169: check memory governor before starting expensive build
         if self.governor.is_spill_needed():
             self._spill_to_mmap()
+
+        # Phase 227: replay WAL before building so edges added since the last
+        # REM flush are present in the graph.
+        if self._wal.exists():
+            replayed = self._wal.replay(self.adapter)
+            if replayed:
+                logger.info("CerebrumGraph.build: replayed %d edges from WAL", replayed)
+
+        # Phase 227: run the mmap advisor and log the recommendation.
+        # The advisor never blocks build; it only informs.
+        import uuid as _uuid
+        self._build_id = str(_uuid.uuid4())
+        G_pre   = self.adapter.to_networkx()
+        emb_dim = getattr(self._embedding_engine, "dim", 384)
+        _rec = self._mmap_advisor.evaluate(
+            n_nodes       = G_pre.number_of_nodes(),
+            n_edges       = G_pre.number_of_edges(),
+            embedding_dim = emb_dim,
+            policy        = self._mmap_policy,
+        )
+        _rec.log()
 
         from core.community_engine import dscf_communities, leiden_communities, lpa_communities
         from core.structural_encoder import (
@@ -1007,14 +1108,18 @@ class CerebrumGraph:
                     embedding_method=_emb_method,
                 )
                 self._deriver = _pi_deriver
+                # Phase 225: wire per-hop alpha scales into the CSA engine
+                self._csa.alpha_hop_scales = list(self._param_defaults.alpha_hop_scales)
                 logger.info(
                     "Phase 207: ParameterInitializer regime=%s emb=%s "
-                    "gamma=%.3f beta=%.3f vote=%.3f trb=%.3f beam=%d  Q=%.3f",
+                    "gamma=%.3f beta=%.3f vote=%.3f trb=%.3f beam=%d  Q=%.3f "
+                    "alpha_hop_scales=%s",
                     self._param_defaults.effective_regime,
                     _emb_method,
                     self._param_defaults.gamma, self._param_defaults.beta,
                     self._param_defaults.vote_weight, self._param_defaults.trb_factor,
                     self._param_defaults.beam_width, _modularity_Q,
+                    self._param_defaults.alpha_hop_scales,
                 )
             else:
                 self._param_defaults = None
@@ -1567,11 +1672,16 @@ class CerebrumGraph:
         except Exception as exc:
             logger.warning("METABOLIC_FLUX emit failed: %s", exc)
 
+        # Phase 226: Semantic re-scoring (score_path weight_semantic=0.2) degrades
+        # 2-hop answer ranking because aggregated path entity embeddings are poor
+        # proxies for the question.  Only pass query_embedding for 3-hop queries.
+        _eff_query_embedding = query_embedding if (max_hop or 1) >= 3 else None
+
         answers = extract(
             paths,
             top_k                 = top_k,
             min_hop               = min_hop,
-            query_embedding       = query_embedding,
+            query_embedding       = _eff_query_embedding,
             relation_prior        = relation_prior,
             vote_weight           = vote_weight,
             branch_bonus_weight   = branch_bonus_weight,
