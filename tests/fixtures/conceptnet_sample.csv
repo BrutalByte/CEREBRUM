@@ -1,0 +1,26 @@
+/a/[/r/IsA/,/c/en/dog/,/c/en/animal/]	/r/IsA	/c/en/dog	/c/en/animal	{"weight": 3.0}
+/a/[/r/RelatedTo/,/c/en/dog/,/c/en/animal/]	/r/RelatedTo	/c/en/dog	/c/en/animal	{"weight": 2.0}
+/a/[/r/IsA/,/c/en/dog/,/c/en/pet/]	/r/IsA	/c/en/dog	/c/en/pet	{"weight": 4.0}
+/a/[/r/IsA/,/c/en/cat/,/c/en/animal/]	/r/IsA	/c/en/cat	/c/en/animal	{"weight": 3.0}
+/a/[/r/IsA/,/c/en/cat/,/c/en/pet/]	/r/IsA	/c/en/cat	/c/en/pet	{"weight": 3.0}
+/a/[/r/IsA/,/c/en/dog/,/c/en/mammal/]	/r/IsA	/c/en/dog	/c/en/mammal	{"weight": 2.5}
+/a/[/r/IsA/,/c/en/cat/,/c/en/mammal/]	/r/IsA	/c/en/cat	/c/en/mammal	{"weight": 2.5}
+/a/[/r/RelatedTo/,/c/en/mammal/,/c/en/animal/]	/r/RelatedTo	/c/en/mammal	/c/en/animal	{"weight": 2.0}
+/a/[/r/IsA/,/c/en/vertebrate/,/c/en/animal/]	/r/IsA	/c/en/vertebrate	/c/en/animal	{"weight": 2.0}
+/a/[/r/IsA/,/c/en/dog/,/c/en/vertebrate/]	/r/IsA	/c/en/dog	/c/en/vertebrate	{"weight": 1.5}
+/a/[/r/HasA/,/c/en/animal/,/c/en/body/]	/r/HasA	/c/en/animal	/c/en/body	{"weight": 2.0}
+/a/[/r/UsedFor/,/c/en/pet/,/c/en/companionship/]	/r/UsedFor	/c/en/pet	/c/en/companionship	{"weight": 3.0}
+/a/[/r/HasProperty/,/c/en/dog/,/c/en/loyal/]	/r/HasProperty	/c/en/dog	/c/en/loyal	{"weight": 2.0}
+/a/[/r/HasProperty/,/c/en/cat/,/c/en/independent/]	/r/HasProperty	/c/en/cat	/c/en/independent	{"weight": 2.0}
+/a/[/r/IsA/,/c/en/loyal/,/c/en/trait/]	/r/IsA	/c/en/loyal	/c/en/trait	{"weight": 1.5}
+/a/[/r/IsA/,/c/en/independent/,/c/en/trait/]	/r/IsA	/c/en/independent	/c/en/trait	{"weight": 1.5}
+/a/[/r/Causes/,/c/en/dog/,/c/en/allergy/]	/r/Causes	/c/en/dog	/c/en/allergy	{"weight": 1.5}
+/a/[/r/IsA/,/c/en/allergy/,/c/en/medical_condition/]	/r/IsA	/c/en/allergy	/c/en/medical_condition	{"weight": 2.0}
+/a/[/r/CapableOf/,/c/en/human/,/c/en/keep_pets/]	/r/CapableOf	/c/en/human	/c/en/keep_pets	{"weight": 2.5}
+/a/[/r/UsedFor/,/c/en/keep_pets/,/c/en/companionship/]	/r/UsedFor	/c/en/keep_pets	/c/en/companionship	{"weight": 2.0}
+# French — should be filtered out by lang="en"
+/a/[/r/IsA/,/c/fr/chien/,/c/fr/animal/]	/r/IsA	/c/fr/chien	/c/fr/animal	{"weight": 3.0}
+# Below min_weight=1.0 — should be filtered
+/a/[/r/RelatedTo/,/c/en/dog/,/c/en/noise/]	/r/RelatedTo	/c/en/dog	/c/en/noise	{"weight": 0.5}
+# ExternalURL — should be excluded
+/a/[/r/ExternalURL/,/c/en/dog/,/c/en/wikipedia/]	/r/ExternalURL	/c/en/dog	/c/en/wikipedia	{"weight": 1.0}

@@ -414,6 +414,42 @@ class CerebrumGraph:
         return cls(adapter, embedding_engine=eng, **kwargs)
 
     @classmethod
+    def from_conceptnet(
+        cls,
+        path:          Union[str, Path],
+        lang:          str   = "en",
+        min_weight:    float = 1.0,
+        max_edges:     Optional[int] = None,
+        embeddings:    str   = "random",
+        embedding_dim: int   = 64,
+        exclude_relations: Optional[List[str]] = None,
+        **kwargs,
+    ) -> "CerebrumGraph":
+        """
+        Load ConceptNet 5 CSV (plain or .gz) into a CerebrumGraph.
+
+        Parameters
+        ----------
+        path              : path to conceptnet-assertions-*.csv or *.csv.gz
+        lang              : language filter, default "en"
+        min_weight        : minimum CN5 edge weight (default 1.0)
+        max_edges         : cap on edges loaded (None = all)
+        embeddings        : "random" or "sentence"
+        embedding_dim     : dimension for random embeddings
+        exclude_relations : relation URIs to skip (e.g. ["ExternalURL"])
+        """
+        from adapters.conceptnet_adapter import load_conceptnet
+        adapter = load_conceptnet(
+            str(path),
+            lang=lang,
+            min_weight=min_weight,
+            max_edges=max_edges,
+            exclude_relations=exclude_relations,
+        )
+        eng = cls._make_engine(embeddings, embedding_dim)
+        return cls(adapter, embedding_engine=eng, **kwargs)
+
+    @classmethod
     def from_sql(
         cls,
         connection,
