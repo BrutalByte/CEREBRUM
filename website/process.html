@@ -1,1153 +1,1658 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CEREBRUM — Pipeline Visualizer</title>
-  <meta name="description" content="Interactive step-by-step visualization of the CEREBRUM knowledge graph reasoning pipeline.">
-  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            bg:      '#0a0a0f',
-            surface: '#111118',
-            border:  '#1e1e2e',
-            indigo:  '#6366f1',
-            cyan:    '#22d3ee',
-            emerald: '#10b981',
-            amber:   '#f59e0b',
-            rose:    '#f43f5e',
-            codebg:  '#0f172a',
-          },
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-        }
-      }
-    }
-  </script>
   <style>
     :root {
-      --c-indigo: #6366f1;
-      --c-cyan:   #22d3ee;
-      --c-emerald:#10b981;
-      --c-amber:  #f59e0b;
-      --c-rose:   #f43f5e;
-      --c-bg:     #0a0a0f;
-      --c-surf:   #111118;
-      --c-border: #1e1e2e;
+      --bg:      #0a0a0f;
+      --surf:    #111118;
+      --surf2:   #16161f;
+      --border:  #1e1e2e;
+      --indigo:  #6366f1;
+      --cyan:    #22d3ee;
+      --emerald: #10b981;
+      --amber:   #f59e0b;
+      --rose:    #f43f5e;
+      --violet:  #a78bfa;
+      --sky:     #38bdf8;
     }
-    body { background: var(--c-bg); color: #f1f5f9; font-family: 'Inter', sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { background: var(--bg); color: #f1f5f9; font-family: 'Inter', sans-serif; font-size: 13px; }
+
+    /* ── layout ── */
+    #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    #topbar { flex-shrink: 0; height: 44px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid var(--border); background: rgba(10,10,15,0.9); backdrop-filter: blur(10px); }
+    #content { flex: 1; display: flex; min-height: 0; overflow: hidden; }
+
+    /* ── diagram column ── */
+    #diagram-col { flex-shrink: 0; width: 320px; border-right: 1px solid var(--border); overflow-y: auto; padding: 12px 8px; background: var(--bg); }
+
+    /* ── detail column ── */
+    #detail-col { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+    #detail-header { flex-shrink: 0; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surf); }
+    #detail-body { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+    /* ── channel column ── */
+    #channel-col { flex-shrink: 0; width: 260px; border-left: 1px solid var(--border); overflow-y: auto; background: var(--bg); }
+    #channel-header { padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--surf); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: #475569; text-transform: uppercase; }
+
+    /* ── controls bar ── */
+    #controls { flex-shrink: 0; border-top: 1px solid var(--border); background: var(--surf); padding: 8px 16px; }
 
     /* ── SVG node states ── */
-    .n-rect {
-      fill: #1a1a2e;
-      stroke: #2d2d4a;
-      stroke-width: 1.5;
-      rx: 8;
-      transition: fill 0.35s, stroke 0.35s, filter 0.35s;
-    }
-    .n-label {
-      fill: #94a3b8;
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      font-weight: 500;
-      dominant-baseline: middle;
-      text-anchor: middle;
-      transition: fill 0.35s;
-      pointer-events: none;
-    }
-    .n-sub {
-      fill: #475569;
-      font-family: 'Inter', sans-serif;
-      font-size: 9px;
-      dominant-baseline: middle;
-      text-anchor: middle;
-      pointer-events: none;
-    }
-    .n-user circle { fill: #1a1a2e; stroke: #2d2d4a; stroke-width: 1.5; transition: fill 0.35s, stroke 0.35s, filter 0.35s; }
-    .n-user text   { fill: #94a3b8; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; dominant-baseline: middle; text-anchor: middle; }
+    .n-box { fill: #14141f; stroke: #252535; stroke-width: 1.5; transition: fill .3s, stroke .3s; }
+    .n-lbl { fill: #64748b; font: 500 10px 'Inter',sans-serif; dominant-baseline: middle; text-anchor: middle; pointer-events: none; }
+    .n-sub { fill: #334155; font: 400 8.5px 'Inter',sans-serif; dominant-baseline: middle; text-anchor: middle; pointer-events: none; }
+    .n-user-c { fill: #14141f; stroke: #252535; stroke-width: 1.5; transition: fill .3s, stroke .3s; }
+    .n-user-l { fill: #64748b; font: 600 10px 'Inter',sans-serif; dominant-baseline: middle; text-anchor: middle; pointer-events: none; }
 
-    /* visited */
-    .visited .n-rect    { fill: #1e1e35; stroke: #3d3d60; }
-    .visited .n-label   { fill: #cbd5e1; }
-    .visited circle     { fill: #1e1e35; stroke: #3d3d60; }
+    .sv  .n-box { fill: #1a1a30; stroke: #353565; }
+    .sv  .n-lbl { fill: #94a3b8; }
+    .sv  .n-user-c { fill: #1a1a30; stroke: #353565; }
 
-    /* active — per color */
-    .active-indigo .n-rect  { fill: #2d2d6a; stroke: var(--c-indigo); stroke-width: 2; filter: drop-shadow(0 0 8px #6366f155); }
-    .active-indigo .n-label { fill: #fff; }
-    .active-indigo circle   { fill: #2d2d6a; stroke: var(--c-indigo); stroke-width: 2; filter: drop-shadow(0 0 8px #6366f155); }
-    .active-cyan .n-rect    { fill: #1a3545; stroke: var(--c-cyan);   stroke-width: 2; filter: drop-shadow(0 0 8px #22d3ee55); }
-    .active-cyan .n-label   { fill: #fff; }
-    .active-cyan circle     { fill: #1a3545; stroke: var(--c-cyan);   stroke-width: 2; filter: drop-shadow(0 0 8px #22d3ee55); }
-    .active-emerald .n-rect { fill: #152a22; stroke: var(--c-emerald);stroke-width: 2; filter: drop-shadow(0 0 8px #10b98155); }
-    .active-emerald .n-label{ fill: #fff; }
-    .active-amber .n-rect   { fill: #2a2215; stroke: var(--c-amber);  stroke-width: 2; filter: drop-shadow(0 0 8px #f59e0b55); }
-    .active-amber .n-label  { fill: #fff; }
+    .ai  .n-box { fill: #2a1a50; stroke: var(--indigo); stroke-width: 2; filter: drop-shadow(0 0 6px #6366f140); }
+    .ai  .n-lbl { fill: #fff; }
+    .ai  .n-user-c { fill: #2a1a50; stroke: var(--indigo); stroke-width: 2; filter: drop-shadow(0 0 6px #6366f140); }
+    .ac  .n-box { fill: #0e2f3a; stroke: var(--cyan);   stroke-width: 2; filter: drop-shadow(0 0 6px #22d3ee40); }
+    .ac  .n-lbl { fill: #fff; }
+    .ac  .n-user-c { fill: #0e2f3a; stroke: var(--cyan);   stroke-width: 2; filter: drop-shadow(0 0 6px #22d3ee40); }
+    .ae  .n-box { fill: #0d2a1e; stroke: var(--emerald);stroke-width: 2; filter: drop-shadow(0 0 6px #10b98140); }
+    .ae  .n-lbl { fill: #fff; }
+    .aa  .n-box { fill: #2a1f05; stroke: var(--amber);  stroke-width: 2; filter: drop-shadow(0 0 6px #f59e0b40); }
+    .aa  .n-lbl { fill: #fff; }
+    .av  .n-box { fill: #1e1040; stroke: var(--violet); stroke-width: 2; filter: drop-shadow(0 0 6px #a78bfa40); }
+    .av  .n-lbl { fill: #fff; }
 
-    /* ── SVG edge states ── */
-    .edge {
-      fill: none;
-      stroke: #2d2d4a;
-      stroke-width: 1.5;
-      transition: stroke 0.35s, stroke-width 0.35s;
-      marker-end: url(#arrow-dim);
-    }
-    .edge-visited {
-      stroke: #3d3d60;
-      marker-end: url(#arrow-vis);
-    }
-    .edge-active {
-      stroke-width: 2;
-      stroke-dasharray: 6 4;
-      animation: flowEdge 0.7s linear infinite;
-      marker-end: url(#arrow-act);
-    }
-    .edge-active-indigo { stroke: var(--c-indigo); }
-    .edge-active-cyan   { stroke: var(--c-cyan);   }
-    .edge-active-emerald{ stroke: var(--c-emerald);}
-    .edge-active-amber  { stroke: var(--c-amber);  }
+    /* edges */
+    .edge { fill: none; stroke: #1e1e2e; stroke-width: 1.5; }
+    .ev   { stroke: #2a2a45; }
+    .ea   { stroke-dasharray: 6 3; animation: flowdash .6s linear infinite; stroke-width: 2; }
+    .ea-i { stroke: var(--indigo); }
+    .ea-c { stroke: var(--cyan);   }
+    .ea-e { stroke: var(--emerald);}
+    .ea-a { stroke: var(--amber);  }
+    .ea-v { stroke: var(--violet); }
 
-    @keyframes flowEdge {
-      from { stroke-dashoffset: 20; }
-      to   { stroke-dashoffset: 0;  }
-    }
+    @keyframes flowdash { from { stroke-dashoffset: 18; } to { stroke-dashoffset: 0; } }
 
-    /* ── Timeline strip ── */
-    .step-pip {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: #2d2d4a;
-      border: 1.5px solid #3d3d60;
-      cursor: pointer;
-      transition: background 0.2s, border-color 0.2s, transform 0.15s;
-      flex-shrink: 0;
+    /* ── code blocks ── */
+    .cb {
+      background: #0a0d1a; border: 1px solid var(--border); border-radius: 6px;
+      padding: 10px 12px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px;
+      line-height: 1.65; color: #7dd3fc; overflow-x: auto; white-space: pre; flex: 1;
     }
-    .step-pip:hover       { transform: scale(1.3); }
-    .step-pip.visited     { background: #3d3d6a; border-color: #6366f1; }
-    .step-pip.current     { background: var(--c-cyan); border-color: var(--c-cyan); transform: scale(1.4); }
+    .cb-label { font-size: 9.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #334155; margin-bottom: 4px; }
+    .cb .kw  { color: #818cf8; }
+    .cb .fn  { color: #38bdf8; }
+    .cb .str { color: #6ee7b7; }
+    .cb .num { color: #f59e0b; }
+    .cb .cmt { color: #374151; }
+    .cb .key { color: #f472b6; }
+    .cb .val { color: #e2e8f0; }
 
-    /* ── Detail panel ── */
-    pre.code-block {
-      background: #0f172a;
-      border: 1px solid #1e1e2e;
-      border-radius: 8px;
-      padding: 12px 14px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      line-height: 1.6;
-      color: #94a3b8;
-      overflow-x: auto;
-      white-space: pre;
-    }
-    .layer-badge {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      padding: 2px 8px;
-      border-radius: 4px;
-    }
+    /* ── channel cards ── */
+    .ch-card { border-bottom: 1px solid var(--border); padding: 8px 12px; }
+    .ch-name { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 3px; }
+    .ch-val  { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #64748b; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
+    .ch-card.ch-active .ch-val { color: #cbd5e1; }
+    .ch-dot  { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+    .ch-dot-i { background: var(--indigo); }
+    .ch-dot-c { background: var(--cyan);   }
+    .ch-dot-e { background: var(--emerald);}
+    .ch-dot-a { background: var(--amber);  }
+    .ch-dot-v { background: var(--violet); }
+    .ch-dot-dim { background: #252535; }
 
-    /* navbar */
-    #navbar {
-      background: rgba(10,10,15,0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid #1e1e2e;
-    }
-    /* control btn */
-    .ctrl-btn {
-      display: flex; align-items: center; justify-content: center;
-      width: 36px; height: 36px; border-radius: 8px;
-      background: #1a1a2e; border: 1px solid #2d2d4a;
-      color: #94a3b8; cursor: pointer;
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
-    }
-    .ctrl-btn:hover { background: #252540; color: #f1f5f9; border-color: #6366f1; }
-    .ctrl-btn.active-play { background: #1a3545; border-color: var(--c-cyan); color: var(--c-cyan); }
+    /* ── step timeline ── */
+    .pip { width: 8px; height: 8px; border-radius: 50%; background: #1e1e2e; border: 1px solid #2d2d4a; cursor: pointer; flex-shrink: 0; transition: background .15s, transform .1s; }
+    .pip:hover { transform: scale(1.4); }
+    .pip.pv { background: #2a2a50; border-color: var(--indigo); }
+    .pip.pc { background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 4px var(--cyan); transform: scale(1.3); }
 
-    /* progress bar */
-    #progress-fill { transition: width 0.35s ease; }
+    /* ── control btns ── */
+    .cbtn { display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:6px; background:#1a1a2e; border:1px solid #252540; color:#64748b; cursor:pointer; transition:background .15s,color .15s,border-color .15s; }
+    .cbtn:hover { background:#20203a; color:#f1f5f9; border-color:var(--indigo); }
+    .cbtn.on { background:#0e2f3a; border-color:var(--cyan); color:var(--cyan); }
 
-    /* scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #111118; }
-    ::-webkit-scrollbar-thumb { background: #2d2d4a; border-radius: 3px; }
-
-    /* SVG hover tooltip */
-    .node-group { cursor: pointer; }
-    .node-group:hover .n-rect { stroke-width: 2; }
+    /* misc */
+    .badge { font-size: 9px; font-weight: 700; letter-spacing: .07em; padding: 2px 6px; border-radius: 4px; }
+    .bi { background:#2a1a50; color:var(--indigo); border:1px solid #3d2a80; }
+    .bc { background:#0e2f3a; color:var(--cyan);   border:1px solid #164555; }
+    .be { background:#0d2a1e; color:var(--emerald);border:1px solid #1a4030; }
+    .ba { background:#2a1f05; color:var(--amber);  border:1px solid #3d2e10; }
+    .bv { background:#1e1040; color:var(--violet); border:1px solid #2e1860; }
+    .bg-dimr { background:#1a1010; color:var(--rose); border:1px solid #3d1515; }
+    .node-g { cursor: pointer; }
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-track { background:var(--bg); }
+    ::-webkit-scrollbar-thumb { background:#252535; border-radius:3px; }
+    #progress-bar { height:2px; background:var(--indigo); transition:width .3s ease; }
+    select { background:var(--bg); border:1px solid var(--border); border-radius:4px; color:#94a3b8; padding:2px 6px; font-size:11px; outline:none; }
   </style>
 </head>
 <body>
+<div id="app">
 
-<!-- ───────────────────── NAVBAR ───────────────────── -->
-<nav id="navbar" class="fixed top-0 inset-x-0 z-50 h-12 flex items-center px-6 gap-6">
-  <a href="index.html" class="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
-    <span class="text-indigo">◈</span> CEREBRUM
-  </a>
-  <span class="text-border">|</span>
-  <span class="text-sm font-medium text-cyan">Pipeline Visualizer</span>
-  <div class="flex-1"></div>
-  <a href="index.html" class="text-xs text-slate-500 hover:text-slate-300 transition-colors">← Back to site</a>
-</nav>
+<!-- ── TOP BAR ── -->
+<div id="topbar">
+  <a href="index.html" style="color:var(--indigo);font-weight:700;font-size:14px;letter-spacing:-.5px;text-decoration:none">◈ CEREBRUM</a>
+  <span style="color:var(--border)">|</span>
+  <span style="color:var(--cyan);font-weight:600">Pipeline Visualizer</span>
+  <div style="flex:1"></div>
 
-<!-- ───────────────────── MAIN ───────────────────── -->
-<div class="pt-12 h-screen flex flex-col overflow-hidden">
-
-  <!-- header bar -->
-  <div class="flex-shrink-0 px-6 py-3 border-b border-border flex items-center gap-4 bg-surface">
-    <div>
-      <h1 class="text-sm font-semibold text-white">Query Reasoning Pipeline</h1>
-      <p class="text-xs text-slate-500 mt-0.5">Step through every stage of a live CEREBRUM inference</p>
-    </div>
-    <div class="flex-1"></div>
-    <!-- live status indicator -->
-    <div id="live-badge" class="flex items-center gap-2 px-3 py-1 rounded-full bg-bg border border-border text-xs cursor-pointer hover:border-emerald/40 transition-colors" onclick="toggleLive()" title="Connect to running CEREBRUM server">
-      <span id="live-dot" class="w-2 h-2 rounded-full bg-slate-600"></span>
-      <span id="live-label" class="text-slate-500 font-medium">Live Mode</span>
-    </div>
-    <!-- view toggle -->
-    <div id="view-tabs" class="flex gap-1 bg-bg rounded-lg p-1 border border-border text-xs">
-      <button onclick="setView('query')"  id="tab-query"  class="px-3 py-1 rounded-md font-medium transition-colors bg-surface text-white">Query Flow</button>
-      <button onclick="setView('bg')"     id="tab-bg"     class="px-3 py-1 rounded-md font-medium transition-colors text-slate-500 hover:text-slate-300">Background</button>
-    </div>
+  <!-- live badge -->
+  <div id="live-badge" onclick="toggleLive()" title="Connect to localhost:8200" style="display:flex;align-items:center;gap:6px;padding:3px 10px;border-radius:20px;background:var(--surf);border:1px solid var(--border);cursor:pointer;transition:border-color .2s">
+    <span id="live-dot" style="width:7px;height:7px;border-radius:50%;background:#2d2d4a"></span>
+    <span id="live-lbl" style="font-size:11px;font-weight:500;color:#475569">Live Mode</span>
   </div>
 
-  <!-- content row -->
-  <div class="flex flex-1 min-h-0 overflow-hidden">
-
-    <!-- ── LEFT: diagram ── -->
-    <div class="flex-shrink-0 w-[420px] border-r border-border overflow-y-auto flex flex-col items-center py-4 px-2 bg-bg">
-      <svg id="pipeline-svg" viewBox="0 0 440 880" width="400" height="800" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <marker id="arrow-dim" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
-            <path d="M0,0 L7,3.5 L0,7 Z" fill="#2d2d4a"/>
-          </marker>
-          <marker id="arrow-vis" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
-            <path d="M0,0 L7,3.5 L0,7 Z" fill="#3d3d60"/>
-          </marker>
-          <marker id="arrow-act" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
-            <path id="arrow-act-path" d="M0,0 L7,3.5 L0,7 Z" fill="#22d3ee"/>
-          </marker>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="3" result="blur"/>
-            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-          </filter>
-        </defs>
-
-        <!-- ── EDGES (drawn first, under nodes) ── -->
-        <!-- USER → REST_API -->
-        <path id="e-USER-REST_API"        class="edge" d="M220,55 L220,90"/>
-        <!-- REST_API → EMBED -->
-        <path id="e-REST_API-EMBED"       class="edge" d="M185,113 C150,135 130,155 130,175"/>
-        <!-- REST_API → PROFILER -->
-        <path id="e-REST_API-PROFILER"    class="edge" d="M255,113 C290,135 310,155 310,175"/>
-        <!-- EMBED → COMMUNITY -->
-        <path id="e-EMBED-COMMUNITY"      class="edge" d="M152,207 C165,235 185,250 200,262"/>
-        <!-- PROFILER → COMMUNITY -->
-        <path id="e-PROFILER-COMMUNITY"   class="edge" d="M288,207 C275,235 258,250 242,262"/>
-        <!-- COMMUNITY → CSA -->
-        <path id="e-COMMUNITY-CSA"        class="edge" d="M220,296 L220,335"/>
-        <!-- CSA → BEAM_HOP1 -->
-        <path id="e-CSA-BEAM_HOP1"        class="edge" d="M220,369 L220,408"/>
-        <!-- BEAM_HOP1 → BEAM_HOP23 -->
-        <path id="e-BEAM_HOP1-BEAM_HOP23" class="edge" d="M220,442 L220,478"/>
-        <!-- ENGRAM → BEAM_HOP23 -->
-        <path id="e-ENGRAM-BEAM_HOP23"    class="edge" d="M342,498 C325,498 275,495 265,493"/>
-        <!-- BEAM_HOP23 → LOOPED -->
-        <path id="e-BEAM_HOP23-LOOPED"    class="edge" d="M220,512 L220,548"/>
-        <!-- MODULATOR → LOOPED -->
-        <path id="e-MODULATOR-LOOPED"     class="edge" d="M342,568 C325,568 275,565 265,563"/>
-        <!-- LOOPED → SCORER -->
-        <path id="e-LOOPED-SCORER"        class="edge" d="M220,582 L220,618"/>
-        <!-- SCORER → EXTRACTOR -->
-        <path id="e-SCORER-EXTRACTOR"     class="edge" d="M220,652 L220,688"/>
-        <!-- EXTRACTOR → RESPONSE -->
-        <path id="e-EXTRACTOR-RESPONSE"   class="edge" d="M185,722 C155,745 120,770 105,793"/>
-        <!-- EXTRACTOR → TELEMETRY -->
-        <path id="e-EXTRACTOR-TELEMETRY"  class="edge" d="M255,722 C285,745 320,770 335,793"/>
-        <!-- TELEMETRY → UE5 -->
-        <path id="e-TELEMETRY-UE5"        class="edge" d="M370,793 L370,815 L392,815"/>
-
-        <!-- ── NODES ── -->
-
-        <!-- USER -->
-        <g id="n-USER" class="node-group n-user" onclick="jumpToStep(1)">
-          <circle cx="220" cy="38" r="22"/>
-          <text x="220" y="38">USER</text>
-        </g>
-
-        <!-- REST API -->
-        <g id="n-REST_API" class="node-group" onclick="jumpToStep(1)">
-          <rect class="n-rect" x="150" y="90" width="140" height="32" rx="8"/>
-          <text class="n-label" x="220" y="107">REST API  /query</text>
-        </g>
-
-        <!-- EMBED -->
-        <g id="n-EMBED" class="node-group" onclick="jumpToStep(2)">
-          <rect class="n-rect" x="68" y="175" width="128" height="30" rx="6"/>
-          <text class="n-label" x="132" y="191">EmbeddingEngine</text>
-        </g>
-
-        <!-- PROFILER -->
-        <g id="n-PROFILER" class="node-group" onclick="jumpToStep(3)">
-          <rect class="n-rect" x="245" y="175" width="128" height="30" rx="6"/>
-          <text class="n-label" x="309" y="191">GraphProfiler</text>
-        </g>
-
-        <!-- COMMUNITY -->
-        <g id="n-COMMUNITY" class="node-group" onclick="jumpToStep(4)">
-          <rect class="n-rect" x="148" y="262" width="144" height="30" rx="6"/>
-          <text class="n-label" x="220" y="278">CommunityEngine</text>
-        </g>
-
-        <!-- CSA -->
-        <g id="n-CSA" class="node-group" onclick="jumpToStep(5)">
-          <rect class="n-rect" x="148" y="335" width="144" height="30" rx="6"/>
-          <text class="n-label" x="220" y="351">CSAEngine  (10 params)</text>
-        </g>
-
-        <!-- BEAM HOP1 -->
-        <g id="n-BEAM_HOP1" class="node-group" onclick="jumpToStep(6)">
-          <rect class="n-rect" x="140" y="408" width="160" height="30" rx="6"/>
-          <text class="n-label" x="220" y="424">BeamTraversal  Hop 1</text>
-        </g>
-
-        <!-- ENGRAM (side) -->
-        <g id="n-ENGRAM" class="node-group" onclick="jumpToStep(7)">
-          <rect class="n-rect" x="342" y="482" width="88" height="28" rx="6"/>
-          <text class="n-label" x="386" y="497">Engram Cache</text>
-        </g>
-
-        <!-- BEAM HOP23 -->
-        <g id="n-BEAM_HOP23" class="node-group" onclick="jumpToStep(7)">
-          <rect class="n-rect" x="132" y="478" width="130" height="30" rx="6"/>
-          <text class="n-label" x="197" y="494">BeamTraversal  2/3</text>
-        </g>
-
-        <!-- MODULATOR (side) -->
-        <g id="n-MODULATOR" class="node-group" onclick="jumpToStep(8)">
-          <rect class="n-rect" x="342" y="552" width="88" height="28" rx="6"/>
-          <text class="n-label" x="386" y="567">ChemModulator</text>
-        </g>
-
-        <!-- LOOPED -->
-        <g id="n-LOOPED" class="node-group" onclick="jumpToStep(8)">
-          <rect class="n-rect" x="130" y="548" width="134" height="30" rx="6"/>
-          <text class="n-label" x="197" y="564">LoopedBeamTraversal</text>
-        </g>
-
-        <!-- SCORER -->
-        <g id="n-SCORER" class="node-group" onclick="jumpToStep(9)">
-          <rect class="n-rect" x="150" y="618" width="140" height="30" rx="6"/>
-          <text class="n-label" x="220" y="634">PathScorer</text>
-        </g>
-
-        <!-- EXTRACTOR -->
-        <g id="n-EXTRACTOR" class="node-group" onclick="jumpToStep(10)">
-          <rect class="n-rect" x="148" y="688" width="144" height="30" rx="6"/>
-          <text class="n-label" x="220" y="704">AnswerExtractor</text>
-        </g>
-
-        <!-- RESPONSE -->
-        <g id="n-RESPONSE" class="node-group" onclick="jumpToStep(11)">
-          <rect class="n-rect" x="42" y="793" width="118" height="30" rx="6"/>
-          <text class="n-label" x="101" y="809">QueryResponse</text>
-        </g>
-
-        <!-- TELEMETRY -->
-        <g id="n-TELEMETRY" class="node-group" onclick="jumpToStep(11)">
-          <rect class="n-rect" x="272" y="793" width="118" height="30" rx="6"/>
-          <text class="n-label" x="331" y="809">TelemetryBridge</text>
-        </g>
-
-        <!-- UE5 -->
-        <g id="n-UE5" class="node-group" onclick="jumpToStep(11)">
-          <rect class="n-rect" x="393" y="808" width="44" height="28" rx="6"/>
-          <text class="n-label" x="415" y="823">UE5</text>
-        </g>
-
-        <!-- Layer labels -->
-        <text x="8" y="107" fill="#334155" font-size="8" font-family="Inter">INTERFACE</text>
-        <text x="8" y="195" fill="#334155" font-size="8" font-family="Inter">THALAMUS</text>
-        <text x="8" y="280" fill="#334155" font-size="8" font-family="Inter">CORTEX</text>
-        <text x="8" y="810" fill="#334155" font-size="8" font-family="Inter">OUTPUT</text>
-
-        <!-- Horizontal layer separators -->
-        <line x1="4" y1="84"  x2="436" y2="84"  stroke="#1a1a2a" stroke-width="1"/>
-        <line x1="4" y1="168" x2="436" y2="168" stroke="#1a1a2a" stroke-width="1"/>
-        <line x1="4" y1="252" x2="436" y2="252" stroke="#1a1a2a" stroke-width="1"/>
-        <line x1="4" y1="780" x2="436" y2="780" stroke="#1a1a2a" stroke-width="1"/>
-
-      </svg>
-
-      <!-- Background processes diagram (hidden by default) -->
-      <div id="bg-diagram" class="hidden w-full px-4">
-        <svg viewBox="0 0 440 520" width="400" height="473" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <marker id="arrow-bg" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
-              <path d="M0,0 L7,3.5 L0,7 Z" fill="#2d2d4a"/>
-            </marker>
-          </defs>
-
-          <!-- REM ENGINE cluster -->
-          <rect x="10" y="20" width="200" height="160" rx="10" fill="none" stroke="#1e1e2e" stroke-width="1" stroke-dasharray="4 3"/>
-          <text x="22" y="38" fill="#334155" font-size="9" font-family="Inter" font-weight="600">REM ENGINE (background)</text>
-          <rect x="30"  y="50"  width="160" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
-          <text x="110" y="65"  fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">SynapticPruner</text>
-          <rect x="30"  y="90"  width="160" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
-          <text x="110" y="105" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">MmapConsolidator</text>
-          <rect x="30"  y="130" width="160" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
-          <text x="110" y="145" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">GraphWAL (NVMe)</text>
-          <path d="M110,78 L110,90" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
-          <path d="M110,118 L110,130" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
-
-          <!-- RESEARCH AGENT cluster -->
-          <rect x="230" y="20" width="200" height="200" rx="10" fill="none" stroke="#1e1e2e" stroke-width="1" stroke-dasharray="4 3"/>
-          <text x="242" y="38" fill="#334155" font-size="9" font-family="Inter" font-weight="600">RESEARCH AGENT</text>
-          <rect x="250" y="50"  width="160" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
-          <text x="330" y="65"  fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">ResearchAgent</text>
-          <rect x="250" y="90"  width="160" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
-          <text x="330" y="105" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">HypothesisEngine</text>
-          <rect x="250" y="130" width="160" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
-          <text x="330" y="145" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">TriangulationEngine</text>
-          <rect x="250" y="170" width="160" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
-          <text x="330" y="185" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">AutoApprover</text>
-          <path d="M330,78 L330,90" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
-          <path d="M330,118 L330,130" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
-          <path d="M330,158 L330,170" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
-
-          <!-- LEARNING LOOP -->
-          <rect x="10" y="230" width="420" height="80" rx="10" fill="none" stroke="#1e1e2e" stroke-width="1" stroke-dasharray="4 3"/>
-          <text x="22" y="248" fill="#334155" font-size="9" font-family="Inter" font-weight="600">LEARNING LOOP (POST /feedback → /retrain)</text>
-          <rect x="30"  y="255" width="110" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
-          <text x="85"  y="270" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">MetaParamLearner</text>
-          <rect x="165" y="255" width="110" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
-          <text x="220" y="270" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">CSAParamLearner</text>
-          <rect x="300" y="255" width="110" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
-          <text x="355" y="270" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">PlattCalibration</text>
-          <path d="M140,269 L165,269" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
-          <path d="M275,269 L300,269" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
-
-          <!-- AUTONOMOUS LOOP -->
-          <rect x="10" y="355" width="420" height="80" rx="10" fill="none" stroke="#1e1e2e" stroke-width="1" stroke-dasharray="4 3"/>
-          <text x="22" y="373" fill="#334155" font-size="9" font-family="Inter" font-weight="600">AUTONOMOUS DISCOVERY LOOP</text>
-          <rect x="30"  y="380" width="110" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
-          <text x="85"  y="395" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">DiscoveryCalibrator</text>
-          <rect x="165" y="380" width="110" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
-          <text x="220" y="395" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">AutonomousLoop</text>
-          <rect x="300" y="380" width="110" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
-          <text x="355" y="395" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">ProvenanceLedger</text>
-          <path d="M140,394 L165,394" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
-          <path d="M275,394 L300,394" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
-          <!-- loop arrow back -->
-          <path d="M85,408 Q85,450 220,450 Q355,450 355,408" stroke="#2d2d4a" stroke-width="1" fill="none" stroke-dasharray="3 3" marker-end="url(#arrow-bg)"/>
-
-          <!-- cross-connections: ResearchAgent → AutonomousLoop -->
-          <path d="M330,198 L330,220 L220,220 L220,380" stroke="#1e1e2e" stroke-width="1" stroke-dasharray="3 3" fill="none" marker-end="url(#arrow-bg)"/>
-          <!-- MmapConsolidator → GraphWAL already shown inline -->
-        </svg>
-      </div>
-    </div>
-
-    <!-- ── RIGHT: detail panel ── -->
-    <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
-
-      <!-- step title bar -->
-      <div id="step-header" class="flex-shrink-0 px-6 py-4 border-b border-border bg-surface">
-        <div class="flex items-center gap-3">
-          <span id="step-num" class="text-xs font-mono text-slate-500">Step 0 / 11</span>
-          <span id="layer-badge" class="layer-badge bg-indigo/10 text-indigo border border-indigo/20">SYSTEM</span>
-        </div>
-        <h2 id="step-title" class="mt-1 text-base font-semibold text-white">System Ready</h2>
-      </div>
-
-      <!-- detail content -->
-      <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-
-        <!-- description -->
-        <div>
-          <p id="step-desc" class="text-sm text-slate-400 leading-relaxed"></p>
-        </div>
-
-        <!-- what's happening cards -->
-        <div id="step-cards" class="grid grid-cols-2 gap-3"></div>
-
-        <!-- code snippet -->
-        <div>
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Code</p>
-          <pre id="step-code" class="code-block"></pre>
-        </div>
-
-        <!-- data flow annotation -->
-        <div id="step-flow" class="text-xs font-mono text-slate-500 border border-border rounded-lg px-4 py-3 bg-surface leading-relaxed"></div>
-
-      </div>
-
-      <!-- ── controls bar ── -->
-      <div class="flex-shrink-0 border-t border-border bg-surface px-6 py-3">
-
-        <!-- progress -->
-        <div class="mb-3">
-          <div class="flex justify-between text-xs text-slate-600 mb-1">
-            <span>Progress</span>
-            <span id="pct-label">0%</span>
-          </div>
-          <div class="h-1.5 bg-bg rounded-full overflow-hidden">
-            <div id="progress-fill" class="h-full bg-indigo rounded-full" style="width:0%"></div>
-          </div>
-        </div>
-
-        <!-- pip timeline -->
-        <div class="flex items-center gap-1.5 mb-3 overflow-x-auto pb-1">
-          <span class="text-xs text-slate-600 flex-shrink-0 mr-1">Steps:</span>
-          <div id="pip-strip" class="flex items-center gap-1.5 flex-shrink-0"></div>
-        </div>
-
-        <!-- buttons -->
-        <div class="flex items-center gap-2">
-          <button class="ctrl-btn" onclick="prevStep()" title="Previous">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
-          </button>
-          <button id="play-btn" class="ctrl-btn" onclick="togglePlay()" title="Play / Pause">
-            <svg id="play-icon"  width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-            <svg id="pause-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="hidden"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-          </button>
-          <button class="ctrl-btn" onclick="nextStep()" title="Next">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
-          </button>
-          <button class="ctrl-btn" onclick="resetSteps()" title="Reset">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,4 1,10 7,10"/><path d="M3.51,15a9,9,0,1,0,.49-4.27"/></svg>
-          </button>
-
-          <div class="flex-1"></div>
-
-          <label class="text-xs text-slate-500 flex items-center gap-2 cursor-pointer">
-            Speed:
-            <select id="speed-sel" onchange="setSpeed(this.value)" class="bg-bg border border-border rounded px-2 py-0.5 text-xs text-slate-300 focus:outline-none">
-              <option value="2000">Slow</option>
-              <option value="1200" selected>Normal</option>
-              <option value="600">Fast</option>
-              <option value="300">Very Fast</option>
-            </select>
-          </label>
-        </div>
-      </div>
-
-    </div>
+  <!-- view tabs -->
+  <div style="display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:2px">
+    <button id="tab-q"  onclick="setView('q')"  style="padding:3px 10px;border-radius:4px;font-size:11px;font-weight:500;cursor:pointer;background:var(--surf);color:#fff;border:none">Query Flow</button>
+    <button id="tab-bg" onclick="setView('bg')" style="padding:3px 10px;border-radius:4px;font-size:11px;font-weight:500;cursor:pointer;background:transparent;color:#475569;border:none">Background</button>
   </div>
 </div>
+<div id="progress-bar" style="width:0%"></div>
+
+<!-- ── CONTENT ── -->
+<div id="content">
+
+  <!-- ── DIAGRAM ── -->
+  <div id="diagram-col">
+
+    <!-- Query Flow SVG -->
+    <svg id="qsvg" viewBox="0 0 300 1160" width="300" height="1160" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1e1e2e"/></marker>
+        <marker id="arv" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2a2a45"/></marker>
+        <marker id="ari" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto"><path id="ari-p" d="M0,0 L6,3 L0,6 Z" fill="#6366f1"/></marker>
+        <marker id="arc" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#22d3ee"/></marker>
+        <marker id="are" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#10b981"/></marker>
+        <marker id="ara" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/></marker>
+        <marker id="arv2" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#a78bfa"/></marker>
+      </defs>
+
+      <!-- LAYER BANDS -->
+      <rect x="0" y="0"    width="300" height="75"  fill="#0c0c14" opacity=".5"/>
+      <text x="4" y="12" fill="#1e2535" font-size="8" font-family="Inter" font-weight="600">INTERFACE</text>
+      <rect x="0" y="75"   width="300" height="150" fill="#0b0b12" opacity=".5"/>
+      <text x="4" y="87" fill="#1e2535" font-size="8" font-family="Inter" font-weight="600">THALAMUS</text>
+      <rect x="0" y="225"  width="300" height="680" fill="#09090f" opacity=".5"/>
+      <text x="4" y="237" fill="#1e2535" font-size="8" font-family="Inter" font-weight="600">CORTEX</text>
+      <rect x="0" y="905"  width="300" height="255" fill="#0c0c14" opacity=".5"/>
+      <text x="4" y="917" fill="#1e2535" font-size="8" font-family="Inter" font-weight="600">OUTPUT</text>
+
+      <!-- ─── EDGES ─── -->
+      <!-- main spine -->
+      <path id="e0" class="edge" d="M150,46 L150,65" marker-end="url(#arr)"/>
+      <path id="e1" class="edge" d="M150,95 L150,112" marker-end="url(#arr)"/>
+      <path id="e2" class="edge" d="M115,140 C90,158 80,170 80,183" marker-end="url(#arr)"/>
+      <path id="e3" class="edge" d="M185,140 C210,158 220,170 220,183" marker-end="url(#arr)"/>
+      <path id="e4" class="edge" d="M80,210 C80,228 120,248 138,258" marker-end="url(#arr)"/>
+      <path id="e5" class="edge" d="M220,210 C220,228 180,248 162,258" marker-end="url(#arr)"/>
+      <path id="e6" class="edge" d="M150,277 L150,292" marker-end="url(#arr)"/>
+      <path id="e7" class="edge" d="M150,319 L150,334" marker-end="url(#arr)"/>
+      <path id="e8" class="edge" d="M150,361 L150,376" marker-end="url(#arr)"/>
+      <path id="e9" class="edge" d="M150,403 L150,420" marker-end="url(#arr)"/>
+      <path id="e10" class="edge" d="M150,447 L150,462" marker-end="url(#arr)"/>
+      <!-- engram side -->
+      <path id="e11" class="edge" d="M258,490 C248,490 210,495 195,502" marker-end="url(#arr)"/>
+      <!-- hop2 -->
+      <path id="e12" class="edge" d="M150,476 L150,494" marker-end="url(#arr)"/>
+      <path id="e13" class="edge" d="M150,521 L150,538" marker-end="url(#arr)"/>
+      <!-- modulator side -->
+      <path id="e14" class="edge" d="M258,560 C248,560 210,565 195,572" marker-end="url(#arr)"/>
+      <!-- looped -->
+      <path id="e15" class="edge" d="M150,548 L150,565" marker-end="url(#arr)"/>
+      <path id="e16" class="edge" d="M150,592 L150,607" marker-end="url(#arr)"/>
+      <!-- pe feedback loop back arrow -->
+      <path id="e16b" class="edge" d="M108,578 C60,578 55,505 108,505" marker-end="url(#arr)" stroke-dasharray="3 3"/>
+      <!-- cingulate side -->
+      <path id="e17b" class="edge" d="M258,635 C248,635 210,640 195,647" marker-end="url(#arr)"/>
+      <!-- scorer -->
+      <path id="e17" class="edge" d="M150,619 L150,636" marker-end="url(#arr)"/>
+      <path id="e18" class="edge" d="M150,663 L150,680" marker-end="url(#arr)"/>
+      <!-- platt side -->
+      <path id="e19b" class="edge" d="M258,707 C248,707 212,713 196,718" marker-end="url(#arr)"/>
+      <!-- extractor -->
+      <path id="e19" class="edge" d="M150,693 L150,708" marker-end="url(#arr)"/>
+      <!-- querylog side -->
+      <path id="e20b" class="edge" d="M258,773 C248,773 212,777 196,782" marker-end="url(#arr)"/>
+      <!-- finalizer -->
+      <path id="e20" class="edge" d="M150,735 L150,748" marker-end="url(#arr)"/>
+      <!-- response branch -->
+      <path id="e21" class="edge" d="M118,790 C90,808 74,838 74,860" marker-end="url(#arr)"/>
+      <path id="e22" class="edge" d="M182,790 C210,808 226,838 226,860" marker-end="url(#arr)"/>
+      <!-- telemetry → ue5 -->
+      <path id="e23" class="edge" d="M226,887 L226,924" marker-end="url(#arr)"/>
+      <!-- querylog persist -->
+      <path id="e24" class="edge" d="M74,887 L74,924" marker-end="url(#arr)"/>
+      <!-- engram write-back from response -->
+      <path id="e25" class="edge" d="M74,951 C40,951 32,520 108,505" marker-end="url(#arr)" stroke-dasharray="2 4"/>
+
+      <!-- ─── NODES ─── -->
+
+      <!-- USER -->
+      <g id="n-USER" class="node-g" onclick="jumpTo(1)">
+        <circle class="n-user-c" cx="150" cy="30" r="20"/>
+        <text class="n-user-l" x="150" y="31">USER</text>
+      </g>
+
+      <!-- REST API -->
+      <g id="n-API" class="node-g" onclick="jumpTo(1)">
+        <rect class="n-box" x="90" y="65" width="120" height="28" rx="6"/>
+        <text class="n-lbl" x="150" y="80">REST API  /query</text>
+      </g>
+
+      <!-- EMBED -->
+      <g id="n-EMBED" class="node-g" onclick="jumpTo(4)">
+        <rect class="n-box" x="28" y="183" width="104" height="26" rx="5"/>
+        <text class="n-lbl" x="80" y="197">EmbeddingEngine</text>
+      </g>
+
+      <!-- PROFILER -->
+      <g id="n-PROF" class="node-g" onclick="jumpTo(3)">
+        <rect class="n-box" x="168" y="183" width="104" height="26" rx="5"/>
+        <text class="n-lbl" x="220" y="197">GraphProfiler</text>
+      </g>
+
+      <!-- PYDANTIC -->
+      <g id="n-PYD" class="node-g" onclick="jumpTo(2)">
+        <rect class="n-box" x="88" y="112" width="124" height="26" rx="5"/>
+        <text class="n-lbl" x="150" y="126">QueryRequest  (Pydantic)</text>
+      </g>
+
+      <!-- COMMUNITY -->
+      <g id="n-COMM" class="node-g" onclick="jumpTo(6)">
+        <rect class="n-box" x="84" y="258" width="132" height="26" rx="5"/>
+        <text class="n-lbl" x="150" y="272">CommunityEngine</text>
+      </g>
+
+      <!-- CSA PARAMS -->
+      <g id="n-CSA" class="node-g" onclick="jumpTo(7)">
+        <rect class="n-box" x="84" y="292" width="132" height="26" rx="5"/>
+        <text class="n-lbl" x="150" y="306">CSAEngine  (10 params)</text>
+      </g>
+
+      <!-- BEAM INIT -->
+      <g id="n-BINIT" class="node-g" onclick="jumpTo(8)">
+        <rect class="n-box" x="84" y="334" width="132" height="26" rx="5"/>
+        <text class="n-lbl" x="150" y="348">BeamTraversal.init()</text>
+      </g>
+
+      <!-- H1SE -->
+      <g id="n-H1SE" class="node-g" onclick="jumpTo(9)">
+        <rect class="n-box" x="80" y="376" width="140" height="26" rx="5"/>
+        <text class="n-lbl" x="150" y="390">H1SE  Hop-1 Expand</text>
+      </g>
+
+      <!-- STRB -->
+      <g id="n-STRB" class="node-g" onclick="jumpTo(10)">
+        <rect class="n-box" x="80" y="420" width="140" height="26" rx="5"/>
+        <text class="n-lbl" x="150" y="434">STRB  Terminal Rel Score</text>
+      </g>
+
+      <!-- BARRIER -->
+      <g id="n-BAR" class="node-g" onclick="jumpTo(11)">
+        <rect class="n-box" x="84" y="462" width="132" height="26" rx="5"/>
+        <text class="n-lbl" x="150" y="476">GlobalBeamBarrier</text>
+      </g>
+
+      <!-- ENGRAM (side) -->
+      <g id="n-ENG" class="node-g" onclick="jumpTo(12)">
+        <rect class="n-box" x="214" y="477" width="82" height="24" rx="5"/>
+        <text class="n-lbl" x="255" y="490">Engram Cache</text>
+      </g>
+
+      <!-- HOP23 -->
+      <g id="n-HOP23" class="node-g" onclick="jumpTo(13)">
+        <rect class="n-box" x="84" y="494" width="132" height="26" rx="5"/>
+        <text class="n-lbl" x="150" y="508">BeamTraversal  2/3</text>
+      </g>
+
+      <!-- PE engine -->
+      <g id="n-PE" class="node-g" onclick="jumpTo(14)">
+        <rect class="n-box" x="84" y="538" width="132" height="26" rx="5"/>
+        <text class="n-lbl" x="150" y="552">PredictiveCodingEngine</text>
+      </g>
+
+      <!-- MODULATOR (side) -->
+      <g id="n-MOD" class="node-g" onclick="jumpTo(15)">
+        <rect class="n-box" x="214" y="548" width="82" height="24" rx="5"/>
+        <text class="n-lbl" x="255" y="561">ChemModulator</text>
+      </g>
+
+      <!-- LOOPED -->
+      <g id="n-LOOP" class="node-g" onclick="jumpTo(15)">
+        <rect class="n-box" x="80" y="565" width="140" height="26" rx="5"/>
+        <text class="n-lbl" x="150" y="579">LoopedBeamTraversal</text>
+      </g>
+
+      <!-- SCORER -->
+      <g id="n-SCOR" class="node-g" onclick="jumpTo(16)">
+        <rect class="n-box" x="84" y="607" width="132" height="26" rx="5"/>
+        <text class="n-lbl" x="150" y="621">PathScorer  r2+vws</text>
+      </g>
+
+      <!-- CINGULATE (side) -->
+      <g id="n-CING" class="node-g" onclick="jumpTo(17)">
+        <rect class="n-box" x="214" y="625" width="82" height="24" rx="5"/>
+        <text class="n-lbl" x="255" y="638">CingulateEngine</text>
+      </g>
+
+      <!-- EXTRACTOR -->
+      <g id="n-EXT" class="node-g" onclick="jumpTo(18)">
+        <rect class="n-box" x="84" y="636" width="132" height="26" rx="5"/>
+        <text class="n-lbl" x="150" y="650">AnswerExtractor</text>
+      </g>
+
+      <!-- PLATT (side) -->
+      <g id="n-PLATT" class="node-g" onclick="jumpTo(19)">
+        <rect class="n-box" x="214" y="698" width="82" height="24" rx="5"/>
+        <text class="n-lbl" x="255" y="711">PlattCalibration</text>
+      </g>
+
+      <!-- FINALIZER -->
+      <g id="n-FIN" class="node-g" onclick="jumpTo(19)">
+        <rect class="n-box" x="84" y="708" width="132" height="26" rx="5"/>
+        <text class="n-lbl" x="150" y="722">Answer Finalization</text>
+      </g>
+
+      <!-- QUERYLOG (side) -->
+      <g id="n-QLOG" class="node-g" onclick="jumpTo(20)">
+        <rect class="n-box" x="214" y="765" width="82" height="24" rx="5"/>
+        <text class="n-lbl" x="255" y="778">QueryLog</text>
+      </g>
+
+      <!-- RESPONSE BUILD -->
+      <g id="n-RBLD" class="node-g" onclick="jumpTo(20)">
+        <rect class="n-box" x="84" y="748" width="132" height="26" rx="5"/>
+        <text class="n-lbl" x="150" y="762">QueryResponse.build()</text>
+      </g>
+
+      <!-- HTTP RESPONSE -->
+      <g id="n-RESP" class="node-g" onclick="jumpTo(21)">
+        <rect class="n-box" x="28" y="860" width="92" height="26" rx="5"/>
+        <text class="n-lbl" x="74" y="874">HTTP 200</text>
+      </g>
+
+      <!-- TELEMETRY -->
+      <g id="n-TEL" class="node-g" onclick="jumpTo(22)">
+        <rect class="n-box" x="178" y="860" width="96" height="26" rx="5"/>
+        <text class="n-lbl" x="226" y="874">TelemetryBridge</text>
+      </g>
+
+      <!-- QUERYLOG PERSIST -->
+      <g id="n-QPER" class="node-g" onclick="jumpTo(20)">
+        <rect class="n-box" x="28" y="924" width="92" height="26" rx="5"/>
+        <text class="n-lbl" x="74" y="938">query_log.ndjson</text>
+      </g>
+
+      <!-- UE5 -->
+      <g id="n-UE5" class="node-g" onclick="jumpTo(22)">
+        <rect class="n-box" x="178" y="924" width="96" height="26" rx="5"/>
+        <text class="n-lbl" x="226" y="938">UE5  ANeuronNodeActor</text>
+      </g>
+
+      <!-- data type edge labels -->
+      <text x="156" y="58"  fill="#1e3a28" font-size="7" font-family="JetBrains Mono">HTTP POST</text>
+      <text x="156" y="105" fill="#1e2a3a" font-size="7" font-family="JetBrains Mono">QueryRequest</text>
+      <text x="156" y="282" fill="#1e2535" font-size="7" font-family="JetBrains Mono">community_map</text>
+      <text x="156" y="310" fill="#1e2535" font-size="7" font-family="JetBrains Mono">params[10]</text>
+    </svg>
+
+    <!-- Background SVG (hidden) — click any node for detail -->
+    <svg id="bgsvg" viewBox="0 0 300 490" width="300" height="490" xmlns="http://www.w3.org/2000/svg" style="display:none">
+
+      <!-- REM ENGINE -->
+      <rect x="8" y="8" width="284" height="82" rx="8" fill="none" stroke="#1e1e2e" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="16" y="22" fill="#334155" font-size="8" font-family="Inter" font-weight="600">REM ENGINE  (background cycle)</text>
+      <g class="bg-node" id="bg-SynapticPruner"   onclick="showBgNode('SynapticPruner')"   style="cursor:pointer">
+        <rect x="16"  y="28" width="78" height="24" rx="5" fill="#14141f" stroke="#252535" stroke-width="1.5"/>
+        <text x="55"  y="41" fill="#64748b" font-size="9" font-family="Inter" text-anchor="middle" dominant-baseline="middle">SynapticPruner</text>
+      </g>
+      <g class="bg-node" id="bg-MmapConsolidator" onclick="showBgNode('MmapConsolidator')" style="cursor:pointer">
+        <rect x="110" y="28" width="78" height="24" rx="5" fill="#14141f" stroke="#252535" stroke-width="1.5"/>
+        <text x="149" y="41" fill="#64748b" font-size="9" font-family="Inter" text-anchor="middle" dominant-baseline="middle">MmapConsolidator</text>
+      </g>
+      <g class="bg-node" id="bg-GraphWAL"         onclick="showBgNode('GraphWAL')"         style="cursor:pointer">
+        <rect x="204" y="28" width="80" height="24" rx="5" fill="#14141f" stroke="#252535" stroke-width="1.5"/>
+        <text x="244" y="41" fill="#64748b" font-size="9" font-family="Inter" text-anchor="middle" dominant-baseline="middle">GraphWAL (NVMe)</text>
+      </g>
+      <path d="M94,40 L110,40"  stroke="#1e1e2e" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+      <path d="M188,40 L204,40" stroke="#1e1e2e" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+      <text x="16" y="70" fill="#283040" font-size="7.5" font-family="JetBrains Mono">WAL O(1) append → MmapAdvisor (20/50% RAM) → atomic flush</text>
+
+      <!-- LEARNING LOOP -->
+      <rect x="8" y="100" width="284" height="74" rx="8" fill="none" stroke="#1e1e2e" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="16" y="114" fill="#334155" font-size="8" font-family="Inter" font-weight="600">LEARNING LOOP  (POST /feedback → /retrain)</text>
+      <g class="bg-node" id="bg-MetaParamLearner" onclick="showBgNode('MetaParamLearner')" style="cursor:pointer">
+        <rect x="16"  y="120" width="78" height="24" rx="5" fill="#14141f" stroke="#252535" stroke-width="1.5"/>
+        <text x="55"  y="133" fill="#64748b" font-size="9" font-family="Inter" text-anchor="middle" dominant-baseline="middle">MetaParamLearner</text>
+      </g>
+      <g class="bg-node" id="bg-CSAParamLearner"  onclick="showBgNode('CSAParamLearner')"  style="cursor:pointer">
+        <rect x="110" y="120" width="78" height="24" rx="5" fill="#14141f" stroke="#252535" stroke-width="1.5"/>
+        <text x="149" y="133" fill="#64748b" font-size="9" font-family="Inter" text-anchor="middle" dominant-baseline="middle">CSAParamLearner</text>
+      </g>
+      <g class="bg-node" id="bg-PlattCalibration" onclick="showBgNode('PlattCalibration')" style="cursor:pointer">
+        <rect x="204" y="120" width="80" height="24" rx="5" fill="#14141f" stroke="#252535" stroke-width="1.5"/>
+        <text x="244" y="133" fill="#64748b" font-size="9" font-family="Inter" text-anchor="middle" dominant-baseline="middle">PlattCalibration</text>
+      </g>
+      <path d="M94,132 L110,132"  stroke="#1e1e2e" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+      <path d="M188,132 L204,132" stroke="#1e1e2e" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+      <text x="16" y="160" fill="#283040" font-size="7.5" font-family="JetBrains Mono">online SGD (feedback) → batch retrain → Platt A/B refit</text>
+
+      <!-- AUTONOMOUS DISCOVERY LOOP -->
+      <rect x="8" y="184" width="284" height="110" rx="8" fill="none" stroke="#1e1e2e" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="16" y="198" fill="#334155" font-size="8" font-family="Inter" font-weight="600">AUTONOMOUS DISCOVERY LOOP</text>
+      <g class="bg-node" id="bg-DiscoveryCalibrator" onclick="showBgNode('DiscoveryCalibrator')" style="cursor:pointer">
+        <rect x="16"  y="204" width="78" height="24" rx="5" fill="#14141f" stroke="#252535" stroke-width="1.5"/>
+        <text x="55"  y="217" fill="#64748b" font-size="9" font-family="Inter" text-anchor="middle" dominant-baseline="middle">DiscoveryCalibrator</text>
+      </g>
+      <g class="bg-node" id="bg-AutonomousLoop"     onclick="showBgNode('AutonomousLoop')"     style="cursor:pointer">
+        <rect x="110" y="204" width="78" height="24" rx="5" fill="#14141f" stroke="#252535" stroke-width="1.5"/>
+        <text x="149" y="217" fill="#64748b" font-size="9" font-family="Inter" text-anchor="middle" dominant-baseline="middle">AutonomousLoop</text>
+      </g>
+      <g class="bg-node" id="bg-AutoApprover"       onclick="showBgNode('AutoApprover')"       style="cursor:pointer">
+        <rect x="204" y="204" width="80" height="24" rx="5" fill="#14141f" stroke="#252535" stroke-width="1.5"/>
+        <text x="244" y="217" fill="#64748b" font-size="9" font-family="Inter" text-anchor="middle" dominant-baseline="middle">AutoApprover</text>
+      </g>
+      <path d="M94,216 L110,216"  stroke="#1e1e2e" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+      <path d="M188,216 L204,216" stroke="#1e1e2e" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+      <g class="bg-node" id="bg-ProvenanceLedger"   onclick="showBgNode('ProvenanceLedger')"   style="cursor:pointer">
+        <rect x="111" y="248" width="78" height="24" rx="5" fill="#14141f" stroke="#252535" stroke-width="1.5"/>
+        <text x="150" y="261" fill="#64748b" font-size="9" font-family="Inter" text-anchor="middle" dominant-baseline="middle">ProvenanceLedger</text>
+      </g>
+      <path d="M55,228 Q55,261 111,261" stroke="#1e1e2e" stroke-width="1" fill="none" stroke-dasharray="3 3" marker-end="url(#arr)"/>
+      <path d="M244,228 Q244,261 189,261" stroke="#1e1e2e" stroke-width="1" fill="none" stroke-dasharray="3 3" marker-end="url(#arr)"/>
+      <text x="16" y="286" fill="#283040" font-size="7.5" font-family="JetBrains Mono">circuit breaker → auto_rollback_on_trip → rollback_cycle()</text>
+
+      <!-- RESEARCH AGENT PIPELINE -->
+      <rect x="8" y="304" width="284" height="82" rx="8" fill="none" stroke="#1e1e2e" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="16" y="318" fill="#334155" font-size="8" font-family="Inter" font-weight="600">RESEARCH AGENT PIPELINE</text>
+      <g class="bg-node" id="bg-HypothesisEngine"    onclick="showBgNode('HypothesisEngine')"    style="cursor:pointer">
+        <rect x="12"  y="324" width="62" height="24" rx="5" fill="#14141f" stroke="#252535" stroke-width="1.5"/>
+        <text x="43"  y="337" fill="#64748b" font-size="8.5" font-family="Inter" text-anchor="middle" dominant-baseline="middle">HypothesisEngine</text>
+      </g>
+      <g class="bg-node" id="bg-TriangulationEngine" onclick="showBgNode('TriangulationEngine')" style="cursor:pointer">
+        <rect x="84"  y="324" width="62" height="24" rx="5" fill="#14141f" stroke="#252535" stroke-width="1.5"/>
+        <text x="115" y="337" fill="#64748b" font-size="8.5" font-family="Inter" text-anchor="middle" dominant-baseline="middle">TriangulationEngine</text>
+      </g>
+      <g class="bg-node" id="bg-ContradictionResolver" onclick="showBgNode('ContradictionResolver')" style="cursor:pointer">
+        <rect x="156" y="324" width="62" height="24" rx="5" fill="#14141f" stroke="#252535" stroke-width="1.5"/>
+        <text x="187" y="337" fill="#64748b" font-size="8.5" font-family="Inter" text-anchor="middle" dominant-baseline="middle">ContradictionRes.</text>
+      </g>
+      <g class="bg-node" id="bg-Materialise"          onclick="showBgNode('Materialise')"          style="cursor:pointer">
+        <rect x="228" y="324" width="60" height="24" rx="5" fill="#14141f" stroke="#252535" stroke-width="1.5"/>
+        <text x="258" y="337" fill="#64748b" font-size="8.5" font-family="Inter" text-anchor="middle" dominant-baseline="middle">Materialise</text>
+      </g>
+      <path d="M74,336 L84,336"   stroke="#1e1e2e" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+      <path d="M146,336 L156,336" stroke="#1e1e2e" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+      <path d="M218,336 L228,336" stroke="#1e1e2e" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+      <text x="16" y="366" fill="#283040" font-size="7.5" font-family="JetBrains Mono">4-perspective validation → ContradictionResolver → ProvenanceLedger</text>
+      <text x="16" y="377" fill="#283040" font-size="7.5" font-family="JetBrains Mono">approved edges → SYNAPTOGENESIS → TelemetryBridge → UE5</text>
+
+      <!-- hint -->
+      <text x="150" y="468" fill="#1e2535" font-size="8" font-family="Inter" text-anchor="middle">click any node for details →</text>
+    </svg>
+  </div>
+
+  <!-- ── DETAIL ── -->
+  <div id="detail-col">
+    <div id="detail-header">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span id="s-num"   style="font-size:10px;font-family:'JetBrains Mono';color:#334155">Step 0 / 22</span>
+        <span id="s-layer" class="badge bi">SYSTEM</span>
+        <span id="s-dtype" style="font-size:10px;font-family:'JetBrains Mono';color:#334155"></span>
+      </div>
+      <div id="s-title" style="font-size:14px;font-weight:600;color:#fff"></div>
+      <div id="s-desc"  style="font-size:11.5px;color:#64748b;margin-top:3px;line-height:1.5"></div>
+    </div>
+
+    <div id="detail-body">
+      <!-- I/O panels -->
+      <div style="display:flex;gap:10px;min-height:0">
+        <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+          <div class="cb-label">→ SENT / INPUT</div>
+          <pre id="s-in" class="cb" style="min-height:130px"></pre>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+          <div class="cb-label">← RETURNED / OUTPUT</div>
+          <pre id="s-out" class="cb" style="min-height:130px;color:#6ee7b7"></pre>
+        </div>
+      </div>
+
+      <!-- internal call -->
+      <div>
+        <div class="cb-label">Internal Call</div>
+        <pre id="s-call" class="cb" style="min-height:60px;color:#a78bfa"></pre>
+      </div>
+
+      <!-- key facts row -->
+      <div id="s-facts" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    </div>
+
+    <!-- ── controls ── -->
+    <div id="controls">
+      <!-- progress -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <div style="flex:1;height:3px;background:#1a1a2e;border-radius:2px;overflow:hidden">
+          <div id="pbar" style="height:100%;background:var(--indigo);transition:width .3s;width:0%"></div>
+        </div>
+        <span id="pct" style="font-size:10px;font-family:'JetBrains Mono';color:#334155;width:30px;text-align:right">0%</span>
+      </div>
+
+      <!-- pip strip -->
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:8px;overflow-x:auto;padding-bottom:2px">
+        <span style="font-size:9px;color:#334155;flex-shrink:0;margin-right:2px">STEPS</span>
+        <div id="pip-strip" style="display:flex;align-items:center;gap:3px;flex-shrink:0"></div>
+      </div>
+
+      <!-- buttons -->
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="cbtn" onclick="go(-1)" title="Prev (←)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15,18 9,12 15,6"/></svg>
+        </button>
+        <button id="playbtn" class="cbtn" onclick="togglePlay()" title="Play/Pause (Space)">
+          <svg id="play-ic"  width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+          <svg id="pause-ic" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+        <button class="cbtn" onclick="go(1)" title="Next (→)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9,18 15,12 9,6"/></svg>
+        </button>
+        <button class="cbtn" onclick="jumpTo(0)" title="Reset (R)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,4 1,10 7,10"/><path d="M3.51,15a9,9,0,1,0,.49-4.27"/></svg>
+        </button>
+        <div style="flex:1"></div>
+        <span style="font-size:11px;color:#334155">Speed:</span>
+        <select id="spd" onchange="playSpeed=+this.value">
+          <option value="2200">Slow</option>
+          <option value="1300" selected>Normal</option>
+          <option value="650">Fast</option>
+          <option value="300">Max</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CHANNEL MONITOR ── -->
+  <div id="channel-col">
+    <div id="channel-header">Channel Monitor</div>
+
+    <!-- channels filled by JS -->
+    <div id="ch-REST"  class="ch-card"><div class="ch-name"><span class="ch-dot ch-dot-c"></span>REST  /query</div><div class="ch-val" id="cv-REST">—</div></div>
+    <div id="ch-VEC"   class="ch-card"><div class="ch-name"><span class="ch-dot ch-dot-v"></span>Embedding Vector</div><div class="ch-val" id="cv-VEC">—</div></div>
+    <div id="ch-PROF"  class="ch-card"><div class="ch-name"><span class="ch-dot ch-dot-i"></span>GraphProfile</div><div class="ch-val" id="cv-PROF">—</div></div>
+    <div id="ch-COMM"  class="ch-card"><div class="ch-name"><span class="ch-dot ch-dot-a"></span>Community Map</div><div class="ch-val" id="cv-COMM">—</div></div>
+    <div id="ch-CSA"   class="ch-card"><div class="ch-name"><span class="ch-dot ch-dot-i"></span>CSA Params</div><div class="ch-val" id="cv-CSA">—</div></div>
+    <div id="ch-BEAM"  class="ch-card"><div class="ch-name"><span class="ch-dot ch-dot-c"></span>Beam State</div><div class="ch-val" id="cv-BEAM">—</div></div>
+    <div id="ch-ENG"   class="ch-card"><div class="ch-name"><span class="ch-dot ch-dot-v"></span>Engram Affinity</div><div class="ch-val" id="cv-ENG">—</div></div>
+    <div id="ch-PE"    class="ch-card"><div class="ch-name"><span class="ch-dot ch-dot-e"></span>Prediction Error</div><div class="ch-val" id="cv-PE">—</div></div>
+    <div id="ch-MOD"   class="ch-card"><div class="ch-name"><span class="ch-dot ch-dot-a"></span>ChemModulator</div><div class="ch-val" id="cv-MOD">—</div></div>
+    <div id="ch-SCORE" class="ch-card"><div class="ch-name"><span class="ch-dot ch-dot-e"></span>Top-3 Scores</div><div class="ch-val" id="cv-SCORE">—</div></div>
+    <div id="ch-ANS"   class="ch-card"><div class="ch-name"><span class="ch-dot ch-dot-e"></span>Answers</div><div class="ch-val" id="cv-ANS">—</div></div>
+    <div id="ch-TEL"   class="ch-card"><div class="ch-name"><span class="ch-dot ch-dot-c"></span>TelemetryBridge</div><div class="ch-val" id="cv-TEL">—</div></div>
+    <div id="ch-LIVE"  class="ch-card"><div class="ch-name"><span class="ch-dot ch-dot-dim" id="live-ch-dot"></span>Live WS Events</div><div class="ch-val" id="cv-LIVE" style="max-height:90px;overflow-y:auto">—</div></div>
+  </div>
+
+</div><!-- /content -->
+</div><!-- /app -->
 
 <script>
-// ── Step data ────────────────────────────────────────────────────────────────
-const STEPS = [
-  {
-    id: 0,
-    title: "System Ready — Idle",
-    layer: "SYSTEM",
-    color: "indigo",
-    active_nodes: ["REST_API"],
-    active_edges: [],
-    description: "CEREBRUM is loaded and standing by. The knowledge graph is resident in memory (or memory-mapped from NVMe via MmapAdapter). Community partitions are computed. Engram cache is warm from QueryLog replay.",
-    cards: [
-      { label: "Graph", value: "NetworkX / Mmap adapter loaded" },
-      { label: "Communities", value: "DSCF/TSC partitions cached" },
-      { label: "Engram", value: "Warm via QueryLog.replay_into_cache()" },
-      { label: "Server", value: "uvicorn :8200  ws-port :8765" },
-    ],
-    code: `uvicorn api.server:app --port 8200 --ws-port 8765
-# GraphProfiler auto-classifies topology at build time
-# Engram: relation-pattern cache loaded from query_log.ndjson
-# PlattCalibration: A,B params restored if checkpoint exists`,
-    flow: `READY  graph ──►  CommunityEngine  ──►  communities[]\n       Engram  ──►  QueryLog.replay() ──►  pattern cache`
-  },
-  {
-    id: 1,
-    title: "User Query Received",
-    layer: "INTERFACE",
-    color: "cyan",
-    active_nodes: ["USER", "REST_API"],
-    active_edges: ["USER-REST_API"],
-    description: "POST /query arrives at the FastAPI REST server. Pydantic validates the QueryRequest. The graph profile is retrieved from the cached GraphProfiler result and attached to the request context.",
-    cards: [
-      { label: "Endpoint", value: "POST /query" },
-      { label: "Seed entities", value: "seeds[] extracted from query" },
-      { label: "Beam width", value: "default 12 (profile-configured)" },
-      { label: "Max loops", value: "3 (LoopedBeamTraversal)" },
-    ],
-    code: `POST /query
+// ════════════════════════════════════════════════════════════════
+//  STEP DATA  (23 steps: 0 = idle … 22 = done)
+// ════════════════════════════════════════════════════════════════
+const S = [
+  { id:0, title:"System Ready — Idle",
+    layer:"SYSTEM", color:"i", dtype:"",
+    nodes:["n-API"], edges:[],
+    desc:"CEREBRUM is loaded. Graph in memory (or mmap'd from NVMe). Community partitions computed. Engram cache warm via QueryLog.replay_into_cache(). PlattCalibration A/B restored from checkpoint.",
+    inp:`# Nothing in flight
+# Server state:
+#   graph:    NetworkXAdapter (21 nodes, 30 edges)
+#   communities: 3 partitions (DSCF/TSC)
+#   engram:   22,283 relation sequences cached
+#   platt:    A=-1.24  B=0.38  (fitted)`,
+    out:`GET /health → 200 OK
 {
-  "query":   "Who directed The Matrix?",
-  "seeds":   ["The Matrix"],
-  "top_k":   10,
-  "max_loops": 3
-}
-# Pydantic: QueryRequest validated
-# profile = GraphProfiler.get_cached()`,
-    flow: `HTTP POST  ──►  FastAPI router  ──►  QueryRequest()\n            ──►  GraphProfile  attached to context`
-  },
-  {
-    id: 2,
-    title: "Query Embedding",
-    layer: "THALAMUS",
-    color: "emerald",
-    active_nodes: ["REST_API", "EMBED"],
-    active_edges: ["REST_API-EMBED"],
-    description: "EmbeddingEngine encodes the query string to a 384-dimensional dense vector using sentence-transformers (all-MiniLM-L6-v2). This vector is used by CSAEngine for semantic similarity (alpha term) and by STRB for terminal relation detection.",
-    cards: [
-      { label: "Model", value: "all-MiniLM-L6-v2 (384-dim)" },
-      { label: "Used by", value: "CSA alpha·sim + STRB cosine" },
-      { label: "GraphSAGE", value: "entity embeddings smoothed 1-hop" },
-      { label: "Cache", value: "LRU per query text" },
-    ],
-    code: `# EmbeddingEngine.encode()
-query_vec = model.encode("Who directed The Matrix?")
-# → ndarray(384,), L2-normalized
-
-# GraphSAGE (build-time, not per-query)
-entity_embs = smooth_with_graphsage(
-    base_embs, graph, num_layers=2)`,
-    flow: `query_text  ──►  sentence-transformers  ──►  query_vec (384,)\nentity_ids  ──►  EmbeddingEngine + GraphSAGE  ──►  entity_embs`
-  },
-  {
-    id: 3,
-    title: "Graph Profiling",
-    layer: "CORTEX",
-    color: "indigo",
-    active_nodes: ["REST_API", "PROFILER"],
-    active_edges: ["REST_API-PROFILER"],
-    description: "GraphProfiler (cached at graph build time — O(E) analysis) returns the graph's structural class. Configures reasoning strategy: H1SE (hop-1 seed expansion), TAB (terminal anchor beam), STRB (semantic terminal relation boost), and initial beam width.",
-    cards: [
-      { label: "Profile type", value: "hub_homogeneous" },
-      { label: "H1SE", value: "True — hop-1 sub-traversals" },
-      { label: "STRB", value: "True — cosine rel matching" },
-      { label: "Anchor bonus", value: "0.4" },
-    ],
-    code: `# Cached at CerebrumGraph.build() time
-profile = GraphProfiler.analyze(graph)
-# GraphProfile(
-#   type         = "hub_homogeneous",
-#   hop_expand   = True,    # H1SE
-#   trb_auto     = True,    # STRB
-#   anchor_bonus = 0.4,
-#   beam_width   = 12
-# )`,
-    flow: `graph topology  ──►  GraphProfiler.analyze()  ──►  GraphProfile\nGraphProfile    ──►  BeamTraversal params configured`
-  },
-  {
-    id: 4,
-    title: "Community Assignment",
-    layer: "CORTEX",
-    color: "amber",
-    active_nodes: ["COMMUNITY"],
-    active_edges: ["EMBED-COMMUNITY", "PROFILER-COMMUNITY"],
-    description: "CommunityEngine's cached DSCF/TSC partition maps every seed entity to its community. CSAEngine will apply a β=0.4 community score bonus for same-community traversal edges, creating structurally cohesive beam paths.",
-    cards: [
-      { label: "Algorithm", value: "DSCF / TSC / Leiden" },
-      { label: "Beta weight", value: "0.4 (same-community bonus)" },
-      { label: "Per-community", value: "CSA params overridable" },
-      { label: "Online", value: "GlobalRebalancer monitors Q drift" },
-    ],
-    code: `# CommunityEngine.get_partition() — cached
-partition = {entity_id: community_id, ...}
-
-seed_community = partition["The Matrix"]  # → 7
-# Community 7: film/movie nodes cluster
-
-# CSAEngine will use:
-#   cs = 1.0 if same community else 0.0
-#   beta * cs = 0.4 contribution`,
-    flow: `seed_entities  ──►  CommunityEngine  ──►  community_ids[]\ncommunity_ids  ──►  CSAEngine query_snapshot`
-  },
-  {
-    id: 5,
-    title: "CSA Attention Weights",
-    layer: "CORTEX",
-    color: "indigo",
-    active_nodes: ["CSA"],
-    active_edges: ["COMMUNITY-CSA"],
-    description: "CSAEngine evaluates the 10-parameter Community-Structured Attention formula for every candidate edge in the beam. Combines semantic similarity, community cohesion, PageRank, temporal decay, and 6 more structural features into a single attention weight.",
-    cards: [
-      { label: "Parameters", value: "α β γ δ ε ζ η ι μ θ (10)" },
-      { label: "Alpha (semantic)", value: "0.4 × cosine(query, entity)" },
-      { label: "Beta (community)", value: "0.4 × same-community score" },
-      { label: "Online SGD", value: "MetaParameterLearner adapts live" },
-    ],
-    code: `a(u,v,k) = sigmoid(
-  0.4 * sim        # semantic similarity
-+ 0.4 * cs         # community cohesion
-+ 0.1 * etw        # edge-type weight
-- 0.05* nd         # distance penalty
-+ 0.05* hd         # hop decay
-+ 0.1 * pr_v       # PageRank prior
-+ 0.1 * td         # temporal decay
-+ 0.05* nr_v       # node recency
-- 0.1 * sd         # synthesis penalty
-+ 1.0 * grounding  # confidence
-)`,
-    flow: `candidate_edges  ──►  CSAEngine.compute_weight()  ──►  attention[]\nattention[]      ──►  BeamTraversal._prune_candidates()`
-  },
-  {
-    id: 6,
-    title: "Beam Traversal — Hop 1",
-    layer: "CORTEX",
-    color: "cyan",
-    active_nodes: ["BEAM_HOP1"],
-    active_edges: ["CSA-BEAM_HOP1"],
-    description: "H1SE: each hop-1 branch runs as an independent sub-traversal eliminating cross-branch competition. GlobalBeamBarrier keeps min 10 branches regardless of score. STRB scores terminal relations via cosine similarity to query embedding.",
-    cards: [
-      { label: "H1SE", value: "per-branch sub-traversal" },
-      { label: "Beam width", value: "12 (profile default)" },
-      { label: "STRB", value: "terminal rel cosine scoring" },
-      { label: "Barrier", value: "min_guaranteed=10 branches" },
-    ],
-    code: `# HopExpandedTraversal (H1SE)
-for seed in query.seeds:
-    branch = sub_traverse(seed, beam_width=12)
-    # STRB: rank relations by cosine similarity
-    #   cosine(query_embedding, relation_label_emb)
-    branch.apply_strb(query_embedding)
-
-# GlobalBeamBarrier
-barrier.prune(threshold=0.1, min_guaranteed=10)`,
-    flow: `seeds[]  ──►  HopExpandedTraversal.hop1()  ──►  hop1_branches[]\nSTRB     ──►  relation scores  ──►  terminal_rel_ranked[]`
-  },
-  {
-    id: 7,
-    title: "Beam Traversal — Hops 2 / 3",
-    layer: "CORTEX",
-    color: "cyan",
-    active_nodes: ["BEAM_HOP23", "ENGRAM"],
-    active_edges: ["BEAM_HOP1-BEAM_HOP23", "ENGRAM-BEAM_HOP23"],
-    description: "Beam continues through hops 2 and 3. Engram cache biases pruning toward known-productive relation sequences via affinity boost. Causal edge bonus (+0.3) applied on CAUSAL_RELATIONS edges. PRB boosts the penultimate relation. r2 scores path consistency.",
-    cards: [
-      { label: "Engram affinity", value: "multiplicative boost on pruning" },
-      { label: "Causal bonus", value: "+0.3 on causal edges" },
-      { label: "PRB", value: "penultimate relation boost" },
-      { label: "Funnel", value: "beam_widths={1:20, 2:10, 3:5}" },
-    ],
-    code: `# Engram-steered pruning
-affinity = engram.query(rel_sequence_prefix)
-candidate.score *= (1.0 + affinity)
-
-# Causal edge bonus (Phase 124)
-if (u, v) in causal_edge_index:
-    weight *= (1.0 + causal_bonus)  # default 0.3
-
-# Funnel beam profile
-beam_width = {1: 20, 2: 10, 3: 5}[hop]`,
-    flow: `hop1_branches[]  ──►  BeamTraversal.hop2_3()  ──►  all_paths[]\nEngram           ──►  affinity_boost  ──►  pruning bias`
-  },
-  {
-    id: 8,
-    title: "Looped Beam Refinement",
-    layer: "CORTEX",
-    color: "indigo",
-    active_nodes: ["LOOPED", "MODULATOR"],
-    active_edges: ["BEAM_HOP23-LOOPED", "MODULATOR-LOOPED"],
-    description: "LoopedBeamTraversal (LoopLM-style) iterates up to T=3 times. Between loops: top-K answers expand seeds (semantic channel), PredictiveCodingEngine computes PE→ChemicalModulator adjusts beam params (metabolic channel), Engram biases next loop's pruning (mnemonic channel). Exit: |ΔPE| < γ.",
-    cards: [
-      { label: "Max loops", value: "3 (adaptive exit on ΔPE)" },
-      { label: "Seed expansion", value: "top-K answers add new seeds" },
-      { label: "PE feedback", value: "Jaccard divergence → arousal" },
-      { label: "Modulator", value: "arousal/novelty → beam width" },
-    ],
-    code: `for loop_i in range(max_loops):
-    results = beam.traverse(expanded_seeds)
-    pe = predictive_engine.update(results)
-    # ChemicalModulator: arousal, novelty, reinforcement
-    modulator.update(arousal=pe, novelty=1-soliton)
-    # Exit gate
-    if abs(pe - prev_pe) < gamma: break
-    # Expand seeds for next loop
-    new_seeds = top_k_entities(results)
-    expanded_seeds = seeds | new_seeds`,
-    flow: `all_paths[]  ──►  LoopedBeam  ──►  loop_0..T results\nPE          ──►  ChemModulator  ──►  adjusted beam params`
-  },
-  {
-    id: 9,
-    title: "Path Scoring",
-    layer: "CORTEX",
-    color: "emerald",
-    active_nodes: ["SCORER"],
-    active_edges: ["LOOPED-SCORER"],
-    description: "PathScorer ranks all collected paths with composite scoring: r2 path-consistency boost (×3.0 for corroborated paths), vote-weight suppression per community, counterfactual robustness re-ranking, and Cingulate Engine bilateral verification for top-K.",
-    cards: [
-      { label: "r2 boost", value: "×3.0 for consistent paths" },
-      { label: "Vote-weight", value: "community approval suppression" },
-      { label: "Counterfactual", value: "block intermediate nodes, rescore" },
-      { label: "Cingulate", value: "bilateral reverse verify +30%" },
-    ],
-    code: `# PathScorer composite scoring
-score = base_score
-      * r2_path_consistency_boost(path)   # ×3.0
-      * vote_weight_suppression(community)
-      * counterfactual_robustness(path)
-
-# CingulateEngine bilateral verification
-if cingulate.verify_reverse(path):
-    score *= 1.3  # confirmed answer
-
-# DBC: distribution-based calibration
-score = dbc_calibrate(score, path_scores)`,
-    flow: `all_paths[]  ──►  PathScorer.rank()  ──►  scored_paths[]\nCingulate    ──►  bilateral check  ──►  confidence boost`
-  },
-  {
-    id: 10,
-    title: "Answer Extraction",
-    layer: "CORTEX",
-    color: "emerald",
-    active_nodes: ["EXTRACTOR"],
-    active_edges: ["SCORER-EXTRACTOR"],
-    description: "AnswerExtractor extracts tail entities from top paths, deduplicates, and applies Platt scaling to calibrate raw scores to probabilities. Answer-type constraint filters by expected semantic type from the detected terminal relation.",
-    cards: [
-      { label: "Top-K", value: "10 ranked answers" },
-      { label: "Platt scaling", value: "P = 1/(1+exp(A·s+B))" },
-      { label: "Type filter", value: "terminal relation → entity type" },
-      { label: "Dedup", value: "best-score per tail entity" },
-    ],
-    code: `# AnswerExtractor
-answers = extractor.extract(scored_paths, top_k=10)
-
-# Platt calibration (fitted from POST /feedback)
-for ans in answers:
-    ans.confidence = platt.calibrate(ans.raw_score)
-    # P = 1 / (1 + exp(A * raw_score + B))
-
-# Answer-type constraint
-expected_type = terminal_rel_type_map[terminal_rel]
-answers = [a for a in answers if a.type == expected_type]`,
-    flow: `scored_paths[]  ──►  AnswerExtractor  ──►  answers[{entity, score}]\nPlatt           ──►  calibrated confidence  ──►  final QueryResponse`
-  },
-  {
-    id: 11,
-    title: "Response + Telemetry",
-    layer: "INTERFACE",
-    color: "cyan",
-    active_nodes: ["RESPONSE", "TELEMETRY", "UE5"],
-    active_edges: ["EXTRACTOR-RESPONSE", "EXTRACTOR-TELEMETRY", "TELEMETRY-UE5"],
-    description: "QueryResponse returns ranked answers with calibrated confidences and full ReasoningTrace (ERT) to the user. Simultaneously, TelemetryBridge emits SYNAPTIC_PULSE WebSocket events per traversed hop to connected UE5 visualization clients — showing the reasoning as live neural activity.",
-    cards: [
-      { label: "Response", value: "answers[] + paths[] + trace{}" },
-      { label: "ERT", value: "per-hop ReasoningTrace (glass-box)" },
-      { label: "SYNAPTIC_PULSE", value: "per hop → UE5 actor glow" },
-      { label: "Latency", value: "~80–400ms (3-hop, warm cache)" },
-    ],
-    code: `# QueryResponse (REST)
-{
-  "answers": [{"entity":"Lana Wachowski","score":0.94},...],
-  "paths":   [...],
-  "trace":   {"hops": [...], "loop_trace": [...]}
-}
-
-# TelemetryBridge (WebSocket :8765)
-{
-  "type":   "SYNAPTIC_PULSE",
-  "source": "The Matrix",
-  "target": "Lana Wachowski",
-  "relation": "directed_by",
-  "weight": 0.94, "hop_count": 1
+  "status":           "ok",
+  "adapter_loaded":   true,
+  "communities_loaded": true,
+  "embeddings_loaded":  true,
+  "node_count":       21,
+  "community_count":  3
 }`,
-    flow: `AnswerExtractor  ──►  QueryResponse  ──►  HTTP 200 to user\n                 ──►  TelemetryBridge  ──►  ws://localhost:8765\n                 ──►  UE5 ANeuronNodeActor.pulse()`
+    call:`uvicorn api.server:app --port 8200 --ws-port 8765\n# graph loaded, communities computed, telemetry listening`,
+    facts:[{l:"Graph",v:"21 nodes · 30 edges"},{l:"Engram",v:"22,283 sequences"},{l:"Platt",v:"fitted A/B"},{l:"WS",v:":8765 open"}],
+    ch:{ REST:"—", VEC:"—", PROF:"—", COMM:"—", CSA:"params restored", BEAM:"—", ENG:"warm cache", PE:"—", MOD:"—", SCORE:"—", ANS:"—", TEL:"listening :8765" }
+  },
+
+  { id:1, title:"HTTP POST /query Received",
+    layer:"INTERFACE", color:"c", dtype:"HTTP → JSON",
+    nodes:["n-USER","n-API"], edges:["e0"],
+    desc:"Client sends POST /query. FastAPI router receives the raw JSON body. TLS terminates, body decoded to bytes. Before parsing, rate-limiter and API-key middleware run.",
+    inp:`POST /query HTTP/1.1
+Host: localhost:8200
+Content-Type: application/json
+Authorization: Bearer <api_key>
+
+{
+  "query":     "Who directed The Matrix?",
+  "seeds":     ["The Matrix"],
+  "top_k":     10,
+  "max_loops": 3,
+  "beam_width": null
+}`,
+    out:`# FastAPI accepts the request
+# Body bytes buffered → awaiting Pydantic parse
+# Middleware: API key valid → proceed
+# Rate limiter: OK`,
+    call:`@router.post("/query")\nasync def query_endpoint(req: Request):\n    body = await req.json()\n    # → passed to query_handler()`,
+    facts:[{l:"Method",v:"POST /query"},{l:"Auth",v:"API key middleware"},{l:"Rate",v:"limiter passes"},{l:"Body",v:"raw JSON bytes"}],
+    ch:{ REST:'POST /query\nbody: 92 bytes', VEC:"—", PROF:"—", COMM:"—", CSA:"—", BEAM:"—", ENG:"—", PE:"—", MOD:"—", SCORE:"—", ANS:"—", TEL:"—" }
+  },
+
+  { id:2, title:"Pydantic Validation → QueryRequest",
+    layer:"INTERFACE", color:"c", dtype:"JSON → QueryRequest",
+    nodes:["n-PYD"], edges:["e1"],
+    desc:"Pydantic deserialises the body into a QueryRequest dataclass. Type coercion, field defaults, and constraint checks run. beam_width=None triggers profile-based auto-selection later.",
+    inp:`# Raw dict from JSON parse:
+{
+  "query":     "Who directed The Matrix?",
+  "seeds":     ["The Matrix"],
+  "top_k":     10,
+  "max_loops": 3,
+  "beam_width": null,
+  "use_counterfactual_rerank": false,
+  "use_deductive_consensus":  false,
+  "causal_bonus": 0.3
+}`,
+    out:`QueryRequest(
+  query     = "Who directed The Matrix?",
+  seeds     = ["The Matrix"],
+  top_k     = 10,
+  max_loops = 3,
+  beam_width = None,      # → auto from profile
+  causal_bonus = 0.3,
+  use_counterfactual_rerank = False,
+  query_id  = "a3f9e2c1-..."  # UUID assigned
+)`,
+    call:`class QueryRequest(BaseModel):\n    query:     str\n    seeds:     List[str]\n    top_k:     int = 10\n    max_loops: int = 3\n    beam_width: Optional[int] = None\n    query_id:   str = Field(default_factory=lambda: str(uuid4()))`,
+    facts:[{l:"query_id",v:"UUID assigned"},{l:"beam_width",v:"None → auto"},{l:"Pydantic",v:"v2 validation"},{l:"422",v:"if schema invalid"}],
+    ch:{ REST:'QueryRequest validated\nquery_id = "a3f9e2c1-..."', VEC:"—", PROF:"—", COMM:"—", CSA:"—", BEAM:"—", ENG:"—", PE:"—", MOD:"—", SCORE:"—", ANS:"—", TEL:"—" }
+  },
+
+  { id:3, title:"GraphProfiler.get_cached()",
+    layer:"CORTEX", color:"i", dtype:"→ GraphProfile",
+    nodes:["n-PROF"], edges:["e3"],
+    desc:"GraphProfiler analysed the graph at build time (O(E)). Returns cached GraphProfile: structural class, recommended strategy flags, and default beam width. Determines H1SE, TAB, STRB auto-configuration.",
+    inp:`# Called at CerebrumGraph.build() time — result cached
+GraphProfiler.analyze(graph)
+
+# Analysis metrics sampled:
+#   hub_ratio     = 0.71   (hubs dominate)
+#   type_diversity= 0.28   (low → homogeneous)
+#   mean_degree   = 2.86
+#   diameter_est  = 4`,
+    out:`GraphProfile(
+  type          = "hub_homogeneous",
+  hop_expand    = True,    # use H1SE
+  trb_auto      = True,    # use STRB
+  anchor_bonus  = 0.40,
+  beam_width    = 12,      # default
+  use_tab       = False,   # typed graph only
+  profile_hash  = "7a3f..."
+)`,
+    call:`# Attached to request context\nreq_ctx.profile = GraphProfiler.get_cached()\n# beam_width = profile.beam_width if req.beam_width is None`,
+    facts:[{l:"Type",v:"hub_homogeneous"},{l:"H1SE",v:"enabled"},{l:"STRB",v:"enabled"},{l:"Beam",v:"12 (default)"}],
+    ch:{ REST:'QueryRequest validated', VEC:"—", PROF:'type=hub_homogeneous\nhop_expand=True\nstrb=True\nbw=12', COMM:"—", CSA:"—", BEAM:"—", ENG:"—", PE:"—", MOD:"—", SCORE:"—", ANS:"—", TEL:"—" }
+  },
+
+  { id:4, title:"EmbeddingEngine.encode(query)",
+    layer:"THALAMUS", color:"v", dtype:"str → ndarray[384]",
+    nodes:["n-EMBED"], edges:["e2"],
+    desc:"EmbeddingEngine encodes the query text with sentence-transformers (all-MiniLM-L6-v2). Output is an L2-normalised 384-dim dense vector. GraphSAGE-smoothed entity embeddings were computed at build time.",
+    inp:`EmbeddingEngine.encode(
+    text = "Who directed The Matrix?"
+)
+
+# Model: all-MiniLM-L6-v2
+# Device: cuda:0 (RTX 5090)
+# Cache: LRU (hit if same text seen before)`,
+    out:`query_embedding = ndarray([
+   0.0412, -0.1834,  0.0571, ...  # dim 0–3
+  -0.0293,  0.2108, -0.0047, ...  # ...
+], shape=(384,), dtype=float32)
+
+# L2-normalised: ||v|| = 1.0000
+# Used by: CSA alpha·sim  +  STRB cosine`,
+    call:`# EmbeddingEngine.encode()\nmodel = SentenceTransformer("all-MiniLM-L6-v2")\nvec = model.encode(text, normalize_embeddings=True)\n# GraphSAGE (build-time, not per-query)\n# smooth_with_graphsage(base_embs, graph, num_layers=2)`,
+    facts:[{l:"Model",v:"all-MiniLM-L6-v2"},{l:"Dim",v:"384"},{l:"Norm",v:"L2 = 1.0"},{l:"Device",v:"cuda:0"}],
+    ch:{ REST:'QueryRequest ok', VEC:'shape=(384,)\nnorm=1.0\ncuda:0', PROF:'type=hub_homogeneous', COMM:"—", CSA:"—", BEAM:"—", ENG:"—", PE:"—", MOD:"—", SCORE:"—", ANS:"—", TEL:"—" }
+  },
+
+  { id:5, title:"QueryLog.record_start()",
+    layer:"INTERFACE", color:"c", dtype:"→ NDJSON append",
+    nodes:["n-API"], edges:["e0"],
+    desc:"QueryLog appends a start record to query_log.ndjson before reasoning begins. On restart, replay_into_cache() reads these records to warm the Engram with previously productive relation sequences.",
+    inp:`QueryLog.record(
+    query_id = "a3f9e2c1-...",
+    query    = "Who directed The Matrix?",
+    seeds    = ["The Matrix"],
+    event    = "start",
+    ts       = 1749181760.42
+)`,
+    out:`# Appended to data/cerebrum/query_log.ndjson:
+{"query_id":"a3f9e2c1","query":"Who directed The Matrix?","seeds":["The Matrix"],"event":"start","ts":1749181760.42}
+
+# File is append-only NDJSON
+# Never truncated during normal operation`,
+    call:`# core/persistence.py\nwith open(self._path, "a") as f:\n    f.write(json.dumps(record) + "\\n")`,
+    facts:[{l:"Format",v:"NDJSON append-only"},{l:"Replay",v:"warms Engram on restart"},{l:"Path",v:"data/cerebrum/query_log.ndjson"},{l:"Flush",v:"unbuffered"}],
+    ch:{ REST:'start logged', VEC:'shape=(384,)', PROF:'hub_homogeneous', COMM:"—", CSA:"—", BEAM:"—", ENG:"query start recorded", PE:"—", MOD:"—", SCORE:"—", ANS:"—", TEL:"—" }
+  },
+
+  { id:6, title:"CommunityEngine.get_partition()",
+    layer:"CORTEX", color:"a", dtype:"→ {entity: community_id}",
+    nodes:["n-COMM"], edges:["e4","e5"],
+    desc:"CommunityEngine returns the cached DSCF/TSC community partition. Maps every entity to a community ID. Seeds are assigned their community so CSAEngine can apply the β=0.4 same-community cohesion bonus.",
+    inp:`CommunityEngine.get_partition()
+# Cached at build time — O(1) read
+# Algorithm: DSCF/TSC (Dual-Signal Community Fusion)
+
+# Seed lookup:
+seed = "The Matrix"`,
+    out:`community_map = {
+  "The Matrix":       7,
+  "Lana Wachowski":   7,
+  "Lily Wachowski":   7,
+  "Keanu Reeves":     7,
+  "Warner Bros":      2,
+  ...  # all 21 entities
+}
+
+seed_community = 7   # film cluster`,
+    call:`# CSAEngine query snapshot (thread-safe)\ncsa.set_query_snapshot(community_map)\n# Snapshot prevents mid-flight community swap`,
+    facts:[{l:"Communities",v:"3 partitions"},{l:"Algorithm",v:"DSCF/TSC"},{l:"Seed comm",v:"7 (film cluster)"},{l:"Beta weight",v:"0.4 × cs"}],
+    ch:{ REST:'ok', VEC:'(384,)', PROF:'hub_homogeneous', COMM:'seed→community 7\n3 partitions total\nβ=0.40 bonus', CSA:"—", BEAM:"—", ENG:"warm", PE:"—", MOD:"—", SCORE:"—", ANS:"—", TEL:"—" }
+  },
+
+  { id:7, title:"CSAEngine.get_params() — 10-param vector",
+    layer:"CORTEX", color:"i", dtype:"→ CSAParams",
+    nodes:["n-CSA"], edges:["e6"],
+    desc:"CSAEngine retrieves the current 10-parameter attention weight vector. Global prior plus any per-community overrides set by MetaParameterLearner via online SGD from /feedback calls.",
+    inp:`CSAEngine.get_params(community_id=7)
+
+# Check per-community override first,
+# fall back to global prior`,
+    out:`CSAParams(
+  alpha   = 0.40,  # semantic similarity
+  beta    = 0.40,  # community cohesion
+  gamma   = 0.10,  # edge-type weight
+  delta   = 0.05,  # distance penalty
+  epsilon = 0.05,  # hop decay
+  zeta    = 0.10,  # PageRank prior
+  eta     = 0.10,  # temporal decay
+  iota    = 0.05,  # node recency
+  mu      = 0.10,  # synthesis penalty
+  theta   = 1.00,  # grounding confidence
+)
+# source: global_prior (no community override)`,
+    call:`a(u,v,k) = sigmoid(\n  α·sim + β·cs + γ·etw\n  - δ·nd + ε·hd + ζ·pr\n  + η·td + ι·nr - μ·sd + θ·g\n)`,
+    facts:[{l:"Alpha",v:"0.40 semantic"},{l:"Beta",v:"0.40 community"},{l:"Theta",v:"1.00 grounding"},{l:"Online SGD",v:"MetaParamLearner"}],
+    ch:{ REST:'ok', VEC:'(384,)', PROF:'hub_homogeneous', COMM:'comm 7 active', CSA:'α=0.40 β=0.40 γ=0.10\nδ=0.05 ε=0.05 ζ=0.10\nη=0.10 ι=0.05 μ=0.10\nθ=1.00', BEAM:"—", ENG:"warm", PE:"—", MOD:"—", SCORE:"—", ANS:"—", TEL:"—" }
+  },
+
+  { id:8, title:"BeamTraversal.init() — Beam State",
+    layer:"CORTEX", color:"c", dtype:"→ BeamState",
+    nodes:["n-BINIT"], edges:["e7"],
+    desc:"BeamTraversal initialises the beam state. Seeds resolved to entity IDs, beam width set from profile (12), causal edge index built. EpistemicGate computes adaptive width from previous query's epistemic uncertainty.",
+    inp:`BeamTraversal(
+    adapter      = graph_adapter,
+    csa_engine   = csa,
+    beam_width   = 12,          # from profile
+    hop_expand   = True,        # H1SE
+    causal_bonus = 0.3,
+)
+.init(seeds=["The Matrix"])`,
+    out:`BeamState(
+  seeds          = ["the_matrix_1999"],
+  beam_width     = 14,    # +2 from EpistemicGate
+  hop             = 0,
+  active_branches = [],
+  causal_idx      = {("wachowski","matrix"), ...},
+  snapshot_hash   = "7a3f...",
+  loop_i          = 0
+)`,
+    call:`# EpistemicGate adaptive width\nepistemic_u = EpistemicGate._last_eu  # 0.5 default\nadaptive_bw = min(bw*3, max(bw, int(bw*(1+eu))))\n# 12 * (1 + 0.17) ≈ 14`,
+    facts:[{l:"Seeds",v:"1 entity resolved"},{l:"Beam width",v:"14 (adaptive)"},{l:"Causal idx",v:"built O(E)"},{l:"H1SE",v:"enabled"}],
+    ch:{ REST:'ok', VEC:'(384,)', PROF:'bw=12 → adaptive=14', COMM:'comm 7', CSA:'10-param ready', BEAM:'seeds=["the_matrix"]\nbw=14  hop=0', ENG:"warm", PE:"eu=0.50", MOD:"—", SCORE:"—", ANS:"—", TEL:"—" }
+  },
+
+  { id:9, title:"H1SE — Hop-1 Seed Expansion",
+    layer:"CORTEX", color:"c", dtype:"→ hop1_branches[]",
+    nodes:["n-H1SE"], edges:["e8"],
+    desc:"HopExpandedTraversal runs each hop-1 neighbour as an independent sub-traversal, eliminating cross-branch competition. Each branch gets its own beam budget. GlobalBeamBarrier keeps min 10 branches regardless of score.",
+    inp:`HopExpandedTraversal.expand_hop1(
+    seed       = "the_matrix_1999",
+    beam_width = 14,
+    csa_params = {...}
+)
+
+# For each hop-1 neighbour n of seed:
+#   run sub_traverse(seed→n, beam_width=14)`,
+    out:`hop1_branches = [
+  Branch(rel="directed_by",  dest="wachowski_l",  score=0.847),
+  Branch(rel="directed_by",  dest="wachowski_lil",score=0.841),
+  Branch(rel="starred",      dest="keanu_reeves",  score=0.731),
+  Branch(rel="produced_by",  dest="warner_bros",   score=0.682),
+  Branch(rel="has_genre",    dest="sci_fi",        score=0.321),
+  ... # 14 branches total
+]`,
+    call:`for seed in seeds:\n    nbrs = adapter.get_neighbors(seed)\n    for nbr in nbrs[:beam_width]:\n        score = csa.compute_weight(seed, nbr, query_emb)\n        branches.append(Branch(seed, nbr, score))\nbarrier = GlobalBeamBarrier(threshold=0.1, min_guaranteed=10)`,
+    facts:[{l:"H1SE",v:"per-branch sub-traversal"},{l:"Branches",v:"14 after expand"},{l:"Barrier",v:"min 10 kept"},{l:"CSA",v:"compute_weight per edge"}],
+    ch:{ REST:'ok', VEC:'(384,)', PROF:'H1SE active', COMM:'comm 7', CSA:'10-param', BEAM:'hop=1  14 branches', ENG:"warm", PE:"eu=0.50", MOD:"—", SCORE:"—", ANS:"—", TEL:"—" }
+  },
+
+  { id:10, title:"STRB — Terminal Relation Scoring",
+    layer:"CORTEX", color:"i", dtype:"query_emb → rel_scores",
+    nodes:["n-STRB"], edges:["e9"],
+    desc:"Semantic Terminal Relation Boost computes cosine similarity between the query embedding and each relation label embedding. Boosts the beam toward the most query-relevant terminal relation type.",
+    inp:`semantic_trb(
+    query_embedding = query_vec,   # (384,)
+    relations = [
+      "directed_by", "starred",
+      "produced_by", "has_genre",
+      "release_year", ...
+    ]
+)
+
+# rel_label_embs cached at build time`,
+    out:`terminal_rel_scores = {
+  "directed_by":  0.784,   # ← highest
+  "written_by":   0.631,
+  "starred":      0.412,
+  "produced_by":  0.308,
+  "has_genre":    0.091,
+  "release_year": 0.044,
+}
+
+# Terminal relation: "directed_by"
+# Applied as beam weight multiplier`,
+    call:`# reasoning/traversal.py\nrel_embs = emb_engine.encode_batch(relations)\nscores = cosine_similarity(query_emb, rel_embs)\nfor branch in hop1_branches:\n    branch.score *= (1 + strb_weight * scores[branch.rel])`,
+    facts:[{l:"Top rel",v:"directed_by 0.784"},{l:"Model",v:"same sentence-transformer"},{l:"Boost",v:"score × (1 + strb·cos)"},{l:"Fallback",v:"SRI structural"}],
+    ch:{ REST:'ok', VEC:'(384,) used for STRB', PROF:'STRB active', COMM:'comm 7', CSA:'10-param', BEAM:'strb boost applied', ENG:"warm", PE:"eu=0.50", MOD:"—", SCORE:"—", ANS:"—", TEL:"—" }
+  },
+
+  { id:11, title:"GlobalBeamBarrier.prune()",
+    layer:"CORTEX", color:"i", dtype:"branches[] → pruned[]",
+    nodes:["n-BAR"], edges:["e10"],
+    desc:"GlobalBeamBarrier prunes hop-1 branches below the score threshold, but guarantees at least 10 survive to prevent missed paths. Geometric mean stitching combines hop-1 parent score with child scores during deeper traversal.",
+    inp:`GlobalBeamBarrier.prune(
+    branches   = hop1_branches,  # 14
+    threshold  = max_score * 0.10,
+    min_guaranteed = 10
+)`,
+    out:`kept_branches = [
+  Branch(rel="directed_by", dest="wachowski_l",   score=0.847),
+  Branch(rel="directed_by", dest="wachowski_lil", score=0.841),
+  Branch(rel="starred",     dest="keanu_reeves",   score=0.731),
+  Branch(rel="produced_by", dest="warner_bros",    score=0.682),
+  ... # 10 branches total (min_guaranteed)
+]
+
+# Dropped: 4 branches below threshold
+# min_guaranteed prevented dropping more`,
+    call:`# reasoning/expanded_traversal.py\ncutoff = max(b.score for b in branches) * threshold\nkept = [b for b in branches if b.score >= cutoff]\nif len(kept) < min_guaranteed:\n    kept = sorted(branches, key=lambda b: -b.score)[:min_guaranteed]`,
+    facts:[{l:"In",v:"14 branches"},{l:"Out",v:"10 branches"},{l:"Dropped",v:"4 below threshold"},{l:"Stitch",v:"geom-mean parent×child"}],
+    ch:{ REST:'ok', VEC:'(384,)', PROF:'H1SE', COMM:'comm 7', CSA:'10-param', BEAM:'10 branches after barrier', ENG:"warm", PE:"eu=0.50", MOD:"—", SCORE:"—", ANS:"—", TEL:"—" }
+  },
+
+  { id:12, title:"Engram.query() — Affinity Lookup",
+    layer:"CORTEX", color:"v", dtype:"rel_prefix → affinity",
+    nodes:["n-ENG","n-HOP23"], edges:["e11"],
+    desc:"Engram cache is queried with the relation prefix seen so far. Returns an affinity score for relation sequences matching the prefix. High-affinity sequences bias pruning toward known-productive reasoning chains via multiplicative boost.",
+    inp:`Engram.query(
+    relation_prefix = ("directed_by",)
+)
+
+# SpeedTalk compressed key:
+# "directed_by" → phoneme "d" (most-traversed)
+# prefix query in O(P) — no full-scan`,
+    out:`engram_result = EngramHit(
+  prefix    = ("directed_by",),
+  affinity  = 0.73,
+  hit_count = 1847,
+  sequences = [
+    ("directed_by", "born_in"),
+    ("directed_by", "collaborated_with"),
+  ]
+)
+
+# Affinity applied: branch.score *= (1 + 0.73)`,
+    call:`# reasoning/speedtalk_cache.py\nphoneme = encoder.encode_relation("directed_by")  # "d"\nresults = cache.prefix_query(phoneme)\naffinity = results.mean_confidence if results else 0.0`,
+    facts:[{l:"Prefix",v:"(directed_by,)"},{l:"Affinity",v:"0.73"},{l:"Hits",v:"1,847 sequences"},{l:"Encoding",v:"SpeedTalk phonemic"}],
+    ch:{ REST:'ok', VEC:'(384,)', PROF:'H1SE', COMM:'comm 7', CSA:'10-param', BEAM:'hop 2 starting', ENG:'prefix=(directed_by,)\naffinity=0.73\nhits=1847', PE:"eu=0.50", MOD:"—", SCORE:"—", ANS:"—", TEL:"—" }
+  },
+
+  { id:13, title:"BeamTraversal Hops 2 + 3",
+    layer:"CORTEX", color:"c", dtype:"branches[] → all_paths[]",
+    nodes:["n-HOP23"], edges:["e12","e13"],
+    desc:"Beam continues hops 2 and 3. Engram affinity bias applied on each candidate. Causal edge bonus (+0.3) on CAUSAL_RELATIONS edges. PRB boosts penultimate relation. Funnel narrows beam: hop1=20, hop2=10, hop3=5.",
+    inp:`# For each kept hop-1 branch:
+BeamTraversal.continue_hops(
+    branches    = kept_branches,
+    target_hops = 3,
+    engram      = engram_result,
+    causal_idx  = causal_edge_index,
+    causal_bonus = 0.30,
+    funnel      = {1:20, 2:10, 3:5}
+)`,
+    out:`all_paths = [
+  Path(
+    nodes = ["The Matrix","Lana Wachowski","USA"],
+    rels  = ["directed_by","born_in"],
+    score = 0.847 * sqrt(0.847 * 0.712)
+          = 0.791,   # geom-mean stitch
+    hop_count = 2
+  ),
+  Path(nodes=[...], rels=["directed_by",...], score=0.784),
+  Path(nodes=[...], rels=["starred",...],     score=0.661),
+  ... # 38 total paths collected
+]`,
+    call:`# Causal bonus (Phase 124)\nif (u,v) in causal_edge_index:\n    w *= (1.0 + causal_bonus)  # ×1.3\n# PRB: penultimate relation boost\nif hop == max_hop - 1:\n    w *= prb_weight(rel, detected_terminal)`,
+    facts:[{l:"Paths",v:"38 collected"},{l:"Causal",v:"+0.3 on causal edges"},{l:"PRB",v:"hop N-1 boost"},{l:"Funnel",v:"20→10→5"}],
+    ch:{ REST:'ok', VEC:'(384,)', PROF:'H1SE', COMM:'comm 7', CSA:'applied per edge', BEAM:'38 paths  3 hops', ENG:'affinity boosting', PE:"eu=0.50", MOD:"—", SCORE:"38 paths raw", ANS:"—", TEL:"—" }
+  },
+
+  { id:14, title:"PredictiveCodingEngine — Compute PE",
+    layer:"CORTEX", color:"e", dtype:"paths → PE float",
+    nodes:["n-PE"], edges:["e13"],
+    desc:"PredictiveCodingEngine compares the actual paths found against the prior predicted from the top Engram pattern. Jaccard divergence between prior and actual relation sequences = Prediction Error. soliton_index = 1 − mean(recent PEs).",
+    inp:`PredictiveCodingEngine.update(
+    actual_paths = all_paths,
+    engram       = engram,
+    query_id     = "a3f9e2c1-..."
+)
+
+# Prior from top Engram pattern:
+# prior_sequence = ("directed_by", "born_in")`,
+    out:`PE_result = PEResult(
+  prior_sequence  = ("directed_by","born_in"),
+  actual_top_rel  = ("directed_by","born_in"),
+  prediction_error = 0.12,   # Jaccard divergence
+  soliton_index    = 0.87,   # 1 - mean(recent PEs)
+  arousal_signal   = 0.12,   # → ChemModulator
+  novelty_signal   = 0.13,   # → ChemModulator
+)`,
+    call:`# core/predictive_coding.py\nprior_set  = set(prior_sequence)\nactual_set = set(path.rels for path in all_paths)\npe = 1 - len(prior_set & actual_set) / len(prior_set | actual_set)\nsoliton = 1 - np.mean(self._pe_history[-10:])`,
+    facts:[{l:"PE",v:"0.12 (low, good match)"},{l:"Soliton",v:"0.87"},{l:"Prior",v:"(directed_by, born_in)"},{l:"Match",v:"Jaccard divergence"}],
+    ch:{ REST:'ok', VEC:'(384,)', PROF:'H1SE', COMM:'comm 7', CSA:'applied', BEAM:'38 paths', ENG:'affinity=0.73', PE:'pe=0.12\nsoliton=0.87\narousal=0.12\nnovelty=0.13', MOD:"pending update", SCORE:"—", ANS:"—", TEL:"—" }
+  },
+
+  { id:15, title:"ChemModulator.update() + LoopedBeam",
+    layer:"CORTEX", color:"a", dtype:"PE → signals → loop iter",
+    nodes:["n-LOOP","n-MOD"], edges:["e14","e15"],
+    desc:"ChemicalModulator updates metabolic scalars from PE signals. LoopedBeamTraversal checks the adaptive exit gate (|ΔPE| < γ). Low PE means the prior was accurate — loop exits after 1 iteration. Answer set expanded as new seeds.",
+    inp:`ChemModulator.update(
+    arousal      = 0.12,    # from PE
+    novelty      = 0.13,
+    reinforcement= 0.90,    # high answer confidence
+    cohesion     = 0.80,
+    persistence  = 0.70,
+)
+
+LoopedBeam.check_exit(
+    prev_pe = 0.50,   # initial default
+    curr_pe = 0.12,
+    gamma   = 0.05    # exit threshold
+)`,
+    out:`ChemState(
+  reinforcement = 0.855,   # homeostatic blend
+  arousal       = 0.480,
+  novelty       = 0.438,
+  cohesion      = 0.760,
+  persistence   = 0.665,
+)
+
+# Exit gate: |0.50 - 0.12| = 0.38 > γ=0.05
+# → Continue to loop 2
+# Expanded seeds: ["wachowski_l","keanu_reeves"]`,
+    call:`# core/chemical_modulator.py\nfor signal, val in updates.items():\n    self._state[signal] = (\n        self._state[signal] * (1 - decay) + val * decay)\n# LoopedBeam adaptive exit\nif abs(pe_curr - pe_prev) < gamma: break\nnew_seeds = top_k_tail_entities(paths, k=3)`,
+    facts:[{l:"ΔPE",v:"0.38 > γ → continue"},{l:"Loop",v:"→ iteration 2"},{l:"New seeds",v:"+2 from top answers"},{l:"Modulator",v:"homeostatic decay"}],
+    ch:{ REST:'ok', VEC:'(384,)', PROF:'H1SE', COMM:'comm 7', CSA:'applied', BEAM:'loop 2 starting', ENG:'affinity active', PE:'pe=0.12  Δpe=0.38', MOD:'R=0.855 A=0.480\nN=0.438 C=0.760\nP=0.665', SCORE:"—", ANS:"—", TEL:"—" }
+  },
+
+  { id:16, title:"PathScorer — r2 + Vote-Weight",
+    layer:"CORTEX", color:"e", dtype:"paths[] → scored_paths[]",
+    nodes:["n-SCOR"], edges:["e16","e17"],
+    desc:"PathScorer applies composite scoring over all collected paths. r2 path-consistency boost (×3.0) rewards corroborated answers. Vote-weight suppression penalises answers from communities with low historical approval rates.",
+    inp:`PathScorer.rank(
+    paths       = all_paths,  # 38 + loop-2 = 61
+    r2_boost    = 3.0,
+    vote_weight = community_approval_rates,
+    query_embedding = query_vec
+)`,
+    out:`scored_paths = [
+  ScoredPath(
+    tail    = "Lana Wachowski",
+    score   = 0.847
+            * r2_consistency(path) * 3.0   # =2.51
+            * vote_weight(comm_7)  * 0.93  # =2.33
+    final   = 2.331
+  ),
+  ScoredPath(tail="Lily Wachowski", final=2.280),
+  ScoredPath(tail="Keanu Reeves",   final=1.614),
+  ... # 61 paths scored
+]`,
+    call:`# benchmarks/metaqa_eval.py\nfor path in paths:\n    path.score *= r2_boost if is_consistent(path) else 1.0\n    path.score *= vote_weight_map[path.community]\n# DBC: distribution-based calibration\nscores = dbc_calibrate(scores)`,
+    facts:[{l:"Paths in",v:"61 (2 loops)"},{l:"r2 boost",v:"×3.0 if consistent"},{l:"Vote-weight",v:"community suppression"},{l:"DBC",v:"distribution calibration"}],
+    ch:{ REST:'ok', VEC:'(384,)', PROF:'H1SE', COMM:'comm 7', CSA:'applied', BEAM:'61 paths scored', ENG:'affinity=0.73', PE:'pe=0.09 (loop 2)', MOD:'stable', SCORE:'top: Lana=2.33\nLily=2.28\nKeanu=1.61', ANS:"—", TEL:"—" }
+  },
+
+  { id:17, title:"CingulateEngine.verify_reverse()",
+    layer:"CORTEX", color:"i", dtype:"top-K → bilateral verify",
+    nodes:["n-CING","n-EXT"], edges:["e17b","e18"],
+    desc:"CingulateEngine runs bilateral reverse traversal on the top-K candidates. Reverse path confirmed → score ×1.3. Unconfirmed → score ×0.9. Implements FrontalEngine-assigned strategy from the graph profile.",
+    inp:`CingulateEngine.verify(
+    candidates = scored_paths[:10],
+    query      = "Who directed The Matrix?",
+    adapter    = graph_adapter,
+    beam_width = 5   # lighter reverse beam
+)`,
+    out:`verified = [
+  Verified(
+    tail     = "Lana Wachowski",
+    forward  = 2.331,
+    reverse  = confirmed,   # path found L.W.→directs→Matrix
+    final    = 2.331 * 1.3 = 3.030,
+  ),
+  Verified(tail="Lily Wachowski", reverse=confirmed, final=2.964),
+  Verified(tail="Keanu Reeves",   reverse=partial,   final=1.452),
+  ...
+]`,
+    call:`# core/insight_validator.py\nfor cand in top_k:\n    rev = beam.traverse(cand.tail, seeds, max_hops=3)\n    if seeds[0] in rev.answers:\n        cand.score *= 1.3   # confirmed\n    else:\n        cand.score *= 0.9   # not found`,
+    facts:[{l:"Reverse beam",v:"width 5"},{l:"Confirmed",v:"Lana ×1.3"},{l:"Partial",v:"Keanu ×0.9→×1.0"},{l:"Strategy",v:"from FrontalEngine"}],
+    ch:{ REST:'ok', VEC:'(384,)', PROF:'H1SE', COMM:'comm 7', CSA:'applied', BEAM:'bilateral done', ENG:'affinity=0.73', PE:'pe=0.09', MOD:'stable', SCORE:'top: Lana=3.03\nLily=2.96\nKeanu=1.45', ANS:"pending", TEL:"—" }
+  },
+
+  { id:18, title:"AnswerExtractor.extract()",
+    layer:"CORTEX", color:"e", dtype:"scored_paths → answers[]",
+    nodes:["n-EXT"], edges:["e18"],
+    desc:"AnswerExtractor pulls tail entities from the top-scored paths, deduplicates by entity, keeps highest score per entity, and filters by expected semantic type derived from the detected terminal relation.",
+    inp:`AnswerExtractor.extract(
+    scored_paths = verified_paths,
+    top_k        = 10,
+    terminal_rel = "directed_by",
+)
+
+# terminal_rel → expected type: PERSON
+# Filter out non-person tail entities`,
+    out:`raw_answers = [
+  Answer(entity="Lana Wachowski", raw_score=3.030, type=PERSON),
+  Answer(entity="Lily Wachowski", raw_score=2.964, type=PERSON),
+  Answer(entity="Keanu Reeves",   raw_score=1.452, type=PERSON),
+  Answer(entity="Joel Silver",    raw_score=0.891, type=PERSON),
+  ...  # genre labels filtered out (wrong type)
+]`,
+    call:`# reasoning/answer_extractor.py\nanswers = defaultdict(float)\nfor path in sorted_paths:\n    if expected_type and path.tail.type != expected_type:\n        continue   # type filter\n    answers[path.tail] = max(answers[path.tail], path.score)\nreturn sorted(answers.items(), key=lambda x: -x[1])[:top_k]`,
+    facts:[{l:"Dedup",v:"best score per entity"},{l:"Type filter",v:"PERSON from directed_by"},{l:"Filtered",v:"genre labels removed"},{l:"Count",v:"8 answers remain"}],
+    ch:{ REST:'ok', VEC:'(384,)', PROF:'H1SE', COMM:'comm 7', CSA:'applied', BEAM:'done', ENG:'affinity=0.73', PE:'pe=0.09', MOD:'stable', SCORE:'Lana=3.03\nLily=2.96', ANS:'8 raw answers\ntype-filtered', TEL:"—" }
+  },
+
+  { id:19, title:"PlattCalibration.calibrate()",
+    layer:"CORTEX", color:"v", dtype:"raw_score → probability",
+    nodes:["n-PLATT","n-FIN"], edges:["e19b","e19"],
+    desc:"PlattCalibration converts raw path scores to calibrated probabilities using a fitted 2-parameter sigmoid: P = 1/(1+exp(A·s+B)). Fitted via gradient descent from /feedback calls (min 20 samples required).",
+    inp:`PlattCalibration.calibrate(
+    scores = [3.030, 2.964, 1.452, 0.891, ...]
+)
+
+# Fitted parameters (from /feedback history):
+# A = -1.24,  B = 0.38
+# Min samples for refit: 20  (currently 847)`,
+    out:`calibrated = [
+  Answer(entity="Lana Wachowski",
+         raw=3.030, confidence=0.947),
+  Answer(entity="Lily Wachowski",
+         raw=2.964, confidence=0.941),
+  Answer(entity="Keanu Reeves",
+         raw=1.452, confidence=0.724),
+  Answer(entity="Joel Silver",
+         raw=0.891, confidence=0.601),
+  ...
+]
+# P = 1 / (1 + exp(-1.24 * score + 0.38))`,
+    call:`# core/parameter_learner.py\nclass PlattCalibration:\n    def calibrate(self, score: float) -> float:\n        return 1.0 / (1.0 + math.exp(self.A * score + self.B))\n    def refit(self, pairs: list):\n        # gradient descent on log-loss`,
+    facts:[{l:"A",v:"-1.24"},{l:"B",v:"0.38"},{l:"Samples",v:"847 from /feedback"},{l:"Top conf",v:"0.947 Lana"}],
+    ch:{ REST:'ok', VEC:'(384,)', PROF:'H1SE', COMM:'comm 7', CSA:'applied', BEAM:'done', ENG:'affinity=0.73', PE:'pe=0.09', MOD:'stable', SCORE:'calibrated', ANS:'Lana=0.947\nLily=0.941\nKeanu=0.724', TEL:"—" }
+  },
+
+  { id:20, title:"QueryResponse.build() + QueryLog",
+    layer:"INTERFACE", color:"c", dtype:"→ QueryResponse",
+    nodes:["n-RBLD","n-QLOG"], edges:["e20","e20b"],
+    desc:"QueryResponse assembled from answers, paths, and full ReasoningTrace (ERT). QueryLog appends the result record so Engram relation sequences can be replayed on next restart.",
+    inp:`QueryResponse.build(
+    answers      = calibrated_answers,
+    paths        = top_scored_paths,
+    trace        = reasoning_trace,   # ERT
+    query_id     = "a3f9e2c1-...",
+    latency_ms   = 312
+)
+
+QueryLog.record(event="result", ...)`,
+    out:`QueryResponse(
+  query_id = "a3f9e2c1-...",
+  answers  = [
+    {"entity":"Lana Wachowski","confidence":0.947},
+    {"entity":"Lily Wachowski","confidence":0.941},
+    ...
+  ],
+  paths    = [...],
+  trace    = ReasoningTrace(
+    hops=[...], loop_trace=[...],
+    prior="(directed_by,born_in)",
+    pe=0.09, soliton=0.89
+  ),
+  latency_ms = 312
+)`,
+    call:`# core/persistence.py — QueryLog\nwith open(log_path,"a") as f:\n    f.write(json.dumps({\n        "query_id": qid, "event":"result",\n        "answers": answer_entities,\n        "rel_seqs": top_relation_sequences\n    }) + "\\n")`,
+    facts:[{l:"Latency",v:"312ms"},{l:"ERT",v:"full hop trace"},{l:"QueryLog",v:"result appended"},{l:"Rel seqs",v:"logged for Engram"}],
+    ch:{ REST:'response ready\n312ms', VEC:'(384,)', PROF:'H1SE', COMM:'comm 7', CSA:'applied', BEAM:'done', ENG:'rel seqs written', PE:'pe=0.09', MOD:'stable', SCORE:'Lana=0.947', ANS:'Lana Wachowski\nLily Wachowski\n+6 more', TEL:"pending" }
+  },
+
+  { id:21, title:"HTTP 200 QueryResponse → Client",
+    layer:"INTERFACE", color:"c", dtype:"→ HTTP 200 JSON",
+    nodes:["n-RESP"], edges:["e21"],
+    desc:"FastAPI serialises the QueryResponse to JSON and returns HTTP 200. The response body includes calibrated answers, ranked paths, and the full ERT ReasoningTrace with per-hop details.",
+    inp:`# FastAPI serialisation
+json.dumps(QueryResponse, default=pydantic_encoder)
+
+# Response headers:
+# Content-Type: application/json
+# X-Query-Id: a3f9e2c1-...
+# X-Latency-Ms: 312`,
+    out:`HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "query_id":  "a3f9e2c1-...",
+  "answers": [
+    {"entity":"Lana Wachowski","confidence":0.947,"rank":1},
+    {"entity":"Lily Wachowski","confidence":0.941,"rank":2},
+    {"entity":"Keanu Reeves",  "confidence":0.724,"rank":3}
+  ],
+  "latency_ms": 312,
+  "trace": {
+    "hops": [...],
+    "pe": 0.09,
+    "soliton": 0.89
+  }
+}`,
+    call:`@router.post("/query")\nasync def query_endpoint(...) -> QueryResponse:\n    result = await query_handler(req)\n    return JSONResponse(result.dict(), status_code=200,\n        headers={"X-Query-Id": result.query_id,\n                 "X-Latency-Ms": str(result.latency_ms)})`,
+    facts:[{l:"Status",v:"200 OK"},{l:"Answers",v:"8 calibrated"},{l:"ERT",v:"full trace included"},{l:"Latency",v:"312ms"}],
+    ch:{ REST:'200 OK  312ms\n8 answers returned', VEC:'done', PROF:'done', COMM:'done', CSA:'done', BEAM:'done', ENG:'sequences stored', PE:'0.09', MOD:'updated', SCORE:'Lana=0.947', ANS:'Lana Wachowski ✓', TEL:"firing now" }
+  },
+
+  { id:22, title:"TelemetryBridge → SYNAPTIC_PULSE → UE5",
+    layer:"OUTPUT", color:"c", dtype:"→ WebSocket broadcast",
+    nodes:["n-TEL","n-UE5"], edges:["e22","e23"],
+    desc:"TelemetryBridge broadcasts SYNAPTIC_PULSE events over WebSocket for each traversed hop. Connected UE5 clients receive the events and trigger ANeuronNodeActor pulse animations — visualising the reasoning as live neural activity.",
+    inp:`# Fired once per hop in the winning path
+TelemetryBridge.emit([
+  SYNAPTIC_PULSE(source="the_matrix_1999",
+                 target="wachowski_l",
+                 relation="directed_by",
+                 weight=0.947, hop=1),
+  SYNAPTIC_PULSE(source="wachowski_l",
+                 target="usa",
+                 relation="born_in",
+                 weight=0.831, hop=2),
+])`,
+    out:`# WebSocket frame → ws://localhost:8765
+{
+  "type":     "SYNAPTIC_PULSE",
+  "source":   "the_matrix_1999",
+  "target":   "wachowski_l",
+  "relation": "directed_by",
+  "weight":   0.947,
+  "hop_count": 1,
+  "is_wormhole": false,
+  "query_id": "a3f9e2c1-..."
+}
+
+# UE5: ANeuronNodeActor.OnSynapticPulse()
+# → Glow animation fires on both nodes`,
+    call:`# api/telemetry_bridge.py\nasync def broadcast(self, event: dict):\n    msg = json.dumps(event)\n    await asyncio.gather(*[\n        ws.send(msg) for ws in self._clients\n        if not ws.closed\n    ])`,
+    facts:[{l:"Protocol",v:"WebSocket :8765"},{l:"Events",v:"1 per hop"},{l:"UE5 actor",v:"ANeuronNodeActor.pulse()"},{l:"Clients",v:"all connected"}],
+    ch:{ REST:'200 done', VEC:'done', PROF:'done', COMM:'done', CSA:'done', BEAM:'done', ENG:'updated', PE:'0.09', MOD:'updated', SCORE:'done', ANS:'Lana Wachowski', TEL:'SYNAPTIC_PULSE ×2\nhop1+hop2 fired\n→ UE5 glow active' }
   },
 ];
 
-// ── State ────────────────────────────────────────────────────────────────────
-let currentStep = 0;
-let playing = false;
-let playTimer = null;
-let playSpeed = 1200;
-let currentView = 'query';
+// ════════════════════════════════════════════════════════════════
+//  NODE / EDGE MAPS
+// ════════════════════════════════════════════════════════════════
+const EDGE_IDS = ["e0","e1","e2","e3","e4","e5","e6","e7","e8","e9","e10",
+  "e11","e12","e13","e14","e15","e16","e16b","e17","e17b","e18","e19","e19b",
+  "e20","e20b","e21","e22","e23","e24","e25"];
+const NODE_IDS = ["n-USER","n-API","n-PYD","n-EMBED","n-PROF","n-COMM","n-CSA",
+  "n-BINIT","n-H1SE","n-STRB","n-BAR","n-ENG","n-HOP23","n-PE","n-MOD",
+  "n-LOOP","n-SCOR","n-CING","n-EXT","n-PLATT","n-FIN","n-QLOG","n-RBLD",
+  "n-RESP","n-TEL","n-QPER","n-UE5"];
 
-// ── Init ─────────────────────────────────────────────────────────────────────
+const COLOR_MAP = {i:"#6366f1", c:"#22d3ee", e:"#10b981", a:"#f59e0b", v:"#a78bfa"};
+const EDGE_COLOR_CLASS = {i:"ea-i", c:"ea-c", e:"ea-e", a:"ea-a", v:"ea-v"};
+const MARKER_MAP = {i:"url(#ari)", c:"url(#arc)", e:"url(#are)", a:"url(#ara)", v:"url(#arv2)"};
+
+// ════════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════════
+let cur = 0, playing = false, playTimer = null, playSpeed = 1300;
+let liveActive = false, liveWs = null, liveHealthTimer = null;
+
+// ════════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════════
 function init() {
   buildPips();
-  renderStep(0);
+  render(0);
 }
 
 function buildPips() {
   const strip = document.getElementById('pip-strip');
-  strip.innerHTML = '';
-  STEPS.forEach((s, i) => {
-    const pip = document.createElement('div');
-    pip.className = 'step-pip';
-    pip.id = `pip-${i}`;
-    pip.title = `Step ${i}: ${s.title}`;
-    pip.onclick = () => jumpToStep(i);
-    strip.appendChild(pip);
+  S.forEach((s, i) => {
+    const d = document.createElement('div');
+    d.className = 'pip'; d.id = 'pip'+i;
+    d.title = `Step ${i}: ${s.title}`;
+    d.onclick = () => jumpTo(i);
+    strip.appendChild(d);
   });
 }
 
-// ── Render step ───────────────────────────────────────────────────────────────
-function renderStep(idx) {
-  const s = STEPS[idx];
-  currentStep = idx;
+// ════════════════════════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════════════════════════
+function render(idx) {
+  cur = idx;
+  const s = S[idx];
 
   // header
-  document.getElementById('step-num').textContent   = `Step ${idx} / ${STEPS.length - 1}`;
-  document.getElementById('step-title').textContent  = s.title;
-  document.getElementById('step-desc').textContent   = s.description;
-  document.getElementById('step-code').textContent   = s.code;
-  document.getElementById('step-flow').textContent   = s.flow;
+  document.getElementById('s-num').textContent   = `Step ${idx} / ${S.length-1}`;
+  document.getElementById('s-title').textContent  = s.title;
+  document.getElementById('s-desc').textContent   = s.desc;
 
-  // layer badge
-  const badge = document.getElementById('layer-badge');
-  const colorMap = { indigo: 'bg-indigo/10 text-indigo border-indigo/20', cyan: 'bg-cyan/10 text-cyan border-cyan/20', emerald: 'bg-emerald/10 text-emerald border-emerald/20', amber: 'bg-amber/10 text-amber border-amber/20' };
-  badge.className = `layer-badge border ${colorMap[s.color] || colorMap.indigo}`;
-  badge.textContent = s.layer;
+  const lbl = document.getElementById('s-layer');
+  lbl.textContent = s.layer;
+  lbl.className = 'badge ' + {i:'bi',c:'bc',e:'be',a:'ba',v:'bv',SYSTEM:'bi',INTERFACE:'bc',OUTPUT:'bc',THALAMUS:'be',CORTEX:'bi'}[s.color] || 'bi';
 
-  // cards
-  const cards = document.getElementById('step-cards');
-  cards.innerHTML = (s.cards || []).map(c =>
-    `<div class="bg-surface border border-border rounded-lg px-3 py-2">
-       <div class="text-xs text-slate-500">${c.label}</div>
-       <div class="text-xs text-slate-300 font-medium mt-0.5">${c.value}</div>
+  document.getElementById('s-dtype').textContent = s.dtype;
+  document.getElementById('s-in').textContent    = s.inp;
+  document.getElementById('s-out').textContent   = s.out;
+  document.getElementById('s-call').textContent  = s.call;
+
+  // facts
+  const fc = document.getElementById('s-facts');
+  fc.innerHTML = (s.facts||[]).map(f =>
+    `<div style="background:#14141f;border:1px solid #1e1e2e;border-radius:5px;padding:4px 8px">
+       <div style="font-size:9px;color:#334155">${f.l}</div>
+       <div style="font-size:10.5px;color:#94a3b8;font-weight:500;margin-top:1px">${f.v}</div>
      </div>`
   ).join('');
 
   // progress
-  const pct = idx / (STEPS.length - 1) * 100;
-  document.getElementById('progress-fill').style.width = pct + '%';
-  document.getElementById('pct-label').textContent = Math.round(pct) + '%';
+  const pct = idx / (S.length - 1) * 100;
+  document.getElementById('pbar').style.width = pct + '%';
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('pct').textContent = Math.round(pct) + '%';
 
   // pips
-  STEPS.forEach((_, i) => {
-    const pip = document.getElementById(`pip-${i}`);
-    if (!pip) return;
-    pip.className = 'step-pip' + (i < idx ? ' visited' : '') + (i === idx ? ' current' : '');
+  S.forEach((_,i) => {
+    const p = document.getElementById('pip'+i);
+    if (!p) return;
+    p.className = 'pip' + (i < idx ? ' pv' : '') + (i===idx ? ' pc' : '');
   });
 
   // SVG
   updateSVG(s);
+
+  // channels
+  updateChannels(s);
 }
 
-function updateSVG(step) {
-  // reset all nodes
-  const allNodes = ['USER','REST_API','EMBED','PROFILER','COMMUNITY','CSA',
-    'BEAM_HOP1','ENGRAM','BEAM_HOP23','MODULATOR','LOOPED','SCORER',
-    'EXTRACTOR','RESPONSE','TELEMETRY','UE5'];
-
-  // find which nodes were visited before this step
-  const visitedNodes = new Set();
-  for (let i = 0; i < currentStep; i++) {
-    (STEPS[i].active_nodes || []).forEach(n => visitedNodes.add(n));
+function updateSVG(s) {
+  const visited_n = new Set(), visited_e = new Set();
+  for (let i = 0; i < cur; i++) {
+    (S[i].nodes||[]).forEach(n => visited_n.add(n));
+    (S[i].edges||[]).forEach(e => visited_e.add(e));
   }
 
-  allNodes.forEach(id => {
-    const el = document.getElementById('n-' + id);
+  // reset all
+  NODE_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className.baseVal = 'node-g';
+    if (visited_n.has(id)) el && (el.className.baseVal = 'node-g sv');
+  });
+  EDGE_IDS.forEach(id => {
+    const el = document.getElementById(id);
     if (!el) return;
-    el.className.baseVal = 'node-group';
-    if (visitedNodes.has(id)) el.className.baseVal += ' visited';
+    el.className.baseVal = 'edge' + (visited_e.has(id) ? ' ev' : '');
+    el.setAttribute('marker-end', 'url(#arr)');
   });
 
-  // apply active classes
-  (step.active_nodes || []).forEach(id => {
-    const el = document.getElementById('n-' + id);
-    if (!el) return;
-    el.className.baseVal = `node-group active-${step.color}`;
-  });
-
-  // reset all edges
-  const allEdges = ['USER-REST_API','REST_API-EMBED','REST_API-PROFILER',
-    'EMBED-COMMUNITY','PROFILER-COMMUNITY','COMMUNITY-CSA','CSA-BEAM_HOP1',
-    'BEAM_HOP1-BEAM_HOP23','ENGRAM-BEAM_HOP23','BEAM_HOP23-LOOPED',
-    'MODULATOR-LOOPED','LOOPED-SCORER','SCORER-EXTRACTOR',
-    'EXTRACTOR-RESPONSE','EXTRACTOR-TELEMETRY','TELEMETRY-UE5'];
-
-  const visitedEdges = new Set();
-  for (let i = 0; i < currentStep; i++) {
-    (STEPS[i].active_edges || []).forEach(e => visitedEdges.add(e));
-  }
-
-  allEdges.forEach(id => {
-    const el = document.getElementById('e-' + id);
-    if (!el) return;
-    el.className.baseVal = 'edge' + (visitedEdges.has(id) ? ' edge-visited' : '');
+  // active nodes
+  const activeCls = {i:'ai', c:'ac', e:'ae', a:'aa', v:'av'};
+  const cls = activeCls[s.color] || 'ai';
+  (s.nodes||[]).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className.baseVal = 'node-g ' + cls;
   });
 
   // active edges
-  (step.active_edges || []).forEach(id => {
-    const el = document.getElementById('e-' + id);
+  const ecls = 'ea ' + (EDGE_COLOR_CLASS[s.color] || 'ea-i');
+  const mend = MARKER_MAP[s.color] || 'url(#ari)';
+  (s.edges||[]).forEach(id => {
+    const el = document.getElementById(id);
     if (!el) return;
-    el.className.baseVal = `edge edge-active edge-active-${step.color}`;
+    el.className.baseVal = 'edge ' + ecls;
+    el.setAttribute('marker-end', mend);
   });
-
-  // update arrow color
-  const arrowPath = document.getElementById('arrow-act-path');
-  const colorHex = { indigo: '#6366f1', cyan: '#22d3ee', emerald: '#10b981', amber: '#f59e0b' };
-  if (arrowPath) arrowPath.setAttribute('fill', colorHex[step.color] || '#22d3ee');
 }
 
-// ── Controls ──────────────────────────────────────────────────────────────────
-function nextStep() {
-  if (currentStep < STEPS.length - 1) renderStep(currentStep + 1);
-  else stopPlay();
+function updateChannels(s) {
+  const ch = s.ch || {};
+  const keys = ['REST','VEC','PROF','COMM','CSA','BEAM','ENG','PE','MOD','SCORE','ANS','TEL'];
+  keys.forEach(k => {
+    const val = ch[k];
+    const card = document.getElementById('ch-'+k);
+    const cv   = document.getElementById('cv-'+k);
+    if (!cv) return;
+    cv.textContent = val || '—';
+    if (card) card.className = 'ch-card' + (val && val !== '—' ? ' ch-active' : '');
+  });
 }
-function prevStep() {
-  if (currentStep > 0) renderStep(currentStep - 1);
+
+// ════════════════════════════════════════════════════════════════
+//  CONTROLS
+// ════════════════════════════════════════════════════════════════
+function go(d) {
+  const n = Math.max(0, Math.min(S.length-1, cur+d));
+  render(n);
 }
-function jumpToStep(i) {
+function jumpTo(i) {
   stopPlay();
-  renderStep(Math.max(0, Math.min(i, STEPS.length - 1)));
-}
-function resetSteps() {
-  stopPlay();
-  renderStep(0);
+  render(Math.max(0, Math.min(S.length-1, i)));
 }
 function togglePlay() {
   playing ? stopPlay() : startPlay();
 }
 function startPlay() {
   playing = true;
-  document.getElementById('play-btn').classList.add('active-play');
-  document.getElementById('play-icon').classList.add('hidden');
-  document.getElementById('pause-icon').classList.remove('hidden');
-  function tick() {
-    if (currentStep < STEPS.length - 1) {
-      nextStep();
-      playTimer = setTimeout(tick, playSpeed);
-    } else {
-      stopPlay();
-    }
-  }
+  document.getElementById('playbtn').classList.add('on');
+  document.getElementById('play-ic').style.display  = 'none';
+  document.getElementById('pause-ic').style.display = '';
+  const tick = () => {
+    if (cur < S.length-1) { go(1); playTimer = setTimeout(tick, playSpeed); }
+    else stopPlay();
+  };
   playTimer = setTimeout(tick, playSpeed);
 }
 function stopPlay() {
   playing = false;
   clearTimeout(playTimer);
-  document.getElementById('play-btn').classList.remove('active-play');
-  document.getElementById('play-icon').classList.remove('hidden');
-  document.getElementById('pause-icon').classList.add('hidden');
-}
-function setSpeed(v) {
-  playSpeed = parseInt(v);
+  document.getElementById('playbtn').classList.remove('on');
+  document.getElementById('play-ic').style.display  = '';
+  document.getElementById('pause-ic').style.display = 'none';
 }
 
-// ── View toggle ───────────────────────────────────────────────────────────────
+// view toggle
+let currentView = 'q';
 function setView(v) {
   currentView = v;
-  const svg = document.getElementById('pipeline-svg');
-  const bg  = document.getElementById('bg-diagram');
-  if (v === 'query') {
-    svg.classList.remove('hidden'); bg.classList.add('hidden');
-    document.getElementById('tab-query').classList.add('bg-surface','text-white');
-    document.getElementById('tab-query').classList.remove('text-slate-500');
-    document.getElementById('tab-bg').classList.remove('bg-surface','text-white');
-    document.getElementById('tab-bg').classList.add('text-slate-500');
-  } else {
-    svg.classList.add('hidden'); bg.classList.remove('hidden');
-    document.getElementById('tab-bg').classList.add('bg-surface','text-white');
-    document.getElementById('tab-bg').classList.remove('text-slate-500');
-    document.getElementById('tab-query').classList.remove('bg-surface','text-white');
-    document.getElementById('tab-query').classList.add('text-slate-500');
-  }
+  document.getElementById('qsvg').style.display  = v==='q'  ? '' : 'none';
+  document.getElementById('bgsvg').style.display = v==='bg' ? '' : 'none';
+  ['q','bg'].forEach(t => {
+    const btn = document.getElementById('tab-'+t);
+    btn.style.background = t===v ? 'var(--surf)' : 'transparent';
+    btn.style.color      = t===v ? '#fff' : '#475569';
+  });
 }
 
-// keyboard nav
+// keyboard
 document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight') nextStep();
-  if (e.key === 'ArrowLeft')  prevStep();
-  if (e.key === ' ')          { e.preventDefault(); togglePlay(); }
-  if (e.key === 'r' || e.key === 'R') resetSteps();
+  if (e.key==='ArrowRight') go(1);
+  if (e.key==='ArrowLeft')  go(-1);
+  if (e.key===' ')          { e.preventDefault(); togglePlay(); }
+  if (e.key==='r'||e.key==='R') jumpTo(0);
 });
 
-// ── Live Mode ─────────────────────────────────────────────────────────────────
-let liveActive = false;
-let liveWs = null;
-let liveHealthTimer = null;
-const REST_URL = 'http://localhost:8200';
-const WS_URL   = 'ws://localhost:8765';
+// ════════════════════════════════════════════════════════════════
+//  LIVE MODE
+// ════════════════════════════════════════════════════════════════
+const EVENT_STEP = {SYNAPTIC_PULSE:13, SYNAPTOGENESIS:13, SYNAPTIC_PRUNE:16, NEUROGENESIS:6};
 
-// Step mapping for telemetry event types
-const EVENT_STEP = {
-  SYNAPTIC_PULSE:  7,
-  SYNAPTOGENESIS:  7,
-  SYNAPTIC_PRUNE:  9,
-  NEUROGENESIS:    4,
-  DISSONANCE_DETECTED: 9,
-};
-
-function toggleLive() {
-  liveActive ? stopLive() : startLive();
-}
+function toggleLive() { liveActive ? stopLive() : startLive(); }
 
 function startLive() {
   liveActive = true;
-  setLiveBadge('connecting', 'Connecting…');
+  setBadge('connecting', 'Connecting…', '#f59e0b');
   checkHealth();
   liveHealthTimer = setInterval(checkHealth, 3000);
   connectWs();
 }
-
 function stopLive() {
   liveActive = false;
   clearInterval(liveHealthTimer);
-  if (liveWs) { try { liveWs.close(); } catch(e){} liveWs = null; }
-  setLiveBadge('off', 'Live Mode');
+  if (liveWs) { try{liveWs.close();}catch(e){} liveWs=null; }
+  setBadge('off', 'Live Mode', '#2d2d4a');
 }
-
-function setLiveBadge(state, label) {
-  const dot   = document.getElementById('live-dot');
-  const lbl   = document.getElementById('live-label');
-  lbl.textContent = label;
-  dot.className = 'w-2 h-2 rounded-full ' + {
-    off:        'bg-slate-600',
-    connecting: 'bg-amber-400 animate-pulse',
-    connected:  'bg-emerald-400',
-    error:      'bg-rose-500',
-  }[state];
+function setBadge(state, label, dotColor) {
+  document.getElementById('live-dot').style.background = dotColor;
+  document.getElementById('live-lbl').style.color = state==='connected' ? '#22d3ee' : state==='error' ? '#f43f5e' : '#94a3b8';
+  document.getElementById('live-lbl').textContent = label;
+  if (state==='connecting') document.getElementById('live-dot').style.animation='pulse 1s infinite';
+  else document.getElementById('live-dot').style.animation='';
 }
-
 async function checkHealth() {
   try {
-    const r = await fetch(`${REST_URL}/health`, { signal: AbortSignal.timeout(2000) });
+    const r = await fetch('http://localhost:8200/health', {signal: AbortSignal.timeout(2000)});
     if (r.ok) {
       const d = await r.json();
-      setLiveBadge('connected', `Live · ${d.node_count ?? '?'} nodes`);
-    } else {
-      setLiveBadge('error', 'Server error');
-    }
-  } catch {
-    setLiveBadge('error', 'Offline');
-  }
+      setBadge('connected', `Live · ${d.node_count}n`, '#10b981');
+      document.getElementById('live-ch-dot').style.background='#10b981';
+    } else setBadge('error','Server error','#f43f5e');
+  } catch { setBadge('error','Offline','#f43f5e'); }
 }
-
 function connectWs() {
   try {
-    liveWs = new WebSocket(WS_URL);
-    liveWs.onopen    = () => setLiveBadge('connected', 'Live · WS connected');
-    liveWs.onclose   = () => { if (liveActive) setTimeout(connectWs, 2000); };
+    liveWs = new WebSocket('ws://localhost:8765');
+    liveWs.onopen    = () => setBadge('connected', 'Live · WS', '#10b981');
+    liveWs.onclose   = () => { if(liveActive) setTimeout(connectWs,2000); };
     liveWs.onerror   = () => {};
-    liveWs.onmessage = (ev) => {
+    liveWs.onmessage = ev => {
       try {
         const msg = JSON.parse(ev.data);
-        handleLiveEvent(msg);
+        const step = EVENT_STEP[msg.type];
+        if (step !== undefined) { stopPlay(); jumpTo(step); }
+        const cv = document.getElementById('cv-LIVE');
+        const ts = new Date().toLocaleTimeString();
+        cv.textContent = `[${ts}] ${msg.type}\n  ${msg.source||''}→${msg.target||''} w=${(msg.weight||0).toFixed(3)}\n` + (cv.textContent||'').split('\n').slice(0,12).join('\n');
       } catch {}
     };
   } catch {}
 }
 
-function handleLiveEvent(msg) {
-  const type = msg.type || '';
-  const targetStep = EVENT_STEP[type];
-  if (targetStep === undefined) return;
+// ════════════════════════════════════════════════════════════════
+//  BACKGROUND NODE DATA
+// ════════════════════════════════════════════════════════════════
+const BG = {
+  SynapticPruner: {
+    title: "SynapticPruner",
+    layer: "REM ENGINE", color: "e", dtype: "periodic → removed edges",
+    desc: "Periodically sweeps synthetic edges (wormhole bridges, materialised hypotheses) and removes those below a combined utility score. Prevents accumulation of stale low-confidence synthetic connections that would skew CSA attention.",
+    inp: `SynapticPruner.prune(\n    adapter     = graph_adapter,\n    min_conf    = 0.40,      # confidence threshold\n    max_age_days= 30,        # temporal cutoff\n    min_usage   = 3          # traversal count floor\n)\n\n# Targets: edges with metadata.synthetic=True\n# Sources: REMEngine, ResearchAgent.approve()`,
+    out: `PruneResult(\n  scanned  = 847,\n  pruned   = 23,\n  kept     = 824,\n  freed_mb = 0.4,\n  events   = [\n    SYNAPTIC_PRUNE(source="e1",target="e2",reason="low_conf"),\n    ...\n  ]\n)\n# TelemetryBridge: SYNAPTIC_PRUNE per removed edge`,
+    call: `# core/rem_engine.py\nfor u, v, data in adapter.edges(data=True):\n    if not data.get("synthetic"): continue\n    score = data["confidence"] * usage_decay(data)\n    if score < threshold:\n        adapter.remove_edge(u, v, data["relation"])\n        telemetry.emit(SYNAPTIC_PRUNE(u, v))`,
+    facts: [{l:"Threshold",v:"conf=0.40 + age"},{l:"Trigger",v:"REM cycle (periodic)"},{l:"Output",v:"SYNAPTIC_PRUNE events"},{l:"Protocol",v:"GraphAdapter.remove_edge()"}],
+  },
+  MmapConsolidator: {
+    title: "MmapConsolidator",
+    layer: "REM ENGINE", color: "e", dtype: "WAL → mmap files",
+    desc: "Flushes the in-memory WAL (Write-Ahead Log) to memory-mapped NVMe files atomically. Writes to a staging directory `_tmp_flush/`, then renames to live path — crash-safe. MmapAdvisor evaluates RAM pressure (20%/50% thresholds) to decide when to flush.",
+    inp: `MmapConsolidator.flush(\n    wal       = graph_wal,\n    output_dir= Path("data/cerebrum/mmap/"),\n    advisor   = MmapAdvisor(low=0.20, high=0.50)\n)\n\n# MmapAdvisor reads:\n#   psutil.virtual_memory().percent\n# Decision: flush if RAM > 50% OR REM cycle end`,
+    out: `FlushResult(\n  records_flushed = 1_247,\n  output_files    = [\n    "nodes.bin",       # entity id→idx map\n    "edges.bin",       # COO edge list\n    "weights.bin",     # float32 weights\n    "communities.bin", # community assignments\n    "embeddings.bin",  # entity vectors\n    "metadata.bin"     # edge attributes\n  ],\n  staging_path = "_tmp_flush/",\n  atomic_rename= True\n)`,
+    call: `# core/nvme_wal.py\nstaging = output_dir / "_tmp_flush"\nstaging.mkdir(exist_ok=True)\n# write all 6 files to staging\n_write_nodes(wal, staging)\n_write_edges(wal, staging)\n# atomic rename: staging → live\nos.rename(staging, output_dir)`,
+    facts: [{l:"Files",v:"6 output files"},{l:"Atomic",v:"_tmp_flush/ rename"},{l:"Trigger",v:"RAM >50% or REM end"},{l:"Crash safe",v:"rename is atomic on POSIX"}],
+  },
+  GraphWAL: {
+    title: "GraphWAL (NVMe)",
+    layer: "REM ENGINE", color: "e", dtype: "edge ops → NDJSON log",
+    desc: "Write-Ahead Log providing O(1) crash-safe edge append on NVMe SSD. Every add_edge / remove_edge call appends a JSON record to the WAL before modifying in-memory state. On restart, WAL is replayed to reconstruct the graph.",
+    inp: `GraphWAL.append(\n    operation = "add_edge",\n    source    = "lana_wachowski",\n    target    = "matrix_sequel",\n    relation  = "directed_by",\n    metadata  = {"confidence": 0.87, "synthetic": True}\n)\n\n# O(1) append — no seek, no sort\n# NVMe sequential write ~3.5 GB/s`,
+    out: `# Written to data/cerebrum/graph_wal.ndjson:\n{"op":"add_edge","u":"lana_wachowski","v":"matrix_sequel",\n "rel":"directed_by","conf":0.87,"synthetic":true,\n "ts":1749181760.42,"seq":10483}\n\n# DiGraph edge count correctness fix:\n# WAL tracks exact add/remove sequence\n# replay() reconstructs identical state`,
+    call: `# core/nvme_wal.py\nclass GraphWAL:\n    def append(self, **record):\n        record["seq"] = self._seq; self._seq += 1\n        record["ts"]  = time.time()\n        self._fh.write(json.dumps(record) + "\\n")\n        self._fh.flush()  # fsync on NVMe\n    def replay(self, adapter):\n        for line in open(self._path):\n            rec = json.loads(line)\n            if rec["op"] == "add_edge": adapter.add_edge(...)\n            else: adapter.remove_edge(...)`,
+    facts: [{l:"Format",v:"NDJSON append-only"},{l:"Write",v:"O(1) sequential"},{l:"Replay",v:"reconstruct on restart"},{l:"NVMe",v:"~3.5 GB/s sequential"}],
+  },
+  MetaParamLearner: {
+    title: "MetaParameterLearner",
+    layer: "LEARNING LOOP", color: "i", dtype: "feedback → SGD update",
+    desc: "Online SGD learner for per-community CSA parameter vectors. Each POST /feedback triggers a gradient step on the 10-param vector for the answering community. Also supports triplet updates (Phase 127) using cached path features as hard negatives.",
+    inp: `POST /feedback\n{\n  "query_id":      "a3f9e2c1-...",\n  "correct_entity": "Lana Wachowski",\n  "community_id":   7\n}\n\n# query_path_cache[query_id] holds\n# top answer features (60s TTL)`,
+    out: `# CSA params for community 7 updated:\nold: alpha=0.40, beta=0.40, ...\nnew: alpha=0.412, beta=0.398, ...\n\n# Triplet update (Phase 127):\n# pos_features = correct path features\n# neg_features = top wrong path features\n# margin = 0.20\n# finite-diff gradient on 10-param vector`,
+    call: `# core/parameter_learner.py\nclass MetaParameterLearner:\n    def update(self, community_id, pos_feat, neg_feat):\n        params = self._community_params[community_id]\n        grad = triplet_grad(params, pos_feat, neg_feat, margin=0.2)\n        params -= self._lr * grad\n    def to_dict(self) -> dict: ...\n    def from_dict(cls, d) -> Self: ...`,
+    facts: [{l:"Algorithm",v:"online SGD"},{l:"Triplet",v:"margin=0.20 (Ph127)"},{l:"Per-community",v:"separate param vector"},{l:"Persist",v:"to_dict() / from_dict()"}],
+  },
+  CSAParamLearner: {
+    title: "CSAParameterLearner",
+    layer: "LEARNING LOOP", color: "i", dtype: "pairs[] → batch retrain",
+    desc: "Batch gradient descent over accumulated (positive, negative) path pairs. Triggered by POST /retrain. Updates the global prior 10-param vector. MetaParameterLearner handles per-community online updates; CSAParamLearner updates the global fallback.",
+    inp: `POST /retrain\n# Uses buffered pairs from /feedback calls\n\nCSAParameterLearner.fit(\n    pos_pairs = [(feat_vec, 1.0), ...],  # 423 pairs\n    neg_pairs = [(feat_vec, 0.0), ...],  # 423 pairs\n    lr        = 0.001,\n    epochs    = 50,\n    reg_l2    = 1e-4\n)`,
+    out: `TrainResult(\n  epochs_run  = 50,\n  final_loss  = 0.0821,\n  delta_params= {\n    "alpha":   +0.018,\n    "beta":    -0.005,\n    "theta":   +0.002,\n    ...  # all 10\n  },\n  global_prior_updated = True\n)`,
+    call: `# core/parameter_learner.py\nfor epoch in range(epochs):\n    for feat, label in zip(pos_pairs, neg_pairs):\n        logit  = feat @ params\n        loss   = bce(sigmoid(logit), label)\n        grad   = feat * (sigmoid(logit) - label)\n        params -= lr * (grad + reg_l2 * params)\n# POST /params to checkpoint`,
+    facts: [{l:"Trigger",v:"POST /retrain"},{l:"Pairs",v:"buffered from /feedback"},{l:"Algo",v:"batch gradient descent"},{l:"Checkpoint",v:"POST /params after fit"}],
+  },
+  PlattCalibration: {
+    title: "PlattCalibration",
+    layer: "LEARNING LOOP", color: "v", dtype: "raw_score → probability",
+    desc: "2-parameter sigmoid calibration fitted via gradient descent on (score, correct) pairs from /feedback. Converts raw PathScorer scores to calibrated probabilities. NOT isotonic regression — isotonic overfits on sparse feedback. Requires min 20 samples before first refit.",
+    inp: `# Accumulates from /feedback:\nplatt.accumulate(raw_score=3.030, correct=True)\nplatt.accumulate(raw_score=0.412, correct=False)\n...\n\n# Refit on /retrain (min 20 samples):\nPlattCalibration.refit(\n    pairs = [(score, label), ...],  # 847 pairs\n)`,
+    out: `# Updated parameters:\nPlattCalibration(\n  A = -1.24,   # slope\n  B =  0.38,   # intercept\n  n_samples = 847,\n  fitted = True\n)\n\n# Calibrated output:\n# P = 1 / (1 + exp(-1.24 * score + 0.38))\n# score=3.03 → P=0.947\n# score=0.41 → P=0.394`,
+    call: `# core/parameter_learner.py\nclass PlattCalibration:\n    def refit(self, pairs):\n        # gradient descent on log-loss\n        for _ in range(200):\n            for s, y in pairs:\n                p = sigmoid(self.A*s + self.B)\n                self.A -= lr * s * (p - y)\n                self.B -= lr * (p - y)\n    def calibrate(self, score):\n        return 1.0 / (1.0 + math.exp(self.A*score + self.B))`,
+    facts: [{l:"Model",v:"2-param sigmoid"},{l:"Min samples",v:"20 before refit"},{l:"Algorithm",v:"gradient descent"},{l:"NOT",v:"isotonic regression"}],
+  },
+  DiscoveryCalibrator: {
+    title: "DiscoveryCalibrator",
+    layer: "AUTONOMOUS LOOP", color: "a", dtype: "→ community weights",
+    desc: "Tracks per-community scan and discovery rates via Exponential Moving Average. Computes inverse-rate sampling multipliers so the ResearchAgent focuses on under-explored communities. Cold-start: unscanned communities get max_weight=5.0.",
+    inp: `DiscoveryCalibrator.get_weight(community_id=7)\n\n# Internal state (EMA):\n#   scan_rate[7]      = 0.84  (scanned often)\n#   discovery_rate[7] = 0.12  (few new findings)\n#\n# Cold-start communities:\n#   scan_rate[14] = 0.0  → weight = max_weight`,
+    out: `CommunityWeight(\n  community_id    = 7,\n  scan_rate       = 0.84,\n  discovery_rate  = 0.12,\n  weight          = global_rate / (0.12 + ε)\n                  = 3.21,    # boost for low-discovery\n)\n\n# Community 14 (cold-start):\n#   weight = 5.0  (max_weight)\n# Adaptive loop: shorter interval if weight>3`,
+    call: `# core/autonomous_loop.py\ndef get_weight(self, cid):\n    rate = self._discovery_ema.get(cid, 0.0)\n    if rate == 0.0: return self.max_weight\n    return self._global_rate / (rate + 1e-6)\ndef record_scan(self, cid):\n    self._scan_ema[cid] = ema(old, 1, alpha=0.1)\ndef record_discovery(self, cid):\n    self._discovery_ema[cid] = ema(old, 1, alpha=0.1)`,
+    facts: [{l:"Algorithm",v:"EMA (α=0.1)"},{l:"Cold-start",v:"weight=5.0 (max)"},{l:"Inverse rate",v:"global_rate / (disc_rate + ε)"},{l:"Adaptive",v:"loop interval tuned by weight"}],
+  },
+  AutonomousLoop: {
+    title: "AutonomousDiscoveryLoop",
+    layer: "AUTONOMOUS LOOP", color: "a", dtype: "timed cycle → materialise",
+    desc: "Runs ResearchAgent.scan_once() on a configurable timer. Processes findings through AutoApprover. Circuit breaker halts materialisation if approval rate drops below threshold. auto_rollback_on_trip removes bad edges via ProvenanceLedger on circuit break.",
+    inp: `POST /research/loop/start\n{\n  "cycle_interval":           300,  # seconds\n  "max_materializations":     20,   # per cycle\n  "min_approval_rate":        0.40,\n  "circuit_window":           10,   # decisions\n  "auto_rollback_on_trip":    true,\n  "dry_run":                  false\n}`,
+    out: `CycleRecord(\n  cycle_number         = 47,\n  findings_scanned     = 8,\n  approved             = 3,\n  rejected             = 5,\n  approval_rate        = 0.375,\n  circuit_breaker_tripped = False,\n  effective_cap        = 18,    # adaptive\n  edges_rolled_back    = 0\n)\n\n# GET /research/loop/status\n{"running":true,"approval_rate":0.58,"cycles":47}`,
+    call: `# core/autonomous_loop.py\nclass AutonomousDiscoveryLoop:\n    async def _cycle(self):\n        findings = self.agent.scan_once()\n        for f in findings[:self._effective_cap]:\n            decision = self.approver.evaluate(f)\n            if decision.approve and not self.dry_run:\n                self.agent.approve(f)  # materialise\n                self.ledger.record(f)\n        self._check_circuit_breaker()`,
+    facts: [{l:"Interval",v:"300s default"},{l:"Circuit breaker",v:"approval rate gate"},{l:"Rollback",v:"auto on trip"},{l:"Dry run",v:"safe trial mode"}],
+  },
+  AutoApprover: {
+    title: "AutoApprover",
+    layer: "AUTONOMOUS LOOP", color: "a", dtype: "ResearchFinding → decision",
+    desc: "Three-tier decision stack for ResearchFinding objects. Hard gates (blocked literature status, missing ValidationReport) → online logistic SGD classifier (16-feature vector) → optional LLM semantic fallback. Learns from confirmed decisions via online fit().",
+    inp: `AutoApprover.evaluate(\n  finding = ResearchFinding(\n    source           = "lana_wachowski",\n    target           = "sequel_film",\n    relation         = "directed_by",\n    confidence       = 0.87,\n    discovery_potential = 0.73,\n    gap_score        = 0.65,\n    literature_status= "plausible",\n    novelty_score    = 0.58,\n    triangulation    = TriangulationReport(...)\n  )\n)`,
+    out: `AutoDecision(\n  decision   = "approve",\n  tier       = "classifier",    # tier 2\n  confidence = 0.81,\n  features   = [\n    0.87,  # confidence\n    0.73,  # discovery_potential\n    0.65,  # gap_score\n    0.58,  # novelty_score\n    0.82,  # reverse_confidence  (triangulation P1)\n    0.75,  # strategy_agreement  (triangulation P2)\n    ...    # 16 features total\n  ]\n)`,
+    call: `# Tier 1: hard gates\nif finding.literature_status in BLOCKED: return reject\nif not finding.validation_report: return reject\n# Tier 2: logistic SGD classifier\nprob = sigmoid(features @ self.weights + self.bias)\nif prob >= threshold: return approve\n# Tier 3: LLM fallback (optional)\nreturn self.llm_fallback(finding)`,
+    facts: [{l:"Tiers",v:"hard gate → SGD → LLM"},{l:"Features",v:"16-dim vector"},{l:"Online",v:"fit() from confirmed"},{l:"REST",v:"GET/POST /research/auto-approver"}],
+  },
+  ProvenanceLedger: {
+    title: "ProvenanceLedger",
+    layer: "AUTONOMOUS LOOP", color: "a", dtype: "edge record → rollback",
+    desc: "Records every edge materialised by ResearchAgent.approve() with batch_id, finding_id, and cycle_number. Enables surgical rollback: remove exactly one approval's edges (rollback_batch) or all edges from a loop cycle (rollback_cycle). Thread-safe, LRU-evicting.",
+    inp: `ProvenanceLedger.record(\n  batch_id   = "batch_047_03",\n  finding_id = finding.id,\n  cycle_number = 47,\n  edges_added = [\n    Edge("lana_wachowski","sequel_film","directed_by"),\n  ]\n)\n\n# Rollback:\nledger.rollback_batch("batch_047_03", adapter)`,
+    out: `# After record():\nBatchRecord(\n  batch_id     = "batch_047_03",\n  finding_id   = "...",\n  cycle_number = 47,\n  edge_count   = 1,\n  rolled_back  = False,\n  ts           = 1749181900.0\n)\n\n# After rollback_batch():\n# adapter.remove_edge("lana_wachowski","sequel_film","directed_by")\n# batch.rolled_back = True`,
+    call: `# core/provenance_ledger.py\ndef rollback_batch(self, batch_id, adapter):\n    batch = self._batches[batch_id]\n    if batch.rolled_back: raise AlreadyRolledBack\n    for edge in batch.edges_added:\n        adapter.remove_edge(*edge)  # GraphAdapter protocol\n    batch.rolled_back = True\ndef rollback_cycle(self, cycle_number, adapter):\n    for b in self._batches.values():\n        if b.cycle_number == cycle_number:\n            self.rollback_batch(b.batch_id, adapter)`,
+    facts: [{l:"Granularity",v:"per-batch or per-cycle"},{l:"Thread safe",v:"LRU eviction"},{l:"REST",v:"POST /research/provenance/rollback/{id}"},{l:"Protocol",v:"GraphAdapter.remove_edge()"}],
+  },
+  HypothesisEngine: {
+    title: "HypothesisEngine",
+    layer: "RESEARCH AGENT", color: "v", dtype: "candidate → hypothesis",
+    desc: "Abductive reasoning engine using Noisy-OR aggregation. Given a (source, target) candidate pair from ResearchAgent, generates a hypothesis about the missing link using structural paths, community overlap, and embedding proximity.",
+    inp: `HypothesisEngine.generate(\n  source = "lana_wachowski",\n  target = "sequel_film_x",\n  context= GraphContext(\n    path_sample    = [...],\n    community_overlap = 0.71,\n    embedding_cosine  = 0.68\n  )\n)`,
+    out: `Hypothesis(\n  source     = "lana_wachowski",\n  target     = "sequel_film_x",\n  relation   = "directed_by",\n  confidence = noisy_or([0.87, 0.71, 0.68]),\n            # = 1 - (1-0.87)(1-0.71)(1-0.68)\n            # = 0.972\n  evidence   = [\n    "structural: 3 common path patterns",\n    "community: same partition (7)",\n    "semantic: cosine=0.68"\n  ]\n)`,
+    call: `# core/hypothesis_engine.py\nclass HypothesisEngine:\n    def generate(self, src, tgt, ctx):\n        # Noisy-OR over independent evidence channels\n        probs = [\n            self._structural_confidence(src, tgt, ctx),\n            self._community_confidence(src, tgt),\n            self._semantic_confidence(src, tgt)\n        ]\n        confidence = 1.0 - math.prod(1-p for p in probs)\n        return Hypothesis(src, tgt, confidence)`,
+    facts: [{l:"Aggregation",v:"Noisy-OR"},{l:"Evidence",v:"structural + community + semantic"},{l:"Output",v:"Hypothesis with confidence"},{l:"Next",v:"→ TriangulationEngine"}],
+  },
+  TriangulationEngine: {
+    title: "TriangulationEngine",
+    layer: "RESEARCH AGENT", color: "v", dtype: "hypothesis → 4-perspective report",
+    desc: "Four-perspective validation of ResearchCandidate objects. P1: reverse traversal confidence (B→A). P2: multi-strategy agreement fraction. P3: mean path independence (Jaccard). P4: semantic type consistency. Extends AutoApprover feature vector from 12→16.",
+    inp: `TriangulationEngine.validate(\n  candidate = ResearchCandidate(\n    source   = "lana_wachowski",\n    target   = "sequel_film_x",\n    relation = "directed_by",\n    confidence = 0.972\n  )\n)`,
+    out: `TriangulationReport(\n  P1_reverse_confidence  = 0.82,  # B→A path found\n  P2_strategy_agreement  = 0.75,  # 3/4 configs agree\n  P3_mean_path_independence = 0.68, # Jaccard disjoint\n  P4_semantic_type_score = 0.90,  # PERSON→Film ok\n  is_wormhole_candidate  = False,\n  composite              = 0.788\n)`,
+    call: `# core/triangulation_engine.py\n# P1: reverse traversal\nrev = beam.traverse(target, [source], max_hops=3)\nP1 = 1.0 if source in rev.answers else 0.0\n# P2: strategy agreement\nresults = [run_with_config(c, src, tgt) for c in configs]\nP2 = sum(tgt in r.answers for r in results) / len(results)\n# P3: path Jaccard independence\nP3 = mean(jaccard_complement(p1,p2) for p1,p2 in path_pairs)\n# P4: type consistency\nP4 = type_score(relation, src_type, tgt_type)`,
+    facts: [{l:"P1",v:"reverse traversal"},{l:"P2",v:"3-config agreement"},{l:"P3",v:"path independence Jaccard"},{l:"P4",v:"semantic type consistency"}],
+  },
+  ContradictionResolver: {
+    title: "ContradictionResolver",
+    layer: "RESEARCH AGENT", color: "v", dtype: "finding → resolution class",
+    desc: "Deterministic evidence-weight classifier on already-computed proposal data. Noisy-OR of proposed confidences vs max contradiction_score → net_evidence_score. Classifies: clean / revision_candidate / contested / discardable. Discardable findings auto-rejected before AutoApprover.",
+    inp: `ContradictionResolver.resolve(\n  finding = ResearchFinding(\n    confidence         = 0.87,\n    contradiction_score= 0.22,  # from existing edges\n    proposals          = [0.87, 0.71, 0.65]\n  )\n)\n\n# net_evidence = Noisy-OR(proposals) vs contradiction`,
+    out: `Resolution(\n  resolution    = "clean",\n  net_evidence  = 0.972,     # Noisy-OR(proposals)\n  contradiction = 0.22,\n  net_score     = 0.972 - 0.22 = 0.752,\n  thresholds    = {\n    "clean":           net > 0.60,\n    "revision":  0.40 < net <= 0.60,\n    "contested": 0.20 < net <= 0.40,\n    "discard":         net <= 0.20\n  }\n)\n# "discardable" → auto-reject before AutoApprover`,
+    call: `# core/autonomous_loop.py\nnet_evidence = noisy_or(finding.proposals)\nnet_score = net_evidence - finding.contradiction_score\nif net_score <= 0.20:\n    return Resolution("discardable")\nelif net_score <= 0.40:\n    self._revision_candidates.append(finding)\n    return Resolution("contested")\nreturn Resolution("clean")`,
+    facts: [{l:"Model",v:"Noisy-OR evidence"},{l:"Classes",v:"clean/revision/contested/discard"},{l:"Discardable",v:"auto-reject (skips AutoApprover)"},{l:"Revision",v:"queued for re-evaluation"}],
+  },
+  Materialise: {
+    title: "Materialise — Edge Materialisation",
+    layer: "RESEARCH AGENT", color: "v", dtype: "approved finding → graph edge",
+    desc: "Final stage: approved ResearchFindings become real graph edges via adapter.add_edge(). Confidence is Noisy-OR aggregated from all evidence channels. Edge carries synthetic=True metadata and full discovery provenance. Recorded in ProvenanceLedger. SYNAPTOGENESIS event emitted to TelemetryBridge.",
+    inp: `ResearchAgent.approve(finding)\n\n# Internally:\nadapter.add_edge(\n  source   = "lana_wachowski",\n  target   = "sequel_film_x",\n  relation = "directed_by",\n  metadata = {\n    "confidence":  0.972,\n    "synthetic":   True,\n    "source":      "ResearchAgent",\n    "batch_id":    "batch_047_03",\n    "discovery_ts": 1749181900.0\n  }\n)`,
+    out: `# Edge added to live graph\n# ProvenanceLedger.record() called\n\n# TelemetryBridge:\n{\n  "type":     "SYNAPTOGENESIS",\n  "source":   "lana_wachowski",\n  "target":   "sequel_film_x",\n  "relation": "directed_by",\n  "confidence": 0.972,\n  "is_synthetic": true\n}\n# UE5: new ANeuronNodeActor + ASynapseActor spawned`,
+    call: `# core/research_agent.py\ndef approve(self, finding: ResearchFinding):\n    conf = noisy_or_aggregate(finding.evidence)\n    self.adapter.add_edge(\n        finding.source, finding.target,\n        finding.relation,\n        confidence=conf, synthetic=True)\n    self.ledger.record(batch_id=..., edges=[...])\n    self.telemetry.emit(\n        SYNAPTOGENESIS(finding.source, finding.target))`,
+    facts: [{l:"Confidence",v:"Noisy-OR aggregated"},{l:"Metadata",v:"synthetic=True + provenance"},{l:"Rollback",v:"ProvenanceLedger.rollback_batch()"},{l:"UE5",v:"SYNAPTOGENESIS → new actor"}],
+  },
+};
 
-  stopPlay();
-  jumpToStep(targetStep);
+function showBgNode(id) {
+  const n = BG[id];
+  if (!n) return;
 
-  // Append event to flow annotation
-  const flow = document.getElementById('step-flow');
-  const ts   = new Date().toLocaleTimeString();
-  const line = `[${ts}] ${type}  ${msg.source ?? ''}  →  ${msg.target ?? ''}  w=${(msg.weight ?? 0).toFixed(3)}`;
-  flow.textContent = line + '\n' + (flow.textContent || '').split('\n').slice(0, 8).join('\n');
+  // highlight selected bg node, reset others
+  document.querySelectorAll('.bg-node rect').forEach(r => {
+    r.style.fill   = '#14141f';
+    r.style.stroke = '#252535';
+  });
+  const sel = document.querySelector(`#bg-${id} rect`);
+  if (sel) {
+    const cx = {i:'#6366f1',c:'#22d3ee',e:'#10b981',a:'#f59e0b',v:'#a78bfa'};
+    sel.style.fill   = {i:'#2a1a50',c:'#0e2f3a',e:'#0d2a1e',a:'#2a1f05',v:'#1e1040'}[n.color];
+    sel.style.stroke = cx[n.color];
+  }
+  // update detail panel
+  document.getElementById('s-num').textContent   = `Background · ${id}`;
+  document.getElementById('s-title').textContent  = n.title;
+  document.getElementById('s-desc').textContent   = n.desc;
+  const lbl = document.getElementById('s-layer');
+  lbl.textContent = n.layer;
+  lbl.className = 'badge '+{i:'bi',c:'bc',e:'be',a:'ba',v:'bv'}[n.color];
+  document.getElementById('s-dtype').textContent = n.dtype;
+  document.getElementById('s-in').textContent    = n.inp;
+  document.getElementById('s-out').textContent   = n.out;
+  document.getElementById('s-call').textContent  = n.call;
+  document.getElementById('s-facts').innerHTML   = (n.facts||[]).map(f =>
+    `<div style="background:#14141f;border:1px solid #1e1e2e;border-radius:5px;padding:4px 8px">
+       <div style="font-size:9px;color:#334155">${f.l}</div>
+       <div style="font-size:10.5px;color:#94a3b8;font-weight:500;margin-top:1px">${f.v}</div>
+     </div>`
+  ).join('');
 }
+
+init();
 </script>
 </body>
 </html>
