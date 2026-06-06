@@ -192,7 +192,7 @@
     <!-- Wordmark -->
     <div class="flex items-center gap-3">
       <span class="font-mono font-semibold text-white tracking-tight text-lg">CEREBRUM</span>
-      <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/30">v2.73.0</span>
+      <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/30">v2.75.0</span>
     </div>
     <!-- Nav links (desktop) -->
     <div class="hidden md:flex items-center gap-8">
@@ -332,14 +332,14 @@
     <!-- Stat bar -->
     <div class="flex flex-col sm:flex-row items-center justify-center gap-0 mb-10 bg-surface rounded-xl border border-border overflow-hidden">
       <div class="flex-1 px-6 py-5 text-center">
-        <div class="font-mono text-4xl font-bold text-white">60.4%</div>
+        <div class="font-mono text-4xl font-bold text-white">60.6%</div>
         <div class="text-xs text-slate-400 mt-1">3-hop H@1</div>
         <div class="text-xs text-slate-600 mt-0.5">MetaQA</div>
       </div>
       <div class="hidden sm:block w-px h-16 bg-border"></div>
       <div class="block sm:hidden h-px w-full bg-border"></div>
       <div class="flex-1 px-6 py-5 text-center">
-        <div class="font-mono text-4xl font-bold text-white">89.4%</div>
+        <div class="font-mono text-4xl font-bold text-white">87.9%</div>
         <div class="text-xs text-slate-400 mt-1">3-hop H@10</div>
         <div class="text-xs text-slate-600 mt-0.5">MetaQA</div>
       </div>
@@ -433,8 +433,8 @@
     <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
       <div class="flex-shrink-0 w-1 h-16 bg-gradient-to-b from-cyan to-cyan/0 rounded-full"></div>
       <div>
-        <p class="text-3xl md:text-4xl font-bold text-white leading-tight">No labels. No training loop.<br><span class="text-cyan">60.4% H@1 · 89.4% H@10 out of the box.</span></p>
-        <p class="text-slate-500 mt-3 text-sm max-w-lg">Zero-config, zero tuning. Supervised systems like UniKGQA and NSM reach 99%+ H@1 on MetaQA — after training on thousands of labeled question-answer pairs from that exact dataset. CEREBRUM reaches 66.8% (tuned) or 60.4% (full-pipeline, no tuning) on the same benchmark with no labels, no gradient descent, and no GPU cluster required. H@10 = 89.4% — the system <em>finds</em> the answer nearly as often as supervised methods rank it first.</p>
+        <p class="text-3xl md:text-4xl font-bold text-white leading-tight">No labels. No training loop.<br><span class="text-cyan">60.6% H@1 · 87.9% H@10 (Phase 225-227, full 14,274q run)</span></p>
+        <p class="text-slate-500 mt-3 text-sm max-w-lg">Zero-config, zero tuning. Supervised systems like UniKGQA and NSM reach 99%+ H@1 on MetaQA — after training on thousands of labeled question-answer pairs from that exact dataset. CEREBRUM reaches 60.6% (tuned) or 56.8% (full-pipeline, no tuning) on the same benchmark with no labels, no gradient descent, and no GPU cluster required. H@10 = 87.9% — the system <em>finds</em> the answer nearly as often as supervised methods rank it first.</p>
       </div>
     </div>
 
@@ -459,14 +459,14 @@
 
     <!-- Headline -->
     <div class="text-center mb-16">
-      <p class="text-xs font-mono uppercase tracking-widest text-indigo mb-4">v2.73.0 — Phases 220–223</p>
+      <p class="text-xs font-mono uppercase tracking-widest text-indigo mb-4">v2.75.0 — Phases 220–229</p>
       <h2 class="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
         CEREBRUM knows<br>
         <span class="bg-gradient-to-r from-indigo to-cyan bg-clip-text text-transparent">what it doesn't know.</span><br>
         <span class="text-3xl md:text-4xl text-white/80">And acts on it.</span>
       </h2>
       <p class="text-slate-400 text-lg max-w-2xl mx-auto">
-        Most AI systems produce answers. CEREBRUM v2.73.0 produces answers <em>and a structured model of its own epistemic state</em> — then uses that model to automatically retry uncertain queries, resolve contradictions via source credibility, and self-correct scoring parameters without human feedback.
+        Most AI systems produce answers. CEREBRUM v2.75.0 produces answers <em>and a structured model of its own epistemic state</em> — then uses that model to automatically retry uncertain queries, resolve contradictions via source credibility, and self-correct scoring parameters without human feedback.
       </p>
     </div>
 
@@ -733,14 +733,14 @@
     <div class="text-center mb-16">
       <div class="section-label mb-4">From Data to Answer</div>
       <h2 class="text-3xl md:text-4xl font-bold text-white">The full CEREBRUM pipeline</h2>
-      <p class="text-slate-400 mt-3 max-w-2xl mx-auto">Every benchmark number — 60.4%, 83.2%, 66.8%, 95.7% on Hetionet — is the result of this pipeline running end-to-end on whatever graph you load. No training. No LLM. Just graph math.</p>
+      <p class="text-slate-400 mt-3 max-w-2xl mx-auto">Every benchmark number — 60.6%, 83.2%, 66.8%, 95.7% on Hetionet — is the result of this pipeline running end-to-end on whatever graph you load. No training. No LLM. Just graph math.</p>
     </div>
 
     <!-- Performance mode banner -->
     <div class="mb-12 p-4 rounded-xl border border-indigo/30 bg-indigo/5 flex flex-col md:flex-row items-start md:items-center gap-4">
       <svg class="w-5 h-5 text-indigo flex-shrink-0 mt-0.5 md:mt-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       <div>
-        <p class="text-sm text-slate-300"><span class="text-indigo font-semibold">All benchmark numbers are post-ingestion.</span> The ingestion pipeline — community detection, embedding, GraphProfiler, ParameterInitializer — is what enables high accuracy. BFS without ingestion achieves ~5% H@1. With the full pipeline, zero-config reaches 83.2% H@1 on 1-hop and 56.8% on 3-hop. Running the CMA-ES tuner after ingestion pushes 3-hop to 60.4% (tuned random) or 66.8% (tuned sentence embeddings).</p>
+        <p class="text-sm text-slate-300"><span class="text-indigo font-semibold">All benchmark numbers are post-ingestion.</span> The ingestion pipeline — community detection, embedding, GraphProfiler, ParameterInitializer — is what enables high accuracy. BFS without ingestion achieves ~5% H@1. With the full pipeline, zero-config reaches 83.2% H@1 on 1-hop and 56.8% on 3-hop. Running the CMA-ES tuner after ingestion pushes 3-hop to 60.6% (Phase 225-227, full run) with random embeddings, 66.8% (Phase 213, 500-sample) with sentence-transformers.</p>
       </div>
     </div>
 
@@ -859,7 +859,7 @@
             <span class="text-xs text-slate-500 uppercase tracking-wider">Tune (optional)</span>
           </div>
           <h3 class="text-xl font-semibold text-white mb-2">CMA-ES tuner for maximum accuracy</h3>
-          <p class="text-slate-400 text-sm leading-relaxed">The ParameterInitializer zero-config baseline already achieves <strong class="text-white">56.8% H@1 on 3-hop</strong>. Running the built-in CMA-ES tuner on your specific data pushes further — <strong class="text-white">60.4%</strong> with random embeddings, <strong class="text-white">66.8%</strong> with sentence-transformers. One command. Fully automated.</p>
+          <p class="text-slate-400 text-sm leading-relaxed">The ParameterInitializer zero-config baseline already achieves <strong class="text-white">56.8% H@1 on 3-hop</strong>. Running the built-in CMA-ES tuner on your specific data pushes further — <strong class="text-white">60.6%</strong> with random embeddings, <strong class="text-white">66.8%</strong> with sentence-transformers. One command. Fully automated.</p>
         </div>
         <div class="card p-4 border-emerald/20">
           <div class="code-block text-xs">
@@ -869,8 +869,8 @@
             &nbsp;&nbsp;<span class="kw">--embeddings</span> sentence \<br>
             &nbsp;&nbsp;<span class="kw">--trials</span> <span class="num">140</span> \<br>
             &nbsp;&nbsp;<span class="kw">--workers</span> <span class="num">8</span><br><br>
-            <span class="cmt"># Zero-config:    60.4% H@1  (3-hop, v2.73.0, full pipeline)</span><br>
-            <span class="cmt"># Tuned random:   60.4% H@1  (CMA-ES, Phase 204)</span><br>
+            <span class="cmt"># Zero-config:    56.8% H@1  (3-hop, v2.75.0, Phase 212)</span><br>
+            <span class="cmt"># Tuned random:   60.6% H@1  (CMA-ES, Phase 225-227)</span><br>
             <span class="cmt"># Tuned sentence: 66.8% H@1  (CMA-ES, Phase 213)</span>
           </div>
         </div>
@@ -918,9 +918,9 @@
           </thead>
           <tbody>
             <tr class="highlight">
-              <td class="py-3 px-4 font-semibold text-indigo">CEREBRUM v2.73.0 (full pipeline)</td>
-              <td class="py-3 px-4 text-center font-mono font-bold text-white">60.4%</td>
-              <td class="py-3 px-4 text-center font-mono font-bold text-white">89.4%</td>
+              <td class="py-3 px-4 font-semibold text-indigo">CEREBRUM v2.75.0 (full pipeline)</td>
+              <td class="py-3 px-4 text-center font-mono font-bold text-white">60.6%</td>
+              <td class="py-3 px-4 text-center font-mono font-bold text-white">87.9%</td>
               <td class="py-3 px-4"><span class="text-emerald font-medium">None</span></td>
             </tr>
             <tr>
@@ -979,15 +979,15 @@
       </div>
 
       <!-- One-liner -->
-      <p class="mt-4 text-xs text-slate-500 text-center">The correct answer is in the top 10 candidates 89.4% of the time — the gap is ranking, not retrieval.</p>
+      <p class="mt-4 text-xs text-slate-500 text-center">The correct answer is in the top 10 candidates 87.9% of the time — the gap is ranking, not retrieval.</p>
 
       <!-- Callout box -->
       <div class="mt-4 p-4 rounded-lg bg-indigo/10 border border-indigo/20">
         <p class="text-sm text-slate-300 leading-relaxed">
-          <span class="text-indigo font-semibold">The gap to supervised H@1</span> (99% vs 60.4%) is a ranking challenge, not a retrieval failure.
-          CEREBRUM finds the correct answer in its top 10 candidates <strong class="text-white">89.4%</strong> of the time —
+          <span class="text-indigo font-semibold">The gap to supervised H@1</span> (99% vs 60.6%) is a ranking challenge, not a retrieval failure.
+          CEREBRUM finds the correct answer in its top 10 candidates <strong class="text-white">87.9%</strong> of the time —
           NSM achieves ~98% H@1 after supervised training on the same MetaQA distribution.
-          CEREBRUM achieves 89.4% <em>recall</em> at top-10 with <strong class="text-emerald">zero training data</strong>.
+          CEREBRUM achieves 87.9% <em>recall</em> at top-10 with <strong class="text-emerald">zero training data</strong>.
           The system finds the answer; it lacks the task-specific training to always rank it first.
         </p>
       </div>
@@ -1056,8 +1056,16 @@
           <span class="font-mono text-xs text-indigo w-14 text-right shrink-0">66.8%</span>
           <span class="text-xs text-slate-500 hidden md:block">tuned · sentence embeddings · 500-sample</span>
         </div>
+          <div class="flex items-center gap-3">
+            <span class="font-mono text-xs text-slate-600 w-20 shrink-0">Phase 227</span>
+            <div class="flex-1 bg-surface rounded-full h-5 overflow-hidden">
+              <div class="h-full rounded bg-indigo" style="width:60.6%"></div>
+            </div>
+            <span class="font-mono text-xs text-slate-300 w-14 text-right shrink-0">60.6%</span>
+          </div>
       </div>
-      <p class="text-xs text-slate-600 mt-4">* 500-sample runs are not directly comparable to full 14k validation. Cyan bar = zero-config baseline (no tuning ever applied).</p>
+      <p class="text-xs text-slate-500 mt-2">* Phase 213: 500-sample sentence-transformers run. Phase 227: full 14,274-question run, random embeddings.</p>
+      <p class="text-xs text-slate-600 mt-2">* 500-sample runs are not directly comparable to full 14k validation. Cyan bar = zero-config baseline (no tuning ever applied).</p>
     </div>
 
     <!-- Metrics explainer table -->
@@ -1076,12 +1084,12 @@
             <tr>
               <td class="py-2.5 px-4 font-mono text-indigo">H@1</td>
               <td class="py-2.5 px-4 text-slate-400">Correct answer ranked #1</td>
-              <td class="py-2.5 px-4 font-mono text-white">60.4% on 3-hop</td>
+              <td class="py-2.5 px-4 font-mono text-white">60.6% on 3-hop</td>
             </tr>
             <tr>
               <td class="py-2.5 px-4 font-mono text-indigo">H@10</td>
               <td class="py-2.5 px-4 text-slate-400">Correct answer in top 10</td>
-              <td class="py-2.5 px-4 font-mono text-white">89.4% on 3-hop</td>
+              <td class="py-2.5 px-4 font-mono text-white">87.9% on 3-hop</td>
             </tr>
             <tr>
               <td class="py-2.5 px-4 font-mono text-indigo">MRR</td>
@@ -1236,7 +1244,7 @@
           </tr>
           <tr style="border-bottom: 1px solid #1e1e2e;">
             <td class="py-3 px-4 text-slate-300 font-medium">3-hop H@10 recall</td>
-            <td class="py-3 px-4 text-center font-mono text-white font-semibold">89.4%</td>
+            <td class="py-3 px-4 text-center font-mono text-white font-semibold">87.9%</td>
             <td class="py-3 px-4 text-center font-mono text-amber/80">~95–99% (H@1)</td>
             <td class="py-3 px-4 text-center text-slate-500 text-xs">N/A — no structured KG</td>
           </tr>
@@ -1436,7 +1444,7 @@
       <div id="arch-diagram" class="w-full h-full p-6" style="min-height:500px; cursor:grab;"></div>
     </div>
 
-    <p class="text-center text-xs text-slate-600 mt-4">v2.73.0 · Phase 227 · All 54 system components</p>
+    <p class="text-center text-xs text-slate-600 mt-4">v2.75.0 · Phase 229 · All 54 system components</p>
   </div>
 </section>
 
@@ -1843,7 +1851,7 @@ RA2 -->|GENESIS| TB`,
           <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span class="text-xs text-slate-500 uppercase tracking-wide">Technical Report</span>
         </div>
-        <h4 class="text-sm font-semibold text-white mb-2 flex-1">CEREBRUM v2.73.0: Complete Technical Specification — Phase 223</h4>
+        <h4 class="text-sm font-semibold text-white mb-2 flex-1">CEREBRUM v2.75.0: Complete Technical Specification — Phase 229</h4>
         <span class="inline-flex items-center gap-1.5 text-xs text-slate-600 mt-3">
           <span class="px-1.5 py-0.5 rounded bg-surface border border-border">arXiv</span>
           <span>In preparation</span>

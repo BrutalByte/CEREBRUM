@@ -5,6 +5,37 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.75.0] - 2026-06-06
+### Added
+- **Phase 229: ConceptNet 2-hop benchmark + mixed×random ParameterInitializer calibration**:
+  - `benchmarks/conceptnet_eval.py` — 2-hop chain discovery evaluation on ConceptNet 5.7 (160k English edges, 80/20 MD5 train/test split). Evaluation methodology: find (h→mid→t) chains in training graph where (h,t) has no direct training edge; per-seed cap=2 for QA diversity; `_PREFERRED_RELATIONS` set for cleaner signal. `build_conceptnet_state()` builds graph + QA pairs once; `run_trial_inprocess()` runs Optuna trials without graph rebuild (in-process pattern matching Hetionet). Best result: H@1=6.0%, H@10=67.6%, MRR=0.2207 (500-chain calibration, 70-trial Sobol+partial-CMA-ES).
+  - `benchmarks/cerebrum_tuner.py` — `--dataset conceptnet` support with `PARAM_SPACE_CONCEPTNET`, in-process eval, `--cn5-file <path>` and `--max-edges <N>` CLI args.
+  - `tests/test_conceptnet_eval.py` — 18 tests covering edge-split determinism, load_and_split, `_sample_qa_pairs`, `build_conceptnet_state`, and `run_trial_inprocess`.
+  - `core/parameter_initializer.py` — fills `mixed × random` row with Phase 229 calibration constants: `_TRB_C["mixed"]=13.24`, `_BETA["mixed"]=2.445`, `_BRANCH_BONUS["mixed"]=0.365`, `_R2_C["mixed"]=13.85`, `_FHRB_C["mixed"]=0.128`, `_VOTE_BASE["mixed"]=0.753`, `_BOOST_SCALE["mixed"]=72.11`. Adds `_IDF_SCALE_C` per-regime dict (`mixed=0.0457` vs global `0.0102`); uses `_IDF_SCALE_C["mixed"]` in `_blend_params_mixed`. Winning params: `trb=29.098, r2=4.637, vote=0.806, beam=8, idf=0.146, branch=0.365, fhrb=1.142, gamma=6.362, beta=2.445`. Graph profile: n_nodes=149,860, n_edges=152,385, mean_degree=2.034, degree_cv=3.195, n_rel=8, mean_fo=2.699.
+  - `docs/CLAUDE.md` + `pyproject.toml` — bumped to v2.75.0, documented Phase 229.
+
+## [2.74.0] - 2026-06-05
+### Added
+- **Phase 225–227: Alpha hop scaling + semantic re-scoring fix + NVMe WAL/MmapConsolidator + Optuna tuning**:
+  - **Phase 225 — Alpha hop scaling** (`core/parameter_initializer.py`): `_ALPHA_HOP_SCALES` dict maps regime × embedding_method → per-hop alpha multiplier list applied to CSA alpha during beam expansion. `hub_homogeneous × sentence: [0.0, 1.0, 1.0]` — suppresses semantic beam-steering at hop-1 (bridge step) where intermediate entity names are poor proxies for the query domain; keeps steering for hop-2+. `typed_heterogeneous × sentence: [1.0, 0.6, 0.9]` — typed intermediate entities retain semantic structure.
+  - **Phase 226 — Semantic re-scoring fix** (`benchmarks/metaqa_eval.py`): Root-cause analysis traced the 14-point 2-hop degradation under sentence-transformers to `score_path()` applying a 0.2-weight semantic alignment term (query_embedding ↔ path.embedding cosine) for non-3-hop queries. Fix: pass `query_embedding=None` for non-3-hop queries so `has_semantic=False`. After fix, 2-hop jumped from 45.6% → 58.9% (sentence-transformers). Documents: semantic scoring should only be active when the aggregated path embedding is a reliable proxy for the question.
+  - **Phase 227 — NVMe WAL/MmapConsolidator + full 14,274-question validation** (`core/engram_store.py`, `benchmarks/metaqa_eval.py`): NVMe WAL for append-only write-ahead log; MmapConsolidator for zero-copy mmap read path. Full validation run (14,274 questions, beam-width=12, Optuna-tuned params, 8 workers): **H@1=60.6%, H@10=87.9%, MRR=0.703**. Replaces Phase 186 (56.12%) as the canonical 3-hop benchmark.
+
+## [2.73.0] - 2026-06-04
+### Added
+- **Phases 219–223: Cognitive architecture — FastBindingEngine, OscillationEngine, SelfAwarenessEngine, uncertainty retry, credibility resolution, PlattCalibration, cerebellar punishment, self-supervised adaptation**:
+  - **Phase 219 — FastBindingEngine + OscillationEngine**: One-shot episodic binding for rapid entity association; theta/gamma DSCF synchronization in `OscillationEngine` (cycles the community detection between theta-rhythm local scans and gamma-rhythm cross-community integration).
+  - **Phase 220 — SelfAwarenessEngine**: 7-dimension epistemic self-assessment: answer confidence, reasoning depth, community coherence, path diversity, semantic alignment, temporal relevance, structural novelty. Surfaces explicit uncertainty signals.
+  - **Phases 221–223 — Uncertainty-steered retry + PlattCalibration + cerebellar punishment + self-supervised adaptation**: Retry loop triggers when confidence < 0.09 threshold; PlattCalibration converts raw beam scores to calibrated probabilities; CerebellarEngine punishment updates per-relation dissonance scores when traversal fails; self-supervised adaptation adjusts alpha weights based on path-success correlation. Phase 223 validation (500-sample, sentence-transformers): 1-hop H@1=84.0%, 2-hop H@1=48.2%, 3-hop H@1=60.2%, MRR=0.702.
+
+## [2.72.0] - 2026-06-03
+### Added
+- **Phases 214–218: Cross-KB Engram transfer, cognitive architecture (Inhibition of Return, source credibility, meta-relation layer, mixed-regime blending)**:
+  - **Phase 215 — Cognitive architecture additions**: Inhibition of Return (prevents revisiting already-explored hypothesis paths within a query), hyperbolic forgetting curve (`memory_strength(t) = 1 / (1 + k * t)` applied to bridge twin relay weights), conflict monitoring via contradiction detection before materialization, information-gain curiosity (ResearchAgent preferentially targets nodes with highest expected information gain over uniform sampling).
+  - **Phase 216 — Source credibility weighting**: Each edge carries a `source_credibility` field (0–1) derived from the originating data source's reputation score. CSA `epsilon` term weighted by source credibility; high-credibility paths receive a systematic boost over low-credibility paths with identical structural scores.
+  - **Phase 217 — Meta-relation layer**: Second-order graph reasoning layer extracts relations-between-relations (e.g., `related_to IMPLIES co-occurs_with` when observed > N times). Meta-edges stored in a separate meta-graph; can be activated via `use_meta_relations=True` in traversal.
+  - **Phase 218 — Cross-KB Engram transfer + calibrator persistence + mixed-regime parameter blending**: `ParameterInitializer._blend_params_mixed()` — cosine-similarity soft-mix of MetaQA and Hetionet calibration constants for unseen "mixed" KGs; `_KB_PROFILE_VECTORS` stores normalized 5-vector profiles (degree_cv, mean_degree, mean_fo, n_rel, mean_rel_coverage) for each reference KB. Engram cache transfer between KB namespaces via prefix-aware key migration. CalibrationPersistence saves/loads PlattCalibration sigmoid parameters across sessions.
+
 ## [2.71.0] - 2026-06-02
 ### Added
 - **Phase 213: hub_homogeneous × sentence constants (ParameterInitializer)**:

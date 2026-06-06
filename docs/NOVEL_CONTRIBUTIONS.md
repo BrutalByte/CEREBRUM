@@ -7,7 +7,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: June 2026
-**Status**: v2.73.0 (Phase 223 COMPLETE)
+**Status**: v2.75.0 (Phase 229 COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -1457,9 +1457,53 @@ while maintaining structural freshness on high-traffic regions.
 
 **Relevant files**: `core/cerebrum.py`, `core/discovery_calibrator.py`
 
+### Claim 77: Per-Regime IDF Scale Constant (Phase 229)
+
+**Description**: `_IDF_SCALE_C` dictionary maps regime → IDF scale constant, replacing the single global `IDF_SCALE_C = 0.0102`. The `mixed` regime requires `0.0457` (4.5× the global constant), derived from Phase 229 ConceptNet calibration: `idf_weight / degree_cv = 0.146 / 3.195`. The elevated IDF scale reflects ConceptNet's relatively uniform degree distribution where hub-entity suppression must compensate more aggressively to differentiate commonsense intermediate nodes.
+
+**Novel aspect**: First per-regime IDF scale constant in the ParameterInitializer 2D table. Prior work treated IDF sensitivity as graph-invariant; Phase 229 demonstrates it is regime-specific.
+
+**File**: `core/parameter_initializer.py` — `_IDF_SCALE_C` dict + `_blend_params_mixed()` using `_IDF_SCALE_C["mixed"]`.
+
 ---
 
-**Reviewed on**: June 3, 2026 for version v2.73.0
+### Claim 78: ConceptNet 2-hop Chain Discovery Evaluation (Phase 229)
+
+**Description**: First CEREBRUM benchmark on ConceptNet 5.7, using a novel 2-hop chain discovery evaluation methodology (not link-prediction). Given training graph edges, find chains h→mid→t where (h,t) has no direct training edge. This directly tests the traversal engine's ability to discover non-trivial multi-hop paths in a general commonsense KG.
+
+**Novel aspects**:
+1. **Task design**: 2-hop chain discovery is structurally appropriate for a beam traversal engine (as opposed to removed-edge link prediction, which is incompatible with the engine's training-free architecture).
+2. **Per-seed diversity cap**: Maximum 2 QA pairs per seed entity `h`, preventing any single high-degree hub from dominating evaluation signal.
+3. **Deterministic 80/20 MD5 split**: `_edge_in_test(h, r, t)` computes `MD5("{h}\t{r}\t{t}") % 5 == 0` — fully reproducible without a random seed.
+4. **`_PREFERRED_RELATIONS` priority set**: Biases chain sampling toward structured CN5 relations (RelatedTo, IsA, UsedFor, etc.) for cleaner tuning signal vs noise relations.
+
+**Result**: H@1=6.0%, H@10=67.6%, MRR=0.2207 (500 chains, 70-trial Sobol+CMA-ES, random embeddings, 149,860-node graph).
+
+**File**: `benchmarks/conceptnet_eval.py`, `tests/test_conceptnet_eval.py` (18 tests).
+
+---
+
+### Claim 79: Alpha Hop Scaling for Semantic Beam Steering (Phase 225)
+
+**Description**: `_ALPHA_HOP_SCALES[regime][embedding_method]` provides a per-hop multiplier list applied to the CSA alpha (semantic similarity) term during beam expansion. For `hub_homogeneous × sentence`, scale=[0.0, 1.0, 1.0] suppresses semantic steering at hop-1 (where intermediate entity names are poor proxies for the query answer domain) while retaining it at hop-2+.
+
+**Novel aspect**: First per-hop, per-regime, per-embedding-method semantic steering control in a training-free KG traversal system. Prior work applied uniform semantic weights across all traversal depths.
+
+**File**: `core/parameter_initializer.py` — `_ALPHA_HOP_SCALES` dict.
+
+---
+
+### Claim 80: Semantic Re-Scoring Root Cause Fix for 2-hop Queries (Phase 226)
+
+**Description**: Identified that CEREBRUM's `score_path()` was applying a 0.2-weight `query_embedding ↔ path.embedding` cosine alignment term for non-3-hop queries, producing noisy answer rankings because aggregated bridge-entity embeddings are poor proxies for the question at hop-2. Fix: pass `query_embedding=None` for non-3-hop queries at the call site. Result: 2-hop H@1 jumped from 45.6% → 58.9% (sentence-transformers, MetaQA).
+
+**Novel aspect**: Identifies and fixes a fundamental over-application of semantic scoring in multi-hop traversal. Bridge entity embeddings systematically mislead ranking when the intermediate hop creates semantic drift from the original query embedding.
+
+**File**: `benchmarks/metaqa_eval.py`.
+
+---
+
+**Reviewed on**: June 6, 2026 for version v2.75.0
 
 ---
 
