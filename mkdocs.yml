@@ -97,7 +97,7 @@ extra:
       link: https://github.com/BrutalByte/CEREBRUM
   analytics:
     provider: google
-    property: ""
+    property: G-XXXXXXXXXX
 
 extra_css:
   - stylesheets/extra.css
