@@ -63,11 +63,13 @@ except ImportError:
 
 _EVAL_SCRIPT          = Path(__file__).parent / "metaqa_eval.py"
 _HETIONET_EVAL_SCRIPT = Path(__file__).parent / "hetionet_param_eval.py"
+_CN5_EVAL_SCRIPT      = Path(__file__).parent / "conceptnet_eval.py"
 _DEFAULT_KB  = Path(__file__).parent / "data" / "metaqa" / "kb.txt"
 
-# Pre-built Hetionet state shared across all in-process trials (avoids ~66s rebuild).
-# Populated once by _init_hetionet_state() before the Optuna study starts.
-_hetionet_state: Optional[dict] = None
+# Pre-built state shared across all in-process trials (avoids expensive graph rebuild).
+# Populated once by _init_*_state() before the Optuna study starts.
+_hetionet_state:   Optional[dict] = None
+_conceptnet_state: Optional[dict] = None
 
 # ── search space (Phase 1 — wide exploration) ─────────────────────────────────
 # Phase 203: two-parameter SDRB — gamma ceiling raised to 16.0 (hit 7.93/8.0 in
@@ -99,6 +101,22 @@ PARAM_SPACE_HETIONET: dict = {
     "fhrb_factor":  (1.0,  5.0),
     "gamma":        (0.5,  8.0),
     "beta":         (0.5,  2.0),
+}
+
+# Phase 229: ConceptNet (mixed regime) search space.
+# Centered around ParameterInitializer mixed/random predictions (pre-calibration estimate).
+# ConceptNet is 1-hop link prediction with high fan-out, so trb_factor matters more;
+# gamma/beta drive SDRB on ~2M edges — wider range than Hetionet.
+PARAM_SPACE_CONCEPTNET: dict = {
+    "trb_factor":   (5.0,  35.0),
+    "r2_boost":     (1.0,  10.0),
+    "vote_weight":  (0.60, 0.95),
+    "beam_width":   [8, 10, 12],
+    "idf_weight":   (0.0,  0.20),
+    "branch_bonus": (0.0,  1.0),
+    "fhrb_factor":  (1.0,  8.0),
+    "gamma":        (0.5,  16.0),
+    "beta":         (0.5,  3.0),
 }
 
 # Float param names (excludes categorical beam_width)
@@ -497,6 +515,27 @@ def _init_hetionet_state(n_questions: int = 20, max_neighbors: int = 50) -> None
     )
 
 
+def _init_conceptnet_state(
+    cn5_path:    str,
+    n_questions: int = 500,
+    max_edges:   int = 200_000,
+    embeddings:  str = "random",
+) -> None:
+    """Build ConceptNet graph + QA pairs once; stored in _conceptnet_state for in-process trials."""
+    global _conceptnet_state
+    if _conceptnet_state is not None:
+        return  # already initialised
+    from conceptnet_eval import build_conceptnet_state
+    _conceptnet_state = build_conceptnet_state(
+        cn5_path    = cn5_path,
+        n_questions = n_questions,
+        embeddings  = embeddings,
+        seed        = 42,
+        use_cache   = True,
+        max_edges   = max_edges,
+    )
+
+
 def _run_eval_logged(
     log_file: Path,
     run_id:   str,
@@ -504,24 +543,46 @@ def _run_eval_logged(
     **kwargs,
 ) -> tuple[float, float, float, float]:
     dataset = kwargs.get("dataset", "metaqa")
+    import traceback as _tb
+
+    # In-process paths (graph already built — skip expensive rebuild per trial)
+    _inprocess_params = {
+        "trb_factor":   kwargs["trb_factor"],
+        "r2_boost":     kwargs["r2_boost"],
+        "vote_weight":  kwargs["vote_weight"],
+        "beam_width":   kwargs["beam_width"],
+        "idf_weight":   kwargs["idf_weight"],
+        "branch_bonus": kwargs["branch_bonus"],
+        "fhrb_factor":  kwargs["fhrb_factor"],
+        "gamma":        kwargs["gamma"],
+        "beta":         kwargs["beta"],
+        "max_loops":    1,
+    }
     if dataset == "hetionet" and _hetionet_state is not None:
-        # In-process path: graph already built — skip ~66s rebuild per trial
-        import traceback as _tb
         from hetionet_param_eval import run_trial_inprocess
         t0 = time.time()
         try:
-            h1, h10, mrr = run_trial_inprocess(_hetionet_state, {
-                "trb_factor":   kwargs["trb_factor"],
-                "r2_boost":     kwargs["r2_boost"],
-                "vote_weight":  kwargs["vote_weight"],
-                "beam_width":   kwargs["beam_width"],
-                "idf_weight":   kwargs["idf_weight"],
-                "branch_bonus": kwargs["branch_bonus"],
-                "fhrb_factor":  kwargs["fhrb_factor"],
-                "gamma":        kwargs["gamma"],
-                "beta":         kwargs["beta"],
-                "max_loops":    1,
-            })
+            h1, h10, mrr = run_trial_inprocess(_hetionet_state, _inprocess_params)
+        except Exception:
+            print(f"\n[INPROCESS-ERR trial {trial_id}]\n{_tb.format_exc()}", file=sys.stderr, flush=True)
+            raise
+        elapsed = time.time() - t0
+        _write_log(log_file, {
+            "type":      "trial_stdout",
+            "run_id":    run_id,
+            "trial_id":  trial_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "lines":     [f"inprocess h1={h1:.4f} h10={h10:.4f} mrr={mrr:.4f}"],
+            "exit_code": 0,
+            "elapsed_s": round(elapsed, 1),
+        })
+        return h1, h10, mrr, elapsed
+
+    if dataset == "conceptnet" and _conceptnet_state is not None:
+        from conceptnet_eval import run_trial_inprocess
+        t0 = time.time()
+        try:
+            h1, h10, mrr = run_trial_inprocess(_conceptnet_state, _inprocess_params)
         except Exception:
             print(f"\n[INPROCESS-ERR trial {trial_id}]\n{_tb.format_exc()}", file=sys.stderr, flush=True)
             raise
@@ -557,6 +618,14 @@ def _run_eval_logged(
             "--workers",      str(kwargs.get("workers", 1)),
             "--min-eval-hop", "2",
             "--max-neighbors","50",
+        ]
+    elif dataset == "conceptnet":
+        n_questions = kwargs.get("sample", 500)
+        cmd = [
+            sys.executable, "-u", str(_CN5_EVAL_SCRIPT),
+            "--cn5",          str(kwargs["cn5_path"]),
+            "--n-questions",  str(n_questions),
+            "--embeddings",   kwargs.get("embeddings", "random"),
         ]
     else:
         sample = kwargs["sample"]
@@ -690,6 +759,8 @@ def run_tuner(
     kb_file:       Optional[Path] = None,
     dataset:       str            = "metaqa",
     embeddings:    str            = "sentence",
+    cn5_path:      str            = "",
+    max_edges:     int            = 200_000,
 ) -> Optional[TrialRecord]:
     """
     Two-phase hyperparameter search.
@@ -720,7 +791,12 @@ def run_tuner(
         phase2_trials = 0
 
     # Dataset-specific parameter space
-    _param_space = PARAM_SPACE_HETIONET if dataset == "hetionet" else PARAM_SPACE_WIDE
+    if dataset == "hetionet":
+        _param_space = PARAM_SPACE_HETIONET
+    elif dataset == "conceptnet":
+        _param_space = PARAM_SPACE_CONCEPTNET
+    else:
+        _param_space = PARAM_SPACE_WIDE
 
     # ── resume: skip Phase 1, load from previous JSONL ───────────────────
     _resume_records:      list[TrialRecord] = []
@@ -739,9 +815,19 @@ def run_tuner(
 
     total_trials = phase1_trials + phase2_trials
 
-    # ── Hetionet: build graph once before trials start ────────────────────
+    # ── Dataset: build graph once before trials start ────────────────────
     if dataset == "hetionet":
         _init_hetionet_state(n_questions=sample, max_neighbors=50)
+    elif dataset == "conceptnet":
+        if not cn5_path:
+            print("ERROR: --cn5-file is required for --dataset conceptnet", file=sys.stderr)
+            return None
+        _init_conceptnet_state(
+            cn5_path    = cn5_path,
+            n_questions = sample,
+            max_edges   = max_edges,
+            embeddings  = embeddings,
+        )
 
     # ── log file setup ────────────────────────────────────────────────────
     run_id   = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
@@ -783,7 +869,9 @@ def run_tuner(
             h1, h10, mrr, elapsed = _run_eval_logged(
                 log_file=log_file, run_id=run_id, trial_id=tid,
                 sample=sample, timeout=timeout_s, workers=workers,
-                dataset=dataset, embeddings=embeddings, **params,
+                dataset=dataset, embeddings=embeddings,
+                cn5_path=cn5_path,
+                **params,
             )
             rec = TrialRecord(
                 trial_id=tid, phase=phase,
@@ -958,6 +1046,11 @@ def run_tuner(
             f"--n-questions 200 --min-eval-hop 1 --max-neighbors 200 --workers 8 "
             f"--embeddings {embeddings} {_param_flags}"
         )
+    elif dataset == "conceptnet":
+        canonical = (
+            f"python -u benchmarks/conceptnet_eval.py "
+            f"--cn5 {cn5_path} --n-questions 2000 --embeddings {embeddings} {_param_flags}"
+        )
     else:
         canonical = (
             f"python -u benchmarks/metaqa_eval.py --hop 3 --embeddings {embeddings} "
@@ -1088,9 +1181,17 @@ def main() -> None:
         help="KB triples file for --param-init (default: benchmarks/data/metaqa/kb.txt).",
     )
     parser.add_argument(
-        "--dataset", choices=["metaqa", "hetionet"], default="metaqa", dest="dataset",
-        help="(Phase 206) KB to tune against. 'hetionet' uses hetionet_param_eval.py with "
-             "PARAM_SPACE_HETIONET. Default: metaqa.",
+        "--dataset", choices=["metaqa", "hetionet", "conceptnet"], default="metaqa", dest="dataset",
+        help="KB to tune against. 'hetionet' uses PARAM_SPACE_HETIONET; "
+             "'conceptnet' uses PARAM_SPACE_CONCEPTNET (requires --cn5-file). Default: metaqa.",
+    )
+    parser.add_argument(
+        "--cn5-file", type=str, default="", dest="cn5_path",
+        help="Path to conceptnet-assertions-5.7.0.csv or .csv.gz (required for --dataset conceptnet).",
+    )
+    parser.add_argument(
+        "--max-edges", type=int, default=200_000, dest="max_edges",
+        help="Maximum ConceptNet edges to load (default: 200,000).",
     )
     parser.add_argument(
         "--embeddings", choices=["sentence", "random"], default="sentence",
@@ -1116,6 +1217,8 @@ def main() -> None:
         kb_file=args.kb_file,
         dataset=args.dataset,
         embeddings=args.embeddings,
+        cn5_path=args.cn5_path,
+        max_edges=args.max_edges,
     )
 
 

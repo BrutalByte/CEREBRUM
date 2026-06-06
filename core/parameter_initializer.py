@@ -27,7 +27,11 @@ Calibration basis (2D constant table — all cells filled for known KBs):
   typed_heterogeneous × random:  Phase 207 Hetionet     61.00% H@1 (hop_expand fixed)
   typed_heterogeneous × sentence: Phase 209 Hetionet    81.1%  H@1 (2-hop, multi-hop tuner)
   hub_homogeneous   × sentence:  Phase 213 MetaQA 3-hop 66.8%  H@1 (gamma=10.14, beta=0.96)
-  mixed × random/sentence:       pending Phase 214 (ConceptNet calibration)
+  mixed × random:                Phase 229 ConceptNet   6.0%  H@1 (2-hop discovery, 500 chains)
+                                 ConceptNet 200k edges: n_nodes=149k, n_rel=8, mean_fo=2.70,
+                                 degree_cv=3.19. Raw: trb=29.1, r2=4.64, vote=0.806, beam=8,
+                                 idf=0.146, branch=0.365, fhrb=1.14, gamma=6.36, beta=2.45.
+  mixed × sentence:              pending (ConceptNet sentence calibration)
 
 Phase 213 fANOVA (hub_homogeneous × sentence): trb=0.22 (#1), fhrb=0.19 (#2),
   gamma=0.15, beta=0.12, vote=0.12, r2=0.09, branch=0.09, idf=0.02
@@ -53,6 +57,16 @@ BEAM_WIDTH: int = 12          # fANOVA importance ~0.1%; plateau at 8–12
 IDF_SCALE_C: float = 0.0102   # degree_cv × IDF_SCALE_C → idf_weight
                                # MetaQA random: cv=5.68, idf=0.058 → C=0.0102
                                # For sentence-transformers see _SENTENCE_OVERRIDES["idf_scale_c"]
+
+# Per-regime IDF scale overrides for random embeddings.
+# hub and typed match the global constant; mixed is higher because
+# ConceptNet's uniform-ish degree distribution demands a stronger IDF penalty
+# to suppress high-frequency hub nodes (Phase 229: idf=0.146, cv=3.195 → C=0.0457).
+_IDF_SCALE_C = {
+    "hub_homogeneous":     0.0102,  # same as global — MetaQA Phase 204
+    "typed_heterogeneous": 0.0102,  # same as global — no separate calibration yet
+    "mixed":               0.0457,  # Phase 229 ConceptNet: 0.146 / 3.195 = 0.0457
+}
 
 VOTE_BASE: float   = 0.72     # vote_weight lower bound (Q=0 → community uninformative)
 VOTE_Q_SCALE: float = 0.15    # sensitivity to modularity: 0.72 at Q=0, 0.87 at Q=1
@@ -89,7 +103,7 @@ GAMMA_MIN:   float = 0.5      # floor: prevents degenerate near-zero gamma
 _BOOST_SCALE = {
     "hub_homogeneous":    21.79,  # Phase 204 MetaQA validated
     "typed_heterogeneous": 28.48, # Phase 207 Hetionet validated (gamma=4.97, beta=0.777)
-    "mixed":              22.00,  # estimate — geometric mean; refine when mixed KB available
+    "mixed":              72.11,  # Phase 229 ConceptNet: gamma=6.36 × 2.70^2.445 = 72.1
 }
 
 # ---------------------------------------------------------------------------
@@ -102,31 +116,31 @@ _BOOST_SCALE = {
 _TRB_C = {
     "hub_homogeneous":    9.33,  # 21.486 / log(9+1) — Phase 204 MetaQA
     "typed_heterogeneous": 6.14, # 19.769 / log(24+1) — Phase 207 Hetionet (hop_expand fixed)
-    "mixed":               7.50,
+    "mixed":              13.24,  # Phase 229 ConceptNet: 29.10 / log(8+1) = 13.24
 }
 
 _BETA = {
     "hub_homogeneous":    2.0,   # Phase 204 best: 2.0846; amplifies hub relations
     "typed_heterogeneous": 0.777, # Phase 207 Hetionet (hop_expand fixed); was 1.88 on broken 2-hop
-    "mixed":               1.4,
+    "mixed":               2.445, # Phase 229 ConceptNet: high beta from 2-hop traversal on large graph
 }
 
 _BRANCH_BONUS = {
     "hub_homogeneous":    0.48,  # Phase 204 best: 0.482
     "typed_heterogeneous": 0.308, # Phase 207 Hetionet (hop_expand fixed)
-    "mixed":               0.40,
+    "mixed":               0.365, # Phase 229 ConceptNet
 }
 
 _R2_C = {
     "hub_homogeneous":    13.50, # (8.185 - 1.5) / log(5.768/9+1) — Phase 204
     "typed_heterogeneous": 1.07, # (3.224 - 1.5) / log(95.7/24+1) — Phase 207 Hetionet
-    "mixed":               4.00,
+    "mixed":              13.85,  # Phase 229 ConceptNet: (4.64 - 1.5) / log(2.034/8+1) = 13.85
 }
 
 _FHRB_C = {
     "hub_homogeneous":    1.18,  # (3.260 - 1.0) / log(5.768+1) — Phase 204
     "typed_heterogeneous": 0.80, # (4.658 - 1.0) / log(95.7+1) — Phase 207 Hetionet
-    "mixed":               0.70,
+    "mixed":               0.128, # Phase 229 ConceptNet: (1.142 - 1.0) / log(2.034+1) = 0.128
 }
 
 # vote_weight lower bound is regime-specific: typed graphs have more edge types,
@@ -134,7 +148,7 @@ _FHRB_C = {
 _VOTE_BASE = {
     "hub_homogeneous":    0.72,  # Phase 204 MetaQA validated
     "typed_heterogeneous": 0.55, # Phase 207 Hetionet: optimal=0.6047; lower base for typed graphs
-    "mixed":               0.64,
+    "mixed":               0.753, # Phase 229 ConceptNet: 0.806 - 0.15×0.35 (assuming Q≈0.35)
 }
 
 # ---------------------------------------------------------------------------
@@ -507,7 +521,7 @@ class ParameterInitializer:
         gamma        = max(GAMMA_MIN, _bs / (mean_fo ** beta))
         r2_boost     = max(1.5, 1.5 + _blend_const(_R2_C) * math.log(mean_degree / n_rel + 1))
         fhrb_factor  = max(1.0, 1.0 + _blend_const(_FHRB_C) * math.log(mean_degree + 1))
-        idf_weight   = max(0.01, IDF_SCALE_C * profile.degree_cv)
+        idf_weight   = max(0.01, _IDF_SCALE_C["mixed"] * profile.degree_cv)
         vote_base    = _blend_const(_VOTE_BASE)
         q_clamped    = max(0.0, min(1.0, modularity_Q))
         vote_weight  = vote_base + VOTE_Q_SCALE * q_clamped
