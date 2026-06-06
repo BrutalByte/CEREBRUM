@@ -342,6 +342,21 @@ with gr.Blocks(title="CEREBRUM Studio") as demo:
                             val_btn = gr.Button("Validate All", variant="primary")
                             ins_out = gr.HTML()
 
+                with gr.Tab("Pipeline Status"):
+                    gr.HTML("""
+                    <div style="padding:8px 0 12px">
+                      <p style="color:#94a3b8;font-size:13px;margin-bottom:12px">
+                        Interactive step-by-step visualizer of the CEREBRUM inference pipeline.
+                        Enable <strong>Live Mode</strong> in the visualizer to connect to the running server
+                        at <code>http://localhost:8200</code> and see real-time query activity.
+                      </p>
+                      <iframe src="http://localhost:8200/web/process.html"
+                              width="100%" height="820px"
+                              style="border:1px solid #1e1e2e;border-radius:10px;background:#0a0a0f"
+                              allow="clipboard-read; clipboard-write">
+                      </iframe>
+                    </div>""")
+
                 with gr.Tab("Live Feed"):
                     with gr.Row():
                         with gr.Column(scale=1):

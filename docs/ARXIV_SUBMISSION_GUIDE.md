@@ -62,8 +62,8 @@ Submit foundational papers first so cross-references resolve correctly.
 | 35 | UE5 Neural Visualization Bridge | `PAPER_035_UE5_NEURAL_VISUALIZATION.md` | `cs.HC` + `cs.IR` |
 | 36 | The Cingulate Engine: Meta-Cognitive Error Correction in Graph Attention | `PAPER_036_CINGULATE_ENGINE.md` | `cs.AI` + `cs.IR` |
 | 37 | GraphProfiler and STRB: Autonomous Strategy Selection for Zero-Shot KG Reasoning | `PAPER_037_GRAPHPROFILER_STRB.md` | `cs.IR` + `cs.AI` |
-| 38 | Hop-Scaled Semantic Attention: Suppressing Cross-Hop Semantic Bias in Multi-Hop KGQA *(Phase 225/226 — draft needed)* | `PAPER_038_HOP_SCALED_SEMANTIC.md` | `cs.IR` + `cs.LG` |
-| 39 | Intentional NVMe Graph Consolidation with Write-Ahead Logging for Knowledge Graph Systems *(Phase 227 — draft needed)* | `PAPER_039_NVME_WAL.md` | `cs.DB` + `cs.IR` |
+| 38 | Hop-Scaled Semantic Attention: Suppressing Cross-Hop Semantic Bias in Multi-Hop KGQA | `PAPER_038_HOP_SCALED_SEMANTIC.md` | `cs.IR` + `cs.LG` |
+| 39 | Intentional NVMe Graph Consolidation with Write-Ahead Logging for Knowledge Graph Systems | `PAPER_039_NVME_WAL.md` | `cs.DB` + `cs.IR` |
 
 ---
 

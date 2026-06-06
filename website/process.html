@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CEREBRUM — Pipeline Visualizer</title>
+  <meta name="description" content="Interactive step-by-step visualization of the CEREBRUM knowledge graph reasoning pipeline.">
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg:      '#0a0a0f',
+            surface: '#111118',
+            border:  '#1e1e2e',
+            indigo:  '#6366f1',
+            cyan:    '#22d3ee',
+            emerald: '#10b981',
+            amber:   '#f59e0b',
+            rose:    '#f43f5e',
+            codebg:  '#0f172a',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --c-indigo: #6366f1;
+      --c-cyan:   #22d3ee;
+      --c-emerald:#10b981;
+      --c-amber:  #f59e0b;
+      --c-rose:   #f43f5e;
+      --c-bg:     #0a0a0f;
+      --c-surf:   #111118;
+      --c-border: #1e1e2e;
+    }
+    body { background: var(--c-bg); color: #f1f5f9; font-family: 'Inter', sans-serif; }
+
+    /* ── SVG node states ── */
+    .n-rect {
+      fill: #1a1a2e;
+      stroke: #2d2d4a;
+      stroke-width: 1.5;
+      rx: 8;
+      transition: fill 0.35s, stroke 0.35s, filter 0.35s;
+    }
+    .n-label {
+      fill: #94a3b8;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      dominant-baseline: middle;
+      text-anchor: middle;
+      transition: fill 0.35s;
+      pointer-events: none;
+    }
+    .n-sub {
+      fill: #475569;
+      font-family: 'Inter', sans-serif;
+      font-size: 9px;
+      dominant-baseline: middle;
+      text-anchor: middle;
+      pointer-events: none;
+    }
+    .n-user circle { fill: #1a1a2e; stroke: #2d2d4a; stroke-width: 1.5; transition: fill 0.35s, stroke 0.35s, filter 0.35s; }
+    .n-user text   { fill: #94a3b8; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 500; dominant-baseline: middle; text-anchor: middle; }
+
+    /* visited */
+    .visited .n-rect    { fill: #1e1e35; stroke: #3d3d60; }
+    .visited .n-label   { fill: #cbd5e1; }
+    .visited circle     { fill: #1e1e35; stroke: #3d3d60; }
+
+    /* active — per color */
+    .active-indigo .n-rect  { fill: #2d2d6a; stroke: var(--c-indigo); stroke-width: 2; filter: drop-shadow(0 0 8px #6366f155); }
+    .active-indigo .n-label { fill: #fff; }
+    .active-indigo circle   { fill: #2d2d6a; stroke: var(--c-indigo); stroke-width: 2; filter: drop-shadow(0 0 8px #6366f155); }
+    .active-cyan .n-rect    { fill: #1a3545; stroke: var(--c-cyan);   stroke-width: 2; filter: drop-shadow(0 0 8px #22d3ee55); }
+    .active-cyan .n-label   { fill: #fff; }
+    .active-cyan circle     { fill: #1a3545; stroke: var(--c-cyan);   stroke-width: 2; filter: drop-shadow(0 0 8px #22d3ee55); }
+    .active-emerald .n-rect { fill: #152a22; stroke: var(--c-emerald);stroke-width: 2; filter: drop-shadow(0 0 8px #10b98155); }
+    .active-emerald .n-label{ fill: #fff; }
+    .active-amber .n-rect   { fill: #2a2215; stroke: var(--c-amber);  stroke-width: 2; filter: drop-shadow(0 0 8px #f59e0b55); }
+    .active-amber .n-label  { fill: #fff; }
+
+    /* ── SVG edge states ── */
+    .edge {
+      fill: none;
+      stroke: #2d2d4a;
+      stroke-width: 1.5;
+      transition: stroke 0.35s, stroke-width 0.35s;
+      marker-end: url(#arrow-dim);
+    }
+    .edge-visited {
+      stroke: #3d3d60;
+      marker-end: url(#arrow-vis);
+    }
+    .edge-active {
+      stroke-width: 2;
+      stroke-dasharray: 6 4;
+      animation: flowEdge 0.7s linear infinite;
+      marker-end: url(#arrow-act);
+    }
+    .edge-active-indigo { stroke: var(--c-indigo); }
+    .edge-active-cyan   { stroke: var(--c-cyan);   }
+    .edge-active-emerald{ stroke: var(--c-emerald);}
+    .edge-active-amber  { stroke: var(--c-amber);  }
+
+    @keyframes flowEdge {
+      from { stroke-dashoffset: 20; }
+      to   { stroke-dashoffset: 0;  }
+    }
+
+    /* ── Timeline strip ── */
+    .step-pip {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #2d2d4a;
+      border: 1.5px solid #3d3d60;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+      flex-shrink: 0;
+    }
+    .step-pip:hover       { transform: scale(1.3); }
+    .step-pip.visited     { background: #3d3d6a; border-color: #6366f1; }
+    .step-pip.current     { background: var(--c-cyan); border-color: var(--c-cyan); transform: scale(1.4); }
+
+    /* ── Detail panel ── */
+    pre.code-block {
+      background: #0f172a;
+      border: 1px solid #1e1e2e;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      line-height: 1.6;
+      color: #94a3b8;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .layer-badge {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* navbar */
+    #navbar {
+      background: rgba(10,10,15,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid #1e1e2e;
+    }
+    /* control btn */
+    .ctrl-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; border-radius: 8px;
+      background: #1a1a2e; border: 1px solid #2d2d4a;
+      color: #94a3b8; cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .ctrl-btn:hover { background: #252540; color: #f1f5f9; border-color: #6366f1; }
+    .ctrl-btn.active-play { background: #1a3545; border-color: var(--c-cyan); color: var(--c-cyan); }
+
+    /* progress bar */
+    #progress-fill { transition: width 0.35s ease; }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #111118; }
+    ::-webkit-scrollbar-thumb { background: #2d2d4a; border-radius: 3px; }
+
+    /* SVG hover tooltip */
+    .node-group { cursor: pointer; }
+    .node-group:hover .n-rect { stroke-width: 2; }
+  </style>
+</head>
+<body>
+
+<!-- ───────────────────── NAVBAR ───────────────────── -->
+<nav id="navbar" class="fixed top-0 inset-x-0 z-50 h-12 flex items-center px-6 gap-6">
+  <a href="index.html" class="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
+    <span class="text-indigo">◈</span> CEREBRUM
+  </a>
+  <span class="text-border">|</span>
+  <span class="text-sm font-medium text-cyan">Pipeline Visualizer</span>
+  <div class="flex-1"></div>
+  <a href="index.html" class="text-xs text-slate-500 hover:text-slate-300 transition-colors">← Back to site</a>
+</nav>
+
+<!-- ───────────────────── MAIN ───────────────────── -->
+<div class="pt-12 h-screen flex flex-col overflow-hidden">
+
+  <!-- header bar -->
+  <div class="flex-shrink-0 px-6 py-3 border-b border-border flex items-center gap-4 bg-surface">
+    <div>
+      <h1 class="text-sm font-semibold text-white">Query Reasoning Pipeline</h1>
+      <p class="text-xs text-slate-500 mt-0.5">Step through every stage of a live CEREBRUM inference</p>
+    </div>
+    <div class="flex-1"></div>
+    <!-- live status indicator -->
+    <div id="live-badge" class="flex items-center gap-2 px-3 py-1 rounded-full bg-bg border border-border text-xs cursor-pointer hover:border-emerald/40 transition-colors" onclick="toggleLive()" title="Connect to running CEREBRUM server">
+      <span id="live-dot" class="w-2 h-2 rounded-full bg-slate-600"></span>
+      <span id="live-label" class="text-slate-500 font-medium">Live Mode</span>
+    </div>
+    <!-- view toggle -->
+    <div id="view-tabs" class="flex gap-1 bg-bg rounded-lg p-1 border border-border text-xs">
+      <button onclick="setView('query')"  id="tab-query"  class="px-3 py-1 rounded-md font-medium transition-colors bg-surface text-white">Query Flow</button>
+      <button onclick="setView('bg')"     id="tab-bg"     class="px-3 py-1 rounded-md font-medium transition-colors text-slate-500 hover:text-slate-300">Background</button>
+    </div>
+  </div>
+
+  <!-- content row -->
+  <div class="flex flex-1 min-h-0 overflow-hidden">
+
+    <!-- ── LEFT: diagram ── -->
+    <div class="flex-shrink-0 w-[420px] border-r border-border overflow-y-auto flex flex-col items-center py-4 px-2 bg-bg">
+      <svg id="pipeline-svg" viewBox="0 0 440 880" width="400" height="800" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-dim" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+            <path d="M0,0 L7,3.5 L0,7 Z" fill="#2d2d4a"/>
+          </marker>
+          <marker id="arrow-vis" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+            <path d="M0,0 L7,3.5 L0,7 Z" fill="#3d3d60"/>
+          </marker>
+          <marker id="arrow-act" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+            <path id="arrow-act-path" d="M0,0 L7,3.5 L0,7 Z" fill="#22d3ee"/>
+          </marker>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+          </filter>
+        </defs>
+
+        <!-- ── EDGES (drawn first, under nodes) ── -->
+        <!-- USER → REST_API -->
+        <path id="e-USER-REST_API"        class="edge" d="M220,55 L220,90"/>
+        <!-- REST_API → EMBED -->
+        <path id="e-REST_API-EMBED"       class="edge" d="M185,113 C150,135 130,155 130,175"/>
+        <!-- REST_API → PROFILER -->
+        <path id="e-REST_API-PROFILER"    class="edge" d="M255,113 C290,135 310,155 310,175"/>
+        <!-- EMBED → COMMUNITY -->
+        <path id="e-EMBED-COMMUNITY"      class="edge" d="M152,207 C165,235 185,250 200,262"/>
+        <!-- PROFILER → COMMUNITY -->
+        <path id="e-PROFILER-COMMUNITY"   class="edge" d="M288,207 C275,235 258,250 242,262"/>
+        <!-- COMMUNITY → CSA -->
+        <path id="e-COMMUNITY-CSA"        class="edge" d="M220,296 L220,335"/>
+        <!-- CSA → BEAM_HOP1 -->
+        <path id="e-CSA-BEAM_HOP1"        class="edge" d="M220,369 L220,408"/>
+        <!-- BEAM_HOP1 → BEAM_HOP23 -->
+        <path id="e-BEAM_HOP1-BEAM_HOP23" class="edge" d="M220,442 L220,478"/>
+        <!-- ENGRAM → BEAM_HOP23 -->
+        <path id="e-ENGRAM-BEAM_HOP23"    class="edge" d="M342,498 C325,498 275,495 265,493"/>
+        <!-- BEAM_HOP23 → LOOPED -->
+        <path id="e-BEAM_HOP23-LOOPED"    class="edge" d="M220,512 L220,548"/>
+        <!-- MODULATOR → LOOPED -->
+        <path id="e-MODULATOR-LOOPED"     class="edge" d="M342,568 C325,568 275,565 265,563"/>
+        <!-- LOOPED → SCORER -->
+        <path id="e-LOOPED-SCORER"        class="edge" d="M220,582 L220,618"/>
+        <!-- SCORER → EXTRACTOR -->
+        <path id="e-SCORER-EXTRACTOR"     class="edge" d="M220,652 L220,688"/>
+        <!-- EXTRACTOR → RESPONSE -->
+        <path id="e-EXTRACTOR-RESPONSE"   class="edge" d="M185,722 C155,745 120,770 105,793"/>
+        <!-- EXTRACTOR → TELEMETRY -->
+        <path id="e-EXTRACTOR-TELEMETRY"  class="edge" d="M255,722 C285,745 320,770 335,793"/>
+        <!-- TELEMETRY → UE5 -->
+        <path id="e-TELEMETRY-UE5"        class="edge" d="M370,793 L370,815 L392,815"/>
+
+        <!-- ── NODES ── -->
+
+        <!-- USER -->
+        <g id="n-USER" class="node-group n-user" onclick="jumpToStep(1)">
+          <circle cx="220" cy="38" r="22"/>
+          <text x="220" y="38">USER</text>
+        </g>
+
+        <!-- REST API -->
+        <g id="n-REST_API" class="node-group" onclick="jumpToStep(1)">
+          <rect class="n-rect" x="150" y="90" width="140" height="32" rx="8"/>
+          <text class="n-label" x="220" y="107">REST API  /query</text>
+        </g>
+
+        <!-- EMBED -->
+        <g id="n-EMBED" class="node-group" onclick="jumpToStep(2)">
+          <rect class="n-rect" x="68" y="175" width="128" height="30" rx="6"/>
+          <text class="n-label" x="132" y="191">EmbeddingEngine</text>
+        </g>
+
+        <!-- PROFILER -->
+        <g id="n-PROFILER" class="node-group" onclick="jumpToStep(3)">
+          <rect class="n-rect" x="245" y="175" width="128" height="30" rx="6"/>
+          <text class="n-label" x="309" y="191">GraphProfiler</text>
+        </g>
+
+        <!-- COMMUNITY -->
+        <g id="n-COMMUNITY" class="node-group" onclick="jumpToStep(4)">
+          <rect class="n-rect" x="148" y="262" width="144" height="30" rx="6"/>
+          <text class="n-label" x="220" y="278">CommunityEngine</text>
+        </g>
+
+        <!-- CSA -->
+        <g id="n-CSA" class="node-group" onclick="jumpToStep(5)">
+          <rect class="n-rect" x="148" y="335" width="144" height="30" rx="6"/>
+          <text class="n-label" x="220" y="351">CSAEngine  (10 params)</text>
+        </g>
+
+        <!-- BEAM HOP1 -->
+        <g id="n-BEAM_HOP1" class="node-group" onclick="jumpToStep(6)">
+          <rect class="n-rect" x="140" y="408" width="160" height="30" rx="6"/>
+          <text class="n-label" x="220" y="424">BeamTraversal  Hop 1</text>
+        </g>
+
+        <!-- ENGRAM (side) -->
+        <g id="n-ENGRAM" class="node-group" onclick="jumpToStep(7)">
+          <rect class="n-rect" x="342" y="482" width="88" height="28" rx="6"/>
+          <text class="n-label" x="386" y="497">Engram Cache</text>
+        </g>
+
+        <!-- BEAM HOP23 -->
+        <g id="n-BEAM_HOP23" class="node-group" onclick="jumpToStep(7)">
+          <rect class="n-rect" x="132" y="478" width="130" height="30" rx="6"/>
+          <text class="n-label" x="197" y="494">BeamTraversal  2/3</text>
+        </g>
+
+        <!-- MODULATOR (side) -->
+        <g id="n-MODULATOR" class="node-group" onclick="jumpToStep(8)">
+          <rect class="n-rect" x="342" y="552" width="88" height="28" rx="6"/>
+          <text class="n-label" x="386" y="567">ChemModulator</text>
+        </g>
+
+        <!-- LOOPED -->
+        <g id="n-LOOPED" class="node-group" onclick="jumpToStep(8)">
+          <rect class="n-rect" x="130" y="548" width="134" height="30" rx="6"/>
+          <text class="n-label" x="197" y="564">LoopedBeamTraversal</text>
+        </g>
+
+        <!-- SCORER -->
+        <g id="n-SCORER" class="node-group" onclick="jumpToStep(9)">
+          <rect class="n-rect" x="150" y="618" width="140" height="30" rx="6"/>
+          <text class="n-label" x="220" y="634">PathScorer</text>
+        </g>
+
+        <!-- EXTRACTOR -->
+        <g id="n-EXTRACTOR" class="node-group" onclick="jumpToStep(10)">
+          <rect class="n-rect" x="148" y="688" width="144" height="30" rx="6"/>
+          <text class="n-label" x="220" y="704">AnswerExtractor</text>
+        </g>
+
+        <!-- RESPONSE -->
+        <g id="n-RESPONSE" class="node-group" onclick="jumpToStep(11)">
+          <rect class="n-rect" x="42" y="793" width="118" height="30" rx="6"/>
+          <text class="n-label" x="101" y="809">QueryResponse</text>
+        </g>
+
+        <!-- TELEMETRY -->
+        <g id="n-TELEMETRY" class="node-group" onclick="jumpToStep(11)">
+          <rect class="n-rect" x="272" y="793" width="118" height="30" rx="6"/>
+          <text class="n-label" x="331" y="809">TelemetryBridge</text>
+        </g>
+
+        <!-- UE5 -->
+        <g id="n-UE5" class="node-group" onclick="jumpToStep(11)">
+          <rect class="n-rect" x="393" y="808" width="44" height="28" rx="6"/>
+          <text class="n-label" x="415" y="823">UE5</text>
+        </g>
+
+        <!-- Layer labels -->
+        <text x="8" y="107" fill="#334155" font-size="8" font-family="Inter">INTERFACE</text>
+        <text x="8" y="195" fill="#334155" font-size="8" font-family="Inter">THALAMUS</text>
+        <text x="8" y="280" fill="#334155" font-size="8" font-family="Inter">CORTEX</text>
+        <text x="8" y="810" fill="#334155" font-size="8" font-family="Inter">OUTPUT</text>
+
+        <!-- Horizontal layer separators -->
+        <line x1="4" y1="84"  x2="436" y2="84"  stroke="#1a1a2a" stroke-width="1"/>
+        <line x1="4" y1="168" x2="436" y2="168" stroke="#1a1a2a" stroke-width="1"/>
+        <line x1="4" y1="252" x2="436" y2="252" stroke="#1a1a2a" stroke-width="1"/>
+        <line x1="4" y1="780" x2="436" y2="780" stroke="#1a1a2a" stroke-width="1"/>
+
+      </svg>
+
+      <!-- Background processes diagram (hidden by default) -->
+      <div id="bg-diagram" class="hidden w-full px-4">
+        <svg viewBox="0 0 440 520" width="400" height="473" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow-bg" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+              <path d="M0,0 L7,3.5 L0,7 Z" fill="#2d2d4a"/>
+            </marker>
+          </defs>
+
+          <!-- REM ENGINE cluster -->
+          <rect x="10" y="20" width="200" height="160" rx="10" fill="none" stroke="#1e1e2e" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="22" y="38" fill="#334155" font-size="9" font-family="Inter" font-weight="600">REM ENGINE (background)</text>
+          <rect x="30"  y="50"  width="160" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
+          <text x="110" y="65"  fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">SynapticPruner</text>
+          <rect x="30"  y="90"  width="160" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
+          <text x="110" y="105" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">MmapConsolidator</text>
+          <rect x="30"  y="130" width="160" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
+          <text x="110" y="145" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">GraphWAL (NVMe)</text>
+          <path d="M110,78 L110,90" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
+          <path d="M110,118 L110,130" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
+
+          <!-- RESEARCH AGENT cluster -->
+          <rect x="230" y="20" width="200" height="200" rx="10" fill="none" stroke="#1e1e2e" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="242" y="38" fill="#334155" font-size="9" font-family="Inter" font-weight="600">RESEARCH AGENT</text>
+          <rect x="250" y="50"  width="160" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
+          <text x="330" y="65"  fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">ResearchAgent</text>
+          <rect x="250" y="90"  width="160" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
+          <text x="330" y="105" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">HypothesisEngine</text>
+          <rect x="250" y="130" width="160" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
+          <text x="330" y="145" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">TriangulationEngine</text>
+          <rect x="250" y="170" width="160" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
+          <text x="330" y="185" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">AutoApprover</text>
+          <path d="M330,78 L330,90" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
+          <path d="M330,118 L330,130" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
+          <path d="M330,158 L330,170" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
+
+          <!-- LEARNING LOOP -->
+          <rect x="10" y="230" width="420" height="80" rx="10" fill="none" stroke="#1e1e2e" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="22" y="248" fill="#334155" font-size="9" font-family="Inter" font-weight="600">LEARNING LOOP (POST /feedback → /retrain)</text>
+          <rect x="30"  y="255" width="110" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
+          <text x="85"  y="270" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">MetaParamLearner</text>
+          <rect x="165" y="255" width="110" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
+          <text x="220" y="270" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">CSAParamLearner</text>
+          <rect x="300" y="255" width="110" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
+          <text x="355" y="270" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">PlattCalibration</text>
+          <path d="M140,269 L165,269" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
+          <path d="M275,269 L300,269" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
+
+          <!-- AUTONOMOUS LOOP -->
+          <rect x="10" y="355" width="420" height="80" rx="10" fill="none" stroke="#1e1e2e" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="22" y="373" fill="#334155" font-size="9" font-family="Inter" font-weight="600">AUTONOMOUS DISCOVERY LOOP</text>
+          <rect x="30"  y="380" width="110" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
+          <text x="85"  y="395" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">DiscoveryCalibrator</text>
+          <rect x="165" y="380" width="110" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
+          <text x="220" y="395" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">AutonomousLoop</text>
+          <rect x="300" y="380" width="110" height="28" rx="6" fill="#1a1a2e" stroke="#2d2d4a" stroke-width="1.5"/>
+          <text x="355" y="395" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle" dominant-baseline="middle">ProvenanceLedger</text>
+          <path d="M140,394 L165,394" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
+          <path d="M275,394 L300,394" stroke="#2d2d4a" stroke-width="1.5" fill="none" marker-end="url(#arrow-bg)"/>
+          <!-- loop arrow back -->
+          <path d="M85,408 Q85,450 220,450 Q355,450 355,408" stroke="#2d2d4a" stroke-width="1" fill="none" stroke-dasharray="3 3" marker-end="url(#arrow-bg)"/>
+
+          <!-- cross-connections: ResearchAgent → AutonomousLoop -->
+          <path d="M330,198 L330,220 L220,220 L220,380" stroke="#1e1e2e" stroke-width="1" stroke-dasharray="3 3" fill="none" marker-end="url(#arrow-bg)"/>
+          <!-- MmapConsolidator → GraphWAL already shown inline -->
+        </svg>
+      </div>
+    </div>
+
+    <!-- ── RIGHT: detail panel ── -->
+    <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
+
+      <!-- step title bar -->
+      <div id="step-header" class="flex-shrink-0 px-6 py-4 border-b border-border bg-surface">
+        <div class="flex items-center gap-3">
+          <span id="step-num" class="text-xs font-mono text-slate-500">Step 0 / 11</span>
+          <span id="layer-badge" class="layer-badge bg-indigo/10 text-indigo border border-indigo/20">SYSTEM</span>
+        </div>
+        <h2 id="step-title" class="mt-1 text-base font-semibold text-white">System Ready</h2>
+      </div>
+
+      <!-- detail content -->
+      <div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+
+        <!-- description -->
+        <div>
+          <p id="step-desc" class="text-sm text-slate-400 leading-relaxed"></p>
+        </div>
+
+        <!-- what's happening cards -->
+        <div id="step-cards" class="grid grid-cols-2 gap-3"></div>
+
+        <!-- code snippet -->
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Code</p>
+          <pre id="step-code" class="code-block"></pre>
+        </div>
+
+        <!-- data flow annotation -->
+        <div id="step-flow" class="text-xs font-mono text-slate-500 border border-border rounded-lg px-4 py-3 bg-surface leading-relaxed"></div>
+
+      </div>
+
+      <!-- ── controls bar ── -->
+      <div class="flex-shrink-0 border-t border-border bg-surface px-6 py-3">
+
+        <!-- progress -->
+        <div class="mb-3">
+          <div class="flex justify-between text-xs text-slate-600 mb-1">
+            <span>Progress</span>
+            <span id="pct-label">0%</span>
+          </div>
+          <div class="h-1.5 bg-bg rounded-full overflow-hidden">
+            <div id="progress-fill" class="h-full bg-indigo rounded-full" style="width:0%"></div>
+          </div>
+        </div>
+
+        <!-- pip timeline -->
+        <div class="flex items-center gap-1.5 mb-3 overflow-x-auto pb-1">
+          <span class="text-xs text-slate-600 flex-shrink-0 mr-1">Steps:</span>
+          <div id="pip-strip" class="flex items-center gap-1.5 flex-shrink-0"></div>
+        </div>
+
+        <!-- buttons -->
+        <div class="flex items-center gap-2">
+          <button class="ctrl-btn" onclick="prevStep()" title="Previous">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+          </button>
+          <button id="play-btn" class="ctrl-btn" onclick="togglePlay()" title="Play / Pause">
+            <svg id="play-icon"  width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+            <svg id="pause-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" class="hidden"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+          <button class="ctrl-btn" onclick="nextStep()" title="Next">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>
+          </button>
+          <button class="ctrl-btn" onclick="resetSteps()" title="Reset">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,4 1,10 7,10"/><path d="M3.51,15a9,9,0,1,0,.49-4.27"/></svg>
+          </button>
+
+          <div class="flex-1"></div>
+
+          <label class="text-xs text-slate-500 flex items-center gap-2 cursor-pointer">
+            Speed:
+            <select id="speed-sel" onchange="setSpeed(this.value)" class="bg-bg border border-border rounded px-2 py-0.5 text-xs text-slate-300 focus:outline-none">
+              <option value="2000">Slow</option>
+              <option value="1200" selected>Normal</option>
+              <option value="600">Fast</option>
+              <option value="300">Very Fast</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Step data ────────────────────────────────────────────────────────────────
+const STEPS = [
+  {
+    id: 0,
+    title: "System Ready — Idle",
+    layer: "SYSTEM",
+    color: "indigo",
+    active_nodes: ["REST_API"],
+    active_edges: [],
+    description: "CEREBRUM is loaded and standing by. The knowledge graph is resident in memory (or memory-mapped from NVMe via MmapAdapter). Community partitions are computed. Engram cache is warm from QueryLog replay.",
+    cards: [
+      { label: "Graph", value: "NetworkX / Mmap adapter loaded" },
+      { label: "Communities", value: "DSCF/TSC partitions cached" },
+      { label: "Engram", value: "Warm via QueryLog.replay_into_cache()" },
+      { label: "Server", value: "uvicorn :8200  ws-port :8765" },
+    ],
+    code: `uvicorn api.server:app --port 8200 --ws-port 8765
+# GraphProfiler auto-classifies topology at build time
+# Engram: relation-pattern cache loaded from query_log.ndjson
+# PlattCalibration: A,B params restored if checkpoint exists`,
+    flow: `READY  graph ──►  CommunityEngine  ──►  communities[]\n       Engram  ──►  QueryLog.replay() ──►  pattern cache`
+  },
+  {
+    id: 1,
+    title: "User Query Received",
+    layer: "INTERFACE",
+    color: "cyan",
+    active_nodes: ["USER", "REST_API"],
+    active_edges: ["USER-REST_API"],
+    description: "POST /query arrives at the FastAPI REST server. Pydantic validates the QueryRequest. The graph profile is retrieved from the cached GraphProfiler result and attached to the request context.",
+    cards: [
+      { label: "Endpoint", value: "POST /query" },
+      { label: "Seed entities", value: "seeds[] extracted from query" },
+      { label: "Beam width", value: "default 12 (profile-configured)" },
+      { label: "Max loops", value: "3 (LoopedBeamTraversal)" },
+    ],
+    code: `POST /query
+{
+  "query":   "Who directed The Matrix?",
+  "seeds":   ["The Matrix"],
+  "top_k":   10,
+  "max_loops": 3
+}
+# Pydantic: QueryRequest validated
+# profile = GraphProfiler.get_cached()`,
+    flow: `HTTP POST  ──►  FastAPI router  ──►  QueryRequest()\n            ──►  GraphProfile  attached to context`
+  },
+  {
+    id: 2,
+    title: "Query Embedding",
+    layer: "THALAMUS",
+    color: "emerald",
+    active_nodes: ["REST_API", "EMBED"],
+    active_edges: ["REST_API-EMBED"],
+    description: "EmbeddingEngine encodes the query string to a 384-dimensional dense vector using sentence-transformers (all-MiniLM-L6-v2). This vector is used by CSAEngine for semantic similarity (alpha term) and by STRB for terminal relation detection.",
+    cards: [
+      { label: "Model", value: "all-MiniLM-L6-v2 (384-dim)" },
+      { label: "Used by", value: "CSA alpha·sim + STRB cosine" },
+      { label: "GraphSAGE", value: "entity embeddings smoothed 1-hop" },
+      { label: "Cache", value: "LRU per query text" },
+    ],
+    code: `# EmbeddingEngine.encode()
+query_vec = model.encode("Who directed The Matrix?")
+# → ndarray(384,), L2-normalized
+
+# GraphSAGE (build-time, not per-query)
+entity_embs = smooth_with_graphsage(
+    base_embs, graph, num_layers=2)`,
+    flow: `query_text  ──►  sentence-transformers  ──►  query_vec (384,)\nentity_ids  ──►  EmbeddingEngine + GraphSAGE  ──►  entity_embs`
+  },
+  {
+    id: 3,
+    title: "Graph Profiling",
+    layer: "CORTEX",
+    color: "indigo",
+    active_nodes: ["REST_API", "PROFILER"],
+    active_edges: ["REST_API-PROFILER"],
+    description: "GraphProfiler (cached at graph build time — O(E) analysis) returns the graph's structural class. Configures reasoning strategy: H1SE (hop-1 seed expansion), TAB (terminal anchor beam), STRB (semantic terminal relation boost), and initial beam width.",
+    cards: [
+      { label: "Profile type", value: "hub_homogeneous" },
+      { label: "H1SE", value: "True — hop-1 sub-traversals" },
+      { label: "STRB", value: "True — cosine rel matching" },
+      { label: "Anchor bonus", value: "0.4" },
+    ],
+    code: `# Cached at CerebrumGraph.build() time
+profile = GraphProfiler.analyze(graph)
+# GraphProfile(
+#   type         = "hub_homogeneous",
+#   hop_expand   = True,    # H1SE
+#   trb_auto     = True,    # STRB
+#   anchor_bonus = 0.4,
+#   beam_width   = 12
+# )`,
+    flow: `graph topology  ──►  GraphProfiler.analyze()  ──►  GraphProfile\nGraphProfile    ──►  BeamTraversal params configured`
+  },
+  {
+    id: 4,
+    title: "Community Assignment",
+    layer: "CORTEX",
+    color: "amber",
+    active_nodes: ["COMMUNITY"],
+    active_edges: ["EMBED-COMMUNITY", "PROFILER-COMMUNITY"],
+    description: "CommunityEngine's cached DSCF/TSC partition maps every seed entity to its community. CSAEngine will apply a β=0.4 community score bonus for same-community traversal edges, creating structurally cohesive beam paths.",
+    cards: [
+      { label: "Algorithm", value: "DSCF / TSC / Leiden" },
+      { label: "Beta weight", value: "0.4 (same-community bonus)" },
+      { label: "Per-community", value: "CSA params overridable" },
+      { label: "Online", value: "GlobalRebalancer monitors Q drift" },
+    ],
+    code: `# CommunityEngine.get_partition() — cached
+partition = {entity_id: community_id, ...}
+
+seed_community = partition["The Matrix"]  # → 7
+# Community 7: film/movie nodes cluster
+
+# CSAEngine will use:
+#   cs = 1.0 if same community else 0.0
+#   beta * cs = 0.4 contribution`,
+    flow: `seed_entities  ──►  CommunityEngine  ──►  community_ids[]\ncommunity_ids  ──►  CSAEngine query_snapshot`
+  },
+  {
+    id: 5,
+    title: "CSA Attention Weights",
+    layer: "CORTEX",
+    color: "indigo",
+    active_nodes: ["CSA"],
+    active_edges: ["COMMUNITY-CSA"],
+    description: "CSAEngine evaluates the 10-parameter Community-Structured Attention formula for every candidate edge in the beam. Combines semantic similarity, community cohesion, PageRank, temporal decay, and 6 more structural features into a single attention weight.",
+    cards: [
+      { label: "Parameters", value: "α β γ δ ε ζ η ι μ θ (10)" },
+      { label: "Alpha (semantic)", value: "0.4 × cosine(query, entity)" },
+      { label: "Beta (community)", value: "0.4 × same-community score" },
+      { label: "Online SGD", value: "MetaParameterLearner adapts live" },
+    ],
+    code: `a(u,v,k) = sigmoid(
+  0.4 * sim        # semantic similarity
++ 0.4 * cs         # community cohesion
++ 0.1 * etw        # edge-type weight
+- 0.05* nd         # distance penalty
++ 0.05* hd         # hop decay
++ 0.1 * pr_v       # PageRank prior
++ 0.1 * td         # temporal decay
++ 0.05* nr_v       # node recency
+- 0.1 * sd         # synthesis penalty
++ 1.0 * grounding  # confidence
+)`,
+    flow: `candidate_edges  ──►  CSAEngine.compute_weight()  ──►  attention[]\nattention[]      ──►  BeamTraversal._prune_candidates()`
+  },
+  {
+    id: 6,
+    title: "Beam Traversal — Hop 1",
+    layer: "CORTEX",
+    color: "cyan",
+    active_nodes: ["BEAM_HOP1"],
+    active_edges: ["CSA-BEAM_HOP1"],
+    description: "H1SE: each hop-1 branch runs as an independent sub-traversal eliminating cross-branch competition. GlobalBeamBarrier keeps min 10 branches regardless of score. STRB scores terminal relations via cosine similarity to query embedding.",
+    cards: [
+      { label: "H1SE", value: "per-branch sub-traversal" },
+      { label: "Beam width", value: "12 (profile default)" },
+      { label: "STRB", value: "terminal rel cosine scoring" },
+      { label: "Barrier", value: "min_guaranteed=10 branches" },
+    ],
+    code: `# HopExpandedTraversal (H1SE)
+for seed in query.seeds:
+    branch = sub_traverse(seed, beam_width=12)
+    # STRB: rank relations by cosine similarity
+    #   cosine(query_embedding, relation_label_emb)
+    branch.apply_strb(query_embedding)
+
+# GlobalBeamBarrier
+barrier.prune(threshold=0.1, min_guaranteed=10)`,
+    flow: `seeds[]  ──►  HopExpandedTraversal.hop1()  ──►  hop1_branches[]\nSTRB     ──►  relation scores  ──►  terminal_rel_ranked[]`
+  },
+  {
+    id: 7,
+    title: "Beam Traversal — Hops 2 / 3",
+    layer: "CORTEX",
+    color: "cyan",
+    active_nodes: ["BEAM_HOP23", "ENGRAM"],
+    active_edges: ["BEAM_HOP1-BEAM_HOP23", "ENGRAM-BEAM_HOP23"],
+    description: "Beam continues through hops 2 and 3. Engram cache biases pruning toward known-productive relation sequences via affinity boost. Causal edge bonus (+0.3) applied on CAUSAL_RELATIONS edges. PRB boosts the penultimate relation. r2 scores path consistency.",
+    cards: [
+      { label: "Engram affinity", value: "multiplicative boost on pruning" },
+      { label: "Causal bonus", value: "+0.3 on causal edges" },
+      { label: "PRB", value: "penultimate relation boost" },
+      { label: "Funnel", value: "beam_widths={1:20, 2:10, 3:5}" },
+    ],
+    code: `# Engram-steered pruning
+affinity = engram.query(rel_sequence_prefix)
+candidate.score *= (1.0 + affinity)
+
+# Causal edge bonus (Phase 124)
+if (u, v) in causal_edge_index:
+    weight *= (1.0 + causal_bonus)  # default 0.3
+
+# Funnel beam profile
+beam_width = {1: 20, 2: 10, 3: 5}[hop]`,
+    flow: `hop1_branches[]  ──►  BeamTraversal.hop2_3()  ──►  all_paths[]\nEngram           ──►  affinity_boost  ──►  pruning bias`
+  },
+  {
+    id: 8,
+    title: "Looped Beam Refinement",
+    layer: "CORTEX",
+    color: "indigo",
+    active_nodes: ["LOOPED", "MODULATOR"],
+    active_edges: ["BEAM_HOP23-LOOPED", "MODULATOR-LOOPED"],
+    description: "LoopedBeamTraversal (LoopLM-style) iterates up to T=3 times. Between loops: top-K answers expand seeds (semantic channel), PredictiveCodingEngine computes PE→ChemicalModulator adjusts beam params (metabolic channel), Engram biases next loop's pruning (mnemonic channel). Exit: |ΔPE| < γ.",
+    cards: [
+      { label: "Max loops", value: "3 (adaptive exit on ΔPE)" },
+      { label: "Seed expansion", value: "top-K answers add new seeds" },
+      { label: "PE feedback", value: "Jaccard divergence → arousal" },
+      { label: "Modulator", value: "arousal/novelty → beam width" },
+    ],
+    code: `for loop_i in range(max_loops):
+    results = beam.traverse(expanded_seeds)
+    pe = predictive_engine.update(results)
+    # ChemicalModulator: arousal, novelty, reinforcement
+    modulator.update(arousal=pe, novelty=1-soliton)
+    # Exit gate
+    if abs(pe - prev_pe) < gamma: break
+    # Expand seeds for next loop
+    new_seeds = top_k_entities(results)
+    expanded_seeds = seeds | new_seeds`,
+    flow: `all_paths[]  ──►  LoopedBeam  ──►  loop_0..T results\nPE          ──►  ChemModulator  ──►  adjusted beam params`
+  },
+  {
+    id: 9,
+    title: "Path Scoring",
+    layer: "CORTEX",
+    color: "emerald",
+    active_nodes: ["SCORER"],
+    active_edges: ["LOOPED-SCORER"],
+    description: "PathScorer ranks all collected paths with composite scoring: r2 path-consistency boost (×3.0 for corroborated paths), vote-weight suppression per community, counterfactual robustness re-ranking, and Cingulate Engine bilateral verification for top-K.",
+    cards: [
+      { label: "r2 boost", value: "×3.0 for consistent paths" },
+      { label: "Vote-weight", value: "community approval suppression" },
+      { label: "Counterfactual", value: "block intermediate nodes, rescore" },
+      { label: "Cingulate", value: "bilateral reverse verify +30%" },
+    ],
+    code: `# PathScorer composite scoring
+score = base_score
+      * r2_path_consistency_boost(path)   # ×3.0
+      * vote_weight_suppression(community)
+      * counterfactual_robustness(path)
+
+# CingulateEngine bilateral verification
+if cingulate.verify_reverse(path):
+    score *= 1.3  # confirmed answer
+
+# DBC: distribution-based calibration
+score = dbc_calibrate(score, path_scores)`,
+    flow: `all_paths[]  ──►  PathScorer.rank()  ──►  scored_paths[]\nCingulate    ──►  bilateral check  ──►  confidence boost`
+  },
+  {
+    id: 10,
+    title: "Answer Extraction",
+    layer: "CORTEX",
+    color: "emerald",
+    active_nodes: ["EXTRACTOR"],
+    active_edges: ["SCORER-EXTRACTOR"],
+    description: "AnswerExtractor extracts tail entities from top paths, deduplicates, and applies Platt scaling to calibrate raw scores to probabilities. Answer-type constraint filters by expected semantic type from the detected terminal relation.",
+    cards: [
+      { label: "Top-K", value: "10 ranked answers" },
+      { label: "Platt scaling", value: "P = 1/(1+exp(A·s+B))" },
+      { label: "Type filter", value: "terminal relation → entity type" },
+      { label: "Dedup", value: "best-score per tail entity" },
+    ],
+    code: `# AnswerExtractor
+answers = extractor.extract(scored_paths, top_k=10)
+
+# Platt calibration (fitted from POST /feedback)
+for ans in answers:
+    ans.confidence = platt.calibrate(ans.raw_score)
+    # P = 1 / (1 + exp(A * raw_score + B))
+
+# Answer-type constraint
+expected_type = terminal_rel_type_map[terminal_rel]
+answers = [a for a in answers if a.type == expected_type]`,
+    flow: `scored_paths[]  ──►  AnswerExtractor  ──►  answers[{entity, score}]\nPlatt           ──►  calibrated confidence  ──►  final QueryResponse`
+  },
+  {
+    id: 11,
+    title: "Response + Telemetry",
+    layer: "INTERFACE",
+    color: "cyan",
+    active_nodes: ["RESPONSE", "TELEMETRY", "UE5"],
+    active_edges: ["EXTRACTOR-RESPONSE", "EXTRACTOR-TELEMETRY", "TELEMETRY-UE5"],
+    description: "QueryResponse returns ranked answers with calibrated confidences and full ReasoningTrace (ERT) to the user. Simultaneously, TelemetryBridge emits SYNAPTIC_PULSE WebSocket events per traversed hop to connected UE5 visualization clients — showing the reasoning as live neural activity.",
+    cards: [
+      { label: "Response", value: "answers[] + paths[] + trace{}" },
+      { label: "ERT", value: "per-hop ReasoningTrace (glass-box)" },
+      { label: "SYNAPTIC_PULSE", value: "per hop → UE5 actor glow" },
+      { label: "Latency", value: "~80–400ms (3-hop, warm cache)" },
+    ],
+    code: `# QueryResponse (REST)
+{
+  "answers": [{"entity":"Lana Wachowski","score":0.94},...],
+  "paths":   [...],
+  "trace":   {"hops": [...], "loop_trace": [...]}
+}
+
+# TelemetryBridge (WebSocket :8765)
+{
+  "type":   "SYNAPTIC_PULSE",
+  "source": "The Matrix",
+  "target": "Lana Wachowski",
+  "relation": "directed_by",
+  "weight": 0.94, "hop_count": 1
+}`,
+    flow: `AnswerExtractor  ──►  QueryResponse  ──►  HTTP 200 to user\n                 ──►  TelemetryBridge  ──►  ws://localhost:8765\n                 ──►  UE5 ANeuronNodeActor.pulse()`
+  },
+];
+
+// ── State ────────────────────────────────────────────────────────────────────
+let currentStep = 0;
+let playing = false;
+let playTimer = null;
+let playSpeed = 1200;
+let currentView = 'query';
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+function init() {
+  buildPips();
+  renderStep(0);
+}
+
+function buildPips() {
+  const strip = document.getElementById('pip-strip');
+  strip.innerHTML = '';
+  STEPS.forEach((s, i) => {
+    const pip = document.createElement('div');
+    pip.className = 'step-pip';
+    pip.id = `pip-${i}`;
+    pip.title = `Step ${i}: ${s.title}`;
+    pip.onclick = () => jumpToStep(i);
+    strip.appendChild(pip);
+  });
+}
+
+// ── Render step ───────────────────────────────────────────────────────────────
+function renderStep(idx) {
+  const s = STEPS[idx];
+  currentStep = idx;
+
+  // header
+  document.getElementById('step-num').textContent   = `Step ${idx} / ${STEPS.length - 1}`;
+  document.getElementById('step-title').textContent  = s.title;
+  document.getElementById('step-desc').textContent   = s.description;
+  document.getElementById('step-code').textContent   = s.code;
+  document.getElementById('step-flow').textContent   = s.flow;
+
+  // layer badge
+  const badge = document.getElementById('layer-badge');
+  const colorMap = { indigo: 'bg-indigo/10 text-indigo border-indigo/20', cyan: 'bg-cyan/10 text-cyan border-cyan/20', emerald: 'bg-emerald/10 text-emerald border-emerald/20', amber: 'bg-amber/10 text-amber border-amber/20' };
+  badge.className = `layer-badge border ${colorMap[s.color] || colorMap.indigo}`;
+  badge.textContent = s.layer;
+
+  // cards
+  const cards = document.getElementById('step-cards');
+  cards.innerHTML = (s.cards || []).map(c =>
+    `<div class="bg-surface border border-border rounded-lg px-3 py-2">
+       <div class="text-xs text-slate-500">${c.label}</div>
+       <div class="text-xs text-slate-300 font-medium mt-0.5">${c.value}</div>
+     </div>`
+  ).join('');
+
+  // progress
+  const pct = idx / (STEPS.length - 1) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('pct-label').textContent = Math.round(pct) + '%';
+
+  // pips
+  STEPS.forEach((_, i) => {
+    const pip = document.getElementById(`pip-${i}`);
+    if (!pip) return;
+    pip.className = 'step-pip' + (i < idx ? ' visited' : '') + (i === idx ? ' current' : '');
+  });
+
+  // SVG
+  updateSVG(s);
+}
+
+function updateSVG(step) {
+  // reset all nodes
+  const allNodes = ['USER','REST_API','EMBED','PROFILER','COMMUNITY','CSA',
+    'BEAM_HOP1','ENGRAM','BEAM_HOP23','MODULATOR','LOOPED','SCORER',
+    'EXTRACTOR','RESPONSE','TELEMETRY','UE5'];
+
+  // find which nodes were visited before this step
+  const visitedNodes = new Set();
+  for (let i = 0; i < currentStep; i++) {
+    (STEPS[i].active_nodes || []).forEach(n => visitedNodes.add(n));
+  }
+
+  allNodes.forEach(id => {
+    const el = document.getElementById('n-' + id);
+    if (!el) return;
+    el.className.baseVal = 'node-group';
+    if (visitedNodes.has(id)) el.className.baseVal += ' visited';
+  });
+
+  // apply active classes
+  (step.active_nodes || []).forEach(id => {
+    const el = document.getElementById('n-' + id);
+    if (!el) return;
+    el.className.baseVal = `node-group active-${step.color}`;
+  });
+
+  // reset all edges
+  const allEdges = ['USER-REST_API','REST_API-EMBED','REST_API-PROFILER',
+    'EMBED-COMMUNITY','PROFILER-COMMUNITY','COMMUNITY-CSA','CSA-BEAM_HOP1',
+    'BEAM_HOP1-BEAM_HOP23','ENGRAM-BEAM_HOP23','BEAM_HOP23-LOOPED',
+    'MODULATOR-LOOPED','LOOPED-SCORER','SCORER-EXTRACTOR',
+    'EXTRACTOR-RESPONSE','EXTRACTOR-TELEMETRY','TELEMETRY-UE5'];
+
+  const visitedEdges = new Set();
+  for (let i = 0; i < currentStep; i++) {
+    (STEPS[i].active_edges || []).forEach(e => visitedEdges.add(e));
+  }
+
+  allEdges.forEach(id => {
+    const el = document.getElementById('e-' + id);
+    if (!el) return;
+    el.className.baseVal = 'edge' + (visitedEdges.has(id) ? ' edge-visited' : '');
+  });
+
+  // active edges
+  (step.active_edges || []).forEach(id => {
+    const el = document.getElementById('e-' + id);
+    if (!el) return;
+    el.className.baseVal = `edge edge-active edge-active-${step.color}`;
+  });
+
+  // update arrow color
+  const arrowPath = document.getElementById('arrow-act-path');
+  const colorHex = { indigo: '#6366f1', cyan: '#22d3ee', emerald: '#10b981', amber: '#f59e0b' };
+  if (arrowPath) arrowPath.setAttribute('fill', colorHex[step.color] || '#22d3ee');
+}
+
+// ── Controls ──────────────────────────────────────────────────────────────────
+function nextStep() {
+  if (currentStep < STEPS.length - 1) renderStep(currentStep + 1);
+  else stopPlay();
+}
+function prevStep() {
+  if (currentStep > 0) renderStep(currentStep - 1);
+}
+function jumpToStep(i) {
+  stopPlay();
+  renderStep(Math.max(0, Math.min(i, STEPS.length - 1)));
+}
+function resetSteps() {
+  stopPlay();
+  renderStep(0);
+}
+function togglePlay() {
+  playing ? stopPlay() : startPlay();
+}
+function startPlay() {
+  playing = true;
+  document.getElementById('play-btn').classList.add('active-play');
+  document.getElementById('play-icon').classList.add('hidden');
+  document.getElementById('pause-icon').classList.remove('hidden');
+  function tick() {
+    if (currentStep < STEPS.length - 1) {
+      nextStep();
+      playTimer = setTimeout(tick, playSpeed);
+    } else {
+      stopPlay();
+    }
+  }
+  playTimer = setTimeout(tick, playSpeed);
+}
+function stopPlay() {
+  playing = false;
+  clearTimeout(playTimer);
+  document.getElementById('play-btn').classList.remove('active-play');
+  document.getElementById('play-icon').classList.remove('hidden');
+  document.getElementById('pause-icon').classList.add('hidden');
+}
+function setSpeed(v) {
+  playSpeed = parseInt(v);
+}
+
+// ── View toggle ───────────────────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  const svg = document.getElementById('pipeline-svg');
+  const bg  = document.getElementById('bg-diagram');
+  if (v === 'query') {
+    svg.classList.remove('hidden'); bg.classList.add('hidden');
+    document.getElementById('tab-query').classList.add('bg-surface','text-white');
+    document.getElementById('tab-query').classList.remove('text-slate-500');
+    document.getElementById('tab-bg').classList.remove('bg-surface','text-white');
+    document.getElementById('tab-bg').classList.add('text-slate-500');
+  } else {
+    svg.classList.add('hidden'); bg.classList.remove('hidden');
+    document.getElementById('tab-bg').classList.add('bg-surface','text-white');
+    document.getElementById('tab-bg').classList.remove('text-slate-500');
+    document.getElementById('tab-query').classList.remove('bg-surface','text-white');
+    document.getElementById('tab-query').classList.add('text-slate-500');
+  }
+}
+
+// keyboard nav
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') nextStep();
+  if (e.key === 'ArrowLeft')  prevStep();
+  if (e.key === ' ')          { e.preventDefault(); togglePlay(); }
+  if (e.key === 'r' || e.key === 'R') resetSteps();
+});
+
+// ── Live Mode ─────────────────────────────────────────────────────────────────
+let liveActive = false;
+let liveWs = null;
+let liveHealthTimer = null;
+const REST_URL = 'http://localhost:8200';
+const WS_URL   = 'ws://localhost:8765';
+
+// Step mapping for telemetry event types
+const EVENT_STEP = {
+  SYNAPTIC_PULSE:  7,
+  SYNAPTOGENESIS:  7,
+  SYNAPTIC_PRUNE:  9,
+  NEUROGENESIS:    4,
+  DISSONANCE_DETECTED: 9,
+};
+
+function toggleLive() {
+  liveActive ? stopLive() : startLive();
+}
+
+function startLive() {
+  liveActive = true;
+  setLiveBadge('connecting', 'Connecting…');
+  checkHealth();
+  liveHealthTimer = setInterval(checkHealth, 3000);
+  connectWs();
+}
+
+function stopLive() {
+  liveActive = false;
+  clearInterval(liveHealthTimer);
+  if (liveWs) { try { liveWs.close(); } catch(e){} liveWs = null; }
+  setLiveBadge('off', 'Live Mode');
+}
+
+function setLiveBadge(state, label) {
+  const dot   = document.getElementById('live-dot');
+  const lbl   = document.getElementById('live-label');
+  lbl.textContent = label;
+  dot.className = 'w-2 h-2 rounded-full ' + {
+    off:        'bg-slate-600',
+    connecting: 'bg-amber-400 animate-pulse',
+    connected:  'bg-emerald-400',
+    error:      'bg-rose-500',
+  }[state];
+}
+
+async function checkHealth() {
+  try {
+    const r = await fetch(`${REST_URL}/health`, { signal: AbortSignal.timeout(2000) });
+    if (r.ok) {
+      const d = await r.json();
+      setLiveBadge('connected', `Live · ${d.node_count ?? '?'} nodes`);
+    } else {
+      setLiveBadge('error', 'Server error');
+    }
+  } catch {
+    setLiveBadge('error', 'Offline');
+  }
+}
+
+function connectWs() {
+  try {
+    liveWs = new WebSocket(WS_URL);
+    liveWs.onopen    = () => setLiveBadge('connected', 'Live · WS connected');
+    liveWs.onclose   = () => { if (liveActive) setTimeout(connectWs, 2000); };
+    liveWs.onerror   = () => {};
+    liveWs.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        handleLiveEvent(msg);
+      } catch {}
+    };
+  } catch {}
+}
+
+function handleLiveEvent(msg) {
+  const type = msg.type || '';
+  const targetStep = EVENT_STEP[type];
+  if (targetStep === undefined) return;
+
+  stopPlay();
+  jumpToStep(targetStep);
+
+  // Append event to flow annotation
+  const flow = document.getElementById('step-flow');
+  const ts   = new Date().toLocaleTimeString();
+  const line = `[${ts}] ${type}  ${msg.source ?? ''}  →  ${msg.target ?? ''}  w=${(msg.weight ?? 0).toFixed(3)}`;
+  flow.textContent = line + '\n' + (flow.textContent || '').split('\n').slice(0, 8).join('\n');
+}
+</script>
+</body>
+</html>
