@@ -1,6 +1,6 @@
 # arXiv Submission Guide
 
-**CEREBRUM — 35 Papers Complete (PAPER_001 – PAPER_035)**
+**CEREBRUM — 39 Papers (PAPER_001 – PAPER_037 complete · PAPER_038–039 staged)**
 
 This guide covers the submission process, per-paper metadata, and checklist for submitting all CEREBRUM papers to arXiv.
 
@@ -8,7 +8,7 @@ This guide covers the submission process, per-paper metadata, and checklist for 
 
 ## arXiv Categories
 
-All sixteen papers should be submitted to **primary category `cs.IR`** (Information Retrieval) with the following cross-list categories as appropriate:
+All papers should be submitted to **primary category `cs.IR`** (Information Retrieval) with the following cross-list categories as appropriate:
 
 | Primary | Cross-list | Use for |
 |---|---|---|
@@ -41,10 +41,10 @@ Submit foundational papers first so cross-references resolve correctly.
 | 14 | Metacognitive Verification | `PAPER_014_INSIGHT_ENGINE.md` | `cs.AI` + `cs.IR` |
 | 15 | Algorithmic Depth | `PAPER_015_ALGORITHMIC_DEPTH.md` | `cs.LG` + `cs.IR` |
 | 16 | Production Hardening | `PAPER_016_PRODUCTION_HARDENING.md` | `cs.SE` + `cs.IR` |
-| 17 | Hypothesis Materialization | `PAPER_017_HYPOTHESIS_MATERIALIZATION.md` | `cs.AI` + `cs.IR` |
+| 17 | GraphSAGE Neighbourhood Smoothing | `PAPER_017_GRAPHSAGE_SMOOTHING.md` | `cs.LG` + `cs.IR` |
 | 18 | Engram-Steered Traversal | `PAPER_018_ENGRAM_TRAVERSAL.md` | `cs.IR` + `cs.AI` |
 | 19 | Temporal Calibration | `PAPER_019_TEMPORAL_CALIBRATOR.md` | `cs.LG` + `cs.IR` |
-| 20 | MACH Consensus Hierarchies | `PAPER_020_MACH.md` | `cs.AI` + `cs.DC` |
+| 20 | Five Fault-Tolerance Patterns for Production KG Servers | `PAPER_020_FAULT_TOLERANCE.md` | `cs.SE` + `cs.IR` |
 | 21 | SpeedTalk Phonemic Compression | `PAPER_021_SPEEDTALK_COMPRESSION.md` | `cs.IR` + `cs.LG` |
 | 22 | Looped Beam Traversal | `PAPER_022_LOOPED_TRAVERSAL.md` | `cs.IR` + `cs.LG` |
 | 23 | PredictiveCodingEngine | `PAPER_023_PREDICTIVE_CODING.md` | `cs.AI` + `cs.NE` |
@@ -60,6 +60,10 @@ Submit foundational papers first so cross-references resolve correctly.
 | 33 | GraphSnapshot Persistence | `PAPER_033_GRAPH_SNAPSHOT.md` | `cs.SE` + `cs.IR` |
 | 34 | Adaptive Loop Tuning | `PAPER_034_ADAPTIVE_LOOP_TUNING.md` | `cs.AI` + `cs.IR` |
 | 35 | UE5 Neural Visualization Bridge | `PAPER_035_UE5_NEURAL_VISUALIZATION.md` | `cs.HC` + `cs.IR` |
+| 36 | The Cingulate Engine: Meta-Cognitive Error Correction in Graph Attention | `PAPER_036_CINGULATE_ENGINE.md` | `cs.AI` + `cs.IR` |
+| 37 | GraphProfiler and STRB: Autonomous Strategy Selection for Zero-Shot KG Reasoning | `PAPER_037_GRAPHPROFILER_STRB.md` | `cs.IR` + `cs.AI` |
+| 38 | Hop-Scaled Semantic Attention: Suppressing Cross-Hop Semantic Bias in Multi-Hop KGQA *(Phase 225/226 — draft needed)* | `PAPER_038_HOP_SCALED_SEMANTIC.md` | `cs.IR` + `cs.LG` |
+| 39 | Intentional NVMe Graph Consolidation with Write-Ahead Logging for Knowledge Graph Systems *(Phase 227 — draft needed)* | `PAPER_039_NVME_WAL.md` | `cs.DB` + `cs.IR` |
 
 ---
 
@@ -72,7 +76,7 @@ Title:        [From paper header]
 Authors:      Bryan Alexander Buchorn
 Abstract:     [From paper Abstract section — max 1,920 characters]
 Comments:     16 pages. Part of the CEREBRUM framework series (v2.73.0).
-              Code: https://github.com/[repo]
+              Code: https://github.com/BrutalByte/CEREBRUM
 MSC-class:    68T30 (Knowledge representation)
 ACM-class:    I.2.4; H.3.3
 License:      CC BY 4.0 (arXiv default for non-commercial research)
@@ -93,7 +97,7 @@ pandoc docs/arxiv/PAPER_001_DSCF_TSC.md -o arxiv_submission/paper_001.tex \
     --bibliography refs.bib
 ```
 
-A LaTeX template (`arxiv_template.tex`) following arXiv's `article` document class should be prepared once and reused for all sixteen papers.
+A LaTeX template (`arxiv_template.tex`) following arXiv's `article` document class should be prepared once and reused for all papers.
 
 ### Required LaTeX elements
 - `\usepackage{amsmath}` — for displayed equations
@@ -132,7 +136,7 @@ done
 - [ ] All citations in `refs.bib` with correct BibTeX keys
 - [ ] Author affiliation: "Independent Researcher, Las Vegas, NV, USA"
 - [ ] Prior art section explicitly differentiates from closest prior work
-- [ ] Benchmark numbers match `release/BENCHMARKS.md`
+- [ ] Benchmark numbers match `docs/BENCHMARK_CANONICAL.md`
 - [ ] GitHub/code link included in Comments field
 - [ ] License selected: CC BY 4.0
 - [ ] Cross-list categories correct for paper topic
@@ -160,10 +164,12 @@ The comprehensive umbrella paper (`docs/CEREBRUM_White_Paper_arXiv.md`) covers a
 
 > **CEREBRUM: Community-Structured Graph Attention for Zero-Shot Multi-Hop Knowledge Graph Reasoning**
 
-This paper should cite all subsystem papers (PAPER_001 through PAPER_035) by their arXiv IDs. Submit after PAPER_035 is live.
+This paper should cite all subsystem papers (PAPER_001 through PAPER_039) by their arXiv IDs. Submit after PAPER_039 is live.
+
+`PAPER_100_CONCLUSION.md` (`docs/archive/pre-arXiv/arxiv/PAPER_100_CONCLUSION.md`) is the series conclusion — submit last, after the umbrella paper is live and all arXiv IDs are assigned.
 
 ---
 **Copyright © 2026 Bryan Alexander Buchorn. All Rights Reserved.**
 
 ---
-**Reviewed on**: June 4, 2026 for version v2.73.0
+**Reviewed on**: June 5, 2026 for version v2.73.0 (Phase 227)

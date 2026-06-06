@@ -1355,7 +1355,7 @@ def main():
     parser.add_argument(
         "--workers", type=int, default=None, metavar="N",
         help="Worker processes for question-level parallelism. "
-             "Default: os.cpu_count(). Set to 1 to disable multiprocessing.",
+             "Default: min(cpu_count, 8). Set to 1 to disable multiprocessing.",
     )
     parser.add_argument(
         "--verbose", action="store_true", default=False,
@@ -1588,7 +1588,8 @@ def main():
     # ------------------------------------------------------------------
     # Phase 182: Resolve worker count and build multiprocessing pool
     # ------------------------------------------------------------------
-    n_workers = max(1, args.workers if args.workers is not None else os.cpu_count())
+    _MAX_DEFAULT_WORKERS = 8  # >8 concurrent sentence-transformer loads exhaust GPU VRAM
+    n_workers = max(1, args.workers if args.workers is not None else min(os.cpu_count(), _MAX_DEFAULT_WORKERS))
     _pool = None
     if n_workers > 1:
         print(f"\nSpawning {n_workers} worker processes...")

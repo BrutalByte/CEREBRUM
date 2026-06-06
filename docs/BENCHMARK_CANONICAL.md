@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.73.0 (Phase 223) — Updated Jun 4, 2026
+## Version: v2.73.0 (Phase 227) — Updated Jun 5, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -63,8 +63,9 @@ r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs 
 | **219** | FastBindingEngine (one-shot episodic) + OscillationEngine (theta/gamma DSCF sync) (cognitive architecture) | — | — | — |
 | **220** | SelfAwarenessEngine — 7-dimension epistemic self-assessment (cognitive architecture) | — | — | — |
 | **221–223** | Uncertainty-steered retry + credibility resolution + PlattCalibration + cerebellar punishment + self-supervised adaptation (cognitive architecture) | **60.2%** | **89.4%** | **0.702** |
+| **225–227** | **alpha hop scaling (Ph225) + semantic re-scoring fix (Ph226) + NVMe WAL/MmapConsolidator + Optuna tuning (beam-width=12)** | **60.6%** | **87.9%** | **0.703** |
 
-*\* Phase 221–223 numbers from 500-sample sentence-transformer run (Jun 4, 2026). No regression vs Phase 220 baseline (60.6%).*
+*\* Phase 221–223 numbers from 500-sample sentence-transformer run (Jun 4, 2026). Phase 225–227 from full 14,274-question run (Jun 5, 2026). Tuner 500-sample best was 66.8% (Phase 227 trial 63); full-run validation converged at 60.6% (expected holdout gap).*
 
 ---
 
@@ -461,10 +462,17 @@ Use this table verbatim in the flagship paper and Paper A's context section.
 | **CEREBRUM Phase 53 (ours)** | **None** | **46.1%** | **30.0%** | **12.5%** | **7.5%** |
 | CEREBRUM Phase 182 (full stack)† | None | 46.1% | 30.0% | **49.68%** | 7.5% |
 | CEREBRUM Phase 201 (full stack)† | None | — | — | **58.90%** | — |
+| CEREBRUM Phase 227 (full stack)† | None | — | — | **60.6%** | — |
 
 † Full-stack 3-hop results use FHRB, r2-boost, SRD, RelationPathPrior and are
 **not directly comparable** to supervised methods in this table — listed for internal tracking only.
 Use Phase 53 numbers in all paper comparison tables.
+
+**Phase 227 full-stack configuration (Jun 5, 2026):** sentence-transformers, beam-width=12,
+trb-factor=31.134, r2-boost=3.977, vote-weight=0.7527, idf-weight=0.039, branch-bonus=0.385,
+fhrb-factor=7.572, gamma=10.138, beta=0.9616, 8-worker multiprocessing.
+14,268/14,274 questions answered (6 skipped). Runtime: 1283.7s (~21 min).
+H@1=60.6% | H@10=87.9% | MRR=0.703.
 
 **Framing (include as footnote or paragraph):**
 > CEREBRUM achieves these results with zero task-specific training, no labeled question-answer pairs,
@@ -594,4 +602,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-06-03 | Phase 219: cognitive architecture additions (IOR, hyperbolic forgetting, conflict monitoring, curiosity, source credibility, causal discovery, meta-relation layer, cross-KB transfer, fast binding, oscillation sync) — no scoring regression | Phase 219 zero-config 500-sample validation: 60.6% 3-hop H@1 (sentence) / 60.6% (random) | Phase 213: hub_homogeneous × sentence H@1=66.8% (500-sample, 3-hop) | Phase 53 canonical paper numbers unchanged*
+*Last updated: 2026-06-05 | Phase 225–227: alpha hop scaling + semantic re-scoring fix + NVMe WAL/MmapConsolidator + Optuna tuning — full 14,274-question validation: H@1=60.6%, H@10=87.9%, MRR=0.703 | Phase 53 canonical paper numbers unchanged*

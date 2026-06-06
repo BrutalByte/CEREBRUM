@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CEREBRUM — Training-Free Knowledge Graph Reasoning</title>
-  <meta name="description" content="Crystal-box knowledge graph reasoning — 60.4% H@1 on MetaQA 3-hop, 89.4% H@10, zero training data, zero hallucinations. Open source.">
+  <meta name="description" content="Crystal-box knowledge graph reasoning — 60.6% H@1 on MetaQA 3-hop, 87.9% H@10, zero training data, zero hallucinations. Open source.">
   <meta property="og:title" content="CEREBRUM — Training-Free Knowledge Graph Reasoning">
   <meta property="og:description" content="Every answer is a traceable graph path. Zero hallucinations. 1000× cheaper than frontier LLMs.">
   <meta property="og:image" content="./assets/og-image.png">
@@ -12,7 +12,7 @@
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="CEREBRUM — Zero Hallucination KG Reasoning">
-  <meta name="twitter:description" content="60.4% H@1 · 89.4% H@10 on MetaQA 3-hop. Zero training. Zero hallucinations. Open source.">
+  <meta name="twitter:description" content="60.6% H@1 · 87.9% H@10 on MetaQA 3-hop. Zero training. Zero hallucinations. Open source.">
   <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon-16x16.png">
@@ -1382,6 +1382,259 @@
     </div>
   </div>
 </section>
+
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 6B: INTERACTIVE ARCHITECTURE DIAGRAM
+══════════════════════════════════════════════════ -->
+<section id="architecture" class="py-24 px-6 border-t border-border">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-12">
+      <div class="section-label mb-4">System Architecture</div>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">How the layers connect</h2>
+      <p class="text-slate-400 mt-3 max-w-2xl mx-auto">Select a view to explore data and control flows. Pan to scroll, scroll to zoom.</p>
+    </div>
+
+    <!-- Tab buttons -->
+    <div class="flex flex-wrap justify-center gap-3 mb-8" id="arch-tabs">
+      <button onclick="showDiagram('query')"   id="tab-query"   class="arch-tab arch-tab-active px-5 py-2 rounded-lg text-sm font-medium transition-all">Query Flow</button>
+      <button onclick="showDiagram('learning')" id="tab-learning" class="arch-tab px-5 py-2 rounded-lg text-sm font-medium transition-all">Learning Loop</button>
+      <button onclick="showDiagram('full')"    id="tab-full"    class="arch-tab px-5 py-2 rounded-lg text-sm font-medium transition-all">Full System</button>
+    </div>
+
+    <!-- Diagram container -->
+    <div class="relative rounded-2xl border border-border bg-surface overflow-hidden" style="min-height:520px;">
+      <!-- Controls -->
+      <div class="absolute top-3 right-3 z-10 flex gap-2">
+        <button onclick="resetZoom()" title="Reset zoom" class="w-8 h-8 rounded-lg bg-surface border border-border text-slate-400 hover:text-white hover:border-indigo/50 transition-all flex items-center justify-center text-lg leading-none">⊙</button>
+        <button onclick="zoomIn()"   title="Zoom in"    class="w-8 h-8 rounded-lg bg-surface border border-border text-slate-400 hover:text-white hover:border-indigo/50 transition-all flex items-center justify-center text-lg leading-none">+</button>
+        <button onclick="zoomOut()"  title="Zoom out"   class="w-8 h-8 rounded-lg bg-surface border border-border text-slate-400 hover:text-white hover:border-indigo/50 transition-all flex items-center justify-center text-lg leading-none">−</button>
+      </div>
+
+      <!-- Loading state -->
+      <div id="arch-loading" class="absolute inset-0 flex items-center justify-center">
+        <div class="text-slate-500 text-sm animate-pulse">Rendering diagram…</div>
+      </div>
+
+      <!-- Diagram render target -->
+      <div id="arch-diagram" class="w-full h-full p-6" style="min-height:500px; cursor:grab;"></div>
+    </div>
+
+    <p class="text-center text-xs text-slate-600 mt-4">v2.73.0 · Phase 227 · All 54 system components</p>
+  </div>
+</section>
+
+<style>
+  .arch-tab        { background:#111118; color:#94a3b8; border:1px solid #1e1e2e; }
+  .arch-tab:hover  { color:#fff; border-color:rgba(99,102,241,.4); }
+  .arch-tab-active { background:rgba(99,102,241,.15); color:#a5b4fc; border-color:rgba(99,102,241,.5); }
+
+  /* Mermaid dark overrides */
+  #arch-diagram .node rect,
+  #arch-diagram .node circle,
+  #arch-diagram .node polygon { stroke:#6366f1 !important; fill:#111118 !important; }
+  #arch-diagram .node .label  { color:#e2e8f0 !important; fill:#e2e8f0 !important; }
+  #arch-diagram .edgePath .path { stroke:#6366f1 !important; opacity:.6; }
+  #arch-diagram .edgeLabel      { color:#94a3b8 !important; fill:#94a3b8 !important; font-size:10px !important; }
+  #arch-diagram .cluster rect   { fill:#0f172a !important; stroke:#1e1e2e !important; }
+  #arch-diagram .cluster .label { color:#6366f1 !important; fill:#6366f1 !important; font-weight:600; }
+  #arch-diagram svg             { width:100% !important; }
+</style>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background:      '#0a0a0f',
+      primaryColor:    '#1e1e3a',
+      primaryBorderColor: '#6366f1',
+      primaryTextColor: '#e2e8f0',
+      secondaryColor:  '#0f172a',
+      tertiaryColor:   '#111118',
+      lineColor:       '#6366f1',
+      fontSize:        '13px',
+      edgeLabelBackground: '#111118',
+    },
+    flowchart: { curve: 'basis', useMaxWidth: true, htmlLabels: true },
+  });
+
+  const DIAGRAMS = {
+    query: `flowchart LR
+subgraph THALAMUS["THALAMUS — Ingestion"]
+  KG["CSV / Neo4j\nRDF / SQL"] -->|raw edges| ADAPT["GraphAdapter"]
+  ADAPT -->|graph| INGEST["IngestionPipeline\nnormalize + dedup"]
+  INGEST -->|entities| EMBED["EmbeddingEngine\nrandom / sentence-transformers"]
+  EMBED -->|base emb| GSAGE["GraphSAGE\nsmoother"]
+  INGEST -->|nodes| STRUCT["StructuralEncoder\nPageRank · betweenness · degree"]
+end
+subgraph CORTEX["CORTEX — Reasoning"]
+  COMM["CommunityEngine\nDSCF / TSC / Leiden"]
+  PROF["GraphProfiler\nauto beam+hop config"]
+  CSA["CSAEngine\n10-param attention\nα·sim + β·cs + γ·etw…"]
+  BT["BeamTraversal\nH1SE · TAB · Bayesian"]
+  LBT["LoopedBeamTraversal\nLoopLM iterative"]
+  PS["PathScorer"]
+  AE["AnswerExtractor\nPlatt · counterfactual\ndeductive rerank"]
+  ENG["Engram / SpeedTalk\npattern cache"]
+end
+GSAGE -->|smoothed emb| CSA
+STRUCT -->|PR/degree| CSA
+ADAPT -->|topology| COMM
+COMM -->|community map| CSA
+PROF -->|flags| BT
+CSA -->|attention weights| BT
+ENG -->|affinity boost| BT
+BT --> LBT --> PS --> AE
+USER["User\nPOST /query"] --> API["FastAPI\nREST"] --> LBT
+AE -->|ranked answers| API --> USER
+AE -->|query record| QLOG["QueryLog"] --> ENG`,
+
+    learning: `flowchart TD
+subgraph FEEDBACK["Feedback & Adaptation"]
+  USER2["User\nPOST /feedback"] --> MML["MetaParameterLearner\nonline SGD per community"]
+  USER2 --> PLATT["PlattCalibration\n2-param sigmoid fit"]
+  API2["POST /retrain"] --> CPL["CSAParameterLearner\nbatch gradient descent"]
+end
+subgraph COGNITIVE["Cognitive Modulation"]
+  AE2["AnswerExtractor"] -->|dissonant preds| CERE["CerebellarEngine\ndissonance detection"]
+  LBT2["LoopedBeamTraversal"] -->|prediction error PE| PRED["PredictiveCodingEngine\nactive inference + soliton_index"]
+  PRED -->|PE → signals| CHEM["ChemicalModulator\nDopamine · Norepinephrine\nAcetylcholine · Oxytocin"]
+  CHEM -->|beam adjustments| BT2["BeamTraversal"]
+end
+subgraph REM_LOOP["REM / NVMe"]
+  SCO["SleepCycleOrchestrator\nPhases 1–6"] -->|phase 3| REME["REMEngine\nprune · synthesize"]
+  SCO -->|phase 6 flush| MMAP["MmapConsolidator\ngraph.a · graph.e · embeddings.e"]
+  REME -->|on_complete| MMAP
+  WAL["GraphWAL\nNVMe WAL"] -->|replay on startup| ADAPT2["GraphAdapter"]
+  ADAPT2 -->|add_edge append| WAL
+end
+MML -->|community overrides| CSA2["CSAEngine"]
+CPL -->|global prior| CSA2
+PLATT -->|calibrated scores| AE2
+PRED -->|pattern affinity| ENG2["Engram\npattern cache"]
+CERE -->|seeds| RA["ResearchAgent"]
+RA -->|new edges| ADAPT2`,
+
+    full: `flowchart TD
+subgraph EXT["External"]
+  KG2["Knowledge Graph"] & USER3["User"] & LIT2["Literature APIs"]
+end
+subgraph THAL2["THALAMUS"]
+  AD["Adapter"] --> ING["Ingestion"] --> EMB["Embedding"] --> GS["GraphSAGE"]
+  ING --> SE["StructuralEncoder"]
+end
+subgraph CX["CORTEX"]
+  CM["Community\nEngine"] --> CA["CSA\nEngine"] --> BTX["Beam\nTraversal"] --> LX["Looped\nBeam"] --> PX["Path\nScorer"] --> AX["Answer\nExtractor"]
+  GP["GraphProfiler"] --> BTX
+  EN["Engram"] --> BTX
+end
+subgraph COG["Cognitive"]
+  CB["Cerebellar"] & CM2["Chemical\nMod"] & PC["Predictive\nCoding"] & SA["Self\nAwareness"]
+end
+subgraph LRN["Learning"]
+  ML["MetaParam\nLearner"] & CL["CSAParam\nLearner"] & PT["Platt\nCalib"]
+end
+subgraph REML["REM + Storage"]
+  SC["SleepCycle\nOrch"] --> RE["REMEngine"] --> MC["Mmap\nConsolidator"]
+  WL["GraphWAL"]
+end
+subgraph RES["Research"]
+  AL["Autonomous\nLoop"] --> RA2["Research\nAgent"] --> HY["Hypothesis\nEngine"] --> EV["External\nValidator"]
+  EV --> AA["Auto\nApprover"] --> PV["Provenance\nLedger"]
+end
+subgraph IF["Interface"]
+  AP["FastAPI"] & CL2["CLI"] & ST["Studio"]
+end
+subgraph VZ["Visualization"]
+  TB["Telemetry\nBridge"] --> UE["UE5\nVisualizer"]
+end
+KG2 --> AD
+USER3 --> AP --> LX
+GS --> CA
+SE --> CA
+AD --> CM
+CM2 --> BTX
+SA --> BTX
+ML --> CA
+CL --> CA
+PT --> AX
+SC --> RE
+RE --> MC & WL
+AD -->|add_edge| WL
+WL -->|replay| AD
+RA2 --> HY --> BTX
+AA --> AD
+AX -->|dissonant| CB --> RA2
+LX -->|PE| PC --> CM2
+BTX -->|PULSE| TB
+RE -->|PRUNE| TB
+RA2 -->|GENESIS| TB`,
+  };
+
+  let panZoom = null;
+  let currentTab = 'query';
+
+  window.showDiagram = async function(key) {
+    currentTab = key;
+    // Update tab styles
+    document.querySelectorAll('.arch-tab').forEach(t => t.classList.remove('arch-tab-active'));
+    document.getElementById('tab-' + key).classList.add('arch-tab-active');
+
+    const container = document.getElementById('arch-diagram');
+    const loading   = document.getElementById('arch-loading');
+    loading.style.display = 'flex';
+    container.innerHTML = '';
+    if (panZoom) { try { panZoom.destroy(); } catch(e){} panZoom = null; }
+
+    const id = 'mermaid-' + key + '-' + Date.now();
+    const { svg } = await mermaid.render(id, DIAGRAMS[key]);
+    container.innerHTML = svg;
+    loading.style.display = 'none';
+
+    // Enable pan+zoom
+    const svgEl = container.querySelector('svg');
+    if (svgEl) {
+      svgEl.style.width  = '100%';
+      svgEl.style.height = 'auto';
+      svgEl.style.minHeight = '480px';
+      try {
+        const { default: svgPanZoom } = await import('https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/src/svg-pan-zoom.js');
+        panZoom = svgPanZoom(svgEl, { zoomEnabled:true, controlIconsEnabled:false, fit:true, center:true, minZoom:0.3, maxZoom:8 });
+      } catch(e) {
+        // svg-pan-zoom unavailable — fall back to CSS transform pan
+        let dragging = false, ox=0, oy=0, tx=0, ty=0, scale=1;
+        svgEl.style.transformOrigin = 'top left';
+        svgEl.style.cursor = 'grab';
+        svgEl.addEventListener('mousedown', e => { dragging=true; ox=e.clientX-tx; oy=e.clientY-ty; svgEl.style.cursor='grabbing'; });
+        window.addEventListener('mouseup', () => { dragging=false; svgEl.style.cursor='grab'; });
+        window.addEventListener('mousemove', e => { if(!dragging) return; tx=e.clientX-ox; ty=e.clientY-oy; svgEl.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`; });
+        svgEl.addEventListener('wheel', e => { e.preventDefault(); scale=Math.min(8,Math.max(0.3,scale-e.deltaY*0.001)); svgEl.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`; }, {passive:false});
+        window._archState = { svgEl, get scale(){return scale;}, set scale(v){scale=v;}, get tx(){return tx;}, set tx(v){tx=v;}, get ty(){return ty;}, set ty(v){ty=v;} };
+      }
+    }
+  };
+
+  window.resetZoom = function() {
+    if (panZoom) { panZoom.resetZoom(); panZoom.center(); return; }
+    const s = window._archState;
+    if (s) { s.scale=1; s.tx=0; s.ty=0; s.svgEl.style.transform='translate(0,0) scale(1)'; }
+  };
+  window.zoomIn  = function() {
+    if (panZoom) { panZoom.zoomIn(); return; }
+    const s = window._archState; if(s){ s.scale=Math.min(8,s.scale*1.25); s.svgEl.style.transform=`translate(${s.tx}px,${s.ty}px) scale(${s.scale})`; }
+  };
+  window.zoomOut = function() {
+    if (panZoom) { panZoom.zoomOut(); return; }
+    const s = window._archState; if(s){ s.scale=Math.max(0.3,s.scale*0.8); s.svgEl.style.transform=`translate(${s.tx}px,${s.ty}px) scale(${s.scale})`; }
+  };
+
+  // Auto-render first tab on load
+  showDiagram('query');
+</script>
 
 
 <!-- ═══════════════════════════════════════════════
