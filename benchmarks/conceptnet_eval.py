@@ -449,6 +449,16 @@ def main() -> None:
     parser.add_argument("--top-k", type=int, default=10, dest="top_k")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--no-cache", action="store_true", dest="no_cache")
+    # Optional beam parameter overrides (used by tuner subprocess validation)
+    parser.add_argument("--beam-width",   type=int,   default=None, dest="beam_width")
+    parser.add_argument("--trb-factor",   type=float, default=None, dest="trb_factor")
+    parser.add_argument("--r2-boost",     type=float, default=None, dest="r2_boost")
+    parser.add_argument("--vote-weight",  type=float, default=None, dest="vote_weight")
+    parser.add_argument("--idf-weight",   type=float, default=None, dest="idf_weight")
+    parser.add_argument("--branch-bonus", type=float, default=None, dest="branch_bonus")
+    parser.add_argument("--fhrb-factor",  type=float, default=None, dest="fhrb_factor")
+    parser.add_argument("--gamma",        type=float, default=None, dest="gamma")
+    parser.add_argument("--beta",         type=float, default=None, dest="beta")
     args = parser.parse_args()
 
     if not Path(args.cn5).exists():
@@ -470,23 +480,32 @@ def main() -> None:
         min_weight  = args.min_weight,
     )
 
-    from core.parameter_initializer import ParameterInitializer
-    pi    = ParameterInitializer(state["graph"].adapter)
-    defaults = pi.derive()
+    defaults = state["graph"].param_defaults
 
-    h1, h10, mrr = run_trial_inprocess(state, {
-        "trb_factor":   defaults.trb_factor,
-        "r2_boost":     defaults.r2_boost,
-        "vote_weight":  defaults.vote_weight,
-        "beam_width":   defaults.beam_width,
-        "idf_weight":   defaults.idf_weight,
-        "branch_bonus": defaults.branch_bonus,
-        "fhrb_factor":  defaults.fhrb_factor,
-        "gamma":        defaults.gamma,
-        "beta":         defaults.beta,
-    }, top_k=args.top_k)
+    # CLI overrides take precedence over ParameterInitializer defaults
+    def _d(attr: str):
+        return getattr(defaults, attr) if defaults is not None else None
+
+    params = {
+        "trb_factor":   args.trb_factor   if args.trb_factor   is not None else _d("trb_factor"),
+        "r2_boost":     args.r2_boost     if args.r2_boost     is not None else _d("r2_boost"),
+        "vote_weight":  args.vote_weight  if args.vote_weight  is not None else _d("vote_weight"),
+        "beam_width":   args.beam_width   if args.beam_width   is not None else _d("beam_width"),
+        "idf_weight":   args.idf_weight   if args.idf_weight   is not None else _d("idf_weight"),
+        "branch_bonus": args.branch_bonus if args.branch_bonus is not None else _d("branch_bonus"),
+        "fhrb_factor":  args.fhrb_factor  if args.fhrb_factor  is not None else _d("fhrb_factor"),
+        "gamma":        args.gamma        if args.gamma        is not None else _d("gamma"),
+        "beta":         args.beta         if args.beta         is not None else _d("beta"),
+    }
+    if any(v is None for v in params.values()):
+        raise RuntimeError("ParameterInitializer returned None and no CLI overrides — "
+                           "check graph profiling.")
+
+    h1, h10, mrr = run_trial_inprocess(state, params, top_k=args.top_k)
 
     n = len(state["qa_pairs"])
+    # Machine-readable line parsed by cerebrum_tuner subprocess validator
+    print(f"2-hop  {n}  {h1:.4f}  {h10:.4f}  {mrr:.4f}")
     print(f"\n{'='*55}")
     print(f"ConceptNet 2-hop discovery  ({n:,} questions, top-{args.top_k})")
     print(f"  H@1  = {h1:.4f}  ({h1*100:.2f}%)")

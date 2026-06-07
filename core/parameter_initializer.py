@@ -31,7 +31,8 @@ Calibration basis (2D constant table — all cells filled for known KBs):
                                  ConceptNet 200k edges: n_nodes=149k, n_rel=8, mean_fo=2.70,
                                  degree_cv=3.19. Raw: trb=29.1, r2=4.64, vote=0.806, beam=8,
                                  idf=0.146, branch=0.365, fhrb=1.14, gamma=6.36, beta=2.45.
-  mixed × sentence:              pending (ConceptNet sentence calibration)
+  mixed × sentence:              Phase 230 ConceptNet   6.2%  H@1 (2-hop discovery, identical to
+                                 random — ConceptNet concept strings too short for semantic signal)
 
 Phase 213 fANOVA (hub_homogeneous × sentence): trb=0.22 (#1), fhrb=0.19 (#2),
   gamma=0.15, beta=0.12, vote=0.12, r2=0.09, branch=0.09, idf=0.02
@@ -58,14 +59,24 @@ IDF_SCALE_C: float = 0.0102   # degree_cv × IDF_SCALE_C → idf_weight
                                # MetaQA random: cv=5.68, idf=0.058 → C=0.0102
                                # For sentence-transformers see _SENTENCE_OVERRIDES["idf_scale_c"]
 
-# Per-regime IDF scale overrides for random embeddings.
-# hub and typed match the global constant; mixed is higher because
-# ConceptNet's uniform-ish degree distribution demands a stronger IDF penalty
-# to suppress high-frequency hub nodes (Phase 229: idf=0.146, cv=3.195 → C=0.0457).
+# Per-regime IDF scale for random embeddings.
+# mixed is higher because ConceptNet's uniform degree distribution demands a
+# stronger IDF penalty (Phase 229: idf=0.146, cv=3.195 → C=0.0457).
 _IDF_SCALE_C = {
-    "hub_homogeneous":     0.0102,  # same as global — MetaQA Phase 204
-    "typed_heterogeneous": 0.0102,  # same as global — no separate calibration yet
+    "hub_homogeneous":     0.0102,  # MetaQA Phase 204
+    "typed_heterogeneous": 0.0102,  # no separate calibration yet
     "mixed":               0.0457,  # Phase 229 ConceptNet: 0.146 / 3.195 = 0.0457
+}
+
+# Per-regime IDF scale for sentence-transformers embeddings.
+# Sentence embeddings encode hub-ness semantically → smaller IDF coefficient
+# for hub and typed regimes.  For mixed (ConceptNet), Phase 230 shows sentence
+# embeddings converge to identical optimal params as random — ConceptNet concept
+# strings are too short for semantic embeddings to add structural signal.
+_IDF_SCALE_C_SENTENCE = {
+    "hub_homogeneous":     0.00693,  # Phase 213 MetaQA: 0.03934 / 5.68 = 0.00693
+    "typed_heterogeneous": 0.00432,  # Phase 209 Hetionet: 0.018 / 4.17 = 0.00432
+    "mixed":               0.0457,   # Phase 230 ConceptNet: same as random (no semantic gain)
 }
 
 VOTE_BASE: float   = 0.72     # vote_weight lower bound (Q=0 → community uninformative)
@@ -201,7 +212,10 @@ _SENTENCE_OVERRIDES: dict[str, dict] = {
         "idf_scale_c":   0.00693,# 0.03934 / 5.68
         "vote_base":     0.6777, # 0.7527 − 0.15×0.5
     },
-    # mixed × sentence: pending Phase 215 ConceptNet tuner run
+    # mixed × sentence: Phase 230 confirmed same as random — sentence embeddings
+    # provide no additional signal on ConceptNet short-phrase concepts.
+    # IDF scale handled by _IDF_SCALE_C_SENTENCE["mixed"] = 0.0457 (same as random).
+    # No override entry needed; _blend_params_mixed() selects correct table.
 }
 
 # ---------------------------------------------------------------------------
@@ -442,7 +456,8 @@ class ParameterInitializer:
         # Sentence-transformers embeddings already encode hub-ness semantically,
         # so the IDF penalty coefficient is smaller than with random embeddings.
         # ------------------------------------------------------------------
-        idf_c      = _sovr.get("idf_scale_c", IDF_SCALE_C)
+        _idf_default = (_IDF_SCALE_C_SENTENCE if use_sentence else _IDF_SCALE_C).get(regime, IDF_SCALE_C)
+        idf_c      = _sovr.get("idf_scale_c", _idf_default)
         idf_weight = max(0.01, idf_c * profile.degree_cv)
 
         # ------------------------------------------------------------------
@@ -521,7 +536,8 @@ class ParameterInitializer:
         gamma        = max(GAMMA_MIN, _bs / (mean_fo ** beta))
         r2_boost     = max(1.5, 1.5 + _blend_const(_R2_C) * math.log(mean_degree / n_rel + 1))
         fhrb_factor  = max(1.0, 1.0 + _blend_const(_FHRB_C) * math.log(mean_degree + 1))
-        idf_weight   = max(0.01, _IDF_SCALE_C["mixed"] * profile.degree_cv)
+        _idf_table   = _IDF_SCALE_C_SENTENCE if use_sentence else _IDF_SCALE_C
+        idf_weight   = max(0.01, _idf_table["mixed"] * profile.degree_cv)
         vote_base    = _blend_const(_VOTE_BASE)
         q_clamped    = max(0.0, min(1.0, modularity_Q))
         vote_weight  = vote_base + VOTE_Q_SCALE * q_clamped

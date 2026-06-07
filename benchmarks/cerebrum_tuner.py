@@ -578,7 +578,8 @@ def _run_eval_logged(
         })
         return h1, h10, mrr, elapsed
 
-    if dataset == "conceptnet" and _conceptnet_state is not None:
+    # trial_id < 0 signals validation — use subprocess for a fresh QA sample
+    if dataset == "conceptnet" and _conceptnet_state is not None and trial_id >= 0:
         from conceptnet_eval import run_trial_inprocess
         t0 = time.time()
         try:
@@ -626,6 +627,15 @@ def _run_eval_logged(
             "--cn5",          str(kwargs["cn5_path"]),
             "--n-questions",  str(n_questions),
             "--embeddings",   kwargs.get("embeddings", "random"),
+            "--beam-width",   str(kwargs["beam_width"]),
+            "--trb-factor",   str(kwargs["trb_factor"]),
+            "--r2-boost",     str(kwargs["r2_boost"]),
+            "--vote-weight",  str(kwargs["vote_weight"]),
+            "--idf-weight",   str(kwargs["idf_weight"]),
+            "--branch-bonus", str(kwargs["branch_bonus"]),
+            "--fhrb-factor",  str(kwargs["fhrb_factor"]),
+            "--gamma",        str(kwargs["gamma"]),
+            "--beta",         str(kwargs["beta"]),
         ]
     else:
         sample = kwargs["sample"]
@@ -660,7 +670,7 @@ def _run_eval_logged(
             line = line.rstrip("\n")
             lines.append(line)
             parts = line.split()
-            if parts and parts[0] == "3-hop" and len(parts) >= 5:
+            if parts and parts[0] in ("3-hop", "2-hop") and len(parts) >= 5:
                 try:
                     h1, h10, mrr = float(parts[2]), float(parts[3]), float(parts[4])
                     parsed = True
@@ -1085,7 +1095,11 @@ def run_tuner(
     if validate > 0:
         _print(f"Validating best config on {validate:,} questions (--workers {workers})...")
         try:
-            vh1, vh10, vmrr, vel = _run_eval(
+            vh1, vh10, vmrr, vel = _run_eval_logged(
+                log_file,
+                run_id,
+                trial_id=-1,
+                dataset=dataset,
                 sample=validate,
                 trb_factor=best.trb_factor,
                 r2_boost=best.r2_boost,
@@ -1099,6 +1113,7 @@ def run_tuner(
                 timeout=3600,
                 workers=workers,
                 embeddings=embeddings,
+                cn5_path=cn5_path,
             )
             _print(
                 f"  Validation:  H@1={vh1*100:.2f}%  "
