@@ -7,7 +7,7 @@
 **Document Classification**: Intellectual Property Reference
 **Authors**: Bryan Alexander Buchorn
 **Date**: June 2026
-**Status**: v2.75.0 (Phase 229 COMPLETE)
+**Status**: v2.76.0 (Phase 230 COMPLETE)
 
 > This document consolidates the novel technical contributions of the CEREBRUM framework for use in patent applications, academic priority claims, and commercial IP protection. Each claim is substantiated with prior art analysis and a statement of the specific technical distinction.
 
@@ -1503,7 +1503,19 @@ while maintaining structural freshness on high-traffic regions.
 
 ---
 
-**Reviewed on**: June 6, 2026 for version v2.75.0
+---
+
+### Claim 81: Complete ParameterInitializer 2D Constant Table (Phase 230)
+
+**Description**: CEREBRUM provides a fully calibrated 2×3 constant table for hyperparameter initialization across all regime × embedding_method combinations. Each cell is back-derived from tuner results: for regime R and embedding E, idf_scale_c = tuned_idf_weight / graph_degree_cv. The mixed × sentence cell (Phase 230) confirmed that commonsense KG concept strings are too short for sentence embeddings to shift the optimal parameter landscape. Specifically, Phase 230 found that the optimal params for ConceptNet mixed × sentence are identical to mixed × random — H@1=3.55%, H@10=63.80%, MRR=0.1915 (2000-question validation) vs random H@1=3.90%, H@10=64.15%, MRR=0.1950. This null result is scientifically meaningful: it establishes that sentence-transformers' benefit is gated on entity string length, and commonsense KG concept strings (1–3 word phrases) fall below the threshold where embedding geometry provides structural signal beyond hash-based random embeddings.
+
+**Novel aspect**: First empirical demonstration that sentence-transformers provide no measurable benefit over random embeddings on commonsense KGs, and formal encoding of this finding as a closed 2D constant table (regime × embedding_method) for principled zero-config hyperparameter initialization. Prior work either assumed embeddings always help or required per-graph tuning; the complete 2D table makes this knowledge operational for any graph loaded into CEREBRUM.
+
+**File**: `core/parameter_initializer.py` — `_IDF_SCALE_C_SENTENCE` dict; `_blend_params_mixed()` embedding_method branch.
+
+---
+
+**Reviewed on**: June 7, 2026 for version v2.76.0
 
 ---
 

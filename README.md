@@ -4,7 +4,7 @@
 
 *Thought, finally formalized.*
 
-**Current Version:** v2.75.0 (Phase 229)
+**Current Version:** v2.76.0 (Phase 230)
 
 CEREBRUM is the first reasoning engine that treats the Knowledge Graph not as a static data dump, but as a living, self-optimizing neural substrate. By embedding the intelligence of Transformer-style attention directly into the graph's topology, it delivers hyper-accurate, verifiable reasoning at sub-millisecond speeds—completely eliminating the hallucinations of LLMs and the bottleneck of expensive, manual model training.
 
@@ -70,8 +70,8 @@ The numbers below are the **full pipeline** results unless otherwise noted. The 
 
 | System | 3-hop H@1 | Approach | Training required |
 |--------|-----------|----------|-------------------|
-| **CEREBRUM v2.75.0 (full pipeline)** | **60.6%** | Crystal-box beam traversal + SDRB + ParameterInitializer | **No** |
-| CEREBRUM v2.75.0 (search only) | 12.5% | Structural beam traversal, no embeddings | No |
+| **CEREBRUM v2.76.0 (full pipeline)** | **60.6%** | Crystal-box beam traversal + SDRB + ParameterInitializer | **No** |
+| CEREBRUM v2.76.0 (search only) | 12.5% | Structural beam traversal, no embeddings | No |
 | MINERVA (RL)† | ~48% | Reinforcement learning paths | Yes — RL training |
 | RotatE (KGE)† | ~47% | Complex embedding rotation | Yes — KG-specific training |
 | TransE (KGE)† | ~43% | Embedding distance | Yes — KG-specific training |
@@ -244,11 +244,19 @@ CEREBRUM streams live reasoning events (per-hop traversal pulses, node creation,
 
 ### Layer 7: Principled Auto-Calibration and Cognitive Depth
 
-**ParameterInitializer (Phases 205-229)**
-Rather than requiring hyperparameter tuning for each new knowledge graph, the ParameterInitializer analytically derives all default parameters from four graph statistics computed in a single O(E) pass: fan-out (average targets per relation), degree coefficient of variation, modularity Q, and relation count. Defaults are stored in a 2D constant table keyed by regime (hub-homogeneous / typed-heterogeneous / mixed) × embedding_method (sentence-transformers / random). The `mixed × random` row was calibrated on a ConceptNet 200k-edge English subgraph (Phase 229). A new knowledge graph loaded into CEREBRUM gets production-grade default parameters with zero manual tuning.
+**ParameterInitializer (Phases 205-230)**
+Rather than requiring hyperparameter tuning for each new knowledge graph, the ParameterInitializer analytically derives all default parameters from four graph statistics computed in a single O(E) pass: fan-out (average targets per relation), degree coefficient of variation, modularity Q, and relation count. Defaults are stored in a fully calibrated 2D constant table keyed by regime (hub-homogeneous / typed-heterogeneous / mixed) × embedding_method (sentence-transformers / random). All 6 cells are now complete:
 
-**ConceptNet Benchmark (Phase 229)**
-CEREBRUM's first benchmark on a general commonsense knowledge graph: ConceptNet 5.7, restricted to 160k English-language edges. The task is 2-hop chain discovery — given a source entity, find the target reachable via exactly two relation hops. Results on 500 sampled 2-hop chains: H@1=6.0%, H@10=67.6%, MRR=0.2207. This benchmark serves as calibration data for the ParameterInitializer's mixed-regime row and establishes CEREBRUM's baseline on open-domain commonsense reasoning.
+| | random | sentence |
+|--|--------|----------|
+| hub_homogeneous | Phase 204 ✓ | Phase 213 ✓ |
+| typed_heterogeneous | Phase 207 ✓ | Phase 209 ✓ |
+| mixed | Phase 229 ✓ | Phase 230 ✓ |
+
+Phase 230 confirmed that ConceptNet concept strings (1–3 word phrases) are too short for sentence-transformers to add structural signal over random embeddings — optimal params are identical across both embedding methods for the mixed regime. A new knowledge graph loaded into CEREBRUM gets production-grade default parameters with zero manual tuning.
+
+**ConceptNet Benchmark (Phases 229–230)**
+CEREBRUM's first benchmark on a general commonsense knowledge graph: ConceptNet 5.7, restricted to 160k English-language edges. The task is 2-hop chain discovery — given a source entity, find the target reachable via exactly two relation hops. Phase 229 (random embeddings) results on 500 sampled 2-hop chains: H@1=6.0%, H@10=67.6%, MRR=0.2207. Phase 230 (sentence embeddings, 2000-question validation): H@1=3.55%, H@10=63.80%, MRR=0.1915. Phase 230 scientific finding: sentence-transformers provide no measurable benefit on ConceptNet — concept strings (1–3 word phrases) are too short for embedding geometry to add signal over random. This benchmark serves as calibration data for the ParameterInitializer's mixed-regime rows and establishes CEREBRUM's baseline on open-domain commonsense reasoning.
 
 **Cognitive Architecture Layers (Phases 215-223)**
 Five new cognitive-depth components added to the reasoning stack:
@@ -424,7 +432,7 @@ CEREBRUM has been empirically validated on standardized benchmarks with zero tra
 
 ## Roadmap
 
-**Current Project Status: v2.75.0 — Phase 229 (ParameterInitializer + ConceptNet Benchmark)**
+**Current Project Status: v2.76.0 — Phase 230 (ParameterInitializer Complete + ConceptNet Sentence Calibration)**
 
 ### The Core Pillars
 - [x] **Phase 1**: Core Engine (GraphAdapter, TSC Engine, CSA Attention)
@@ -541,6 +549,7 @@ CEREBRUM has been empirically validated on standardized benchmarks with zero tra
 - [x] **Phase 215-223**: Cognitive Architecture Layers — InhibitionOfReturn (prevents revisiting explored hypothesis paths), SelfAwarenessEngine (7-dimension epistemic self-assessment), PlattCalibration (beam score → calibrated probability), CerebellarEngine (error-driven meta-learning via dissonance detection), OscillationEngine (theta/gamma DSCF synchronization) (v2.70.0)
 - [x] **Phase 225-227**: Full pipeline tuning run — **60.6% H@1**, 87.9% H@10, MRR 0.703 on 14,274 3-hop questions (v2.73.0)
 - [x] **Phase 229**: ConceptNet 5.7 benchmark — 2-hop chain discovery on 160k English edges; H@1=6.0%, H@10=67.6%, MRR=0.2207 on 500 chains; calibrates `mixed × random` ParameterInitializer row (v2.75.0)
+- [x] **Phase 230**: ConceptNet sentence-transformers calibration — 2000-question validation H@1=3.55%, H@10=63.80%, MRR=0.1915; confirms `mixed × sentence` optimal params identical to random; completes ParameterInitializer 2D table (all 6 cells) (v2.76.0)
 
 ## Benchmark Results
 

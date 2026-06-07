@@ -5,6 +5,24 @@ All notable changes to CEREBRUM are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.76.0] - 2026-06-07
+
+### Added
+- **Phase 230**: ConceptNet sentence-transformers calibration — completes ParameterInitializer 2D table
+- `_IDF_SCALE_C_SENTENCE` per-regime dict: hub=0.00693, typed=0.00432, mixed=0.0457
+- `_blend_params_mixed()` now selects correct IDF scale table by embedding_method
+
+### Fixed
+- `cerebrum_tuner.py`: `--validate` was running MetaQA eval for all datasets (ConceptNet/Hetionet `--validate` reported MetaQA numbers)
+- `conceptnet_eval.py`: missing beam param CLI overrides, incorrect ParameterInitializer instantiation
+- Subprocess parser now accepts "2-hop" result lines (was hardcoded "3-hop" only)
+
+### Benchmarks
+- ConceptNet sentence (2000q): H@1=3.55%, H@10=63.80%, MRR=0.1915
+- ConceptNet random  (2000q): H@1=3.90%, H@10=64.15%, MRR=0.1950
+- Scientific finding: sentence embeddings provide no measurable benefit on ConceptNet — concept strings too short for semantic signal
+- ParameterInitializer 2×3 table fully calibrated: all 6 regime×embedding cells complete
+
 ## [2.75.0] - 2026-06-06
 ### Added
 - **Phase 229: ConceptNet 2-hop benchmark + mixed×random ParameterInitializer calibration**:

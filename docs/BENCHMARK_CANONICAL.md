@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.75.0 (Phase 229) — Updated Jun 6, 2026
+## Version: v2.76.0 (Phase 230) — Updated Jun 7, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -481,15 +481,33 @@ python benchmarks/conceptnet_eval.py \
 
 **Note on H@1:** 6.0% on 2-hop chain discovery reflects ConceptNet's structural characteristics — 8 general-purpose commonsense relations produce highly ambiguous intermediate nodes. H@10=67.6% confirms the correct answer is found in the top-10 the majority of the time; the challenge is ranking it first when many plausible paths compete. This is fundamentally different from MetaQA's narrow-domain relations (9 movie-specific types with clear semantic clustering) or Hetionet's typed biomedical edges.
 
+### ConceptNet — Phase 230 (sentence embeddings)
+
+| Metric | Tuning (500q) | Validation (2000q) |
+|--------|--------------|-------------------|
+| H@1    | 6.2%         | 3.55%              |
+| H@10   | 67.6%        | 63.80%             |
+| MRR    | 0.2215       | 0.1915             |
+
+**Finding**: optimal params identical to Phase 229 random — ConceptNet concept strings (1-3 word phrases) are too short for sentence-transformers to add structural signal. `_IDF_SCALE_C_SENTENCE["mixed"] = 0.0457` (same as random).
+
+**ParameterInitializer 2D table — COMPLETE (v2.76.0)**
+
+|                      | random     | sentence   |
+|----------------------|------------|------------|
+| hub_homogeneous      | Phase 204 ✓| Phase 213 ✓|
+| typed_heterogeneous  | Phase 207 ✓| Phase 209 ✓|
+| mixed                | Phase 229 ✓| Phase 230 ✓|
+
 ---
 
-## ParameterInitializer 2D Constant Table (v2.75.0)
+## ParameterInitializer 2D Constant Table (v2.76.0)
 
 | Regime | random | sentence |
 |--------|--------|---------|
 | **hub_homogeneous** | Phase 204 (MetaQA) ✓ | Phase 213 (MetaQA sentence) ✓ |
 | **typed_heterogeneous** | Phase 207 (Hetionet) ✓ | Phase 209 (Hetionet sentence) ✓ |
-| **mixed** | **Phase 229 (ConceptNet) ✓** | Pending (mixed × sentence) |
+| **mixed** | **Phase 229 (ConceptNet) ✓** | **Phase 230 (ConceptNet sentence) ✓** |
 
 ---
 
@@ -676,4 +694,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-06-06 | Phase 225–227: alpha hop scaling + semantic re-scoring fix + NVMe WAL/MmapConsolidator + Optuna tuning — full 14,274-question validation: H@1=60.6%, H@10=87.9%, MRR=0.703 | Phase 229: ConceptNet mixed×random calibration complete — ParameterInitializer 2D table fully populated | Phase 53 canonical paper numbers unchanged*
+*Last updated: 2026-06-07 | Phase 230: ConceptNet sentence calibration complete — ParameterInitializer 2D table fully calibrated (all 6 cells) | Phase 225–227: alpha hop scaling + semantic re-scoring fix + NVMe WAL/MmapConsolidator + Optuna tuning — full 14,274-question validation: H@1=60.6%, H@10=87.9%, MRR=0.703 | Phase 229: ConceptNet mixed×random calibration complete | Phase 53 canonical paper numbers unchanged*
