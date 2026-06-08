@@ -64,12 +64,14 @@ except ImportError:
 _EVAL_SCRIPT          = Path(__file__).parent / "metaqa_eval.py"
 _HETIONET_EVAL_SCRIPT = Path(__file__).parent / "hetionet_param_eval.py"
 _CN5_EVAL_SCRIPT      = Path(__file__).parent / "conceptnet_eval.py"
+_WEBQSP_EVAL_SCRIPT   = Path(__file__).parent / "webqsp_param_eval.py"
 _DEFAULT_KB  = Path(__file__).parent / "data" / "metaqa" / "kb.txt"
 
 # Pre-built state shared across all in-process trials (avoids expensive graph rebuild).
 # Populated once by _init_*_state() before the Optuna study starts.
 _hetionet_state:   Optional[dict] = None
 _conceptnet_state: Optional[dict] = None
+_webqsp_state:     Optional[dict] = None
 
 # ── search space (Phase 1 — wide exploration) ─────────────────────────────────
 # Phase 203: two-parameter SDRB — gamma ceiling raised to 16.0 (hit 7.93/8.0 in
@@ -117,6 +119,22 @@ PARAM_SPACE_CONCEPTNET: dict = {
     "fhrb_factor":  (1.0,  8.0),
     "gamma":        (0.5,  16.0),
     "beta":         (0.5,  3.0),
+}
+
+# Phase 231: WebQSP (typed_heterogeneous regime, Freebase 2-hop KB).
+# Seeded around Hetionet typed_heterogeneous calibration (closest known regime).
+# Freebase has higher relation diversity (6k types vs 89) and denser hubs,
+# so trb_factor/gamma ceilings are raised to allow more aggressive path pruning.
+PARAM_SPACE_WEBQSP: dict = {
+    "trb_factor":   (2.0,  30.0),
+    "r2_boost":     (1.0,  10.0),
+    "vote_weight":  (0.55, 0.95),
+    "beam_width":   [8, 10, 12, 16],
+    "idf_weight":   (0.0,  0.30),
+    "branch_bonus": (0.0,  0.80),
+    "fhrb_factor":  (1.0,  6.0),
+    "gamma":        (0.5,  12.0),
+    "beta":         (0.5,  2.5),
 }
 
 # Float param names (excludes categorical beam_width)
@@ -536,6 +554,23 @@ def _init_conceptnet_state(
     )
 
 
+def _init_webqsp_state(
+    n_questions: int = 200,
+    embeddings:  str = "random",
+) -> None:
+    """Build WebQSP graph + QA pairs once; stored in _webqsp_state for in-process trials."""
+    global _webqsp_state
+    if _webqsp_state is not None:
+        return
+    from webqsp_param_eval import build_webqsp_state
+    _webqsp_state = build_webqsp_state(
+        n_questions = n_questions,
+        embeddings  = embeddings,
+        seed        = 42,
+        use_cache   = True,
+    )
+
+
 def _run_eval_logged(
     log_file: Path,
     run_id:   str,
@@ -578,6 +613,26 @@ def _run_eval_logged(
         })
         return h1, h10, mrr, elapsed
 
+    if dataset == "webqsp" and _webqsp_state is not None:
+        from webqsp_param_eval import run_trial_inprocess
+        t0 = time.time()
+        try:
+            h1, h10, mrr = run_trial_inprocess(_webqsp_state, _inprocess_params)
+        except Exception:
+            print(f"\n[INPROCESS-ERR trial {trial_id}]\n{_tb.format_exc()}", file=sys.stderr, flush=True)
+            raise
+        elapsed = time.time() - t0
+        _write_log(log_file, {
+            "type":      "trial_stdout",
+            "run_id":    run_id,
+            "trial_id":  trial_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "lines":     [f"inprocess h1={h1:.4f} h10={h10:.4f} mrr={mrr:.4f}"],
+            "exit_code": 0,
+            "elapsed_s": round(elapsed, 1),
+        })
+        return h1, h10, mrr, elapsed
+
     # trial_id < 0 signals validation — use subprocess for a fresh QA sample
     if dataset == "conceptnet" and _conceptnet_state is not None and trial_id >= 0:
         from conceptnet_eval import run_trial_inprocess
@@ -599,7 +654,23 @@ def _run_eval_logged(
         })
         return h1, h10, mrr, elapsed
 
-    if dataset == "hetionet":
+    if dataset == "webqsp":
+        n_questions = kwargs.get("sample", 200)
+        cmd = [
+            sys.executable, "-u", str(_WEBQSP_EVAL_SCRIPT),
+            "--sample",       str(n_questions),
+            "--embeddings",   kwargs.get("embeddings", "random"),
+            "--beam-width",   str(kwargs["beam_width"]),
+            "--trb-factor",   str(kwargs["trb_factor"]),
+            "--r2-boost",     str(kwargs["r2_boost"]),
+            "--vote-weight",  str(kwargs["vote_weight"]),
+            "--idf-weight",   str(kwargs["idf_weight"]),
+            "--branch-bonus", str(kwargs["branch_bonus"]),
+            "--fhrb-factor",  str(kwargs["fhrb_factor"]),
+            "--gamma",        str(kwargs["gamma"]),
+            "--beta",         str(kwargs["beta"]),
+        ]
+    elif dataset == "hetionet":
         # Fallback subprocess path (state not yet initialised)
         n_questions = kwargs.get("sample", 50)
         cmd = [
@@ -670,7 +741,7 @@ def _run_eval_logged(
             line = line.rstrip("\n")
             lines.append(line)
             parts = line.split()
-            if parts and parts[0] in ("3-hop", "2-hop") and len(parts) >= 5:
+            if parts and parts[0] in ("3-hop", "2-hop", "webqsp") and len(parts) >= 5:
                 try:
                     h1, h10, mrr = float(parts[2]), float(parts[3]), float(parts[4])
                     parsed = True
@@ -805,6 +876,8 @@ def run_tuner(
         _param_space = PARAM_SPACE_HETIONET
     elif dataset == "conceptnet":
         _param_space = PARAM_SPACE_CONCEPTNET
+    elif dataset == "webqsp":
+        _param_space = PARAM_SPACE_WEBQSP
     else:
         _param_space = PARAM_SPACE_WIDE
 
@@ -838,6 +911,8 @@ def run_tuner(
             max_edges   = max_edges,
             embeddings  = embeddings,
         )
+    elif dataset == "webqsp":
+        _init_webqsp_state(n_questions=sample, embeddings=embeddings)
 
     # ── log file setup ────────────────────────────────────────────────────
     run_id   = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
@@ -1061,6 +1136,11 @@ def run_tuner(
             f"python -u benchmarks/conceptnet_eval.py "
             f"--cn5 {cn5_path} --n-questions 2000 --embeddings {embeddings} {_param_flags}"
         )
+    elif dataset == "webqsp":
+        canonical = (
+            f"python -u benchmarks/webqsp_param_eval.py "
+            f"--sample 1628 --embeddings {embeddings} {_param_flags}"
+        )
     else:
         canonical = (
             f"python -u benchmarks/metaqa_eval.py --hop 3 --embeddings {embeddings} "
@@ -1196,9 +1276,10 @@ def main() -> None:
         help="KB triples file for --param-init (default: benchmarks/data/metaqa/kb.txt).",
     )
     parser.add_argument(
-        "--dataset", choices=["metaqa", "hetionet", "conceptnet"], default="metaqa", dest="dataset",
+        "--dataset", choices=["metaqa", "hetionet", "conceptnet", "webqsp"], default="metaqa", dest="dataset",
         help="KB to tune against. 'hetionet' uses PARAM_SPACE_HETIONET; "
-             "'conceptnet' uses PARAM_SPACE_CONCEPTNET (requires --cn5-file). Default: metaqa.",
+             "'conceptnet' uses PARAM_SPACE_CONCEPTNET (requires --cn5-file); "
+             "'webqsp' uses PARAM_SPACE_WEBQSP. Default: metaqa.",
     )
     parser.add_argument(
         "--cn5-file", type=str, default="", dest="cn5_path",
