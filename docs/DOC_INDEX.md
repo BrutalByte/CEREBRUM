@@ -1,5 +1,5 @@
 # CEREBRUM Documentation Index
-## v2.73.0 (Phase 223 COMPLETE) — June 2026
+## v2.77.0 (Phase 231 COMPLETE) — June 2026
 
 Single-page navigation for all CEREBRUM documentation. Start here.
 
@@ -22,13 +22,14 @@ Target: 6 arXiv submissions per `CEREBRUM_PUBLICATION_GAMEPLAN.md`. Submission o
 
 | Paper | Directory | Status | arXiv Category |
 |-------|-----------|--------|---------------|
-| Technical Report (full spec) | `research/papers/00-technical-report/` | Draft — v2.73.0 | cs.AI |
-| Flagship: Training-Free KGQA | `research/papers/01-flagship/` | Draft — v2.73.0 | cs.AI |
+| Technical Report (full spec) | `research/papers/00-technical-report/` | Draft — v2.77.0 | cs.AI |
+| Flagship: Training-Free KGQA | `research/papers/01-flagship/` | Draft — v2.77.0 | cs.AI |
 | Paper A: TSC Community Detection | `research/papers/02-community-detection/` | Planned | cs.SI / cs.LG |
 | Paper B: Graph Plasticity (Bridge + STDP) | `research/papers/03-graph-plasticity/` | Planned | cs.AI |
 | Paper C: Federated Holographic Indexing | `research/papers/04-federated/` | Planned | cs.DC |
 | Paper D: Production Engineering | `research/papers/05-production/` | Planned | cs.SE / cs.DB |
-| SDRB/PI Paper | `research/papers/06-sdrb/` | Draft — v2.73.0 | cs.AI |
+| SDRB/PI Paper | `research/papers/06-sdrb/` | Draft — v2.77.0 | cs.AI |
+| WebQSP Benchmark (Phase 231) | `benchmarks/webqsp_param_eval.py` | Results — v2.77.0 (H@1=5.5%, H@10=25.5%, MRR=0.1127, 200q zero-config) | cs.AI |
 
 See [`CEREBRUM_PUBLICATION_GAMEPLAN.md`](CEREBRUM_PUBLICATION_GAMEPLAN.md) for full submission strategy.  
 See [`ARXIV_SUBMISSION_GUIDE.md`](ARXIV_SUBMISSION_GUIDE.md) for submission mechanics.
@@ -62,7 +63,7 @@ See [`ARXIV_SUBMISSION_GUIDE.md`](ARXIV_SUBMISSION_GUIDE.md) for submission mech
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | System architecture, module map, Transformer↔KG analogy, data flow |
 | [`API_REFERENCE.md`](API_REFERENCE.md) | All REST endpoints with request/response schemas |
 | [`DEPLOYMENT.md`](DEPLOYMENT.md) | Production deployment, `--kge-model` flag, sentence-transformers requirement |
-| [`TESTING.md`](TESTING.md) | Test suite, fixture conventions, 2269 passed / 4 skipped (v2.73.0) |
+| [`TESTING.md`](TESTING.md) | Test suite, fixture conventions, 2442 passed / 4 skipped (v2.77.0) |
 | [`INTEGRATION_GUIDE.md`](INTEGRATION_GUIDE.md) | How to integrate CEREBRUM with external systems |
 | [`MIGRATION_GUIDE.md`](MIGRATION_GUIDE.md) | Version migration notes |
 | [`PERFORMANCE_TUNING.md`](PERFORMANCE_TUNING.md) | Latency, beam width, GraphSAGE tradeoffs |
@@ -76,7 +77,7 @@ See [`ARXIV_SUBMISSION_GUIDE.md`](ARXIV_SUBMISSION_GUIDE.md) for submission mech
 | File | Purpose |
 |------|---------|
 | [`CEREBRUM_BENCHMARK_COMPARISON_PAPER.md`](CEREBRUM_BENCHMARK_COMPARISON_PAPER.md) | Full benchmark analysis vs SOTA — detailed version of the comparison table in BENCHMARK_CANONICAL.md |
-| [`ROADMAP_FUTURE.md`](ROADMAP_FUTURE.md) | Post-Phase 223 research directions |
+| [`ROADMAP_FUTURE.md`](ROADMAP_FUTURE.md) | Post-Phase 231 research directions |
 | [`whitepapers/`](whitepapers/) | Topic-specific technical whitepapers |
 | [`docs/Research/`](Research/) | Supporting research notes and phase-by-phase findings |
 
@@ -113,4 +114,4 @@ Superseded document versions — preserved for reference, not for new citations.
 
 ---
 
-*Last updated: 2026-06-04 | v2.73.0 publication cycle*
+*Last updated: 2026-06-07 | v2.77.0 publication cycle*

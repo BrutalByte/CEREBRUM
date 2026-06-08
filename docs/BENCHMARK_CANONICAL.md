@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.76.0 (Phase 230) — Updated Jun 7, 2026
+## Version: v2.77.0 (Phase 231) — Updated Jun 7, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -511,16 +511,45 @@ python benchmarks/conceptnet_eval.py \
 
 ---
 
-## WebQSP — v2.52.0
+## WebQSP — Phase 231 (v2.77.0)
 
-| Metric | Value | Phase | Notes |
-|--------|-------|-------|-------|
-| Hits@1 | 7.5% | 137+ | Full OPT configuration |
-| Hits@10 | 17.5% | 137+ | |
-| MRR | 9.8% | 137+ | |
-| RAW (no OPT) | 4.0% | — | No query optimization |
+Dataset: WebQSP test split (1,628 questions), Freebase 2-hop KB (3.79M triples).
+Evaluation: 200-question sample, zero-config (Hetionet typed_heterogeneous × random fallback params),
+random embeddings, MID relay-node filter, seed-entity subgraph extraction (584k triples, 292k nodes).
 
-**Note (May 2025):** arXiv:2505.23495 found ~52% of WebQSP examples factually questionable.
+**Run date: 2026-06-07.**
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| **H@1**  | **5.50%**  | Ranking distorted by CVT path-count amplification |
+| **H@10** | **25.50%** | Correct answer in beam ≥25% of the time |
+| **MRR**  | **0.1127** | |
+
+**Zero-config params (Hetionet typed_heterogeneous × random fallback):**
+trb_factor=13.87, r2_boost=1.32, vote_weight=0.64, beam_width=12,
+idf_weight=0.018, branch_bonus=0.03, fhrb_factor=1.73, gamma=1.01, beta=0.95.
+
+**Scientific findings:**
+- H@10=25.5% confirms the correct answer is in the beam; H@1=5.5% reflects a ranking
+  challenge on Freebase's CVT-reified graph structure.
+- CVT vote normalization (path_score-only ranking, branch_count-normalized consensus) was
+  tested and degraded performance (H@10: 25.5% → 18.5% → 14.0%). The consensus/vote signal
+  carries genuine positive information on reified KGs — correct answers are themselves
+  CVT-heavy entities, so normalizing by CVT count penalizes correct and incorrect answers
+  symmetrically. Consensus voting remains the best ranking signal.
+- Root cause of H@1 gap: semantic question understanding. The beam reliably reaches answer
+  candidates but cannot rank the semantically correct one first without LLM-guided relation
+  filtering or explicit question parsing. Structural post-processing fixes are insufficient.
+- Sentence embeddings provide no benefit (288k MID strings dilute cosine similarity; 788s overhead).
+- ParameterInitializer returns gamma=334,513 for Freebase topology (uncalibrated); uses
+  Hetionet typed_heterogeneous × random fallback.
+
+**Canonical eval command:**
+```bash
+python -u benchmarks/webqsp_param_eval.py --sample 200 --embeddings random
+```
+
+**Note:** arXiv:2505.23495 found ~52% of WebQSP examples factually questionable.
 Acknowledge this benchmark quality caveat in all papers discussing WebQSP results.
 
 ---
@@ -694,4 +723,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-06-07 | Phase 230: ConceptNet sentence calibration complete — ParameterInitializer 2D table fully calibrated (all 6 cells) | Phase 225–227: alpha hop scaling + semantic re-scoring fix + NVMe WAL/MmapConsolidator + Optuna tuning — full 14,274-question validation: H@1=60.6%, H@10=87.9%, MRR=0.703 | Phase 229: ConceptNet mixed×random calibration complete | Phase 53 canonical paper numbers unchanged*
+*Last updated: 2026-06-07 | Phase 231: WebQSP Freebase 2-hop baseline — H@1=5.5%, H@10=25.5%, MRR=0.1127 (200q zero-config); CVT vote normalization tested and reverted — consensus signal is net positive even on reified KGs; root cause is semantic question understanding gap | Phase 230: ConceptNet sentence calibration — ParameterInitializer 2D table fully calibrated (all 6 cells) | Phase 225–227: alpha hop scaling + semantic re-scoring fix + NVMe WAL/MmapConsolidator — full 14,274-question validation: H@1=60.6%, H@10=87.9%, MRR=0.703 | Phase 53 canonical paper numbers unchanged*

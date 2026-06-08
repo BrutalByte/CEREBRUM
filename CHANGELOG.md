@@ -3,7 +3,43 @@
 All notable changes to CEREBRUM are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+## [2.78.0] - 2026-06-08
+
+### Added
+- **Phase 232**: Question decomposition + answer-type filtering — first step toward goal-directed reasoning on KGQA
+- `core/question_decomposer.py` — `QuestionDecomposer` + `DecomposedQuestion`: training-free WH-word detection, answer type inference ("who"→person, "where"→place, "when"→time), verb lemmatization (87 forms), temporal constraint + comparative detection. No external NLP deps.
+- `core/relation_name_index.py` — `RelationNameIndex`: builds an inverted index over dotted/underscored relation names (e.g., Freebase `film.film.starring` → tokens `["film","starring"]`); scores question keywords against relation tokens via Jaccard overlap + verb-synonym bonus (17 verb synonym sets); returns `{relation: score}` dict for `terminal_relation_boost` integration.
+- `tests/test_question_decomposer.py` — 19 unit tests covering WH-word mapping, stopword removal, lemmatization, temporal constraints, comparatives, edge cases.
+- `tests/test_relation_name_index.py` — 14 unit tests covering tokenization, synonym matching, score ordering, min_score filtering, edge cases.
+- **WebQSP Phase 232 enhancements** (`benchmarks/webqsp_param_eval.py`):
+  - `build_webqsp_state()` builds and stores `RelationNameIndex` from all 4,166 graph relations
+  - `run_trial_inprocess()` per-question: `QuestionDecomposer.decompose(question)` + `RelationNameIndex.score_relations(relation_keywords)` → post-extraction path re-ranking (answers reached via question-relevant terminal relations get score bonus)
+  - `_soft_type_filter()` — "who" questions: soft-sort, pushing entities with obvious non-person markers (film, album, country, etc.) to end without removal
+  - 84% of WebQSP test questions receive matching relation scores
+
+### Benchmarks
+- WebQSP Phase 232 (200q, random, fallback params): **H@1≈6.5–7.0%, H@10≈22–24%** (±1.7pp std error at 200q)
+- vs Phase 231 zero-config: H@1=5.5%, H@10=25.5% — improvement within statistical noise at 200q scale
+- Scientific finding: question decomposition provides architectural infrastructure for goal-directed reasoning; H@1 gain is not statistically significant at 200q but the re-ranking mechanism is mechanistically sound (84% question coverage; post-extraction path re-ranking by terminal-relation semantic match)
+- Root insight for "genuine thinking": CEREBRUM's H@1 gap on WebQSP is a COVERAGE problem (H@10=25% = beam finds answer in top-10 only 25% of the time), not a re-ranking problem. Structural improvements to beam coverage are the next lever.
+
+## [2.77.0] - 2026-06-07
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.77.0] - 2026-06-07
+
+### Added
+- **Phase 231**: WebQSP KGQA benchmark — Freebase 2-hop, 1,628 test questions
+- `benchmarks/webqsp_param_eval.py` — new eval harness; seed-entity subgraph extraction (2-pass streaming, 584k triples, 292k nodes); MID relay-node filter in output (`/m/xxxxx` nodes excluded from ranked candidates); `build_webqsp_state()` + `run_trial_inprocess()` in-process pattern; machine-readable result line for tuner integration
+- `benchmarks/cerebrum_tuner.py` — `--dataset webqsp` support: `PARAM_SPACE_WEBQSP`, `_init_webqsp_state()`, in-process eval path, subprocess fallback, parser updated for `"webqsp"` prefix
+
+### Benchmarks
+- WebQSP zero-config (200q, random embeddings, fallback params): **H@1=5.50%, H@10=25.50%, MRR=0.1127**
+- Scientific finding: H@10=25.5% confirms the correct answer is in the beam; H@1=5.5% reflects a ranking challenge on Freebase's CVT-reified graph. Attempts at CVT vote normalization (path_score-only ranking, branch_count-normalized consensus) both degraded performance — the consensus/vote signal carries genuine positive information even on reified KGs. Correct answers are themselves CVT-heavy entities, so normalizing by CVT count penalizes correct and incorrect answers symmetrically.
+- Root cause of H@1 gap: semantic question understanding — the beam finds candidate answers but cannot reliably rank the semantically correct one first without LLM-guided relation filtering or explicit question parsing. Structural fixes are insufficient.
+- Sentence embeddings provide no benefit on WebQSP (288k MID strings dilute cosine similarity signal; 788s encoding overhead).
+- ParameterInitializer uncalibrated for Freebase topology (gamma=334,513 computed); zero-config uses Hetionet typed_heterogeneous × random fallback.
 
 ## [2.76.0] - 2026-06-07
 

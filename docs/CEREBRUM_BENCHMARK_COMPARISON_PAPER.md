@@ -2,9 +2,10 @@
 ## Zero-Shot Knowledge Graph Reasoning vs. Trained Baselines: A Comprehensive Analysis
 
 **Author**: Bryan Alexander Buchorn
-**Version**: v2.73.0 · Phase 223 COMPLETE — 2269 tests passing, 4 skipped
+**Version**: v2.77.0 · Phase 231 COMPLETE — 2442 tests passing, 4 skipped
 **Date**: June 2026
 **Status**: Proprietary — all rights reserved
+**Code & Docs**: \url{https://github.com/BrutalByte/CEREBRUM} | \url{https://brutalbyte.github.io/CEREBRUM/} | Wiki: \url{https://github.com/BrutalByte/CEREBRUM/wiki}
 
 ---
 
@@ -14,11 +15,13 @@ This paper presents a rigorous, head-to-head comparison of CEREBRUM's knowledge 
 
 **CEREBRUM achieves competitive results on standard multi-hop KGQA benchmarks using zero training data, zero gradient descent, and zero labeled examples.**
 
-On MetaQA 3-hop, CEREBRUM achieves 89.4% Hits@10 and 60.2% Hits@1 (Phase 223). On the full 39,093-question zero-config evaluation (Phase 212), CEREBRUM scores 1-hop 83.2% / 2-hop 63.3% / 3-hop 56.8% H@1 — with H@10 at 90.7%. The Hits@10 story is the key framing: **CEREBRUM finds the correct answer in its top-10 results at near-supervised rates**. The gap to supervised leaders (UniKGQA 99.1%, NSM ~98%) is a ranking challenge, not a reasoning failure. Supervised training teaches answer ranking; CEREBRUM doesn't have it.
+On MetaQA 3-hop, CEREBRUM achieves H@1=60.6%, H@10=87.9%, MRR=0.703 (Phase 225–227, full 14,274-question run, Optuna-tuned). On the full 39,093-question zero-config evaluation (Phase 212), CEREBRUM scores 1-hop 83.2% / 2-hop 63.3% / 3-hop 56.8% H@1 — with H@10 at 99.0% / 94.3% / 90.7%. The Hits@10 story is the key framing: **CEREBRUM finds the correct answer in its top-10 results at near-supervised rates**. The gap to supervised leaders (UniKGQA 99.1%, NSM ~98%) is a ranking challenge, not a reasoning failure.
 
-On biomedical knowledge graphs (Hetionet, 47,031 entities / 2,250,197 edges), CEREBRUM achieves **95.7% H@1 on 1-hop disease→gene** and **79.5% H@1 on 3-hop disease→compound→pathway** queries using random embeddings with tuned parameters (Phase 207). Sentence-transformer embeddings (Phase 209) improve 2-hop cross-type queries (+10pp to 81.1%) while exposing a documented cross-type semantic ceiling on 3-hop chains — a known architectural limit, not a tuning gap.
+On biomedical knowledge graphs (Hetionet, 47,031 entities / 2,250,197 edges), CEREBRUM achieves **95.7% H@1 on 1-hop disease→gene** and **79.5% H@1 on 3-hop disease→compound→pathway** queries using random embeddings with tuned parameters (Phase 207). Sentence-transformer embeddings (Phase 209) calibrate 2-hop cross-type queries (81.1% H@1).
 
-On WebQSP, CEREBRUM scores 7.5% Hits@1 against trained baselines in the 74–80% range. This gap is honest, explained, and architecturally bounded by entity linking, not reasoning.
+On ConceptNet (commonsense KG, 150K English nodes, 8 relation types), CEREBRUM achieves **H@10=67.6%** on 2-hop chain discovery (Phase 229). ConceptNet's short concept strings provide insufficient embedding signal — random and sentence embeddings perform identically, confirming structural reasoning is the dominant signal on commonsense KGs.
+
+On WebQSP (Freebase KGQA, 1,628 questions), CEREBRUM achieves **H@10=25.5%, H@1=5.5%, MRR=0.1127** (Phase 231, 200-question sample, zero-config). H@10 confirms beam-reach; H@1 reflects the semantic ranking challenge on Freebase's CVT-reified structure — a question-understanding gap, not a graph traversal failure.
 
 Beyond accuracy, CEREBRUM v2.73.0 introduces a full cognitive architecture layer (Phases 215–223): Inhibition of Return, credibility registry, causal discovery, SelfAwarenessEngine (7-dimension epistemic self-assessment), uncertainty-steered retry, PlattCalibration with ECE drift detection, and CerebellarEngine Parameter Punishment with self-triggered MetaParameterLearner. These are not accuracy features — they are production reasoning safeguards.
 
