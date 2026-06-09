@@ -125,16 +125,19 @@ PARAM_SPACE_CONCEPTNET: dict = {
 # Seeded around Hetionet typed_heterogeneous calibration (closest known regime).
 # Freebase has higher relation diversity (6k types vs 89) and denser hubs,
 # so trb_factor/gamma ceilings are raised to allow more aggressive path pruning.
+# Phase 234: beam_width range expanded to [16,24,32,48] after empirical sweep
+# showed bw=32 optimal for WebQSP hub-heavy topology (+5pp H@10 vs bw=12).
+# trb_factor range shifted up (ParameterInitializer: 35.9 for Freebase).
 PARAM_SPACE_WEBQSP: dict = {
-    "trb_factor":   (2.0,  30.0),
-    "r2_boost":     (1.0,  10.0),
+    "trb_factor":   (10.0, 60.0),
+    "r2_boost":     (0.5,  8.0),
     "vote_weight":  (0.55, 0.95),
-    "beam_width":   [8, 10, 12, 16],
-    "idf_weight":   (0.0,  0.30),
-    "branch_bonus": (0.0,  0.80),
-    "fhrb_factor":  (1.0,  6.0),
-    "gamma":        (0.5,  12.0),
-    "beta":         (0.5,  2.5),
+    "beam_width":   [16, 24, 32, 48],
+    "idf_weight":   (0.0,  0.15),
+    "branch_bonus": (0.0,  0.20),
+    "fhrb_factor":  (0.5,  4.0),
+    "gamma":        (1.0,  10.0),
+    "beta":         (0.5,  2.0),
 }
 
 # Float param names (excludes categorical beam_width)

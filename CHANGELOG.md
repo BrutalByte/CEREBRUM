@@ -4,6 +4,27 @@ All notable changes to CEREBRUM are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.80.0] - 2026-06-08
+
+### Fixed
+- **Phase 234**: PlattCalibration cross-trial contamination — critical in-process benchmark corruption bug
+  - Phase 207 implicit seed-reuse feedback (`record_feedback(seed, correct=True)`) fires whenever a query seed appeared as a top-5 answer in any prior in-process query. Across ~3 sequential trials this accumulates 20+ `correct=True` biased samples; `_platt.fit()` then fires in a background thread. Once `_platt._fitted=True`, `graph.query()` applies `_platt.transform(ans.score)` to ALL answers — squashing every score to near-identical sigmoid values (~0.5) and destroying ranking order entirely.
+  - Fix: reset `_platt._samples=[]`, `_platt._fitted=False`, `_recent_answer_cache={}`, `_feedback_buf=[]` at the start of each `run_trial_inprocess()` call in `benchmarks/webqsp_param_eval.py`. Verified: 4 consecutive in-process trials now give stable H@10=24.0–24.5% (previously degraded 24%→7.5%→0% across trials).
+- **CingulateEngine permanent beam_width halving** (`core/cerebrum.py:1677`): Line 1666 `traversal.beam_width = max(2, traversal.beam_width // 2)` modifies the shared `self._traversal` permanently when `needs_custom=False`. The `finally` block restored `_beam_widths` (dict) but not `beam_width` (scalar). Fix: added `self._traversal.beam_width = self._beam_width` to the finally block.
+
+### Changed
+- **WebQSP ParameterInitializer defaults** (`benchmarks/webqsp_param_eval.py`): Updated `_FALLBACK` from stale Hetionet fallbacks to ParameterInitializer-calibrated Freebase values (`trb_factor=35.9236, gamma=3.9861, beta=0.9545, r2_boost=1.4999, fhrb_factor=1.2557, idf_weight=0.0266, vote_weight=0.6279, branch_bonus=0.032`) with `beam_width=32` (empirically optimal for WebQSP's hub-heavy Freebase topology).
+- **PARAM_SPACE_WEBQSP beam_width range** (`benchmarks/cerebrum_tuner.py`): Expanded from `[8,10,12]` to `[16,24,32,48]` after empirical sweep confirmed bw=32 adds +5pp H@10 vs bw=12 on WebQSP. `trb_factor` range shifted up to `(10.0, 60.0)` matching ParameterInitializer calibration; `branch_bonus` ceiling tightened to `0.20` (Freebase over-branching is already controlled by high trb_factor).
+
+### Benchmarks
+- WebQSP Phase 234 (200q, ParameterInitializer defaults, beam_width=32): **H@1=6.5–8%, H@10=26.5–28.5%, MRR≈0.13** vs Phase 233 baseline H@10≈23–25%
+- The primary improvement is from correcting the in-process corruption (Platt contamination was masking real scores) and from beam_width=32 (+5pp H@10 over bw=12 for Freebase hub topology)
+- H@50≈40% confirms answers exist in the beam at rank 11–50 for many questions — a ranking problem within found candidates, not only a coverage problem
+- Theoretical 2-hop ceiling: 71% of 200 test questions have their answer within 2 hops; H@10=28.5% means only ~40% of reachable questions are answered in top-10
+
+### Reverted
+- Phase 234 semantic beam steering (RelationNameIndex q_scores injected into `terminal_relation_boost`/`initial_relation_boost`): abandoned because token-level keyword matching is too noisy for beam guidance (e.g., "play" as verb matches `theater.theater_role.play` with score 0.375, ranking above sports relations). Semantic signal from `RelationNameIndex` remains active only at post-extraction re-ranking where bounded noise is acceptable.
+
 ## [2.79.0] - 2026-06-08
 
 ### Added

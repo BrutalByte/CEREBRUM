@@ -1673,6 +1673,8 @@ class CerebrumGraph:
             # Phase 136: restore shared traversal's beam widths
             if not needs_custom:
                 self._traversal._beam_widths = _prev_widths
+                # Phase 234: restore beam_width in case CingulateEngine halved it
+                self._traversal.beam_width = self._beam_width
 
         # Phase 69: Compute prediction error and dispatch to regulators
         if self.predictive_coder is not None:

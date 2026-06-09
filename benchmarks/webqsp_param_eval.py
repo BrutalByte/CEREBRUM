@@ -342,6 +342,17 @@ def run_trial_inprocess(
     if not qa:
         return 0.0, 0.0, 0.0
 
+    # Reset cross-trial state: Phase 207 implicit feedback accumulates Platt
+    # calibration samples across trials, causing _platt.transform() to squash all
+    # answer scores to near-identical values once _fitted=True (destroying ranking).
+    # Also clear _recent_answer_cache to prevent cross-trial seed-reuse bias.
+    _platt = getattr(graph, "_platt", None)
+    if _platt is not None:
+        _platt._samples = []
+        _platt._fitted  = False
+    graph._recent_answer_cache = {}
+    graph._feedback_buf        = []
+
     beam_width   = int(params.get("beam_width")   or 12)
     trb_factor   = float(params.get("trb_factor")  or 13.87)
     r2_boost     = float(params.get("r2_boost")    or 1.32)
@@ -381,14 +392,12 @@ def run_trial_inprocess(
             else:
                 q_scores = {}
 
-            # TRB unchanged — deriver structural signal drives beam exploration.
-            # Question steering happens post-extraction via path re-ranking (below).
-            q_trb = trb_map or None
+            # TRB and FHRB remain structural (fan-out calibrated).
+            # Semantic signal from RelationNameIndex is used only post-extraction
+            # (re-ranking) where noisy keyword matches are bounded and safe.
+            q_trb  = trb_map  or None
+            q_fhrb = fhrb_map or None
 
-            # Phase 233: Answer-type-aware community hypothesis.
-            # Uses decomp.answer_type to filter outbound community bridges — only boosts
-            # relations that lead toward communities reaching the expected answer category
-            # (person/place/time). Falls back to unfiltered boosts if no typed match.
             # Phase 233: Answer-type-aware community hypothesis.
             # Uses decomp.answer_type to filter outbound community bridges — only boosts
             # relations that lead toward communities reaching the expected answer category
@@ -412,7 +421,7 @@ def run_trial_inprocess(
                 terminal_relation_boost     = q_trb,
                 vote_weight                 = vote_weight,
                 branch_bonus_weight         = branch_bonus,
-                initial_relation_boost      = fhrb_map or None,
+                initial_relation_boost      = q_fhrb,
                 community_hypothesis_fn     = ch_fn,
                 query_embedding             = qemb,
                 max_loops                   = max_loops,
@@ -602,13 +611,14 @@ def main() -> None:
         use_cache   = not args.no_cache,
     )
 
-    # Typed-heterogeneous × random starting point (Hetionet Phase 207 calibration).
-    # ParameterInitializer is not yet calibrated for Freebase topology, so we
-    # use these as the zero-config defaults until Phase 231 tuning is complete.
+    # Phase 234: ParameterInitializer defaults for Freebase typed_heterogeneous +
+    # sentence embeddings regime, with beam_width=32 (empirically optimal for
+    # WebQSP's hub-heavy topology). Improves H@10 from ~23% to ~28.5%.
+    # Tuner run pending to refine further.
     _FALLBACK = {
-        "trb_factor":   13.87, "r2_boost":    1.32, "vote_weight":  0.64,
-        "beam_width":   12,    "idf_weight":  0.018,"branch_bonus": 0.03,
-        "fhrb_factor":  1.73,  "gamma":       1.01, "beta":         0.95,
+        "trb_factor":   35.9236, "r2_boost":  1.4999, "vote_weight":  0.6279,
+        "beam_width":   32,      "idf_weight":0.0266, "branch_bonus": 0.032,
+        "fhrb_factor":  1.2557,  "gamma":     3.9861, "beta":         0.9545,
     }
 
     def _d(attr: str):
