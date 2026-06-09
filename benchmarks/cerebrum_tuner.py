@@ -1029,7 +1029,12 @@ def run_tuner(
                 },
             })
 
-        if p1_source_trials:
+        # CMA-ES does not support categorical params (lists); fall back to TPE
+        # when any param in the refined space is categorical (e.g. beam_width=[16,24,32,48]).
+        _has_categorical = any(isinstance(v, list) for v in rs.values())
+        if _has_categorical:
+            sampler = optuna.samplers.TPESampler(seed=seed + 1, multivariate=True)
+        elif p1_source_trials:
             # source_trials initializes x0/sigma0 from data — cannot specify both
             sampler = optuna.samplers.CmaEsSampler(
                 seed=seed + 1,

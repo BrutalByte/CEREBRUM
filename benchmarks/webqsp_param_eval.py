@@ -611,14 +611,15 @@ def main() -> None:
         use_cache   = not args.no_cache,
     )
 
-    # Phase 234: ParameterInitializer defaults for Freebase typed_heterogeneous +
-    # sentence embeddings regime, with beam_width=32 (empirically optimal for
-    # WebQSP's hub-heavy topology). Improves H@10 from ~23% to ~28.5%.
-    # Tuner run pending to refine further.
+    # Phase 235: Tuner-calibrated Freebase params (tuner_20260609T073451.jsonl, trial 13).
+    # bw=32 with low trb + high r2_boost + branch_bonus=0.143 maximises H@10 coverage.
+    # Branch_bonus (#1 by fANOVA, 0.35 variance) rewards branchy paths → broader candidate set.
+    # Low trb=15.3 allows wider terminal exploration vs ranking-focused configs (trb≈36-42).
+    # Alt MRR-focused config (trial 14): trb=35.8 r2=0.77 bbns=0.008 bw=48 → H@10=27% H@1=6.5%
     _FALLBACK = {
-        "trb_factor":   35.9236, "r2_boost":  1.4999, "vote_weight":  0.6279,
-        "beam_width":   32,      "idf_weight":0.0266, "branch_bonus": 0.032,
-        "fhrb_factor":  1.2557,  "gamma":     3.9861, "beta":         0.9545,
+        "trb_factor":   15.3444, "r2_boost":  7.8128, "vote_weight":  0.8106,
+        "beam_width":   32,      "idf_weight":0.1392, "branch_bonus": 0.1426,
+        "fhrb_factor":  2.3684,  "gamma":     6.8905, "beta":         1.3339,
     }
 
     def _d(attr: str):

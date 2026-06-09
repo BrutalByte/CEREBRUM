@@ -4,6 +4,23 @@ All notable changes to CEREBRUM are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.81.0] - 2026-06-09
+
+### Fixed
+- **CMA-ES Phase 2 failure with categorical params** (`benchmarks/cerebrum_tuner.py`): `CmaEsSampler` raises "No compatible source_trials" when any param in the refined space is categorical (e.g. `beam_width=[16,24,32,48]`). Fix: detect `_has_categorical` before building Phase 2 sampler; if any list param present, fall back to `TPESampler(multivariate=True)` which natively handles mixed discrete/continuous spaces. Without this fix, only 40/100 WebQSP tuner trials completed (60 Phase 2 trials errored out).
+
+### Changed
+- **WebQSP `_FALLBACK` params** updated to tuner-calibrated values (tuner run `20260609T073451`, trial 13): `trb_factor=15.344, r2_boost=7.813, vote_weight=0.811, beam_width=32, idf_weight=0.139, branch_bonus=0.143, fhrb_factor=2.368, gamma=6.891, beta=1.334`
+  - Target: H@10=28.0% vs Phase 234's 26.5–28.5% (now reproduced reliably)
+  - fANOVA reveals `branch_bonus` is #1 parameter (0.35 variance explained), followed by `trb_factor` (0.20), `beam_width` (0.15), `vote_weight` (0.13)
+  - **Coverage/ranking tradeoff**: low `trb_factor` + high `r2_boost` + high `branch_bonus` → better H@10 coverage; high `trb_factor` + low `branch_bonus` → better H@1 ranking. Current defaults favor coverage since that is the primary bottleneck.
+  - MRR-focused alt config: trial 14 (`trb=35.8, r2=0.77, bbns=0.008, bw=48`) → H@1=6.5%, H@10=27.0%, MRR=0.1197
+
+### Benchmarks
+- WebQSP Phase 235 (200q, tuned params, beam_width=32): **H@1=5.0%, H@10=28.0%, MRR=0.1108** (best coverage config)
+- fANOVA parameter importances: branch_bonus=0.35, trb_factor=0.20, beam_width=0.15, vote_weight=0.13, beta=0.06, gamma=0.03
+- Per beam_width best: bw=16→26.0%, bw=24→27.5%, bw=32→28.0%, bw=48→27.5%
+
 ## [2.80.0] - 2026-06-08
 
 ### Fixed
