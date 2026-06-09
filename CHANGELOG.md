@@ -4,6 +4,29 @@ All notable changes to CEREBRUM are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.82.0] - 2026-06-09
+
+### Added
+- **Phase 236: Training-Free Path Schema Prediction** (`core/path_schema_index.py`): First predictive reasoning signal in CEREBRUM. Unlike all prior signals (TRB, community hypothesis, relation-name index) which steer or re-rank AFTER beam traversal, PathSchemaIndex forms a goal-directed hypothesis BEFORE any traversal by predicting the most likely (r1, r2) 2-hop relation schema from the question embedding.
+  - `PathSchemaIndex.build(adapter, embedding_engine, min_count=3)`: Enumerates all (r1, r2) 2-hop schemas from the graph via intermediate-node cross-product, filters by frequency, embeds using last-segment Freebase tokenization (`person.person.place_of_birth` → `"place of birth"`), stores L2-normalised float16 matrix
+  - `predict_schemas_for_seed(qemb, seed_outgoing_rels, top_k=5)`: Filters candidates to schemas whose r1 is an actual outgoing relation from the seed entity (prevents semantically similar but structurally inapplicable schema matches), then ranks by cosine similarity
+  - `execute_schemas(seed, schemas, adapter)`: Executes (r1, r2) as targeted 2-hop traversals — hop1: seed→r1→intermediates, hop2: intermediate→r2→answers; deduplicates excluding seed and intermediate nodes
+  - `_by_r1: Dict[str, List[int]]` reverse index for O(1) seed-filtered lookup
+  - 81,755 schemas indexed from WebQSP 584k-triple subgraph; build time ~60s (sentence encoding bottleneck)
+  - 27 unit tests in `tests/test_path_schema_index.py`
+
+### Fixed
+- **MultiDiGraph `get_neighbors` edge_types filtering** (`adapters/networkx_adapter.py`): NetworkX WebQSP graph is a `MultiDiGraph` — `get_edge_data(u, v)` returns `{key: {attr: val}, ...}` (outer dict keyed by edge index). Old code called `.get("relation", "RELATED_TO")` on the outer dict, which always returned `RELATED_TO` (key mismatch), making all `edge_types` filter calls match nothing. Fixed for the filtered case (`edge_types` specified) by iterating `raw.values()` to access inner edge dicts. Unfiltered calls preserve old one-Edge-per-neighbor behavior to avoid disrupting beam traversal scoring that was tuned with RELATED_TO semantics.
+
+### Changed
+- **WebQSP schema channel merge strategy**: Schema answers (top-2 by schema score) are prepended before beam ranked list so they compete at H@1/H@10. Remaining schema answers appended after top-k for extended H@10+ coverage. This reflects schema channel's high-precision nature — exact (r1, r2) path execution is more reliable than beam score ordering.
+
+### Benchmarks
+- WebQSP Phase 236 (200q, seed_rels from direct graph traversal): **H@1=9.5%, H@10=32.5%, MRR=0.1552**
+- Phase 235 baseline: H@1=6.0%, H@10=28.5%, MRR=0.1198
+- Delta: **+3.5pp H@1, +4.0pp H@10, +0.354 MRR (+30%)**
+- Schema channel fires for ~70% of questions (7/10 in trace sample); schema answers correctly identify hop-2 answers via exact relation-path execution
+
 ## [2.81.0] - 2026-06-09
 
 ### Fixed

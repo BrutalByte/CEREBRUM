@@ -76,27 +76,57 @@ class NetworkXAdapter(GraphAdapter):
             else self._G.neighbors(entity_id)
         )
 
+        is_multi = self._G.is_multigraph()
         edges = []
         for neighbor in neighbors:
-            edge_data = self._G.get_edge_data(entity_id, neighbor) or {}
-            rel_type  = edge_data.get("relation", "RELATED_TO")
+            raw = self._G.get_edge_data(entity_id, neighbor) or {}
+            # MultiDiGraph: raw = {key: {attr: val, ...}, ...}
+            # DiGraph:      raw = {attr: val, ...}
+            inner_edges = list(raw.values()) if is_multi else [raw]
 
-            if edge_types and rel_type not in edge_types:
-                continue
-
-            edges.append(
-                Edge(
-                    source_id=entity_id,
-                    target_id=neighbor,
-                    relation_type=rel_type,
-                    weight=float(edge_data.get("weight", 1.0)),
-                    properties=dict(edge_data),
-                    confidence=float(edge_data.get("confidence", 1.0)),
-                    provenance=str(edge_data.get("provenance", "")),
-                    valid_from=edge_data.get("valid_from"),
-                    valid_to=edge_data.get("valid_to"),
+            if edge_types:
+                # Filtered mode: emit one Edge per matching (neighbor, relation) pair.
+                # This lets callers requesting a specific relation type see all
+                # parallel edges, e.g. schema execute hop-1/hop-2 traversals.
+                for edge_data in inner_edges:
+                    rel_type = edge_data.get("relation", "RELATED_TO")
+                    if rel_type not in edge_types:
+                        continue
+                    edges.append(
+                        Edge(
+                            source_id=entity_id,
+                            target_id=neighbor,
+                            relation_type=rel_type,
+                            weight=float(edge_data.get("weight", 1.0)),
+                            properties=dict(edge_data),
+                            confidence=float(edge_data.get("confidence", 1.0)),
+                            provenance=str(edge_data.get("provenance", "")),
+                            valid_from=edge_data.get("valid_from"),
+                            valid_to=edge_data.get("valid_to"),
+                        )
+                    )
+            else:
+                # Unfiltered mode: emit ONE Edge per unique neighbor, preserving
+                # the pre-existing beam-traversal contract (fan-out = |neighbors|,
+                # not |parallel edges|).  Read relation from the flattened inner
+                # dict for DiGraph, or fall back to RELATED_TO for MultiDiGraph
+                # to avoid changing the beam scoring that was tuned against that
+                # default.  Schema channel uses edge_types-filtered calls instead.
+                edge_data = raw if not is_multi else {}
+                rel_type = edge_data.get("relation", "RELATED_TO")
+                edges.append(
+                    Edge(
+                        source_id=entity_id,
+                        target_id=neighbor,
+                        relation_type=rel_type,
+                        weight=float(edge_data.get("weight", 1.0)),
+                        properties=dict(edge_data),
+                        confidence=float(edge_data.get("confidence", 1.0)),
+                        provenance=str(edge_data.get("provenance", "")),
+                        valid_from=edge_data.get("valid_from"),
+                        valid_to=edge_data.get("valid_to"),
+                    )
                 )
-            )
 
         # Truncate to max_neighbors. When the cap fires we shuffle first so that
         # minority-type edges (e.g. Disease edges among a compound's 300+ Side

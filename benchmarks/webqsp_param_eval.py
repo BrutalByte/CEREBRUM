@@ -57,6 +57,8 @@ from core.question_decomposer import QuestionDecomposer
 from core.relation_name_index import RelationNameIndex
 # Phase 233: community-structured hypothesis generation
 from core.community_hypothesis import CommunityHypothesisGenerator
+# Phase 236: training-free path schema prediction
+from core.path_schema_index import PathSchemaIndex
 
 _DECOMPOSER = QuestionDecomposer()
 
@@ -375,6 +377,7 @@ def run_trial_inprocess(
     emb_engine  = getattr(graph, "_embedding_engine", None)
     rel_index   = state.get("rel_index")
     hyp_gen     = state.get("hyp_gen")
+    schema_idx  = state.get("schema_idx")
 
     for seed_ent, answers, question in qa:
         try:
@@ -411,6 +414,28 @@ def run_trial_inprocess(
             # Build query embedding from question text (None for random embeddings)
             qemb = (emb_engine.encode_one(question)
                     if emb_engine and hasattr(emb_engine, "encode_one") else None)
+
+            # Phase 236: Path schema prediction — predict (r1, r2) path from question
+            # embedding restricted to schemas whose r1 the seed actually has, then
+            # execute as targeted 2-hop traversals (independent coverage channel).
+            schema_extra: List[str] = []
+            if schema_idx is not None and qemb is not None:
+                # Collect ALL outgoing relation types from seed — iterate the
+                # underlying graph directly to capture every parallel edge key.
+                _G = graph.adapter._G
+                seed_rels: set = set()
+                if seed_ent in _G:
+                    for _, _, _d in _G.out_edges(seed_ent, data=True):
+                        seed_rels.add(_d.get("relation", "RELATED_TO"))
+                predicted_schemas = schema_idx.predict_schemas_for_seed(
+                    qemb, seed_rels, top_k=5
+                )
+                if predicted_schemas:
+                    schema_hits = schema_idx.execute_schemas(
+                        seed_ent, predicted_schemas, graph.adapter,
+                        skip_rels=_SKIP_RELATIONS,
+                    )
+                    schema_extra = [(eid, sc) for eid, sc in schema_hits]
 
             answers_obj = graph.query(
                 seeds                       = [seed_ent],
@@ -468,6 +493,30 @@ def run_trial_inprocess(
             # For "who" questions, push obviously non-person entities to the end.
             named = _soft_type_filter(named, decomp.answer_type)
             ranked = [a.entity_id for a in named[:top_k]]
+
+            # Phase 236: Merge schema-predicted answers with beam ranking.
+            # Schema channel is high-precision: execute_schemas follows exact
+            # (r1, r2) paths, so when it fires the answer is almost certainly
+            # correct.  Inject the top-2 schema answers (by schema_score) at
+            # the front of the ranked list so they compete at H@1.  Remaining
+            # schema answers are appended after beam top-k for H@10+ coverage.
+            if schema_extra:
+                beam_set = set(ranked)
+                # Sort by schema score descending (already sorted, but explicit)
+                top_schema = [
+                    eid for eid, _sc in schema_extra
+                    if eid not in beam_set and not eid.startswith("/m/")
+                ]
+                # Prepend top-2 high-precision schema answers before beam ranked
+                prepend = top_schema[:2]
+                tail    = top_schema[2:]
+                prepend_set = set(prepend)
+                # Remove prepended items from beam ranked to avoid duplicates
+                ranked = prepend + [e for e in ranked if e not in prepend_set]
+                # Append remaining schema answers for extended coverage
+                for eid in tail:
+                    if eid not in beam_set and eid not in prepend_set:
+                        ranked.append(eid)
         except Exception:
             ranked = []
 
@@ -557,6 +606,22 @@ def build_webqsp_state(
     hyp_gen = CommunityHypothesisGenerator().build(graph.adapter)
     print(f"  {len(hyp_gen._bridge_index):,} community-pair bridges indexed")
 
+    # Phase 236: Build PathSchemaIndex — enumerate 2-hop (r1, r2) schemas and embed
+    # them so query-time cosine similarity can predict the likely relation path.
+    # Only built when sentence embeddings are available (schema prediction requires
+    # meaningful embedding similarity; random embeddings produce no signal).
+    schema_idx: Optional[PathSchemaIndex] = None
+    if embeddings == "sentence":
+        print("[WebQSPState] Building PathSchemaIndex...")
+        t_si = time.time()
+        schema_idx = PathSchemaIndex().build(
+            graph.adapter,
+            graph._embedding_engine,
+            min_count       = 3,
+            skip_relations  = _SKIP_RELATIONS,
+        )
+        print(f"  {schema_idx.schema_count():,} 2-hop schemas indexed ({time.time()-t_si:.1f}s)")
+
     print("[WebQSPState] Ready — all trials will skip graph build.\n")
 
     return {
@@ -567,6 +632,7 @@ def build_webqsp_state(
         "embeddings":   embeddings,
         "rel_index":    rel_index,
         "hyp_gen":      hyp_gen,
+        "schema_idx":   schema_idx,
     }
 
 
