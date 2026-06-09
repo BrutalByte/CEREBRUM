@@ -17,9 +17,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - MRR-focused alt config: trial 14 (`trb=35.8, r2=0.77, bbns=0.008, bw=48`) → H@1=6.5%, H@10=27.0%, MRR=0.1197
 
 ### Benchmarks
-- WebQSP Phase 235 (200q, tuned params, beam_width=32): **H@1=5.0%, H@10=28.0%, MRR=0.1108** (best coverage config)
-- fANOVA parameter importances: branch_bonus=0.35, trb_factor=0.20, beam_width=0.15, vote_weight=0.13, beta=0.06, gamma=0.03
-- Per beam_width best: bw=16→26.0%, bw=24→27.5%, bw=32→28.0%, bw=48→27.5%
+- WebQSP Phase 235 (200q, full 100-trial run): **H@1=6.0%, H@10=28.5%, MRR=0.1198** (bw=32, trb=43.0, bbns=0.090, gamma=8.40)
+- H@1=7.0% reached (composite best, bw=16) — new H@1 high watermark for WebQSP
+- fANOVA parameter importances: branch_bonus=0.195, beam_width=0.177, vote_weight=0.150, trb_factor=0.122, idf_weight=0.114
+- Per beam_width best H@10: bw=16→26.0%, bw=24→28.5%, bw=32→28.5%, bw=48→28.5%
+- Consistent pattern: gamma=8.4–8.6 in all top configs — high community attention weight critical for Freebase
+- Alt MRR config: bw=24, trb=58.1, bbns=0.022, gamma=8.55 → H@1=6.5%, H@10=27.0%, MRR=0.1216
 
 ## [2.80.0] - 2026-06-08
 

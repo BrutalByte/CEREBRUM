@@ -611,15 +611,15 @@ def main() -> None:
         use_cache   = not args.no_cache,
     )
 
-    # Phase 235: Tuner-calibrated Freebase params (tuner_20260609T073451.jsonl, trial 13).
-    # bw=32 with low trb + high r2_boost + branch_bonus=0.143 maximises H@10 coverage.
-    # Branch_bonus (#1 by fANOVA, 0.35 variance) rewards branchy paths → broader candidate set.
-    # Low trb=15.3 allows wider terminal exploration vs ranking-focused configs (trb≈36-42).
-    # Alt MRR-focused config (trial 14): trb=35.8 r2=0.77 bbns=0.008 bw=48 → H@10=27% H@1=6.5%
+    # Phase 235: Tuner-calibrated Freebase params (tuner_20260609T074734.jsonl, trial 85, Phase 2).
+    # bw=32 + high trb + gamma=8.4 + bbns=0.09 → H@10=28.5% H@1=6.0% MRR=0.1198.
+    # Full 100-trial run (30 Sobol + 70 TPE) with CMA-ES categorical fix applied.
+    # fANOVA: branch_bonus=0.195, beam_width=0.177, vote_weight=0.150, trb_factor=0.122.
+    # Alt MRR config (bw=24, trb=58.1, bbns=0.022): H@1=6.5%, H@10=27.0%, MRR=0.1216
     _FALLBACK = {
-        "trb_factor":   15.3444, "r2_boost":  7.8128, "vote_weight":  0.8106,
-        "beam_width":   32,      "idf_weight":0.1392, "branch_bonus": 0.1426,
-        "fhrb_factor":  2.3684,  "gamma":     6.8905, "beta":         1.3339,
+        "trb_factor":   42.9747, "r2_boost":  5.6184, "vote_weight":  0.6856,
+        "beam_width":   32,      "idf_weight":0.0152, "branch_bonus": 0.0905,
+        "fhrb_factor":  1.5508,  "gamma":     8.4034, "beta":         1.5679,
     }
 
     def _d(attr: str):
