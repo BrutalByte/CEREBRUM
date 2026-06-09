@@ -55,6 +55,8 @@ CACHE_DIR = DATA_DIR / "cache"
 # Phase 232: question decomposition + relation-name steering
 from core.question_decomposer import QuestionDecomposer
 from core.relation_name_index import RelationNameIndex
+# Phase 233: community-structured hypothesis generation
+from core.community_hypothesis import CommunityHypothesisGenerator
 
 _DECOMPOSER = QuestionDecomposer()
 
@@ -361,6 +363,7 @@ def run_trial_inprocess(
     h1_sum = h10_sum = mrr_sum = 0.0
     emb_engine  = getattr(graph, "_embedding_engine", None)
     rel_index   = state.get("rel_index")
+    hyp_gen     = state.get("hyp_gen")
 
     for seed_ent, answers, question in qa:
         try:
@@ -382,22 +385,37 @@ def run_trial_inprocess(
             # Question steering happens post-extraction via path re-ranking (below).
             q_trb = trb_map or None
 
+            # Phase 233: Answer-type-aware community hypothesis.
+            # Uses decomp.answer_type to filter outbound community bridges — only boosts
+            # relations that lead toward communities reaching the expected answer category
+            # (person/place/time). Falls back to unfiltered boosts if no typed match.
+            # Phase 233: Answer-type-aware community hypothesis.
+            # Uses decomp.answer_type to filter outbound community bridges — only boosts
+            # relations that lead toward communities reaching the expected answer category
+            # (person/place/time). Falls back to unfiltered boosts if no typed match.
+            if hyp_gen:
+                _at = decomp.answer_type
+                ch_fn = lambda e, at=_at: hyp_gen.generate_typed_boosts(e, answer_type=at, top_n=20, boost_scale=2.0)
+            else:
+                ch_fn = None
+
             # Build query embedding from question text (None for random embeddings)
             qemb = (emb_engine.encode_one(question)
                     if emb_engine and hasattr(emb_engine, "encode_one") else None)
 
             answers_obj = graph.query(
-                seeds                  = [seed_ent],
-                top_k                  = top_k * 3,  # overfetch for post-processing
-                min_hop                = 1,
-                max_hop                = 2,
-                beam_width             = beam_width,
-                terminal_relation_boost= q_trb,
-                vote_weight            = vote_weight,
-                branch_bonus_weight    = branch_bonus,
-                initial_relation_boost = fhrb_map or None,
-                query_embedding        = qemb,
-                max_loops              = max_loops,
+                seeds                       = [seed_ent],
+                top_k                       = top_k * 3,  # overfetch for post-processing
+                min_hop                     = 1,
+                max_hop                     = 2,
+                beam_width                  = beam_width,
+                terminal_relation_boost     = q_trb,
+                vote_weight                 = vote_weight,
+                branch_bonus_weight         = branch_bonus,
+                initial_relation_boost      = fhrb_map or None,
+                community_hypothesis_fn     = ch_fn,
+                query_embedding             = qemb,
+                max_loops                   = max_loops,
             )
 
             # Phase 232: Post-extraction path re-ranking.
@@ -524,6 +542,12 @@ def build_webqsp_state(
     rel_index.build_from_relations(all_relations)
     print(f"  {len(all_relations):,} relations indexed")
 
+    # Phase 233: Build CommunityHypothesisGenerator from community structure.
+    # Scans all edges once to catalog bridge-crossing relations per community pair.
+    print("[WebQSPState] Building CommunityHypothesisGenerator...")
+    hyp_gen = CommunityHypothesisGenerator().build(graph.adapter)
+    print(f"  {len(hyp_gen._bridge_index):,} community-pair bridges indexed")
+
     print("[WebQSPState] Ready — all trials will skip graph build.\n")
 
     return {
@@ -533,6 +557,7 @@ def build_webqsp_state(
         "answer_freq":  dict(answer_freq),
         "embeddings":   embeddings,
         "rel_index":    rel_index,
+        "hyp_gen":      hyp_gen,
     }
 
 

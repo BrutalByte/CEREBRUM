@@ -388,6 +388,10 @@ class BeamTraversal:
         self.penultimate_relation_boost: Dict[str, float] = dict(kwargs.get("penultimate_relation_boost", {}) or {})
         # Phase 180: Initial Relation Boost - applied only at hop 1 to steer the first step
         self.initial_relation_boost: Dict[str, float] = dict(kwargs.get("initial_relation_boost", {}) or {})
+        # Phase 233: Dynamic Community Hypothesis — callable(entity_id) -> {rel: boost}
+        # Called at every expansion step using the current tail entity's community, giving
+        # per-entity-community relation boosts without any hop-position restriction.
+        self._community_hypothesis_fn = kwargs.get("community_hypothesis_fn")
         # Phase 172: Terminal-Anchor hints â€” {hop: (entity_set, bonus_factor)}
         # At the specified hop, entities in the set get their sort key multiplied by bonus_factor.
         # Does not mutate path scores; only affects pruning order. Safe to apply at any non-terminal hop.
@@ -773,6 +777,15 @@ class BeamTraversal:
                         if self.initial_relation_boost and hop == 1:
                             ib = self.initial_relation_boost.get(rel_eff, 0.1)
                             w *= ib
+                        # Phase 233: Dynamic community hypothesis — per-entity boost at non-terminal hops.
+                        # Skipped at the terminal hop when TRB is active so TRB signal dominates
+                        # selection of the final edge (community boosts steer intermediates only).
+                        if self._community_hypothesis_fn and not (
+                            self.terminal_relation_boost and hop == self.max_hop
+                        ):
+                            ch = self._community_hypothesis_fn(u).get(rel_eff, 1.0)
+                            if ch > 1.0:
+                                w *= ch
 
                         if v_eff not in comm_cache:
                             comm_cache[v_eff] = _get_comm(v_eff)

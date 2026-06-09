@@ -1357,6 +1357,7 @@ class CerebrumGraph:
         fan_out:                     Optional[Dict]  = None,
         weight_specificity:          float           = 0.0,
         initial_relation_boost:      Optional[Dict[str, float]] = None,
+        community_hypothesis_fn:     Optional[Any]   = None,
     ) -> List[Answer]:
         """
         Traverse the graph from ``seeds`` and return ranked answers.
@@ -1537,6 +1538,7 @@ class CerebrumGraph:
                 penultimate_relation_boost = _prb,  # Phase 156
                 initial_relation_boost     = initial_relation_boost,  # Phase 180
                 penultimate_decay          = penultimate_decay,
+                community_hypothesis_fn    = community_hypothesis_fn,  # Phase 233
                 **csa_overrides # Inject hormonal overrides
             )
             traversal.global_workspace = self.global_workspace
@@ -1581,6 +1583,7 @@ class CerebrumGraph:
                 penultimate_decay          = penultimate_decay,
                 anchor_hints               = _anchor_hints,       # Phase 172
                 stage1_anchor_hint         = _stage1_anchor,      # Phase 172
+                community_hypothesis_fn    = community_hypothesis_fn,  # Phase 233
                 **csa_overrides,
             )
             traversal._causal_edge_index = getattr(

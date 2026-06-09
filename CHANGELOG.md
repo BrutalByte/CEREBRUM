@@ -4,6 +4,26 @@ All notable changes to CEREBRUM are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.79.0] - 2026-06-08
+
+### Added
+- **Phase 233**: Community-Structured Hypothesis Generation — first topology-derived beam steering layer
+- `core/community_hypothesis.py` — `CommunityHypothesisGenerator`:
+  - `build(adapter)`: O(|E|) scan of all inter-community edges; builds `_bridge_index: Dict[(src_cid, dst_cid), Counter[rel]]` and `_outbound_index: Dict[cid, Counter[rel]]`; tags each community with reachable answer types via `_community_reach_types`
+  - `generate_hop_boosts(entity, top_n=20, boost_scale=2.0)`: top-N community bridge relations as boosts in [1.0, 1.0+boost_scale]
+  - `generate_typed_boosts(entity, answer_type, ...)`: filters bridge relations to those whose Freebase suffix matches expected answer type (last dot-segment: "actor"→person, "containedby"→place, "date"→time); falls back to unfiltered when no match
+  - `community_reach_types(cid)`: frozenset of answer types this community connects to via its outbound bridge suffixes
+- `reasoning/traversal.py` — `_community_hypothesis_fn` kwarg: callable(entity_id)→{rel: boost} applied at every non-terminal hop (skipped at terminal hop when TRB is active to prevent destructive interference)
+- `core/cerebrum.py` — `query()` gains `community_hypothesis_fn` parameter, passed through to BeamTraversal
+- `tests/test_community_hypothesis.py` — 24 unit tests: build correctness, intra-community exclusion, bridge ordering, typed filtering, reach-type classification, fallback behavior, edge cases
+
+### Benchmarks
+- WebQSP Phase 233 (200q, ±1.7pp std error): **H@1≈7–8%, H@10≈23–25%, MRR≈0.12** vs Phase 232 baseline H@1=6.5%, H@10=25.5%, MRR=0.1127
+- 219,588 community-pair bridges indexed on WebQSP 584k-triple subgraph; 100% seed coverage; build time <3s
+- Key finding: Answer-type-aware community hypothesis (`generate_typed_boosts`) provides cleaner beam steering than unfiltered outbound boosts — for "who" questions, filters to person-reaching relations (suffix: actor, player, founder, …) reducing award-relation noise
+- Scientific insight: Community boosts must be applied at non-terminal hops only; applying at terminal hop (alongside deriver TRB) causes destructive interference (3× community × 0.01 TRB penalty = 0.03 effective weight). Penultimate-only application preserves TRB signal integrity
+- Novel property: purely topology-derived hypothesis generation — works on opaque relation names, any KG with community assignments, language-agnostic
+
 ## [2.78.0] - 2026-06-08
 
 ### Added
