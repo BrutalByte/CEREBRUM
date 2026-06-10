@@ -4,6 +4,16 @@ All notable changes to CEREBRUM are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.84.0] - 2026-06-09
+
+### Added
+- **Phase 239: Hub-entity degree penalty + extended answer-type filter** (`benchmarks/webqsp_param_eval.py`, `benchmarks/cerebrum_tuner.py`): Targets the 20pp H@1/H@10 gap — the beam finds correct answers in top-10 but ranks wrong entities #1 due to hub flooding and unapplied answer-type context.
+  - **`degree_penalty_weight` parameter**: Wires the existing `extract()` hub-suppression mechanism (Phase 148, `degree_penalty_weight` in `answer_extractor.py`) into the WebQSP tuner for the first time. Was dead code since Phase 148 — never passed from `webqsp_param_eval.py` to `graph.query()`. Penalty formula: `score *= 1 / (1 + dpw * log1p(degree))`. High-degree hub entities (e.g., "United States", "English") get suppressed relative to specific entities reached via fewer paths. Added to `PARAM_SPACE_WEBQSP` as `"degree_penalty_weight": (0.0, 0.5)`, `TrialRecord`, `_inprocess_params`, `_trial_record_to_dict`, `_load_resume`, `_make_source_trials`.
+  - **Extended `_soft_type_filter`**: Extends answer-type re-ordering from "person" only to "time" type. "when" questions (3.5% of WebQSP) now prefer entities matching year patterns (`\b(1[0-9]{3}|20[0-9]{2})\b`) or temporal words (century, decade, era, period). Filter never removes answers — only reorders, so cannot hurt recall.
+
+### Benchmarks
+- Phase 239 tuner run pending — expected gain from degree penalty: +2–4pp H@1 (hub flooding is estimated 25% of the H@1/H@10 gap)
+
 ## [2.83.0] - 2026-06-10
 
 ### Fixed

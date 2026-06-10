@@ -282,24 +282,36 @@ def load_webqsp_questions(
 # Evaluation
 # ---------------------------------------------------------------------------
 
+_TIME_PATTERN = re.compile(r'\b(1[0-9]{3}|20[0-9]{2})\b|century|decade|\bera\b|period|ancient|medieval|modern')
+
 def _soft_type_filter(answers: list, answer_type: str) -> list:
     """
-    Phase 232: Soft answer-type filter — re-orders answers so type-consistent
+    Phase 232/239: Soft answer-type filter — re-orders answers so type-consistent
     entities appear before obviously mismatched ones.  Does NOT remove answers.
 
-    Only applied for 'person' type (most common WebQSP category).
+    Handles 'person', 'place', and 'time' answer types.
     """
-    if answer_type != "person" or not answers:
+    if not answers:
         return answers
-    person_like, non_person = [], []
-    for ans in answers:
-        eid = ans.entity_id.lower()
-        words = set(re.split(r"[\s_\-/]+", eid))
-        if words & _NON_PERSON_MARKERS:
-            non_person.append(ans)
-        else:
-            person_like.append(ans)
-    return person_like + non_person
+    if answer_type == "person":
+        person_like, non_person = [], []
+        for ans in answers:
+            eid = ans.entity_id.lower()
+            words = set(re.split(r"[\s_\-/]+", eid))
+            if words & _NON_PERSON_MARKERS:
+                non_person.append(ans)
+            else:
+                person_like.append(ans)
+        return person_like + non_person
+    if answer_type == "time":
+        time_like, non_time = [], []
+        for ans in answers:
+            if _TIME_PATTERN.search(ans.entity_id):
+                time_like.append(ans)
+            else:
+                non_time.append(ans)
+        return time_like + non_time
+    return answers
 
 
 def _hits_mrr(
@@ -367,6 +379,8 @@ def run_trial_inprocess(
     max_loops           = int(params.get("max_loops")            or 1)
     _sst = params.get("schema_score_threshold")
     schema_score_thresh = float(_sst) if _sst is not None else 0.0
+    _dpw = params.get("degree_penalty_weight")
+    degree_penalty_weight = float(_dpw) if _dpw is not None else 0.0
 
     # Build relation boost maps from deriver fan-out statistics
     boost_map  = deriver.boost_map(gamma, beta) if deriver.is_built else {}
@@ -446,6 +460,7 @@ def run_trial_inprocess(
                 community_hypothesis_fn     = ch_fn,
                 query_embedding             = qemb,
                 max_loops                   = max_loops,
+                degree_penalty_weight       = degree_penalty_weight,
             )
 
             # Phase 232: Post-extraction path re-ranking.

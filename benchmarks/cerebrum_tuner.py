@@ -128,6 +128,7 @@ PARAM_SPACE_CONCEPTNET: dict = {
 # idf_weight: top-quartile max 0.052 → ceiling cut to 0.08.
 # branch_bonus: top-quartile max 0.089 → ceiling cut to 0.12.
 # schema_score_threshold: first real sweep (was propagation-bug blocked in 237).
+# degree_penalty_weight: Phase 239 — hub suppression via entity degree in extract().
 PARAM_SPACE_WEBQSP: dict = {
     "trb_factor":             (38.0, 60.0),
     "r2_boost":               (0.5,  8.0),
@@ -139,6 +140,7 @@ PARAM_SPACE_WEBQSP: dict = {
     "gamma":                  (1.0,  10.0),
     "beta":                   (0.5,  2.0),
     "schema_score_threshold": (0.40, 0.90),
+    "degree_penalty_weight":  (0.0,  0.5),
 }
 
 # Float param names (excludes categorical beam_width)
@@ -238,6 +240,7 @@ def _load_resume(path: Path) -> tuple[list["TrialRecord"], Optional[dict]]:
             mrr=obj["mrr"],
             elapsed_s=obj["elapsed_s"],
             schema_score_threshold=obj.get("schema_score_threshold", 0.0),
+            degree_penalty_weight=obj.get("degree_penalty_weight", 0.0),
         )
         if rec.h1 > best_h1:
             best_h1 = rec.h1
@@ -276,6 +279,7 @@ def _make_source_trials(records: "list[TrialRecord]", space: dict) -> list:
             "gamma":                  rec.gamma,
             "beta":                   rec.beta,
             "schema_score_threshold": getattr(rec, "schema_score_threshold", 0.0),
+            "degree_penalty_weight":  getattr(rec, "degree_penalty_weight", 0.0),
         }
         # Only include params that exist in the distributions dict
         params = {k: v for k, v in params.items() if k in distributions}
@@ -307,6 +311,7 @@ class TrialRecord:
     mrr:                    float
     elapsed_s:              float
     schema_score_threshold: float = 0.0  # Phase 237: schema prepend confidence gate
+    degree_penalty_weight:  float = 0.0  # Phase 239: hub entity degree suppression
     is_best:                bool  = False
     phase:                  int   = 1
 
@@ -353,7 +358,8 @@ class LiveDashboard:
                 f"bbns=[cyan]{b.branch_bonus:.3f}[/cyan]  "
                 f"fhrb=[cyan]{b.fhrb_factor:.3f}[/cyan]  "
                 f"gamma=[cyan]{b.gamma:.3f}[/cyan]  "
-                f"beta=[cyan]{b.beta:.3f}[/cyan]"
+                f"beta=[cyan]{b.beta:.3f}[/cyan]  "
+                f"dpw=[cyan]{b.degree_penalty_weight:.3f}[/cyan]"
             )
         else:
             body = "[dim]Waiting for first trial...[/dim]"
@@ -387,6 +393,7 @@ class LiveDashboard:
         t.add_column("fhrb",  justify="right",              no_wrap=True, width=5)
         t.add_column("gamma", justify="right",              no_wrap=True, width=6)
         t.add_column("beta",  justify="right",              no_wrap=True, width=5)
+        t.add_column("dpw",   justify="right",              no_wrap=True, width=5)
         t.add_column("H@1",   justify="right",              no_wrap=True, width=7)
         t.add_column("H@10",  justify="right",              no_wrap=True, width=7)
         t.add_column("MRR",   justify="right",              no_wrap=True, width=6)
@@ -418,6 +425,7 @@ class LiveDashboard:
                 f"{r.fhrb_factor:.2f}",
                 f"{r.gamma:.3f}",
                 f"{r.beta:.3f}",
+                f"{getattr(r, 'degree_penalty_weight', 0.0):.3f}",
                 f"{r.h1*100:.1f}%",
                 f"{r.h10*100:.1f}%",
                 f"{r.mrr:.4f}",
@@ -469,6 +477,7 @@ def _trial_record_to_dict(
         "gamma":                  rec.gamma,
         "beta":                   rec.beta,
         "schema_score_threshold": rec.schema_score_threshold,
+        "degree_penalty_weight":  rec.degree_penalty_weight,
         "h1":                     rec.h1,
         "h10":              rec.h10,
         "mrr":              rec.mrr,
@@ -608,6 +617,7 @@ def _run_eval_logged(
         "gamma":                  kwargs["gamma"],
         "beta":                   kwargs["beta"],
         "schema_score_threshold": kwargs.get("schema_score_threshold", 0.0),
+        "degree_penalty_weight":  kwargs.get("degree_penalty_weight", 0.0),
         "max_loops":              1,
     }
     if dataset == "hetionet" and _hetionet_state is not None:
