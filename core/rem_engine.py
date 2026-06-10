@@ -17,6 +17,14 @@ exactly what a real run would do — safe to call at any time for inspection.
 
 Rollback: one level of undo. Before each real run a compact diff snapshot is
 saved. rollback() restores pruned edges and removes synthetic ones.
+
+The pruning step follows the sparse selective principle introduced by Behrouz
+et al. (2026) "Memory Caching: RNNs with Growing Memory" (arXiv:2602.24281):
+rather than retaining all edges above a threshold, future iterations should
+rank edges by a composite utility score (confidence × traversal frequency)
+and keep only the top-k per relation type — preventing memory growth
+proportional to graph size.  See EngramConsolidator.sparse_consolidate() for
+the Engram-cache analog of this principle.
 """
 from __future__ import annotations
 

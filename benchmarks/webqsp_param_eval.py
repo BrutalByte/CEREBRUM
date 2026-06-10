@@ -497,6 +497,24 @@ def run_trial_inprocess(
                     ans.score *= 1.0 / (1.0 + idf_weight * math.log1p(freq))
                 answers_obj.sort(key=lambda a: a.score, reverse=True)
 
+            # Phase 240: CVT relay boost.
+            # Freebase CVT (compound-value-type) nodes act as intermediate join tables
+            # between entities (e.g. seed → film.film.starring → /m/cvt → film.performance.actor → answer).
+            # When the beam traverses through a CVT at hop-1, the CSA semantic similarity
+            # on the CVT node (an opaque MID string) is ~0, penalising the whole 2-hop path.
+            # Answers that reached a named entity via a CVT intermediate deserve a boost to
+            # undo this structural penalty — the CVT hop is unavoidable, not a weakness.
+            _cvt_relay_boost = params.get("cvt_relay_boost", 0.0)
+            if _cvt_relay_boost > 0.0:
+                for ans in answers_obj:
+                    bp = getattr(ans, "best_path", None)
+                    nodes = getattr(bp, "nodes", ()) if bp else ()
+                    # 2-hop path: [seed, rel1, hop1_entity, rel2, terminal]
+                    # nodes[2] is the hop-1 intermediate; if it's a MID, this went through CVT
+                    if len(nodes) >= 5 and str(nodes[2]).startswith("/m/"):
+                        ans.score *= (1.0 + _cvt_relay_boost)
+                answers_obj.sort(key=lambda a: a.score, reverse=True)
+
             # Filter out Freebase MID relay nodes — they are never correct answers
             named = [a for a in answers_obj if not str(a.entity_id).startswith("/m/")]
 
@@ -672,15 +690,18 @@ def main() -> None:
     parser.add_argument("--seed",        type=int, default=42)
     parser.add_argument("--no-cache",    action="store_true",    dest="no_cache")
     # Beam parameter overrides
-    parser.add_argument("--beam-width",   type=int,   default=None, dest="beam_width")
-    parser.add_argument("--trb-factor",   type=float, default=None, dest="trb_factor")
-    parser.add_argument("--r2-boost",     type=float, default=None, dest="r2_boost")
-    parser.add_argument("--vote-weight",  type=float, default=None, dest="vote_weight")
-    parser.add_argument("--idf-weight",   type=float, default=None, dest="idf_weight")
-    parser.add_argument("--branch-bonus", type=float, default=None, dest="branch_bonus")
-    parser.add_argument("--fhrb-factor",  type=float, default=None, dest="fhrb_factor")
-    parser.add_argument("--gamma",        type=float, default=None, dest="gamma")
-    parser.add_argument("--beta",         type=float, default=None, dest="beta")
+    parser.add_argument("--beam-width",              type=int,   default=None, dest="beam_width")
+    parser.add_argument("--trb-factor",              type=float, default=None, dest="trb_factor")
+    parser.add_argument("--r2-boost",                type=float, default=None, dest="r2_boost")
+    parser.add_argument("--vote-weight",             type=float, default=None, dest="vote_weight")
+    parser.add_argument("--idf-weight",              type=float, default=None, dest="idf_weight")
+    parser.add_argument("--branch-bonus",            type=float, default=None, dest="branch_bonus")
+    parser.add_argument("--fhrb-factor",             type=float, default=None, dest="fhrb_factor")
+    parser.add_argument("--gamma",                   type=float, default=None, dest="gamma")
+    parser.add_argument("--beta",                    type=float, default=None, dest="beta")
+    parser.add_argument("--schema-score-threshold",  type=float, default=None, dest="schema_score_threshold")
+    parser.add_argument("--degree-penalty-weight",   type=float, default=None, dest="degree_penalty_weight")
+    parser.add_argument("--cvt-relay-boost",         type=float, default=None, dest="cvt_relay_boost")
     args = parser.parse_args()
 
     state = build_webqsp_state(
@@ -718,7 +739,10 @@ def main() -> None:
         "branch_bonus": args.branch_bonus if args.branch_bonus is not None else _d("branch_bonus"),
         "fhrb_factor":  args.fhrb_factor  if args.fhrb_factor  is not None else _d("fhrb_factor"),
         "gamma":        args.gamma        if args.gamma        is not None else _d("gamma"),
-        "beta":         args.beta         if args.beta         is not None else _d("beta"),
+        "beta":                   args.beta                   if args.beta                   is not None else _d("beta"),
+        "schema_score_threshold": args.schema_score_threshold if args.schema_score_threshold is not None else _d("schema_score_threshold"),
+        "degree_penalty_weight":  args.degree_penalty_weight  if args.degree_penalty_weight  is not None else 0.0,
+        "cvt_relay_boost":        args.cvt_relay_boost        if args.cvt_relay_boost        is not None else 0.0,
         "max_loops":    1,
     }
 

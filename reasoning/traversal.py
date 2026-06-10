@@ -301,6 +301,39 @@ class TraversalPath:
         )
 
 
+@dataclass
+class BeamCheckpoint:
+    """
+    Structural snapshot of the neighbor expansion at one hop during beam traversal.
+
+    Inspired by Behrouz et al. (2026) "Memory Caching: RNNs with Growing Memory"
+    (arXiv:2602.24281), which proposes caching RNN hidden-state checkpoints so
+    that recurrent models gain growing memory without re-processing the full
+    sequence.  BeamCheckpoint applies the dual principle to graph traversal:
+    cache the parameter-free structural expansion (raw edge lists per tail
+    entity) at each hop, so that a re-traversal with different CSA parameters
+    can skip redundant graph I/O and only reapply the scoring pass.
+
+    Lifecycle:
+      - Populated on the first traversal of an entity at a given hop depth.
+      - Reused on subsequent traversals of the same entity (same graph, any params).
+      - Invalidated explicitly via BeamTraversal.clear_checkpoints() when the
+        underlying graph changes.
+
+    Fields
+    ------
+    entity_id   : The tail entity whose outgoing edges are stored.
+    hop         : Hop depth at which this entity was expanded (1-indexed).
+    edges       : Raw list of Edge objects returned by the adapter at this entity.
+    max_neighbors : The max_neighbors cap used during the expansion.
+    """
+    entity_id: str
+    hop: int
+    edges: List
+    max_neighbors: int
+    timestamp: float = field(default_factory=_time.time)
+
+
 class BeamTraversal:
     """
     Beam-search traversal using CSA attention weights.
@@ -420,6 +453,27 @@ class BeamTraversal:
         from core.frontal_engine import FrontalEngine as _FrontalEngine
         self._frontal_engine: Optional[_FrontalEngine] = kwargs.get("frontal_engine", None)
 
+        # BeamCheckpoint cache (Behrouz et al. 2026, arXiv:2602.24281).
+        # Maps entity_id → List[Edge] (raw neighbor list, parameter-free).
+        # Valid as long as the underlying graph is unchanged; call clear_checkpoints()
+        # after any graph mutation.
+        self._expansion_cache: Dict[str, List] = {}
+
+    def clear_checkpoints(self) -> int:
+        """
+        Invalidate all cached BeamCheckpoints.
+
+        Call this after any graph mutation (edge addition, pruning, REM cycle)
+        to ensure subsequent traversals see the updated topology.  Returns the
+        number of entries evicted.
+        """
+        n = len(self._expansion_cache)
+        self._expansion_cache.clear()
+        return n
+
+    def checkpoint_stats(self) -> Dict[str, int]:
+        """Return a summary of the current BeamCheckpoint cache state."""
+        return {"cached_entities": len(self._expansion_cache)}
 
     def traverse(
         self,
@@ -561,14 +615,22 @@ class BeamTraversal:
             # Phase 172: Vectorized Batch Neighbor Fetch (NVME Parallelism)
             # Fetch neighbors for ALL beam tails in a single call to exploit deep NVME queues.
             # Falls back to individual get_neighbors when batch method is unavailable.
+            # BeamCheckpoint (Behrouz et al. 2026, arXiv:2602.24281): serve cached expansions
+            # for entities already seen; fetch only the uncached remainder.
             tails = list(dict.fromkeys(p.tail for p in beam))
-            _batch_fn = getattr(self.adapter, "get_neighbors_batch", None)
-            if _batch_fn is not None and callable(_batch_fn):
-                all_edges_map = _batch_fn(tails, max_neighbors=self.max_neighbors)
-                if not isinstance(all_edges_map, dict):
-                    all_edges_map = {t: self.adapter.get_neighbors(t, max_neighbors=self.max_neighbors) for t in tails}
-            else:
-                all_edges_map = {t: self.adapter.get_neighbors(t, max_neighbors=self.max_neighbors) for t in tails}
+            all_edges_map: Dict[str, List] = {}
+            tails_to_fetch = [t for t in tails if t not in self._expansion_cache]
+            if tails_to_fetch:
+                _batch_fn = getattr(self.adapter, "get_neighbors_batch", None)
+                if _batch_fn is not None and callable(_batch_fn):
+                    _fetched = _batch_fn(tails_to_fetch, max_neighbors=self.max_neighbors)
+                    if not isinstance(_fetched, dict):
+                        _fetched = {t: self.adapter.get_neighbors(t, max_neighbors=self.max_neighbors) for t in tails_to_fetch}
+                else:
+                    _fetched = {t: self.adapter.get_neighbors(t, max_neighbors=self.max_neighbors) for t in tails_to_fetch}
+                self._expansion_cache.update(_fetched)
+            for t in tails:
+                all_edges_map[t] = self._expansion_cache.get(t, [])
 
             for path in beam:
                 u = path.tail

@@ -678,3 +678,25 @@ For setup instructions, see `docs/AUTOMATION_GUIDE.md`.
 
 ---
 
+## References
+
+Behrouz, A., Li, Z., Deng, Y., Zhong, P., Razaviyayn, M., & Mirrokni, V. (2026). Memory Caching: RNNs with Growing Memory. *arXiv preprint arXiv:2602.24281*. https://doi.org/10.48550/arXiv.2602.24281
+
+Das, R., Dhuliawala, S., Zaheer, M., Vilnis, L., Durugkar, I., Krishnamurthy, A., Smola, A., & McCallum, A. (2018). Go for a walk and arrive at the answer. *ICLR 2018*. https://openreview.net/forum?id=Syg-YfWCW
+
+Himmelstein, D. S., et al. (2017). Systematic integration of biomedical knowledge prioritizes drugs for repurposing. *eLife, 6*, e26726. https://doi.org/10.7554/eLife.26726
+
+Hutter, F., Hoos, H., & Leyton-Brown, K. (2014). An efficient approach for assessing hyperparameter importance. *ICML 2014*. https://proceedings.mlr.press/v32/hutter14.html
+
+Jiang, J., et al. (2023). UniKGQA. *ICLR 2023*. https://openreview.net/forum?id=Z63RvyAZ2Vh
+
+Newman, M. E. J., & Girvan, M. (2004). Finding and evaluating community structure in networks. *Physical Review E, 69*(2), 026113. https://doi.org/10.1103/PhysRevE.69.026113
+
+Saxena, A., Tripathi, A., & Talukdar, P. (2020). Improving multi-hop QA over KGs. *ACL 2020*. https://aclanthology.org/2020.acl-main.412
+
+Sun, H., et al. (2018). Open domain QA using early fusion of KBs and text. *EMNLP 2018*. https://aclanthology.org/D18-1455
+
+Zhang, Y., et al. (2018). Variational reasoning for QA with knowledge graphs. *AAAI 2018*. https://arxiv.org/abs/1709.04071
+
+---
+

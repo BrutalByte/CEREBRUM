@@ -141,6 +141,8 @@ PARAM_SPACE_WEBQSP: dict = {
     "beta":                   (0.5,  2.0),
     "schema_score_threshold": (0.40, 0.90),
     "degree_penalty_weight":  (0.0,  0.5),
+    # Phase 240: CVT relay boost — compensates for semantic penalty on Freebase CVT intermediate nodes.
+    "cvt_relay_boost":        (0.0,  3.0),
 }
 
 # Float param names (excludes categorical beam_width)
@@ -241,6 +243,7 @@ def _load_resume(path: Path) -> tuple[list["TrialRecord"], Optional[dict]]:
             elapsed_s=obj["elapsed_s"],
             schema_score_threshold=obj.get("schema_score_threshold", 0.0),
             degree_penalty_weight=obj.get("degree_penalty_weight", 0.0),
+            cvt_relay_boost=obj.get("cvt_relay_boost", 0.0),
         )
         if rec.h1 > best_h1:
             best_h1 = rec.h1
@@ -280,6 +283,7 @@ def _make_source_trials(records: "list[TrialRecord]", space: dict) -> list:
             "beta":                   rec.beta,
             "schema_score_threshold": getattr(rec, "schema_score_threshold", 0.0),
             "degree_penalty_weight":  getattr(rec, "degree_penalty_weight", 0.0),
+            "cvt_relay_boost":        getattr(rec, "cvt_relay_boost", 0.0),
         }
         # Only include params that exist in the distributions dict
         params = {k: v for k, v in params.items() if k in distributions}
@@ -312,6 +316,7 @@ class TrialRecord:
     elapsed_s:              float
     schema_score_threshold: float = 0.0  # Phase 237: schema prepend confidence gate
     degree_penalty_weight:  float = 0.0  # Phase 239: hub entity degree suppression
+    cvt_relay_boost:        float = 0.0  # Phase 240: CVT path score compensation
     is_best:                bool  = False
     phase:                  int   = 1
 
@@ -478,6 +483,7 @@ def _trial_record_to_dict(
         "beta":                   rec.beta,
         "schema_score_threshold": rec.schema_score_threshold,
         "degree_penalty_weight":  rec.degree_penalty_weight,
+        "cvt_relay_boost":        rec.cvt_relay_boost,
         "h1":                     rec.h1,
         "h10":              rec.h10,
         "mrr":              rec.mrr,
@@ -618,6 +624,7 @@ def _run_eval_logged(
         "beta":                   kwargs["beta"],
         "schema_score_threshold": kwargs.get("schema_score_threshold", 0.0),
         "degree_penalty_weight":  kwargs.get("degree_penalty_weight", 0.0),
+        "cvt_relay_boost":        kwargs.get("cvt_relay_boost", 0.0),
         "max_loops":              1,
     }
     if dataset == "hetionet" and _hetionet_state is not None:
