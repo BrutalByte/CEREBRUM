@@ -23,12 +23,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - `branch_bonus`: `(0.0, 0.20)` → `(0.0, 0.12)` — top-quartile max 0.089; ceiling cut
 
 ### Benchmarks
-- WebQSP Phase 238 (47 trials, seed 42): **H@1=10.5%, H@10=32.5%, MRR=0.1620**
-  - Best config: `sst=0.550, bw=16` (trial 18, Phase 1 Sobol)
-  - schema_score_threshold signal confirmed: sst ∈ [0.41, 0.55] → H@1=10.5%; sst ∈ [0.80, 0.89] → H@1=4.0–7.5%
-  - CMA-ES Phase 2 converging to sst ≈ 0.41–0.63, bw=16 — consistent with Phase 1 analysis
+- WebQSP Phase 238 (100 trials, seed 42): **H@1=11.0%, H@10=31.0%, MRR=0.1617** — new H@1 record
+  - Best config (trial 80, Phase 2 CMA-ES): `trb=57.9, r2=4.48, vote=0.886, bw=16, idf=0.025, branch=0.086, fhrb=2.797, gamma=6.247, beta=1.913, sst=0.490`
+  - schema_score_threshold signal confirmed: sst ∈ [0.41, 0.55] → H@1=10.5-11.0%; sst ∈ [0.80, 0.89] → H@1=4.0–7.5%
+  - CMA-ES converged to sst ≈ 0.41–0.55, bw=16, trb ≈ 47–58 — consistent with Phase 1 analysis
   - Phase 237 baseline was H@10=33.5% (from runs that silently used sst=0.0 due to the propagation bug)
-  - With proper sst gating, H@1 maintained at 10.5% and H@10=32.5% against the narrowed/corrected search space
+  - Delta vs Phase 237 true baseline: **H@1 10.5% → 11.0% (+0.5pp)**, H@10 stable at 31-32.5%
 
 ## [2.82.0] - 2026-06-09
 
