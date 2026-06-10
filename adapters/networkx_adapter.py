@@ -106,12 +106,15 @@ class NetworkXAdapter(GraphAdapter):
                         )
                     )
             else:
-                # Unfiltered mode: emit ONE Edge per unique neighbor, preserving
-                # the pre-existing beam-traversal contract (fan-out = |neighbors|,
-                # not |parallel edges|).  Read relation from the flattened inner
-                # dict for DiGraph, or fall back to RELATED_TO for MultiDiGraph
-                # to avoid changing the beam scoring that was tuned against that
-                # default.  Schema channel uses edge_types-filtered calls instead.
+                # Unfiltered mode: emit ONE Edge per unique neighbor.
+                # For MultiDiGraph (e.g. Freebase WebQSP), multiple parallel edges
+                # exist per (u,v) pair with different relation types.  Picking one
+                # arbitrarily would add noise to beam scoring; returning RELATED_TO
+                # as a structural placeholder keeps traversal driven by embedding
+                # similarity and community scores — the correct signals for a graph
+                # with high parallel-edge density.  The schema channel uses the
+                # edge_types-filtered path (above) which correctly enumerates all
+                # parallel edges; unfiltered callers (beam traversal) see RELATED_TO.
                 edge_data = raw if not is_multi else {}
                 rel_type = edge_data.get("relation", "RELATED_TO")
                 edges.append(
@@ -137,6 +140,25 @@ class NetworkXAdapter(GraphAdapter):
             import random as _random
             _random.shuffle(edges)
         return edges[:max_neighbors]
+
+    def get_all_relation_types(self, entity_id: str) -> set:
+        """Return the set of all outgoing relation types from entity_id.
+
+        For MultiDiGraph, iterates every parallel edge key to capture all
+        relation types — not just the first per (u, v) pair as get_neighbors does.
+        O(out_degree) with no fan-out cap; suitable for seed_rels collection.
+        """
+        if entity_id not in self._G:
+            return set()
+        is_multi = self._G.is_multigraph()
+        rels: set = set()
+        for _, _, data in self._G.out_edges(entity_id, data=True):
+            if is_multi:
+                # data is the inner attr dict (NetworkX iterates per-key for MultiGraph)
+                rels.add(data.get("relation", "RELATED_TO"))
+            else:
+                rels.add(data.get("relation", "RELATED_TO"))
+        return rels
 
     def find_entities(self, query: str, top_k: int = 10) -> List[Entity]:
         """

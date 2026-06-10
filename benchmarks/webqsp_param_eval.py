@@ -355,16 +355,18 @@ def run_trial_inprocess(
     graph._recent_answer_cache = {}
     graph._feedback_buf        = []
 
-    beam_width   = int(params.get("beam_width")   or 12)
-    trb_factor   = float(params.get("trb_factor")  or 13.87)
-    r2_boost     = float(params.get("r2_boost")    or 1.32)
-    vote_weight  = float(params.get("vote_weight") or 0.64)
-    idf_weight   = float(params.get("idf_weight")  or 0.018)
-    branch_bonus = float(params.get("branch_bonus") or 0.03)
-    fhrb_factor  = float(params.get("fhrb_factor") or 1.73)
-    gamma        = float(params.get("gamma")       or 1.01)
-    beta         = float(params.get("beta")        or 0.95)
-    max_loops    = int(params.get("max_loops")     or 1)
+    beam_width          = int(params.get("beam_width")          or 12)
+    trb_factor          = float(params.get("trb_factor")         or 13.87)
+    r2_boost            = float(params.get("r2_boost")           or 1.32)
+    vote_weight         = float(params.get("vote_weight")        or 0.64)
+    idf_weight          = float(params.get("idf_weight")         or 0.018)
+    branch_bonus        = float(params.get("branch_bonus")       or 0.03)
+    fhrb_factor         = float(params.get("fhrb_factor")        or 1.73)
+    gamma               = float(params.get("gamma")              or 1.01)
+    beta                = float(params.get("beta")               or 0.95)
+    max_loops           = int(params.get("max_loops")            or 1)
+    _sst = params.get("schema_score_threshold")
+    schema_score_thresh = float(_sst) if _sst is not None else 0.0
 
     # Build relation boost maps from deriver fan-out statistics
     boost_map  = deriver.boost_map(gamma, beta) if deriver.is_built else {}
@@ -420,13 +422,7 @@ def run_trial_inprocess(
             # execute as targeted 2-hop traversals (independent coverage channel).
             schema_extra: List[str] = []
             if schema_idx is not None and qemb is not None:
-                # Collect ALL outgoing relation types from seed — iterate the
-                # underlying graph directly to capture every parallel edge key.
-                _G = graph.adapter._G
-                seed_rels: set = set()
-                if seed_ent in _G:
-                    for _, _, _d in _G.out_edges(seed_ent, data=True):
-                        seed_rels.add(_d.get("relation", "RELATED_TO"))
+                seed_rels = graph.adapter.get_all_relation_types(seed_ent)
                 predicted_schemas = schema_idx.predict_schemas_for_seed(
                     qemb, seed_rels, top_k=5
                 )
@@ -494,29 +490,33 @@ def run_trial_inprocess(
             named = _soft_type_filter(named, decomp.answer_type)
             ranked = [a.entity_id for a in named[:top_k]]
 
-            # Phase 236: Merge schema-predicted answers with beam ranking.
-            # Schema channel is high-precision: execute_schemas follows exact
-            # (r1, r2) paths, so when it fires the answer is almost certainly
-            # correct.  Inject the top-2 schema answers (by schema_score) at
-            # the front of the ranked list so they compete at H@1.  Remaining
-            # schema answers are appended after beam top-k for H@10+ coverage.
+            # Phase 236/237: Merge schema-predicted answers with beam ranking.
+            # Only prepend when schema_score exceeds threshold — low-confidence
+            # predictions displace correct beam answers without adding signal.
             if schema_extra:
                 beam_set = set(ranked)
-                # Sort by schema score descending (already sorted, but explicit)
-                top_schema = [
-                    eid for eid, _sc in schema_extra
-                    if eid not in beam_set and not eid.startswith("/m/")
+                high_conf = [
+                    eid for eid, sc in schema_extra
+                    if sc >= schema_score_thresh
+                    and eid not in beam_set
+                    and not eid.startswith("/m/")
                 ]
-                # Prepend top-2 high-precision schema answers before beam ranked
-                prepend = top_schema[:2]
-                tail    = top_schema[2:]
+                low_conf = [
+                    eid for eid, sc in schema_extra
+                    if sc < schema_score_thresh
+                    and eid not in beam_set
+                    and not eid.startswith("/m/")
+                ]
+                # Prepend top-2 high-confidence schema answers before beam ranked
+                prepend     = high_conf[:2]
                 prepend_set = set(prepend)
-                # Remove prepended items from beam ranked to avoid duplicates
                 ranked = prepend + [e for e in ranked if e not in prepend_set]
-                # Append remaining schema answers for extended coverage
-                for eid in tail:
-                    if eid not in beam_set and eid not in prepend_set:
+                # Append remaining schema answers for extended H@10+ coverage
+                appended: set = prepend_set.copy()
+                for eid in (high_conf[2:] + low_conf):
+                    if eid not in beam_set and eid not in appended:
                         ranked.append(eid)
+                        appended.add(eid)
         except Exception:
             ranked = []
 
@@ -677,15 +677,18 @@ def main() -> None:
         use_cache   = not args.no_cache,
     )
 
-    # Phase 235: Tuner-calibrated Freebase params (tuner_20260609T074734.jsonl, trial 85, Phase 2).
-    # bw=32 + high trb + gamma=8.4 + bbns=0.09 → H@10=28.5% H@1=6.0% MRR=0.1198.
-    # Full 100-trial run (30 Sobol + 70 TPE) with CMA-ES categorical fix applied.
-    # fANOVA: branch_bonus=0.195, beam_width=0.177, vote_weight=0.150, trb_factor=0.122.
-    # Alt MRR config (bw=24, trb=58.1, bbns=0.022): H@1=6.5%, H@10=27.0%, MRR=0.1216
+    # Phase 236: Schema channel params (H@10=32.5% H@1=9.5% MRR=0.155, schema prepend top-2).
+    # Phase 237 finding: RELATED_TO beam is correct for MultiDiGraph Freebase — parallel
+    # edges per (u,v) pair mean any single real relation is arbitrary, so RELATED_TO keeps
+    # traversal driven by embedding similarity + community scores only (correct signals).
+    # schema_score_threshold=0.0 (tunable): unconditional prepend gives best H@10 coverage.
+    # fANOVA (real-relation tuner run): beta #1 (0.40), beam_width #2 (0.30) — different
+    # landscape but lower H@10 confirms RELATED_TO beam is the right design choice.
     _FALLBACK = {
-        "trb_factor":   42.9747, "r2_boost":  5.6184, "vote_weight":  0.6856,
-        "beam_width":   32,      "idf_weight":0.0152, "branch_bonus": 0.0905,
-        "fhrb_factor":  1.5508,  "gamma":     8.4034, "beta":         1.5679,
+        "trb_factor":            42.9747, "r2_boost":  5.6184, "vote_weight":  0.6856,
+        "beam_width":            32,      "idf_weight":0.0152, "branch_bonus": 0.0905,
+        "fhrb_factor":           1.5508,  "gamma":     8.4034, "beta":         1.5679,
+        "schema_score_threshold": 0.0,
     }
 
     def _d(attr: str):

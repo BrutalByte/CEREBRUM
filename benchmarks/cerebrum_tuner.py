@@ -129,15 +129,16 @@ PARAM_SPACE_CONCEPTNET: dict = {
 # showed bw=32 optimal for WebQSP hub-heavy topology (+5pp H@10 vs bw=12).
 # trb_factor range shifted up (ParameterInitializer: 35.9 for Freebase).
 PARAM_SPACE_WEBQSP: dict = {
-    "trb_factor":   (10.0, 60.0),
-    "r2_boost":     (0.5,  8.0),
-    "vote_weight":  (0.55, 0.95),
-    "beam_width":   [16, 24, 32, 48],
-    "idf_weight":   (0.0,  0.15),
-    "branch_bonus": (0.0,  0.20),
-    "fhrb_factor":  (0.5,  4.0),
-    "gamma":        (1.0,  10.0),
-    "beta":         (0.5,  2.0),
+    "trb_factor":            (10.0, 60.0),
+    "r2_boost":              (0.5,  8.0),
+    "vote_weight":           (0.55, 0.95),
+    "beam_width":            [16, 24, 32, 48],
+    "idf_weight":            (0.0,  0.15),
+    "branch_bonus":          (0.0,  0.20),
+    "fhrb_factor":           (0.5,  4.0),
+    "gamma":                 (1.0,  10.0),
+    "beta":                  (0.5,  2.0),
+    "schema_score_threshold": (0.40, 0.90),
 }
 
 # Float param names (excludes categorical beam_width)
