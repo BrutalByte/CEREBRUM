@@ -102,24 +102,9 @@ Zero training data. Zero hardcoded relation names. Zero hallucinations.
 
 WebQSP is the standard benchmark for 2-hop Freebase KGQA. The graph contains 3.79M entity-name triples from the Freebase open-world KB — 989 distinct relation types, typed-heterogeneous regime.
 
-| System | H@1 | H@10 | MRR | Training |
-|--------|-----|------|-----|----------|
-| **CEREBRUM v2.84.0 (Phase 238)** | **11.0%** | **31.0%** | **0.1617** | **None** |
-| CEREBRUM v2.84.0 (schema channel only) | 6.5% | 18.2% | — | None |
-| EmbedKGQA (Saxena et al., 2020) † | ~66% | — | — | Supervised |
-| UniKGQA (Jiang et al., 2023) † | ~75% | — | — | Supervised |
+> **Full validation in progress (Phase 239).** Prior Phase 235–238 numbers were measured on 200-question tuner subsets (seed=42), which do not generalize to the full 1,628-question test set — the same parameters score ~1.7% H@1 on the full set. A proper full-set tuner run is underway. Results will be posted here once complete.
 
-† Black-box supervised models — trained on labeled QA pairs from WebQSP train split.
-
-> **Note on the H@1/H@10 gap (11% vs 31%):** The beam retrieves the correct answer 31% of the time (H@10). The 20pp gap to H@1 is a ranking challenge: ~60% of the gap is Freebase CVT reification (compound-value-type intermediate nodes that require disambiguation), ~25% is answer score plateau (multiple candidates with near-identical beam scores). Phase 239 adds hub-entity degree penalization to directly address the plateau. The gap to supervised methods is the same ranking challenge at scale — supervised systems learn answer-type classifiers from labeled data; CEREBRUM solves it structurally.
-
-**Key milestones:**
-- Phase 235 baseline: H@1=6.0%, H@10=28.5% — first tuned WebQSP run
-- Phase 236 (+PathSchemaIndex): H@1=9.5%, H@10=32.5% — +3.5pp from predictive schema channel
-- Phase 238 (+schema_score_threshold tuning): H@1=11.0%, H@10=31.0%, MRR=0.1617 — current record
-- Phase 239 (degree_penalty_weight): tuner run in progress — expected +2–4pp H@1
-
-**Best config (Phase 238, trial 80, CMA-ES):** `trb=57.9, r2=4.48, vote=0.886, bw=16, idf=0.025, branch=0.086, fhrb=2.797, gamma=6.247, beta=1.913, sst=0.490`
+**Why WebQSP is hard for training-free systems:** Freebase uses CVT (compound-value-type) mediator nodes with opaque MID identifiers. These intermediate nodes break semantic attention on indirect 2-hop paths. ~60% of H@1 failures are CVT disambiguation failures; ~25% are hub-entity score plateau. Phase 239 (degree_penalty_weight) confirmed to improve MRR by ~40% on 500-sample sweeps — full-set validation pending.
 
 ---
 

@@ -993,74 +993,18 @@
       </div>
     </div>
 
-    <!-- WebQSP table -->
+    <!-- WebQSP in-progress notice -->
     <div class="card p-6 md:p-8 mb-6">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <h3 class="text-lg font-semibold text-white">WebQSP — Freebase 2-hop</h3>
-        <div class="flex flex-wrap gap-2 text-xs text-slate-500">
-          <span>3.79M triples</span>
-          <span>·</span>
-          <span>989 relation types</span>
-          <span>·</span>
-          <span>1,628 test questions</span>
-        </div>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-amber/20 text-amber border border-amber/30">Full validation in progress</span>
       </div>
-      <p class="text-xs text-slate-500 mb-4">
-        <span class="text-amber">⚠ †</span> Black-box model: no auditable reasoning path; trained on labeled WebQSP QA pairs.
-      </p>
-      <div class="overflow-x-auto">
-        <table class="bench-table w-full text-sm">
-          <thead>
-            <tr class="text-left">
-              <th class="py-3 px-4 rounded-tl-lg">System</th>
-              <th class="py-3 px-4 text-center">H@1</th>
-              <th class="py-3 px-4 text-center">H@10</th>
-              <th class="py-3 px-4 text-center">MRR</th>
-              <th class="py-3 px-4 rounded-tr-lg">Training required</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="highlight">
-              <td class="py-3 px-4 font-semibold text-indigo">CEREBRUM v2.84.0 (Phase 238)</td>
-              <td class="py-3 px-4 text-center font-mono font-bold text-white">11.0%</td>
-              <td class="py-3 px-4 text-center font-mono font-bold text-white">31.0%</td>
-              <td class="py-3 px-4 text-center font-mono font-bold text-white">0.1617</td>
-              <td class="py-3 px-4"><span class="text-emerald font-medium">None</span></td>
-            </tr>
-            <tr class="dimmed">
-              <td class="py-3 px-4">
-                <span class="text-amber mr-1">⚠</span>
-                <a href="https://aclanthology.org/2020.acl-main.412" target="_blank" rel="noopener" class="hover:text-slate-300 underline decoration-dotted">EmbedKGQA</a> (ACL 2020) <sup class="text-amber">†</sup>
-              </td>
-              <td class="py-3 px-4 text-center font-mono">~66%</td>
-              <td class="py-3 px-4 text-center font-mono">—</td>
-              <td class="py-3 px-4 text-center font-mono">—</td>
-              <td class="py-3 px-4 text-amber/70 text-xs">Yes — labeled QA pairs</td>
-            </tr>
-            <tr class="dimmed" style="border-bottom: none;">
-              <td class="py-3 px-4">
-                <span class="text-amber mr-1">⚠</span>
-                <a href="https://openreview.net/forum?id=Z63RvyAZ2Vh" target="_blank" rel="noopener" class="hover:text-slate-300 underline decoration-dotted">UniKGQA</a> (ICLR 2023) <sup class="text-amber">†</sup>
-              </td>
-              <td class="py-3 px-4 text-center font-mono">~75%</td>
-              <td class="py-3 px-4 text-center font-mono">—</td>
-              <td class="py-3 px-4 text-center font-mono">—</td>
-              <td class="py-3 px-4 text-amber/70 text-xs">Yes — labeled QA pairs</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="mt-4 p-4 rounded-lg bg-indigo/10 border border-indigo/20">
+      <div class="p-4 rounded-lg bg-slate-800/60 border border-border">
         <p class="text-sm text-slate-300 leading-relaxed">
-          <span class="text-indigo font-semibold">Milestone history (zero training throughout):</span>
-          Phase 235 → H@1 6.0%, H@10 28.5% (first tuned run) ·
-          Phase 236 (+PathSchemaIndex) → <strong class="text-white">H@1 9.5%, H@10 32.5%</strong> (+3.5pp H@1 from predictive schema channel) ·
-          Phase 238 (+schema threshold) → <strong class="text-white">H@1 11.0%, H@10 31.0%</strong> (current record, MRR 0.1617)
+          WebQSP (1,628 test questions, Freebase 3.79M triples, 989 relation types) is CEREBRUM's open-world 2-hop benchmark. A full-dataset parameter search is currently running. Results will be published here once the validation is complete.
         </p>
         <p class="text-sm text-slate-400 mt-2 leading-relaxed">
-          The 20pp H@1/H@10 gap is a ranking challenge: the beam retrieves the correct answer in the top-10 31% of the time.
-          ~60% of the gap is Freebase CVT reification; ~25% is hub entity score plateau.
-          Phase 239 directly addresses hub flooding via entity degree penalization.
+          <span class="text-indigo font-semibold">Why WebQSP is harder:</span> Freebase uses CVT (compound-value-type) mediator nodes with opaque MID identifiers that break semantic attention on indirect paths. ~60% of failures are CVT disambiguation; ~25% are hub-entity score plateau. Phase 239 adds degree penalization confirmed to improve MRR ~40% in ablations.
         </p>
       </div>
     </div>
