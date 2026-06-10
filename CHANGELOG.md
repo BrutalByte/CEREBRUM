@@ -4,6 +4,32 @@ All notable changes to CEREBRUM are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.83.0] - 2026-06-10
+
+### Fixed
+- **Phase 238: schema_score_threshold propagation bugs** (`benchmarks/cerebrum_tuner.py`): Four interrelated bugs blocked proper `schema_score_threshold` tuning since Phase 237 added it to `PARAM_SPACE_WEBQSP`.
+  - **Root cause (silent trial-record loss)**: `TrialRecord` dataclass lacked the `schema_score_threshold` field, causing `TrialRecord(**params)` to throw `TypeError` for every WebQSP trial. Optuna's `catch=(Exception,)` silently discarded each trial — `trial_stdout` was written (eval ran) but no `trial` record was written. Result: the June 10 runs (30 trials × 2 runs = 60 evaluations) had zero parameter records despite producing real H@1/H@10 values. The tuner appeared to work but was logging eval results with no associated parameters.
+  - **`_inprocess_params` omission**: `schema_score_threshold` was never passed to `run_trial_inprocess()` — all evaluations ran with the implicit default of `sst=0.0` (unconditional prepend) regardless of what Optuna suggested.
+  - **`_trial_record_to_dict` omission**: `schema_score_threshold` was not serialised to JSONL `trial` entries, so resume (`--resume`) and analysis scripts could not access it.
+  - **`_make_source_trials` mismatch**: `params` dict lacked `schema_score_threshold` while `distributions` included it — would raise `ValueError` when creating Optuna FrozenTrials for CMA-ES warm-start from resumed data.
+  - Fix adds `schema_score_threshold: float = 0.0` to `TrialRecord`; adds the param to `_inprocess_params`, `_trial_record_to_dict`, `_make_source_trials`; adds `obj.get("schema_score_threshold", 0.0)` to `_load_resume`.
+
+### Changed
+- **PARAM_SPACE_WEBQSP narrowed** (`benchmarks/cerebrum_tuner.py`): Space tightened from 340-trial empirical analysis (June 2026 WebQSP runs, Pearson correlation and quartile breakdowns):
+  - `beam_width`: `[16, 24, 32, 48]` → `[16, 24]` — bw=32/48 hurt H@1 (Pearson r=−0.352 vs beam size)
+  - `trb_factor`: `(10, 60)` → `(38, 60)` — top-quartile median 43.6; floor raised
+  - `vote_weight`: `(0.55, 0.95)` → `(0.83, 0.95)` — top-quartile prefers >0.83
+  - `idf_weight`: `(0.0, 0.15)` → `(0.0, 0.08)` — top-quartile max 0.052; ceiling cut
+  - `branch_bonus`: `(0.0, 0.20)` → `(0.0, 0.12)` — top-quartile max 0.089; ceiling cut
+
+### Benchmarks
+- WebQSP Phase 238 (47 trials, seed 42): **H@1=10.5%, H@10=32.5%, MRR=0.1620**
+  - Best config: `sst=0.550, bw=16` (trial 18, Phase 1 Sobol)
+  - schema_score_threshold signal confirmed: sst ∈ [0.41, 0.55] → H@1=10.5%; sst ∈ [0.80, 0.89] → H@1=4.0–7.5%
+  - CMA-ES Phase 2 converging to sst ≈ 0.41–0.63, bw=16 — consistent with Phase 1 analysis
+  - Phase 237 baseline was H@10=33.5% (from runs that silently used sst=0.0 due to the propagation bug)
+  - With proper sst gating, H@1 maintained at 10.5% and H@10=32.5% against the narrowed/corrected search space
+
 ## [2.82.0] - 2026-06-09
 
 ### Added

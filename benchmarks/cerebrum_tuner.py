@@ -121,23 +121,23 @@ PARAM_SPACE_CONCEPTNET: dict = {
     "beta":         (0.5,  3.0),
 }
 
-# Phase 231: WebQSP (typed_heterogeneous regime, Freebase 2-hop KB).
-# Seeded around Hetionet typed_heterogeneous calibration (closest known regime).
-# Freebase has higher relation diversity (6k types vs 89) and denser hubs,
-# so trb_factor/gamma ceilings are raised to allow more aggressive path pruning.
-# Phase 234: beam_width range expanded to [16,24,32,48] after empirical sweep
-# showed bw=32 optimal for WebQSP hub-heavy topology (+5pp H@10 vs bw=12).
-# trb_factor range shifted up (ParameterInitializer: 35.9 for Freebase).
+# Phase 238: narrowed from 340-trial empirical analysis of June 2026 WebQSP runs.
+# beam_width: bw=16/24 dominate H@1 (Pearson r=-0.352 vs bw size); drop 32/48.
+# trb_factor: top-quartile median 43.6 → floor raised to 38.
+# vote_weight: top-quartile >0.83 → floor raised.
+# idf_weight: top-quartile max 0.052 → ceiling cut to 0.08.
+# branch_bonus: top-quartile max 0.089 → ceiling cut to 0.12.
+# schema_score_threshold: first real sweep (was propagation-bug blocked in 237).
 PARAM_SPACE_WEBQSP: dict = {
-    "trb_factor":            (10.0, 60.0),
-    "r2_boost":              (0.5,  8.0),
-    "vote_weight":           (0.55, 0.95),
-    "beam_width":            [16, 24, 32, 48],
-    "idf_weight":            (0.0,  0.15),
-    "branch_bonus":          (0.0,  0.20),
-    "fhrb_factor":           (0.5,  4.0),
-    "gamma":                 (1.0,  10.0),
-    "beta":                  (0.5,  2.0),
+    "trb_factor":             (38.0, 60.0),
+    "r2_boost":               (0.5,  8.0),
+    "vote_weight":            (0.83, 0.95),
+    "beam_width":             [16, 24],
+    "idf_weight":             (0.0,  0.08),
+    "branch_bonus":           (0.0,  0.12),
+    "fhrb_factor":            (0.5,  4.0),
+    "gamma":                  (1.0,  10.0),
+    "beta":                   (0.5,  2.0),
     "schema_score_threshold": (0.40, 0.90),
 }
 
@@ -169,12 +169,18 @@ def _compute_refined_space(
     clamped to the wide-space limits. Categorical params are unchanged.
     """
     top = sorted(records, key=lambda r: r.h1, reverse=True)[:min(top_k, len(records))]
+    if not top:
+        return wide_space  # no Phase 1 results — use full space as fallback
     refined: dict = {}
     for name, bounds in wide_space.items():
         if isinstance(bounds, list):
             refined[name] = bounds
             continue
-        vals = [getattr(r, name) for r in top]
+        vals = [getattr(r, name, None) for r in top]
+        vals = [v for v in vals if v is not None]
+        if not vals:
+            refined[name] = bounds
+            continue
         lo, hi = min(vals), max(vals)
         full_span = bounds[1] - bounds[0]
         span = max(hi - lo, full_span * 0.05)   # floor at 5% of full range
@@ -231,6 +237,7 @@ def _load_resume(path: Path) -> tuple[list["TrialRecord"], Optional[dict]]:
             h10=obj["h10"],
             mrr=obj["mrr"],
             elapsed_s=obj["elapsed_s"],
+            schema_score_threshold=obj.get("schema_score_threshold", 0.0),
         )
         if rec.h1 > best_h1:
             best_h1 = rec.h1
@@ -259,16 +266,19 @@ def _make_source_trials(records: "list[TrialRecord]", space: dict) -> list:
     frozen: list = []
     for rec in records:
         params = {
-            "trb_factor":   rec.trb_factor,
-            "r2_boost":     rec.r2_boost,
-            "vote_weight":  rec.vote_weight,
-            "beam_width":   rec.beam_width,
-            "idf_weight":   rec.idf_weight,
-            "branch_bonus": rec.branch_bonus,
-            "fhrb_factor":  rec.fhrb_factor,
-            "gamma":        rec.gamma,
-            "beta":         rec.beta,
+            "trb_factor":             rec.trb_factor,
+            "r2_boost":               rec.r2_boost,
+            "vote_weight":            rec.vote_weight,
+            "beam_width":             rec.beam_width,
+            "idf_weight":             rec.idf_weight,
+            "branch_bonus":           rec.branch_bonus,
+            "fhrb_factor":            rec.fhrb_factor,
+            "gamma":                  rec.gamma,
+            "beta":                   rec.beta,
+            "schema_score_threshold": getattr(rec, "schema_score_threshold", 0.0),
         }
+        # Only include params that exist in the distributions dict
+        params = {k: v for k, v in params.items() if k in distributions}
         frozen.append(
             optuna.trial.create_trial(
                 params=params,
@@ -292,12 +302,13 @@ class TrialRecord:
     fhrb_factor:  float
     gamma:        float   # Phase 203 SDRB: scale factor
     beta:         float   # Phase 203 SDRB: fan_out exponent; boost(r) = gamma * fan_out(r)^beta
-    h1:           float
-    h10:          float
-    mrr:          float
-    elapsed_s:    float
-    is_best:      bool = False
-    phase:        int  = 1
+    h1:                     float
+    h10:                    float
+    mrr:                    float
+    elapsed_s:              float
+    schema_score_threshold: float = 0.0  # Phase 237: schema prepend confidence gate
+    is_best:                bool  = False
+    phase:                  int   = 1
 
 
 # ── live dashboard ────────────────────────────────────────────────────────────
@@ -448,16 +459,17 @@ def _trial_record_to_dict(
         "phase":            rec.phase,
         "timestamp":        datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "sample":           sample,
-        "trb_factor":       rec.trb_factor,
-        "r2_boost":         rec.r2_boost,
-        "vote_weight":      rec.vote_weight,
-        "beam_width":       rec.beam_width,
-        "idf_weight":       rec.idf_weight,
-        "branch_bonus":     rec.branch_bonus,
-        "fhrb_factor":      rec.fhrb_factor,
-        "gamma":            rec.gamma,
-        "beta":             rec.beta,
-        "h1":               rec.h1,
+        "trb_factor":             rec.trb_factor,
+        "r2_boost":               rec.r2_boost,
+        "vote_weight":            rec.vote_weight,
+        "beam_width":             rec.beam_width,
+        "idf_weight":             rec.idf_weight,
+        "branch_bonus":           rec.branch_bonus,
+        "fhrb_factor":            rec.fhrb_factor,
+        "gamma":                  rec.gamma,
+        "beta":                   rec.beta,
+        "schema_score_threshold": rec.schema_score_threshold,
+        "h1":                     rec.h1,
         "h10":              rec.h10,
         "mrr":              rec.mrr,
         "elapsed_s":        round(rec.elapsed_s, 1),
@@ -586,16 +598,17 @@ def _run_eval_logged(
 
     # In-process paths (graph already built — skip expensive rebuild per trial)
     _inprocess_params = {
-        "trb_factor":   kwargs["trb_factor"],
-        "r2_boost":     kwargs["r2_boost"],
-        "vote_weight":  kwargs["vote_weight"],
-        "beam_width":   kwargs["beam_width"],
-        "idf_weight":   kwargs["idf_weight"],
-        "branch_bonus": kwargs["branch_bonus"],
-        "fhrb_factor":  kwargs["fhrb_factor"],
-        "gamma":        kwargs["gamma"],
-        "beta":         kwargs["beta"],
-        "max_loops":    1,
+        "trb_factor":             kwargs["trb_factor"],
+        "r2_boost":               kwargs["r2_boost"],
+        "vote_weight":            kwargs["vote_weight"],
+        "beam_width":             kwargs["beam_width"],
+        "idf_weight":             kwargs["idf_weight"],
+        "branch_bonus":           kwargs["branch_bonus"],
+        "fhrb_factor":            kwargs["fhrb_factor"],
+        "gamma":                  kwargs["gamma"],
+        "beta":                   kwargs["beta"],
+        "schema_score_threshold": kwargs.get("schema_score_threshold", 0.0),
+        "max_loops":              1,
     }
     if dataset == "hetionet" and _hetionet_state is not None:
         from hetionet_param_eval import run_trial_inprocess
