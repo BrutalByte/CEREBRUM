@@ -1358,6 +1358,7 @@ class CerebrumGraph:
         weight_specificity:          float           = 0.0,
         initial_relation_boost:      Optional[Dict[str, float]] = None,
         community_hypothesis_fn:     Optional[Any]   = None,
+        cvt_passthrough:             bool            = False,
     ) -> List[Answer]:
         """
         Traverse the graph from ``seeds`` and return ranked answers.
@@ -1539,6 +1540,7 @@ class CerebrumGraph:
                 initial_relation_boost     = initial_relation_boost,  # Phase 180
                 penultimate_decay          = penultimate_decay,
                 community_hypothesis_fn    = community_hypothesis_fn,  # Phase 233
+                cvt_passthrough            = cvt_passthrough,  # Phase 243
                 **csa_overrides # Inject hormonal overrides
             )
             traversal.global_workspace = self.global_workspace
@@ -1552,6 +1554,8 @@ class CerebrumGraph:
             traversal = self._traversal
             _prev_widths = traversal._beam_widths
             traversal._beam_widths = _auto_beam_widths  # Phase 136: temporary override
+            if cvt_passthrough:
+                traversal.cvt_passthrough = True
 
         # Phase 137: H1SE - replace traversal with HopExpandedTraversal when
         # hop_expand=True. needs_custom=True guarantees no shared-traversal
@@ -1675,6 +1679,9 @@ class CerebrumGraph:
                 self._traversal._beam_widths = _prev_widths
                 # Phase 234: restore beam_width in case CingulateEngine halved it
                 self._traversal.beam_width = self._beam_width
+                # Phase 243: restore cvt_passthrough default
+                if cvt_passthrough:
+                    self._traversal.cvt_passthrough = False
 
         # Phase 69: Compute prediction error and dispatch to regulators
         if self.predictive_coder is not None:

@@ -461,6 +461,7 @@ def run_trial_inprocess(
                 query_embedding             = qemb,
                 max_loops                   = max_loops,
                 degree_penalty_weight       = degree_penalty_weight,
+                cvt_passthrough             = bool(params.get("cvt_passthrough", True)),
             )
 
             # Phase 232: Post-extraction path re-ranking.
@@ -497,23 +498,9 @@ def run_trial_inprocess(
                     ans.score *= 1.0 / (1.0 + idf_weight * math.log1p(freq))
                 answers_obj.sort(key=lambda a: a.score, reverse=True)
 
-            # Phase 240: CVT relay boost.
-            # Freebase CVT (compound-value-type) nodes act as intermediate join tables
-            # between entities (e.g. seed → film.film.starring → /m/cvt → film.performance.actor → answer).
-            # When the beam traverses through a CVT at hop-1, the CSA semantic similarity
-            # on the CVT node (an opaque MID string) is ~0, penalising the whole 2-hop path.
-            # Answers that reached a named entity via a CVT intermediate deserve a boost to
-            # undo this structural penalty — the CVT hop is unavoidable, not a weakness.
-            _cvt_relay_boost = params.get("cvt_relay_boost", 0.0)
-            if _cvt_relay_boost > 0.0:
-                for ans in answers_obj:
-                    bp = getattr(ans, "best_path", None)
-                    nodes = getattr(bp, "nodes", ()) if bp else ()
-                    # 2-hop path: [seed, rel1, hop1_entity, rel2, terminal]
-                    # nodes[2] is the hop-1 intermediate; if it's a MID, this went through CVT
-                    if len(nodes) >= 5 and str(nodes[2]).startswith("/m/"):
-                        ans.score *= (1.0 + _cvt_relay_boost)
-                answers_obj.sort(key=lambda a: a.score, reverse=True)
+            # CVT handling is done at traversal time via cvt_passthrough=True (Phase 243).
+            # BeamTraversal collapses A→CVT→B into a compound edge scored against the
+            # final named entity, avoiding the near-zero semantic penalty on opaque MIDs.
 
             # Filter out Freebase MID relay nodes — they are never correct answers
             named = [a for a in answers_obj if not str(a.entity_id).startswith("/m/")]
@@ -701,7 +688,7 @@ def main() -> None:
     parser.add_argument("--beta",                    type=float, default=None, dest="beta")
     parser.add_argument("--schema-score-threshold",  type=float, default=None, dest="schema_score_threshold")
     parser.add_argument("--degree-penalty-weight",   type=float, default=None, dest="degree_penalty_weight")
-    parser.add_argument("--cvt-relay-boost",         type=float, default=None, dest="cvt_relay_boost")
+    parser.add_argument("--cvt-passthrough",          action="store_true", default=True, dest="cvt_passthrough")
     args = parser.parse_args()
 
     state = build_webqsp_state(
@@ -742,7 +729,7 @@ def main() -> None:
         "beta":                   args.beta                   if args.beta                   is not None else _d("beta"),
         "schema_score_threshold": args.schema_score_threshold if args.schema_score_threshold is not None else _d("schema_score_threshold"),
         "degree_penalty_weight":  args.degree_penalty_weight  if args.degree_penalty_weight  is not None else 0.0,
-        "cvt_relay_boost":        args.cvt_relay_boost        if args.cvt_relay_boost        is not None else 0.0,
+        "cvt_passthrough":        True,
         "max_loops":    1,
     }
 
