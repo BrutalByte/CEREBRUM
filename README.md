@@ -4,7 +4,7 @@
 
 *Thought, finally formalized.*
 
-**Current Version:** v2.84.0 (Phase 239)
+**Current Version:** v2.85.0 (Phase 244)
 
 CEREBRUM is the first reasoning engine that treats the Knowledge Graph not as a static data dump, but as a living, self-optimizing neural substrate. By embedding the intelligence of Transformer-style attention directly into the graph's topology, it delivers hyper-accurate, verifiable reasoning at sub-millisecond speeds—completely eliminating the hallucinations of LLMs and the bottleneck of expensive, manual model training.
 
@@ -102,9 +102,9 @@ Zero training data. Zero hardcoded relation names. Zero hallucinations.
 
 WebQSP is the standard benchmark for 2-hop Freebase KGQA. The graph contains 3.79M entity-name triples from the Freebase open-world KB — 989 distinct relation types, typed-heterogeneous regime.
 
-> **Full validation in progress (Phase 239).** Prior Phase 235–238 numbers were measured on 200-question tuner subsets (seed=42), which do not generalize to the full 1,628-question test set — the same parameters score ~1.7% H@1 on the full set. A proper full-set tuner run is underway. Results will be posted here once complete.
+> **Phase 244 tuning in progress.** Phase 241 full-set tuner achieved H@1=5.04%, H@10=11.86% on all 1,628 questions (zero config baseline: H@1=1.41%). Phase 243 wired `cvt_passthrough` into the evaluation pipeline — BeamTraversal now collapses A→CVT→B into compound edges scored against named leaf entities. Phase 244 re-tunes all parameters under the corrected traversal. Results will be posted here once complete.
 
-**Why WebQSP is hard for training-free systems:** Freebase uses CVT (compound-value-type) mediator nodes with opaque MID identifiers. These intermediate nodes break semantic attention on indirect 2-hop paths. ~60% of H@1 failures are CVT disambiguation failures; ~25% are hub-entity score plateau. Phase 239 (degree_penalty_weight) confirmed to improve MRR by ~40% on 500-sample sweeps — full-set validation pending.
+**Why WebQSP is hard for training-free systems:** Freebase uses CVT (compound-value-type) mediator nodes with opaque MID identifiers. These intermediate nodes break semantic attention on indirect 2-hop paths. Phase 239 fANOVA identified `degree_penalty_weight` as the dominant parameter (50% of variance). Phase 243 fixes the root cause: `cvt_passthrough` collapses CVT hops at traversal time so the semantic score is computed against the final named entity rather than the opaque MID.
 
 ---
 

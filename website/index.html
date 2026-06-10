@@ -192,7 +192,7 @@
     <!-- Wordmark -->
     <div class="flex items-center gap-3">
       <span class="font-mono font-semibold text-white tracking-tight text-lg">CEREBRUM</span>
-      <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/30">v2.84.0</span>
+      <span class="text-xs font-mono px-2 py-0.5 rounded-full bg-indigo/20 text-indigo border border-indigo/30">v2.85.0</span>
     </div>
     <!-- Nav links (desktop) -->
     <div class="hidden md:flex items-center gap-8">
@@ -443,7 +443,7 @@
       <div class="flex-shrink-0 w-1 h-16 bg-gradient-to-b from-indigo via-cyan to-cyan/0 rounded-full"></div>
       <div>
         <p class="text-3xl md:text-4xl font-bold text-white leading-tight">Knowledge graphs were<br>always the answer.<br><span class="bg-gradient-to-r from-indigo to-cyan bg-clip-text text-transparent">We just made them work.</span></p>
-        <p class="text-slate-500 mt-3 text-sm max-w-lg">76 documented novel contributions across 239 development phases. Community detection, Bayesian beam search, ParameterInitializer, SDRB, H1SE, STRB, GraphProfiler, SelfAwarenessEngine — all working together, on any knowledge base, out of the box.</p>
+        <p class="text-slate-500 mt-3 text-sm max-w-lg">76 documented novel contributions across 244 development phases. Community detection, Bayesian beam search, ParameterInitializer, SDRB, H1SE, STRB, GraphProfiler, SelfAwarenessEngine — all working together, on any knowledge base, out of the box.</p>
       </div>
     </div>
 
@@ -459,14 +459,14 @@
 
     <!-- Headline -->
     <div class="text-center mb-16">
-      <p class="text-xs font-mono uppercase tracking-widest text-indigo mb-4">v2.84.0 — Phases 230–239</p>
+      <p class="text-xs font-mono uppercase tracking-widest text-indigo mb-4">v2.85.0 — Phases 230–244</p>
       <h2 class="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
         CEREBRUM knows<br>
         <span class="bg-gradient-to-r from-indigo to-cyan bg-clip-text text-transparent">what it doesn't know.</span><br>
         <span class="text-3xl md:text-4xl text-white/80">And acts on it.</span>
       </h2>
       <p class="text-slate-400 text-lg max-w-2xl mx-auto">
-        Most AI systems produce answers. CEREBRUM v2.84.0 produces answers <em>and a structured model of its own epistemic state</em> — then uses that model to automatically retry uncertain queries, resolve contradictions via source credibility, and self-correct scoring parameters without human feedback.
+        Most AI systems produce answers. CEREBRUM v2.85.0 produces answers <em>and a structured model of its own epistemic state</em> — then uses that model to automatically retry uncertain queries, resolve contradictions via source credibility, and self-correct scoring parameters without human feedback.
       </p>
     </div>
 
@@ -918,7 +918,7 @@
           </thead>
           <tbody>
             <tr class="highlight">
-              <td class="py-3 px-4 font-semibold text-indigo">CEREBRUM v2.84.0 (full pipeline)</td>
+              <td class="py-3 px-4 font-semibold text-indigo">CEREBRUM v2.85.0 (full pipeline)</td>
               <td class="py-3 px-4 text-center font-mono font-bold text-white">60.6%</td>
               <td class="py-3 px-4 text-center font-mono font-bold text-white">87.9%</td>
               <td class="py-3 px-4"><span class="text-emerald font-medium">None</span></td>
@@ -1004,7 +1004,7 @@
           WebQSP (1,628 test questions, Freebase 3.79M triples, 989 relation types) is CEREBRUM's open-world 2-hop benchmark. A full-dataset parameter search is currently running. Results will be published here once the validation is complete.
         </p>
         <p class="text-sm text-slate-400 mt-2 leading-relaxed">
-          <span class="text-indigo font-semibold">Why WebQSP is harder:</span> Freebase uses CVT (compound-value-type) mediator nodes with opaque MID identifiers that break semantic attention on indirect paths. ~60% of failures are CVT disambiguation; ~25% are hub-entity score plateau. Phase 239 adds degree penalization confirmed to improve MRR ~40% in ablations.
+          <span class="text-indigo font-semibold">Why WebQSP is harder:</span> Freebase uses CVT (compound-value-type) mediator nodes with opaque MID identifiers that break semantic attention on indirect 2-hop paths. Phase 239 added hub-entity degree penalization (50% fANOVA variance). Phase 243 wired <code>cvt_passthrough</code> into the evaluation pipeline — BeamTraversal now collapses A→CVT→B into a single compound-edge scored against the named leaf entity, eliminating the near-zero semantic penalty on opaque MIDs. Phase 244 re-tuning is in progress.
         </p>
       </div>
     </div>
@@ -1460,7 +1460,7 @@
       <div id="arch-diagram" class="w-full h-full p-6" style="min-height:500px; cursor:grab;"></div>
     </div>
 
-    <p class="text-center text-xs text-slate-600 mt-4">v2.84.0 · Phase 239 · All 54 system components</p>
+    <p class="text-center text-xs text-slate-600 mt-4">v2.85.0 · Phase 244 · All 54 system components</p>
   </div>
 </section>
 
@@ -1881,7 +1881,7 @@ RA2 -->|GENESIS| TB`,
           <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span class="text-xs text-slate-500 uppercase tracking-wide">Technical Report</span>
         </div>
-        <h4 class="text-sm font-semibold text-white mb-2 flex-1">CEREBRUM v2.84.0: Complete Technical Specification — Phase 239</h4>
+        <h4 class="text-sm font-semibold text-white mb-2 flex-1">CEREBRUM v2.85.0: Complete Technical Specification — Phase 244</h4>
         <span class="inline-flex items-center gap-1.5 text-xs text-slate-600 mt-3">
           <span class="px-1.5 py-0.5 rounded bg-surface border border-border">arXiv</span>
           <span>In preparation</span>
@@ -1925,7 +1925,7 @@ RA2 -->|GENESIS| TB`,
     <div class="inline-block px-4 py-1.5 rounded-full bg-indigo/10 border border-indigo/20 text-xs text-indigo font-mono mb-5 tracking-wide">Solo Project</div>
     <h2 class="text-2xl md:text-3xl font-bold text-white mb-4">Built by one person.</h2>
     <p class="text-slate-400 leading-relaxed max-w-xl mx-auto mb-3">
-      CEREBRUM is the work of a single independent researcher — 76 novel contributions, 2,269 tests, and a fully documented research roadmap across 239 development phases — with no team, no grant, and no institution behind it.
+      CEREBRUM is the work of a single independent researcher — 76 novel contributions, 2,269 tests, and a fully documented research roadmap across 244 development phases — with no team, no grant, and no institution behind it.
     </p>
     <p class="text-slate-500 text-sm">
       Claude (Anthropic) was a pivotal tool in its creation. The ideas, architecture, and research decisions are entirely human-originated.

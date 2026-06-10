@@ -700,9 +700,11 @@ class BeamTraversal:
                     # CVT passthrough logic
                     # ----------------------------------------------------------
                     if self.cvt_passthrough and _is_cvt_node(v):
-                        cvt_edges = self.adapter.get_neighbors(
-                            v, max_neighbors=self.max_neighbors
-                        )
+                        if v not in self._expansion_cache:
+                            self._expansion_cache[v] = self.adapter.get_neighbors(
+                                v, max_neighbors=self.max_neighbors
+                            )
+                        cvt_edges = self._expansion_cache[v]
                         for ce in cvt_edges:
                             vv = ce.target_id
                             if vv not in path.seen_entities and not _is_cvt_node(vv):
@@ -1279,9 +1281,11 @@ class AsyncBeamTraversal(BeamTraversal):
 
                     # CVT passthrough (same logic as sync traversal)
                     if self.cvt_passthrough and _is_cvt_node(v):
-                        cvt_edges = self.adapter.get_neighbors(
-                            v, max_neighbors=self.max_neighbors
-                        )
+                        if v not in self._expansion_cache:
+                            self._expansion_cache[v] = self.adapter.get_neighbors(
+                                v, max_neighbors=self.max_neighbors
+                            )
+                        cvt_edges = self._expansion_cache[v]
                         next_steps: List[Tuple[str, str, float, str, Optional[float], Optional[float]]] = []
                         for ce in cvt_edges:
                             vv = ce.target_id
