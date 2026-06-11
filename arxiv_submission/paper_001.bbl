@@ -1,0 +1,64 @@
+\begin{thebibliography}{1}
+
+\bibitem{das2018minerva}
+Rajarshi Das, Shehzade Dhuliawala, Manzil Zaheer, Luke Vilnis, Ishan Durugkar,
+  Akshay Krishnamurthy, Alex Smola, and Andrew McCallum.
+\newblock Go for a walk and arrive at the answer: Reasoning over paths in
+  knowledge bases using reinforcement learning.
+\newblock In {\em International Conference on Learning Representations}, 2018.
+\newblock arXiv:1711.05851.
+
+\bibitem{he2021}
+Gaole He, Yunshi Lan, Jing Jiang, Wayne~Xin Zhao, and Ji-Rong Wen.
+\newblock Improving multi-hop knowledge base question answering by learning
+  intermediate supervision signals.
+\newblock In {\em Proceedings of the 14th ACM International Conference on Web
+  Search and Data Mining}, 2021.
+\newblock arXiv:2101.03737.
+
+\bibitem{hetionet2017}
+Daniel~S Himmelstein, Antoine Lizee, Christian Hessler, Leo Brueggeman,
+  Sabrina~L Chen, David Hadley, Ari~J Green, Pouya Khankhanian, and Sergio~E
+  Baranzini.
+\newblock Systematic integration of biomedical knowledge prioritizes drugs for
+  inflammation.
+\newblock {\em eLife}, 2017.
+
+\bibitem{jiang2023}
+Jinhao Jiang, Kun Zhou, Xin Zhao, and Ji-Rong Wen.
+\newblock {UniKGQA}: Unified retrieval and reasoning for solving multi-hop
+  question answering over knowledge graph.
+\newblock In {\em International Conference on Learning Representations}, 2023.
+\newblock arXiv:2212.00959.
+
+\bibitem{saxena2020improve}
+Apoorv Saxena, Adit Tripathi, and Partha Talukdar.
+\newblock Improving multi-hop question answering over knowledge graphs using
+  knowledge graph embeddings.
+\newblock In {\em Proceedings of the 58th Annual Meeting of the Association for
+  Computational Linguistics}, 2020.
+
+\bibitem{sun2018graftnet}
+Haitian Sun, Bhuwan Dhingra, Manzil Zaheer, Kathryn Mazaitis, Ruslan
+  Salakhutdinov, and William~W Cohen.
+\newblock {GraftNet}: Towards domain specific question answering with knowledge
+  bases and text.
+\newblock In {\em Proceedings of the 2018 Conference on Empirical Methods in
+  Natural Language Processing}, 2018.
+\newblock arXiv:1809.09606.
+
+\bibitem{webqsp2016}
+Wen-tau Yih, Matthew Richardson, Christopher Meek, Ming-Wei Chang, and Jina
+  Suh.
+\newblock The value of semantic parse labeling for knowledge base question
+  answering.
+\newblock In {\em Proceedings of the 54th Annual Meeting of the Association for
+  Computational Linguistics}, 2016.
+
+\bibitem{metaqa2017}
+Yuyu Zhang, Hanjun Dai, Zornitsa Kozareva, Alexander~J Smola, and Le~Song.
+\newblock Variational reasoning for question answering over knowledge graphs.
+\newblock In {\em Proceedings of the AAAI Conference on Artificial
+  Intelligence}, 2018.
+
+\end{thebibliography}

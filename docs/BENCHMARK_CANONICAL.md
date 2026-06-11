@@ -694,7 +694,21 @@ H@10=20.47% confirms the correct answer is in the top-10 candidates roughly 1 in
 
 **Interpretation:** The `_expansion_cache` hop-1 structural evidence overlaps heavily with what PathSchemaIndex already predicts — the schemas it would boost are already being executed. csb is retired from `PARAM_SPACE_WEBQSP`.
 
-**Phase 244d remains the WebQSP canonical result.** Next lever: Phase 248 — Freebase entity name resolution (MID → readable label substitution at embedding time, targeting the ~60% CVT/MID opacity failure mode).
+**Phase 244d remains the WebQSP canonical result.**
+
+---
+
+### WebQSP — Phase 248 (Freebase MID Name Resolution — Negative Result)
+
+**Hypothesis:** Scan `freebase_2hop.txt` for `type.object.name` triples to build a MID→readable_name map; substitute at embedding time to restore CSA alpha signal on CVT nodes.
+
+**Result:** 0 MIDs resolved (0.0% coverage). `type.object.name` triples are not present in the 2-hop subgraph extraction — that file contains only QA-path triples, not entity metadata. Zero name substitutions applied; eval score equivalent to Phase 244d within sampling noise (200q sample: H@1=8.50%, within ±3pp of 10.33% canonical).
+
+**Finding:** Correct implementation, wrong data source. Entity name triples require a separate Freebase entity-labels file (e.g., FB15k label dumps or Freebase full NTriples). The `entity_name_overrides` infrastructure in `adapters/networkx_adapter.py` and `core/cerebrum.py` is in place and correct — it activates automatically when overrides are populated; the missing piece is the data.
+
+**Next step for CVT opacity:** Acquire a Freebase entity-name mapping file (e.g., `freebase-easy.tar.gz` from the Freebase archive or FB15k entity labels). Pre-built maps mapping `/m/xxxxx` → English label are available from prior FB15k work.
+
+**Phase 244d remains the WebQSP canonical result.**
 
 ---
 
@@ -885,4 +899,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-06-11 | Phase 247: Conditional schema prediction (negative) — csb adds zero gain over Phase 244d; Phase 244d H@1=10.33% remains WebQSP canonical | Phase 244d: backward verification + path diversity re-ranker + additive CVT; degree_penalty_weight 50.0% fANOVA | Phase 206b: Hetionet branch_bonus 81.86% fANOVA | Phase 236: PathSchemaIndex +3.5pp H@1 | Phase 225–227: MetaQA H@1=60.6%, H@10=87.9% | Phase 53 canonical unchanged*
+*Last updated: 2026-06-11 | Phase 248: Freebase MID name resolution (negative) — 0 MIDs resolved; type.object.name triples absent from 2-hop subgraph; infrastructure in place, data source needed | Phase 247: Conditional schema prediction (negative) — csb adds zero gain over Phase 244d; Phase 244d H@1=10.33% remains WebQSP canonical | Phase 244d: backward verification + path diversity re-ranker + additive CVT; degree_penalty_weight 50.0% fANOVA | Phase 206b: Hetionet branch_bonus 81.86% fANOVA | Phase 236: PathSchemaIndex +3.5pp H@1 | Phase 225–227: MetaQA H@1=60.6%, H@10=87.9% | Phase 53 canonical unchanged*
