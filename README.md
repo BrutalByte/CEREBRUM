@@ -2,7 +2,7 @@
 
 **Training-Free Knowledge Graph Reasoning — Every Answer a Citable Graph Path**
 
-**Current Version:** v2.86.0 (Phase 246)
+**Current Version:** v2.87.0 (Phase 247)
 
 ---
 
@@ -81,8 +81,8 @@ The numbers below are the **full pipeline** results unless otherwise noted. The 
 
 | System | 3-hop H@1 | Approach | Training required |
 |--------|-----------|----------|-------------------|
-| **CEREBRUM v2.86.0 (full pipeline)** | **60.6%** | Crystal-box beam traversal + SDRB + ParameterInitializer | **No** |
-| CEREBRUM v2.86.0 (search only) | 12.5% | Structural beam traversal, no embeddings | No |
+| **CEREBRUM v2.87.0 (full pipeline)** | **60.6%** | Crystal-box beam traversal + SDRB + ParameterInitializer | **No** |
+| CEREBRUM v2.87.0 (search only) | 12.5% | Structural beam traversal, no embeddings | No |
 | MINERVA (RL)† | ~48% | Reinforcement learning paths | Yes — RL training |
 | RotatE (KGE)† | ~47% | Complex embedding rotation | Yes — KG-specific training |
 | TransE (KGE)† | ~43% | Embedding distance | Yes — KG-specific training |
@@ -659,7 +659,7 @@ curl -X POST http://localhost:8200/v1/query \
 |---------|-----------|-----------|-----------|
 | BFS baseline (no TRB) | 0.8% | — | — |
 | TRB explicit (disease_gene_pathway only) | — | 73.5% | — |
-| **CEREBRUM v2.86.0 (Phase 209, 200q/template canonical)** | **95.3%** | **53.0%** | **49.2%** |
+| **CEREBRUM v2.87.0 (Phase 209, 200q/template canonical)** | **95.3%** | **53.0%** | **49.2%** |
 
 Per-template: `disease_associates_gene` 100% · `gene_participates_pathway` 98.5% · `compound_treats_disease` 89.0% · `disease_gene_pathway` 81.1% · `compound_gene_disease` 34.5% · `disease_compound_via_gene` 49.2%
 
@@ -674,7 +674,7 @@ Per-template: `disease_associates_gene` 100% · `gene_participates_pathway` 98.5
 | Variant | Hits@1 | Hits@10 | MRR |
 |---------|--------|---------|-----|
 | Zero-config baseline | 1.41% | 4.30% | — |
-| **CEREBRUM v2.86.0 (Phase 244d, full pipeline)** | **10.33%** | **20.47%** | **0.1347** |
+| **CEREBRUM v2.87.0 (Phase 244d, full pipeline)** | **10.33%** | **20.47%** | **0.1347** |
 | NSM (trained)† | 74% | — | — |
 
 † **Black-box model** — supervised neural network trained on labeled WebQSP QA pairs. No traceable reasoning path; can produce confident wrong answers (hallucinate) with no self-indication of error.

@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.86.0 (Phase 246) — Updated Jun 10, 2026
+## Version: v2.87.0 (Phase 247) — Updated Jun 11, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -684,6 +684,20 @@ H@10=20.47% confirms the correct answer is in the top-10 candidates roughly 1 in
 
 ---
 
+### WebQSP — Phase 247 (Conditional Schema Prediction — Negative Result)
+
+**Configuration:** 100-trial TPE tuner adding `conditional_schema_bonus` (csb) to Phase 244d param space. csb scales the structural boost applied to schemas whose r2 relation is confirmed present on actual hop-1 intermediates from `_expansion_cache`.
+
+**Result:** H@1=**10.33%**, H@10=20.04%, MRR=0.1347 (best trial 97, csb=0.240).
+
+**Finding:** csb provides zero net gain over Phase 244d baseline (H@1 tied at 10.33%; H@10 slightly lower). Conditional schema prediction adds no information beyond the Phase 236 pre-beam schema channel already in the pipeline.
+
+**Interpretation:** The `_expansion_cache` hop-1 structural evidence overlaps heavily with what PathSchemaIndex already predicts — the schemas it would boost are already being executed. csb is retired from `PARAM_SPACE_WEBQSP`.
+
+**Phase 244d remains the WebQSP canonical result.** Next lever: Phase 248 — Freebase entity name resolution (MID → readable label substitution at embedding time, targeting the ~60% CVT/MID opacity failure mode).
+
+---
+
 ### WebQSP — "When Training-Free KGQA Works"
 
 The WebQSP and MetaQA/Hetionet results together characterize when training-free semantic attention succeeds:
@@ -871,4 +885,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-06-10 | Phase 244d: WebQSP canonical full-set result — H@1=10.33%, H@10=20.47%, MRR=0.1347 (1,628 questions, 100-trial tuner); +backward verification pass + path diversity re-ranker + additive CVT traversal; degree_penalty_weight 50.0% fANOVA importance | Phase 206b: Hetionet branch_bonus dominance — 81.86% fANOVA; cross-domain finding: branch_bonus is universal training-free KGQA discriminator on graphs with clean entity names (MetaQA 46.2%, Hetionet 81.9%) | Phase 236: PathSchemaIndex training-free schema prediction — H@1=9.5%, H@10=32.5% (200q) | Phase 225–227: alpha hop scaling + semantic re-scoring fix + NVMe WAL/MmapConsolidator — full 14,274-question validation: H@1=60.6%, H@10=87.9%, MRR=0.703 | Phase 53 canonical paper numbers unchanged*
+*Last updated: 2026-06-11 | Phase 247: Conditional schema prediction (negative) — csb adds zero gain over Phase 244d; Phase 244d H@1=10.33% remains WebQSP canonical | Phase 244d: backward verification + path diversity re-ranker + additive CVT; degree_penalty_weight 50.0% fANOVA | Phase 206b: Hetionet branch_bonus 81.86% fANOVA | Phase 236: PathSchemaIndex +3.5pp H@1 | Phase 225–227: MetaQA H@1=60.6%, H@10=87.9% | Phase 53 canonical unchanged*
