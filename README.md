@@ -11,11 +11,11 @@
 | | The claim | The evidence |
 |--|-----------|-------------|
 | **Researchers** | Your result is falsifiable. Every one. | Every answer includes the full hop-by-hop path, CSA weight on each edge, community votes, and what was pruned — a complete reasoning record. fANOVA over 100 tuner trials reveals that `branch_bonus` accounts for 81.9% of scoring variance on Hetionet — a finding only possible because the scoring is fully interpretable. |
-| **Scientists** | You can't cite a hallucination. We don't make them. | Structural impossibility: CEREBRUM can only return entities reachable from the seed via real graph edges. On Hetionet (47,031 biomedical entities), every drug-disease association is traceable to specific triple provenance with H@1=95.7% on `disease_associates_gene`. |
+| **Scientists** | You can't cite a hallucination. We don't make them. | Structural impossibility: CEREBRUM can only return entities reachable from the seed via real graph edges. On Hetionet (47,031 biomedical entities), every drug-disease association is traceable to specific triple provenance — 100% H@1 on `disease_associates_gene`, 95.7% 1-hop average. |
 | **Engineers** | Load a CSV. Query immediately. Zero configuration. | ParameterInitializer derives all 9 scoring parameters from your graph statistics in one O(E) pass. Adapters for CSV, Neo4j, RDF/SPARQL, NetworkX. If you have `(head, relation, tail)` triples, you're querying in under 60 seconds. |
 | **Students** | $0.001 per 1,000 queries. No API key. No GPU cluster. | Compute only. CEREBRUM runs on a laptop. Zero-config baseline achieves 56.8% H@1 on MetaQA 3-hop with no tuning. AGPL-3.0: free for academic use. |
 
-The accuracy numbers — 60.6% H@1 on MetaQA 3-hop, 87.9% H@10, 95.7% on Hetionet disease_associates_gene — are evidence for the claims above, not the claims themselves.
+The accuracy numbers — 60.6% H@1 on MetaQA 3-hop, 87.9% H@10, 100% on Hetionet `disease_associates_gene` — are evidence for the claims above, not the claims themselves.
 
 ---
 
