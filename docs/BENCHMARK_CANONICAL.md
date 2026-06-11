@@ -441,7 +441,7 @@ Tuner run to establish canonical Hetionet sentence-transformer calibration with 
 
 On Hetionet (`typed_heterogeneous` regime), the branch_bonus signal is amplified because Hetionet's dense cross-type edges create numerous structurally valid multi-hop paths. Correct biomedical targets (genes, compounds, diseases with known relationships) appear at the intersection of many distinct traversal routes, while spurious candidates appear on only one. `branch_bonus` directly captures this convergence.
 
-**Note:** 50q/template pilot; validate at 200q/template for fully canonical numbers. Run-to-run variance expected ±2pp from sentence embeddings + community sampling.
+**Note:** 50q/template pilot. Phase 209 (below) is the 200q/template canonical validation: 1-hop 95.3%, 2-hop 53.0%, 3-hop 49.2%.
 
 **Cross-domain fANOVA table (MetaQA vs Hetionet):**
 

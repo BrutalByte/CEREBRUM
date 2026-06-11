@@ -76,7 +76,7 @@ Each submission requires the following metadata fields on arXiv:
 Title:        [From paper header]
 Authors:      Bryan Alexander Buchorn
 Abstract:     [From paper Abstract section — max 1,920 characters]
-Comments:     16 pages. Part of the CEREBRUM framework series (v2.73.0).
+Comments:     16 pages. Part of the CEREBRUM framework series (v2.86.0).
               Code: https://github.com/BrutalByte/CEREBRUM
 MSC-class:    68T30 (Knowledge representation)
 ACM-class:    I.2.4; H.3.3
