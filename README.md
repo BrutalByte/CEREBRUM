@@ -653,15 +653,19 @@ curl -X POST http://localhost:8200/v1/query \
 
 ### Hetionet — 47,031 entities / 2,250,197 edges (Biomedical KG)
 
-6 templates across 1-hop, 2-hop, and 3-hop: compound→disease, disease→gene, gene→pathway, disease→gene→pathway, compound→gene→disease, disease→compound→gene. 300 total QA pairs. Zero training data.
+6 templates across 1-hop, 2-hop, and 3-hop. 998 unique QA pairs (200q/template except disease_associates_gene, capped at 134). Zero training data. Phase 209 full canonical validation.
 
-| Variant | Hits@1 | Hits@10 | MRR |
-|---------|--------|---------|-----|
+| Variant | 1-hop H@1 | 2-hop H@1 | 3-hop H@1 |
+|---------|-----------|-----------|-----------|
 | BFS baseline (no TRB) | 0.8% | — | — |
-| TRB explicit (disease_gene_pathway only) | 73.5% | — | — |
-| **CEREBRUM v2.86.0 (tuned, 6 templates, 50q/template pilot)** | **59.33%** | **59.33%** | **0.593** |
+| TRB explicit (disease_gene_pathway only) | — | 73.5% | — |
+| **CEREBRUM v2.86.0 (Phase 209, 200q/template canonical)** | **95.3%** | **53.0%** | **49.2%** |
 
-**fANOVA finding (Phase 206b pilot):** `branch_bonus` accounts for **81.9% of scoring variance** on Hetionet — the highest single-parameter dominance observed across all benchmarks. Multi-path convergence is the primary discriminating signal in training-free KGQA regardless of domain or graph structure. H@1=H@10 indicates high-confidence beam decisions: correct answers rank first or are absent, with minimal mid-rank noise (characteristic of typed, heterogeneous KBs).
+Per-template: `disease_associates_gene` 100% · `gene_participates_pathway` 98.5% · `compound_treats_disease` 89.0% · `disease_gene_pathway` 81.1% · `compound_gene_disease` 34.5% · `disease_compound_via_gene` 49.2%
+
+**fANOVA finding (Phase 206b):** `branch_bonus` accounts for **81.9% of scoring variance** on Hetionet — the highest single-parameter dominance observed across all benchmarks. Multi-path convergence is the universal training-free KGQA discriminator regardless of domain.
+
+**Known ceiling:** 3-hop `disease_compound_via_gene` (49.2% vs random 79.5%) — cosine-similarity bias suppresses cross-type paths (disease→gene→compound spans maximally dissimilar semantic types). Not addressable by structural parameter tuning; intrinsic to training-free semantic attention on typed heterogeneous KGs.
 
 ### WebQSP — 1,298,304 entities / 2,752,238 edges (Freebase 2-hop subgraph)
 

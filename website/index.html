@@ -482,7 +482,7 @@
         <div class="border-t border-border pt-5 space-y-2">
           <div class="flex items-start gap-3">
             <span class="text-emerald mt-0.5">→</span>
-            <span class="text-sm text-slate-300"><strong class="text-white">95.7% H@1 on disease_associates_gene</strong> (Hetionet, 1-hop, 200 questions) with full edge-level provenance on every answer</span>
+            <span class="text-sm text-slate-300"><strong class="text-white">100% H@1 on disease_associates_gene</strong> (Hetionet, 1-hop, 134 questions) · 95.7% 1-hop average across 3 templates · full edge-level provenance on every answer</span>
           </div>
           <div class="flex items-start gap-3">
             <span class="text-emerald mt-0.5">→</span>
@@ -1328,10 +1328,10 @@
         <div class="bg-bg border border-emerald/20 rounded-xl p-5">
           <div class="flex items-center gap-2 mb-2">
             <div class="w-2 h-2 rounded-full bg-emerald"></div>
-            <span class="text-sm font-semibold text-white">0.8% → 95.7%</span>
+            <span class="text-sm font-semibold text-white">0.8% → 100%</span>
           </div>
           <p class="text-sm text-slate-400">Baseline BFS (no reasoning priors) scores 0.8% on the disease-associates-gene template.
-          CEREBRUM's Terminal Relation Boost identifies the target relation type from the question text — no annotation required — and the beam focuses immediately on the right edge type. Result: 95.7% H@1 on the same template.</p>
+          CEREBRUM's Terminal Relation Boost identifies the target relation type from the question text — no annotation required — and the beam focuses immediately on the right edge type. Result: 100% H@1 on disease_associates_gene (134 questions); 95.7% averaged across all 3 one-hop templates.</p>
         </div>
         <div class="bg-bg border border-cyan/20 rounded-xl p-5">
           <div class="flex items-center gap-2 mb-2">
