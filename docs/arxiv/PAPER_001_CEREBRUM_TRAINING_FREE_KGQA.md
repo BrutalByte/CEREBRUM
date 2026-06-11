@@ -11,7 +11,7 @@
 
 ### Abstract
 
-We present CEREBRUM, a training-free framework for multi-hop knowledge graph question answering (KGQA). Given any knowledge base expressible as (head, relation, tail) triples, CEREBRUM answers natural-language questions by traversing graph paths under a 10-parameter Community-Structured Attention (CSA) formula — no gradient descent, no pre-training, no task-specific supervision. On the MetaQA 3-hop benchmark (14,274 test questions, 134K-triple movie KB), CEREBRUM achieves H@1=60.6%, H@10=87.9%, MRR=0.703 with zero training data. The H@10 figure matches or exceeds several supervised methods (GraftNet H@1=22.8%, MINERVA H@10=45.6%), establishing that beam-traversal recall is not the bottleneck — ranking precision is. On WebQSP (1,628 questions, Freebase 3.79M triples), H@1=5.22% versus a 1.41% zero-configuration baseline (+270% relative); we diagnose the ceiling as Freebase CVT mediator nodes whose opaque MID identifiers suppress semantic attention, an intrinsic adversarial property of the KB rather than a framework failure. CEREBRUM is crystal-box: every answer is a fully traceable, hop-by-hop graph path, making hallucination structurally impossible. The framework deploys on any CSV with no configuration. Code is publicly available at https://github.com/BrutalByte/CEREBRUM.
+We present CEREBRUM, a training-free framework for multi-hop knowledge graph question answering (KGQA). Given any knowledge base expressible as (head, relation, tail) triples, CEREBRUM answers natural-language questions by traversing graph paths under a 10-parameter Community-Structured Attention (CSA) formula — no gradient descent, no pre-training, no task-specific supervision. On the MetaQA 3-hop benchmark (14,274 test questions, 134K-triple movie KB), CEREBRUM achieves H@1=60.6%, H@10=87.9%, MRR=0.703 with zero training data. The H@10 figure matches or exceeds several supervised methods (GraftNet H@1=22.8%, MINERVA H@10=45.6%), establishing that beam-traversal recall is not the bottleneck — ranking precision is. On Hetionet (998 biomedical QA pairs, 6 templates), 1-hop H@1=95.3% including 100% on the disease_associates_gene template. On WebQSP (1,628 questions, Freebase 3.79M triples), H@1=10.33% versus a 1.41% zero-configuration baseline (+633% relative); we diagnose the ceiling as Freebase CVT mediator nodes whose opaque MID identifiers suppress semantic attention, an intrinsic adversarial property of the KB rather than a framework failure. CEREBRUM is crystal-box: every answer is a fully traceable, hop-by-hop graph path, making hallucination structurally impossible. The framework deploys on any CSV with no configuration. Code is publicly available at https://github.com/BrutalByte/CEREBRUM.
 
 ---
 
@@ -102,7 +102,7 @@ This section presents results on three benchmarks: MetaQA (primary evaluation), 
 
 **MetaQA** (Zhang et al., ICLR 2018): Movie question-answering over a 134,741-triple knowledge graph (43,234 entities, 9 relation types). Three hop levels: 1-hop (9,947 test), 2-hop (14,872 test), 3-hop (14,274 test). We report on the full 3-hop test set (14,274 questions) as the primary evaluation; 1-hop and 2-hop results are included for completeness.
 
-**Hetionet** (Himmelstein et al., eLife 2017): Biomedical knowledge graph — 47,031 nodes, 24 relation types, 2,107,709 edges. Covers drugs, diseases, genes, pathways, anatomy, molecular functions. We evaluate on six question templates across 1-hop, 2-hop, and 3-hop: compound→disease, disease→gene, gene→pathway, disease→gene→pathway, compound→gene→disease, disease→compound→gene. 50 QA pairs per template (300 total). No labeled data used.
+**Hetionet** (Himmelstein et al., eLife 2017): Biomedical knowledge graph — 47,031 nodes, 24 relation types, 2,250,197 edges. Covers drugs, diseases, genes, pathways, anatomy, molecular functions. We evaluate on six question templates across 1-hop, 2-hop, and 3-hop: compound→disease, disease→gene, gene→pathway, disease→gene→pathway, compound→gene→disease, disease→compound→gene. Up to 200 QA pairs per template (998 total unique QA pairs; disease_associates_gene capped at 134 available pairs). No labeled data used.
 
 **WebQSP** (Yih et al., ACL 2016): 1,628 test questions over Freebase (3.79M triples, 4,166 relation types). We use a 2-hop subgraph extraction protocol (584K triples / 292K nodes per seed expansion) to avoid OOM on the full KB. We report all 1,628 test questions.
 
@@ -141,15 +141,17 @@ Supervised: GraftNet (H@1=22.8%, MetaQA 3-hop), EmbedKGQA (H@1~94%), UniKGQA (H@
 | Literature: EmbedKGQA (supervised) | 66.6% | — | — |
 | Literature: UniKGQA (supervised) | 75.1% | — | — |
 
-**Hetionet (300 questions, 6 templates, biomedical domain):**
+**Hetionet (998 QA pairs, 6 templates, biomedical domain — Phase 209 canonical, 200q/template):**
 
-| Configuration | H@1 | H@10 | MRR |
-|---------------|-----|------|-----|
-| CEREBRUM tuned (ours) | **59.33%** | **59.33%** | **0.593** |
-| Literature: BFS baseline (Phase 165) | 0.8% | — | — |
-| Literature: TRB explicit (Phase 165) | 73.5% (3-hop only) | — | — |
+| Configuration | 1-hop H@1 | 2-hop H@1 | 3-hop H@1 |
+|---------------|-----------|-----------|-----------|
+| BFS baseline (no TRB) | 0.8% | — | — |
+| TRB explicit (disease_gene_pathway only) | — | 73.5% | — |
+| **CEREBRUM tuned, Phase 209 (ours)** | **95.3%** | **53.0%** | **49.2%** |
 
-Note: H@1=H@10 indicates high-confidence beam decisions — correct answers rank first or are absent, with minimal mid-rank noise. This is characteristic of typed, heterogeneous KBs with clean entity names (24 relation types vs MetaQA's 9).
+Per-template: `disease_associates_gene` **100%** · `gene_participates_pathway` 98.5% · `compound_treats_disease` 89.0% · `disease_gene_pathway` 81.1% · `compound_gene_disease` 34.5% · `disease_compound_via_gene` 49.2%
+
+Note: 1-hop tasks show H@1≈H@10 (high-confidence beam decisions — correct answers rank first or absent). 3-hop `disease_compound_via_gene` (49.2%) shows a known ceiling relative to random embeddings (79.5%): cosine-similarity bias suppresses valid cross-type paths spanning maximally dissimilar entity types. This ceiling is intrinsic to training-free semantic attention on cross-type heterogeneous paths and is not addressable by structural parameter tuning (confirmed by Phase 210 branch_bonus grid and Phase 211 GraphSAGE ablation).
 
 **WebQSP honest finding:** Freebase CVT (compound value type) mediator nodes use opaque MID identifiers (e.g., `/m/0abc12`) that carry no semantic content. Because CSA's primary attention signal is question–relation cosine similarity (the alpha term), CVT paths are scored near-random. This is not a framework failure: on structured KBs where relation names are human-readable (MetaQA, Hetionet, ConceptNet), semantic attention functions correctly. The WebQSP result isolates opaque-identifier KBs as a known limitation requiring KB-side preprocessing (CVT materialisation or MID-to-name resolution) rather than framework changes.
 
@@ -198,7 +200,9 @@ Cross-dataset results reveal a clean empirical boundary for when training-free K
 | Dataset | Entity names | Relation labels | H@1 | H@10 | Notes |
 |---------|-------------|-----------------|-----|------|-------|
 | MetaQA 3-hop | Movie titles, person names | 9 typed (starred_actors, directed_by…) | 60.6% | 87.9% | hub_homogeneous |
-| Hetionet | Gene/disease/compound names | 24 biomedical types | 59.3% | ~60% | typed_heterogeneous |
+| Hetionet 1-hop | Gene/disease/compound names | 24 biomedical types | 95.3% | ~95% | typed_heterogeneous |
+| Hetionet 2-hop | Gene/disease/compound names | 24 biomedical types | 53.0% | ~53% | typed_heterogeneous |
+| Hetionet 3-hop (cross-type) | Gene/disease/compound names | 24 biomedical types | 49.2% | ~50% | typed_heterogeneous† |
 | WebQSP | Opaque MIDs (/m/0xxxxx) | 989 Freebase paths (dotted) | 10.3% | 20.5% | typed_heterogeneous |
 
 **Semantic attention requires readable entity names.** MetaQA and Hetionet have entity names that generate meaningful cosine similarities with question text ("Who directed Inception?" → "directed_by" → "Christopher Nolan"). Freebase replaces entities with MID identifiers and intermediate CVT nodes that produce near-zero cosine similarity regardless of question content. The CSA alpha (semantic) term effectively deactivates on Freebase.
