@@ -288,6 +288,8 @@ class StructuralRelationInferrer:
         if not rel_weights:
             return False
         total = sum(rel_weights.values())
+        if total == 0.0:
+            return False
         consensus_rel = max(rel_weights, key=rel_weights.__getitem__)
         confidence = rel_weights[consensus_rel] / total
         if confidence < min_consensus_fraction:

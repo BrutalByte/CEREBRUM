@@ -188,7 +188,13 @@ class TestCvtPassthroughDisabled:
 
 class TestCvtPassthroughEnabled:
     def test_cvt_node_not_in_path_tails(self):
-        """With passthrough, CVT node should not appear as a terminal tail."""
+        """With additive CVT passthrough, answer must be reachable via compound path.
+
+        Phase 246: CVT passthrough is additive — the direct seed→CVT edge is kept
+        AND the compound seed→answer (r1|r2) edge is added. CVT nodes may appear
+        in tails (via the direct edge), but the answer node must also be present.
+        The MID filter in webqsp_param_eval.py removes CVT nodes from final answers.
+        """
         edges = [
             ("seed", "r1", "/m/cvt001"),
             ("/m/cvt001", "r2", "answer"),
@@ -199,7 +205,8 @@ class TestCvtPassthroughEnabled:
 
         paths = bt.traverse(["seed"])
         tails = {p.tail for p in paths if p.hop_depth >= 1}
-        assert "/m/cvt001" not in tails, "CVT node must not be a terminal tail"
+        # Additive mode: answer must be reachable via compound path
+        assert "answer" in tails, "Answer must be reachable via CVT compound path"
 
     def test_answer_reachable_through_cvt(self):
         """The answer node behind the CVT must be reachable in one hop."""
@@ -276,10 +283,14 @@ class TestCvtPassthroughEnabled:
             assert p.nodes.count("seed") <= 1, "Cycle detected through CVT node"
 
     def test_chained_cvt_not_expanded(self):
-        """Second CVT node after first should not be added as an endpoint."""
-        # seed â†’ /m/cvt1 â†’ /m/cvt2 â†’ answer
-        # passthrough of cvt1 would reach cvt2, which is also a CVT node.
-        # The inner CVT filter in next_steps should drop it.
+        """Chained CVT: compound path must not end at another CVT node.
+
+        Phase 246 additive mode: when cvt1’s compound expansion reaches cvt2 (also
+        a CVT node), it must be dropped (not added as a compound endpoint). Only
+        non-CVT leaf nodes may appear as compound-path answers. cvt001 and cvt002
+        may appear via the direct edge (additive), but the compound hop from cvt001
+        must not produce cvt002 as a terminal answer.
+        """
         edges = [
             ("seed", "r1", "/m/cvt001"),
             ("/m/cvt001", "r2", "/m/cvt002"),
@@ -290,9 +301,14 @@ class TestCvtPassthroughEnabled:
         bt = _make_traversal(adapter, csa, cvt_passthrough=True, max_hop=2)
 
         paths = bt.traverse(["seed"])
-        tails = {p.tail for p in paths}
-        assert "/m/cvt001" not in tails
-        assert "/m/cvt002" not in tails
+        compound_tails = {
+            p.tail for p in paths
+            if "|" in (p.nodes[1] if len(p.nodes) > 1 else "")
+        }
+        # Compound paths must not end at a CVT node
+        assert not any(t.startswith("/m/") for t in compound_tails), (
+            f"Compound CVT path must not produce CVT terminal: {compound_tails}"
+        )
 
     def test_non_cvt_path_unaffected(self):
         """When no CVT nodes are present, passthrough has no effect."""
@@ -342,4 +358,7 @@ class TestAsyncCvtPassthrough:
 
         tails = {p.tail for p in all_paths}
         assert "answer" in tails
-        assert "/m/cvt001" not in {p.tail for p in all_paths if p.hop_depth >= 1}
+        # Additive mode: answer reachable via compound path is the key invariant.
+        # Direct CVT edge is preserved, so /m/cvt001 may appear; answer must appear too.
+        compound_tails = {p.tail for p in all_paths if "|" in (p.nodes[1] if len(p.nodes) > 1 else "")}
+        assert "answer" in (tails | compound_tails)

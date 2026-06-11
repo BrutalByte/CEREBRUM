@@ -1,6 +1,6 @@
 # arXiv Submission Guide
 
-**CEREBRUM — 39 Papers (PAPER_001 – PAPER_037 complete · PAPER_038–039 staged)**
+**CEREBRUM — 40 Papers (PAPER_001 flagship + PAPER_002–037 complete · PAPER_038–039 staged)**
 
 This guide covers the submission process, per-paper metadata, and checklist for submitting all CEREBRUM papers to arXiv.
 
@@ -25,6 +25,7 @@ Submit foundational papers first so cross-references resolve correctly.
 
 | Order | Paper | File | Category |
 |---|---|---|---|
+| 0 | **CEREBRUM: Training-Free Multi-Hop KGQA (flagship)** | `PAPER_001_CEREBRUM_TRAINING_FREE_KGQA.md` | `cs.IR` + `cs.AI` + `cs.LG` |
 | 1 | DSCF/TSC Community Fusion | `PAPER_001_DSCF_TSC.md` | `cs.IR` + `cs.AI` |
 | 2 | Community-Structured Attention | `PAPER_002_CSA.md` | `cs.IR` + `cs.LG` |
 | 3 | Bridge Twin Nodes | `PAPER_003_BRIDGE_TWINS.md` | `cs.AI` + `cs.NE` |

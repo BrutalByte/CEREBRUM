@@ -204,6 +204,61 @@ class PathSchemaIndex:
         return [(self._schemas[cand[i]][0], self._schemas[cand[i]][1], float(scores[i]))
                 for i in top_local]
 
+    def predict_schemas_conditional(
+        self,
+        question_embedding: np.ndarray,
+        seed_outgoing_rels: Set[str],
+        hop1_r2_rels: Set[str],
+        top_k: int = 5,
+        structural_bonus: float = 0.3,
+    ) -> List[Tuple[str, str, float]]:
+        """
+        Phase 247: Condition r2 selection on actual hop-1 structural evidence.
+
+        After the beam completes hop-1 and populates _expansion_cache, the caller
+        builds hop1_r2_rels = union of outgoing relation types from all hop-1
+        intermediates. This method re-ranks the r1-filtered schema candidates by:
+
+            combined_score = cosine_sim × (1 + structural_bonus  if r2 ∈ hop1_r2_rels
+                                           else cosine_sim)
+
+        Schemas whose r2 is confirmed present on actual hop-1 intermediates receive
+        a boost, biasing selection toward paths that are both semantically appropriate
+        AND structurally reachable from this specific seed.
+        """
+        if not self._schemas or not seed_outgoing_rels:
+            return []
+
+        candidate_idx: List[int] = []
+        for r1 in seed_outgoing_rels:
+            candidate_idx.extend(self._by_r1.get(r1, []))
+
+        if not candidate_idx:
+            return []
+
+        qvec = question_embedding.astype(np.float32)
+        norm = float(np.linalg.norm(qvec))
+        if norm < 1e-9:
+            return []
+        qvec /= norm
+
+        cand = np.array(candidate_idx, dtype=np.int32)
+        cosine_scores: np.ndarray = self._schema_matrix[cand].astype(np.float32) @ qvec
+
+        # Structural confirmation: r2 is actually present on a hop-1 intermediate
+        structural_mask = np.array(
+            [float(self._schemas[cand[i]][1] in hop1_r2_rels) for i in range(len(cand))],
+            dtype=np.float32,
+        )
+        combined = cosine_scores * (1.0 + structural_bonus * structural_mask)
+
+        k = min(top_k, len(cand))
+        top_local = np.argpartition(-combined, k - 1)[:k]
+        top_local  = top_local[np.argsort(-combined[top_local])]
+
+        return [(self._schemas[cand[i]][0], self._schemas[cand[i]][1], float(combined[i]))
+                for i in top_local]
+
     def execute_schemas(
         self,
         seed_entity:    str,

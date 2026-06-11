@@ -502,6 +502,86 @@ def run_trial_inprocess(
             # BeamTraversal collapses A→CVT→B into a compound edge scored against the
             # final named entity, avoiding the near-zero semantic penalty on opaque MIDs.
 
+            # Phase 245: Backward verification pass.
+            # For 2-hop answers [seed, rel1, hop1, rel2, answer], check whether the
+            # hop-1 intermediate appears in the answer entity's outgoing neighbors.
+            # Bidirectional structural support distinguishes correct answers from
+            # hub entities coincidentally reached by one noisy forward path.
+            _bbp = params.get("backward_bonus", 0.0)
+            if _bbp > 0.0:
+                _ecache = getattr(getattr(graph, "_traversal", None), "_expansion_cache", {})
+                for ans in answers_obj:
+                    bp = getattr(ans, "best_path", None)
+                    nodes = getattr(bp, "nodes", ()) if bp else ()
+                    if len(nodes) >= 5:
+                        hop1 = nodes[2]
+                        if ans.entity_id not in _ecache:
+                            _ecache[ans.entity_id] = graph.adapter.get_neighbors(
+                                ans.entity_id, max_neighbors=100
+                            )
+                        if hop1 in {e.target_id for e in _ecache[ans.entity_id]}:
+                            ans.score *= (1.0 + _bbp)
+                answers_obj.sort(key=lambda a: a.score, reverse=True)
+
+            # Phase 246: Path diversity re-ranker.
+            # Correct answers in Freebase are typically reachable via multiple distinct
+            # hop-1 intermediates (different relation paths converging on the same entity),
+            # while hub-entity noise tends to arrive via a single dominant relation path.
+            # We build a reverse index from the expansion cache: for each hop-1 node,
+            # map its outbound targets back to the set of distinct intermediates reaching
+            # them. Answers with n_paths > 1 receive a log-scaled score boost.
+            _da = params.get("diversity_alpha", 0.0)
+            if _da > 0.0:
+                _ecache = getattr(getattr(graph, "_traversal", None), "_expansion_cache", {})
+                # Hop-1 nodes = direct neighbors of the seed entity in the cache
+                _hop1_nodes = {e.target_id for e in _ecache.get(seed_ent, [])}
+                # Reverse index: answer_entity → set of hop-1 intermediates reaching it
+                _reverse: dict = {}
+                for _h1 in _hop1_nodes:
+                    for _edge in _ecache.get(_h1, []):
+                        _t = _edge.target_id
+                        if _t not in _reverse:
+                            _reverse[_t] = set()
+                        _reverse[_t].add(_h1)
+                for ans in answers_obj:
+                    _n = len(_reverse.get(ans.entity_id, ()))
+                    if _n > 1:
+                        ans.score *= (1.0 + _da * math.log1p(_n - 1))
+                answers_obj.sort(key=lambda a: a.score, reverse=True)
+
+            # Phase 247: Conditional Schema Prediction.
+            # After the beam populates _expansion_cache, extract the union of outgoing
+            # relation types from all hop-1 intermediate entities (hop1_r2_rels).
+            # Re-predict schemas with r2 biased toward structurally confirmed relations —
+            # schemas whose r2 is actually present on a reachable intermediate receive a
+            # score boost (structural_bonus), concentrating execution on paths that are
+            # both semantically appropriate AND reachable from this specific seed.
+            # Merge with existing schema_extra (highest score wins per entity).
+            _csb = params.get("conditional_schema_bonus", 0.0)
+            if _csb > 0.0 and schema_idx is not None and qemb is not None:
+                _ecache247 = getattr(getattr(graph, "_traversal", None), "_expansion_cache", {})
+                _hop1_r2_rels: set = set()
+                for _h1_edge in _ecache247.get(seed_ent, []):
+                    for _h2_edge in _ecache247.get(_h1_edge.target_id, []):
+                        _hop1_r2_rels.add(_h2_edge.relation_type)
+                if _hop1_r2_rels:
+                    _seed_rels247 = graph.adapter.get_all_relation_types(seed_ent)
+                    _cond_schemas = schema_idx.predict_schemas_conditional(
+                        qemb, _seed_rels247, _hop1_r2_rels, top_k=5, structural_bonus=float(_csb)
+                    )
+                    if _cond_schemas:
+                        _cond_hits = schema_idx.execute_schemas(
+                            seed_ent, _cond_schemas, graph.adapter, skip_rels=_SKIP_RELATIONS
+                        )
+                        _cond_map = {eid: sc for eid, sc in _cond_hits}
+                        _merged: dict = {}
+                        for eid, sc in schema_extra:
+                            _merged[eid] = max(sc, _cond_map.get(eid, 0.0))
+                        for eid, sc in _cond_hits:
+                            if eid not in _merged:
+                                _merged[eid] = sc
+                        schema_extra = sorted(_merged.items(), key=lambda x: x[1], reverse=True)
+
             # Filter out Freebase MID relay nodes — they are never correct answers
             named = [a for a in answers_obj if not str(a.entity_id).startswith("/m/")]
 
@@ -688,7 +768,10 @@ def main() -> None:
     parser.add_argument("--beta",                    type=float, default=None, dest="beta")
     parser.add_argument("--schema-score-threshold",  type=float, default=None, dest="schema_score_threshold")
     parser.add_argument("--degree-penalty-weight",   type=float, default=None, dest="degree_penalty_weight")
-    parser.add_argument("--cvt-passthrough",          action="store_true", default=True, dest="cvt_passthrough")
+    parser.add_argument("--backward-bonus",            type=float, default=None, dest="backward_bonus")
+    parser.add_argument("--diversity-alpha",           type=float, default=None, dest="diversity_alpha")
+    parser.add_argument("--conditional-schema-bonus",  type=float, default=None, dest="conditional_schema_bonus")
+    parser.add_argument("--cvt-passthrough",           action="store_true", default=True, dest="cvt_passthrough")
     args = parser.parse_args()
 
     state = build_webqsp_state(
@@ -729,6 +812,9 @@ def main() -> None:
         "beta":                   args.beta                   if args.beta                   is not None else _d("beta"),
         "schema_score_threshold": args.schema_score_threshold if args.schema_score_threshold is not None else _d("schema_score_threshold"),
         "degree_penalty_weight":  args.degree_penalty_weight  if args.degree_penalty_weight  is not None else 0.0,
+        "backward_bonus":         args.backward_bonus         if args.backward_bonus         is not None else 0.0,
+        "diversity_alpha":        args.diversity_alpha        if args.diversity_alpha        is not None else 0.0,
+        "conditional_schema_bonus": args.conditional_schema_bonus if args.conditional_schema_bonus is not None else 0.0,
         "cvt_passthrough":        True,
         "max_loops":    1,
     }

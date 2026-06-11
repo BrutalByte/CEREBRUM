@@ -697,14 +697,27 @@ class BeamTraversal:
                             continue
 
                     # ----------------------------------------------------------
-                    # CVT passthrough logic
+                    # CVT passthrough logic (additive, Phase 246)
+                    # Compound CVT-collapsed edges are added alongside the normal
+                    # CVT-node step. Expansion is capped at top-5 by confidence to
+                    # prevent batch flooding that crowded out non-CVT paths and
+                    # caused the H@10 regression observed in Phase 244/244b.
                     # ----------------------------------------------------------
+                    _pb_base = 1.5 if (expected_rel and edge.relation_type == expected_rel) else 1.0
+                    # Always add the direct edge (normal traversal path preserved)
+                    _batch_steps.append((
+                        v, edge.relation_type, edge.confidence,
+                        edge.provenance, edge.valid_from, edge.valid_to, _pb_base,
+                    ))
                     if self.cvt_passthrough and _is_cvt_node(v):
                         if v not in self._expansion_cache:
                             self._expansion_cache[v] = self.adapter.get_neighbors(
                                 v, max_neighbors=self.max_neighbors
                             )
-                        cvt_edges = self._expansion_cache[v]
+                        # Top-5 by confidence: prevents crowding non-CVT beam slots
+                        cvt_edges = sorted(
+                            self._expansion_cache[v], key=lambda e: e.confidence, reverse=True
+                        )[:5]
                         for ce in cvt_edges:
                             vv = ce.target_id
                             if vv not in path.seen_entities and not _is_cvt_node(vv):
@@ -715,12 +728,6 @@ class BeamTraversal:
                                     min(edge.confidence, ce.confidence) * CVT_HOP_PENALTY,
                                     ce.provenance, ce.valid_from, ce.valid_to, _pb,
                                 ))
-                    else:
-                        _pb = 1.5 if (expected_rel and edge.relation_type == expected_rel) else 1.0
-                        _batch_steps.append((
-                            v, edge.relation_type, edge.confidence,
-                            edge.provenance, edge.valid_from, edge.valid_to, _pb,
-                        ))
 
                 # Phase 134: vectorized batch scoring (one matrix multiply per path per hop)
                 # isinstance guard: MagicMock auto-creates any attr on the instance,
@@ -1279,14 +1286,18 @@ class AsyncBeamTraversal(BeamTraversal):
                         if not self.symbolic_validator.validate_step(path.tail, edge.relation_type, v, path=path):
                             continue
 
-                    # CVT passthrough (same logic as sync traversal)
+                    # CVT passthrough — additive (same logic as sync traversal, Phase 246)
+                    next_steps: List[Tuple[str, str, float, str, Optional[float], Optional[float]]] = [
+                        (v, edge.relation_type, edge.confidence, edge.provenance, edge.valid_from, edge.valid_to)
+                    ]
                     if self.cvt_passthrough and _is_cvt_node(v):
                         if v not in self._expansion_cache:
                             self._expansion_cache[v] = self.adapter.get_neighbors(
                                 v, max_neighbors=self.max_neighbors
                             )
-                        cvt_edges = self._expansion_cache[v]
-                        next_steps: List[Tuple[str, str, float, str, Optional[float], Optional[float]]] = []
+                        cvt_edges = sorted(
+                            self._expansion_cache[v], key=lambda e: e.confidence, reverse=True
+                        )[:5]
                         for ce in cvt_edges:
                             vv = ce.target_id
                             if vv not in path.seen_entities and not _is_cvt_node(vv):
@@ -1298,10 +1309,6 @@ class AsyncBeamTraversal(BeamTraversal):
                                     ce.valid_from,
                                     ce.valid_to,
                                 ))
-                    else:
-                        next_steps = [
-                            (v, edge.relation_type, edge.confidence, edge.provenance, edge.valid_from, edge.valid_to)
-                        ]
 
                     for (v_eff, rel_eff, conf_eff, prov_eff, vf_eff, vt_eff) in next_steps:
                         if v_eff in path.seen_entities:

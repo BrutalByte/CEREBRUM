@@ -130,17 +130,21 @@ PARAM_SPACE_CONCEPTNET: dict = {
 # schema_score_threshold: first real sweep (was propagation-bug blocked in 237).
 # degree_penalty_weight: Phase 239 — hub suppression via entity degree in extract().
 PARAM_SPACE_WEBQSP: dict = {
-    "trb_factor":             (38.0, 60.0),
-    "r2_boost":               (0.5,  8.0),
-    "vote_weight":            (0.83, 0.95),
-    "beam_width":             [16, 24],
-    "idf_weight":             (0.0,  0.08),
-    "branch_bonus":           (0.0,  0.12),
-    "fhrb_factor":            (0.5,  4.0),
-    "gamma":                  (1.0,  10.0),
-    "beta":                   (0.5,  2.0),
-    "schema_score_threshold": (0.40, 0.90),
-    "degree_penalty_weight":  (0.0,  0.5),
+    # Phase 244d: bounds tightened around Phase 244c best (H@1=10.26%, H@10=20.04%)
+    "trb_factor":             (35.0, 55.0),   # best=41.052
+    "r2_boost":               (1.0,  6.0),    # best=3.490
+    "vote_weight":            (0.85, 0.95),   # best=0.9054
+    "beam_width":             [16, 24],        # best=16; wider beams hurt in 244c
+    "idf_weight":             (0.0,  0.04),   # best=0.019
+    "branch_bonus":           (0.0,  0.08),   # best=0.030
+    "fhrb_factor":            (0.5,  2.5),    # best=1.302
+    "gamma":                  (2.0,  8.0),    # best=4.985
+    "beta":                   (0.8,  1.5),    # best=1.118
+    "schema_score_threshold": (0.35, 0.50),   # best=0.408
+    "degree_penalty_weight":  (0.3,  0.6),    # best=0.494
+    "backward_bonus":         (0.05, 0.4),    # best=0.182; fANOVA #2 at 17.97%
+    "diversity_alpha":        (0.3,  1.0),    # best=0.695; tightened around best
+    "conditional_schema_bonus": (0.1, 0.8),  # Phase 247: structural r2 confirmation boost
     # Phase 243: cvt_passthrough is a fixed True for WebQSP/Freebase (not tunable).
     # Ablation confirmed cvt_relay_boost (post-hoc compensation) consistently hurts;
     # cvt_passthrough (traversal-time collapsing) is the correct structural fix.
@@ -244,6 +248,9 @@ def _load_resume(path: Path) -> tuple[list["TrialRecord"], Optional[dict]]:
             elapsed_s=obj["elapsed_s"],
             schema_score_threshold=obj.get("schema_score_threshold", 0.0),
             degree_penalty_weight=obj.get("degree_penalty_weight", 0.0),
+            backward_bonus=obj.get("backward_bonus", 0.0),
+            diversity_alpha=obj.get("diversity_alpha", 0.0),
+            conditional_schema_bonus=obj.get("conditional_schema_bonus", 0.0),
             )
         if rec.h1 > best_h1:
             best_h1 = rec.h1
@@ -283,6 +290,9 @@ def _make_source_trials(records: "list[TrialRecord]", space: dict) -> list:
             "beta":                   rec.beta,
             "schema_score_threshold": getattr(rec, "schema_score_threshold", 0.0),
             "degree_penalty_weight":  getattr(rec, "degree_penalty_weight", 0.0),
+            "backward_bonus":         getattr(rec, "backward_bonus", 0.0),
+            "diversity_alpha":        getattr(rec, "diversity_alpha", 0.0),
+            "conditional_schema_bonus": getattr(rec, "conditional_schema_bonus", 0.0),
         }
         # Only include params that exist in the distributions dict
         params = {k: v for k, v in params.items() if k in distributions}
@@ -315,6 +325,9 @@ class TrialRecord:
     elapsed_s:              float
     schema_score_threshold: float = 0.0  # Phase 237: schema prepend confidence gate
     degree_penalty_weight:  float = 0.0  # Phase 239: hub entity degree suppression
+    backward_bonus:         float = 0.0  # Phase 245: bidirectional path verification boost
+    diversity_alpha:        float = 0.0  # Phase 246: multi-path convergence re-ranker
+    conditional_schema_bonus: float = 0.0  # Phase 247: conditional r2 structural confirmation
     # cvt_relay_boost removed in Phase 243 — ablation confirmed it hurts; cvt_passthrough is the correct fix
     is_best:                bool  = False
     phase:                  int   = 1
@@ -363,7 +376,10 @@ class LiveDashboard:
                 f"fhrb=[cyan]{b.fhrb_factor:.3f}[/cyan]  "
                 f"gamma=[cyan]{b.gamma:.3f}[/cyan]  "
                 f"beta=[cyan]{b.beta:.3f}[/cyan]  "
-                f"dpw=[cyan]{b.degree_penalty_weight:.3f}[/cyan]"
+                f"dpw=[cyan]{b.degree_penalty_weight:.3f}[/cyan]  "
+                f"bbp=[cyan]{getattr(b, 'backward_bonus', 0.0):.3f}[/cyan]  "
+                f"da=[cyan]{getattr(b, 'diversity_alpha', 0.0):.3f}[/cyan]  "
+                f"csb=[cyan]{getattr(b, 'conditional_schema_bonus', 0.0):.3f}[/cyan]"
             )
         else:
             body = "[dim]Waiting for first trial...[/dim]"
@@ -482,6 +498,9 @@ def _trial_record_to_dict(
         "beta":                   rec.beta,
         "schema_score_threshold": rec.schema_score_threshold,
         "degree_penalty_weight":  rec.degree_penalty_weight,
+        "backward_bonus":         getattr(rec, "backward_bonus", 0.0),
+        "diversity_alpha":        getattr(rec, "diversity_alpha", 0.0),
+        "conditional_schema_bonus": getattr(rec, "conditional_schema_bonus", 0.0),
         "h1":                     rec.h1,
         "h10":              rec.h10,
         "mrr":              rec.mrr,
@@ -622,6 +641,9 @@ def _run_eval_logged(
         "beta":                   kwargs["beta"],
         "schema_score_threshold": kwargs.get("schema_score_threshold", 0.0),
         "degree_penalty_weight":  kwargs.get("degree_penalty_weight", 0.0),
+        "backward_bonus":         kwargs.get("backward_bonus", 0.0),
+        "diversity_alpha":        kwargs.get("diversity_alpha", 0.0),
+        "conditional_schema_bonus": kwargs.get("conditional_schema_bonus", 0.0),
         "cvt_passthrough":        True,  # Phase 243: always enabled for WebQSP/Freebase
         "max_loops":              1,
     }
@@ -1156,7 +1178,10 @@ def run_tuner(
     )
     _print(
         f"  gamma={best.gamma:.4f}  beta={best.beta:.4f}  "
-        f"dpw={best.degree_penalty_weight:.4f}  sst={best.schema_score_threshold:.4f}"
+        f"dpw={best.degree_penalty_weight:.4f}  sst={best.schema_score_threshold:.4f}  "
+        f"bbp={getattr(best, 'backward_bonus', 0.0):.4f}  "
+        f"da={getattr(best, 'diversity_alpha', 0.0):.4f}  "
+        f"csb={getattr(best, 'conditional_schema_bonus', 0.0):.4f}"
     )
     _param_flags = (
         f"--beam-width {best.beam_width} "
@@ -1165,7 +1190,10 @@ def run_tuner(
         f"--branch-bonus {best.branch_bonus:.3f} --fhrb-factor {best.fhrb_factor:.3f} "
         f"--gamma {best.gamma:.4f} --beta {best.beta:.4f} "
         f"--degree-penalty-weight {best.degree_penalty_weight:.4f} "
-        f"--schema-score-threshold {best.schema_score_threshold:.4f}"
+        f"--schema-score-threshold {best.schema_score_threshold:.4f} "
+        f"--backward-bonus {getattr(best, 'backward_bonus', 0.0):.4f} "
+        f"--diversity-alpha {getattr(best, 'diversity_alpha', 0.0):.4f} "
+        f"--conditional-schema-bonus {getattr(best, 'conditional_schema_bonus', 0.0):.4f}"
     )
     if dataset == "hetionet":
         canonical = (
