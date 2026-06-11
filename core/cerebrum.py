@@ -798,6 +798,10 @@ class CerebrumGraph:
         # Phase 152: embedding cache key includes engine type so random and
         # sentence-transformer caches never collide.
         _emb_tag = type(self._embedding_engine).__name__.lower().replace("embeddingengine", "") or "base"
+        # Phase 248: name-resolved embeddings must use a separate cache file
+        _name_overrides = getattr(self.adapter, "entity_name_overrides", {})
+        if _name_overrides:
+            _emb_tag += "_named"
         emb_cache = cache / f"embeddings_{_emb_tag}.pkl" if cache else None
 
         # Track whether embeddings came from cache so later steps know
@@ -819,10 +823,14 @@ class CerebrumGraph:
                 self.adapter.embeddings = pickle.load(f)
         else:
             # Build label map: node_id -> human-readable label
+            # Phase 248: entity_name_overrides substitutes opaque MIDs with
+            # Freebase readable names before embedding, restoring semantic signal.
             entity_labels: Dict[str, str] = {}
             for n in nodes:
                 data  = G.nodes[n]
                 label = data.get("label") or data.get("friendly_name") or str(n)
+                if str(n) in _name_overrides:
+                    label = _name_overrides[str(n)]
                 entity_labels[str(n)] = label
 
             logger.info(

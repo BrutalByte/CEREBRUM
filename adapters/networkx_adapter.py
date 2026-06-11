@@ -44,6 +44,7 @@ class NetworkXAdapter(GraphAdapter):
         self.embeddings: Dict[str, np.ndarray] = {}
         self.community_map: Dict[str, int] = {}
         self._meta_graph: Optional[nx.DiGraph] = None  # Phase 217: built lazily
+        self.entity_name_overrides: Dict[str, str] = {}  # Phase 248: MID→readable name
 
     # ------------------------------------------------------------------
     # Required GraphAdapter methods

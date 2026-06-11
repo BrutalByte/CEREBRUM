@@ -92,6 +92,26 @@ _SKIP_RELATIONS = frozenset({
 # Graph loading
 # ---------------------------------------------------------------------------
 
+def load_mid_name_map(fb_path: str, node_ids: set) -> Dict[str, str]:
+    """
+    Phase 248 — Freebase entity name resolution.
+
+    Scans freebase_2hop.txt for `type.object.name` triples whose head is in
+    node_ids and returns a {MID -> readable_name} dict.  Called after the
+    seed subgraph is extracted so the scan is limited to the actual graph nodes.
+    """
+    mid_name: Dict[str, str] = {}
+    path = Path(fb_path)
+    with path.open(encoding="utf-8", errors="replace") as f:
+        for line in f:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) != 3:
+                continue
+            h, r, t = parts[0].strip(), parts[1].strip(), parts[2].strip()
+            if r == "type.object.name" and h in node_ids and t:
+                mid_name[h] = t
+    return mid_name
+
 def load_freebase_triples(
     fb_path: str,
     max_triples: int = 0,
@@ -190,6 +210,7 @@ def _build_graph(
     seed: int = 42,
     beam_width: int = 12,
     max_neighbors: int = 100,
+    mid_name_map: Optional[Dict[str, str]] = None,
 ):
     """Build CerebrumGraph from (h, r, t) string triples."""
     import networkx as nx
@@ -202,6 +223,8 @@ def _build_graph(
         G.add_edge(h, t, relation=r, weight=1.0)
 
     adapter = NetworkXAdapter(G)
+    if mid_name_map:
+        adapter.entity_name_overrides = mid_name_map  # Phase 248
 
     if embeddings == "sentence":
         try:
@@ -668,9 +691,18 @@ def build_webqsp_state(
     triples = load_seed_subgraph(fb_path, seed_entities=seed_entities)
     print(f"  {len(triples):,} triples loaded ({time.time()-t0:.1f}s)")
 
+    # Phase 248: Build MID→name map from type.object.name triples in Freebase file
+    all_nodes = {h for h, r, t in triples} | {t for h, r, t in triples}
+    print(f"[WebQSPState] Building MID name map for {len(all_nodes):,} nodes (Phase 248)...")
+    t_name = time.time()
+    mid_name_map = load_mid_name_map(fb_path, all_nodes)
+    coverage = len(mid_name_map) / max(len(all_nodes), 1) * 100
+    print(f"  {len(mid_name_map):,} MIDs resolved ({coverage:.1f}% coverage, {time.time()-t_name:.1f}s)")
+
     print(f"[WebQSPState] Building CerebrumGraph (embeddings={embeddings})...")
     t1 = time.time()
-    graph = _build_graph(triples, embeddings=embeddings, cache_dir=cache_dir, seed=seed)
+    graph = _build_graph(triples, embeddings=embeddings, cache_dir=cache_dir, seed=seed,
+                         mid_name_map=mid_name_map)
     nx_g  = graph.adapter.to_networkx()
     print(f"  {nx_g.number_of_nodes():,} nodes, {nx_g.number_of_edges():,} edges ({time.time()-t1:.1f}s)")
 
