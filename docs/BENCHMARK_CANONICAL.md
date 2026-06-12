@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.88.0 (Phase 249) — Updated Jun 11, 2026
+## Version: v2.88.0 (Phase 249), Updated Jun 11, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -7,7 +7,7 @@ Do not report numbers from interim runs or different configurations without expl
 
 ---
 
-## MetaQA — Canonical Subset Run (Use in All Publications)
+## MetaQA, Canonical Subset Run (Use in All Publications)
 
 The "canonical" configuration runs on the standard MetaQA test split (~12,500 questions per hop).
 These numbers are directly comparable to supervised SOTA baselines in the literature.
@@ -24,11 +24,11 @@ No bridge synthesis, no GraphSAGE smoothing (Phase 53 baseline).
 
 ---
 
-## MetaQA — Full Stack Run (README Only; Do NOT Use in Paper Comparison Tables)
+## MetaQA, Full Stack Run (README Only; Do NOT Use in Paper Comparison Tables)
 
 The "full" configuration uses all current features: sentence-transformers, H1SE, TRB/PRB/FHRB,
 r2 path-consistency boost, RelationPathPrior, GraphProfiler.
-**NOT comparable to prior work** — cite this only when labeling CEREBRUM's best-case performance,
+**NOT comparable to prior work**, cite this only when labeling CEREBRUM's best-case performance,
 never in a table alongside supervised methods.
 
 | Metric | 1-hop | 2-hop | 3-hop | Phase | Notes |
@@ -69,7 +69,7 @@ r2-boost=0.40, fhrb-factor=3.0, 8-worker multiprocessing. Runtime: 36.9 min (vs 
 
 ---
 
-## MetaQA — Phase 212 Zero-Config Full Validation (All 39,093 Questions)
+## MetaQA, Phase 212 Zero-Config Full Validation (All 39,093 Questions)
 
 **Zero-config = ParameterInitializer auto-derives all params from graph statistics. No tuning.**
 
@@ -86,18 +86,18 @@ trb_factor=21.48, gamma=0.5, beta=2.0, r2_boost=8.18, fhrb_factor=3.26,
 idf_weight=0.058, vote_weight=0.758, branch_bonus=0.48, beam_width=12.
 
 **Finding:** Zero-config (no tuning) lands 3.5pp below Phase 204 tuned (60.4% 3-hop \(\text{H@1}\)).
-\(\text{H@10} = 90.7\%\) confirms the system *finds* the answer in top-10 the vast majority of the time —
+\(\text{H@10} = 90.7\%\) confirms the system *finds* the answer in top-10 the vast majority of the time;
 the gap to supervised methods is primarily a ranking problem, not a reasoning failure.
 
 ---
 
-## MetaQA — Phase 219–223 Zero-Config Validation (v2.73.0)
+## MetaQA, Phase 219–223 Zero-Config Validation (v2.73.0)
 
 **Configuration:** 500-question sample, zero-config (ParameterInitializer auto-derives all params), no manual tuning.
 Phases 215–223 add cognitive architecture enhancements (uncertainty retry threshold 0.09, PlattCalibration,
-cerebellar punishment, etc.) — none alter the primary scoring path for standard MetaQA runs when probabilistic=False.
+cerebellar punishment, etc.), none alter the primary scoring path for standard MetaQA runs when probabilistic=False.
 
-### Phase 223 — Sentence-Transformers Embeddings (Jun 4, 2026)
+### Phase 223, Sentence-Transformers Embeddings (Jun 4, 2026)
 
 | Hop | H@1 | H@10 | MRR |
 |-----|-----|------|-----|
@@ -105,7 +105,7 @@ cerebellar punishment, etc.) — none alter the primary scoring path for standar
 | 2-hop | **48.2%** | **92.0%** | **0.625** |
 | 3-hop | **60.2%** | **89.4%** | **0.702** |
 
-### Phase 219 — Sentence-Transformers Embeddings (Jun 3, 2026, archived)
+### Phase 219, Sentence-Transformers Embeddings (Jun 3, 2026, archived)
 
 | Hop | H@1 | H@10 | MRR |
 |-----|-----|------|-----|
@@ -129,11 +129,11 @@ Run date: 2026-06-04 (Phase 223), 2026-06-03 (Phase 219 archived).
 
 ---
 
-## Hetionet — Phase 207 (Random Embeddings, hop_expand Fixed)
+## Hetionet, Phase 207 (Random Embeddings, hop_expand Fixed)
 
 Biomedical KG: 47,031 entities / 2,250,197 edges.
 
-### Phase 207 — Tuner Results (hop_expand bug fixed, properly calibrated params)
+### Phase 207, Tuner Results (hop_expand bug fixed, properly calibrated params)
 
 **Tuner best:** H@1=61.00% H@10=61.00% MRR=0.6100 (200q/template pilot)
 
@@ -174,7 +174,7 @@ python -u benchmarks/hetionet_param_eval.py \
 
 Note: beam_width importance \(\approx 0\) confirms fixed at 8 is correct. beta is now the dominant parameter (was near-zero in Phase 206 broken-2-hop run).
 
-### Phase 207 — Full Validation Results (200q/template, Phase 207 params)
+### Phase 207, Full Validation Results (200q/template, Phase 207 params)
 
 | Metric | 1-hop | 2-hop | 3-hop | Notes |
 |--------|-------|-------|-------|-------|
@@ -198,11 +198,11 @@ compound_gene_disease ~32% is a graph-structure ceiling: AvgTyped=0.9 means most
 
 ---
 
-## Hetionet — Phase 208 (Sentence-Transformers Tuner)
+## Hetionet, Phase 208 (Sentence-Transformers Tuner)
 
 Phase 208 adds sentence-transformers embeddings (384-dim) + GraphSAGE smoothing + STRB via query_embedding + full community resolution (cap removed).
 
-### Phase 208 — Tuner Results (all-hop pooled — superseded by Phase 209)
+### Phase 208, Tuner Results (all-hop pooled, superseded by Phase 209)
 
 **Tuner best:** H@1=55.00% H@10=55.00% MRR=0.5500
 
@@ -244,7 +244,7 @@ python -u benchmarks/hetionet_param_eval.py \
     --branch-bonus 0.451 --fhrb-factor 3.013
 ```
 
-### Phase 208 — Full Validation Results (200q/template, sentence-transformers + GraphSAGE + STRB)
+### Phase 208, Full Validation Results (200q/template, sentence-transformers + GraphSAGE + STRB)
 
 | Metric | 1-hop | 2-hop | 3-hop | Notes |
 |--------|-------|-------|-------|-------|
@@ -264,8 +264,8 @@ python -u benchmarks/hetionet_param_eval.py \
 
 **Finding: sentence-transformers regresses vs random on multi-hop.** 1-hop is near-parity (94.0% vs 95.7%) but 2-hop drops 11pp and 3-hop drops 18pp. Two compounding causes:
 
-1. **AvgTyped collapse on 2-hop**: disease_gene_pathway 3.1→1.6, compound_gene_disease 0.9→0.5 — the semantic similarity filter culls more candidates than random does, starving the beam before it can complete the path. idf_weight=0.032 (low) was meant to compensate but insufficient.
-2. **Tuner pilot used 20q/template** — too small to calibrate 2-hop and 3-hop templates independently. The tuner pooled all templates, allowing 1-hop (\(3\times\)) to dominate the \(\text{H@1}\) signal.
+1. **AvgTyped collapse on 2-hop**: disease_gene_pathway 3.1→1.6, compound_gene_disease 0.9→0.5, the semantic similarity filter culls more candidates than random does, starving the beam before it can complete the path. idf_weight=0.032 (low) was meant to compensate but insufficient.
+2. **Tuner pilot used 20q/template**, too small to calibrate 2-hop and 3-hop templates independently. The tuner pooled all templates, allowing 1-hop (\(3\times\)) to dominate the \(\text{H@1}\) signal.
 
 **Root cause**: Phase 208 tuner calibrated against all hops simultaneously with 20q each. The optimal idf_weight for 1-hop (low penalty → more candidates) conflicts with 2-hop (needs higher IDF to suppress false positives at the intermediate node).
 
@@ -273,11 +273,11 @@ python -u benchmarks/hetionet_param_eval.py \
 
 ---
 
-## Hetionet — Phase 209 (Multi-Hop Sentence-Transformers Calibration)
+## Hetionet, Phase 209 (Multi-Hop Sentence-Transformers Calibration)
 
 Phase 209 fixes the Phase 208 regression by tuning with `--min-eval-hop 2` (2-hop + 3-hop only) and disabling `hop_expand` during tuning for speed. 200-trial Sobol+CMA-ES.
 
-### Phase 209 — Tuner Results (sentence-transformers, multi-hop, 200-trial Sobol+CMA-ES, 20q)
+### Phase 209, Tuner Results (sentence-transformers, multi-hop, 200-trial Sobol+CMA-ES, 20q)
 
 **Tuner best:** H@1=55.00% H@10=56.67% MRR=0.5583 (2-hop + 3-hop only, no hop_expand)
 
@@ -309,7 +309,7 @@ Phase 209 fixes the Phase 208 regression by tuning with `--min-eval-hop 2` (2-ho
 
 Key finding: **vote_weight is now #1 on multi-hop** (0.28) vs idf_weight #1 on all-hop (0.43). Community voting drives multi-hop accuracy; IDF hub-penalty drives 1-hop precision.
 
-### Phase 209 — Full Validation Results (200q/template, sentence-transformers, multi-hop params)
+### Phase 209, Full Validation Results (200q/template, sentence-transformers, multi-hop params)
 
 | Metric | 1-hop | 2-hop | 3-hop | Notes |
 |--------|-------|-------|-------|-------|
@@ -329,17 +329,17 @@ Key finding: **vote_weight is now #1 on multi-hop** (0.28) vs idf_weight #1 on a
 
 **Analysis vs Phase 207 (random) and Phase 208 (sentence, all-hop):**
 
-- **1-hop 95.3%** — essentially tied with random (95.7%), best sentence result yet (+1.3pp vs Phase 208)
-- **2-hop 53.0%** — beats random (47.9%) and corrects Phase 208 regression (36.8%). disease_gene_pathway: 81.1% vs 71.2% random — sentence embeddings genuinely help on this template once properly calibrated
-- **3-hop 49.2%** — regressed from random (79.5%) and Phase 208 (61.4%)
+- **1-hop 95.3%**, essentially tied with random (95.7%), best sentence result yet (+1.3pp vs Phase 208)
+- **2-hop 53.0%**, beats random (47.9%) and corrects Phase 208 regression (36.8%). disease_gene_pathway: 81.1% vs 71.2% random, sentence embeddings genuinely help on this template once properly calibrated
+- **3-hop 49.2%**, regressed from random (79.5%) and Phase 208 (61.4%)
 
 **Root cause of 3-hop regression (disease_compound_via_gene):**
 
 Confirmed by Phase 210 branch_bonus grid (see below): not a structural parameter problem. `disease_compound_via_gene` is insensitive to branch_bonus across the full range [0.032–0.308], holding at ~48.5–50.8%. The regression is semantic in origin: sentence-transformers embeddings introduce cosine-similarity bias that suppresses valid cross-type paths (disease→gene→compound spans maximally dissimilar semantic types). Random embeddings have no such bias, which is why Phase 207 achieves 79.5% on this template.
 
-**Summary: Phase 209 is strictly better on 2-hop (+5pp vs random), with a known semantic ceiling on cross-type 3-hop.** This is a fundamental training-free limitation, not a tuning problem — see Phase 210 analysis.
+**Summary: Phase 209 is strictly better on 2-hop (+5pp vs random), with a known semantic ceiling on cross-type 3-hop.** This is a fundamental training-free limitation, not a tuning problem, see Phase 210 analysis.
 
-**Canonical eval command (Phase 209 — full validation as run):**
+**Canonical eval command (Phase 209, full validation as run):**
 ```bash
 python -u benchmarks/hetionet_param_eval.py \
     --n-questions 200 --min-eval-hop 1 --max-neighbors 200 --workers 8 \
@@ -351,11 +351,11 @@ python -u benchmarks/hetionet_param_eval.py \
 
 ---
 
-## Hetionet — Phase 210 (branch_bonus Grid, 3-hop Root Cause Analysis)
+## Hetionet, Phase 210 (branch_bonus Grid, 3-hop Root Cause Analysis)
 
 Phase 210 tests whether branch_bonus is the lever for the 3-hop regression. Grid: [0.032, 0.10, 0.20, 0.308], all other params held at Phase 209 values, 200q/template full eval with workers=8.
 
-### Phase 210 — branch_bonus Grid Results
+### Phase 210, branch_bonus Grid Results
 
 | branch_bonus | 1-hop | 2-hop | 3-hop | dgp H@1 | cge H@1 | dcvg H@1 | AvgTyped dgp |
 |---|---|---|---|---|---|---|---|
@@ -366,17 +366,17 @@ Phase 210 tests whether branch_bonus is the lever for the 3-hop regression. Grid
 
 Template codes: dgp=disease_gene_pathway, cge=compound_gene_disease, dcvg=disease_compound_via_gene
 
-**Finding 1 — branch_bonus confirmed optimal at 0.032.** 2-hop degrades monotonically as branch_bonus rises. disease_gene_pathway AvgTyped collapses 4.6→2.1 as branch_bonus rises: higher values bias the beam toward branchy intermediate paths, culling typed candidates before the answer hop.
+**Finding 1, branch_bonus confirmed optimal at 0.032.** 2-hop degrades monotonically as branch_bonus rises. disease_gene_pathway AvgTyped collapses 4.6→2.1 as branch_bonus rises: higher values bias the beam toward branchy intermediate paths, culling typed candidates before the answer hop.
 
-**Finding 2 — 3-hop is insensitive to branch_bonus.** `disease_compound_via_gene` is locked at 48.5% for all values \(\geq 0.10\), and only marginally better at 0.032 (50.8%). The 3-hop ceiling is not a structural parameter problem.
+**Finding 2, 3-hop is insensitive to branch_bonus.** `disease_compound_via_gene` is locked at 48.5% for all values \(\geq 0.10\), and only marginally better at 0.032 (50.8%). The 3-hop ceiling is not a structural parameter problem.
 
-**Finding 3 — The 3-hop regression is semantic in origin.** Sentence-transformers introduce cosine-similarity bias that suppresses valid cross-type paths. The `disease_compound_via_gene` template traverses maximally dissimilar semantic types (disease→gene→compound); the alpha (semantic similarity) CSA term systematically penalizes valid paths at each hop because the entity types are semantically distant. Random embeddings have no such bias and achieve 79.5%.
+**Finding 3, The 3-hop regression is semantic in origin.** Sentence-transformers introduce cosine-similarity bias that suppresses valid cross-type paths. The `disease_compound_via_gene` template traverses maximally dissimilar semantic types (disease→gene→compound); the alpha (semantic similarity) CSA term systematically penalizes valid paths at each hop because the entity types are semantically distant. Random embeddings have no such bias and achieve 79.5%.
 
-**Known limitation (documented):** Training-free semantic similarity has a natural cross-type depth ceiling in typed heterogeneous biomedical KGs. This is not addressable by structural parameter tuning. The practical mitigation (reducing CSA alpha weight globally) would degrade 1-hop and 2-hop same-type templates that benefit from semantic signal. The asymmetry is real: semantic embeddings help typed 2-hop (disease_gene_pathway +10pp vs random) while hurting cross-type 3-hop (-30pp vs random). A training step that calibrates per-relation-type semantic weights would be required to close this gap — outside the scope of training-free CEREBRUM.
+**Known limitation (documented):** Training-free semantic similarity has a natural cross-type depth ceiling in typed heterogeneous biomedical KGs. This is not addressable by structural parameter tuning. The practical mitigation (reducing CSA alpha weight globally) would degrade 1-hop and 2-hop same-type templates that benefit from semantic signal. The asymmetry is real: semantic embeddings help typed 2-hop (disease_gene_pathway +10pp vs random) while hurting cross-type 3-hop (-30pp vs random). A training step that calibrates per-relation-type semantic weights would be required to close this gap, outside the scope of training-free CEREBRUM.
 
 ---
 
-## Hetionet — Phase 211 (GraphSAGE Ablation)
+## Hetionet, Phase 211 (GraphSAGE Ablation)
 
 Phase 211 tests whether GraphSAGE smoothing amplifies the cross-type 3-hop semantic bias. Same Phase 209 params (branch_bonus=0.032), `--no-graphsage` flag added to `hetionet_param_eval.py`.
 
@@ -387,7 +387,7 @@ Phase 211 tests whether GraphSAGE smoothing amplifies the cross-type 3-hop seman
 
 **Finding: GraphSAGE is not the culprit.** Removing it makes 3-hop *worse* (47.0% vs 50.8%) while marginally improving 2-hop. GraphSAGE is providing a small compensatory benefit on cross-type 3-hop traversal, partially counteracting the cosine similarity bias. Keep GraphSAGE enabled.
 
-**Conclusion (investigation closed):** The `disease_compound_via_gene` 3-hop ceiling (~49–51% vs random 79.5%) is intrinsic to training-free cosine similarity on cross-type heterogeneous paths. No structural parameter (branch_bonus) or embedding post-processing (GraphSAGE) can close this gap. A supervised per-relation-type semantic weight calibration step would be required — outside the scope of training-free CEREBRUM. Documented as a known limitation.
+**Conclusion (investigation closed):** The `disease_compound_via_gene` 3-hop ceiling (~49–51% vs random 79.5%) is intrinsic to training-free cosine similarity on cross-type heterogeneous paths. No structural parameter (branch_bonus) or embedding post-processing (GraphSAGE) can close this gap. A supervised per-relation-type semantic weight calibration step would be required, outside the scope of training-free CEREBRUM. Documented as a known limitation.
 
 ### Hetionet Constants: 2D Table (regime × embedding_method)
 
@@ -407,7 +407,7 @@ Source: Phase 207 (random) + Phase 209 (sentence, multi-hop calibration).
 Note: negative R2_C for sentence/typed means path-consistency boost slightly hurts
 when the beam already selects semantically coherent paths via STRB + GraphSAGE.
 
-### Phase 165 — Legacy Single-Template Result (disease_gene_pathway only)
+### Phase 165, Legacy Single-Template Result (disease_gene_pathway only)
 
 | Metric | Value | Phase | Notes |
 |--------|-------|-------|-------|
@@ -419,13 +419,13 @@ when the beam already selects semantically coherent paths via STRB + GraphSAGE.
 
 ---
 
-## Hetionet — Phase 206b (branch_bonus Dominance Finding, Sentence-Transformers)
+## Hetionet, Phase 206b (branch_bonus Dominance Finding, Sentence-Transformers)
 
 Tuner run to establish canonical Hetionet sentence-transformer calibration with full 6-template evaluation. Run as part of the cross-domain fANOVA investigation (Jun 2026).
 
 **Setup:** 50q/template pilot (6 templates), sentence-transformers, max_neighbors=200, 50-trial Optuna.
 
-### Phase 206b — fANOVA Result (key finding)
+### Phase 206b, fANOVA Result (key finding)
 
 | Parameter | Importance | Bar |
 |-----------|-----------|-----|
@@ -437,7 +437,7 @@ Tuner run to establish canonical Hetionet sentence-transformer calibration with 
 
 **H@1 = 59.33%, MRR = 0.5933** (50q/template, 6 templates, sentence-transformers).
 
-**Key finding — branch_bonus dominates on biomedical KG:** 81.86% of scoring variance on Hetionet is explained by a single parameter: `branch_bonus`. This compares to 46.2% on MetaQA (`hub_homogeneous` regime) and aligns with the core CEREBRUM thesis — multi-path convergence (multiple distinct intermediate routes reaching the same answer entity) is the primary discriminator between correct and incorrect answers in training-free KGQA across graph regimes.
+**Key finding, branch_bonus dominates on biomedical KG:** 81.86% of scoring variance on Hetionet is explained by a single parameter: `branch_bonus`. This compares to 46.2% on MetaQA (`hub_homogeneous` regime) and aligns with the core CEREBRUM thesis, multi-path convergence (multiple distinct intermediate routes reaching the same answer entity) is the primary discriminator between correct and incorrect answers in training-free KGQA across graph regimes.
 
 On Hetionet (`typed_heterogeneous` regime), the branch_bonus signal is amplified because Hetionet's dense cross-type edges create numerous structurally valid multi-hop paths. Correct biomedical targets (genes, compounds, diseases with known relationships) appear at the intersection of many distinct traversal routes, while spurious candidates appear on only one. `branch_bonus` directly captures this convergence.
 
@@ -455,7 +455,7 @@ On Hetionet (`typed_heterogeneous` regime), the branch_bonus signal is amplified
 
 ---
 
-## ConceptNet — Phase 229 (2-hop Chain Discovery, Random Embeddings)
+## ConceptNet, Phase 229 (2-hop Chain Discovery, Random Embeddings)
 
 ConceptNet 5.7 English subset: 149,860 entities / 152,385 edges / 8 relation types.
 Evaluation methodology: 2-hop chain discovery (find h→mid→t where h→t has no direct training edge).
@@ -464,7 +464,7 @@ Train/test split: deterministic 80/20 MD5 hash of "{h}\t{r}\t{t}". 500 QA chains
 **Download:** `wget https://s3.amazonaws.com/conceptnet/downloads/2019/edges/conceptnet-assertions-5.7.0.csv.gz`  
 **Filter:** `--max-edges 200000` (English triples only, `lang/en` filter)
 
-### Phase 229 — Tuner Results (70-trial Sobol + partial CMA-ES, 500 chains)
+### Phase 229, Tuner Results (70-trial Sobol + partial CMA-ES, 500 chains)
 
 **Best result:** H@1=6.0%, H@10=67.6%, MRR=0.2207
 
@@ -515,9 +515,9 @@ python benchmarks/conceptnet_eval.py \
     --fhrb-factor 1.142 --gamma 6.362 --beta 2.445
 ```
 
-**Note on H@1:** 6.0% on 2-hop chain discovery reflects ConceptNet's structural characteristics — 8 general-purpose commonsense relations produce highly ambiguous intermediate nodes. H@10=67.6% confirms the correct answer is found in the top-10 the majority of the time; the challenge is ranking it first when many plausible paths compete. This is fundamentally different from MetaQA's narrow-domain relations (9 movie-specific types with clear semantic clustering) or Hetionet's typed biomedical edges.
+**Note on H@1:** 6.0% on 2-hop chain discovery reflects ConceptNet's structural characteristics, 8 general-purpose commonsense relations produce highly ambiguous intermediate nodes. H@10=67.6% confirms the correct answer is found in the top-10 the majority of the time; the challenge is ranking it first when many plausible paths compete. This is fundamentally different from MetaQA's narrow-domain relations (9 movie-specific types with clear semantic clustering) or Hetionet's typed biomedical edges.
 
-### ConceptNet — Phase 230 (sentence embeddings)
+### ConceptNet, Phase 230 (sentence embeddings)
 
 | Metric | Tuning (500q) | Validation (2000q) |
 |--------|--------------|-------------------|
@@ -525,9 +525,9 @@ python benchmarks/conceptnet_eval.py \
 | H@10   | 67.6%        | 63.80%             |
 | MRR    | 0.2215       | 0.1915             |
 
-**Finding**: optimal params identical to Phase 229 random — ConceptNet concept strings (1-3 word phrases) are too short for sentence-transformers to add structural signal. `_IDF_SCALE_C_SENTENCE["mixed"] = 0.0457` (same as random).
+**Finding**: optimal params identical to Phase 229 random, ConceptNet concept strings (1-3 word phrases) are too short for sentence-transformers to add structural signal. `_IDF_SCALE_C_SENTENCE["mixed"] = 0.0457` (same as random).
 
-**ParameterInitializer 2D table — COMPLETE (v2.76.0)**
+**ParameterInitializer 2D table, COMPLETE (v2.76.0)**
 
 |                      | random     | sentence   |
 |----------------------|------------|------------|
@@ -547,7 +547,7 @@ python benchmarks/conceptnet_eval.py \
 
 ---
 
-## WebQSP — Phase 231–244d (v2.86.0)
+## WebQSP, Phase 231–244d (v2.86.0)
 
 Dataset: WebQSP test split (1,628 questions), Freebase 2-hop KB (3.79M triples).
 Graph regime: `typed_heterogeneous`. Seed-entity subgraph extraction: 584k triples, 292k nodes.
@@ -567,11 +567,11 @@ Acknowledge this benchmark quality caveat in all papers discussing WebQSP result
 | 244c | Additive CVT passthrough (replacement→additive fix) | 9.47% | **20.04%** | 0.1252 | 1,628q | Jun 10 |
 | **244d** | **+backward verification + path diversity re-ranker (100-trial tuner)** | **10.33%** | **20.47%** | **0.1347** | **1,628q** | **Jun 10** |
 
-**Zero-config baseline:** H@1=1.41%, H@10=4.30% (ParameterInitializer returns gamma=334,513 for Freebase topology — uncalibrated; uses Hetionet fallback). **Phase 244d vs zero-config: +633% relative H@1 improvement.**
+**Zero-config baseline:** H@1=1.41%, H@10=4.30% (ParameterInitializer returns gamma=334,513 for Freebase topology, uncalibrated; uses Hetionet fallback). **Phase 244d vs zero-config: +633% relative H@1 improvement.**
 
 ---
 
-### WebQSP — Phase 231 (Baseline)
+### WebQSP, Phase 231 (Baseline)
 
 **Run date: 2026-06-07.** 200-question sample, zero-config, random embeddings, MID relay-node filter.
 
@@ -597,7 +597,7 @@ python -u benchmarks/webqsp_param_eval.py --sample 200 --embeddings random
 
 ---
 
-### WebQSP — Phase 236 (PathSchemaIndex — Training-Free Schema Prediction)
+### WebQSP, Phase 236 (PathSchemaIndex, Training-Free Schema Prediction)
 
 Phase 236 introduces PathSchemaIndex: the first PREDICTIVE reasoning signal in CEREBRUM. All prior signals steer or re-rank after beam traversal. PathSchemaIndex predicts the most likely (r1, r2) 2-hop relation path before traversal begins.
 
@@ -608,17 +608,17 @@ vs Phase 235: H@1=6.0%, H@10=28.5%, MRR=0.1198 (**+3.5pp H@1, +4.0pp H@10, +29% 
 
 ---
 
-### WebQSP — Phase 244c (Additive CVT Passthrough)
+### WebQSP, Phase 244c (Additive CVT Passthrough)
 
-Phase 244c fixes the CVT traversal architecture. Prior implementation replaced direct edges with compound CVT edges, flooding `_batch_steps` with all CVT neighbors and crowding out non-CVT 2-hop paths. Fix: additive mode — normal direct edge always preserved + top-5 compound CVT edges by confidence appended.
+Phase 244c fixes the CVT traversal architecture. Prior implementation replaced direct edges with compound CVT edges, flooding `_batch_steps` with all CVT neighbors and crowding out non-CVT 2-hop paths. Fix: additive mode, normal direct edge always preserved + top-5 compound CVT edges by confidence appended.
 
 **Result (full 1,628q):** H@1=**9.47%**, H@10=**20.04%**, MRR=**0.1252**
 
-**CVT passthrough effect:** Phase 244c H@10=20.04% vs Phase 244 H@10=9.34% with replacement CVT — nearly doubled by the additive fix. This confirms CVT-aware traversal is architecturally correct; the regression was implementation-caused (batch flooding), not signal failure.
+**CVT passthrough effect:** Phase 244c H@10=20.04% vs Phase 244 H@10=9.34% with replacement CVT, nearly doubled by the additive fix. This confirms CVT-aware traversal is architecturally correct; the regression was implementation-caused (batch flooding), not signal failure.
 
 ---
 
-### WebQSP — Phase 244d (Canonical Full-Set Result)
+### WebQSP, Phase 244d (Canonical Full-Set Result)
 
 **This is the canonical full-evaluation result for WebQSP. All papers must cite this entry.**
 
@@ -658,12 +658,12 @@ Run date: 2026-06-10. Full test split: 1,628 questions. 100-trial TPE tuner (30 
 | vote_weight | 0.0510 | ██ |
 | others | < 0.05 combined | |
 
-**Key finding — degree_penalty_weight is the dominant parameter on WebQSP (50.0%):** Freebase has extremely high-degree hub entities (e.g., "United States" with thousands of outgoing edges). Hub suppression via `degree_penalty_weight` is the primary mechanism distinguishing correct answers from spurious high-degree candidates. This contrasts with MetaQA and Hetionet where `branch_bonus` dominates — on those graphs with clean entity names, multi-path convergence is the signal; on Freebase with opaque MIDs, hub suppression is the signal.
+**Key finding, degree_penalty_weight is the dominant parameter on WebQSP (50.0%):** Freebase has extremely high-degree hub entities (e.g., "United States" with thousands of outgoing edges). Hub suppression via `degree_penalty_weight` is the primary mechanism distinguishing correct answers from spurious high-degree candidates. This contrasts with MetaQA and Hetionet where `branch_bonus` dominates, on those graphs with clean entity names, multi-path convergence is the signal; on Freebase with opaque MIDs, hub suppression is the signal.
 
 **New capabilities in Phase 244d:**
 - **Backward verification pass (Phase 245):** For 2-hop answers [seed, rel1, hop1, rel2, answer], checks if hop1 appears in answer's outgoing neighbors via `_expansion_cache`. Score × (1 + backward_bonus) for bidirectional structural support.
 - **Path diversity re-ranker (Phase 246):** Counts distinct hop-1 intermediates reaching each answer from the seed. Score × (1 + diversity_alpha × log1p(n−1)) for n > 1 distinct paths.
-- **Additive CVT traversal (Phase 246):** Normal edge always preserved; top-5 compound CVT edges by confidence appended — prevents beam slot crowding.
+- **Additive CVT traversal (Phase 246):** Normal edge always preserved; top-5 compound CVT edges by confidence appended, prevents beam slot crowding.
 
 **Canonical eval command (Phase 244d):**
 ```bash
@@ -678,13 +678,13 @@ python -u benchmarks/webqsp_param_eval.py \
 
 **Why WebQSP is hard for training-free systems (documented ceiling):**
 
-~60% of failures are CVT disambiguation failures — Freebase uses compound-value-type mediator nodes with opaque MID identifiers (e.g., `/m/02s8qk3`) as intermediaries for reified relationships. Semantic attention on these MID strings produces near-zero cosine similarity with question text. ~25% of failures are hub-entity score plateau from high-degree Freebase entities. The remaining ~15% are multi-hop inference failures that would require explicit question-hop structure parsing.
+~60% of failures are CVT disambiguation failures, Freebase uses compound-value-type mediator nodes with opaque MID identifiers (e.g., `/m/02s8qk3`) as intermediaries for reified relationships. Semantic attention on these MID strings produces near-zero cosine similarity with question text. ~25% of failures are hub-entity score plateau from high-degree Freebase entities. The remaining ~15% are multi-hop inference failures that would require explicit question-hop structure parsing.
 
-H@10=20.47% confirms the correct answer is in the top-10 candidates roughly 1 in 5 times — the system's retrieval is not random, but ranking is limited by semantic signal quality on Freebase. Supervised systems (UniKGQA 75.1%, NSM 74%) benefit from question-answer training that calibrates these weights directly; CEREBRUM does not. This is documented as an honest scientific finding, not a failure mode.
+H@10=20.47% confirms the correct answer is in the top-10 candidates roughly 1 in 5 times, the system's retrieval is not random, but ranking is limited by semantic signal quality on Freebase. Supervised systems (UniKGQA 75.1%, NSM 74%) benefit from question-answer training that calibrates these weights directly; CEREBRUM does not. This is documented as an honest scientific finding, not a failure mode.
 
 ---
 
-### WebQSP — Phase 247 (Conditional Schema Prediction — Negative Result)
+### WebQSP, Phase 247 (Conditional Schema Prediction, Negative Result)
 
 **Configuration:** 100-trial TPE tuner adding `conditional_schema_bonus` (csb) to Phase 244d param space. csb scales the structural boost applied to schemas whose r2 relation is confirmed present on actual hop-1 intermediates from `_expansion_cache`.
 
@@ -692,19 +692,19 @@ H@10=20.47% confirms the correct answer is in the top-10 candidates roughly 1 in
 
 **Finding:** csb provides zero net gain over Phase 244d baseline (H@1 tied at 10.33%; H@10 slightly lower). Conditional schema prediction adds no information beyond the Phase 236 pre-beam schema channel already in the pipeline.
 
-**Interpretation:** The `_expansion_cache` hop-1 structural evidence overlaps heavily with what PathSchemaIndex already predicts — the schemas it would boost are already being executed. csb is retired from `PARAM_SPACE_WEBQSP`.
+**Interpretation:** The `_expansion_cache` hop-1 structural evidence overlaps heavily with what PathSchemaIndex already predicts, the schemas it would boost are already being executed. csb is retired from `PARAM_SPACE_WEBQSP`.
 
 **Phase 244d remains the WebQSP canonical result.**
 
 ---
 
-### WebQSP — Phase 248 (Freebase MID Name Resolution — Negative Result)
+### WebQSP, Phase 248 (Freebase MID Name Resolution, Negative Result)
 
 **Hypothesis:** Scan `freebase_2hop.txt` for `type.object.name` triples to build a MID→readable_name map; substitute at embedding time to restore CSA alpha signal on CVT nodes.
 
-**Result:** 0 MIDs resolved (0.0% coverage). `type.object.name` triples are not present in the 2-hop subgraph extraction — that file contains only QA-path triples, not entity metadata. Zero name substitutions applied; eval score equivalent to Phase 244d within sampling noise (200q sample: H@1=8.50%, within ±3pp of 10.33% canonical).
+**Result:** 0 MIDs resolved (0.0% coverage). `type.object.name` triples are not present in the 2-hop subgraph extraction, that file contains only QA-path triples, not entity metadata. Zero name substitutions applied; eval score equivalent to Phase 244d within sampling noise (200q sample: H@1=8.50%, within ±3pp of 10.33% canonical).
 
-**Finding:** Correct implementation, wrong data source. Entity name triples require a separate Freebase entity-labels file (e.g., FB15k label dumps or Freebase full NTriples). The `entity_name_overrides` infrastructure in `adapters/networkx_adapter.py` and `core/cerebrum.py` is in place and correct — it activates automatically when overrides are populated; the missing piece is the data.
+**Finding:** Correct implementation, wrong data source. Entity name triples require a separate Freebase entity-labels file (e.g., FB15k label dumps or Freebase full NTriples). The `entity_name_overrides` infrastructure in `adapters/networkx_adapter.py` and `core/cerebrum.py` is in place and correct, it activates automatically when overrides are populated; the missing piece is the data.
 
 **Next step for CVT opacity:** Acquire a Freebase entity-name mapping file (e.g., `freebase-easy.tar.gz` from the Freebase archive or FB15k entity labels). Pre-built maps mapping `/m/xxxxx` → English label are available from prior FB15k work.
 
@@ -712,23 +712,23 @@ H@10=20.47% confirms the correct answer is in the top-10 candidates roughly 1 in
 
 ---
 
-### WebQSP — Phase 249 (FB15k Entity Labels — Negative Result)
+### WebQSP, Phase 249 (FB15k Entity Labels, Negative Result)
 
 **Hypothesis:** Load an external Freebase entity-name file (`FB15k_mid2name.txt` from KGraph/FB15k-237 on HuggingFace) to populate the `entity_name_overrides` infrastructure built in Phase 248, restoring CSA alpha signal on opaque `/m/` nodes.
 
 **Result:** 0 MIDs resolved (0.0% coverage). Root cause: the 14,951 entities in FB15k-237 are a disjoint subset from the 486,165 `/m/` nodes in the WebQSP 2-hop subgraph. Zero overlap even after normalising `/m/xxx` ↔ `m.xxx` format variants.
 
-**Deeper finding:** The `/m/` nodes in `freebase_2hop.txt` are predominantly **CVT (compound value type) mediator nodes** used by Freebase for n-ary relations (e.g. `film.starring`, `award.nomination`). CVT nodes have no human-readable names by design — they are structural reification artifacts, not named entities. FB15k-237 contains entity MIDs; our graph's MIDs are CVT MIDs. They are non-overlapping populations.
+**Deeper finding:** The `/m/` nodes in `freebase_2hop.txt` are predominantly **CVT (compound value type) mediator nodes** used by Freebase for n-ary relations (e.g. `film.starring`, `award.nomination`). CVT nodes have no human-readable names by design, they are structural reification artifacts, not named entities. FB15k-237 contains entity MIDs; our graph's MIDs are CVT MIDs. They are non-overlapping populations.
 
-**Corollary:** Only 2 out of 1,628 test questions have MID answers. All other answer entities are already readable names. The naming problem does not affect answer ranking — it affects traversal scoring of intermediate CVT hops only. Phase 246's CVT passthrough already collapses these paths via compound-edge scoring.
+**Corollary:** Only 2 out of 1,628 test questions have MID answers. All other answer entities are already readable names. The naming problem does not affect answer ranking, it affects traversal scoring of intermediate CVT hops only. Phase 246's CVT passthrough already collapses these paths via compound-edge scoring.
 
-**Infrastructure status:** `entity_name_overrides` in `NetworkXAdapter` and label substitution in `core/cerebrum.py` remain in place and correct. The `--mid-name-file` CLI arg is wired. Phase 249 is closed as negative — the data source problem is architectural (CVT vs entity MIDs), not a file-format issue.
+**Infrastructure status:** `entity_name_overrides` in `NetworkXAdapter` and label substitution in `core/cerebrum.py` remain in place and correct. The `--mid-name-file` CLI arg is wired. Phase 249 is closed as negative, the data source problem is architectural (CVT vs entity MIDs), not a file-format issue.
 
 **Phase 244d remains the WebQSP canonical result.**
 
 ---
 
-### WebQSP — "When Training-Free KGQA Works"
+### WebQSP, "When Training-Free KGQA Works"
 
 The WebQSP and MetaQA/Hetionet results together characterize when training-free semantic attention succeeds:
 
@@ -745,7 +745,7 @@ The WebQSP and MetaQA/Hetionet results together characterize when training-free 
 
 ---
 
-## IKGWQ — Incomplete Knowledge Graph World QA Protocol
+## IKGWQ, Incomplete Knowledge Graph World QA Protocol
 
 Measures graceful degradation under edge removal. 5 incompleteness levels.
 
@@ -778,7 +778,7 @@ Use this table verbatim in the flagship paper and Paper A's context section.
 | **CEREBRUM Phase 244d (WebQSP)†** | **None** | **—** | **—** | **—** | **10.33%** |
 
 † Full-stack 3-hop results use FHRB, r2-boost, SRD, RelationPathPrior and are
-**not directly comparable** to supervised methods in this table — listed for internal tracking only.
+**not directly comparable** to supervised methods in this table, listed for internal tracking only.
 Use Phase 53 numbers in all paper comparison tables.
 
 **Phase 227 full-stack configuration (Jun 5, 2026):** sentence-transformers, beam-width=12,
@@ -788,15 +788,15 @@ fhrb-factor=7.572, gamma=10.138, beta=0.9616, 8-worker multiprocessing.
 H@1=60.6% | H@10=87.9% | MRR=0.703.
 
 **Re-validation on v2.87.0 HEAD (Jun 11, 2026):** 14,274/14,274 questions, workers=8.
-H@1=60.29% | H@10=87.78% | MRR=0.699 — within ±0.5pp of Phase 227 canonical. ✓ No regression from Phases 228–248.
+H@1=60.29% | H@10=87.78% | MRR=0.699, within ±0.5pp of Phase 227 canonical. ✓ No regression from Phases 228–248.
 
 **Framing (include as footnote or paragraph):**
 > CEREBRUM achieves these results with zero task-specific training, no labeled question-answer pairs,
-> and no gradient updates — operating purely from graph structure and pre-trained sentence embeddings.
+> and no gradient updates, operating purely from graph structure and pre-trained sentence embeddings.
 > To our knowledge, this represents the first training-free baseline for multi-hop KGQA, establishing
 > a reference point for what structural reasoning alone can achieve. The \(\text{H@10}\) story is the key result:
 > CEREBRUM retrieves the correct answer in its top-10 candidates at 96.6% (1-hop), 86.3% (2-hop),
-> and 50.3% (3-hop) — the system *finds* the answer, it does not yet rank it first. This is a ranking
+> and 50.3% (3-hop), the system *finds* the answer, it does not yet rank it first. This is a ranking
 > challenge, not a reasoning failure. Supervised methods benefit from task-specific training that
 > optimizes exactly this ranking; CEREBRUM does not.
 
@@ -904,18 +904,18 @@ Zhu, Z., Galkin, M., Zhang, Z., & Tang, J. (2022). Neural-symbolic models for lo
 
 ---
 
-## Notation for \(\eta\) (Eta) — Resolved Conflict
+## Notation for \(\eta\) (Eta), Resolved Conflict
 
 **Decision (Phase 172 / May 2026):** The symbol \(\eta\) was used with two different meanings:
 - In CSA (Phase 43): \(\eta\) = temporal decay weight (one of the 10 CSA parameters)
 - In TSC/DSCF (Phase 1): \(\eta\) was used generically for temperature step decay
 
 **Resolution:** In all publication documents, use:
-- \(\eta\) for CSA temporal decay weight (the 10-parameter formula — dominant usage)
+- \(\eta\) for CSA temporal decay weight (the 10-parameter formula, dominant usage)
 - \(\eta_T\) for TSC temperature-step decay (Paper A only, subscript T for Temperature)
 
 All papers after Phase 1 that reference the TSC temperature schedule should use \(\eta_T\).
 
 ---
 
-*Last updated: 2026-06-11 | Phase 249: FB15k entity labels (negative) — 0 MIDs resolved; FB15k-237 entity MIDs are disjoint from WebQSP CVT MIDs; CVT nodes have no readable names by design; Phase 248 infrastructure intact | Phase 248: Freebase MID name resolution (negative) — 0 MIDs resolved; type.object.name triples absent from 2-hop subgraph | Phase 247: Conditional schema prediction (negative) — csb adds zero gain over Phase 244d; Phase 244d H@1=10.33% remains WebQSP canonical | Phase 244d: backward verification + path diversity re-ranker + additive CVT; degree_penalty_weight 50.0% fANOVA | Phase 206b: Hetionet branch_bonus 81.86% fANOVA | Phase 236: PathSchemaIndex +3.5pp H@1 | Phase 225–227: MetaQA H@1=60.6%, H@10=87.9% | Phase 53 canonical unchanged*
+*Last updated: 2026-06-11 | Phase 249: FB15k entity labels (negative), 0 MIDs resolved; FB15k-237 entity MIDs are disjoint from WebQSP CVT MIDs; CVT nodes have no readable names by design; Phase 248 infrastructure intact | Phase 248: Freebase MID name resolution (negative), 0 MIDs resolved; type.object.name triples absent from 2-hop subgraph | Phase 247: Conditional schema prediction (negative), csb adds zero gain over Phase 244d; Phase 244d H@1=10.33% remains WebQSP canonical | Phase 244d: backward verification + path diversity re-ranker + additive CVT; degree_penalty_weight 50.0% fANOVA | Phase 206b: Hetionet branch_bonus 81.86% fANOVA | Phase 236: PathSchemaIndex +3.5pp H@1 | Phase 225–227: MetaQA H@1=60.6%, H@10=87.9% | Phase 53 canonical unchanged*

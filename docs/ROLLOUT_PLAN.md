@@ -1,4 +1,4 @@
-# CEREBRUM v2.88.0 — Rollout Plan
+# CEREBRUM v2.88.0, Rollout Plan
 
 **Date:** 2026-06-11 | **Version:** v2.88.0 (Phase 249)
 
@@ -28,7 +28,7 @@ This document covers the full go-to-market sequence for CEREBRUM v2.88.0. The go
 ```bash
 git add -A
 git commit -m "feat(v2.88.0): Phase 249 close (CVT opacity confirmed) + Phase 250 QASA + README TOC"
-git tag -a v2.88.0 -m "v2.88.0 — Phase 249/250: QASA re-ranking, CVT analysis, README TOC"
+git tag -a v2.88.0 -m "v2.88.0, Phase 249/250: QASA re-ranking, CVT analysis, README TOC"
 git push origin main --tags
 ```
 
@@ -40,9 +40,9 @@ Create a GitHub Release at tag `v2.88.0` with the following body:
 
 **CEREBRUM v2.88.0**
 
-- **Phase 249 (closed — negative):** Confirmed that `/m/` nodes in `freebase_2hop.txt` are CVT mediator nodes, not named entities. FB15k-237 (14k entity MIDs) is a disjoint population from WebQSP's 486k CVT MIDs. Phase 246 CVT passthrough already handles this correctly.
+- **Phase 249 (closed, negative):** Confirmed that `/m/` nodes in `freebase_2hop.txt` are CVT mediator nodes, not named entities. FB15k-237 (14k entity MIDs) is a disjoint population from WebQSP's 486k CVT MIDs. Phase 246 CVT passthrough already handles this correctly.
 
-- **Phase 250 (QASA — new):** Question-Answer Semantic Alignment re-ranking. After beam traversal, re-scores each candidate by `cosine(question_embedding, answer_embedding)`. Adds direct Q→A semantic signal on top of structural scoring. +0.5pp H@1 standalone, tuner calibration in progress.
+- **Phase 250 (QASA, new):** Question-Answer Semantic Alignment re-ranking. After beam traversal, re-scores each candidate by `cosine(question_embedding, answer_embedding)`. Adds direct Q→A semantic signal on top of structural scoring. +0.5pp H@1 standalone, tuner calibration in progress.
 
 - **README:** Table of contents added.
 
@@ -60,7 +60,7 @@ Post 4 pieces over ~2 weeks. Each stands alone; together they tell the full stor
 
 ---
 
-### Post 1 — Launch Announcement (Day 1)
+### Post 1, Launch Announcement (Day 1)
 **Audience:** Broad tech/AI LinkedIn audience  
 **Tone:** Direct, results-first
 
@@ -72,9 +72,9 @@ Here's what that means in practice:
 
 You load a CSV of facts. You ask a multi-step question. CEREBRUM traverses the graph, returns a ranked answer list, and shows you the exact hop-by-hop path it took to get there.
 
-On MetaQA 3-hop — 14,274 questions, 3 reasoning steps each — it hits **60.6% H@1** (right answer, first try). That beats MINERVA (~48%), RotatE (~47%), and RAG + GPT-4 (~40–48%). All of those require training. CEREBRUM requires nothing.
+On MetaQA 3-hop, 14,274 questions, 3 reasoning steps each, it hits **60.6% H@1** (right answer, first try). That beats MINERVA (~48%), RotatE (~47%), and RAG + GPT-4 (~40–48%). All of those require training. CEREBRUM requires nothing.
 
-The architecture is fully interpretable. Every answer includes the complete reasoning trace — which edges were followed, which were pruned, and why. If the answer is wrong, you can see exactly where the chain broke.
+The architecture is fully interpretable. Every answer includes the complete reasoning trace, which edges were followed, which were pruned, and why. If the answer is wrong, you can see exactly where the chain broke.
 
 v2.88.0 is out now.
 → github.com/BrutalByte/CEREBRUM
@@ -84,7 +84,7 @@ v2.88.0 is out now.
 
 ---
 
-### Post 2 — Technical Deep Dive (Day 4)
+### Post 2, Technical Deep Dive (Day 4)
 **Audience:** ML researchers, engineers  
 **Tone:** Precise, architectural
 
@@ -100,12 +100,12 @@ CEREBRUM partitions the graph into communities using triple-signal fusion (label
 No single published graph attention formula includes community membership as a direct term. That's new.
 
 **2. Training-Free Relation Detection**
-For each question, CEREBRUM decomposes the text ("What language do Jamaicans speak?") to extract answer type and relation keywords. It then scores all 4,000+ graph relations using Jaccard overlap + verb synonym expansion — no learned classifier, no fine-tuning. This alone accounts for 29.4% of scoring variance (fANOVA analysis over 100 tuner trials).
+For each question, CEREBRUM decomposes the text ("What language do Jamaicans speak?") to extract answer type and relation keywords. It then scores all 4,000+ graph relations using Jaccard overlap + verb synonym expansion, no learned classifier, no fine-tuning. This alone accounts for 29.4% of scoring variance (fANOVA analysis over 100 tuner trials).
 
 **3. Path Diversity Re-ranking**
 Correct answers in Freebase typically appear at the end of multiple independent paths from the seed entity. Hub entities appear via one dominant path. A reverse-index over the beam's expansion cache counts distinct hop-1 intermediates reaching each answer. Multi-path answers get a log-scaled score boost.
 
-The combination of these three signals gives 10.33% H@1 on WebQSP — without a single training example on Freebase.
+The combination of these three signals gives 10.33% H@1 on WebQSP, without a single training example on Freebase.
 
 → Paper: arxiv_submission/paper_001.pdf (arXiv submission in progress)
 
@@ -113,7 +113,7 @@ The combination of these three signals gives 10.33% H@1 on WebQSP — without a 
 
 ---
 
-### Post 3 — The "Why This Matters" Post (Day 8)
+### Post 3, The "Why This Matters" Post (Day 8)
 **Audience:** Domain scientists, enterprise builders, students  
 **Tone:** Practical impact
 
@@ -121,7 +121,7 @@ The combination of these three signals gives 10.33% H@1 on WebQSP — without a 
 
 **Most real-world knowledge graphs have no labeled question-answer pairs.**
 
-Medical ontologies. Enterprise data graphs. Private research databases. Legal knowledge bases. These are used daily and queried constantly — but there's no training set. You can't fine-tune on them.
+Medical ontologies. Enterprise data graphs. Private research databases. Legal knowledge bases. These are used daily and queried constantly, but there's no training set. You can't fine-tune on them.
 
 This is the fundamental limitation of every supervised KGQA system: they require thousands of labeled examples to work. That's fine for academic benchmarks. It's impractical for production deployments.
 
@@ -143,20 +143,20 @@ AGPL-3.0. No API key. No cloud dependency.
 
 ---
 
-### Post 4 — Call to Action / Community (Day 12)
+### Post 4, Call to Action / Community (Day 12)
 **Audience:** Contributors, researchers, students  
 **Tone:** Collaborative, inviting
 
 ---
 
-**What's next for CEREBRUM — and where you can help.**
+**What's next for CEREBRUM, and where you can help.**
 
 Current canonical results:
 - **MetaQA 3-hop:** 60.6% H@1 (outperforms all supervised baselines on zero training)
-- **WebQSP (Freebase 2-hop):** 10.33% H@1 — harder due to CVT mediator nodes and opaque MIDs
+- **WebQSP (Freebase 2-hop):** 10.33% H@1, harder due to CVT mediator nodes and opaque MIDs
 - **Hetionet (biomedical):** 59.3% H@1, 100% on `disease_associates_gene` template
 
-The MetaQA number is strong. The WebQSP number is honest — Freebase's opaque identifier scheme breaks semantic attention, and three consecutive research phases confirmed there's no easy fix. We're currently exploring answer re-ranking as the next lever.
+The MetaQA number is strong. The WebQSP number is honest, Freebase's opaque identifier scheme breaks semantic attention, and three consecutive research phases confirmed there's no easy fix. We're currently exploring answer re-ranking as the next lever.
 
 If you work on knowledge graphs and want to collaborate:
 - **Researchers:** Benchmark against your dataset. The eval harness takes any `(head, rel, tail)` TSV.
@@ -202,7 +202,7 @@ With `qa_sem_weight` now in `PARAM_SPACE_WEBQSP`, run the Optuna tuner to find t
 python benchmarks/cerebrum_tuner.py --dataset webqsp --n-trials 100 --sample 200
 ```
 
-Expected: tuner will calibrate `qa_sem_weight` against `diversity_alpha` and `backward_bonus` — all three are post-hoc re-ranking signals that interact.
+Expected: tuner will calibrate `qa_sem_weight` against `diversity_alpha` and `backward_bonus`, all three are post-hoc re-ranking signals that interact.
 
 If Phase 250 shows ≥+0.5pp H@1 on full 1,628q eval, record as new canonical and update BENCHMARK_CANONICAL.md.
 

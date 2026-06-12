@@ -47,12 +47,12 @@ We present CEREBRUM, a training-free framework for multi-hop knowledge graph
 question answering (KGQA). Given any knowledge base expressible as
 (head, relation, tail) triples, CEREBRUM answers natural-language questions by
 traversing graph paths under a 10-parameter Community-Structured Attention (CSA)
-formula — no gradient descent, no pre-training, no task-specific supervision.
+formula: no gradient descent, no pre-training, no task-specific supervision.
 On the MetaQA 3-hop benchmark (14,274 test questions, 134K-triple movie KB),
 CEREBRUM achieves H@1=60.6\%, H@10=87.9\%, MRR=0.703 with zero training data.
 The H@10 figure matches or exceeds several supervised methods
 (GraftNet H@1=22.8\%, MINERVA H@10=45.6\%), establishing that beam-traversal
-recall is not the bottleneck — ranking precision is.
+recall is not the bottleneck; ranking precision is.
 On Hetionet (998 biomedical QA pairs, 6 templates), 1-hop H@1=95.3\%
 including 100\% on the disease\_associates\_gene template.
 On WebQSP (1,628 questions, Freebase 3.79M triples), H@1=10.33\% versus a
@@ -70,7 +70,7 @@ on any CSV with no configuration. Code is publicly available at
 
 Knowledge graphs encode structured facts as (head, relation, tail) triples.
 Multi-hop question answering over knowledge graphs (KGQA) requires chaining
-multiple such triples — starting from the entities mentioned in a question,
+multiple such triples, starting from the entities mentioned in a question,
 traversing intermediate nodes, and arriving at the answer entity. The challenge
 is simultaneously combinatorial (the traversal space grows exponentially with
 hop depth) and semantic (the traversal must be guided by the meaning of the
@@ -84,8 +84,8 @@ learns KB-specific embeddings aligned to question representations. GraftNet
 \cite{sun2018graftnet} trains on both the KB and supporting text. These systems
 are effective, but their performance is tightly coupled to the availability of
 labelled QA data for the specific target KB. In domains where such data is
-scarce, proprietary, or continuously evolving — biomedical KGs, legal case
-graphs, enterprise knowledge bases — this coupling is a hard practical
+scarce, proprietary, or continuously evolving (biomedical KGs, legal case
+graphs, enterprise knowledge bases); this coupling is a hard practical
 constraint.
 
 We present CEREBRUM (Community-Structured Encoded Reasoning with
@@ -100,7 +100,7 @@ analytically from graph statistics in a single $O(|E|)$ pass, and begins
 answering questions immediately.
 
 The central result is that this training-free approach achieves H@10=87.9\% on
-the MetaQA 3-hop benchmark (14,274 test questions) — matching or exceeding the
+the MetaQA 3-hop benchmark (14,274 test questions), matching or exceeding the
 top-10 recall of supervised systems including MINERVA (H@10=45.6\%, RL-trained).
 The correct answer is in the top-10 beam 87.9\% of the time without a single
 training example. The residual gap to supervised H@1 (CEREBRUM 60.6\% vs
@@ -135,7 +135,7 @@ We make the following contributions:
     vector, enabling zero-configuration deployment on any knowledge graph
     (\S\ref{sec:paraminit}).
   \item \textbf{PathSchemaIndex:} The first predictive reasoning signal in the
-    system — predicts the most likely $(r_1, r_2)$ 2-hop relation path before
+    system that predicts the most likely $(r_1, r_2)$ 2-hop relation path before
     traversal begins by embedding all graph schemas as natural-language text and
     finding the closest semantic match to the question (\S\ref{sec:psi}).
   \item \textbf{Cross-domain fANOVA finding:} Functional ANOVA over 100 tuner
@@ -146,8 +146,8 @@ We make the following contributions:
   \item \textbf{Honest WebQSP characterisation:} On WebQSP (Freebase KB with
     opaque MID identifiers), the system achieves H@1=10.33\% versus a 1.41\%
     zero-config baseline (+633\% relative), and we provide a structural diagnosis
-    of the residual gap — Freebase CVT mediator nodes that deactivate the
-    semantic attention term — establishing the boundary conditions under which
+    of the residual gap as Freebase CVT mediator nodes that deactivate the
+    semantic attention term, establishing the boundary conditions under which
     training-free semantic attention is and is not effective (\S\ref{sec:webqsp}).
 \end{enumerate}
 
@@ -170,7 +170,7 @@ weights that cannot explain individual answers.
 \paragraph{Reinforcement-learning traversal agents.}
 MINERVA \cite{das2018minerva} formulates multi-hop KGQA as a path-finding
 problem and trains a policy via REINFORCE to walk from seed to answer. On MetaQA
-3-hop, MINERVA achieves H@10=45.6\% — below CEREBRUM's 87.9\% H@10 without any
+3-hop, MINERVA achieves H@10=45.6\%, below CEREBRUM's 87.9\% H@10 without any
 RL training.
 
 \paragraph{Training-free and zero-shot approaches.}
@@ -189,7 +189,7 @@ questions). CEREBRUM evaluates on the complete test set.
 
 \paragraph{CVT mediator nodes.}
 The Freebase KB underlying WebQSP uses Compound Value Type (CVT) mediator nodes
-— opaque \texttt{/m/} or \texttt{/g/} MID identifiers — to reify n-ary
+(opaque \texttt{/m/} or \texttt{/g/} MID identifiers) to reify n-ary
 relations. CVT nodes have no human-readable label, which means the CSA alpha
 (question–relation semantic cosine) term produces near-zero scores on
 CVT-mediated paths. This adversarial property has been noted in prior work
@@ -201,7 +201,7 @@ provide this characterisation in \S\ref{sec:webqsp}.
 \section{The CEREBRUM Framework}
 
 CEREBRUM processes a query in four stages: (1) schema-agnostic graph ingestion
-via pluggable adapters; (2) structural profiling — community detection via
+via pluggable adapters; (2) structural profiling: community detection via
 Dual-Signal Community Fusion (DSCF/TSC) and one-pass $O(|E|)$ fan-out statistics
 collection; (3) beam traversal guided by the 10-parameter Community-Structured
 Attention formula; and (4) answer extraction with multi-signal re-ranking,
@@ -251,7 +251,7 @@ The edge-type weight for relation $r$ is:
 where $\mathrm{fan\_out}(r)$ is the mean out-degree of nodes connected via $r$,
 inferred at graph-load time. SDRB replaces hand-coded relation weights with a
 closed-form formula that rewards relations with concentrated, specific
-connectivity — the structural correlate of semantic informativeness.
+connectivity, the structural correlate of semantic informativeness.
 fANOVA analysis on MetaQA identifies the SDRB $\gamma$ parameter as the
 third-highest-importance scalar after \texttt{branch\_bonus} and \texttt{trb\_factor}.
 
@@ -268,7 +268,7 @@ all three regimes and both random and sentence-transformer embedding modes
 analysis, selects the appropriate constants, and begins answering questions
 without any training loop.
 
-\subsection{PathSchemaIndex — Predictive Pre-Traversal Reasoning}
+\subsection{PathSchemaIndex: Predictive Pre-Traversal Reasoning}
 \label{sec:psi}
 
 All prior CEREBRUM signals (TRB, community hypothesis, relation-name index) are
@@ -311,7 +311,7 @@ top-3 parameter on MetaQA 3-hop.
 levels: 1-hop (9,947 test), 2-hop (14,872 test), 3-hop (14,274 test). We report
 on the full 3-hop test set (14,274 questions) as the primary evaluation.
 
-\textbf{Hetionet} \cite{hetionet2017}: Biomedical knowledge graph —
+\textbf{Hetionet} \cite{hetionet2017}: Biomedical knowledge graph,
 47,031 nodes, 24 relation types, 2,250,197 edges. We evaluate on six question
 templates across 1-hop, 2-hop, and 3-hop (up to 200 QA pairs per template; 998
 total unique pairs). No labeled data used.
@@ -414,7 +414,7 @@ gene\_participates\_pathway 98.5\%, compound\_treats\_disease 89.0\%.}
 \subsection{Ablation}
 \label{sec:fanova}
 
-\paragraph{fANOVA Parameter Importance — cross-domain comparison:}
+\paragraph{fANOVA Parameter Importance: Cross-Domain Comparison}
 
 \begin{table}[h]
 \centering
@@ -464,7 +464,7 @@ Zero-config (ParameterInitializer)         & \textbf{56.8\%} \\
 \subsection{The H@10 / H@1 Gap is a Ranking Problem}
 
 On MetaQA 3-hop, CEREBRUM achieves H@10=87.9\% with H@1=60.6\%. This gap does
-not reflect a reasoning failure — the correct answer is in the beam 87.9\% of
+not reflect a reasoning failure; the correct answer is in the beam 87.9\% of
 the time, matching the top-10 recall of supervised methods. The gap reflects a
 ranking challenge: which of the top-10 candidates to surface first. Supervised
 methods (UniKGQA 99.1\% H@1) close this gap via question-answer training that
@@ -508,7 +508,7 @@ produce near-zero cosine similarity regardless of question content.
 
 Functional ANOVA variance decomposition over 100 tuner trials reveals a striking
 cross-domain pattern (Table~\ref{tab:fanova}): \texttt{branch\_bonus} dominates
-on two entirely different graph structures — movies (hub\_homogeneous, 9
+on two entirely different graph structures: movies (hub\_homogeneous, 9
 relations) and biomedical (typed\_heterogeneous, 24 relations). This
 cross-domain consistency provides strong evidence that multi-path convergence
 is the \emph{universal} discriminating signal in training-free KGQA.
@@ -526,7 +526,7 @@ to tune when adapting CEREBRUM to a new graph.
 The CSA formula instantiates each community as a structural attention head over
 local graph neighborhoods, with beam depth corresponding to Transformer layer
 depth. Each community contributes a ``view'' of entity relevance; the community
-partition replaces the learned Q/K/V projection — it is derived analytically from
+partition replaces the learned Q/K/V projection; it is derived analytically from
 graph structure (Leiden algorithm) with no training. The key difference:
 Transformer attention is learned from data; CSA attention is derived from graph
 topology.
@@ -545,7 +545,7 @@ Hallucination is structurally impossible in the formal sense: CEREBRUM can only
 return entities that are reachable from the seed via edges that exist in the
 knowledge graph. There is no language model component that could generate
 plausible-sounding but false entities. This is a stronger guarantee than
-confidence calibration or uncertainty quantification — it is a structural
+confidence calibration or uncertainty quantification; it is a structural
 impossibility, not a probabilistic bound.
 
 In contrast, LLM-augmented KG systems submit a subgraph or natural-language
@@ -586,7 +586,7 @@ framework that answers multi-hop questions by traversing graph paths under a
     supervised H@1 (99.1\%) is characterised as a ranking problem, not a
     retrieval failure.
   \item \textbf{Zero-config baseline (MetaQA 3-hop):} H@1=56.8\%, H@10=90.7\%
-    with ParameterInitializer defaults — no tuning required.
+    with ParameterInitializer defaults, with no tuning required.
   \item \textbf{Hetionet biomedical domain transfer:} 1-hop H@1=95.3\%
     (100\% on disease\_associates\_gene), 2-hop H@1=53.0\%, with zero biomedical
     training data. Same framework, same code, different graph.
