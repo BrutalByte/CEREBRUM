@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.88.0 (Phase 249), Updated Jun 11, 2026
+## Version: v2.90.0 (Phase 255), Updated Jun 12, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -565,7 +565,10 @@ Acknowledge this benchmark quality caveat in all papers discussing WebQSP result
 | 236 | PathSchemaIndex (training-free schema prediction) | 9.50% | 32.50% | 0.1552 | 200q | Jun 8 |
 | 241 | BeamCheckpoint + full 1,628q tuner (Trial #82) | 5.04% | 11.86% | 0.0725 | **1,628q** | Jun 9 |
 | 244c | Additive CVT passthrough (replacement→additive fix) | 9.47% | **20.04%** | 0.1252 | 1,628q | Jun 10 |
-| **244d** | **+backward verification + path diversity re-ranker (100-trial tuner)** | **10.33%** | **20.47%** | **0.1347** | **1,628q** | **Jun 10** |
+| 244d | +backward verification + path diversity re-ranker (100-trial tuner) | 10.33% | 20.47% | 0.1347 | 1,628q | Jun 10 |
+| 253 | schema_top_k=12 (PathSchemaIndex expansion + anchor-score re-ranking study) | 10.57% | 20.53% | 0.1389 | 1,628q | Jun 12 |
+| 254 | Wider beam re-tune (beam_width=48, schema_top_k=16) | 10.26% | 23.60% | 0.1443 | 1,628q | Jun 12 |
+| **255** | **Guaranteed 1-hop Pass (G1P) + DPW=1.03 (beam-pruned answers injected back)** | **11.12%** | **21.20%** | **0.1447** | **1,628q** | **Jun 12** |
 
 **Zero-config baseline:** H@1=1.41%, H@10=4.30% (ParameterInitializer returns gamma=334,513 for Freebase topology, uncalibrated; uses Hetionet fallback). **Phase 244d vs zero-config: +633% relative H@1 improvement.**
 
@@ -728,6 +731,136 @@ H@10=20.47% confirms the correct answer is in the top-10 candidates roughly 1 in
 
 ---
 
+### WebQSP, Phase 250 (QASA Re-ranking, Negative Result)
+
+**Hypothesis:** Post-hoc re-ranking via Question-Answer Semantic Alignment (QASA): after beam traversal, re-score each candidate by `cosine(question_embedding, answer_entity_embedding)`. Adds direct Q-to-A semantic signal on top of structural scoring via `qa_sem_weight` parameter.
+
+**Result (100 trials, 200q sample, TPE):** Best H@1=9.5% (sample). Full 1,628q canonical eval with best params: **H@1=10.02%, H@10=20.53%, MRR=0.1330** vs canonical 10.33% / 20.47% / 0.1347. Phase 250 is -0.31pp H@1 vs canonical. Closed negative.
+
+**fANOVA finding (100 trials):** `degree_penalty_weight` accounts for **56.5% of scoring variance** on WebQSP, the highest single-parameter dominance for this benchmark. `backward_bonus` second at 8.6%. `qa_sem_weight` fourth at 4.2%, confirming it is not a primary lever.
+
+**Root cause:** QASA requires the answer entity embedding to be semantically similar to the question. On Freebase, most answer entities are public figures, places, and films with readable names. However, CVT-mediated paths produce intermediate embeddings that dilute the Q-to-A signal before it reaches the answer entity. The semantic similarity term is present but weak relative to structural factors.
+
+**Key architectural signal:** `degree_penalty_weight` at 56.5% importance (up from 50.0% in Phase 244d fANOVA) confirms hub-entity degree suppression is the primary bottleneck for WebQSP, not semantic scoring quality. Phase 251 target: targeted `degree_penalty_weight` search with finer resolution.
+
+**Phase 244d remains the WebQSP canonical result.**
+
+---
+
+### WebQSP, Phase 251 (Focused DPW Sweep, Negative Result)
+
+**Hypothesis:** `degree_penalty_weight` (DPW) has shown 50-57% fANOVA importance across Phases 244d and 250, but all prior searches used a narrow range (0.3-0.6). Expanding to (0.0-1.5) with all other params locked near Phase 244d best values should find whether stronger hub suppression improves H@1.
+
+**Result (100 trials, 200q sample, TPE):** Best H@1=9.0% (sample). Full 1,628q canonical eval: **H@1=10.02%, H@10=19.36%, MRR=0.1287** vs canonical 10.33% / 20.47% / 0.1347. Phase 251 closes negative (-0.31pp H@1, -1.11pp H@10).
+
+**DPW landscape (100 trials, 200q buckets):**
+
+| DPW range | Mean H@1 | Max H@1 | Trials |
+|-----------|---------|---------|--------|
+| 0.0-0.25  | 7.7%    | 8.0%    | 17     |
+| 0.25-0.75 | 8.2%    | 9.0%    | 32     |
+| 0.75-1.25 | 8.5%    | 9.0%    | 32     |
+| 1.25-1.5  | 8.1%    | 9.0%    | 19     |
+
+**Finding:** DPW forms a plateau in the 0.5-1.5 range. The fANOVA importance (73.1% in Phase 251) reflects a binary threshold: DPW=0 is significantly worse, but any value in (0.5-1.5) gives similar results. Phase 244d's DPW=0.424 already sits at the plateau. Expanding the range finds no new optimum.
+
+**Architectural conclusion:** `degree_penalty_weight` applies the hub penalty **at answer extraction only** (post-hoc). Hub entities inflate beam scores during traversal itself, before extraction. Tuning the extraction penalty cannot compensate for beam-time hub flooding. Phase 252 target: traversal-time hub suppression — penalize edges leading TO high-degree nodes during beam scoring, preventing hub paths from accumulating scores in the first place.
+
+**Phase 244d remains the WebQSP canonical result.**
+
+---
+
+### WebQSP, Phase 252 (Traversal-Time Hub Suppression, Negative Result)
+
+**Hypothesis:** `degree_penalty_weight` (DPW) only penalises hub entities at answer extraction. Hub nodes also pollute the beam as high-scoring intermediates during traversal itself. A new `beam_hub_penalty` (BHP) parameter applies `1/(1 + bhp * log1p(deg(v)))` at non-terminal hops only — preventing hub entities from accumulating path score as intermediates while leaving final-answer scoring unchanged. DPW and BHP are architecturally complementary.
+
+**Result (100 trials, 200q sample, TPE):** Best H@1=10.0% (sample). Full 1,628q canonical eval: **H@1=9.77%, H@10=19.91%, MRR=0.1294** vs canonical 10.33% / 20.47% / 0.1347. Phase 252 closes negative (-0.56pp H@1).
+
+**BHP landscape (100 trials, 200q buckets):**
+
+| BHP range | Mean H@1 | Max H@1 | Trials |
+|-----------|---------|---------|--------|
+| 0.0-0.25  | 8.8%    | 10.0%   | 17     |
+| 0.25-0.75 | 8.9%    | 10.0%   | 32     |
+| 0.75-1.25 | 8.8%    | 9.5%    | 34     |
+| 1.25-1.5  | 8.7%    | 9.5%    | 17     |
+
+**fANOVA shift:** When BHP is in the search space, `vote_weight` becomes dominant (31.3%) and `degree_penalty_weight` drops to 6.8% (from 50-73% in Phases 244d-251). This reveals that DPW had been acting as a proxy for vote_weight miscalibration, not pure hub suppression.
+
+**Architectural conclusion:** Both post-hoc (DPW) and traversal-time (BHP) hub suppression are near their ceiling with the current `1/(1 + w*log1p(deg))` formula. The 10.33% canonical is a robust local optimum for this class of hub-penalty scoring. The ~25% hub-entity failure rate is not addressable by tuning the penalty weight or applying it at a different stage. Phase 253 target: failure-mode diagnostic — categorize the ~1,300 failed questions to identify systematic patterns beyond hub flooding.
+
+**Phase 244d remains the WebQSP canonical result.**
+
+---
+
+### WebQSP, Phase 253 (Anchor-Score Re-ranking + Tunable schema_top_k)
+
+**Configuration:** 100-trial TPE tuner adding two new params: `anchor_rerank_weight` (anchor score re-ranking, HACH-MVC principle, AliTakrar/HACH-MVC) and `schema_top_k` ∈ {3, 5, 8, 12} (tunable PathSchemaIndex prediction count, previously hardcoded at 5). Anchor score = `intra_community_degree / total_degree` — entities whose neighbours are concentrated in one community score high (semantically coherent targets); cross-community hubs score low. This is a neighbourhood-coherence signal inspired by the anchor principle in HACH-MVC (anchor-guided contrastive learning for multi-view clustering).
+
+**Result (100 trials, 200q sample, TPE):** Best H@1=9.50% (sample, trial #18). Full 1,628q canonical eval with best params (schema_top_k=12, anchor_rerank_weight=0.0): **H@1=10.57%, H@10=20.53%, MRR=0.1389** vs Phase 244d 10.33% / 20.47% / 0.1347. **+0.24pp H@1, +0.06pp H@10, +0.0042 MRR.**
+
+**fANOVA (Phase 253 param importances):**
+- `schema_top_k`: **82.3%** — dominant
+- `anchor_rerank_weight`: **0.1%** — noise
+
+**Finding:** `anchor_rerank_weight` has near-zero importance — the HACH-MVC anchor principle does not transfer to this task. Anchor score (community neighbourhood concentration) is not a discriminative signal for answer re-ranking on WebQSP: correct answers are not more community-concentrated than incorrect ones, likely because CVT reification creates artificial cross-community structure for both. The anchor score is computed correctly but the signal is uninformative in this context.
+
+`schema_top_k=12` (vs hardcoded 5) is the sole driver of improvement. More schema predictions increase coverage of the correct 2-hop path, contributing an additional +0.24pp H@1 and the H@10 nudge. The signal saturates quickly — schema_top_k=12 was optimal, suggesting diminishing returns beyond this point.
+
+**Canonical eval command (Phase 253):**
+```
+python -u benchmarks/webqsp_param_eval.py --sample 1628 --embeddings sentence \
+  --beam-width 16 --trb-factor 44.864 --r2-boost 2.732 --vote-weight 0.8515 \
+  --idf-weight 0.017 --branch-bonus 0.066 --fhrb-factor 2.246 \
+  --gamma 8.6062 --beta 1.1866 --degree-penalty-weight 0.6318 \
+  --schema-score-threshold 0.3572 --backward-bonus 0.1084 \
+  --diversity-alpha 0.6549 --anchor-rerank-weight 0.0 --schema-top-k 12
+```
+
+**Phase 253 has been superseded. See Phase 255.**
+
+---
+
+### WebQSP, Phase 254 (Wider Beam Re-tune, Intermediate)
+
+**Configuration:** PARAM_SPACE_WEBQSP_254 — beam_width ∈ [32,48,64,96], all ranking params re-opened. Full re-tune after beam_width=64 probe showed H@10 +2.33pp but H@1 -0.24pp.
+
+**Result:** H@1=**10.26%**, H@10=**23.60%**, MRR=0.1443 (beam_width=48, schema_top_k=16). H@10 confirms wider beam finds more answers in the pool (+3.07pp over Phase 253). H@1 regresses — ranking machinery can't push them to position 1 under hub competition. fANOVA: beam_width only 2.6% importance (within [32,96], width barely matters for H@1). **Intermediate result — not a new canonical.**
+
+**Architectural conclusion:** The beam retrieval problem is not just width — it's that correct low-degree answers lose to hubs in the scoring competition *before being pruned*. Phase 255 target: bypass beam scoring for 1-hop answers entirely.
+
+---
+
+### WebQSP, Phase 255 (Guaranteed 1-hop Pass)
+
+**Motivation:** Coverage diagnostic (Phase 253b/c/d) showed 43.5% of beam misses are direct 1-hop neighbors of the seed entity (29.6% of all questions) that the beam prunes at hop 1 because beam_width=16 can't fit them. The answers are in the graph, the seed-to-answer edge exists, but the hub-dominated scoring drops them.
+
+**Mechanism (G1P):** After the beam query, enumerate all named (non-MID) direct neighbors of the seed entity (up to 2000) and inject any missing ones into the candidate pool at score `min_beam_score × hop1_base_weight`. The existing ranking stack (DPW, r2_boost, backward_bonus, diversity_alpha) then operates on the extended pool. No LLM, no training — purely structural.
+
+**Result (100 trials, 200q sample, TPE + full 1,628q eval):** Best trial H@1=10.0% (200q). Full eval: **H@1=11.12%, H@10=21.20%, MRR=0.1447** vs Phase 253 10.57% / 20.53% / 0.1389. **+0.55pp H@1, +0.67pp H@10, +0.0058 MRR.**
+
+**fANOVA (Phase 255):**
+- `schema_top_k`: 47.5% — still dominant but reduced from 82.3% (G1P takes over some coverage)
+- `schema_score_threshold`: 12.3%
+- `hop1_base_weight`: 4.2% — positive contribution confirmed
+- `degree_penalty_weight`: 4.9% — best value 1.03 (up from 0.63 in Phase 253) — G1P injects hub neighbors, requiring stronger suppression
+
+**Finding:** G1P recovers a fraction of the theoretical +29.6pp from H1 misses. The gain is real but modest (+0.55pp H@1) because DPW alone is a weak ranker for distinguishing correct 1-hop answers (e.g. "England") from injected hubs (e.g. "United States") — both are direct neighbors, but hubs have higher beam scores. The G1P candidate pool contains the answer; the ranking signal to surface it is the bottleneck.
+
+**Canonical eval command (Phase 255):**
+```
+python -u benchmarks/webqsp_param_eval.py --sample 1628 --embeddings sentence \
+  --beam-width 16 --trb-factor 39.741 --r2-boost 3.559 --vote-weight 0.8806 \
+  --idf-weight 0.018 --branch-bonus 0.064 --fhrb-factor 2.509 \
+  --gamma 6.9888 --beta 0.9540 --degree-penalty-weight 1.0289 \
+  --schema-score-threshold 0.2898 --backward-bonus 0.0773 \
+  --diversity-alpha 0.8714 --schema-top-k 16 --hop1-base-weight 0.6307
+```
+
+**Phase 255 is the new WebQSP canonical result: H@1=11.12%, H@10=21.20%, MRR=0.1447.**
+
+---
+
 ### WebQSP, "When Training-Free KGQA Works"
 
 The WebQSP and MetaQA/Hetionet results together characterize when training-free semantic attention succeeds:
@@ -739,7 +872,7 @@ The WebQSP and MetaQA/Hetionet results together characterize when training-free 
 | Semantic attention viable? | **Yes** | **Yes** | **Limited** |
 | Dominant CSA parameter | branch_bonus (46.2%) | branch_bonus (81.9%) | degree_penalty_weight (50.0%) |
 | H@10 (training-free) | **87.9%** | **~60%** | **20.5%** |
-| H@1 (training-free) | **60.6%** | **59.3%** | **10.3%** |
+| H@1 (training-free) | **60.6%** | **59.3%** | **11.1%** |
 
 **Conclusion:** Training-free multi-hop reasoning is effective when the knowledge graph has human-readable entity names and structured relation labels that enable cosine-similarity-based attention. Freebase's opaque MID identifiers break this prerequisite. Future work: MID-to-name preprocessing (Freebase entity labels) or discriminative re-ranking using an LLM for semantic filtering.
 
@@ -918,4 +1051,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-06-11 | Phase 249: FB15k entity labels (negative), 0 MIDs resolved; FB15k-237 entity MIDs are disjoint from WebQSP CVT MIDs; CVT nodes have no readable names by design; Phase 248 infrastructure intact | Phase 248: Freebase MID name resolution (negative), 0 MIDs resolved; type.object.name triples absent from 2-hop subgraph | Phase 247: Conditional schema prediction (negative), csb adds zero gain over Phase 244d; Phase 244d H@1=10.33% remains WebQSP canonical | Phase 244d: backward verification + path diversity re-ranker + additive CVT; degree_penalty_weight 50.0% fANOVA | Phase 206b: Hetionet branch_bonus 81.86% fANOVA | Phase 236: PathSchemaIndex +3.5pp H@1 | Phase 225–227: MetaQA H@1=60.6%, H@10=87.9% | Phase 53 canonical unchanged*
+*Last updated: 2026-06-12 | Phase 253: schema_top_k=12 (+0.24pp H@1), anchor re-ranking noise (0.1% fANOVA), new canonical H@1=10.57% H@10=20.53% | Phase 252: traversal-time BHP (negative), -0.56pp H@1 | Phase 251: focused DPW sweep (negative), plateau confirmed | Phase 250: QASA re-ranking (negative), qa_sem_weight 4.2% fANOVA | Phase 249: FB15k entity labels (negative) | Phase 247: conditional schema (negative) | Phase 244d: H@1=10.33% prior canonical | Phase 236: PathSchemaIndex +3.5pp H@1 | Phase 225-227: MetaQA H@1=60.6%, H@10=87.9% | Phase 53 canonical unchanged*

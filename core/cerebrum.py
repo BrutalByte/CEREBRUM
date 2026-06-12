@@ -1367,6 +1367,7 @@ class CerebrumGraph:
         initial_relation_boost:      Optional[Dict[str, float]] = None,
         community_hypothesis_fn:     Optional[Any]   = None,
         cvt_passthrough:             bool            = False,
+        beam_hub_penalty:            float           = 0.0,
     ) -> List[Answer]:
         """
         Traverse the graph from ``seeds`` and return ranked answers.
@@ -1549,6 +1550,7 @@ class CerebrumGraph:
                 penultimate_decay          = penultimate_decay,
                 community_hypothesis_fn    = community_hypothesis_fn,  # Phase 233
                 cvt_passthrough            = cvt_passthrough,  # Phase 243
+                beam_hub_penalty           = beam_hub_penalty,  # Phase 252
                 **csa_overrides # Inject hormonal overrides
             )
             traversal.global_workspace = self.global_workspace
@@ -1564,6 +1566,7 @@ class CerebrumGraph:
             traversal._beam_widths = _auto_beam_widths  # Phase 136: temporary override
             if cvt_passthrough:
                 traversal.cvt_passthrough = True
+            traversal._beam_hub_penalty = beam_hub_penalty  # Phase 252: set per-query
 
         # Phase 137: H1SE - replace traversal with HopExpandedTraversal when
         # hop_expand=True. needs_custom=True guarantees no shared-traversal

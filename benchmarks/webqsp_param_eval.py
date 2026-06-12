@@ -437,6 +437,14 @@ def run_trial_inprocess(
     schema_score_thresh = float(_sst) if _sst is not None else 0.0
     _dpw = params.get("degree_penalty_weight")
     degree_penalty_weight = float(_dpw) if _dpw is not None else 0.0
+    _bhp = params.get("beam_hub_penalty")
+    beam_hub_penalty = float(_bhp) if _bhp is not None else 0.0
+    _stk = params.get("schema_top_k")
+    schema_top_k = int(_stk) if _stk is not None else 5
+    _arw = params.get("anchor_rerank_weight")
+    anchor_rerank_weight = float(_arw) if _arw is not None else 0.0
+    _g1p = params.get("hop1_base_weight")
+    hop1_base_weight = float(_g1p) if _g1p is not None else 0.0
 
     # Build relation boost maps from deriver fan-out statistics
     boost_map  = deriver.boost_map(gamma, beta) if deriver.is_built else {}
@@ -446,10 +454,11 @@ def run_trial_inprocess(
 
     import math
     h1_sum = h10_sum = mrr_sum = 0.0
-    emb_engine  = getattr(graph, "_embedding_engine", None)
-    rel_index   = state.get("rel_index")
-    hyp_gen     = state.get("hyp_gen")
-    schema_idx  = state.get("schema_idx")
+    emb_engine    = getattr(graph, "_embedding_engine", None)
+    rel_index     = state.get("rel_index")
+    hyp_gen       = state.get("hyp_gen")
+    schema_idx    = state.get("schema_idx")
+    anchor_scores = state.get("anchor_scores", {})
 
     for seed_ent, answers, question in qa:
         try:
@@ -494,7 +503,7 @@ def run_trial_inprocess(
             if schema_idx is not None and qemb is not None:
                 seed_rels = graph.adapter.get_all_relation_types(seed_ent)
                 predicted_schemas = schema_idx.predict_schemas_for_seed(
-                    qemb, seed_rels, top_k=5
+                    qemb, seed_rels, top_k=schema_top_k
                 )
                 if predicted_schemas:
                     schema_hits = schema_idx.execute_schemas(
@@ -518,7 +527,30 @@ def run_trial_inprocess(
                 max_loops                   = max_loops,
                 degree_penalty_weight       = degree_penalty_weight,
                 cvt_passthrough             = bool(params.get("cvt_passthrough", True)),
+                beam_hub_penalty            = beam_hub_penalty,
             )
+
+            # Phase 255: Guaranteed 1-hop Pass (G1P).
+            # The hop-reachability diagnostic showed 43.5% of beam misses are direct
+            # 1-hop neighbors of the seed that were pruned at beam_width during hop-1
+            # scoring.  G1P bypasses the beam for hop-1 by exhaustively enumerating
+            # all named (non-MID) direct neighbors and injecting any missing ones into
+            # the candidate pool at a tunable base score.  DPW + existing ranking
+            # signals then distinguish correct low-degree answers from hub noise.
+            if hop1_base_weight > 0.0:
+                _beam_ids = {a.entity_id for a in answers_obj}
+                _min_score = min((a.score for a in answers_obj), default=0.0)
+                _base = _min_score * hop1_base_weight
+                for _edge in graph.adapter.get_neighbors(seed_ent, max_neighbors=2000):
+                    _eid = _edge.target_id
+                    if _eid not in _beam_ids and not str(_eid).startswith("/m/"):
+                        _beam_ids.add(_eid)
+                        _fake = type("_G1", (), {
+                            "entity_id": _eid,
+                            "score":     _base,
+                            "best_path": None,
+                        })()
+                        answers_obj.append(_fake)
 
             # Phase 232: Post-extraction path re-ranking.
             # Boost answers whose best-path terminal relation matches question keywords.
@@ -627,6 +659,18 @@ def run_trial_inprocess(
                             if _sim > 0.0:
                                 ans.score *= (1.0 + _qsw * _sim)
                     answers_obj.sort(key=lambda a: a.score, reverse=True)
+
+            # Phase 253: Anchor-score re-ranking — HACH-MVC anchor principle (AliTakrar/HACH-MVC).
+            # anchor_score(v) = intra_community_degree / total_degree (precomputed in state).
+            # Semantically coherent entities (neighbours concentrated in one community) are
+            # boosted; cross-community hub noise is suppressed — a neighbourhood-level signal
+            # orthogonal to the raw-degree DPW penalty.
+            if anchor_rerank_weight > 0.0 and anchor_scores:
+                for ans in answers_obj:
+                    a_sc = anchor_scores.get(ans.entity_id)
+                    if a_sc is not None:
+                        ans.score *= (1.0 + anchor_rerank_weight * a_sc)
+                answers_obj.sort(key=lambda a: a.score, reverse=True)
 
             # Phase 247: Conditional Schema Prediction.
             # After the beam populates _expansion_cache, extract the union of outgoing
@@ -812,17 +856,39 @@ def build_webqsp_state(
         )
         print(f"  {schema_idx.schema_count():,} 2-hop schemas indexed ({time.time()-t_si:.1f}s)")
 
+    # Phase 253: Anchor scores — HACH-MVC anchor principle (AliTakrar/HACH-MVC).
+    # anchor_score(v) = intra_community_degree / total_degree.
+    # Entities whose neighbors are concentrated in one community score high (they are
+    # semantically coherent targets); cross-community hubs score low (they bridge many
+    # communities and are structurally similar to noise / DPW-penalised hub entities).
+    # Unlike DPW which uses raw degree, anchor score captures neighbourhood coherence —
+    # a semantically grounded signal that complements the existing hub penalty.
+    print("[WebQSPState] Computing anchor scores (Phase 253, HACH-MVC principle)...")
+    t_anc = time.time()
+    _cm = getattr(graph.adapter, "community_map", {}) or {}
+    anchor_scores: dict = {}
+    for node in nx_g.nodes():
+        c_v = _cm.get(node, -1)
+        neighbors = list(nx_g.predecessors(node)) + list(nx_g.successors(node))
+        if neighbors:
+            in_comm = sum(1 for n in neighbors if _cm.get(n, -2) == c_v)
+            anchor_scores[node] = in_comm / len(neighbors)
+        else:
+            anchor_scores[node] = 1.0
+    print(f"  {len(anchor_scores):,} anchor scores computed ({time.time()-t_anc:.1f}s)")
+
     print("[WebQSPState] Ready — all trials will skip graph build.\n")
 
     return {
-        "graph":        graph,
-        "deriver":      deriver,
-        "qa_pairs":     qa_pairs,
-        "answer_freq":  dict(answer_freq),
-        "embeddings":   embeddings,
-        "rel_index":    rel_index,
-        "hyp_gen":      hyp_gen,
-        "schema_idx":   schema_idx,
+        "graph":         graph,
+        "deriver":       deriver,
+        "qa_pairs":      qa_pairs,
+        "answer_freq":   dict(answer_freq),
+        "embeddings":    embeddings,
+        "rel_index":     rel_index,
+        "hyp_gen":       hyp_gen,
+        "schema_idx":    schema_idx,
+        "anchor_scores": anchor_scores,
     }
 
 
@@ -858,10 +924,18 @@ def main() -> None:
     parser.add_argument("--beta",                    type=float, default=None, dest="beta")
     parser.add_argument("--schema-score-threshold",  type=float, default=None, dest="schema_score_threshold")
     parser.add_argument("--degree-penalty-weight",   type=float, default=None, dest="degree_penalty_weight")
+    parser.add_argument("--beam-hub-penalty",         type=float, default=None, dest="beam_hub_penalty",
+                        help="Phase 252: Traversal-time hub suppression at non-terminal hops.")
     parser.add_argument("--backward-bonus",            type=float, default=None, dest="backward_bonus")
     parser.add_argument("--diversity-alpha",           type=float, default=None, dest="diversity_alpha")
     parser.add_argument("--qa-sem-weight",             type=float, default=None, dest="qa_sem_weight",
                         help="Phase 250: Question-answer semantic alignment re-ranking weight.")
+    parser.add_argument("--anchor-rerank-weight",      type=float, default=None, dest="anchor_rerank_weight",
+                        help="Phase 253: Anchor-score re-ranking weight (HACH-MVC anchor principle).")
+    parser.add_argument("--hop1-base-weight",          type=float, default=None, dest="hop1_base_weight",
+                        help="Phase 255: Guaranteed 1-hop Pass base score fraction (0=off, 1=min beam score).")
+    parser.add_argument("--schema-top-k",              type=int,   default=None, dest="schema_top_k",
+                        help="Phase 253: Number of schema predictions per question (default 5).")
     parser.add_argument("--conditional-schema-bonus",  type=float, default=None, dest="conditional_schema_bonus")
     parser.add_argument("--cvt-passthrough",           action="store_true", default=True, dest="cvt_passthrough")
     parser.add_argument("--mid-name-file",             type=str,   default=None, dest="mid_name_file",
@@ -907,10 +981,14 @@ def main() -> None:
         "beta":                   args.beta                   if args.beta                   is not None else _d("beta"),
         "schema_score_threshold": args.schema_score_threshold if args.schema_score_threshold is not None else _d("schema_score_threshold"),
         "degree_penalty_weight":  args.degree_penalty_weight  if args.degree_penalty_weight  is not None else 0.0,
+        "beam_hub_penalty":       args.beam_hub_penalty       if args.beam_hub_penalty       is not None else 0.0,
         "backward_bonus":         args.backward_bonus         if args.backward_bonus         is not None else 0.0,
         "diversity_alpha":        args.diversity_alpha        if args.diversity_alpha        is not None else 0.0,
         "conditional_schema_bonus": args.conditional_schema_bonus if args.conditional_schema_bonus is not None else 0.0,
         "qa_sem_weight":          args.qa_sem_weight          if args.qa_sem_weight          is not None else 0.0,
+        "anchor_rerank_weight":   args.anchor_rerank_weight   if args.anchor_rerank_weight   is not None else 0.0,
+        "schema_top_k":           args.schema_top_k           if args.schema_top_k           is not None else 5,
+        "hop1_base_weight":       args.hop1_base_weight       if args.hop1_base_weight       is not None else 0.0,
         "cvt_passthrough":        True,
         "max_loops":    1,
     }

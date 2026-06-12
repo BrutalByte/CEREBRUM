@@ -151,6 +151,124 @@ PARAM_SPACE_WEBQSP: dict = {
     # cvt_passthrough (traversal-time collapsing) is the correct structural fix.
 }
 
+# Phase 251: focused degree_penalty_weight sweep.
+# fANOVA across Phases 244d and 250 consistently shows degree_penalty_weight at 50–57%
+# importance — the single dominant factor on WebQSP.  Prior searches used (0.3, 0.6);
+# this space expands to (0.0, 1.5) to find whether stronger hub suppression helps.
+# All low-importance params are tightened around Phase 244d best to concentrate the
+# trial budget on the high-signal region.
+PARAM_SPACE_WEBQSP_251: dict = {
+    "trb_factor":             (35.0, 52.0),   # 244d best=41.785 ±25%
+    "r2_boost":               (2.0,  5.0),    # 244d best=3.722
+    "vote_weight":            (0.78, 0.95),   # 244d best=0.8608
+    "beam_width":             [16, 24],        # 244d best=16
+    "idf_weight":             (0.0,  0.08),   # 244d best=0.013; fANOVA #3 at 13.3%
+    "branch_bonus":           (0.02, 0.10),   # 244d best=0.048
+    "fhrb_factor":            (1.5,  2.5),    # 244d best=1.826
+    "gamma":                  (5.0,  10.0),   # 244d best=7.726
+    "beta":                   (0.8,  1.3),    # 244d best=1.008
+    "schema_score_threshold": (0.25, 0.55),   # 244d best=0.369; fANOVA #2 at 15.4%
+    "degree_penalty_weight":  (0.0,  1.5),    # 244d best=0.424; 50%+ importance — PRIMARY TARGET
+    "backward_bonus":         (0.05, 0.40),   # 244d best=0.136; 8.6% in Phase 250
+    "diversity_alpha":        (0.6,  1.0),    # 244d best=0.799
+}
+
+# Phase 252: traversal-time hub suppression sweep.
+# Phase 251 confirmed DPW is a plateau: post-hoc extraction penalty is already optimal.
+# Phase 252 tests beam_hub_penalty (BHP) — same 1/(1+bhp*log1p(deg)) formula but applied
+# at non-terminal hops DURING traversal, preventing hub entities from accumulating beam
+# score as intermediates.  Terminal hop excluded so high-degree correct answers (e.g.
+# "United States") are not penalised.  BHP and DPW are complementary: DPW suppresses hub
+# entities as final answers; BHP suppresses them as intermediate beam nodes.
+PARAM_SPACE_WEBQSP_252: dict = {
+    "trb_factor":             (35.0, 52.0),   # 244d best=41.785
+    "r2_boost":               (2.0,  5.0),    # 244d best=3.722
+    "vote_weight":            (0.78, 0.95),   # 244d best=0.8608
+    "beam_width":             [16, 24],        # 244d best=16
+    "idf_weight":             (0.0,  0.08),   # 244d best=0.013; 13.3% fANOVA
+    "branch_bonus":           (0.02, 0.10),   # 244d best=0.048
+    "fhrb_factor":            (1.5,  2.5),    # 244d best=1.826
+    "gamma":                  (5.0,  10.0),   # 244d best=7.726
+    "beta":                   (0.8,  1.3),    # 244d best=1.008
+    "schema_score_threshold": (0.25, 0.55),   # 244d best=0.369; 15.4% fANOVA
+    "degree_penalty_weight":  (0.3,  0.7),    # 244d best=0.424 — plateau confirmed
+    "beam_hub_penalty":       (0.0,  1.5),    # Phase 252 NEW: traversal-time hub suppression
+    "backward_bonus":         (0.05, 0.40),   # 244d best=0.136
+    "diversity_alpha":        (0.6,  1.0),    # 244d best=0.799
+}
+
+# Phase 253: Anchor-score re-ranking + tunable schema_top_k.
+# Anchor score (HACH-MVC, AliTakrar/HACH-MVC): anchor_score(v) = intra_community_degree /
+# total_degree.  Entities whose neighbours are concentrated in one community are boosted;
+# cross-community hubs are suppressed.  This is a neighbourhood-coherence signal orthogonal
+# to DPW (raw degree).  schema_top_k tunes the number of PathSchemaIndex predictions per
+# question — more predictions increase H@10 coverage at the cost of ranking precision.
+PARAM_SPACE_WEBQSP_253: dict = {
+    "trb_factor":             (35.0, 52.0),   # 244d best=41.785
+    "r2_boost":               (2.0,  5.0),    # 244d best=3.722
+    "vote_weight":            (0.78, 0.95),   # 244d best=0.8608
+    "beam_width":             [16, 24],        # 244d best=16
+    "idf_weight":             (0.0,  0.08),   # 244d best=0.013
+    "branch_bonus":           (0.02, 0.10),   # 244d best=0.048
+    "fhrb_factor":            (1.5,  2.5),    # 244d best=1.826
+    "gamma":                  (5.0,  10.0),   # 244d best=7.726
+    "beta":                   (0.8,  1.3),    # 244d best=1.008
+    "schema_score_threshold": (0.25, 0.55),   # 244d best=0.369
+    "degree_penalty_weight":  (0.3,  0.7),    # 244d best=0.424 — plateau confirmed
+    "backward_bonus":         (0.05, 0.40),   # 244d best=0.136
+    "diversity_alpha":        (0.6,  1.0),    # 244d best=0.799
+    "anchor_rerank_weight":   (0.0,  2.0),    # Phase 253 NEW: HACH-MVC anchor re-ranking
+    "schema_top_k":           [3, 5, 8, 12],  # Phase 253 NEW: tunable schema prediction count
+}
+
+# Phase 254: Wider beam re-tune.
+# beam_width=64 probe showed H@10 +2.33pp vs Phase 253 (more gold answers found) but
+# H@1 -0.24pp (hub noise floods top-1 — ranking params calibrated for width=16 are stale).
+# Re-tune all ranking params around the wider beam range [32,48,64,96].
+# Key expected shifts: DPW needs to be stronger (wider beam = more hub candidates to suppress);
+# trb_factor / r2_boost / vote_weight may shift to handle the larger candidate pool.
+PARAM_SPACE_WEBQSP_254: dict = {
+    "trb_factor":             (25.0, 60.0),   # widen — wider beam changes TRB landscape
+    "r2_boost":               (1.0,  6.0),    # widen
+    "vote_weight":            (0.70, 0.98),   # widen
+    "beam_width":             [32, 48, 64, 96],  # Phase 254 KEY: wider beam range
+    "idf_weight":             (0.0,  0.10),   # widen slightly
+    "branch_bonus":           (0.01, 0.15),   # widen
+    "fhrb_factor":            (1.2,  3.0),    # widen
+    "gamma":                  (4.0,  12.0),   # widen
+    "beta":                   (0.7,  1.5),    # widen
+    "schema_score_threshold": (0.15, 0.60),   # widen
+    "degree_penalty_weight":  (0.3,  2.0),    # widen significantly — wider beam needs stronger hub suppression
+    "backward_bonus":         (0.0,  0.50),   # widen
+    "diversity_alpha":        (0.5,  1.2),    # widen
+    "schema_top_k":           [8, 12, 16],    # schema_top_k=12 won Phase 253; explore higher
+}
+
+# Phase 255: Guaranteed 1-hop Pass (G1P).
+# hop1_base_weight controls the injected score of direct 1-hop named neighbors
+# that the beam pruned.  These are added to the candidate pool after the beam query
+# and compete with beam answers via DPW + existing ranking signals.
+# hop-reachability diagnostic showed 43.5% of beam misses are direct 1-hop neighbors
+# (29.6% of all questions) — G1P targets that entire population.
+# beam_width kept at [16, 24] — G1P makes wide beam redundant for H@1.
+PARAM_SPACE_WEBQSP_255: dict = {
+    "trb_factor":             (35.0, 52.0),   # 253 best=44.864
+    "r2_boost":               (2.0,  6.0),    # 253 best=2.732
+    "vote_weight":            (0.78, 0.98),   # 253 best=0.8515
+    "beam_width":             [16, 24],        # G1P makes wide beam redundant for H@1
+    "idf_weight":             (0.0,  0.08),   # 253 best=0.017
+    "branch_bonus":           (0.01, 0.12),   # 253 best=0.066
+    "fhrb_factor":            (1.5,  3.0),    # 253 best=2.246
+    "gamma":                  (5.0,  12.0),   # 253 best=8.606
+    "beta":                   (0.8,  1.4),    # 253 best=1.183
+    "schema_score_threshold": (0.20, 0.60),   # 253 best=0.357
+    "degree_penalty_weight":  (0.3,  1.5),    # wider — G1P injects more candidates, needs stronger hub suppression
+    "backward_bonus":         (0.05, 0.40),   # 253 best=0.108
+    "diversity_alpha":        (0.5,  1.2),    # 253 best=0.655
+    "schema_top_k":           [12, 16],       # 253 best=12; keep higher values
+    "hop1_base_weight":       (0.0,  1.0),    # Phase 255 NEW: G1P injection score fraction
+}
+
 # Float param names (excludes categorical beam_width)
 _FLOAT_PARAMS = tuple(k for k, v in PARAM_SPACE_WIDE.items() if not isinstance(v, list))
 
@@ -294,6 +412,11 @@ def _make_source_trials(records: "list[TrialRecord]", space: dict) -> list:
             "backward_bonus":         getattr(rec, "backward_bonus", 0.0),
             "diversity_alpha":        getattr(rec, "diversity_alpha", 0.0),
             "conditional_schema_bonus": getattr(rec, "conditional_schema_bonus", 0.0),
+            "qa_sem_weight":            getattr(rec, "qa_sem_weight", 0.0),
+            "beam_hub_penalty":         getattr(rec, "beam_hub_penalty", 0.0),
+            "anchor_rerank_weight":     getattr(rec, "anchor_rerank_weight", 0.0),
+            "schema_top_k":             getattr(rec, "schema_top_k", 5),
+            "hop1_base_weight":         getattr(rec, "hop1_base_weight", 0.0),
         }
         # Only include params that exist in the distributions dict
         params = {k: v for k, v in params.items() if k in distributions}
@@ -329,6 +452,11 @@ class TrialRecord:
     backward_bonus:         float = 0.0  # Phase 245: bidirectional path verification boost
     diversity_alpha:        float = 0.0  # Phase 246: multi-path convergence re-ranker
     conditional_schema_bonus: float = 0.0  # Phase 247: conditional r2 structural confirmation
+    qa_sem_weight:            float = 0.0  # Phase 250: question-answer semantic alignment re-ranker
+    beam_hub_penalty:         float = 0.0  # Phase 252: traversal-time hub suppression (non-terminal hops)
+    anchor_rerank_weight:     float = 0.0  # Phase 253: HACH-MVC anchor-score re-ranking
+    schema_top_k:             int   = 5    # Phase 253: tunable schema prediction count
+    hop1_base_weight:         float = 0.0  # Phase 255: G1P base score fraction
     # cvt_relay_boost removed in Phase 243 — ablation confirmed it hurts; cvt_passthrough is the correct fix
     is_best:                bool  = False
     phase:                  int   = 1
@@ -502,6 +630,10 @@ def _trial_record_to_dict(
         "backward_bonus":         getattr(rec, "backward_bonus", 0.0),
         "diversity_alpha":        getattr(rec, "diversity_alpha", 0.0),
         "conditional_schema_bonus": getattr(rec, "conditional_schema_bonus", 0.0),
+        "beam_hub_penalty":       getattr(rec, "beam_hub_penalty", 0.0),
+        "anchor_rerank_weight":   getattr(rec, "anchor_rerank_weight", 0.0),
+        "schema_top_k":           getattr(rec, "schema_top_k", 5),
+        "hop1_base_weight":       getattr(rec, "hop1_base_weight", 0.0),
         "h1":                     rec.h1,
         "h10":              rec.h10,
         "mrr":              rec.mrr,
@@ -645,6 +777,10 @@ def _run_eval_logged(
         "backward_bonus":         kwargs.get("backward_bonus", 0.0),
         "diversity_alpha":        kwargs.get("diversity_alpha", 0.0),
         "conditional_schema_bonus": kwargs.get("conditional_schema_bonus", 0.0),
+        "beam_hub_penalty":       kwargs.get("beam_hub_penalty", 0.0),
+        "anchor_rerank_weight":   kwargs.get("anchor_rerank_weight", 0.0),
+        "schema_top_k":           kwargs.get("schema_top_k", 5),
+        "hop1_base_weight":       kwargs.get("hop1_base_weight", 0.0),
         "cvt_passthrough":        True,  # Phase 243: always enabled for WebQSP/Freebase
         "max_loops":              1,
     }
@@ -668,7 +804,7 @@ def _run_eval_logged(
         })
         return h1, h10, mrr, elapsed
 
-    if dataset == "webqsp" and _webqsp_state is not None:
+    if dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255") and _webqsp_state is not None:
         from webqsp_param_eval import run_trial_inprocess
         t0 = time.time()
         try:
@@ -709,7 +845,7 @@ def _run_eval_logged(
         })
         return h1, h10, mrr, elapsed
 
-    if dataset == "webqsp":
+    if dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255"):
         n_questions = kwargs.get("sample", 200)
         cmd = [
             sys.executable, "-u", str(_WEBQSP_EVAL_SCRIPT),
@@ -725,6 +861,22 @@ def _run_eval_logged(
             "--gamma",        str(kwargs["gamma"]),
             "--beta",         str(kwargs["beta"]),
         ]
+        if kwargs.get("degree_penalty_weight", 0.0):
+            cmd += ["--degree-penalty-weight", str(kwargs["degree_penalty_weight"])]
+        if kwargs.get("beam_hub_penalty", 0.0):
+            cmd += ["--beam-hub-penalty", str(kwargs["beam_hub_penalty"])]
+        if kwargs.get("schema_score_threshold", 0.0):
+            cmd += ["--schema-score-threshold", str(kwargs["schema_score_threshold"])]
+        if kwargs.get("backward_bonus", 0.0):
+            cmd += ["--backward-bonus", str(kwargs["backward_bonus"])]
+        if kwargs.get("diversity_alpha", 0.0):
+            cmd += ["--diversity-alpha", str(kwargs["diversity_alpha"])]
+        if kwargs.get("anchor_rerank_weight", 0.0):
+            cmd += ["--anchor-rerank-weight", str(kwargs["anchor_rerank_weight"])]
+        if kwargs.get("schema_top_k", 5) != 5:
+            cmd += ["--schema-top-k", str(kwargs["schema_top_k"])]
+        if kwargs.get("hop1_base_weight", 0.0):
+            cmd += ["--hop1-base-weight", str(kwargs["hop1_base_weight"])]
     elif dataset == "hetionet":
         # Fallback subprocess path (state not yet initialised)
         n_questions = kwargs.get("sample", 50)
@@ -933,6 +1085,16 @@ def run_tuner(
         _param_space = PARAM_SPACE_CONCEPTNET
     elif dataset == "webqsp":
         _param_space = PARAM_SPACE_WEBQSP
+    elif dataset == "webqsp251":
+        _param_space = PARAM_SPACE_WEBQSP_251
+    elif dataset == "webqsp252":
+        _param_space = PARAM_SPACE_WEBQSP_252
+    elif dataset == "webqsp253":
+        _param_space = PARAM_SPACE_WEBQSP_253
+    elif dataset == "webqsp254":
+        _param_space = PARAM_SPACE_WEBQSP_254
+    elif dataset == "webqsp255":
+        _param_space = PARAM_SPACE_WEBQSP_255
     else:
         _param_space = PARAM_SPACE_WIDE
 
@@ -966,7 +1128,7 @@ def run_tuner(
             max_edges   = max_edges,
             embeddings  = embeddings,
         )
-    elif dataset == "webqsp":
+    elif dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255"):
         _init_webqsp_state(n_questions=sample, embeddings=embeddings)
 
     # ── log file setup ────────────────────────────────────────────────────
@@ -1194,7 +1356,11 @@ def run_tuner(
         f"--schema-score-threshold {best.schema_score_threshold:.4f} "
         f"--backward-bonus {getattr(best, 'backward_bonus', 0.0):.4f} "
         f"--diversity-alpha {getattr(best, 'diversity_alpha', 0.0):.4f} "
-        f"--conditional-schema-bonus {getattr(best, 'conditional_schema_bonus', 0.0):.4f}"
+        f"--conditional-schema-bonus {getattr(best, 'conditional_schema_bonus', 0.0):.4f} "
+        f"--beam-hub-penalty {getattr(best, 'beam_hub_penalty', 0.0):.4f} "
+        f"--anchor-rerank-weight {getattr(best, 'anchor_rerank_weight', 0.0):.4f} "
+        f"--schema-top-k {getattr(best, 'schema_top_k', 5)} "
+        f"--hop1-base-weight {getattr(best, 'hop1_base_weight', 0.0):.4f}"
     )
     if dataset == "hetionet":
         canonical = (
@@ -1207,7 +1373,7 @@ def run_tuner(
             f"python -u benchmarks/conceptnet_eval.py "
             f"--cn5 {cn5_path} --n-questions 2000 --embeddings {embeddings} {_param_flags}"
         )
-    elif dataset == "webqsp":
+    elif dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255"):
         canonical = (
             f"python -u benchmarks/webqsp_param_eval.py "
             f"--sample 1628 --embeddings {embeddings} {_param_flags}"
@@ -1347,10 +1513,15 @@ def main() -> None:
         help="KB triples file for --param-init (default: benchmarks/data/metaqa/kb.txt).",
     )
     parser.add_argument(
-        "--dataset", choices=["metaqa", "hetionet", "conceptnet", "webqsp"], default="metaqa", dest="dataset",
+        "--dataset", choices=["metaqa", "hetionet", "conceptnet", "webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255"], default="metaqa", dest="dataset",
         help="KB to tune against. 'hetionet' uses PARAM_SPACE_HETIONET; "
              "'conceptnet' uses PARAM_SPACE_CONCEPTNET (requires --cn5-file); "
-             "'webqsp' uses PARAM_SPACE_WEBQSP. Default: metaqa.",
+             "'webqsp' uses PARAM_SPACE_WEBQSP; "
+             "'webqsp251' uses PARAM_SPACE_WEBQSP_251 (Phase 251 focused DPW sweep); "
+             "'webqsp252' uses PARAM_SPACE_WEBQSP_252 (Phase 252 traversal-time BHP); "
+             "'webqsp253' uses PARAM_SPACE_WEBQSP_253 (Phase 253 anchor re-ranking + schema_top_k); "
+             "'webqsp254' uses PARAM_SPACE_WEBQSP_254 (Phase 254 wider beam re-tune); "
+             "'webqsp255' uses PARAM_SPACE_WEBQSP_255 (Phase 255 Guaranteed 1-hop Pass). Default: metaqa.",
     )
     parser.add_argument(
         "--cn5-file", type=str, default="", dest="cn5_path",

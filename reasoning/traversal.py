@@ -425,6 +425,11 @@ class BeamTraversal:
         # Called at every expansion step using the current tail entity's community, giving
         # per-entity-community relation boosts without any hop-position restriction.
         self._community_hypothesis_fn = kwargs.get("community_hypothesis_fn")
+        # Phase 252: Traversal-time hub suppression — applied at non-terminal hops only.
+        # Penalises edges leading TO high-degree intermediate nodes so hub entities cannot
+        # accumulate beam score as intermediates.  Terminal hop is excluded: the correct
+        # answer may itself be a high-degree entity (e.g. "United States").
+        self._beam_hub_penalty: float = float(kwargs.get("beam_hub_penalty", 0.0))
         # Phase 172: Terminal-Anchor hints â€” {hop: (entity_set, bonus_factor)}
         # At the specified hop, entities in the set get their sort key multiplied by bonus_factor.
         # Does not mutate path scores; only affects pruning order. Safe to apply at any non-terminal hop.
@@ -857,6 +862,13 @@ class BeamTraversal:
                             ch = self._community_hypothesis_fn(u).get(rel_eff, 1.0)
                             if ch > 1.0:
                                 w *= ch
+                        # Phase 252: traversal-time hub suppression (non-terminal hops only).
+                        # High-degree intermediate nodes flood the beam with spurious paths;
+                        # penalising them here prevents score accumulation before extraction.
+                        if self._beam_hub_penalty > 0.0 and hop < self.max_hop:
+                            import math as _math_bhp
+                            _deg = self.adapter.get_degree(v_eff)
+                            w *= 1.0 / (1.0 + self._beam_hub_penalty * _math_bhp.log1p(_deg))
 
                         if v_eff not in comm_cache:
                             comm_cache[v_eff] = _get_comm(v_eff)
