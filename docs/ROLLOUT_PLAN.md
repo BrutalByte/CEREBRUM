@@ -210,15 +210,19 @@ If Phase 250 shows ≥+0.5pp H@1 on full 1,628q eval, record as new canonical an
 
 ## Execution Order Summary
 
+> **Note:** arXiv is first. Every LinkedIn post should link to the paper.
+> Announcing without a citable reference is a missed opportunity.
+
 | Priority | Action | Owner | Status |
 |----------|--------|-------|--------|
-| 1 | Git commit + tag v2.88.0 | Bryan | Pending |
-| 2 | GitHub Release notes | Bryan | Pending |
-| 3 | LinkedIn Post 1 (Announcement) | Bryan | Day 1 |
-| 4 | Phase 250 tuner run (background) | Code | Day 1 |
-| 5 | LinkedIn Post 2 (Technical) | Bryan | Day 4 |
-| 6 | arXiv submission | Bryan | Day 4–6 |
-| 7 | LinkedIn Post 3 (Why it matters) | Bryan | Day 8 |
-| 8 | Reddit + HN after arXiv ID | Bryan | Day 8–10 |
-| 9 | LinkedIn Post 4 (CTA) | Bryan | Day 12 |
-| 10 | Phase 250 results → BENCHMARK_CANONICAL | Code | After tuner |
+| 1 | ~~Git commit + tag v2.88.0~~ | Bryan | ✅ Done |
+| 2 | ~~GitHub Release notes~~ | Bryan | ✅ Done |
+| 3 | **arXiv submission** (paper_001.tex + paper_001.bbl) | Bryan | **Do first** |
+| 4 | Add arXiv ID to README, HF card, BENCHMARK_CANONICAL | Code | After arXiv |
+| 5 | Phase 250 tuner run (background) | Code | Running |
+| 6 | **LinkedIn Post 1** (Announcement + paper link) | Bryan | After arXiv ID |
+| 7 | **LinkedIn Post 2** (Technical deep dive) | Bryan | Day 4 |
+| 8 | **LinkedIn Post 3** (Why it matters) | Bryan | Day 8 |
+| 9 | Reddit r/MachineLearning + HN | Bryan | Day 8 |
+| 10 | **LinkedIn Post 4** (CTA) | Bryan | Day 12 |
+| 11 | Phase 250 results → BENCHMARK_CANONICAL | Code | After tuner |
