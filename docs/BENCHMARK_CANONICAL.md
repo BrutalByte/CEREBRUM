@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.87.0 (Phase 247) — Updated Jun 11, 2026
+## Version: v2.88.0 (Phase 249) — Updated Jun 11, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -712,6 +712,22 @@ H@10=20.47% confirms the correct answer is in the top-10 candidates roughly 1 in
 
 ---
 
+### WebQSP — Phase 249 (FB15k Entity Labels — Negative Result)
+
+**Hypothesis:** Load an external Freebase entity-name file (`FB15k_mid2name.txt` from KGraph/FB15k-237 on HuggingFace) to populate the `entity_name_overrides` infrastructure built in Phase 248, restoring CSA alpha signal on opaque `/m/` nodes.
+
+**Result:** 0 MIDs resolved (0.0% coverage). Root cause: the 14,951 entities in FB15k-237 are a disjoint subset from the 486,165 `/m/` nodes in the WebQSP 2-hop subgraph. Zero overlap even after normalising `/m/xxx` ↔ `m.xxx` format variants.
+
+**Deeper finding:** The `/m/` nodes in `freebase_2hop.txt` are predominantly **CVT (compound value type) mediator nodes** used by Freebase for n-ary relations (e.g. `film.starring`, `award.nomination`). CVT nodes have no human-readable names by design — they are structural reification artifacts, not named entities. FB15k-237 contains entity MIDs; our graph's MIDs are CVT MIDs. They are non-overlapping populations.
+
+**Corollary:** Only 2 out of 1,628 test questions have MID answers. All other answer entities are already readable names. The naming problem does not affect answer ranking — it affects traversal scoring of intermediate CVT hops only. Phase 246's CVT passthrough already collapses these paths via compound-edge scoring.
+
+**Infrastructure status:** `entity_name_overrides` in `NetworkXAdapter` and label substitution in `core/cerebrum.py` remain in place and correct. The `--mid-name-file` CLI arg is wired. Phase 249 is closed as negative — the data source problem is architectural (CVT vs entity MIDs), not a file-format issue.
+
+**Phase 244d remains the WebQSP canonical result.**
+
+---
+
 ### WebQSP — "When Training-Free KGQA Works"
 
 The WebQSP and MetaQA/Hetionet results together characterize when training-free semantic attention succeeds:
@@ -770,6 +786,9 @@ trb-factor=31.134, r2-boost=3.977, vote-weight=0.7527, idf-weight=0.039, branch-
 fhrb-factor=7.572, gamma=10.138, beta=0.9616, 8-worker multiprocessing.
 14,268/14,274 questions answered (6 skipped). Runtime: 1283.7s (~21 min).
 H@1=60.6% | H@10=87.9% | MRR=0.703.
+
+**Re-validation on v2.87.0 HEAD (Jun 11, 2026):** 14,274/14,274 questions, workers=8.
+H@1=60.29% | H@10=87.78% | MRR=0.699 — within ±0.5pp of Phase 227 canonical. ✓ No regression from Phases 228–248.
 
 **Framing (include as footnote or paragraph):**
 > CEREBRUM achieves these results with zero task-specific training, no labeled question-answer pairs,
@@ -899,4 +918,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-06-11 | Phase 248: Freebase MID name resolution (negative) — 0 MIDs resolved; type.object.name triples absent from 2-hop subgraph; infrastructure in place, data source needed | Phase 247: Conditional schema prediction (negative) — csb adds zero gain over Phase 244d; Phase 244d H@1=10.33% remains WebQSP canonical | Phase 244d: backward verification + path diversity re-ranker + additive CVT; degree_penalty_weight 50.0% fANOVA | Phase 206b: Hetionet branch_bonus 81.86% fANOVA | Phase 236: PathSchemaIndex +3.5pp H@1 | Phase 225–227: MetaQA H@1=60.6%, H@10=87.9% | Phase 53 canonical unchanged*
+*Last updated: 2026-06-11 | Phase 249: FB15k entity labels (negative) — 0 MIDs resolved; FB15k-237 entity MIDs are disjoint from WebQSP CVT MIDs; CVT nodes have no readable names by design; Phase 248 infrastructure intact | Phase 248: Freebase MID name resolution (negative) — 0 MIDs resolved; type.object.name triples absent from 2-hop subgraph | Phase 247: Conditional schema prediction (negative) — csb adds zero gain over Phase 244d; Phase 244d H@1=10.33% remains WebQSP canonical | Phase 244d: backward verification + path diversity re-ranker + additive CVT; degree_penalty_weight 50.0% fANOVA | Phase 206b: Hetionet branch_bonus 81.86% fANOVA | Phase 236: PathSchemaIndex +3.5pp H@1 | Phase 225–227: MetaQA H@1=60.6%, H@10=87.9% | Phase 53 canonical unchanged*

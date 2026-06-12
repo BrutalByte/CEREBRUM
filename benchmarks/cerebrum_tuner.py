@@ -145,6 +145,7 @@ PARAM_SPACE_WEBQSP: dict = {
     "backward_bonus":         (0.05, 0.4),    # best=0.182; fANOVA #2 at 17.97%
     "diversity_alpha":        (0.3,  1.0),    # best=0.695; tightened around best
     "conditional_schema_bonus": (0.1, 0.8),  # Phase 247: structural r2 confirmation boost
+    "qa_sem_weight":            (0.0, 2.0),  # Phase 250: question↔answer embedding alignment
     # Phase 243: cvt_passthrough is a fixed True for WebQSP/Freebase (not tunable).
     # Ablation confirmed cvt_relay_boost (post-hoc compensation) consistently hurts;
     # cvt_passthrough (traversal-time collapsing) is the correct structural fix.

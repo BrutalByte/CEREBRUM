@@ -2,7 +2,41 @@
 
 **Training-Free Knowledge Graph Reasoning — Every Answer a Citable Graph Path**
 
-**Current Version:** v2.87.0 (Phase 247)
+**Current Version:** v2.88.0 (Phase 249)
+
+---
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Benchmarks](#benchmarks)
+  - [What the numbers mean](#what-the-numbers-mean-plain-language)
+  - [Accuracy vs the competition](#accuracy-vs-the-competition-3-hop-zero-training)
+  - [Full MetaQA results](#full-metaqa-results-full-pipeline-14274-questions-each)
+  - [WebQSP — Freebase 2-hop](#webqsp--freebase-2-hop-1628-test-questions)
+  - [Hyperparameter Sensitivity Analysis](#hyperparameter-sensitivity-analysis)
+  - [Cost comparison](#cost-comparison)
+- [Research — Novel Contributions](#research--novel-contributions)
+  - [Layer 1: The Reasoning Foundation](#layer-1-the-reasoning-foundation)
+  - [Layer 2: Structural Self-Organization](#layer-2-structural-self-organization)
+  - [Layer 3: Autonomous Discovery and Hypothesis](#layer-3-autonomous-discovery-and-hypothesis)
+  - [Layer 4: Predictive and Adaptive Reasoning](#layer-4-predictive-and-adaptive-reasoning)
+  - [Layer 5: Zero-Config Auto-Adaptation](#layer-5-zero-config-auto-adaptation)
+  - [Layer 6: Explainability and Production Safety](#layer-6-explainability-and-production-safety)
+  - [Layer 7: Principled Auto-Calibration and Cognitive Depth](#layer-7-principled-auto-calibration-and-cognitive-depth)
+  - [Research Summary](#research-summary)
+- [Install Variants](#install-variants)
+  - [cerebrum-kg-core — The Reasoning Engine](#pip-install-cerebrum-kg-core--the-reasoning-engine)
+  - [cerebrum-kg-studio — The Interactive UI](#pip-install-cerebrum-kg-studio--the-interactive-ui)
+  - [Quick-pick guide](#quick-pick-guide)
+- [Mathematical Foundations](#mathematical-foundations)
+- [Why CEREBRUM?](#why-cerebrum)
+- [Roadmap](#roadmap)
+- [Benchmark Results](#benchmark-results)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Autonomous Discovery & Automation](#autonomous-discovery--automation)
+- [References](#references)
 
 ---
 

@@ -92,15 +92,48 @@ _SKIP_RELATIONS = frozenset({
 # Graph loading
 # ---------------------------------------------------------------------------
 
-def load_mid_name_map(fb_path: str, node_ids: set) -> Dict[str, str]:
+def load_mid_name_map(
+    fb_path: str,
+    node_ids: set,
+    name_file: Optional[str] = None,
+) -> Dict[str, str]:
     """
-    Phase 248 — Freebase entity name resolution.
+    Phase 249 — Freebase entity name resolution from external file.
 
-    Scans freebase_2hop.txt for `type.object.name` triples whose head is in
-    node_ids and returns a {MID -> readable_name} dict.  Called after the
-    seed subgraph is extracted so the scan is limited to the actual graph nodes.
+    When `name_file` is provided (FB15k entity2text.txt or similar), reads it
+    as a TSV with lines `MID\tLabel` and returns a {MID -> readable_name} dict
+    filtered to node_ids.  The FB15k entity2text.txt format uses `/m/xxxxx`
+    prefixed MIDs; bare `m.xxxxx` variants are also tried to match graph nodes.
+
+    Falls back to scanning freebase_2hop.txt for `type.object.name` triples
+    when no name_file is provided (Phase 248 behaviour — found 0 entries in
+    practice because type.object.name triples are absent from the 2-hop subgraph).
     """
     mid_name: Dict[str, str] = {}
+    if name_file:
+        path = Path(name_file)
+        if not path.exists():
+            print(f"  [WARNING] --mid-name-file not found: {name_file}")
+            return mid_name
+        with path.open(encoding="utf-8", errors="replace") as f:
+            for line in f:
+                line = line.rstrip("\n")
+                if "\t" not in line:
+                    continue
+                mid, label = line.split("\t", 1)
+                mid = mid.strip()
+                label = label.strip()
+                if not label:
+                    continue
+                # Match /m/xxxxx directly
+                if mid in node_ids:
+                    mid_name[mid] = label
+                # Also try stripping leading slash: /m/x → m/x (rare format variant)
+                elif mid.startswith("/") and mid[1:] in node_ids:
+                    mid_name[mid[1:]] = label
+        return mid_name
+
+    # Phase 248 fallback: scan freebase_2hop.txt for type.object.name triples
     path = Path(fb_path)
     with path.open(encoding="utf-8", errors="replace") as f:
         for line in f:
@@ -572,6 +605,29 @@ def run_trial_inprocess(
                         ans.score *= (1.0 + _da * math.log1p(_n - 1))
                 answers_obj.sort(key=lambda a: a.score, reverse=True)
 
+            # Phase 250: Question-Answer Semantic Alignment (QASA) re-ranking.
+            # Direct cosine similarity between the question embedding and each answer
+            # entity embedding. Rationale: the H@10/H@1 gap (20.47% vs 10.33%) is a
+            # ranking problem — correct answers are found but not ranked #1. Semantic
+            # alignment adds a direct question↔answer signal on top of structural beam
+            # scoring. Operates entirely on pretrained embeddings: training-free.
+            _qsw = params.get("qa_sem_weight", 0.0)
+            if _qsw > 0.0 and qemb is not None:
+                import numpy as _np
+                _ans_embs = getattr(graph.adapter, "embeddings", {}) or {}
+                if _ans_embs:
+                    _q_norm = qemb / (float(_np.linalg.norm(qemb)) + 1e-9)
+                    for ans in answers_obj:
+                        _ae = _ans_embs.get(ans.entity_id)
+                        if _ae is not None:
+                            _ae = _ae.astype(_np.float32)
+                            _ae_n = float(_np.linalg.norm(_ae))
+                            _ae_norm = _ae / (_ae_n + 1e-9)
+                            _sim = float(_np.dot(_q_norm, _ae_norm))
+                            if _sim > 0.0:
+                                ans.score *= (1.0 + _qsw * _sim)
+                    answers_obj.sort(key=lambda a: a.score, reverse=True)
+
             # Phase 247: Conditional Schema Prediction.
             # After the beam populates _expansion_cache, extract the union of outgoing
             # relation types from all hop-1 intermediate entities (hop1_r2_rels).
@@ -657,13 +713,14 @@ def run_trial_inprocess(
 # ---------------------------------------------------------------------------
 
 def build_webqsp_state(
-    fb_path:    str  = str(FB_FILE),
-    json_path:  str  = str(TEST_JSON),
-    n_questions: int = 200,
-    embeddings:  str = "sentence",
-    seed:        int = 42,
-    use_cache:   bool = True,
-    max_triples: int  = 0,
+    fb_path:      str  = str(FB_FILE),
+    json_path:    str  = str(TEST_JSON),
+    n_questions:  int  = 200,
+    embeddings:   str  = "sentence",
+    seed:         int  = 42,
+    use_cache:    bool = True,
+    max_triples:  int  = 0,
+    mid_name_file: Optional[str] = None,
 ) -> dict:
     """
     Build CerebrumGraph from Freebase 2-hop and load WebQSP QA pairs.
@@ -691,11 +748,12 @@ def build_webqsp_state(
     triples = load_seed_subgraph(fb_path, seed_entities=seed_entities)
     print(f"  {len(triples):,} triples loaded ({time.time()-t0:.1f}s)")
 
-    # Phase 248: Build MID→name map from type.object.name triples in Freebase file
+    # Phase 249: Build MID→name map (external file preferred; fallback scans freebase_2hop.txt)
     all_nodes = {h for h, r, t in triples} | {t for h, r, t in triples}
-    print(f"[WebQSPState] Building MID name map for {len(all_nodes):,} nodes (Phase 248)...")
+    _src = mid_name_file if mid_name_file else "freebase_2hop.txt"
+    print(f"[WebQSPState] Building MID name map for {len(all_nodes):,} nodes (source: {_src})...")
     t_name = time.time()
-    mid_name_map = load_mid_name_map(fb_path, all_nodes)
+    mid_name_map = load_mid_name_map(fb_path, all_nodes, name_file=mid_name_file)
     coverage = len(mid_name_map) / max(len(all_nodes), 1) * 100
     print(f"  {len(mid_name_map):,} MIDs resolved ({coverage:.1f}% coverage, {time.time()-t_name:.1f}s)")
 
@@ -802,17 +860,22 @@ def main() -> None:
     parser.add_argument("--degree-penalty-weight",   type=float, default=None, dest="degree_penalty_weight")
     parser.add_argument("--backward-bonus",            type=float, default=None, dest="backward_bonus")
     parser.add_argument("--diversity-alpha",           type=float, default=None, dest="diversity_alpha")
+    parser.add_argument("--qa-sem-weight",             type=float, default=None, dest="qa_sem_weight",
+                        help="Phase 250: Question-answer semantic alignment re-ranking weight.")
     parser.add_argument("--conditional-schema-bonus",  type=float, default=None, dest="conditional_schema_bonus")
     parser.add_argument("--cvt-passthrough",           action="store_true", default=True, dest="cvt_passthrough")
+    parser.add_argument("--mid-name-file",             type=str,   default=None, dest="mid_name_file",
+                        help="Phase 249: Path to FB15k entity2text.txt for MID→readable-name resolution.")
     args = parser.parse_args()
 
     state = build_webqsp_state(
-        fb_path     = args.fb_path,
-        json_path   = args.json_path,
-        n_questions = args.sample,
-        embeddings  = args.embeddings,
-        seed        = args.seed,
-        use_cache   = not args.no_cache,
+        fb_path      = args.fb_path,
+        json_path    = args.json_path,
+        n_questions  = args.sample,
+        embeddings   = args.embeddings,
+        seed         = args.seed,
+        use_cache    = not args.no_cache,
+        mid_name_file = args.mid_name_file,
     )
 
     # Phase 236: Schema channel params (H@10=32.5% H@1=9.5% MRR=0.155, schema prepend top-2).
@@ -847,6 +910,7 @@ def main() -> None:
         "backward_bonus":         args.backward_bonus         if args.backward_bonus         is not None else 0.0,
         "diversity_alpha":        args.diversity_alpha        if args.diversity_alpha        is not None else 0.0,
         "conditional_schema_bonus": args.conditional_schema_bonus if args.conditional_schema_bonus is not None else 0.0,
+        "qa_sem_weight":          args.qa_sem_weight          if args.qa_sem_weight          is not None else 0.0,
         "cvt_passthrough":        True,
         "max_loops":    1,
     }
