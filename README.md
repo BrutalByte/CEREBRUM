@@ -2,7 +2,7 @@
 
 **Training-Free Knowledge Graph Reasoning — Every Answer a Citable Graph Path**
 
-**Current Version:** v2.88.0 (Phase 249)
+**Current Version:** v2.88.0 (Phase 249) &nbsp;|&nbsp; [📄 Read the Paper](https://github.com/BrutalByte/CEREBRUM/raw/main/arxiv_submission/paper_001.pdf)
 
 ---
 
