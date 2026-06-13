@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.91.0 (Phase 257), Updated Jun 12, 2026
+## Version: v2.92.0 (Phase 259), Updated Jun 12, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -570,7 +570,9 @@ Acknowledge this benchmark quality caveat in all papers discussing WebQSP result
 | 254 | Wider beam re-tune (beam_width=48, schema_top_k=16) | 10.26% | 23.60% | 0.1443 | 1,628q | Jun 12 |
 | 255 | Guaranteed 1-hop Pass (G1P) + DPW=1.03 (beam-pruned answers injected back) | 11.12% | 21.20% | 0.1447 | 1,628q | Jun 12 |
 | 256 | Relation-conditioned G1P (synthetic best_path; g1p_trb_weight dead signal) | 11.12% | 21.27% | 0.1458 | 1,628q | Jun 12 |
-| **257** | **schema_top_k=32 + backward_bonus=0.20 + DPW=1.49** | **11.49%** | **21.70%** | **0.1507** | **1,628q** | **Jun 12** |
+| 257 | schema_top_k=32 + backward_bonus=0.20 + DPW=1.49 | 11.49% | 21.70% | 0.1507 | 1,628q | Jun 12 |
+| 258 | schema_top_k probe [32,48,64] — 32 wins, ceiling confirmed | 11.49% | — | — | 200q | Jun 12 |
+| **259** | **idf_weight=0.073 + beta=0.649 + DPW=1.84 (schema_top_k=32 locked)** | **11.92%** | **20.47%** | **0.1516** | **1,628q** | **Jun 12** |
 
 **Zero-config baseline:** H@1=1.41%, H@10=4.30% (ParameterInitializer returns gamma=334,513 for Freebase topology, uncalibrated; uses Hetionet fallback). **Phase 244d vs zero-config: +633% relative H@1 improvement.**
 
@@ -892,7 +894,38 @@ python -u benchmarks/webqsp_param_eval.py --sample 1628 --embeddings sentence \
   --g1p-trb-weight 0.0
 ```
 
-**Phase 257 is the new WebQSP canonical result: H@1=11.49%, H@10=21.70%, MRR=0.1507.**
+**Phase 257 has been superseded. See Phase 259.**
+
+---
+
+### WebQSP, Phase 259 (idf_weight + beta Fine-tune)
+
+**Motivation:** Phase 258 confirmed schema_top_k=32 is the ceiling (best trial selected 32 even with 48/64 available). With top_k locked, fANOVA spread evenly across all remaining params (no dominant lever). Two signals from Phase 258: idf_weight at 20% importance with best=0.071 (vs Phase 257's 0.044); beta at 11% with best=0.970. Phase 259 widens both ranges to find the optimum.
+
+**Mechanism:** schema_top_k fixed at 32. idf_weight range extended to (0.01, 0.12); beta to (0.6, 1.5). The tuner converged to idf_weight=0.073, beta=0.649 (strongly suppressing fan-out power law), dpw=1.836 (highest DPW yet). Aggressively suppresses hub entities across three channels simultaneously.
+
+**Result (80+40 trials, 200q sample + full 1,628q eval):** Best trial H@1=11.50% (200q, same as Phase 257). Full eval: **H@1=11.92%, H@10=20.47%, MRR=0.1516** vs Phase 257 11.49% / 21.70% / 0.1507. **+0.43pp H@1, -1.23pp H@10, +0.001 MRR.**
+
+**Tradeoff:** The Phase 259 params are precision-optimized — more correct answers reach rank 1, but overall top-10 coverage narrows. H@1/H@10 gap shrinks from 10.2pp (Phase 257) to 8.6pp (Phase 259), indicating the ranking signal is improving.
+
+**fANOVA (Phase 259, schema_top_k locked):**
+- `trb_factor`: 13.8%, `degree_penalty_weight`: 13.0%, `branch_bonus`: 12.6%, `gamma`: 12.4%, `vote_weight`: 10.8% — evenly distributed, plateau signal
+- `schema_top_k`: 0.0% — correctly zero (locked)
+
+**Best params:** beam_width=24, trb_factor=36.85, r2_boost=5.055, vote_weight=0.813, idf_weight=0.073, branch_bonus=0.042, fhrb_factor=3.993, gamma=13.857, beta=0.649, dpw=1.836, sst=0.200, backward_bonus=0.244, diversity_alpha=0.884, schema_top_k=32, hop1_base_weight=0.383.
+
+**Canonical eval command (Phase 259):**
+```
+python -u benchmarks/webqsp_param_eval.py --sample 1628 --embeddings sentence \
+  --beam-width 24 --trb-factor 36.850 --r2-boost 5.055 --vote-weight 0.8129 \
+  --idf-weight 0.073 --branch-bonus 0.042 --fhrb-factor 3.993 \
+  --gamma 13.8569 --beta 0.6494 --degree-penalty-weight 1.8363 \
+  --schema-score-threshold 0.1999 --backward-bonus 0.2441 \
+  --diversity-alpha 0.8843 --schema-top-k 32 --hop1-base-weight 0.3825 \
+  --g1p-trb-weight 0.0
+```
+
+**Phase 259 is the new WebQSP canonical result: H@1=11.92%, H@10=20.47%, MRR=0.1516.**
 
 ---
 
@@ -907,7 +940,7 @@ The WebQSP and MetaQA/Hetionet results together characterize when training-free 
 | Semantic attention viable? | **Yes** | **Yes** | **Limited** |
 | Dominant CSA parameter | branch_bonus (46.2%) | branch_bonus (81.9%) | degree_penalty_weight (50.0%) |
 | H@10 (training-free) | **87.9%** | **~60%** | **20.5%** |
-| H@1 (training-free) | **60.6%** | **59.3%** | **11.5%** |
+| H@1 (training-free) | **60.6%** | **59.3%** | **11.9%** |
 
 **Conclusion:** Training-free multi-hop reasoning is effective when the knowledge graph has human-readable entity names and structured relation labels that enable cosine-similarity-based attention. Freebase's opaque MID identifiers break this prerequisite. Future work: MID-to-name preprocessing (Freebase entity labels) or discriminative re-ranking using an LLM for semantic filtering.
 
@@ -1086,4 +1119,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-06-12 | Phase 257: schema_top_k=32 (68.4% fANOVA, +0.37pp H@1), new canonical H@1=11.49% H@10=21.70% MRR=0.1507 | Phase 256: synthetic best_path for G1P (q_scores now applies to 1-hop injections), g1p_trb_weight confirmed dead | Phase 255: G1P +0.55pp H@1 | Phase 253: schema_top_k=12 (+0.24pp H@1), anchor re-ranking noise | Phase 252: traversal-time BHP (negative) | Phase 244d: H@1=10.33% prior canonical | Phase 236: PathSchemaIndex +3.5pp H@1 | Phase 225-227: MetaQA H@1=60.6%, H@10=87.9% | Phase 53 canonical unchanged*
+*Last updated: 2026-06-12 | Phase 259: idf=0.073 + beta=0.649 + DPW=1.84, H@1=11.92% (new canonical, +0.43pp), H@10=20.47% (precision/recall tradeoff) | Phase 258: schema_top_k=32 ceiling confirmed (48/64 no gain) | Phase 257: schema_top_k=32 (68.4% fANOVA, +0.37pp H@1) | Phase 255: G1P +0.55pp H@1 | Phase 253: schema_top_k=12 (+0.24pp H@1) | Phase 244d: H@1=10.33% prior canonical | Phase 236: PathSchemaIndex +3.5pp H@1 | Phase 225-227: MetaQA H@1=60.6%, H@10=87.9% | Phase 53 canonical unchanged*

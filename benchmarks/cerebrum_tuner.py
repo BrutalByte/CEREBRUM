@@ -318,6 +318,52 @@ PARAM_SPACE_WEBQSP_257: dict = {
     "hop1_base_weight":       (0.3,  1.0),    # 255 best=0.631
 }
 
+# Phase 258: schema_top_k upper bound probe [32, 48, 64].
+# Phase 257 found schema_top_k=32 at 68.4% fANOVA — the dominant signal.
+# This run finds the diminishing-returns ceiling: does 48 or 64 continue to
+# improve, or does the extra schema noise start hurting precision?
+# All other params tightened around Phase 257 best values.
+PARAM_SPACE_WEBQSP_258: dict = {
+    "trb_factor":             (32.0, 52.0),   # 257 best=41.624
+    "r2_boost":               (2.5,  6.0),    # 257 best=4.788
+    "vote_weight":            (0.80, 0.97),   # 257 best=0.8901
+    "beam_width":             [16, 24],        # 257 best=24
+    "idf_weight":             (0.0,  0.08),   # 257 best=0.044
+    "branch_bonus":           (0.01, 0.12),   # 257 best=0.059
+    "fhrb_factor":            (2.0,  4.0),    # 257 best=3.358
+    "gamma":                  (7.0,  14.0),   # 257 best=10.897
+    "beta":                   (0.7,  1.4),    # 257 best=1.022
+    "schema_score_threshold": (0.10, 0.55),   # 257 best=0.308
+    "degree_penalty_weight":  (0.7,  2.0),    # 257 best=1.486; wider — higher top_k may need more suppression
+    "backward_bonus":         (0.05, 0.60),   # 257 best=0.203
+    "diversity_alpha":        (0.3,  1.0),    # 257 best=0.526
+    "schema_top_k":           [32, 48, 64],   # Phase 258 KEY: find diminishing-returns ceiling
+    "hop1_base_weight":       (0.3,  0.8),    # 257 best=0.495
+}
+
+# Phase 259: idf_weight + beta fine-tune with schema_top_k=32 locked.
+# Phase 258 confirmed 32 is the schema_top_k ceiling.  Two new signals emerged:
+#   idf_weight: 20% fANOVA importance — 257 best=0.044, 258 best=0.071 (widening needed)
+#   beta: 11% fANOVA importance — fan-out exponent, 257 best=1.02, 258 best=0.97
+# schema_top_k fixed at 32; wider idf_weight and beta bounds; other params tightened.
+PARAM_SPACE_WEBQSP_259: dict = {
+    "trb_factor":             (32.0, 52.0),   # 257 best=41.624
+    "r2_boost":               (2.5,  6.0),    # 257 best=4.788
+    "vote_weight":            (0.80, 0.97),   # 257 best=0.8901
+    "beam_width":             [16, 24],        # 257 best=24
+    "idf_weight":             (0.01, 0.12),   # Phase 259 KEY: wider — 257=0.044, 258=0.071
+    "branch_bonus":           (0.01, 0.15),   # 257 best=0.059
+    "fhrb_factor":            (2.0,  4.0),    # 257 best=3.358
+    "gamma":                  (7.0,  14.0),   # 257 best=10.897
+    "beta":                   (0.6,  1.5),    # Phase 259 KEY: wider — 257=1.02, 258=0.97
+    "schema_score_threshold": (0.10, 0.45),   # 257 best=0.308
+    "degree_penalty_weight":  (0.7,  2.0),    # 257 best=1.486
+    "backward_bonus":         (0.05, 0.60),   # 257 best=0.203
+    "diversity_alpha":        (0.3,  1.0),    # 257 best=0.526
+    "schema_top_k":           [32],           # locked — confirmed ceiling
+    "hop1_base_weight":       (0.3,  0.8),    # 257 best=0.495
+}
+
 # Float param names (excludes categorical beam_width)
 _FLOAT_PARAMS = tuple(k for k, v in PARAM_SPACE_WIDE.items() if not isinstance(v, list))
 
@@ -857,7 +903,7 @@ def _run_eval_logged(
         })
         return h1, h10, mrr, elapsed
 
-    if dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257") and _webqsp_state is not None:
+    if dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257", "webqsp258", "webqsp259") and _webqsp_state is not None:
         from webqsp_param_eval import run_trial_inprocess
         t0 = time.time()
         try:
@@ -898,7 +944,7 @@ def _run_eval_logged(
         })
         return h1, h10, mrr, elapsed
 
-    if dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257"):
+    if dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257", "webqsp258", "webqsp259"):
         n_questions = kwargs.get("sample", 200)
         cmd = [
             sys.executable, "-u", str(_WEBQSP_EVAL_SCRIPT),
@@ -1154,6 +1200,10 @@ def run_tuner(
         _param_space = PARAM_SPACE_WEBQSP_256
     elif dataset == "webqsp257":
         _param_space = PARAM_SPACE_WEBQSP_257
+    elif dataset == "webqsp258":
+        _param_space = PARAM_SPACE_WEBQSP_258
+    elif dataset == "webqsp259":
+        _param_space = PARAM_SPACE_WEBQSP_259
     else:
         _param_space = PARAM_SPACE_WIDE
 
@@ -1187,7 +1237,7 @@ def run_tuner(
             max_edges   = max_edges,
             embeddings  = embeddings,
         )
-    elif dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257"):
+    elif dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257", "webqsp258", "webqsp259"):
         _init_webqsp_state(n_questions=sample, embeddings=embeddings)
 
     # ── log file setup ────────────────────────────────────────────────────
@@ -1433,7 +1483,7 @@ def run_tuner(
             f"python -u benchmarks/conceptnet_eval.py "
             f"--cn5 {cn5_path} --n-questions 2000 --embeddings {embeddings} {_param_flags}"
         )
-    elif dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257"):
+    elif dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257", "webqsp258", "webqsp259"):
         canonical = (
             f"python -u benchmarks/webqsp_param_eval.py "
             f"--sample 1628 --embeddings {embeddings} {_param_flags}"
@@ -1573,7 +1623,7 @@ def main() -> None:
         help="KB triples file for --param-init (default: benchmarks/data/metaqa/kb.txt).",
     )
     parser.add_argument(
-        "--dataset", choices=["metaqa", "hetionet", "conceptnet", "webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257"], default="metaqa", dest="dataset",
+        "--dataset", choices=["metaqa", "hetionet", "conceptnet", "webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257", "webqsp258", "webqsp259"], default="metaqa", dest="dataset",
         help="KB to tune against. 'hetionet' uses PARAM_SPACE_HETIONET; "
              "'conceptnet' uses PARAM_SPACE_CONCEPTNET (requires --cn5-file); "
              "'webqsp' uses PARAM_SPACE_WEBQSP; "
