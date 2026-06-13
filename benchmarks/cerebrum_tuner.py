@@ -364,6 +364,26 @@ PARAM_SPACE_WEBQSP_259: dict = {
     "hop1_base_weight":       (0.3,  0.8),    # 257 best=0.495
 }
 
+PARAM_SPACE_WEBQSP_260: dict = {
+    # Phase 260 — same scoring params as 259, but MID entity names now active.
+    # idf/beta/DPW may shift once semantic attention fires on resolved entities.
+    "trb_factor":             (32.0, 52.0),   # 259 best=41.624
+    "r2_boost":               (2.5,  6.0),    # 259 best=4.788
+    "vote_weight":            (0.80, 0.97),   # 259 best=0.8901
+    "beam_width":             [16, 24],        # 259 best=24
+    "idf_weight":             (0.01, 0.12),   # 259 best=0.073 — may shift with names
+    "branch_bonus":           (0.01, 0.15),   # 259 best=0.059
+    "fhrb_factor":            (2.0,  4.0),    # 259 best=3.358
+    "gamma":                  (7.0,  14.0),   # 259 best=10.897
+    "beta":                   (0.4,  1.2),    # 259 best=0.649 — widen: names affect fan-out scoring
+    "schema_score_threshold": (0.10, 0.45),   # 259 best=0.308
+    "degree_penalty_weight":  (0.7,  2.5),    # 259 best=1.836 — widen up: names may amplify hub suppression
+    "backward_bonus":         (0.05, 0.60),   # 259 best=0.203
+    "diversity_alpha":        (0.3,  1.0),    # 259 best=0.526
+    "schema_top_k":           [32],           # locked ceiling
+    "hop1_base_weight":       (0.3,  0.8),    # 259 best=0.495
+}
+
 # Float param names (excludes categorical beam_width)
 _FLOAT_PARAMS = tuple(k for k, v in PARAM_SPACE_WIDE.items() if not isinstance(v, list))
 
@@ -834,8 +854,9 @@ def _init_conceptnet_state(
 
 
 def _init_webqsp_state(
-    n_questions: int = 200,
-    embeddings:  str = "random",
+    n_questions:   int = 200,
+    embeddings:    str = "random",
+    mid_name_file: Optional[str] = None,
 ) -> None:
     """Build WebQSP graph + QA pairs once; stored in _webqsp_state for in-process trials."""
     global _webqsp_state
@@ -843,10 +864,11 @@ def _init_webqsp_state(
         return
     from webqsp_param_eval import build_webqsp_state
     _webqsp_state = build_webqsp_state(
-        n_questions = n_questions,
-        embeddings  = embeddings,
-        seed        = 42,
-        use_cache   = True,
+        n_questions   = n_questions,
+        embeddings    = embeddings,
+        seed          = 42,
+        use_cache     = True,
+        mid_name_file = mid_name_file,
     )
 
 
@@ -903,7 +925,7 @@ def _run_eval_logged(
         })
         return h1, h10, mrr, elapsed
 
-    if dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257", "webqsp258", "webqsp259") and _webqsp_state is not None:
+    if dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257", "webqsp258", "webqsp259", "webqsp260") and _webqsp_state is not None:
         from webqsp_param_eval import run_trial_inprocess
         t0 = time.time()
         try:
@@ -1150,6 +1172,7 @@ def run_tuner(
     embeddings:    str            = "sentence",
     cn5_path:      str            = "",
     max_edges:     int            = 200_000,
+    mid_name_file: Optional[str]  = None,
 ) -> Optional[TrialRecord]:
     """
     Two-phase hyperparameter search.
@@ -1204,6 +1227,8 @@ def run_tuner(
         _param_space = PARAM_SPACE_WEBQSP_258
     elif dataset == "webqsp259":
         _param_space = PARAM_SPACE_WEBQSP_259
+    elif dataset == "webqsp260":
+        _param_space = PARAM_SPACE_WEBQSP_260
     else:
         _param_space = PARAM_SPACE_WIDE
 
@@ -1237,8 +1262,8 @@ def run_tuner(
             max_edges   = max_edges,
             embeddings  = embeddings,
         )
-    elif dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257", "webqsp258", "webqsp259"):
-        _init_webqsp_state(n_questions=sample, embeddings=embeddings)
+    elif dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257", "webqsp258", "webqsp259", "webqsp260"):
+        _init_webqsp_state(n_questions=sample, embeddings=embeddings, mid_name_file=mid_name_file)
 
     # ── log file setup ────────────────────────────────────────────────────
     run_id   = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
@@ -1488,6 +1513,12 @@ def run_tuner(
             f"python -u benchmarks/webqsp_param_eval.py "
             f"--sample 1628 --embeddings {embeddings} {_param_flags}"
         )
+    elif dataset == "webqsp260":
+        _mnf = f"--mid-name-file {mid_name_file} " if mid_name_file else ""
+        canonical = (
+            f"python -u benchmarks/webqsp_param_eval.py "
+            f"--sample 1628 --embeddings {embeddings} {_mnf}{_param_flags}"
+        )
     else:
         canonical = (
             f"python -u benchmarks/metaqa_eval.py --hop 3 --embeddings {embeddings} "
@@ -1623,7 +1654,7 @@ def main() -> None:
         help="KB triples file for --param-init (default: benchmarks/data/metaqa/kb.txt).",
     )
     parser.add_argument(
-        "--dataset", choices=["metaqa", "hetionet", "conceptnet", "webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257", "webqsp258", "webqsp259"], default="metaqa", dest="dataset",
+        "--dataset", choices=["metaqa", "hetionet", "conceptnet", "webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257", "webqsp258", "webqsp259", "webqsp260"], default="metaqa", dest="dataset",
         help="KB to tune against. 'hetionet' uses PARAM_SPACE_HETIONET; "
              "'conceptnet' uses PARAM_SPACE_CONCEPTNET (requires --cn5-file); "
              "'webqsp' uses PARAM_SPACE_WEBQSP; "
@@ -1640,6 +1671,10 @@ def main() -> None:
     parser.add_argument(
         "--max-edges", type=int, default=200_000, dest="max_edges",
         help="Maximum ConceptNet edges to load (default: 200,000).",
+    )
+    parser.add_argument(
+        "--mid-name-file", type=str, default=None, dest="mid_name_file",
+        help="Phase 260: Path to mid_to_name.tsv (MID→readable-name) built by build_mid_name_map.py.",
     )
     parser.add_argument(
         "--embeddings", choices=["sentence", "random"], default="sentence",
@@ -1667,6 +1702,7 @@ def main() -> None:
         embeddings=args.embeddings,
         cn5_path=args.cn5_path,
         max_edges=args.max_edges,
+        mid_name_file=args.mid_name_file,
     )
 
 
