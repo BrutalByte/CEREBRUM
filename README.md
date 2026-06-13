@@ -147,15 +147,16 @@ Zero training data. Zero hardcoded relation names. Zero hallucinations.
 
 WebQSP is the standard benchmark for 2-hop Freebase KGQA. The graph contains 3.79M entity-name triples from the Freebase open-world KB, 989 distinct relation types, typed-heterogeneous regime.
 
-**Phase 244d result (1,628 questions, full evaluation):** H@1=**10.33%**, H@10=**20.47%**, MRR=0.1347, zero training data. Zero-config baseline: H@1=1.41% (+633% relative improvement).
+**Phase 259 result (1,628 questions, full evaluation):** H@1=**11.92%**, H@10=**20.47%**, MRR=0.1516, zero training data. Zero-config baseline: H@1=1.41% (+746% relative improvement).
 
 Key architectural milestones:
 - **Phase 243**: `cvt_passthrough` wires compound CVT edge scoring into traversal
-- **Phase 246**: Additive CVT, compound edges + normal traversal in parallel (top-5 CVT expansion cap). This nearly doubled both H@1 and H@10 vs replacement-only CVT.
-- **Phase 245**: Backward verification pass, bidirectional path confirmation (fANOVA #2 at 17.97%)
-- **Phase 246**: Path diversity re-ranker, multi-path convergence scoring
+- **Phase 246**: Additive CVT, compound edges + normal traversal in parallel. Nearly doubled both H@1 and H@10 vs replacement-only CVT.
+- **Phase 255**: Guaranteed 1-hop Pass (G1P) — enumerates all direct 1-hop neighbors post-beam, injecting beam-pruned answers back into the candidate pool
+- **Phase 257**: `schema_top_k=32` — PathSchemaIndex predicts 32 (r1,r2) 2-hop schemas per question (68.4% fANOVA dominance)
+- **Phase 259**: idf_weight=0.073 + beta=0.649 + DPW=1.836 — three simultaneous hub-suppression channels at maximum strength
 
-**Why WebQSP is hard for training-free systems:** Freebase uses CVT (compound-value-type) mediator nodes with opaque MID identifiers. These intermediate nodes break semantic attention on indirect 2-hop paths. The additive CVT approach (Phase 246) resolves this: compound CVT-collapsed edges are added alongside normal traversal paths, so the beam scores CVT-mediated answers against named entities while retaining full 2-hop coverage for non-CVT paths.
+**Why WebQSP is hard for training-free systems:** Freebase uses CVT (compound-value-type) mediator nodes with opaque MID identifiers that break semantic attention on indirect 2-hop paths. The hop-reachability diagnostic (Phase 253d) showed 43.5% of beam misses are direct 1-hop neighbors pruned by beam_width scoring — the G1P mechanism (Phase 255) targets this entire population.
 
 ---
 
@@ -703,17 +704,17 @@ Per-template: `disease_associates_gene` 100% · `gene_participates_pathway` 98.5
 
 ### WebQSP: 1,298,304 entities / 2,752,238 edges (Freebase 2-hop subgraph)
 
-1,628 test questions (full evaluation). Phase 244d result.
+1,628 test questions (full evaluation). Phase 259 result.
 
 | Variant | Hits@1 | Hits@10 | MRR |
 |---------|--------|---------|-----|
 | Zero-config baseline | 1.41% | 4.30% | — |
-| **CEREBRUM v2.87.0 (Phase 244d, full pipeline)** | **10.33%** | **20.47%** | **0.1347** |
+| **CEREBRUM v2.92.0 (Phase 259, full pipeline)** | **11.92%** | **20.47%** | **0.1516** |
 | NSM (trained)† | 74% | — | — |
 
 † **Black-box model**, supervised neural network trained on labeled WebQSP QA pairs. No traceable reasoning path; can produce confident wrong answers (hallucinate) with no self-indication of error.
 
-WebQSP over Freebase is hard for zero-training systems due to CVT mediator nodes with opaque MID identifiers that break semantic attention on indirect paths. ~60% of failures are CVT disambiguation; ~25% are hub-entity score plateau from high-degree Freebase entities. The zero-config→Phase 244d gain (+633% relative H@1) comes entirely from structural tuning with no labeled training data.
+WebQSP over Freebase is hard for zero-training systems due to CVT mediator nodes with opaque MID identifiers that break semantic attention on indirect paths. The zero-config→Phase 259 gain (+746% relative H@1) comes entirely from structural tuning — G1P (Phase 255), PathSchemaIndex schema_top_k=32 (Phase 257), and triple hub-suppression (Phase 259) — with no labeled training data.
 
 ### IKGWQ, Incomplete KG Graceful Degradation (Phase 44 pilot, 5 incompleteness levels)
 

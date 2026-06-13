@@ -540,7 +540,7 @@
     </div>
 
     <!-- Bridge to benchmarks -->
-    <p class="text-center text-slate-600 text-sm mt-10">The accuracy numbers — 60.6% H@1 on MetaQA 3-hop, 95.7% on Hetionet, 10.33% on WebQSP — are evidence for the above claims, not the claims themselves. <a href="#benchmarks" class="text-indigo/70 hover:text-indigo underline decoration-dotted">See benchmarks ↓</a></p>
+    <p class="text-center text-slate-600 text-sm mt-10">The accuracy numbers — 60.6% H@1 on MetaQA 3-hop, 95.7% on Hetionet, 11.92% on WebQSP — are evidence for the above claims, not the claims themselves. <a href="#benchmarks" class="text-indigo/70 hover:text-indigo underline decoration-dotted">See benchmarks ↓</a></p>
 
   </div>
 </section>
@@ -1092,12 +1092,12 @@
     <div class="card p-6 md:p-8 mb-6">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <h3 class="text-lg font-semibold text-white">WebQSP — Freebase 2-hop</h3>
-        <span class="text-xs px-2 py-0.5 rounded-full bg-emerald/20 text-emerald border border-emerald/30">Phase 244d · Full 1,628q</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-emerald/20 text-emerald border border-emerald/30">Phase 259 · Full 1,628q</span>
       </div>
       <!-- Stat row -->
       <div class="grid grid-cols-3 gap-3 mb-4">
         <div class="p-3 rounded-lg bg-slate-800/60 border border-border text-center">
-          <div class="font-mono text-2xl font-bold text-white">10.33%</div>
+          <div class="font-mono text-2xl font-bold text-white">11.92%</div>
           <div class="text-xs text-slate-400 mt-1">H@1</div>
         </div>
         <div class="p-3 rounded-lg bg-slate-800/60 border border-border text-center">
@@ -1105,7 +1105,7 @@
           <div class="text-xs text-slate-400 mt-1">H@10</div>
         </div>
         <div class="p-3 rounded-lg bg-slate-800/60 border border-border text-center">
-          <div class="font-mono text-2xl font-bold text-white">0.1347</div>
+          <div class="font-mono text-2xl font-bold text-white">0.1516</div>
           <div class="text-xs text-slate-400 mt-1">MRR</div>
         </div>
       </div>
@@ -1129,20 +1129,36 @@
           <span class="text-xs text-slate-600 hidden md:block">+PathSchemaIndex (pre-traversal schema prediction)</span>
         </div>
         <div class="flex items-center gap-3">
-          <span class="font-mono text-xs text-indigo w-20 shrink-0">Ph 244d</span>
+          <span class="font-mono text-xs text-slate-600 w-20 shrink-0">Ph 244d</span>
           <div class="flex-1 h-4 bg-surface rounded overflow-hidden border border-border">
-            <div class="h-full rounded bg-indigo" style="width:10.33%"></div>
+            <div class="h-full rounded bg-indigo/60" style="width:10.33%"></div>
           </div>
-          <span class="font-mono text-xs text-white w-14 text-right shrink-0">10.33%</span>
-          <span class="text-xs text-slate-500 hidden md:block">+additive CVT · backward verification · path diversity</span>
+          <span class="font-mono text-xs text-slate-400 w-14 text-right shrink-0">10.33%</span>
+          <span class="text-xs text-slate-600 hidden md:block">+additive CVT · backward verification · path diversity</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="font-mono text-xs text-slate-600 w-20 shrink-0">Ph 255</span>
+          <div class="flex-1 h-4 bg-surface rounded overflow-hidden border border-border">
+            <div class="h-full rounded bg-indigo/75" style="width:11.12%"></div>
+          </div>
+          <span class="font-mono text-xs text-slate-400 w-14 text-right shrink-0">11.12%</span>
+          <span class="text-xs text-slate-600 hidden md:block">+G1P (Guaranteed 1-hop Pass)</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="font-mono text-xs text-indigo w-20 shrink-0">Ph 259</span>
+          <div class="flex-1 h-4 bg-surface rounded overflow-hidden border border-border">
+            <div class="h-full rounded bg-indigo" style="width:11.92%"></div>
+          </div>
+          <span class="font-mono text-xs text-white w-14 text-right shrink-0">11.92%</span>
+          <span class="text-xs text-slate-500 hidden md:block">+schema_top_k=32 · idf+beta+DPW tightening</span>
         </div>
       </div>
       <div class="p-4 rounded-lg bg-slate-800/60 border border-border">
         <p class="text-sm text-slate-300 leading-relaxed">
-          <span class="text-indigo font-semibold">+633% vs zero-config baseline</span> (H@1: 1.41% → 10.33%). Full 1,628-question evaluation.
+          <span class="text-indigo font-semibold">+746% vs zero-config baseline</span> (H@1: 1.41% → 11.92%). Full 1,628-question evaluation.
         </p>
         <p class="text-sm text-slate-400 mt-2 leading-relaxed">
-          <span class="text-indigo font-semibold">Why WebQSP is harder:</span> Freebase uses opaque MID identifiers and CVT mediator nodes that reduce semantic attention signal. The dominant tuning parameter on WebQSP is <code>degree_penalty_weight</code> (50% fANOVA importance) — hub-entity suppression rather than the multi-path convergence signal that drives MetaQA and Hetionet. The H@10=20.47% ceiling reflects that the beam does retrieve the correct answer ~1 in 5 queries; the gap to supervised methods is a ranking challenge, not a retrieval failure.
+          <span class="text-indigo font-semibold">Why WebQSP is harder:</span> Freebase uses opaque MID identifiers and CVT mediator nodes that reduce semantic attention signal. Hop-reachability analysis showed 43.5% of beam misses are direct 1-hop neighbors pruned by beam_width scoring — the Guaranteed 1-hop Pass (G1P, Phase 255) targets this population. PathSchemaIndex schema_top_k=32 (Phase 257, 68.4% fANOVA) provides additional 2-hop coverage. The remaining gap to supervised methods is a ranking challenge on opaque MIDs.
         </p>
       </div>
     </div>
