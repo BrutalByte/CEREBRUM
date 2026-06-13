@@ -1,5 +1,5 @@
 # CEREBRUM Canonical Benchmark Reference
-## Version: v2.90.0 (Phase 255), Updated Jun 12, 2026
+## Version: v2.91.0 (Phase 257), Updated Jun 12, 2026
 
 **This file is the single authoritative source for all benchmark numbers used in publications.**
 All papers, README, and documentation must reference ONLY the numbers defined here.
@@ -568,7 +568,9 @@ Acknowledge this benchmark quality caveat in all papers discussing WebQSP result
 | 244d | +backward verification + path diversity re-ranker (100-trial tuner) | 10.33% | 20.47% | 0.1347 | 1,628q | Jun 10 |
 | 253 | schema_top_k=12 (PathSchemaIndex expansion + anchor-score re-ranking study) | 10.57% | 20.53% | 0.1389 | 1,628q | Jun 12 |
 | 254 | Wider beam re-tune (beam_width=48, schema_top_k=16) | 10.26% | 23.60% | 0.1443 | 1,628q | Jun 12 |
-| **255** | **Guaranteed 1-hop Pass (G1P) + DPW=1.03 (beam-pruned answers injected back)** | **11.12%** | **21.20%** | **0.1447** | **1,628q** | **Jun 12** |
+| 255 | Guaranteed 1-hop Pass (G1P) + DPW=1.03 (beam-pruned answers injected back) | 11.12% | 21.20% | 0.1447 | 1,628q | Jun 12 |
+| 256 | Relation-conditioned G1P (synthetic best_path; g1p_trb_weight dead signal) | 11.12% | 21.27% | 0.1458 | 1,628q | Jun 12 |
+| **257** | **schema_top_k=32 + backward_bonus=0.20 + DPW=1.49** | **11.49%** | **21.70%** | **0.1507** | **1,628q** | **Jun 12** |
 
 **Zero-config baseline:** H@1=1.41%, H@10=4.30% (ParameterInitializer returns gamma=334,513 for Freebase topology, uncalibrated; uses Hetionet fallback). **Phase 244d vs zero-config: +633% relative H@1 improvement.**
 
@@ -857,7 +859,40 @@ python -u benchmarks/webqsp_param_eval.py --sample 1628 --embeddings sentence \
   --diversity-alpha 0.8714 --schema-top-k 16 --hop1-base-weight 0.6307
 ```
 
-**Phase 255 is the new WebQSP canonical result: H@1=11.12%, H@10=21.20%, MRR=0.1447.**
+**Phase 255 has been superseded. See Phase 257.**
+
+---
+
+### WebQSP, Phase 257 (schema_top_k Escalation)
+
+**Motivation:** fANOVA across Phases 255–256 showed `schema_top_k` at 28–43% importance with the search capped at 16. Phase 257 tests whether more schema predictions provide meaningful additional 2-hop coverage.
+
+**Mechanism:** Expand `schema_top_k` search space to [16, 24, 32]. The PathSchemaIndex predicts (r1, r2) 2-hop path schemas from the question embedding; more predictions means more structurally applicable schemas are executed. Phase 256 also wired a synthetic `best_path` into G1P injections so that downstream `q_scores` (question-keyword relation matching) applies to injected 1-hop candidates. `g1p_trb_weight` was confirmed dead (1.5% importance) and dropped.
+
+**Result (80+40 trials, 200q sample + full 1,628q eval):** Best trial H@1=11.50% (200q, schema_top_k=32). Full eval: **H@1=11.49%, H@10=21.70%, MRR=0.1507** vs Phase 255 11.12% / 21.20% / 0.1447. **+0.37pp H@1, +0.50pp H@10, +0.006 MRR.**
+
+**fANOVA (Phase 257):**
+- `schema_top_k`: **68.4%** — exploded from 28–43% once 32 was included; dominant by far
+- `idf_weight`: 6.0%
+- `vote_weight`: 5.8%
+- `gamma`: 4.6%
+- `backward_bonus`: 2.0% (best value 0.203, 2.6× higher than Phase 255's 0.077)
+- `degree_penalty_weight`: 1.1% (best 1.486, up from Phase 255's 1.029)
+
+**Best params:** beam_width=24, trb_factor=41.6, r2_boost=4.79, vote_weight=0.890, idf_weight=0.044, fhrb_factor=3.36, gamma=10.90, beta=1.02, dpw=1.486, sst=0.308, backward_bonus=0.203, diversity_alpha=0.526, schema_top_k=32, hop1_base_weight=0.495.
+
+**Canonical eval command (Phase 257):**
+```
+python -u benchmarks/webqsp_param_eval.py --sample 1628 --embeddings sentence \
+  --beam-width 24 --trb-factor 41.624 --r2-boost 4.788 --vote-weight 0.8901 \
+  --idf-weight 0.044 --branch-bonus 0.059 --fhrb-factor 3.358 \
+  --gamma 10.8971 --beta 1.0223 --degree-penalty-weight 1.4859 \
+  --schema-score-threshold 0.3083 --backward-bonus 0.2026 \
+  --diversity-alpha 0.5260 --schema-top-k 32 --hop1-base-weight 0.4946 \
+  --g1p-trb-weight 0.0
+```
+
+**Phase 257 is the new WebQSP canonical result: H@1=11.49%, H@10=21.70%, MRR=0.1507.**
 
 ---
 
@@ -872,7 +907,7 @@ The WebQSP and MetaQA/Hetionet results together characterize when training-free 
 | Semantic attention viable? | **Yes** | **Yes** | **Limited** |
 | Dominant CSA parameter | branch_bonus (46.2%) | branch_bonus (81.9%) | degree_penalty_weight (50.0%) |
 | H@10 (training-free) | **87.9%** | **~60%** | **20.5%** |
-| H@1 (training-free) | **60.6%** | **59.3%** | **11.1%** |
+| H@1 (training-free) | **60.6%** | **59.3%** | **11.5%** |
 
 **Conclusion:** Training-free multi-hop reasoning is effective when the knowledge graph has human-readable entity names and structured relation labels that enable cosine-similarity-based attention. Freebase's opaque MID identifiers break this prerequisite. Future work: MID-to-name preprocessing (Freebase entity labels) or discriminative re-ranking using an LLM for semantic filtering.
 
@@ -1051,4 +1086,4 @@ All papers after Phase 1 that reference the TSC temperature schedule should use 
 
 ---
 
-*Last updated: 2026-06-12 | Phase 253: schema_top_k=12 (+0.24pp H@1), anchor re-ranking noise (0.1% fANOVA), new canonical H@1=10.57% H@10=20.53% | Phase 252: traversal-time BHP (negative), -0.56pp H@1 | Phase 251: focused DPW sweep (negative), plateau confirmed | Phase 250: QASA re-ranking (negative), qa_sem_weight 4.2% fANOVA | Phase 249: FB15k entity labels (negative) | Phase 247: conditional schema (negative) | Phase 244d: H@1=10.33% prior canonical | Phase 236: PathSchemaIndex +3.5pp H@1 | Phase 225-227: MetaQA H@1=60.6%, H@10=87.9% | Phase 53 canonical unchanged*
+*Last updated: 2026-06-12 | Phase 257: schema_top_k=32 (68.4% fANOVA, +0.37pp H@1), new canonical H@1=11.49% H@10=21.70% MRR=0.1507 | Phase 256: synthetic best_path for G1P (q_scores now applies to 1-hop injections), g1p_trb_weight confirmed dead | Phase 255: G1P +0.55pp H@1 | Phase 253: schema_top_k=12 (+0.24pp H@1), anchor re-ranking noise | Phase 252: traversal-time BHP (negative) | Phase 244d: H@1=10.33% prior canonical | Phase 236: PathSchemaIndex +3.5pp H@1 | Phase 225-227: MetaQA H@1=60.6%, H@10=87.9% | Phase 53 canonical unchanged*

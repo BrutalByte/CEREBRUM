@@ -269,6 +269,55 @@ PARAM_SPACE_WEBQSP_255: dict = {
     "hop1_base_weight":       (0.0,  1.0),    # Phase 255 NEW: G1P injection score fraction
 }
 
+# Phase 256: Relation-conditioned G1P scoring.
+# G1P currently injects all 1-hop neighbors at a flat min_score*hop1_base_weight.
+# g1p_trb_weight applies trb_map[relation] to each injection so answer-bearing
+# relations score higher than hub relations.  Synthetic best_path also routes
+# question-keyword q_scores through the injection for downstream post-processing.
+PARAM_SPACE_WEBQSP_256: dict = {
+    "trb_factor":             (30.0, 55.0),   # 255 best=39.741
+    "r2_boost":               (2.0,  6.0),    # 255 best=3.559
+    "vote_weight":            (0.78, 0.98),   # 255 best=0.8806
+    "beam_width":             [16, 24],
+    "idf_weight":             (0.0,  0.08),   # 255 best=0.018
+    "branch_bonus":           (0.01, 0.12),   # 255 best=0.064
+    "fhrb_factor":            (1.5,  3.5),    # 255 best=2.509
+    "gamma":                  (5.0,  12.0),   # 255 best=6.989
+    "beta":                   (0.7,  1.4),    # 255 best=0.954
+    "schema_score_threshold": (0.15, 0.60),   # 255 best=0.290
+    "degree_penalty_weight":  (0.5,  1.5),    # 255 best=1.029
+    "backward_bonus":         (0.04, 0.35),   # 255 best=0.077
+    "diversity_alpha":        (0.5,  1.2),    # 255 best=0.871
+    "schema_top_k":           [12, 16],
+    "hop1_base_weight":       (0.3,  1.0),    # 255 best=0.631; narrow to useful range
+    "g1p_trb_weight":         (0.0,  5.0),    # Phase 256 NEW: TRB weight for G1P injections
+}
+
+# Phase 257: schema_top_k escalation + backward_bonus headroom.
+# fANOVA across Phase 255+256 shows schema_top_k is 28-43% importance and was
+# capped at 16.  Expanding to [16,24,32] tests whether more schema predictions
+# surface the correct 2-hop path.  backward_bonus jumped to 13% importance in
+# Phase 256 and may be underexplored (255 best=0.077, 256 best=0.099).
+# g1p_trb_weight confirmed dead (0.015 importance) — dropped.
+# Synthetic best_path from Phase 256 retained (q_scores now applies to G1P).
+PARAM_SPACE_WEBQSP_257: dict = {
+    "trb_factor":             (30.0, 55.0),   # 255 best=39.741
+    "r2_boost":               (2.0,  6.0),    # 255 best=3.559
+    "vote_weight":            (0.78, 0.98),   # 255 best=0.8806
+    "beam_width":             [16, 24],
+    "idf_weight":             (0.0,  0.08),   # 255 best=0.018
+    "branch_bonus":           (0.01, 0.12),   # 255 best=0.064
+    "fhrb_factor":            (1.5,  3.5),    # 255 best=2.509
+    "gamma":                  (5.0,  12.0),   # 255 best=6.989
+    "beta":                   (0.7,  1.4),    # 255 best=0.954
+    "schema_score_threshold": (0.10, 0.60),   # 255 best=0.290; widen to catch more schemas
+    "degree_penalty_weight":  (0.5,  1.5),    # 255 best=1.029
+    "backward_bonus":         (0.04, 0.60),   # wider — 256 fANOVA 13%, may have headroom
+    "diversity_alpha":        (0.4,  1.2),    # 255 best=0.871
+    "schema_top_k":           [16, 24, 32],   # Phase 257 KEY: test higher schema coverage
+    "hop1_base_weight":       (0.3,  1.0),    # 255 best=0.631
+}
+
 # Float param names (excludes categorical beam_width)
 _FLOAT_PARAMS = tuple(k for k, v in PARAM_SPACE_WIDE.items() if not isinstance(v, list))
 
@@ -417,6 +466,7 @@ def _make_source_trials(records: "list[TrialRecord]", space: dict) -> list:
             "anchor_rerank_weight":     getattr(rec, "anchor_rerank_weight", 0.0),
             "schema_top_k":             getattr(rec, "schema_top_k", 5),
             "hop1_base_weight":         getattr(rec, "hop1_base_weight", 0.0),
+            "g1p_trb_weight":           getattr(rec, "g1p_trb_weight", 0.0),
         }
         # Only include params that exist in the distributions dict
         params = {k: v for k, v in params.items() if k in distributions}
@@ -457,6 +507,7 @@ class TrialRecord:
     anchor_rerank_weight:     float = 0.0  # Phase 253: HACH-MVC anchor-score re-ranking
     schema_top_k:             int   = 5    # Phase 253: tunable schema prediction count
     hop1_base_weight:         float = 0.0  # Phase 255: G1P base score fraction
+    g1p_trb_weight:           float = 0.0  # Phase 256: relation-conditioned G1P scoring weight
     # cvt_relay_boost removed in Phase 243 — ablation confirmed it hurts; cvt_passthrough is the correct fix
     is_best:                bool  = False
     phase:                  int   = 1
@@ -634,6 +685,7 @@ def _trial_record_to_dict(
         "anchor_rerank_weight":   getattr(rec, "anchor_rerank_weight", 0.0),
         "schema_top_k":           getattr(rec, "schema_top_k", 5),
         "hop1_base_weight":       getattr(rec, "hop1_base_weight", 0.0),
+        "g1p_trb_weight":         getattr(rec, "g1p_trb_weight", 0.0),
         "h1":                     rec.h1,
         "h10":              rec.h10,
         "mrr":              rec.mrr,
@@ -781,6 +833,7 @@ def _run_eval_logged(
         "anchor_rerank_weight":   kwargs.get("anchor_rerank_weight", 0.0),
         "schema_top_k":           kwargs.get("schema_top_k", 5),
         "hop1_base_weight":       kwargs.get("hop1_base_weight", 0.0),
+        "g1p_trb_weight":         kwargs.get("g1p_trb_weight", 0.0),
         "cvt_passthrough":        True,  # Phase 243: always enabled for WebQSP/Freebase
         "max_loops":              1,
     }
@@ -804,7 +857,7 @@ def _run_eval_logged(
         })
         return h1, h10, mrr, elapsed
 
-    if dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255") and _webqsp_state is not None:
+    if dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257") and _webqsp_state is not None:
         from webqsp_param_eval import run_trial_inprocess
         t0 = time.time()
         try:
@@ -845,7 +898,7 @@ def _run_eval_logged(
         })
         return h1, h10, mrr, elapsed
 
-    if dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255"):
+    if dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257"):
         n_questions = kwargs.get("sample", 200)
         cmd = [
             sys.executable, "-u", str(_WEBQSP_EVAL_SCRIPT),
@@ -877,6 +930,8 @@ def _run_eval_logged(
             cmd += ["--schema-top-k", str(kwargs["schema_top_k"])]
         if kwargs.get("hop1_base_weight", 0.0):
             cmd += ["--hop1-base-weight", str(kwargs["hop1_base_weight"])]
+        if kwargs.get("g1p_trb_weight", 0.0):
+            cmd += ["--g1p-trb-weight", str(kwargs["g1p_trb_weight"])]
     elif dataset == "hetionet":
         # Fallback subprocess path (state not yet initialised)
         n_questions = kwargs.get("sample", 50)
@@ -1095,6 +1150,10 @@ def run_tuner(
         _param_space = PARAM_SPACE_WEBQSP_254
     elif dataset == "webqsp255":
         _param_space = PARAM_SPACE_WEBQSP_255
+    elif dataset == "webqsp256":
+        _param_space = PARAM_SPACE_WEBQSP_256
+    elif dataset == "webqsp257":
+        _param_space = PARAM_SPACE_WEBQSP_257
     else:
         _param_space = PARAM_SPACE_WIDE
 
@@ -1128,7 +1187,7 @@ def run_tuner(
             max_edges   = max_edges,
             embeddings  = embeddings,
         )
-    elif dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255"):
+    elif dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257"):
         _init_webqsp_state(n_questions=sample, embeddings=embeddings)
 
     # ── log file setup ────────────────────────────────────────────────────
@@ -1360,7 +1419,8 @@ def run_tuner(
         f"--beam-hub-penalty {getattr(best, 'beam_hub_penalty', 0.0):.4f} "
         f"--anchor-rerank-weight {getattr(best, 'anchor_rerank_weight', 0.0):.4f} "
         f"--schema-top-k {getattr(best, 'schema_top_k', 5)} "
-        f"--hop1-base-weight {getattr(best, 'hop1_base_weight', 0.0):.4f}"
+        f"--hop1-base-weight {getattr(best, 'hop1_base_weight', 0.0):.4f} "
+        f"--g1p-trb-weight {getattr(best, 'g1p_trb_weight', 0.0):.4f}"
     )
     if dataset == "hetionet":
         canonical = (
@@ -1373,7 +1433,7 @@ def run_tuner(
             f"python -u benchmarks/conceptnet_eval.py "
             f"--cn5 {cn5_path} --n-questions 2000 --embeddings {embeddings} {_param_flags}"
         )
-    elif dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255"):
+    elif dataset in ("webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257"):
         canonical = (
             f"python -u benchmarks/webqsp_param_eval.py "
             f"--sample 1628 --embeddings {embeddings} {_param_flags}"
@@ -1513,7 +1573,7 @@ def main() -> None:
         help="KB triples file for --param-init (default: benchmarks/data/metaqa/kb.txt).",
     )
     parser.add_argument(
-        "--dataset", choices=["metaqa", "hetionet", "conceptnet", "webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255"], default="metaqa", dest="dataset",
+        "--dataset", choices=["metaqa", "hetionet", "conceptnet", "webqsp", "webqsp251", "webqsp252", "webqsp253", "webqsp254", "webqsp255", "webqsp256", "webqsp257"], default="metaqa", dest="dataset",
         help="KB to tune against. 'hetionet' uses PARAM_SPACE_HETIONET; "
              "'conceptnet' uses PARAM_SPACE_CONCEPTNET (requires --cn5-file); "
              "'webqsp' uses PARAM_SPACE_WEBQSP; "

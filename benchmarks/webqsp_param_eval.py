@@ -445,6 +445,8 @@ def run_trial_inprocess(
     anchor_rerank_weight = float(_arw) if _arw is not None else 0.0
     _g1p = params.get("hop1_base_weight")
     hop1_base_weight = float(_g1p) if _g1p is not None else 0.0
+    _g1ptw = params.get("g1p_trb_weight")
+    g1p_trb_weight = float(_g1ptw) if _g1ptw is not None else 0.0
 
     # Build relation boost maps from deriver fan-out statistics
     boost_map  = deriver.boost_map(gamma, beta) if deriver.is_built else {}
@@ -530,13 +532,14 @@ def run_trial_inprocess(
                 beam_hub_penalty            = beam_hub_penalty,
             )
 
-            # Phase 255: Guaranteed 1-hop Pass (G1P).
+            # Phase 255/256: Guaranteed 1-hop Pass (G1P).
             # The hop-reachability diagnostic showed 43.5% of beam misses are direct
             # 1-hop neighbors of the seed that were pruned at beam_width during hop-1
             # scoring.  G1P bypasses the beam for hop-1 by exhaustively enumerating
-            # all named (non-MID) direct neighbors and injecting any missing ones into
-            # the candidate pool at a tunable base score.  DPW + existing ranking
-            # signals then distinguish correct low-degree answers from hub noise.
+            # all named (non-MID) direct neighbors and injecting any missing ones.
+            # Phase 256: relation-conditioned scoring — each injection is weighted by
+            # trb_map[relation] so answer-bearing relations (high TRB) score higher than
+            # hub relations, and a synthetic best_path gives downstream q_scores access.
             if hop1_base_weight > 0.0:
                 _beam_ids = {a.entity_id for a in answers_obj}
                 _min_score = min((a.score for a in answers_obj), default=0.0)
@@ -545,10 +548,14 @@ def run_trial_inprocess(
                     _eid = _edge.target_id
                     if _eid not in _beam_ids and not str(_eid).startswith("/m/"):
                         _beam_ids.add(_eid)
+                        _rel = getattr(_edge, "relation_type", "")
+                        _trb_b = trb_map.get(_rel, 0.0) if trb_map else 0.0
+                        _score = _base * (1.0 + g1p_trb_weight * _trb_b)
+                        _path = type("_P", (), {"nodes": (seed_ent, _rel, _eid)})()
                         _fake = type("_G1", (), {
                             "entity_id": _eid,
-                            "score":     _base,
-                            "best_path": None,
+                            "score":     _score,
+                            "best_path": _path,
                         })()
                         answers_obj.append(_fake)
 
@@ -934,6 +941,8 @@ def main() -> None:
                         help="Phase 253: Anchor-score re-ranking weight (HACH-MVC anchor principle).")
     parser.add_argument("--hop1-base-weight",          type=float, default=None, dest="hop1_base_weight",
                         help="Phase 255: Guaranteed 1-hop Pass base score fraction (0=off, 1=min beam score).")
+    parser.add_argument("--g1p-trb-weight",            type=float, default=None, dest="g1p_trb_weight",
+                        help="Phase 256: G1P relation-conditioned scoring weight (TRB applied to injections).")
     parser.add_argument("--schema-top-k",              type=int,   default=None, dest="schema_top_k",
                         help="Phase 253: Number of schema predictions per question (default 5).")
     parser.add_argument("--conditional-schema-bonus",  type=float, default=None, dest="conditional_schema_bonus")
@@ -989,6 +998,7 @@ def main() -> None:
         "anchor_rerank_weight":   args.anchor_rerank_weight   if args.anchor_rerank_weight   is not None else 0.0,
         "schema_top_k":           args.schema_top_k           if args.schema_top_k           is not None else 5,
         "hop1_base_weight":       args.hop1_base_weight       if args.hop1_base_weight       is not None else 0.0,
+        "g1p_trb_weight":         args.g1p_trb_weight         if args.g1p_trb_weight         is not None else 0.0,
         "cvt_passthrough":        True,
         "max_loops":    1,
     }
