@@ -248,7 +248,7 @@ class AuraMemory:
     def forget(self, fact_id: str) -> bool:
         """Remove a specific fact by ID. Returns True if found and removed."""
         with self._lock:
-            for u, v, k, data in list(self._G.edges(data=True, keys=True)):
+            for u, v, data in list(self._G.edges(data=True)):
                 if data.get("fact_id") == fact_id:
                     self._G.remove_edge(u, v)
                     return True
