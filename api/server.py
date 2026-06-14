@@ -235,6 +235,7 @@ _state: Dict[str, Any] = {
     “meta_orchestrator”:  None,  # MetaOrchestrator — Phase 260 self-improvement loop
     “aura_memory”:        None,  # AuraMemory — Phase 275 personal episodic KG
     “dialogue_graph”:     None,  # DialogueGraph — Phase 275 dialogue subgraph
+    “query_grounder”:     None,  # QueryGrounder — Phase 280 SLM language layer
 }
 
 
@@ -3426,6 +3427,72 @@ def create_app(
         dg = _state.get("dialogue_graph") or DialogueGraph(memory)
         act_ids = dg.recall_about(entity, max_hops=max_hops)
         return {"entity": entity, "referenced_in_acts": act_ids}
+
+    # ── Phase 280: SLM hybrid query ──────────────────────────────────────────
+
+    def _get_grounder():
+        if _state.get("query_grounder") is None:
+            from llm_bridge.query_grounder import QueryGrounder
+            harvester = getattr(_state.get("meta_orchestrator"), "_knowledge_harvester", None)
+            _state["query_grounder"] = QueryGrounder(
+                adapter             = _state.get("adapter"),
+                knowledge_harvester = harvester,
+            )
+        return _state["query_grounder"]
+
+    @router.post("/query/hybrid", tags=["reasoning"])
+    async def query_hybrid(
+        question:  str,
+        top_k:     int   = 10,
+        max_hop:   int   = 3,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """
+        NL question → SLM grounding → CEREBRUM beam → SLM surface → NL answer.
+        Falls back to naive grounding if local SLM (Ollama) is unavailable.
+        """
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        t0 = time.time()
+        grounder = _get_grounder()
+
+        seed, schema = grounder.ground(question)
+        graph        = _state["graph_obj"]
+        try:
+            results = graph.query(seeds=[seed], top_k=top_k, max_hop=max_hop)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Graph query failed: {exc}")
+
+        answers    = [r if isinstance(r, str) else getattr(r, "entity_id", str(r)) for r in (results or [])]
+        confidence = float(results[0].score if hasattr(results[0], "score") else 0.9) if results else 0.0
+        answer_text = grounder.surface(
+            {"answers": answers, "confidence": confidence},
+            question,
+        )
+        return {
+            "question":     question,
+            "seed_entity":  seed,
+            "path_schema":  schema,
+            "answers":      answers[:top_k],
+            "confidence":   confidence,
+            "answer_text":  answer_text,
+            "slm_available": grounder.slm_available,
+            "duration_s":   time.time() - t0,
+        }
+
+    @router.post("/query/graph-only", tags=["reasoning"])
+    async def query_graph_only(req: QueryRequest, node: Dict = Depends(get_authenticated_node)):
+        """Structured graph query — skips SLM entirely. Use for programmatic calls."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        t0      = time.time()
+        graph   = _state["graph_obj"]
+        results = graph.query(seeds=req.seeds, top_k=req.top_k, max_hop=req.max_hop)
+        return {
+            "seeds":    req.seeds,
+            "results":  [r if isinstance(r, dict) else getattr(r, "__dict__", str(r)) for r in (results or [])],
+            "duration_s": time.time() - t0,
+        }
 
     @router.post("/query/trace", response_model=TraceResponse, tags=["reasoning"])
     async def query_trace(req: QueryRequest, node: Dict = Depends(get_authenticated_node)):
