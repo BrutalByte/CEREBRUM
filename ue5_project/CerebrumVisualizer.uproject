@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.6",
+	"EngineAssociation": "5.7",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -11,6 +11,14 @@
 		}
 	],
 	"Plugins": [
+		{
+			"Name": "AIAssistant",
+			"Enabled": true
+		},
+		{
+			"Name": "UnrealClaude",
+			"Enabled": false
+		},
 		{
 			"Name": "WebsocketBlueprint",
 			"Enabled": true,
