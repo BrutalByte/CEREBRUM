@@ -233,6 +233,8 @@ _state: Dict[str, Any] = {
     “api_key_store”:      None,   # ApiKeyStore — dynamic key management (D1)
     “_tenant_graphs”:     {},     # tenant_id -> CerebrumGraph (D1 per-tenant KB)
     “meta_orchestrator”:  None,  # MetaOrchestrator — Phase 260 self-improvement loop
+    “aura_memory”:        None,  # AuraMemory — Phase 275 personal episodic KG
+    “dialogue_graph”:     None,  # DialogueGraph — Phase 275 dialogue subgraph
 }
 
 
@@ -3321,6 +3323,109 @@ def create_app(
             except Exception:
                 pass
         return {"entries": entries}
+
+    # ── Phase 275: AURA personal memory ─────────────────────────────────────
+
+    def _get_aura_memory():
+        if _state.get("aura_memory") is None:
+            from core.aura_memory import AuraMemory
+            _state["aura_memory"] = AuraMemory()
+        return _state["aura_memory"]
+
+    @router.post("/aura/ingest", tags=["aura"])
+    async def aura_ingest(
+        subject:    str,
+        relation:   str,
+        obj:        str,
+        confidence: float = 1.0,
+        source:     str   = "user_stated",
+        expires_at: Optional[str] = None,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Ingest a personal episodic fact into AURA's memory graph."""
+        fact_id = _get_aura_memory().ingest_triple(
+            subject    = subject,
+            relation   = relation,
+            obj        = obj,
+            confidence = confidence,
+            source     = source,
+            expires_at = expires_at,
+        )
+        return {"fact_id": fact_id, "subject": subject, "relation": relation, "obj": obj}
+
+    @router.get("/aura/recall", tags=["aura"])
+    async def aura_recall(
+        q:        str,
+        max_hops: int = 2,
+        relation: Optional[str] = None,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Graph-traversal recall from AURA memory. No LLM required."""
+        result = _get_aura_memory().recall(
+            query           = q,
+            max_hops        = max_hops,
+            relation_filter = [relation] if relation else None,
+        )
+        return {
+            "query":            result.query,
+            "facts":            [f.to_dict() for f in result.facts],
+            "traversal_depth":  result.traversal_depth,
+            "duration_ms":      result.duration_ms,
+        }
+
+    @router.get("/aura/stats", tags=["aura"])
+    async def aura_stats(node: Dict = Depends(get_authenticated_node)):
+        """AURA memory graph stats."""
+        return _get_aura_memory().stats()
+
+    @router.post("/aura/dialogue/utterance", tags=["aura"])
+    async def aura_dialogue_utterance(
+        session_id: str,
+        text:       str,
+        intent:     str = "statement",
+        speaker:    str = "user",
+        entities:   Optional[List[str]] = None,
+        parent_act_id: Optional[str] = None,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Record a dialogue utterance into the AURA dialogue graph."""
+        from core.dialogue_graph import DialogueGraph
+        memory = _get_aura_memory()
+        dg = _state.setdefault("dialogue_graph", DialogueGraph(memory))
+        act = dg.record_utterance(
+            session_id          = session_id,
+            text                = text,
+            intent              = intent,
+            speaker             = speaker,
+            referenced_entities = entities or [],
+            parent_act_id       = parent_act_id,
+        )
+        return {"act_id": act.act_id, "session_id": session_id, "ts": act.ts}
+
+    @router.post("/aura/dialogue/session", tags=["aura"])
+    async def aura_dialogue_open_session(
+        speaker: str = "user",
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Open a new dialogue session. Returns session_id."""
+        from core.dialogue_graph import DialogueGraph
+        memory = _get_aura_memory()
+        dg = _state.setdefault("dialogue_graph", DialogueGraph(memory))
+        session_id = dg.open_session(speaker=speaker)
+        return {"session_id": session_id}
+
+    @router.get("/aura/dialogue/recall", tags=["aura"])
+    async def aura_dialogue_recall(
+        entity: str,
+        max_hops: int = 2,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Find dialogue acts that referenced `entity` — transformer-free memory recall."""
+        from core.dialogue_graph import DialogueGraph
+        memory = _get_aura_memory()
+        dg = _state.get("dialogue_graph") or DialogueGraph(memory)
+        act_ids = dg.recall_about(entity, max_hops=max_hops)
+        return {"entity": entity, "referenced_in_acts": act_ids}
 
     @router.post("/query/trace", response_model=TraceResponse, tags=["reasoning"])
     async def query_trace(req: QueryRequest, node: Dict = Depends(get_authenticated_node)):

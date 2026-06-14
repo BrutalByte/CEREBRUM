@@ -4,7 +4,7 @@ build-backend = "setuptools.backends.legacy:build"
 
 [project]
 name = "cerebrum-kg-core"
-version = "2.95.0"
+version = "2.96.0"
 
 description = "CEREBRUM — Community-Structured Graph Attention for Knowledge Graph Reasoning"
 authors = [
