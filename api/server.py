@@ -3275,6 +3275,53 @@ def create_app(
             return {"history": [], "message": "Orchestrator not started"}
         return {"history": [r.to_dict() for r in orch._evaluator.history(n)]}
 
+    @router.post("/harvest/trigger", tags=["orchestrator"])
+    async def harvest_trigger(
+        hints: Optional[List[str]] = None,
+        node: Dict = Depends(get_authenticated_node),
+    ):
+        """Manually trigger a KnowledgeHarvester run with optional gap hints."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        orch = _get_orchestrator()
+        harvester = getattr(orch, "_knowledge_harvester", None)
+        if harvester is None:
+            from core.knowledge_harvester import KnowledgeHarvester
+            adapter = _state["adapter"]
+            harvester = KnowledgeHarvester(adapter=adapter)
+            orch._knowledge_harvester = harvester
+        import threading
+        result_holder: list = []
+        def _run():
+            result_holder.append(harvester.harvest(hints or []))
+        t = threading.Thread(target=_run, daemon=True)
+        t.start()
+        t.join(timeout=300)
+        if result_holder:
+            r = result_holder[0]
+            return {
+                "fetched": r.fetched, "materialized": r.materialized,
+                "rejected": r.rejected, "gap_hints": r.gap_hints,
+            }
+        return {"message": "harvest timed out or is still running"}
+
+    @router.get("/harvest/rejected", tags=["orchestrator"])
+    async def harvest_rejected_log(n: int = 50, node: Dict = Depends(get_authenticated_node)):
+        """Last N entries from the rejected knowledge log."""
+        from pathlib import Path
+        log_path = Path(__file__).parent.parent / "benchmarks" / "rejected_knowledge.jsonl"
+        if not log_path.exists():
+            return {"entries": []}
+        lines = log_path.read_text(encoding="utf-8").splitlines()
+        import json
+        entries = []
+        for line in lines[-n:]:
+            try:
+                entries.append(json.loads(line))
+            except Exception:
+                pass
+        return {"entries": entries}
+
     @router.post("/query/trace", response_model=TraceResponse, tags=["reasoning"])
     async def query_trace(req: QueryRequest, node: Dict = Depends(get_authenticated_node)):
         """

@@ -122,17 +122,19 @@ class MetaOrchestrator:
 
     def __init__(
         self,
-        graph: Any,                          # CerebrumGraph
+        graph: Any,                              # CerebrumGraph
         config: Optional[OrchestratorConfig] = None,
         discovery_loop: Optional[Any] = None,    # AutonomousDiscoveryLoop
         params_getter: Optional[Callable[[], dict]] = None,
         params_setter: Optional[Callable[[dict], None]] = None,
+        knowledge_harvester: Optional[Any] = None,  # KnowledgeHarvester (Phase 270)
     ) -> None:
-        self._graph          = graph
-        self._config         = config or OrchestratorConfig()
-        self._discovery_loop = discovery_loop
-        self._params_getter  = params_getter or self._default_params_getter
-        self._params_setter  = params_setter or self._default_params_setter
+        self._graph               = graph
+        self._config              = config or OrchestratorConfig()
+        self._discovery_loop      = discovery_loop
+        self._params_getter       = params_getter or self._default_params_getter
+        self._params_setter       = params_setter or self._default_params_setter
+        self._knowledge_harvester = knowledge_harvester
 
         self._bus      = EventBus()
         self._running  = False
@@ -248,8 +250,9 @@ class MetaOrchestrator:
             logger.info("MetaOrchestrator: IMPROVED (H@1=%.4f +%.4f).", event.result.h1, event.delta)
 
         elif event.kind == PLATEAU:
-            logger.info("MetaOrchestrator: PLATEAU — triggering ResearchAgent scan.")
+            logger.info("MetaOrchestrator: PLATEAU — triggering ResearchAgent scan + KnowledgeHarvester.")
             self._trigger_research_scan()
+            self._trigger_harvest(event)
 
         elif event.kind == REGRESSION:
             with self._lock:
@@ -289,6 +292,32 @@ class MetaOrchestrator:
             logger.info("MetaOrchestrator: ResearchAgent found %d candidates.", len(findings))
         except Exception:
             logger.exception("MetaOrchestrator: ResearchAgent scan failed.")
+
+    def _trigger_harvest(self, event: EvalEvent) -> None:
+        if self._knowledge_harvester is None:
+            return
+        gap_hints = getattr(event.result, "failed_entities", []) or []
+        threading.Thread(
+            target=self._safe_harvest, args=(gap_hints,), daemon=True, name="knowledge-harvest"
+        ).start()
+
+    def _safe_harvest(self, gap_hints: list) -> None:
+        try:
+            result = self._knowledge_harvester.harvest(gap_hints)
+            logger.info(
+                "MetaOrchestrator: KnowledgeHarvester materialized=%d rejected=%d.",
+                result.materialized, result.rejected,
+            )
+            if result.materialized > 0:
+                try:
+                    adapter = getattr(self._graph, "adapter", self._graph)
+                    edge_count = getattr(adapter, "graph", None)
+                    if edge_count is not None and hasattr(edge_count, "number_of_edges"):
+                        self.notify_graph_changed(edge_count.number_of_edges())
+                except Exception:
+                    pass
+        except Exception:
+            logger.exception("MetaOrchestrator: KnowledgeHarvester harvest failed.")
 
     def _open_circuit(self) -> None:
         with self._lock:
