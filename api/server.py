@@ -236,6 +236,9 @@ _state: Dict[str, Any] = {
     "aura_memory":        None,  # AuraMemory — Phase 275 personal episodic KG
     "dialogue_graph":     None,  # DialogueGraph — Phase 275 dialogue subgraph
     "query_grounder":     None,  # QueryGrounder — Phase 280 SLM language layer
+    "sensory_thalamus":   None,  # SensoryThalamus — Phase 300 perceptual relay
+    "vision_pipeline":    None,  # VisionPipeline — Phase 300 camera loop
+    "perception_adapter": None,  # NetworkXAdapter for perception_kb domain
 }
 
 
@@ -3493,6 +3496,98 @@ def create_app(
             "results":  [r if isinstance(r, dict) else getattr(r, "__dict__", str(r)) for r in (results or [])],
             "duration_s": time.time() - t0,
         }
+
+    # ── Phase 300: Perceptual Grounding ──────────────────────────────────────
+
+    def _get_sensory_thalamus():
+        if _state["sensory_thalamus"] is None:
+            import networkx as nx
+            from adapters.networkx_adapter import NetworkXAdapter
+            from core.perceptual_grounder import PerceptualGrounder
+            from core.sensory_thalamus import SensoryThalamus
+            perception_nx = NetworkXAdapter(nx.DiGraph())
+            _state["perception_adapter"] = perception_nx
+            grounder = PerceptualGrounder(camera_id="obsbot_tiny3")
+            harvester = getattr(_state.get("meta_orchestrator"), "_knowledge_harvester", None)
+            bus = getattr(_state.get("meta_orchestrator"), "_bus", None)
+            _state["sensory_thalamus"] = SensoryThalamus(
+                adapter=perception_nx,
+                grounder=grounder,
+                knowledge_harvester=harvester,
+                event_bus=bus,
+            )
+            reg = _state.get("federated_registry")
+            if reg is not None:
+                reg.graphs["perception_kb"] = perception_nx
+        return _state["sensory_thalamus"]
+
+    @router.post("/perceive/start", tags=["perception"])
+    async def perceive_start(camera_id: int = 0, frame_skip: int = 5,
+                             node: Dict = Depends(get_authenticated_node)):
+        """Start live vision pipeline on the OBSBOT Tiny 3 (or any UVC camera)."""
+        from core.vision_pipeline import VisionPipeline
+        thalamus = _get_sensory_thalamus()
+        vp = _state.get("vision_pipeline")
+        if vp is not None and vp.status()["running"]:
+            return {"status": "already_running"}
+        vp = VisionPipeline(thalamus=thalamus, grounder=thalamus._grounder,
+                            camera_id=camera_id, frame_skip=frame_skip)
+        _state["vision_pipeline"] = vp
+        vp.start()
+        return {"status": "started", "camera_id": camera_id, "frame_skip": frame_skip}
+
+    @router.post("/perceive/stop", tags=["perception"])
+    async def perceive_stop(node: Dict = Depends(get_authenticated_node)):
+        """Stop the live vision pipeline."""
+        vp = _state.get("vision_pipeline")
+        if vp is None:
+            return {"status": "not_running"}
+        vp.stop()
+        return {"status": "stopped"}
+
+    @router.get("/perceive/status", tags=["perception"])
+    async def perceive_status(node: Dict = Depends(get_authenticated_node)):
+        """FPS, frames processed, model states, and thalamus materialization stats."""
+        vp = _state.get("vision_pipeline")
+        thalamus = _state.get("sensory_thalamus")
+        return {
+            "pipeline": vp.status() if vp is not None else {"running": False},
+            "thalamus": thalamus.stats() if thalamus is not None else {},
+        }
+
+    @router.post("/perceive/snapshot", tags=["perception"])
+    async def perceive_snapshot(camera_id: int = 0,
+                                node: Dict = Depends(get_authenticated_node)):
+        """Capture one frame synchronously, run all models, return extracted triples."""
+        from core.vision_pipeline import VisionPipeline
+        thalamus = _get_sensory_thalamus()
+        vp = VisionPipeline(thalamus=thalamus, grounder=thalamus._grounder,
+                            camera_id=camera_id)
+        try:
+            event = vp.snapshot()
+        except RuntimeError as e:
+            raise HTTPException(status_code=503, detail=str(e))
+        triples = thalamus._grounder.ground(event)
+        return {
+            "frame_id":   event.frame_id,
+            "camera_id":  event.camera_id,
+            "detections": len(event.detections),
+            "identities": len(event.identities),
+            "scene":      event.scene.caption if event.scene else None,
+            "triples": [
+                {"source": t.source, "relation": t.relation, "target": t.target,
+                 "confidence": t.confidence, "tier": t.source_tier}
+                for t in triples
+            ],
+        }
+
+    @router.get("/perceive/recent", tags=["perception"])
+    async def perceive_recent(n: int = 50, node: Dict = Depends(get_authenticated_node)):
+        """Last N triples materialized from perceptual grounding."""
+        thalamus = _state.get("sensory_thalamus")
+        if thalamus is None:
+            return {"triples": []}
+        return {"triples": thalamus.recent_triples(n)}
 
     @router.post("/query/trace", response_model=TraceResponse, tags=["reasoning"])
     async def query_trace(req: QueryRequest, node: Dict = Depends(get_authenticated_node)):

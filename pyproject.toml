@@ -4,7 +4,7 @@ build-backend = "setuptools.backends.legacy:build"
 
 [project]
 name = "cerebrum-kg-core"
-version = "2.97.0"
+version = "2.98.0"
 
 description = "CEREBRUM — Community-Structured Graph Attention for Knowledge Graph Reasoning"
 authors = [
@@ -51,6 +51,15 @@ tpu   = ["torch>=2.0.0", "torch-xla>=2.0.0"]
 # Intel Gaudi 2 / 3 (Habana Labs)
 gaudi = ["torch>=2.0.0", "habana-torch-plugin>=1.16.0"]
 
+vision = [
+    "ultralytics>=8.3.0",
+    "opencv-python>=4.8.0",
+    "transformers>=4.40.0",
+    "insightface>=0.7.3",
+    "onnxruntime-gpu>=1.18.0",
+    "torch>=2.0.0",
+    "Pillow>=10.0.0",
+]
 orin   = ["paramiko>=3.0.0"]
 studio = ["cerebrum-kg-studio>=2.65.1"]
 all    = ["cerebrum-kg-core[embeddings,api,neo4j,dev,enterprise,gpu,monitoring,tuning]"]
