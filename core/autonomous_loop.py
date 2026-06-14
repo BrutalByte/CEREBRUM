@@ -144,6 +144,7 @@ class AutonomousDiscoveryLoop:
     def __init__(self, agent, config: Optional[LoopConfig] = None) -> None:
         self._agent = agent
         self._config = config or LoopConfig()
+        self._orchestrator = None  # Phase 260: set by MetaOrchestrator.attach_loop()
 
         self._running = False
         self._thread: Optional[threading.Thread] = None
@@ -452,6 +453,15 @@ class AutonomousDiscoveryLoop:
 
         if (not cfg.dry_run and cfg.approver_checkpoint_path and aa is not None and (auto_approved + auto_rejected) > 0):
             self._save_checkpoint(aa)
+
+        # Phase 260: notify MetaOrchestrator when edges were added
+        if edges_added > 0 and self._orchestrator is not None:
+            try:
+                adapter = getattr(self._agent, "_adapter", None)
+                edge_count = adapter.graph.number_of_edges() if adapter and hasattr(getattr(adapter, "graph", None), "number_of_edges") else -1
+                self._orchestrator.notify_graph_changed(edge_count)
+            except Exception:
+                logger.debug("AutonomousDiscoveryLoop: could not notify orchestrator.", exc_info=True)
 
         return record
 

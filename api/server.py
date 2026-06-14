@@ -230,8 +230,9 @@ _state: Dict[str, Any] = {
     "_query_path_cache":  {},      # Phase 127: query_id -> (answers, expiry_ts)
     "_platt_calibration": None,   # Phase 129: PlattCalibration instance
     "audit_ledger":       None,   # QueryAuditLedger â€” compliance mode logging
-    "api_key_store":      None,   # ApiKeyStore â€” dynamic key management (D1)
-    "_tenant_graphs":     {},     # tenant_id -> CerebrumGraph (D1 per-tenant KB)
+    “api_key_store”:      None,   # ApiKeyStore — dynamic key management (D1)
+    “_tenant_graphs”:     {},     # tenant_id -> CerebrumGraph (D1 per-tenant KB)
+    “meta_orchestrator”:  None,  # MetaOrchestrator — Phase 260 self-improvement loop
 }
 
 
@@ -3208,6 +3209,71 @@ def create_app(
         loop = _get_autonomous_loop()
         loop.stop()
         return _loop_status_response(loop)
+
+    # ── Phase 260: MetaOrchestrator + SelfEvaluator endpoints ────────────────
+
+    def _get_orchestrator():
+        orch = _state.get("meta_orchestrator")
+        if orch is None:
+            from core.meta_orchestrator import MetaOrchestrator
+            graph = _state.get("graph")
+            loop  = _state.get("autonomous_loop")
+            orch  = MetaOrchestrator(graph=graph, discovery_loop=loop)
+            _state["meta_orchestrator"] = orch
+        return orch
+
+    @router.post("/orchestrator/start", tags=["orchestrator"])
+    async def orchestrator_start(node: Dict = Depends(get_authenticated_node)):
+        """Start the MetaOrchestrator — wires SelfEvaluator + ParameterDaemon + DiscoveryLoop."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        _get_orchestrator().start()
+        return _get_orchestrator().status()
+
+    @router.post("/orchestrator/stop", tags=["orchestrator"])
+    async def orchestrator_stop(node: Dict = Depends(get_authenticated_node)):
+        """Stop the MetaOrchestrator and all sub-loops."""
+        orch = _state.get("meta_orchestrator")
+        if orch is None:
+            raise HTTPException(status_code=404, detail="Orchestrator not running")
+        orch.stop()
+        return {"stopped": True}
+
+    @router.post("/orchestrator/reset-circuit", tags=["orchestrator"])
+    async def orchestrator_reset_circuit(node: Dict = Depends(get_authenticated_node)):
+        """Clear circuit breaker and resume autonomous materialization."""
+        orch = _state.get("meta_orchestrator")
+        if orch is None:
+            raise HTTPException(status_code=404, detail="Orchestrator not running")
+        orch.reset_circuit()
+        return orch.status()
+
+    @router.get("/orchestrator/status", tags=["orchestrator"])
+    async def orchestrator_status(node: Dict = Depends(get_authenticated_node)):
+        """Current MetaOrchestrator + SelfEvaluator status."""
+        orch = _state.get("meta_orchestrator")
+        if orch is None:
+            return {"running": False, "message": "Orchestrator not started. POST /orchestrator/start"}
+        return orch.status()
+
+    @router.post("/self-eval/trigger", tags=["orchestrator"])
+    async def self_eval_trigger(node: Dict = Depends(get_authenticated_node)):
+        """Manually trigger one mini-benchmark evaluation."""
+        if not _is_ready():
+            raise HTTPException(status_code=503, detail="Graph not loaded")
+        orch   = _get_orchestrator()
+        result = orch.trigger_eval()
+        if result is None:
+            raise HTTPException(status_code=500, detail="Eval failed — check logs")
+        return result.to_dict()
+
+    @router.get("/self-eval/history", tags=["orchestrator"])
+    async def self_eval_history(n: int = 20, node: Dict = Depends(get_authenticated_node)):
+        """Last N self-evaluation records."""
+        orch = _state.get("meta_orchestrator")
+        if orch is None:
+            return {"history": [], "message": "Orchestrator not started"}
+        return {"history": [r.to_dict() for r in orch._evaluator.history(n)]}
 
     @router.post("/query/trace", response_model=TraceResponse, tags=["reasoning"])
     async def query_trace(req: QueryRequest, node: Dict = Depends(get_authenticated_node)):
